@@ -27,30 +27,30 @@ Resumed-run following uses main's authoritative SSE completion, followed by `fol
 
 The following table covers every original conflicted file. Additional integration edits are listed after it; automatically merged main changes are not individually enumerated here.
 
-| Conflicted file | Resolution |
-|---|---|
-| `CHANGELOG.md` | Retain both feature bullets at the top and every main bullet; describe atomic completion, uncertainty, provenance, stop policy and upgrade. |
-| `apps/api/src/testing/api-subprocess.ts` | Main's prefix/port allocation and process lifecycle; add native closed-object collection before temporary-store removal. |
-| `apps/web/src/runs/RunInspectorPage.tsx` | Script and session recovery controls with main's paged history and server observation projections. |
-| `apps/web/src/runs/projections.ts` | Main description parts, plus a script-dispatch description in that representation. |
-| `apps/web/src/runs/useRunEvents.test.tsx` | Main tests plus running/fast-finished explicit script Resume following. |
-| `apps/web/src/runs/useRunEvents.ts` | Main authoritative completion, cursor recovery and attempt following; remove old cached-terminal shortcut entirely. |
-| `apps/web/tsconfig.json` | Main evidence config; remove the now-unused separate script-recovery config entry. |
-| `docs/03-domain-model.md` | Combine script provenance and main bounded data model text. |
-| `docs/05-execution-engine.md` | Integrated child admission/completion, snapshot identity, script uncertainty, shutdown policy and existing inference/history behavior. |
-| `docs/decisions/README.md` | Preserve both decision lists and link ADR-0059. |
-| `docs/guide/03-run-and-observe.md` | Main observation/recovery guide plus uncertain-script failure and deliberate recovery. |
-| `packages/api-client/openapi.json` | Regenerated from integrated source with the API-client generator. |
-| `packages/api-client/src/generated/schema.ts` | Regenerated alongside OpenAPI; no hand-merge. |
-| `packages/contracts/src/events.ts` | Script dispatch and main harness turn/submission event variants together. |
-| `packages/contracts/src/run.ts` | Script disposition/provenance alongside main inference and missing-session provenance. |
-| `packages/engine/src/errors.ts` | Script, inference, session and atomic outcome `records` options. |
-| `packages/engine/src/handlers/subloop.ts` | One atomic outcome append, sequence-bound wake/finish reuse, child failure parity and retained script provenance. |
-| `packages/engine/src/ports.ts` | Required script disposition with main unconfirmed-termination evidence. |
-| `packages/engine/src/run-manager.ts` | Atomic failure records, truthful script classification, snapshot-bounded child outcome, parent wake identity and force guards; parent-node identity in both admission paths. |
-| `packages/engine/src/testing/fakes.ts` | Atomic parent/child commit and post-commit notifications beside main's separate targeted-Event receipt port. |
-| `packages/infrastructure/src/process/scripts.ts` | Runner disposition and proven spawn refusal with main process-tree cleanup and unconfirmed-termination evidence. |
-| `packages/infrastructure/src/sqlite/admission.ts` | Atomic child link beside main targeted Event receipt, claim, pending-key and deduplication logic. |
+| Conflicted file                                   | Resolution                                                                                                                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHANGELOG.md`                                    | Retain both feature bullets at the top and every main bullet; describe atomic completion, uncertainty, provenance, stop policy and upgrade.                                  |
+| `apps/api/src/testing/api-subprocess.ts`          | Main's prefix/port allocation and process lifecycle; add native closed-object collection before temporary-store removal.                                                     |
+| `apps/web/src/runs/RunInspectorPage.tsx`          | Script and session recovery controls with main's paged history and server observation projections.                                                                           |
+| `apps/web/src/runs/projections.ts`                | Main description parts, plus a script-dispatch description in that representation.                                                                                           |
+| `apps/web/src/runs/useRunEvents.test.tsx`         | Main tests plus running/fast-finished explicit script Resume following.                                                                                                      |
+| `apps/web/src/runs/useRunEvents.ts`               | Main authoritative completion, cursor recovery and attempt following; remove old cached-terminal shortcut entirely.                                                          |
+| `apps/web/tsconfig.json`                          | Main evidence config; remove the now-unused separate script-recovery config entry.                                                                                           |
+| `docs/03-domain-model.md`                         | Combine script provenance and main bounded data model text.                                                                                                                  |
+| `docs/05-execution-engine.md`                     | Integrated child admission/completion, snapshot identity, script uncertainty, shutdown policy and existing inference/history behavior.                                       |
+| `docs/decisions/README.md`                        | Preserve both decision lists and link ADR-0059.                                                                                                                              |
+| `docs/guide/03-run-and-observe.md`                | Main observation/recovery guide plus uncertain-script failure and deliberate recovery.                                                                                       |
+| `packages/api-client/openapi.json`                | Regenerated from integrated source with the API-client generator.                                                                                                            |
+| `packages/api-client/src/generated/schema.ts`     | Regenerated alongside OpenAPI; no hand-merge.                                                                                                                                |
+| `packages/contracts/src/events.ts`                | Script dispatch and main harness turn/submission event variants together.                                                                                                    |
+| `packages/contracts/src/run.ts`                   | Script disposition/provenance alongside main inference and missing-session provenance.                                                                                       |
+| `packages/engine/src/errors.ts`                   | Script, inference, session and atomic outcome `records` options.                                                                                                             |
+| `packages/engine/src/handlers/subloop.ts`         | One atomic outcome append, sequence-bound wake/finish reuse, child failure parity and retained script provenance.                                                            |
+| `packages/engine/src/ports.ts`                    | Required script disposition with main unconfirmed-termination evidence.                                                                                                      |
+| `packages/engine/src/run-manager.ts`              | Atomic failure records, truthful script classification, snapshot-bounded child outcome, parent wake identity and force guards; parent-node identity in both admission paths. |
+| `packages/engine/src/testing/fakes.ts`            | Atomic parent/child commit and post-commit notifications beside main's separate targeted-Event receipt port.                                                                 |
+| `packages/infrastructure/src/process/scripts.ts`  | Runner disposition and proven spawn refusal with main process-tree cleanup and unconfirmed-termination evidence.                                                             |
+| `packages/infrastructure/src/sqlite/admission.ts` | Atomic child link beside main targeted Event receipt, claim, pending-key and deduplication logic.                                                                            |
 
 Additional edits, including cross-work-package files authorized by this integration brief:
 
@@ -76,13 +76,13 @@ Native teardown investigation: reproduced slow disposal after observer close at 
 
 Required native matrices, with file counts:
 
-| Matrix | Result |
-|---|---|
-| Child admission, crash and retry | `child-creation.test.ts` 7; `child-admission-recovery.test.ts` 6; `child-creation-restart.test.ts` 3; `subloop-restart.test.ts` 3; `awaited-children.test.ts` 24; `child-failure-parity.test.ts` 14. **57 passed.** |
-| Uncertain script recovery | API `script-restart.test.ts` 3, `script-persistence-restart.test.ts` 3; engine `script-recovery.test.ts` 9, infrastructure `script-recovery.test.ts` 2; engine `handlers/script-dispatch.test.ts` 7. **24 passed.** New forced-stop regression: 1 passed. |
-| Nested shutdown/recovery | `shutdown-process.test.ts`: **8 passed, 3 platform skips** (native first-SIGINT/first-SIGTERM descendant drains and native explicit-force case, POSIX-only on this Windows host). `pinned-run-restart.test.ts`: **1 passed**. `test:recovery-process`: TAP **1 passed**. `test:wait-restart`: **2 configurations passed** (50/1000 ms; each verified input identity, one timer wake, one paused wake, two heartbeats). |
-| Delivery/finalization | API `finalization.test.ts` **2 passed**, engine `finalization.test.ts` **44 passed**; `test:webhook-retry` **5 HTTP paths** passed, including five failure requests, two crash requests, and drain during backoff and active attempt. |
-| Bounded history | API `routes/run-history.test.ts` **3 passed**. Web `event-retention.test.ts`, `Timeline.test.tsx`, `history-browsing.test.tsx`, `useRunEvents.test.tsx`, plus `projections.test.ts`: **47 passed**. |
+| Matrix                           | Result                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child admission, crash and retry | `child-creation.test.ts` 7; `child-admission-recovery.test.ts` 6; `child-creation-restart.test.ts` 3; `subloop-restart.test.ts` 3; `awaited-children.test.ts` 24; `child-failure-parity.test.ts` 14. **57 passed.**                                                                                                                                                                                                    |
+| Uncertain script recovery        | API `script-restart.test.ts` 3, `script-persistence-restart.test.ts` 3; engine `script-recovery.test.ts` 9, infrastructure `script-recovery.test.ts` 2; engine `handlers/script-dispatch.test.ts` 7. **24 passed.** New forced-stop regression: 1 passed.                                                                                                                                                              |
+| Nested shutdown/recovery         | `shutdown-process.test.ts`: **8 passed, 3 platform skips** (native first-SIGINT/first-SIGTERM descendant drains and native explicit-force case, POSIX-only on this Windows host). `pinned-run-restart.test.ts`: **1 passed**. `test:recovery-process`: TAP **1 passed**. `test:wait-restart`: **2 configurations passed** (50/1000 ms; each verified input identity, one timer wake, one paused wake, two heartbeats). |
+| Delivery/finalization            | API `finalization.test.ts` **2 passed**, engine `finalization.test.ts` **44 passed**; `test:webhook-retry` **5 HTTP paths** passed, including five failure requests, two crash requests, and drain during backoff and active attempt.                                                                                                                                                                                  |
+| Bounded history                  | API `routes/run-history.test.ts` **3 passed**. Web `event-retention.test.ts`, `Timeline.test.tsx`, `history-browsing.test.tsx`, `useRunEvents.test.tsx`, plus `projections.test.ts`: **47 passed**.                                                                                                                                                                                                                    |
 
 The requested `pinned-run-restart.test.ts` did not exist in either supplied head. The added real-process test verifies old pin after kill/restart, new publish for a new run, Replay retaining the source pin, and one child admission/completion each. It passed after correcting its initial helper's body-less JSON POST (the first helper error and corrected result are both retained). This was added coverage, not a demonstrated pre-fix product regression.
 
@@ -90,19 +90,19 @@ The six-file child matrix includes named regressions for dying before atomic suc
 
 Package coverage (latest reports; percentages alone do not make failing tests green):
 
-| Package | Tests passed / failed / skipped | Lines | Branches |
-|---|---:|---:|---:|
-| contracts | 285 / 0 / 0 | 99.74% | 95.00% |
-| domain | 612 / 0 / 0 | 98.48% | 95.81% |
-| engine | 1729 / 1 / 0 | 97.48% | 91.43% |
-| infrastructure | 809 / 9 / 0 | 98.44% | 94.85% |
-| adapter-codex | 501 / 0 / 5 | 98.90% | 94.76% |
-| adapter-jev | 34 / 0 / 5 | 98.80% | 96.77% |
-| api-client | 95 / 1 / 0 | 100.00% | 98.42% |
-| api | 1466 / 0 / 11 | 97.35% | 92.36% |
-| mcp | 52 / 0 / 0 | 96.69% | 95.15% |
-| plugin-codex | 9 / 0 / 1 | 95.23% | 95.45% |
-| web | 1780 / 0 / 0 | 98.68% | 94.58% |
+| Package        | Tests passed / failed / skipped |   Lines | Branches |
+| -------------- | ------------------------------: | ------: | -------: |
+| contracts      |                     285 / 0 / 0 |  99.74% |   95.00% |
+| domain         |                     612 / 0 / 0 |  98.48% |   95.81% |
+| engine         |                    1729 / 1 / 0 |  97.48% |   91.43% |
+| infrastructure |                     809 / 9 / 0 |  98.44% |   94.85% |
+| adapter-codex  |                     501 / 0 / 5 |  98.90% |   94.76% |
+| adapter-jev    |                      34 / 0 / 5 |  98.80% |   96.77% |
+| api-client     |                      95 / 1 / 0 | 100.00% |   98.42% |
+| api            |                   1466 / 0 / 11 |  97.35% |   92.36% |
+| mcp            |                      52 / 0 / 0 |  96.69% |   95.15% |
+| plugin-codex   |                       9 / 0 / 1 |  95.23% |   95.45% |
+| web            |                    1780 / 0 / 0 |  98.68% |   94.58% |
 
 Tooling's separate existing Node test task passed 87/87; it emits no instrumented coverage summary. No coverage thresholds, exclusions or test assertions were relaxed.
 
@@ -114,30 +114,30 @@ The default-discovered script-recovery check passed in both runs. It used a sepa
 
 All commands use the runtime above. Turbo cache is local to this worktree. Child Git trust is process-scoped; no global Git config was changed. API allocation is `GG_TEST_PORT_START=5850`, `GG_TEST_PORT_COUNT=100`, `GG_TEST_STORE_PREFIX=gg-wp-d1-int-`; standalone native commands used 6330..6339. Script browser uses its own free 6320..6339 port. No live providers were called (`LIVE=0`).
 
-| Exact gate command | Result |
-|---|---|
-| `pnpm build` | PASS, 11 tasks, fresh before browser runs. |
-| `pnpm typecheck` | PASS; final API-only `pnpm --filter @graphgoblin/api typecheck` also passed after adding native pin coverage. |
-| `pnpm lint` | PASS; final API-only lint also passed. Initial lint caught an unawaited new hook-test promise; it was corrected. |
-| `pnpm format:check` | PASS; all later changed files, including native pin test and final docs, separately passed `pnpm exec prettier --check <changed paths>`. |
-| `pnpm check:layers` | PASS. |
-| `pnpm check:deps` | PASS. |
-| `pnpm check:migrations` | PASS. |
-| `pnpm check:docs` | PASS after regeneration. |
-| `pnpm check:tokens` | PASS. |
-| `pnpm check:templates` | PASS. |
-| `pnpm check:licenses` | PASS, 225 packages. |
-| `pnpm exec turbo run test:coverage --concurrency=2` | FAILED; first attempt hit child Git trust/environment problems. See attempts below. |
-| `pnpm exec turbo run test:coverage --concurrency=2 --env-mode=loose --continue=always --force --filter=!@graphgoblin/tooling -- --maxWorkers=2` | FAILED test assertions/timeouts; reached all 11 app/library packages. Tooling was checked separately (87/87). |
-| `pnpm --filter @graphgoblin/engine test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/engine-coverage-verified.json` | FAILED, 1 checkpoint timing assertion. |
-| Same direct coverage command for `@graphgoblin/infrastructure` | FAILED, 9 native/upgrade checks; coverage emitted. |
-| Same direct coverage command for `@graphgoblin/api-client` | FAILED, 1 template test timeout; coverage emitted. |
-| `pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/api-coverage-verified.json` | PASS, 1466 passed / 11 skipped. This run collected before the new pinned test existed; that test separately passed its native run and final API typecheck/lint. |
-| `pnpm test:recovery-process` | PASS. |
-| `pnpm test:wait-restart` | PASS. |
-| `pnpm test:webhook-retry` | PASS. |
-| From `apps/web`: `pnpm exec playwright test <34 selected spec paths> --retries=0 --workers=1` | FAILED, 316 passed / 1 failed. Exact selected paths: `browser-focused-selection.txt`. |
-| From `apps/web`: `pnpm exec playwright test --retries=0 --workers=1` | FAILED, 421 passed / 1 failed / 1 skipped. Script recovery executed and passed. |
+| Exact gate command                                                                                                                                                | Result                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm build`                                                                                                                                                      | PASS, 11 tasks, fresh before browser runs.                                                                                                                      |
+| `pnpm typecheck`                                                                                                                                                  | PASS; final API-only `pnpm --filter @graphgoblin/api typecheck` also passed after adding native pin coverage.                                                   |
+| `pnpm lint`                                                                                                                                                       | PASS; final API-only lint also passed. Initial lint caught an unawaited new hook-test promise; it was corrected.                                                |
+| `pnpm format:check`                                                                                                                                               | PASS; all later changed files, including native pin test and final docs, separately passed `pnpm exec prettier --check <changed paths>`.                        |
+| `pnpm check:layers`                                                                                                                                               | PASS.                                                                                                                                                           |
+| `pnpm check:deps`                                                                                                                                                 | PASS.                                                                                                                                                           |
+| `pnpm check:migrations`                                                                                                                                           | PASS.                                                                                                                                                           |
+| `pnpm check:docs`                                                                                                                                                 | PASS after regeneration.                                                                                                                                        |
+| `pnpm check:tokens`                                                                                                                                               | PASS.                                                                                                                                                           |
+| `pnpm check:templates`                                                                                                                                            | PASS.                                                                                                                                                           |
+| `pnpm check:licenses`                                                                                                                                             | PASS, 225 packages.                                                                                                                                             |
+| `pnpm exec turbo run test:coverage --concurrency=2`                                                                                                               | FAILED; first attempt hit child Git trust/environment problems. See attempts below.                                                                             |
+| `pnpm exec turbo run test:coverage --concurrency=2 --env-mode=loose --continue=always --force --filter=!@graphgoblin/tooling -- --maxWorkers=2`                   | FAILED test assertions/timeouts; reached all 11 app/library packages. Tooling was checked separately (87/87).                                                   |
+| `pnpm --filter @graphgoblin/engine test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/engine-coverage-verified.json` | FAILED, 1 checkpoint timing assertion.                                                                                                                          |
+| Same direct coverage command for `@graphgoblin/infrastructure`                                                                                                    | FAILED, 9 native/upgrade checks; coverage emitted.                                                                                                              |
+| Same direct coverage command for `@graphgoblin/api-client`                                                                                                        | FAILED, 1 template test timeout; coverage emitted.                                                                                                              |
+| `pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/api-coverage-verified.json`       | PASS, 1466 passed / 11 skipped. This run collected before the new pinned test existed; that test separately passed its native run and final API typecheck/lint. |
+| `pnpm test:recovery-process`                                                                                                                                      | PASS.                                                                                                                                                           |
+| `pnpm test:wait-restart`                                                                                                                                          | PASS.                                                                                                                                                           |
+| `pnpm test:webhook-retry`                                                                                                                                         | PASS.                                                                                                                                                           |
+| From `apps/web`: `pnpm exec playwright test <34 selected spec paths> --retries=0 --workers=1`                                                                     | FAILED, 316 passed / 1 failed. Exact selected paths: `browser-focused-selection.txt`.                                                                           |
+| From `apps/web`: `pnpm exec playwright test --retries=0 --workers=1`                                                                                              | FAILED, 421 passed / 1 failed / 1 skipped. Script recovery executed and passed.                                                                                 |
 
 Native/unit matrices above used `pnpm --filter <package> exec vitest run <named files> --maxWorkers=2` (JSON reporter/output-file arguments retained with their reports; the standalone pinned test used one worker). Evidence: `engine-integrated-matrix.json`, `infrastructure-matrix.json`, `api-native-matrix.json`, `pinned-run-restart-verified.json`, and `web-matrix.log.txt`.
 
