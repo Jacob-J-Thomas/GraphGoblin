@@ -1,0 +1,42 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-d1-integrated/apps/api
+
+ ❯ src/shutdown-process.test.ts (11 tests | 1 failed | 5 skipped) 149497ms
+   × native racing Events retain admitted work or reusable keys through drain and restart 10266ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-process.test.ts > native racing Events retain admitted work or reusable keys through drain and restart
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 127.0.0.1:5763
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 5763
+}
+
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:186:7
+ ❯ boot src/shutdown-process.test.ts:26:3
+ ❯ src/shutdown-process.test.ts:202:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed | 5 skipped (11)
+   Start at  22:40:54
+   Duration  150.12s (tests 100%)
+

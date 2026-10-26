@@ -1,0 +1,274 @@
+{
+  "phases": {
+    "resumeCancel": {
+      "runId": "01M5V616T1KY86SCZK76C1F1EC",
+      "statusAtKill": "running",
+      "provenance": {
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+            "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP",
+            "state": "outcome-uncertain"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+            "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP"
+          }
+        ]
+      },
+      "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+      "effectsBeforeResume": 1,
+      "cancelResponse": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "run 01M5V616T1KY86SCZK76C1F1EC is already failed"
+        }
+      },
+      "mcp": {
+        "getRunScript": {
+          "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+          "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP",
+          "state": "outcome-uncertain"
+        },
+        "summary": {
+          "id": "01M5V616T1KY86SCZK76C1F1EC",
+          "loopId": "01M5V616RGN6VH6BR29J453VHY",
+          "definition": "QA marker resume v1",
+          "status": "failed",
+          "finalizedAt": "2026-10-26T04:03:30.974Z",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "script": {
+              "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+              "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP",
+              "state": "outcome-uncertain"
+            },
+            "resumable": true
+          },
+          "createdAt": "2026-10-26T04:03:25.121Z",
+          "finishedAt": "2026-10-26T04:03:30.962Z"
+        },
+        "waitForRun": {
+          "finished": true,
+          "script": {
+            "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+            "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP",
+            "state": "outcome-uncertain"
+          }
+        }
+      },
+      "resumeResponseStatus": "running",
+      "final": {
+        "status": "succeeded",
+        "effects": 2,
+        "dispatches": [
+          {
+            "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+            "dispatchId": "01M5V616X8GWF4CPQ4Q4KTWPDP"
+          },
+          {
+            "visitId": "01M5V616T1KY86SCZK76C1F1EC:5",
+            "dispatchId": "01M5V61PAYN8P4PCEHKPESEYNT"
+          }
+        ]
+      }
+    },
+    "replay": {
+      "source": "01M5V61QFWK7D6C9G8GEAP9T2Q",
+      "fork": "01M5V61WQ5WQ4MT8TWMRMAKEQ4",
+      "forkStatus": "succeeded",
+      "effects": 2,
+      "sourceEvents": {
+        "before": 9,
+        "after": 9
+      },
+      "forkDispatch": {
+        "visitId": "01M5V61WQ5WQ4MT8TWMRMAKEQ4:3",
+        "dispatchId": "01M5V61WRA9M7VCWJT6MR1GVGT"
+      },
+      "replayOf": {
+        "runId": "01M5V61QFWK7D6C9G8GEAP9T2Q",
+        "nodeId": "script"
+      },
+      "forkFirstNodeStarted": "script"
+    },
+    "forcedStop": {
+      "runId": "01M5V61X7D02NR3D6YGCSY8A44",
+      "drain": {
+        "status": 202,
+        "phase": "draining"
+      },
+      "during": {
+        "phase": "draining",
+        "activeRunIds": [
+          "01M5V61X7D02NR3D6YGCSY8A44"
+        ],
+        "runStatus": "running"
+      },
+      "force": {
+        "status": 202,
+        "phase": "forcing"
+      },
+      "processExit": {
+        "code": 0,
+        "signal": null
+      },
+      "markerAliveAfterForce": false,
+      "provenance": {
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "script",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          },
+          "script": {
+            "visitId": "01M5V61X7D02NR3D6YGCSY8A44:5",
+            "dispatchId": "01M5V61X9KPD8EBQQ2ZF3T643V",
+            "state": "outcome-uncertain"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M5V61X7D02NR3D6YGCSY8A44:5",
+            "dispatchId": "01M5V61X9KPD8EBQQ2ZF3T643V"
+          }
+        ]
+      },
+      "resumeResponse": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "cannot resume a run that is failed"
+        }
+      },
+      "effects": 1
+    },
+    "nested": {
+      "top": "01M5V626PT78DN5TEQXXE3XVYA",
+      "middle": "01M5V626SECWCHCJ3S25RRGHGB",
+      "leaf": "01M5V626VQK94WJ2CA32SZ5SGT",
+      "leafProvenance": {
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5V626VQK94WJ2CA32SZ5SGT:5",
+            "dispatchId": "01M5V626XQERFWX5WV46ZKCMHV",
+            "state": "outcome-uncertain"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M5V626VQK94WJ2CA32SZ5SGT:5",
+            "dispatchId": "01M5V626XQERFWX5WV46ZKCMHV"
+          }
+        ]
+      },
+      "middleFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "subloop child 01M5V626VQK94WJ2CA32SZ5SGT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "sub",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5V626VQK94WJ2CA32SZ5SGT",
+          "childNodeId": "script"
+        },
+        "script": {
+          "visitId": "01M5V626VQK94WJ2CA32SZ5SGT:5",
+          "dispatchId": "01M5V626XQERFWX5WV46ZKCMHV",
+          "state": "outcome-uncertain"
+        }
+      },
+      "topFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "subloop child 01M5V626SECWCHCJ3S25RRGHGB failed: subloop child 01M5V626VQK94WJ2CA32SZ5SGT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "sub",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5V626SECWCHCJ3S25RRGHGB",
+          "childNodeId": "sub",
+          "childDetails": {
+            "childRunId": "01M5V626VQK94WJ2CA32SZ5SGT",
+            "childNodeId": "script"
+          }
+        },
+        "script": {
+          "visitId": "01M5V626VQK94WJ2CA32SZ5SGT:5",
+          "dispatchId": "01M5V626XQERFWX5WV46ZKCMHV",
+          "state": "outcome-uncertain"
+        }
+      },
+      "mcpSummary": {
+        "id": "01M5V626PT78DN5TEQXXE3XVYA",
+        "loopId": "01M5V626P0HD0SQNKVWGVXGMAG",
+        "definition": "QA nested top v1",
+        "status": "failed",
+        "finalizedAt": "2026-10-26T04:04:04.926Z",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5V626PT78DN5TEQXXE3XVYA:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5V626SECWCHCJ3S25RRGHGB",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "subloop child 01M5V626SECWCHCJ3S25RRGHGB failed: subloop child 01M5V626VQK94WJ2CA32SZ5SGT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "script": {
+            "visitId": "01M5V626VQK94WJ2CA32SZ5SGT:5",
+            "dispatchId": "01M5V626XQERFWX5WV46ZKCMHV",
+            "state": "outcome-uncertain"
+          },
+          "resumable": true
+        },
+        "createdAt": "2026-10-26T04:03:57.786Z",
+        "finishedAt": "2026-10-26T04:04:04.912Z"
+      },
+      "final": "succeeded",
+      "effects": 2,
+      "topChildFinishes": [
+        {
+          "status": "failed",
+          "seq": 10
+        },
+        {
+          "status": "succeeded",
+          "seq": 17
+        }
+      ]
+    }
+  },
+  "mcpServer": {
+    "name": "graphgoblin",
+    "version": "0.1.0",
+    "title": "GraphGoblin"
+  },
+  "violations": [],
+  "verdict": "PASS"
+}
