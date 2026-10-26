@@ -136,3 +136,64 @@ test('following a fast run live refreshes bounded read models and reads no histo
     await request.post(`/runs/${run.id}/cancel`);
   }
 });
+
+test('following live stays quiet for screen readers and keyboard focus can always leave (#186 QA)', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, endlessCycle('Live follow accessibility'));
+  const started = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  expect(started.status()).toBe(202);
+  const run = RunRecordSchema.parse((await started.json()).run);
+  try {
+    await page.goto(`/app/runs/${run.id}`);
+    const timeline = page.getByRole('list', { name: 'Timeline', exact: true });
+    await expect(timeline.getByRole('button').last()).toBeVisible();
+    // The announcement while following does not change as events stream in.
+    const announcement = page.getByText('Following live.', { exact: true });
+    await expect(announcement).toHaveAttribute('aria-live', 'polite');
+    await announcement.evaluate((node) => {
+      const changes = { count: 0 };
+      new MutationObserver((records) => (changes.count += records.length)).observe(node, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      Object.assign(window, { liveAnnouncementChanges: changes });
+    });
+    const rows = await page
+      .getByText(/^Showing events \d+–\d+ of the retained window\.$/)
+      .textContent();
+    await page.waitForTimeout(3_000);
+    expect(
+      await page.evaluate(
+        () =>
+          (window as unknown as { liveAnnouncementChanges: { count: number } })
+            .liveAnnouncementChanges.count,
+      ),
+    ).toBe(0);
+    // The visible window text kept following the tail meanwhile.
+    await expect(
+      page.getByText(/^Showing events \d+–\d+ of the retained window\.$/),
+    ).not.toHaveText(rows ?? '');
+
+    // Focusing a row pauses following and says so; Shift+Tab leaves the rows at once.
+    await timeline.getByRole('button').last().focus();
+    await expect(page.getByText(/^Following paused\. Showing events/)).toHaveAttribute(
+      'aria-live',
+      'polite',
+    );
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByRole('button', { name: 'Go to event' })).toBeFocused();
+
+    // Follow live from the keyboard keeps focus on the control.
+    const follow = page.getByRole('button', { name: 'Follow live' });
+    await follow.focus();
+    await page.keyboard.press('Enter');
+    await expect(follow).toHaveAttribute('aria-disabled', 'true');
+    await expect(follow).toBeFocused();
+    await expect(page.getByText('Following live.', { exact: true })).toBeAttached();
+  } finally {
+    await request.post(`/runs/${run.id}/cancel`);
+  }
+});
