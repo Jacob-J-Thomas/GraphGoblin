@@ -9,6 +9,7 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 // Windows, matching infrastructure: expose gc at worker startup rather than changing V8 flags.
 export default createVitestConfig({
   test: {
+    coverage: { include: ['scripts/check-templates.mjs'] },
     pool: 'forks',
     execArgv: ['--expose-gc'],
     testTimeout: 20_000,

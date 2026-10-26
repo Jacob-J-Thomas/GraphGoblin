@@ -7,6 +7,11 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 export default createVitestConfig({
   plugins: [react()],
   test: {
+    coverage: {
+      autoAttachSubprocess: true,
+      include: ['scripts/generate-icons.mjs'],
+      exclude: ['scripts/**/*.test.ts'],
+    },
     // Keep per-file isolation without a separate Windows process startup for every file.
     pool: 'threads',
     isolate: true,

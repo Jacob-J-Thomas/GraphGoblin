@@ -52,6 +52,42 @@ function waitLoop(name = 'wait'): LoopDefinitionInput {
   };
 }
 
+describe('engine request errors through ordinary routes', () => {
+  it('maps engine-origin missing loop, trigger and unpublished version precisely', async () => {
+    const missing = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${fakeUlid('absent')}/runs`,
+      payload: {},
+    });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.headers['content-type']).toMatch(/problem\+json/);
+    expect(missing.json()).toMatchObject({ code: 'LOOP_NOT_FOUND', status: 404 });
+    const id = await t.publishLoop(minimalLoop());
+    const trigger = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${id}/runs`,
+      payload: { triggerNodeId: 'absent' },
+    });
+    expect(trigger.statusCode).toBe(404);
+    expect(trigger.json()).toMatchObject({ code: 'TRIGGER_NOT_FOUND', status: 404 });
+    const created = await t.app.inject({
+      method: 'POST',
+      url: '/loops',
+      payload: { definition: minimalLoop() },
+    });
+    expect(created.statusCode).toBe(201);
+    const draft = created.json<{ loop: { id: string }; draft: { id: string } }>();
+    const draftId = draft.loop.id;
+    const unpublished = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${draftId}/runs`,
+      payload: { versionId: draft.draft.id },
+    });
+    expect(unpublished.statusCode).toBe(409);
+    expect(unpublished.json()).toMatchObject({ code: 'VERSION_NOT_PUBLISHED', status: 409 });
+  });
+});
+
 describe('system routes', () => {
   it('serves health, version, openapi, and preflight', async () => {
     expect((await t.app.inject('/healthz')).json()).toEqual({ status: 'ok' });

@@ -11,17 +11,28 @@ import { evaluateLicenses, flattenPnpmLicenses } from './licenses.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..', '..');
-const policy = JSON.parse(readFileSync(join(root, 'tooling', 'license-allowlist.json'), 'utf8'));
+const args = process.argv.slice(2);
+const flags = {};
+for (let index = 0; index < args.length; index += 2) {
+  if (!['--policy', '--licenses'].includes(args[index]) || !args[index + 1])
+    throw new Error('Usage: check-licenses.mjs [--policy <json>] [--licenses <pnpm-json>]');
+  flags[args[index]] = args[index + 1];
+}
+const policy = JSON.parse(
+  readFileSync(flags['--policy'] ?? join(root, 'tooling', 'license-allowlist.json'), 'utf8'),
+);
 
 let raw;
 try {
-  raw = execFileSync('pnpm', ['-r', 'licenses', 'list', '--json', '--prod', '--long'], {
-    cwd: root,
-    encoding: 'utf8',
-    shell: process.platform === 'win32',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    maxBuffer: 64 * 1024 * 1024,
-  });
+  raw = flags['--licenses']
+    ? readFileSync(flags['--licenses'], 'utf8')
+    : execFileSync('pnpm', ['-r', 'licenses', 'list', '--json', '--prod', '--long'], {
+        cwd: root,
+        encoding: 'utf8',
+        shell: process.platform === 'win32',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        maxBuffer: 64 * 1024 * 1024,
+      });
 } catch (error) {
   console.error(
     'Failed to run `pnpm licenses list`:',

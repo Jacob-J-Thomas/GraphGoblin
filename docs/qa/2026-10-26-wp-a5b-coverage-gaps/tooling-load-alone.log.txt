@@ -1,0 +1,60 @@
+pnpm.cmd --filter @graphgoblin/tooling exec vitest run perf/runtime.test.mjs scripts/design-contrast.test.mjs -t bounded browser|native measurement worker|CLI writes a formatted --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+
+ ❯ perf/runtime.test.mjs (18 tests | 2 failed | 16 skipped) 144466ms
+   × maintained measurement CLI validates a bounded browser workload with disposable stores 105634ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 38829ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > maintained measurement CLI validates a bounded browser workload with disposable stores
+Error: Command failed: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-264\tooling\perf\measure.mjs browser --aged=2 --items=1 --profile=inspector --out=%USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-TX7OhJ --passes=1000 --browser-ms=1000
+PERF_OUTPUT %USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-TX7OhJ
+PERF_WORKER importing API 28868
+PERF_WORKER imports ready
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+System.Management.Automation.RemoteException
+Error: /events: 400 {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/loopId","message":"Invalid input: expected string, received undefined"}]}
+    at json (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/common.mjs:176:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async measureBrowser (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/browser.mjs:45:11)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/measure.mjs:453:19
+System.Management.Automation.RemoteException
+Node.js v22.23.4
+System.Management.Automation.RemoteException
+ ❯ json perf/common.mjs:176:27
+ ❯ measureBrowser perf/browser.mjs:45:11
+ ❯ perf/measure.mjs:453:19
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 24936
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:278:45
+    276|         reject(new Error('measurement IPC timed out: ' + command));
+    277|       }, 20_000);
+    278|       pending.set(id, { resolve, reject, timer });
+       |                                             ^
+    279|       child.send({ id, command, args });
+    280|     });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 1 passed | 21 skipped (24)
+   Start at  00:50:39
+   Duration  172.16s (tests 100%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

@@ -1,0 +1,54 @@
+pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/api-client
+      Coverage enabled with v8
+
+stderr | scripts/generate.test.ts > generates byte-identical OpenAPI and types in a disposable destination; refuses a file destination
+wrote %USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-codegen-gODkKx\generated\openapi.json
+wrote %USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-codegen-gODkKx\generated\src\generated\schema.ts
+System.Management.Automation.RemoteException
+ ❯ scripts/generate.test.ts (1 test | 1 failed) 5420ms
+   × generates byte-identical OpenAPI and types in a disposable destination; refuses a file destination 5417ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  scripts/generate.test.ts > generates byte-identical OpenAPI and types in a disposable destination; refuses a file destination
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ scripts/generate.test.ts:18:1
+     16| }
+     17|
+     18| it('generates byte-identical OpenAPI and types in a disposable destina…
+       | ^
+     19|   const directory = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-codegen-')…
+     20|   const output = join(directory, 'generated');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 9 passed (10)
+      Tests  1 failed | 96 passed (97)
+   Start at  00:50:08
+   Duration  30.49s (transform 43%, import 39%, tests 17%, worker 1%)
+
+  Transform  transforming modules took 61.50s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 99.39% ( 331/333 )
+Branches     : 97.05% ( 198/204 )
+Functions    : 100% ( 102/102 )
+Lines        : 100% ( 295/295 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\packages\api-client
+System.Management.Automation.RemoteException
+EXIT 1

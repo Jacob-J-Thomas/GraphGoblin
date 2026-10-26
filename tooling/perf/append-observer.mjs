@@ -1,4 +1,3 @@
-/* global performance */
 import { Timings } from './common.mjs';
 
 /** Supply an observed client to a separate repository, never patch the production repository. */

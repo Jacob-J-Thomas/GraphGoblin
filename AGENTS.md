@@ -18,6 +18,7 @@ Node 22 LTS is the supported runtime; installation, development and gates need N
 
 ## Rules
 
+- `tooling` participates in the shared Vitest V8 coverage gate and the Turbo lint pipeline; its independent built-app acceptance suites remain separate.
 - Every package must keep unit-test coverage above 90% of lines and branches. `pnpm test:coverage` fails otherwise. Do not lower thresholds or add exclusions beyond generated code.
 - `pnpm typecheck` runs `tsc -b tsconfig.build.json && tsc -p tsconfig.json` in every package, so test files and fixtures are type-checked too; fix their types rather than casting to `any`.
 - Tests, lint, and typechecking need no prior build: every workspace package lists a `development` export condition pointing at its TypeScript source, which TypeScript, Vitest, and ESLint resolve. Node at runtime loads `dist/`, so run `pnpm build` before starting an app. A new workspace package must follow the same export-map shape.

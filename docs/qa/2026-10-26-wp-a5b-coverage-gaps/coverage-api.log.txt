@@ -1,0 +1,151 @@
+pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 64923ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20318ms
+{"level":30,"time":1792994108730,"pid":43504,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5669"}
+{"level":30,"time":1792994108731,"pid":43504,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5669,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-JCUDmK","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792994108899,"pid":43504,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792994108907,"pid":43504,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":7.56919999999991,"msg":"request completed"}
+child admission kill: delay=0ms snapshots=43762 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 34.97989999999845ms
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 118372ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 49389ms
+[before-receipt] fixture
+[before-receipt] key
+child admission kill: delay=5ms snapshots=46586 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 28.153699999995297ms
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+child admission kill: delay=25ms snapshots=45358 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 20.05999999999767ms
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+ ❯ src/templates/scripts.test.ts (2 tests | 1 failed) 2639ms
+   × template gate validates shipped drafts and refuses both broken graphs and undeclared assets 975ms
+[after-run] key-created
+[after-run] start
+{"status":"draft","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+{"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:184:3
+    182|   };
+    183|
+    184|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    185|     const t = await app({ requireApiKey: true });
+    186|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 127.0.0.1:5694
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 5694
+}
+System.Management.Automation.RemoteException
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:186:7
+ ❯ Object.start src/subloop-restart.test.ts:100:7
+ ❯ src/subloop-restart.test.ts:166:16
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/templates/scripts.test.ts > template gate validates shipped drafts and refuses both broken graphs and undeclared assets
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ src/templates/scripts.test.ts:34:9
+     32|   const original = await readFile(draftPath, 'utf8');
+     33|   const draft: { loop: { edges: { to: { node: string } }[] } } = JSON.…
+     34|   draft.loop.edges[0]!.to.node = 'missing';
+       |         ^
+     35|   await writeFile(draftPath, JSON.stringify(draft));
+     36|   await expect(gate(input)).rejects.toThrow();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  3 failed | 93 passed | 2 skipped (98)
+      Tests  3 failed | 1580 passed | 12 skipped (1595)
+   Start at  00:53:24
+   Duration  447.73s (tests 82%, import 15%, transform 2%)
+
+    Isolate  98 workers spawned · ~1.43s startup each (spawn + environment, per file)
+             at least ~11.29s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 94.55% ( 2988/3160 )
+Branches     : 90.31% ( 1949/2158 )
+Functions    : 91.39% ( 552/604 )
+Lines        : 96.08% ( 2722/2833 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\apps\api
+System.Management.Automation.RemoteException
+EXIT 1

@@ -1,0 +1,47 @@
+pnpm.cmd --filter @graphgoblin/engine exec vitest run src/run-manager.test.ts -t limits concurrency to the configured number
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/engine
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed | 26 skipped) 132ms
+   ❯ run control (9)
+     × limits concurrency to the configured number of workers 129ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/run-manager.test.ts > run control > limits concurrency to the configured number of workers
+AssertionError: expected { active: 2, starts: 2, …(2) } to match object { active: 2, starts: 2, …(1) }
+(1 matching property omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "active": 2,
+    "starts": 2,
+-   "status": "queued",
++   "status": "running",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/run-manager.test.ts:415:27
+    413|       unsubscribeA(); unsubscribeC();
+    414|     }
+    415|     expect(beforeRelease).toMatchObject({ active: 2, starts: 2, status…
+       |                           ^
+    416|     expect(beforeRelease.events).not.toContain('run.started');
+    417|     expect(order).toEqual(['finished A', 'started C']);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+   Start at  01:07:47
+   Duration  4.10s (import 52%, transform 44%, tests 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\packages\engine
+System.Management.Automation.RemoteException
+EXIT 1

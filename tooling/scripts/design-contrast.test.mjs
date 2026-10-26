@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -201,7 +201,7 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
 
 test('CLI writes a formatted temporary table, checks freshness and reports missing inputs', (t) => {
   const temporary = mkdtempSync(join(tmpdir(), 'graphgoblin-contrast-'));
-  t.after(() => rmSync(temporary, { recursive: true, force: true }));
+  t.onTestFinished(() => rmSync(temporary, { recursive: true, force: true }));
   const output = join(temporary, 'nested/table.md');
   const run = (args, env = {}) =>
     spawnSync(process.execPath, [join(here, 'design-contrast.mjs'), ...args], {

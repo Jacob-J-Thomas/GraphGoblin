@@ -117,7 +117,7 @@ test(
       assert.equal(await guardCurrentStore(h.client), 'current');
       await verifyStoreHead(h.client);
       assert.equal(await h.pendingMigrations(), 0);
-      assert.equal((await h.client.execute("SELECT value FROM settings WHERE key='retained'")).rows[0].value, '\"exact bytes\"');
+      assert.equal((await h.client.execute("SELECT value FROM settings WHERE key='retained'")).rows[0].value, '"exact bytes"');
       assert.equal((await h.client.execute('SELECT name FROM loops')).rows[0].name, 'retained current loop');
       const event = (await h.client.execute('SELECT type,payload FROM run_events')).rows[0];
       assert.equal(event.type, 'delivery.finished');
