@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { RunStatusSchema, type RunRecord, type RunStatus } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
@@ -215,8 +216,7 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
   const source = await seed('old-source');
   const fork = await seed('old-fork', 'failed', { replay: source });
   for (const statement of [
-    'DROP TABLE run_resource_uses',
-    'DROP TABLE run_resources',
+    ...RESOURCE_OWNERSHIP_REWIND_SQL,
     'DROP TRIGGER runs_deletion_activity',
     'DROP TRIGGER runs_deletion_relationship',
     'DROP TRIGGER runs_replay_source_update',

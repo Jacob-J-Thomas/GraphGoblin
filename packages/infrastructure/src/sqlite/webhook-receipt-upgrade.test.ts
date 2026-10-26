@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { RunEventSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
@@ -47,8 +48,7 @@ const cases = [
 beforeEach(async () => {
   handle = await openMemoryDatabase();
   // Rewind the unshipped eligibility migration before the historical ledger suffix.
-  await handle.client.execute('DROP TABLE run_resource_uses');
-  await handle.client.execute('DROP TABLE run_resources');
+  for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
   await handle.client.execute('DROP TRIGGER runs_deletion_activity');
   await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');
   await handle.client.execute('DROP TRIGGER runs_deletion_revision');

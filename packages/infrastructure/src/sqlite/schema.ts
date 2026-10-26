@@ -397,6 +397,7 @@ export const runResources = sqliteTable(
     kind: text('kind', { enum: ['workspace', 'artifact'] }).notNull(),
     path: text('path').notNull(),
     identity: text('identity').notNull(),
+    physicalPath: text('physical_path'),
     approval: text('approval', { mode: 'json' }).$type<DeletionApproval>(),
     pending: integer('pending', { mode: 'boolean' }).notNull().default(false),
   },
@@ -416,7 +417,35 @@ export const runResourceUses = sqliteTable(
   (t) => [primaryKey({ columns: [t.runId, t.key] }), index('run_resource_uses_key_idx').on(t.key)],
 );
 
+/** Live workspace obligations, maintained only by admission/version/use changes, never events. */
+export const workspaceReferences = sqliteTable(
+  'workspace_references',
+  {
+    id: text('id').primaryKey(),
+    runId: text('run_id'),
+    versionId: text('version_id'),
+    path: text('path'),
+    physicalPath: text('physical_path'),
+    checkedEpoch: integer('checked_epoch').notNull().default(0),
+  },
+  (t) => [
+    index('workspace_references_physical_idx').on(t.physicalPath),
+    index('workspace_references_run_idx').on(t.runId),
+    index('workspace_references_version_idx').on(t.versionId),
+    index('workspace_references_epoch_idx').on(t.checkedEpoch, t.id),
+  ],
+);
+
+/** A bounded refresh sweep must finish before any workspace can be staged. */
+export const workspaceReferenceState = sqliteTable('workspace_reference_state', {
+  id: integer('id').primaryKey(),
+  epoch: integer('epoch').notNull().default(0),
+  sweeping: integer('sweeping', { mode: 'boolean' }).notNull().default(false),
+});
+
 export const schema = {
+  workspaceReferences,
+  workspaceReferenceState,
   runResources,
   runResourceUses,
   webhookReceipts,

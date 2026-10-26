@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { readFile } from 'node:fs/promises';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import type { RunRecord, WebhookDelivery } from '@graphgoblin/contracts';
@@ -48,8 +49,7 @@ afterEach(() => handle.close());
 async function migrateHistoricalReturns() {
   // Restore a pre-0015 ledger prefix and remove the later index before replaying it.
   // Rewind migration 0021 together with the older ledger used by this historical fixture.
-  await handle.client.execute('DROP TABLE run_resource_uses');
-  await handle.client.execute('DROP TABLE run_resources');
+  for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
   await handle.client.execute('DROP TRIGGER runs_deletion_activity');
   await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');
   await handle.client.execute('DROP TRIGGER runs_deletion_revision');

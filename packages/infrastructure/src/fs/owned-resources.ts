@@ -24,6 +24,7 @@ export interface OwnedRunResource {
   kind: 'workspace' | 'artifact';
   path: string;
   identity: string;
+  physicalPath?: string | null;
 }
 export interface ResourceRemovalPlan {
   target: string;

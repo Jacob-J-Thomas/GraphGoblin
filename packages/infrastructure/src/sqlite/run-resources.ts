@@ -4,6 +4,9 @@ import {
   type RunResourceJournal,
   type OwnedRunResource,
 } from '../fs/owned-resources.js';
+import { physicalDirectory } from '../fs/physical-path.js';
+import { recordWorkspacePhysical } from './workspace-references.js';
+import { workspaceReferences } from './schema.js';
 import type { Database } from './db.js';
 import { runResources, runResourceUses } from './schema.js';
 
@@ -13,6 +16,10 @@ export class SqliteRunResources implements RunResourceJournal {
     return (await this.db.select().from(runResources).where(eq(runResources.key, key)).limit(1))[0];
   }
   async claim(resource: OwnedRunResource): Promise<void> {
+    resource = {
+      ...resource,
+      physicalPath: resource.kind === 'workspace' ? await physicalDirectory(resource.path) : null,
+    };
     await this.db.transaction(async (tx) => {
       const [previous] = await tx
         .select()
@@ -39,6 +46,15 @@ export class SqliteRunResources implements RunResourceJournal {
   }
 
   async use(runId: string, key: string, path: string): Promise<void> {
-    await this.db.insert(runResourceUses).values({ runId, key, path }).onConflictDoNothing();
+    if (!key.startsWith('workspace:')) {
+      await this.db.insert(runResourceUses).values({ runId, key, path }).onConflictDoNothing();
+      return;
+    }
+    const physical = await physicalDirectory(path);
+    await this.db.transaction(async (tx) => {
+      await tx.insert(runResourceUses).values({ runId, key, path }).onConflictDoNothing();
+      await recordWorkspacePhysical(tx, 'use:' + runId + ':' + key, path, physical);
+      await tx.delete(workspaceReferences).where(eq(workspaceReferences.id, 'pending:' + runId));
+    });
   }
 }

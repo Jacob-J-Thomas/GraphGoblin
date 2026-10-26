@@ -7,6 +7,8 @@ import type {
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
+import { physicalDirectory } from '../fs/physical-path.js';
+import { recordWorkspacePhysical } from './workspace-references.js';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import { SqliteEventStore } from './events.js';
@@ -117,6 +119,8 @@ export class SqliteLoopRepository implements LoopRepository {
     ownerId: string,
     definition: LoopDefinition,
   ): Promise<{ loop: LoopRecord; draft: LoopVersionRecord }> {
+    const working = definition.settings.workingDirectory;
+    const physical = working.kind === 'fixed' ? await physicalDirectory(working.path) : null;
     const now = this.clock.now().toISOString();
     const loopId = this.ids.next();
     const draftId = this.ids.next();
@@ -133,6 +137,8 @@ export class SqliteLoopRepository implements LoopRepository {
       await tx
         .insert(loopVersions)
         .values({ id: draftId, loopId, version: 1, status: 'draft', definition, createdAt: now });
+      if (working.kind === 'fixed')
+        await recordWorkspacePhysical(tx, 'version:' + draftId, working.path, physical);
     });
     const loop = await this.getLoop(loopId);
     const draft = await this.getVersion(draftId);
@@ -276,6 +282,8 @@ export class SqliteLoopRepository implements LoopRepository {
     const loop = await this.getLoop(loopId);
     if (!loop) throw new LoopNotFoundError(loopId);
     const now = this.clock.now().toISOString();
+    const working = definition.settings.workingDirectory;
+    const physical = working.kind === 'fixed' ? await physicalDirectory(working.path) : null;
     const existingDraftId = loop.draftVersionId;
     let draftId = existingDraftId ?? this.ids.next();
     await this.db.transaction(async (tx) => {
@@ -303,6 +311,8 @@ export class SqliteLoopRepository implements LoopRepository {
           createdAt: now,
         });
       }
+      if (working.kind === 'fixed')
+        await recordWorkspacePhysical(tx, 'version:' + draftId, working.path, physical);
       await tx
         .update(loops)
         .set({
@@ -325,6 +335,9 @@ export class SqliteLoopRepository implements LoopRepository {
     if (!loop.draftVersionId) return undefined;
     const now = this.clock.now().toISOString();
     const draftId = loop.draftVersionId;
+    const draft = await this.getVersion(draftId);
+    const working = draft?.definition.settings.workingDirectory;
+    const physical = working?.kind === 'fixed' ? await physicalDirectory(working.path) : null;
     // The status flip and the loop pointers change together, and only while the row is a draft.
     const published = await this.db.transaction(async (tx) => {
       const flipped = await tx
@@ -333,6 +346,8 @@ export class SqliteLoopRepository implements LoopRepository {
         .where(and(eq(loopVersions.id, draftId), eq(loopVersions.status, 'draft')))
         .returning({ id: loopVersions.id });
       if (flipped.length === 0) return false;
+      if (working?.kind === 'fixed')
+        await recordWorkspacePhysical(tx, 'version:' + draftId, working.path, physical);
       await tx
         .update(loops)
         .set({ currentVersionId: draftId, draftVersionId: null, updatedAt: now })

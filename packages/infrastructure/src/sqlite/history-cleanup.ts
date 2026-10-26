@@ -1,7 +1,5 @@
 import { DeletionApprovalSchema, TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import { and, eq, gt, inArray, sql } from 'drizzle-orm';
-import { realpath, stat } from 'node:fs/promises';
-import { basename, dirname, join, resolve, sep } from 'node:path';
 import { setImmediate as yieldTurn } from 'node:timers/promises';
 import {
   originalResource,
@@ -11,7 +9,8 @@ import {
 } from '../fs/owned-resources.js';
 import type { Database, SqliteTransaction } from './db.js';
 import { deleteRuns } from './delete-runs.js';
-import { runResources, runs } from './schema.js';
+import { runResources, runs, workspaceReferenceState } from './schema.js';
+import { SqliteWorkspaceReferences, workspaceReferenced } from './workspace-references.js';
 
 type Member = {
   id: string;
@@ -20,46 +19,17 @@ type Member = {
   finalized: string | null;
   approval: string | null;
 };
-const normalized = (path: string) =>
-  process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path);
-
-// promises.realpath uses realpath.native: resolve junctions/short names as well as symlinks.
-// Missing descendants still inherit the physical identity of their deepest existing ancestor.
-async function physicalPath(path: string, budget: { remaining: number }): Promise<string> {
-  let ancestor = resolve(path);
-  const missing: string[] = [];
-  for (let depth = 0; depth < 64; depth++) {
-    try {
-      if (budget.remaining-- <= 0) throw new Error('Workspace resolution budget exceeded');
-      const actual = await realpath(ancestor);
-      if (budget.remaining-- <= 0) throw new Error('Workspace resolution budget exceeded');
-      if (!(await stat(actual)).isDirectory())
-        throw new Error('Workspace reference ancestor is not a directory');
-      return normalized(join(actual, ...missing));
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      const parent = dirname(ancestor);
-      if (parent === ancestor) throw error;
-      missing.unshift(basename(ancestor));
-      ancestor = parent;
-    }
-  }
-  throw new Error('Workspace reference resolution exceeds its ancestor budget');
-}
-
-const overlaps = (a: string, b: string) =>
-  a === b ||
-  a.startsWith(b.endsWith(sep) ? b : b + sep) ||
-  b.startsWith(a.endsWith(sep) ? a : a + sep);
-
 /** Only background polling calls this storage boundary. No event/write-path hooks. */
 export class SqliteHistoryCleanup {
   private runCursor = '';
   private resourceCursor = '';
+  private readonly workspaceReferences: SqliteWorkspaceReferences;
   constructor(
     private readonly db: Database,
     private readonly resources: ResourceCleanupPort,
-  ) {}
+  ) {
+    this.workspaceReferences = new SqliteWorkspaceReferences(db);
+  }
 
   /** Complete dependency components, at most 20 roots / 500 records per pass. */
   async prepareBatch(ownerId: string): Promise<number> {
@@ -137,29 +107,7 @@ export class SqliteHistoryCleanup {
       sql`SELECT 1 FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key = ${resource.key} LIMIT 1`,
     );
     if (use.length) return true;
-    if (resource.kind === 'workspace') {
-      const unresolved =
-        await tx.all(sql`SELECT 1 FROM runs r JOIN loop_versions v ON v.id = r.version_id
-        WHERE json_valid(v.definition) AND json_extract(v.definition, '$.settings.workingDirectory.kind') = 'template'
-        AND NOT EXISTS (SELECT 1 FROM run_resource_uses u WHERE u.run_id = r.id AND u.key LIKE 'workspace:%') LIMIT 1`);
-      if (unresolved.length) return true;
-      const paths = await tx.all<{
-        path: string;
-      }>(sql`SELECT u.path FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key LIKE 'workspace:%'
-        UNION SELECT json_extract(definition, '$.settings.workingDirectory.path') FROM loop_versions
-          WHERE json_valid(definition) AND json_extract(definition, '$.settings.workingDirectory.kind') = 'fixed'
-        LIMIT 33`);
-      if (paths.length > 32) return true;
-      try {
-        const budget = { remaining: 64 };
-        const actual = await physicalPath(resource.path, budget);
-        for (const { path } of paths)
-          if (overlaps(actual, await physicalPath(path, budget))) return true;
-        return false;
-      } catch {
-        return true; // Any non-missing I/O error or exhausted proof budget means unknown/keep.
-      }
-    }
+    if (resource.kind === 'workspace') return workspaceReferenced(tx, resource.physicalPath);
     // Retained history includes initial/checkpoint threads, definition pins and event tails.
     // Decode JSON strings so escaped references are protected too. Damaged JSON fails closed.
     const documents = sql`documents(body) AS (
@@ -209,6 +157,7 @@ export class SqliteHistoryCleanup {
   async reapBatch(
     signal?: AbortSignal,
   ): Promise<{ bytes: number; preserved: number; pending: number; remaining: boolean }> {
+    await this.workspaceReferences.refreshBatch(signal);
     const jobs = await this.db
       .select()
       .from(runResources)
@@ -324,11 +273,15 @@ export class SqliteHistoryCleanup {
     }
     const after = await this.resourceSummary();
     const pending = Number(after.pending);
+    const [referenceState] = await this.db.select().from(workspaceReferenceState);
     // No event hook: SQLite already maintains these counters. Concurrent writes make an
     // absence proof uncertain; do not publish no-eligible from a stale census.
     remaining =
       pending > 0 &&
-      (remaining || before.changes !== after.changes || before.version !== after.version);
+      (remaining ||
+        referenceState!.sweeping ||
+        before.changes !== after.changes ||
+        before.version !== after.version);
     return { bytes, preserved: pending, pending, remaining };
   }
 

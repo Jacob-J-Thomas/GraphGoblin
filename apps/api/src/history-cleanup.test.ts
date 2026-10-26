@@ -1,8 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { writeFile, lstat, mkdtemp, rm, readFile, symlink } from 'node:fs/promises';
+import { writeFile, lstat, mkdtemp, rm, readFile, symlink, mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { DeletionPreview, RunRecord, StorageStatus } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { fakeUlid, samplePin, sampleThread, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { singleNodeLoop, FakeClock, CapturingLogger } from '@graphgoblin/engine/testing';
 import { HistoryCleanup } from './history-cleanup.js';
@@ -534,4 +536,63 @@ it('serves HTTP requests while a startup cleanup pass is still reclaiming', asyn
     await cleanup.stop();
     await server.close();
   }
+});
+
+it('reclaims approved workspaces through the API with 1000 retained workspace users', async () => {
+  const { api, poll } = await controlled();
+  const root = join(api.container.config.dataDir, 'retained-input');
+  await mkdir(root);
+  const template = LoopDefinitionSchema.parse({
+    ...minimalLoop(),
+    settings: { workingDirectory: { kind: 'template', template: '{{vars.path}}' } },
+  });
+  const fixed = LoopDefinitionSchema.parse({
+    ...minimalLoop(),
+    settings: { workingDirectory: { kind: 'fixed', path: root } },
+  });
+  const versions = [];
+  for (const definition of [fixed, template]) {
+    const { loop } = await api.container.repos.loops.create('local', definition);
+    versions.push((await api.container.repos.loops.publish(loop.id))!);
+  }
+  const paths = Array.from({ length: 75 }, (_, i) => join(root, String(i)));
+  await Promise.all(paths.map((path) => mkdir(path)));
+  const owner = await complete(api, true);
+  const owned = api.harness.started.at(-1)!.workingDirectory;
+  await writeFile(join(owned, 'reclaim'), 'owned workspace bytes');
+  for (let i = 0; i < 1000; i++) {
+    const version = versions[i % 2]!;
+    const id = fakeUlid('api-large-' + i);
+    await api.container.repos.runs.create(
+      {
+        id,
+        ownerId: 'local',
+        loopId: version.loopId,
+        versionId: version.id,
+        invocationId: fakeUlid('api-inv-' + i),
+        pinned: samplePin(),
+        status: 'succeeded',
+        iteration: 1,
+        createdAt: FIXTURE_TS,
+        lastEventSeq: 0,
+      },
+      sampleThread(),
+    );
+    await api.container.repos.runs.markFinalized(id);
+    await api.container.ports.workspace.resolve(
+      version.definition.settings.workingDirectory,
+      { vars: { path: paths[i % 75]! } },
+      id,
+    );
+  }
+  await mark(api, [owner.id]);
+  await poll(0);
+  const status = (await api.app.inject('/system/storage')).json<StorageStatus>();
+  expect(status.state).toBe('pressure');
+  expect(status.deletedRuns).toBe(1);
+  expect(status.removedFileBytes).toBeGreaterThanOrEqual(
+    Buffer.byteLength('owned workspace bytes'),
+  );
+  await expect(lstat(owned)).rejects.toMatchObject({ code: 'ENOENT' });
+  expect((await api.app.inject(`/runs/${fakeUlid('api-large-999')}`)).statusCode).toBe(200);
 });

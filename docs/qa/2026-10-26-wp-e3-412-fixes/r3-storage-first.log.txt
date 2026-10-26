@@ -1,0 +1,81 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (29 tests | 3 failed) 31020ms
+   × refuses replay admission if cleanup removed its source before the fork transaction 162ms
+   × keeps workspace bytes when retained paths exceed the 2000-path proof budget 4745ms
+   × reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases 9524ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > refuses replay admission if cleanup removed its source before the fork transaction
+ReferenceError: version is not defined
+ ❯ src/sqlite/history-cleanup.test.ts:304:13
+    302|     id: fakeUlid('fork'),
+    303|     ownerId: 'local',
+    304|     loopId: version?.loopId ?? fakeUlid('loop'),
+       |             ^
+    305|     versionId: version?.id ?? fakeUlid('version'),
+    306|     invocationId: fakeUlid('fork-inv'),
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > keeps workspace bytes when retained paths exceed the 2000-path proof budget
+AssertionError: expected { bytes: 14, preserved: +0, …(2) } to match object { bytes: +0, pending: 1, preserved: 1 }
+(1 matching property omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "bytes": 0,
+-   "pending": 1,
+-   "preserved": 1,
++   "bytes": 14,
++   "pending": 0,
++   "preserved": 0,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:467:35
+    465|   expect(await store.hasApprovedCandidates('local')).toBe(true);
+    466|   expect(await store.prepareBatch('local')).toBe(1);
+    467|   expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending: 1…
+       |                                   ^
+    468|   expect(await readFile(join(workspace, 'keep.txt'), 'utf8')).toBe('un…
+    469| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases
+AssertionError: expected 50 to be 1000 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 1000
++ 50
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:595:58
+    593|   await expect(lstat(free)).rejects.toMatchObject({ code: 'ENOENT' });
+    594|   expect(await readFile(join(shared, 'keep'), 'utf8')).toBe('retained …
+    595|   expect((await repo.list({ ownerId: 'local' })).length).toBe(1000);
+       |                                                          ^
+    596| });
+    597|
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 26 passed (29)
+   Start at  05:24:29
+   Duration  37.30s (tests 84%, import 10%, transform 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

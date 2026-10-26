@@ -1,0 +1,244 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r3-infrastructure-coverage
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure '--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r3-infrastructure-coverage'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/process/scripts.test.ts (41 tests | 1 failed) 24054ms
+   ❯ ProcessScripts (38)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 437ms
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 23948ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1861ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 2910ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 960ms
+     × does not spawn for an already aborted signal and cancels a running process 442ms
+     × kills the descendant that a long-lived child started 1213ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 10175ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 5861ms
+ ❯ src/sqlite/catalog.test.ts (7 tests | 1 failed) 15348ms
+   ❯ model catalog source migration and repository (7)
+     × can roll back the column and migration record without losing model data 100ms
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/delivery-runs.test.ts (32 tests | 24 failed) 4465ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook"}}) 89ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"}}) 90ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":42}) 76ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":17}) 81ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"}) 77ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":null}) 75ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"}) 91ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"}) 88ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"}) 117ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 98ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 92ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}) 112ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run 154ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run 147ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run 212ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run 167ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run 110ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run 188ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run 218ms
+   × one-off migration converts historical webhook outcomes without retrying or changing other sinks 113ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (succeeded) 131ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (running) 139ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (resumed) 180ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (receipted) 243ms
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts (27 tests | 27 failed) 4069ms
+   × frozen receipt contract: omitted optionals 393ms
+   × frozen receipt contract: empty optionals 158ms
+   × frozen receipt contract: ASCII maxima 229ms
+   × frozen receipt contract: astral maxima 124ms
+   × frozen receipt contract: short embedded NUL 118ms
+   × frozen receipt contract: URL normalization preserves stored chan… 292ms
+   × frozen receipt contract: failure ASCII maximum 95ms
+   × frozen receipt contract: failure astral maximum 108ms
+   × frozen receipt contract: empty failure 92ms
+   × frozen receipt contract: astral target 2049 107ms
+   × frozen receipt contract: astral secret 65 102ms
+   × frozen receipt contract: astral error 2001 140ms
+   × frozen receipt contract: target 4097 code points 117ms
+   × frozen receipt contract: ASCII target overflow 158ms
+   × frozen receipt contract: ASCII secret overflow 169ms
+   × frozen receipt contract: ASCII error overflow 123ms
+   × frozen receipt contract: NUL target overflow 203ms
+   × frozen receipt contract: NUL secret overflow 88ms
+   × frozen receipt contract: NUL error overflow 112ms
+   × frozen receipt contract: invalid URL 124ms
+   × frozen receipt contract: numeric target 188ms
+   × frozen receipt contract: unknown evidence 103ms
+   × commits receipt conversion, structure and migration ledger atomically 129ms
+   × preserves damaged receipt invalid JSON 143ms
+   × preserves damaged receipt invalid envelope timestamp 162ms
+   × preserves damaged receipt unexpected envelope field 150ms
+   × preserves damaged receipt unexpected node id 115ms
+ ❯ src/sqlite/history-summaries.test.ts (16 tests | 1 failed) 4015ms
+   ❯ SQLite history queries (16)
+     × applies the history index to an existing current-format store and reruns idempotently 308ms
+ ❯ src/sqlite/deletion-eligibility.test.ts (16 tests | 1 failed) 2293ms
+   × backfills indexed replay provenance from existing threads in the shipped migration 92ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯ Failed Tests 60 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-5jUhNP'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-b5ysU8'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-KtgMk6'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxx' to be 'xxxxx' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxxx"
+Received: "xxxxxxxxx"
+System.Management.Automation.RemoteException
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-z0GESk'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:203:45
+    201|     if (pid === undefined) throw new Error('child did not start');
+    202|     const childPid = pid;
+    203|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    204|   });
+    205|
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/61]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/catalog.test.ts > model catalog source migration and repository > can roll back the column and migration record without losing model data
+ FAIL  src/sqlite/deletion-eligibility.test.ts > backfills indexed replay provenance from existing threads in the shipped migration
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook"}})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"}})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":42})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":17})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":null})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration converts historical webhook outcomes without retrying or changing other sinks
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (succeeded)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (running)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (resumed)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (receipted)
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > applies the history index to an existing current-format store and reruns idempotently
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: omitted optionals
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: empty optionals
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII maxima
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral maxima
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: short embedded NUL
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: URL normalization preserves stored chan…
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: failure ASCII maximum
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: failure astral maximum
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: empty failure
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral target 2049
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral secret 65
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral error 2001
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: target 4097 code points
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII target overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII secret overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII error overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL target overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL secret overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL error overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: invalid URL
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: numeric target
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: unknown evidence
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > commits receipt conversion, structure and migration ledger atomically
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt invalid JSON
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt invalid envelope timestamp
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt unexpected envelope field
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt unexpected node id
+LibsqlError: SQLITE_ERROR: error in trigger workspace_run_version: no such table: main.run_resource_uses
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+System.Management.Automation.RemoteException
+Caused by: SqliteError: error in trigger workspace_run_version: no such table: main.run_resource_uses
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Statement.run ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:335:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:549:34
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/61]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  9 failed | 51 passed (60)
+      Tests  60 failed | 784 passed (844)
+   Start at  05:52:31
+   Duration  275.77s (tests 62%, import 34%, transform 3%, worker 1%)
+
+    Isolate  60 workers spawned · ~960ms startup each (spawn + environment, per file)
+             at least ~27.83s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.95% ( 2727/2842 )
+Branches     : 93.71% ( 2043/2180 )
+Functions    : 98.13% ( 578/589 )
+Lines        : 97.43% ( 2428/2492 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1
