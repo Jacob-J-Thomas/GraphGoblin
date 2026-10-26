@@ -1,0 +1,48 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/packages/infrastructure
+
+ ❯ src/process/scripts.test.ts (45 tests | 2 failed | 41 skipped) 20027ms
+   ❯ killTree (7)
+     × does not signal the PID of a Windows root whose exit was already observed 20020ms
+     × counts taskkill not finding the root as released once the root is seen to have exited 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/scripts.test.ts > killTree > does not signal the PID of a Windows root whose exit was already observed
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:385:3
+    383|   }
+    384|
+    385|   it('does not signal the PID of a Windows root whose exit was already…
+       |   ^
+    386|     const { calls, spawnImpl } = fakeTaskkill();
+    387|     expect(await killTree(fakeChild(1234, 0), 'win32', spawnImpl)).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/process/scripts.test.ts > killTree > counts taskkill not finding the root as released once the root is seen to have exited
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/process/scripts.test.ts:397:27
+    395|     Object.assign(exited, { exitCode: 0 });
+    396|     early.killer.emit('close', 128);
+    397|     expect(await pending).toBe(true);
+       |                           ^
+    398|
+    399|     const late = fakeTaskkill();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed | 41 skipped (45)
+   Start at  02:54:28
+   Duration  20.47s (tests 99%)
+

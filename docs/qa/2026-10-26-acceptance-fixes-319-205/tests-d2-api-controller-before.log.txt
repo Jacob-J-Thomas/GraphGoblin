@@ -1,0 +1,30 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/apps/api
+
+ ❯ src/shutdown-controller.test.ts (8 tests | 1 failed) 7703ms
+   × force over a Codex turn whose CLI output outlives the kill fails cleanup instead of waiting in forcing 1072ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-controller.test.ts > force over a Codex turn whose CLI output outlives the kill fails cleanup instead of waiting in forcing
+AssertionError: expected 'forcing' to be 'force-failed' // Object.is equality
+
+Expected: "force-failed"
+Received: "forcing"
+
+ ❯ src/shutdown-controller.test.ts:141:59
+    139|   const controller = new ShutdownController(e.manager, 300_000, () => …
+    140|   await controller.request('force');
+    141|   await vi.waitFor(() => expect(controller.state().phase).toBe('force-…
+       |                                                           ^
+    142|   expect(controller.state()).toMatchObject({ unconfirmedRunIds: [run.i…
+    143|   expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  02:50:41
+   Duration  10.90s (tests 73%, transform 14%, import 13%)
+

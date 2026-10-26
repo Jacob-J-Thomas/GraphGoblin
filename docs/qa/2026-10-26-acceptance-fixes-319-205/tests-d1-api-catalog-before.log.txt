@@ -1,0 +1,66 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/apps/api
+
+ ❯ src/catalog.test.ts (28 tests | 3 failed | 25 skipped) 807ms
+   ❯ Codex efforts are sent unchanged and offered per model (#205) (3)
+     × lists max for every Codex model the CLI catalog gives it, and not for GPT-5.5 582ms
+     × refuses max for a GPT-5.5 inference before any request and runs max on GPT-6 Luna unchanged 121ms
+     × refuses max for a GPT-5.5 decision before any request and runs max on GPT-6 Luna unchanged 102ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > lists max for every Codex model the CLI catalog gives it, and not for GPT-5.5
+AssertionError: expected [ 'minimal', 'low', 'medium', …(3) ] to deeply equal [ 'minimal', 'low', 'medium', …(2) ]
+
+- Expected
++ Received
+
+@@ -2,6 +2,7 @@
+    "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
++   "max",
+  ]
+
+ ❯ src/catalog.test.ts:406:71
+    404|     const { items } = (await t.app.inject('/model-catalog')).json<{ it…
+    405|     const codex = items.filter((entry) => entry.harness === 'codex');
+    406|     expect(codex.find((entry) => entry.model === 'gpt-5.5')?.efforts).…
+       |                                                                       ^
+    407|       'minimal',
+    408|       'low',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > refuses max for a GPT-5.5 inference before any request and runs max on GPT-6 Luna unchanged
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > refuses max for a GPT-5.5 decision before any request and runs max on GPT-6 Luna unchanged
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ src/catalog.test.ts:426:34
+    424|         payload: { definition: withEffort(place, 'gpt-5.5', 'max') },
+    425|       });
+    426|       expect(refused.statusCode).toBe(400);
+       |                                  ^
+    427|       expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+    428|       const defaults = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 25 skipped (28)
+   Start at  03:13:30
+   Duration  11.22s (import 51%, transform 41%, tests 8%)
+
+  Transform  transforming modules took 4.34s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
