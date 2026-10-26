@@ -177,7 +177,7 @@ test(
         wrong.stderr,
         /^reset refused: --data-dir names .*, but this environment's data directory is /,
       );
-      assert.match(wrong.stderr, /\nNothing was changed\.\n$/);
+      assert.match(wrong.stderr, /\nNothing in the data directory was changed\.\n$/);
       assert.deepEqual(await snapshot(base), original);
 
       // The confirmed reset removes exactly its manifest and follows no link.
