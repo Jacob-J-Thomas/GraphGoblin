@@ -1,0 +1,78 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ❯ scripts/design-contrast.test.mjs (6 tests | 1 failed) 75943ms
+   × CLI writes a formatted temporary table, checks freshness and reports missing inputs 75888ms
+ ❯ perf/runtime.test.mjs (18 tests | 2 failed) 362438ms
+   × maintained measurement CLI validates a bounded browser workload with disposable stores 134848ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 36311ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > maintained measurement CLI validates a bounded browser workload with disposable stores
+Error: Command failed: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-264\tooling\perf\measure.mjs browser --aged=2 --items=1 --profile=inspector --out=%USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-Vl3y1N --passes=1000 --browser-ms=1000
+PERF_OUTPUT %USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-Vl3y1N
+PERF_WORKER importing API 9452
+PERF_WORKER imports ready
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+System.Management.Automation.RemoteException
+Error: /events: 400 {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/loopId","message":"Invalid input: expected string, received undefined"}]}
+    at json (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/common.mjs:176:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async measureBrowser (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/browser.mjs:45:11)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/measure.mjs:453:19
+System.Management.Automation.RemoteException
+Node.js v22.23.4
+System.Management.Automation.RemoteException
+ ❯ json perf/common.mjs:176:27
+ ❯ measureBrowser perf/browser.mjs:45:11
+ ❯ perf/measure.mjs:453:19
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 19248
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:278:45
+    276|   const deadline = (promise, label) =>
+    277|     new Promise((resolve, reject) => {
+    278|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    279|       promise.then(
+    280|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  scripts/design-contrast.test.mjs > CLI writes a formatted temporary table, checks freshness and reports missing inputs
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ scripts/design-contrast.test.mjs:202:1
+    200| });
+    201|
+    202| test('CLI writes a formatted temporary table, checks freshness and rep…
+       | ^
+    203|   const temporary = mkdtempSync(join(tmpdir(), 'graphgoblin-contrast-'…
+    204|   t.onTestFinished(() => rmSync(temporary, { recursive: true, force: t…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 11 passed (13)
+      Tests  3 failed | 108 passed (111)
+   Start at  00:40:50
+   Duration  365.88s (tests 99%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

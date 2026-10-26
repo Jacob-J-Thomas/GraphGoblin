@@ -1,0 +1,71 @@
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/api.test.ts src/concurrency.test.ts src/triggers.test.ts src/templates/scripts.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/apps/api
+
+ ❯ src/concurrency.test.ts (1 test | 1 failed) 2855ms
+   × admits three identities to real SQLite, runs at cap two, then starts the queued identity after completion 2853ms
+ ❯ src/templates/scripts.test.ts (2 tests | 2 failed) 40108ms
+   × template gate validates shipped drafts and refuses both broken graphs and undeclared assets 20101ms
+   × catalog build entry copies independent drafts and refuses an invalid source without damaging an existing catalog 20004ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/concurrency.test.ts > admits three identities to real SQLite, runs at cap two, then starts the queued identity after completion
+AssertionError: expected 'running' to be 'succeeded' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "succeeded"
+Received: "running"
+System.Management.Automation.RemoteException
+ ❯ src/concurrency.test.ts:79:68
+     77|     releases[0]!();
+     78|     await started[2]!.promise;
+     79|     expect((await fixture.container.repos.runs.get(a.id))?.status).toB…
+       |                                                                    ^
+     80|     expect(active).toBe(2);
+     81|     expect(maximum).toBe(2);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/templates/scripts.test.ts > template gate validates shipped drafts and refuses both broken graphs and undeclared assets
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/scripts.test.ts:16:1
+     14|   { timeout: 60_000, windowsHide: true });
+     15|
+     16| it('template gate validates shipped drafts and refuses both broken gra…
+       | ^
+     17|   const root = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-templates-'));
+     18|   const input = join(root, 'templates');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/templates/scripts.test.ts > catalog build entry copies independent drafts and refuses an invalid source without damaging an existing catalog
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/scripts.test.ts:34:1
+     32| });
+     33|
+     34| it('catalog build entry copies independent drafts and refuses an inval…
+       | ^
+     35|   const root = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-copy-catalog-')…
+     36|   const target = join(root, 'catalog');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  3 failed | 103 passed (106)
+   Start at  00:41:23
+   Duration  79.14s (tests 55%, transform 32%, import 13%)
+
+  Transform  transforming modules took 72.19s · 32% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\apps\api
+System.Management.Automation.RemoteException
+EXIT 1

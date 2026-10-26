@@ -1,0 +1,45 @@
+pnpm.cmd --filter @graphgoblin/web test src/editor/useLoadEditor.test.tsx -t does not reconcile from a cached query --maxWorkers 1
+$ vitest run src/editor/useLoadEditor.test.tsx -t 'does not reconcile from a cached query' --maxWorkers 1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/apps/web
+
+ ❯ src/editor/useLoadEditor.test.tsx (20 tests | 2 failed | 18 skipped) 203ms
+   × does not reconcile from a cached query while a fresh server read is pending (staleTime=0) 119ms
+   × does not reconcile from a cached query while a fresh server read is pending (staleTime=Infinity) 83ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/editor/useLoadEditor.test.tsx > does not reconcile from a cached query while a fresh server read is pending (staleTime=0)
+ FAIL  src/editor/useLoadEditor.test.tsx > does not reconcile from a cached query while a fresh server read is pending (staleTime=Infinity)
+AssertionError: expected true to be false // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- false
++ true
+System.Management.Automation.RemoteException
+ ❯ src/editor/useLoadEditor.test.tsx:288:50
+    286|     await waitFor(() => expect(view.result.current.deviceInspected).to…
+    287|     expect(view.result.current.query.isFetching).toBe(true);
+    288|     expect(view.result.current.serverReconciled).toBe(false);
+       |                                                  ^
+    289|     act(() => {
+    290|       server.resolve();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 skipped (20)
+   Start at  03:08:34
+   Duration  5.32s (environment 55%, setup 17%, transform 13%, import 12%, tests 4%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\apps\web
+System.Management.Automation.RemoteException
+EXIT 1

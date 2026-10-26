@@ -1,0 +1,49 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage --coverage.reportOnFailure --maxWorkers=1
+$ vitest run --coverage --coverage.reportOnFailure --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ❯ perf/runtime.test.mjs (18 tests | 1 failed) 307667ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 27576ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 26560
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:283:45
+    281|   const deadline = (promise, label) =>
+    282|     new Promise((resolve, reject) => {
+    283|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    284|       promise.then(
+    285|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 110 passed (111)
+   Start at  00:55:34
+   Duration  397.41s (tests 99%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 90.37% ( 1708/1890 )
+Branches     : 85.63% ( 1031/1204 )
+Functions    : 85.25% ( 289/339 )
+Lines        : 91.63% ( 1523/1662 )
+================================================================================
+ERROR: Coverage for functions (85.25%) does not meet global threshold (90%)
+ERROR: Coverage for branches (85.63%) does not meet global threshold (90%)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

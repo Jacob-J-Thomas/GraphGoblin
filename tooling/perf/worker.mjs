@@ -1,4 +1,3 @@
-/* global Buffer, process, performance, global, setInterval, clearInterval, setTimeout */
 import { Session } from 'node:inspector';
 import { createHash } from 'node:crypto';
 import { stat, appendFile, writeFile } from 'node:fs/promises';
@@ -514,6 +513,7 @@ async function recoverControl() {
   // Recovery writes a fresh finalization acknowledgement; every other run field must match.
   const withoutMarker = (run) => JSON.stringify({ ...run, finalizedAt: undefined });
   return {
+    base, // Reopening can select a new ephemeral listener.
     beforeHash: before.eventsSha256,
     afterHash: after.eventsSha256,
     events: after.events,
@@ -555,6 +555,19 @@ const commands = {
   finish,
   probe,
   recoverControl,
+  seedInbound: async ({ count, payloadValueBytes }) => {
+    for (let index = 0; index < count; index++)
+      await container.repos.inbound.insert({
+        id: container.ports.ids.next(),
+        ownerId: 'local',
+        type: 'perf.measurement',
+        payload: { index, nested: { value: 'v'.repeat(payloadValueBytes) } },
+        source: 'perf.fixture',
+        receivedAt: container.ports.clock.now().toISOString(),
+        runIds: [],
+      });
+    return { inserted: count };
+  },
   memory: async ({ gc = false } = {}) => {
     if (gc) global.gc();
     return {

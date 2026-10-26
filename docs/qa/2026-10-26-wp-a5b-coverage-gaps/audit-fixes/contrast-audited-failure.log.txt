@@ -1,0 +1,17 @@
+Source: read-only independent audit coverage-tooling.log.txt at HEAD 20b16ecf
+ ❯ perf/runtime.test.mjs (21 tests | 1 failed) 257039ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 24386ms
+ ❯ scripts/design-contrast.test.mjs (6 tests | 1 failed) 64211ms
+   × CLI writes a formatted temporary table, checks freshness and reports missing inputs 64162ms
+System.Management.Automation.RemoteException
+ FAIL  scripts/design-contrast.test.mjs > CLI writes a formatted temporary table, checks freshness and reports missing inputs
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ scripts/design-contrast.test.mjs:202:1
+    200| });
+    201|
+    202| test('CLI writes a formatted temporary table, checks freshness and rep…
+       | ^
+    203|   const temporary = mkdtempSync(join(tmpdir(), 'graphgoblin-contrast-'…
+    204|   t.onTestFinished(() => rmSync(temporary, { recursive: true, force: t…
+System.Management.Automation.RemoteException
