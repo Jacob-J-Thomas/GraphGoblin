@@ -6,7 +6,7 @@ Status: 1.0.0 released 2026-10-03. What changed is in [CHANGELOG.md](CHANGELOG.m
 
 ## Quick start
 
-You need Git, Node 22 LTS (22.x), pnpm, and the Codex CLI logged in (`codex login`) as the user who runs GraphGoblin. GraphGoblin stores no Codex credentials.
+You need Git, Node 22 LTS (22.22.2 or later), pnpm, and the Codex CLI logged in (`codex login`) as the user who runs GraphGoblin. GraphGoblin stores no Codex credentials.
 
 ### Install script
 
