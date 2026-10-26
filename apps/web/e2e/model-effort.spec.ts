@@ -361,6 +361,83 @@ test('Codex effort choices follow the model: max is offered and requested unchan
     .toMatchObject([{ model: 'gpt-6-luna', effort: 'max' }]);
 });
 
+for (const kind of ['inference', 'llm'] as const) {
+  test(`${kind}: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const source = minimalLoop();
+    const definition = LoopDefinitionSchema.parse({
+      ...source,
+      name: `205 kept max ${kind}`,
+      nodes: [
+        source.nodes[0],
+        {
+          id: 'work',
+          label: 'Work',
+          kind: kind === 'inference' ? kind : 'decision',
+          ui: { x: 260, y: 80 },
+          config:
+            kind === 'inference'
+              ? { prompt: { template: 'Choose' }, model: 'gpt-6-luna', effort: 'max' }
+              : {
+                  kind: 'llm',
+                  harness: 'codex',
+                  instructions: 'Choose',
+                  model: { mode: 'explicit', value: 'gpt-6-luna' },
+                  effort: { mode: 'explicit', value: 'max' },
+                  routes: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                },
+        },
+        source.nodes[1],
+      ],
+      edges: [
+        { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+        ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map((port) => ({
+          id: port,
+          from: { node: 'work', port },
+          to: { node: 'done' },
+        })),
+      ],
+    });
+    const created = await request.post(url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.goto(url + `/app/loops/${loop.id}/edit`);
+    const message = 'Effort max is not supported by GPT-5.5. Choose a supported effort or Default.';
+    let dialog = await openNode(page, 'work');
+    await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-5.5');
+    // The choice is kept and the field explains it as soon as the model changes.
+    const effort = dialog.getByLabel('Effort', { exact: true });
+    await expect(effort).toHaveValue('max');
+    await expect(effort).toHaveAccessibleDescription(new RegExp(message));
+    await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+    await page.screenshot({ path: test.info().outputPath(`kept-max-${kind}.png`) });
+    await closeNode(page);
+    // Publish cannot save the draft; the issue list now points at the node.
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText(/fix the issues below first/)).toBeVisible();
+    await expect(page.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+    await page.getByRole('button', { name: '1 error', exact: true }).click();
+    await page.getByRole('button', { name: 'work: 1 issue' }).click();
+    dialog = page.getByRole('dialog', { name: /Edit/ });
+    await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('max');
+    await dialog.getByLabel('Effort', { exact: true }).selectOption('xhigh');
+    await expect(dialog.getByRole('button', { name: /issues? on work/ })).toHaveCount(0);
+    await expect(dialog.getByLabel('Effort', { exact: true })).not.toHaveAccessibleDescription(
+      /not supported/,
+    );
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+  });
+}
+
 test('classifier keeps Question, Model, Answer visible and has no effort', async ({
   page,
   request,
