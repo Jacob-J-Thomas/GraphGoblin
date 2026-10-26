@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/api-client
+
+ ✓ src/sse-completion.test.ts > stream completion contract > delivers historical terminals, resumes and delivery audits before authoritative completion 50ms
+ ✓ src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 387 without retry or cursor advance 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 487 without retry or cursor advance 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > retries EOF after a terminal event from that cursor until completion is authoritative 4ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 0 4ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 8 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion { without consuming its id 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion {} without consuming its id 2ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion null without consuming its id 2ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion {"after":999} without consuming its id 1ms
+ ✓ src/wait.test.ts > waitForRun > interrupts a stalled request on caller abort with the exact reason before any timer fires 48ms
+ ✓ src/wait.test.ts > waitForRun > resolves at the deadline without a snapshot and ignores a late success 4ms
+ ✓ src/wait.test.ts > waitForRun > polls until a terminal status 5ms
+ ✓ src/wait.test.ts > waitForRun > returns the latest snapshot when the timeout elapses, never sleeping past it 4ms
+ ✓ src/wait.test.ts > waitForRun > uses the real clock and timer by default 24ms
+ ✓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields 4ms
+ ✓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks 1ms
+ ✓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data 0ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor 22ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_SLOW_CONSUMER problem and retries from the last delivered id 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_REPLAY_FAILED problem and retries from the last delivered id 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > provides the received JSON size to batch consumers without another serialization 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after authoritative completion 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry 12ms
+ ✓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read 1ms
+ ✓ src/wait.test.ts > waitForRun > rejects with the abort reason when the signal fires 17ms
+ ✓ src/wait.test.ts > observation budgets > rejects an already aborted caller without making any request 1ms
+ ✓ src/wait.test.ts > observation budgets > returns no snapshot and makes no request with a zero budget 1ms
+ ✓ src/wait.test.ts > observation budgets > returns a fast success and disposes its deadline 3ms
+ ✓ src/wait.test.ts > observation budgets > ignores a response at the clock deadline even before the timer callback runs 1ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a request stalls past the deadline 3ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a sleep stalls past the deadline 2ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a body stalls past the deadline 2ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a progress stalls past the deadline 1ms
+ ✓ src/wait.test.ts > observation budgets > aborts a non-cooperating sleep with the caller reason 1ms
+ ✓ src/wait.test.ts > observation budgets > propagates ordinary request, sleep and observer failures 2ms
+ ✓ src/wait.test.ts > observation budgets > stops for caller action before progress or another poll 1ms
+ ✓ src/wait.test.ts > keeps long deadlines within the JavaScript timer limit and cleans up after abort 5ms
+ ✓ src/wait.test.ts > resolves a long deadline at timeoutMs rather than the timer chunk boundary 2ms
+ ✓ src/wait.test.ts > preserves a caller abort raised during observation before starting a sleep 2ms
+ ✓ src/wait.test.ts > consumes a late transport rejection after the deadline 1ms
+ ✓ src/wait.test.ts > keeps successful execution pending until the durable finalization acknowledgement 1ms
+ ✓ src/wait.test.ts > does not hide pending delivery evidence behind a finalization acknowledgement 16ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run 62ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run 34ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection 52ms
+ ✓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort 8ms
+
+ Test Files  3 passed (3)
+      Tests  61 passed (61)
+   Start at  03:14:28
+   Duration  2.99s (import 48%, transform 45%, tests 7%, worker 1%)
+
+  Transform  transforming modules took 3.11s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

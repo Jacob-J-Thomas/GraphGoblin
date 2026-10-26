@@ -1,0 +1,205 @@
+{
+  "checks": [
+    {
+      "name": "finished 20k vs 2k events: heap within 25% (+2 MiB), Timeline <= 80 rows, session cache bounded, heading = lastSeq",
+      "ok": true,
+      "detail": {
+        "short": {
+          "label": "finished ~2k events",
+          "serverLastSeq": 2009,
+          "heading": {
+            "total": 2009,
+            "status": "complete"
+          },
+          "jsHeapUsedMiB": 9.05,
+          "domNodes": 884,
+          "timelineRowsMounted": 80,
+          "sessionStorageBytesUtf16": 417276
+        },
+        "long": {
+          "label": "finished ~20k events",
+          "serverLastSeq": 20009,
+          "heading": {
+            "total": 20009,
+            "status": "complete"
+          },
+          "jsHeapUsedMiB": 10.05,
+          "domNodes": 884,
+          "timelineRowsMounted": 80,
+          "sessionStorageBytesUtf16": 420348
+        }
+      }
+    },
+    {
+      "name": "live inspector: <= 80 rows, bounded cache, heap stable over a minute of live growth",
+      "ok": true,
+      "detail": {
+        "m1": [
+          3205,
+          9.16
+        ],
+        "m2": [
+          3891,
+          10.84
+        ]
+      }
+    },
+    {
+      "name": "Load older during execution: contiguous ascending rows, window stays put while the live count advances",
+      "ok": false,
+      "detail": {
+        "status": "running",
+        "tailFirst": 3812,
+        "older": [
+          3381,
+          3460
+        ],
+        "headingBefore": 3892,
+        "headingAfter5s": 4404,
+        "followEnabled": true
+      }
+    },
+    {
+      "name": "repeated Previous rows / Load older: contiguous, strictly older",
+      "ok": true,
+      "detail": {
+        "range": [
+          2485,
+          2564
+        ]
+      }
+    },
+    {
+      "name": "Next rows after older browsing: contiguous",
+      "ok": true,
+      "detail": {
+        "range": [
+          2565,
+          2644
+        ]
+      }
+    },
+    {
+      "name": "Go to event 137 during execution: row selected, \"Thread at event 137\", recorded JSON equals the API event",
+      "ok": true,
+      "detail": {
+        "seekRange": [
+          58,
+          137
+        ]
+      }
+    },
+    {
+      "name": "reload restores the browsed window and history mode",
+      "ok": true,
+      "detail": {
+        "before": [
+          58,
+          137
+        ],
+        "after": [
+          58,
+          137
+        ],
+        "followEnabled": true
+      }
+    },
+    {
+      "name": "Follow live returns to the contiguous tail",
+      "ok": true,
+      "detail": {
+        "tail": [
+          5219,
+          5220,
+          5221
+        ]
+      }
+    },
+    {
+      "name": "after a gateway restart the open inspector reconnects: heading = server lastSeq, contiguous tail ending at it, stream complete",
+      "ok": true,
+      "detail": {
+        "killedAt": 5226,
+        "last": 5318,
+        "outageShown": true,
+        "tail": [
+          5316,
+          5317,
+          5318
+        ]
+      }
+    },
+    {
+      "name": "history across the restart boundary is contiguous in the Timeline",
+      "ok": true,
+      "detail": {
+        "range": [
+          5226,
+          5305
+        ]
+      }
+    }
+  ],
+  "heap": [
+    {
+      "label": "finished ~2k events",
+      "serverLastSeq": 2009,
+      "heading": {
+        "total": 2009,
+        "status": "complete"
+      },
+      "jsHeapUsedMiB": 9.05,
+      "domNodes": 884,
+      "timelineRowsMounted": 80,
+      "sessionStorageBytesUtf16": 417276
+    },
+    {
+      "label": "finished ~20k events",
+      "serverLastSeq": 20009,
+      "heading": {
+        "total": 20009,
+        "status": "complete"
+      },
+      "jsHeapUsedMiB": 10.05,
+      "domNodes": 884,
+      "timelineRowsMounted": 80,
+      "sessionStorageBytesUtf16": 420348
+    },
+    {
+      "label": "live, caught up",
+      "serverLastSeq": 3205,
+      "heading": {
+        "total": 3205,
+        "status": "live"
+      },
+      "jsHeapUsedMiB": 9.16,
+      "domNodes": 873,
+      "timelineRowsMounted": 80,
+      "sessionStorageBytesUtf16": 417624
+    },
+    {
+      "label": "live, +60 s",
+      "serverLastSeq": 3891,
+      "heading": {
+        "total": 3891,
+        "status": "live"
+      },
+      "jsHeapUsedMiB": 10.84,
+      "domNodes": 874,
+      "timelineRowsMounted": 80,
+      "sessionStorageBytesUtf16": 418066
+    },
+    {
+      "label": "live run after restart and cancel",
+      "serverLastSeq": 5318,
+      "heading": {
+        "total": 5318,
+        "status": "complete"
+      },
+      "jsHeapUsedMiB": 9.85,
+      "domNodes": 713,
+      "timelineRowsMounted": 80,
+      "sessionStorageBytesUtf16": 206620
+    }
+  ]
+}

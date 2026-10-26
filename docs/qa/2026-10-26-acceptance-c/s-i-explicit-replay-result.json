@@ -1,0 +1,42 @@
+{
+  "scenario": "s-i-explicit-replay",
+  "passed": 6,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "I1 force exits 0 and the script is gone",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "I2 after restart the run is still failed with RUN_INTERRUPTED_BY_STOP and was not re-run",
+      "ok": true,
+      "detail": {
+        "status": "failed",
+        "code": "RUN_INTERRUPTED_BY_STOP"
+      }
+    },
+    {
+      "id": "I3 explicit replay from the interrupted node is accepted (202, new run)",
+      "ok": true,
+      "detail": 202
+    },
+    {
+      "id": "I3 the replayed run reran the script and succeeded",
+      "ok": true,
+      "detail": {
+        "newPid": 45916
+      }
+    },
+    {
+      "id": "I3 the source run keeps its interruption record",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "I4 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

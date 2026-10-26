@@ -1,0 +1,97 @@
+// Scenario F: (1) mechanism behind scenario D: which processes share the gateway's console, so
+// receive a terminal Ctrl+C; API drain versus Ctrl+C for an in-flight Codex CLI turn, and what a
+// Ctrl+C force records. (2) Inspector presentation of a forced interruption after restart.
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-f-console-and-inspector');
+const GRACE = 60_000;
+const gateways = [];
+const dirs = [];
+let browser;
+const consoleList = (pid) => {
+  const out = path.join(L.TOOLS, `conslist-${pid}.txt`);
+  const r = spawnSync(path.join(L.TOOLS, 'conslist.exe'), [String(pid), out], { windowsHide: true });
+  const text = fs.existsSync(out) ? fs.readFileSync(out, 'utf8') : `exit ${r.status} ${r.stderr}`;
+  fs.rmSync(out, { force: true });
+  return text;
+};
+try {
+  const dir = L.makeStore('f1');
+  dirs.push(dir);
+  const env = { ...L.fakeCodex(dir), GG_SHUTDOWN_GRACE_MS: String(GRACE) };
+  const g = await L.startGateway({ dir, port: 6466, label: 'f1', env, viaConsole: true, rec });
+  gateways.push(g);
+  const scriptLoop = await L.publishLoop(g.call, L.scriptLoop('Console script', L.heldScriptSource({ dir, name: 'held', maxMs: 300_000 })));
+  const harnessLoop = await L.publishLoop(g.call, L.inferenceLoop('Console harness turn'));
+  const scriptRun = await L.startRun(g.call, scriptLoop);
+  const harnessRun = await L.startRun(g.call, harnessLoop);
+  const scriptPid = Number(await L.waitFile(path.join(dir, 'held.pid')));
+  const codexPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  const gatewayConsole = consoleList(g.pid);
+  const scriptConsole = consoleList(scriptPid);
+  rec.log('F1 processes attached to the gateway console (GetConsoleProcessList)', { gatewayPid: g.pid, codexPid, scriptPid, gatewayConsole, scriptConsole });
+  rec.check('F1 the fake Codex CLI shares the gateway console (receives terminal Ctrl+C)', gatewayConsole.split(',').some((e) => e.startsWith(codexPid + ':')), gatewayConsole);
+  rec.check('F1 the script process does not share the gateway console (own hidden console)', !gatewayConsole.split(',').some((e) => e.startsWith(scriptPid + ':')), gatewayConsole);
+
+  const drained = await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  await L.sleep(2500);
+  const harnessAfterApiDrain = (await g.call(`/runs/${harnessRun}`)).json;
+  rec.check('F2 contrast: an API drain leaves the in-flight Codex CLI running', drained.json.phase === 'draining' && L.tasklistAlive(codexPid) && harnessAfterApiDrain.status === 'running', { phase: drained.json.phase, codexAlive: L.tasklistAlive(codexPid), status: harnessAfterApiDrain.status });
+
+  // A terminal signal after an API-initiated stop is documented to request explicit force.
+  const signal = L.ctrlC(g.pid);
+  rec.log('F3 Ctrl+C after the API drain', signal);
+  const code = await g.waitExit(60_000);
+  rec.check('F3 Ctrl+C after an API drain forces and exits 0', code === 0, code);
+  g.copyLog('s-f-gateway-f1.log.txt');
+  const r = await L.startGateway({ dir, port: 6466, label: 'f1r', env, rec });
+  gateways.push(r);
+  const hr = (await r.call(`/runs/${harnessRun}`)).json;
+  const sr = (await r.call(`/runs/${scriptRun}`)).json;
+  rec.log('F3 records after the Ctrl+C force', { harness: { status: hr.status, failure: hr.failure }, script: { status: sr.status, failure: sr.failure } });
+  rec.check('F3 script run records RUN_INTERRUPTED_BY_STOP', sr.failure?.code === 'RUN_INTERRUPTED_BY_STOP', sr.failure?.code);
+  rec.check('F3 harness run records RUN_INTERRUPTED_BY_STOP (managed force) rather than a provider failure', hr.failure?.code === 'RUN_INTERRUPTED_BY_STOP', { code: hr.failure?.code, resumable: hr.failure?.resumable });
+
+  // Inspector presentation of the interrupted runs on the restarted gateway.
+  browser = await L.launchEdge();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
+  const ins = await ctx.newPage();
+  for (const [label, id] of [['script', scriptRun], ['harness', harnessRun]]) {
+    await ins.goto(r.origin + `/app/runs/${id}`);
+    await ins.getByText(/interrupted|RUN_INTERRUPTED_BY_STOP|HARNESS_DELIVERY_UNCERTAIN|failed/i).first().waitFor({ timeout: 20_000 }).catch(() => undefined);
+    await L.sleep(1500);
+    const text = await ins.locator('body').innerText();
+    fs.writeFileSync(path.join(L.OUT, `s-f-inspector-${label}.txt`), L.redact(text));
+    await L.shot(ins, `s-f-inspector-${label}`);
+    rec.log(`F4 inspector ${label} buttons`, await ins.getByRole('button').allInnerTexts());
+    if (label === 'script')
+      rec.check('F4 inspector shows the force-stop interruption and possible external effects for the script run', /force-stop interrupted this run/i.test(text) && /external effects may have happened/i.test(text), null);
+  }
+  await browser.close();
+  browser = undefined;
+  await r.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('F5 restarted gateway drains to exit 0', (await r.waitExit(30_000)) === 0, r.exitCode());
+  r.copyLog('s-f-gateway-f1r.log.txt');
+} catch (error) {
+  rec.check('F scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of gateways) {
+    if (x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+  }
+  rec.finish();
+  for (const d of dirs) {
+    for (const p of L.storeProcesses(d)) {
+      try {
+        process.kill(p.pid);
+      } catch {}
+    }
+    L.rmStore(d);
+  }
+}

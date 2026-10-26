@@ -1,0 +1,54 @@
+{
+  "checks": [
+    {
+      "name": "L1 live reader from 0 during execution: 1..last in order, then stream.complete",
+      "ok": true,
+      "detail": {
+        "delivered": 12509,
+        "last": 12509
+      }
+    },
+    {
+      "name": "L2 reader pausing 4 s every 300 events: 1..last in order, no failure control, stream.complete",
+      "ok": true,
+      "detail": {
+        "delivered": 12509,
+        "stalls": 41,
+        "last": 12509
+      }
+    },
+    {
+      "name": "L3 reader disconnecting at random points, reconnecting with Last-Event-ID: 1..last in order",
+      "ok": true,
+      "detail": {
+        "delivered": 12509,
+        "connections": 48
+      }
+    },
+    {
+      "name": "L4 api-client with periodic 1.5 s consumer pauses: 1..last exactly once, in order",
+      "ok": true,
+      "detail": {
+        "delivered": 12509,
+        "errors": []
+      }
+    },
+    {
+      "name": "identical timestamps occur and JSON pages still return 1..last by seq",
+      "ok": true,
+      "detail": {
+        "events": 12509,
+        "distinctTimestamps": 10007,
+        "timestampsSharedByMoreThanOneEvent": 2501,
+        "largestGroup": 3
+      }
+    }
+  ],
+  "timestamps": {
+    "events": 12509,
+    "distinctTimestamps": 10007,
+    "timestampsSharedByMoreThanOneEvent": 2501,
+    "largestGroup": 3
+  },
+  "runId": "01M5VGV2HT4F8S24M44K5GAHXJ"
+}

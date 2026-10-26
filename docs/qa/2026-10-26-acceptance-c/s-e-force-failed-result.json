@@ -1,0 +1,153 @@
+{
+  "scenario": "s-e-force-failed",
+  "passed": 15,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "E0 root exited, grandchild holds the pipe, run still running",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E1 force cleanup failure is reported as force-failed (not a clean stop)",
+      "ok": true,
+      "detail": "force-failed"
+    },
+    {
+      "id": "E1 force-failed offers only a further explicit force",
+      "ok": true,
+      "detail": [
+        "force"
+      ]
+    },
+    {
+      "id": "E1 listener and lock retained in force-failed",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E1 the surviving grandchild is real (cleanup truly unconfirmed)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E2 notice explains failed cleanup, retained lock and native inspection",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E2 force-failed is stable: no automatic exit after several seconds",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E3 Force exit needs its own confirmation naming the retained lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E3 explicit Force exit leaves with exit code 1",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "E3 lock retained after the failed-cleanup exit",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E3 browser sent exactly two POSTs (confirmed force, confirmed force exit)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E4 next start reclaims the dead owner lock",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "E4 run records an unconfirmed termination, not a clean interruption or success",
+      "ok": true,
+      "detail": {
+        "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+        "message": "Script process tree termination was not confirmed; stop the process before restarting",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "interruptedByStop": true
+        },
+        "script": {
+          "visitId": "01M5VGCFRTKAWQZMZ2KVCPA3TD:5",
+          "dispatchId": "01M5VGCFVFVRD5SVEPADSB18TN",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "E5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "E6 cleanup: no process names the store",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T07:04:25.435Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:27.458Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:29.425Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:31.441Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:31.959Z",
+      "method": "POST",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:33.979Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:35.993Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:38.017Z",
+      "method": "GET",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:38.631Z",
+      "method": "POST",
+      "tab": "e",
+      "page": "http://127.0.0.1:6464/app/loops"
+    }
+  ]
+}

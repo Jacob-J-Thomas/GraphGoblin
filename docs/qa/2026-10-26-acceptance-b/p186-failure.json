@@ -1,0 +1,89 @@
+{
+  "checks": [
+    {
+      "name": "F1 stall 6000 ms: ordered prefix, then explicit SSE_SLOW_CONSUMER (or premature close), no completion",
+      "ok": true,
+      "detail": {
+        "how": "end",
+        "lastGood": 10,
+        "code": "SSE_SLOW_CONSUMER",
+        "interruptedFrames": [
+          {
+            "id": "10",
+            "event": "node.finished",
+            "dataTail": "xxxxxxxxxxxxxxxxxxxxxxxxxx\n[interrupted]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "F1 stall 6000 ms: an interrupted frame is unparseable and its id is reset to the last complete event",
+      "ok": true,
+      "detail": [
+        {
+          "id": "10",
+          "event": "node.finished",
+          "dataTail": "xxxxxxxxxxxxxxxxxxxxxxxxxx\n[interrupted]"
+        }
+      ]
+    },
+    {
+      "name": "F1 stall 6000 ms: reconnect from Last-Event-ID 10 completes the history in order",
+      "ok": true,
+      "detail": {
+        "before": 10,
+        "after": 599
+      }
+    },
+    {
+      "name": "F1 stall 6500 ms: ordered prefix, then explicit SSE_SLOW_CONSUMER (or premature close), no completion",
+      "ok": true,
+      "detail": {
+        "how": "end",
+        "lastGood": 10,
+        "code": "SSE_SLOW_CONSUMER",
+        "interruptedFrames": [
+          {
+            "id": "10",
+            "event": "node.finished",
+            "dataTail": "xxxxxxxxxxxxxxxxxxxxxxxxxx\n[interrupted]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "F1 stall 6500 ms: an interrupted frame is unparseable and its id is reset to the last complete event",
+      "ok": true,
+      "detail": [
+        {
+          "id": "10",
+          "event": "node.finished",
+          "dataTail": "xxxxxxxxxxxxxxxxxxxxxxxxxx\n[interrupted]"
+        }
+      ]
+    },
+    {
+      "name": "F1 stall 6500 ms: reconnect from Last-Event-ID 10 completes the history in order",
+      "ok": true,
+      "detail": {
+        "before": 10,
+        "after": 599
+      }
+    },
+    {
+      "name": "F2 api-client: one 8 s consumer block is reported through onError and recovered from the cursor; every event once, in order",
+      "ok": true,
+      "detail": {
+        "delivered": 609,
+        "duplicates": 0,
+        "errors": [
+          {
+            "attempt": 1,
+            "message": "terminated"
+          }
+        ],
+        "ms": 9003
+      }
+    }
+  ]
+}

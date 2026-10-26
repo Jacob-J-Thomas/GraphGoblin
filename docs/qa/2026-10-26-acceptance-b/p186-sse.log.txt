@@ -1,0 +1,12 @@
+[2026-10-26T06:51:28.881Z] API started pid=53052 port=6451 scenario=success
+[2026-10-26T06:51:34.554Z] heavy run succeeded result  ms 5220 lastEventSeq 609
+[2026-10-26T06:51:34.965Z] history {"events":609,"historyBytes":23843761,"largestEventBytes":196860}
+[2026-10-26T06:51:36.282Z] memory after run (idle, no readers) {"privateMiB":146.3,"workingSetMiB":147.4}
+[2026-10-26T06:51:36.685Z] PASS A normal replay: every event 1..last in order, then stream.complete {"delivered":609,"last":609,"completion":"{\"after\":609}","eof":true,"maxPrivateMiB":null}
+[2026-10-26T06:52:53.171Z] PASS B 3 s stall: completes without a failure control {"delivered":609,"how":"end"}
+[2026-10-26T06:53:10.796Z] C stalled reader result {"how":"end","rawBytes":381561,"delivered":10,"lastC":10,"completed":false,"framesAfterError":null,"tailBytes":180224,"pausedForMs":17619,"endedAfterResumeMs":1}
+[2026-10-26T06:53:10.796Z] PASS C 15 s stall: explicit SSE_SLOW_CONSUMER control or severed connection, never completion with a gap {"explicit":false,"how":"end","chunkedTerminated":false,"lastCompleteEvent":10}
+[2026-10-26T06:53:11.477Z] PASS C recovery from Last-Event-ID: combined history is exactly 1..last with no gap or duplicate {"before":10,"after":599,"last":609}
+[2026-10-26T06:54:11.873Z] PASS D five stalled readers: server private memory growth stays far below 5 x history size {"baseD":{"privateMiB":140.3,"workingSetMiB":118.6},"peakPrivateMiB":167.6,"growthMiB":27.3,"historyMiB":22.7,"outcomes":[{"how":"end","delivered":5,"error":null},{"how":"end","delivered":5,"error":null},{"how":"end","delivered":5,"error":null},{"how":"end","delivered":5,"error":null},{"how":"end","delivered":5,"error":null}]}
+[2026-10-26T06:54:33.774Z] PASS E api-client slow consumer: every event once, in order, done resolves after stream.complete {"delivered":609,"duplicates":0,"ordered":true,"errors":[]}
+[2026-10-26T06:54:34.183Z] API pid=53052 terminated
