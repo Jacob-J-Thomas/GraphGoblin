@@ -14,8 +14,9 @@ import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from '.
  * changes nothing). With `--yes --data-dir <path>` naming the configured data directory it takes
  * the data-directory lock, lists the same manifest and removes exactly that: the database and its
  * SQLite sidecars, the artifact directory, and the run workspaces whose names are stored run IDs,
- * then the lock file last. It never follows links, never removes anything outside the data
- * directory, and keeps `master.key` and every other entry. Browser device drafts live in each
+ * then the lock file last. Planned identities are rechecked before each removal (see tree.ts for
+ * the remaining external-process race). Links are removed themselves; `master.key` and every
+ * other entry are kept. Browser device drafts live in each
  * browser and are discarded from the editor.
  */
 
@@ -625,7 +626,8 @@ export async function resetDataDirectory(
   }
   let failure: unknown;
   try {
-    // Plan again under the lock, so the manifest removed is the one no other process can change.
+    // Plan again under the lock, so GraphGoblin cannot change the manifest concurrently. External
+    // processes do not obey this lock; removeEntry rechecks the planned filesystem identities.
     const plan = await planReset({ dataDir, database, readStore: io.readStore });
     io.write(formatPlan(plan, { dryRun: false, configured }));
     io.write('Removing:\n');

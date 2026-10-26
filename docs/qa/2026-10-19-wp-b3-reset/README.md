@@ -136,7 +136,7 @@ Use a PowerShell window in the branch checkout. Every step uses disposable direc
 - **Real-filesystem reset tests**: `apps/api/src/reset/reset.test.ts` and `store-facts.test.ts`. They run against real temporary directories, with junctions on Windows.
   - Argument parsing and usage (exit code 2).
   - Byte-identical dry runs of current, older, unreadable and absent stores, and the bounded manifest with its full totals.
-  - A confirmed reset that removes exactly the manifest, keeps `master.key`, user folders and everything unrecognised, and never follows a link, including a link swapped in after listing.
+  - A confirmed reset that removes exactly the manifest, keeps `master.key`, user folders and everything unrecognised, removes links themselves and refuses a link swapped in after listing when the removal check observes it (the remaining external-process race is described below).
   - A partial failure that reports what was removed and what was left, followed by a rerun that finishes.
   - Every refusal leaves a stale lock and every other byte in place. The refusals covered:
     - a database reached through a link;
@@ -162,3 +162,27 @@ Use a PowerShell window in the branch checkout. Every step uses disposable direc
   - refusal of a wrong target;
   - a confirmed reset that keeps `master.key`, the user folder and the outside folder behind a link;
   - a fresh start that answers `/healthz`.
+
+## Removal identity regression check (2026-10-25)
+
+At PR #355 head `32568edd3756207d7790bf771b5bd7e7746c2303`, native Windows filesystem tests in `apps/api/src/reset/tree.test.ts` and `reset-identity.test.ts` reproduced same-kind file deletion and a root junction pivot into an unrelated store. All fixtures use system-temp `gg-wp-b3-rid-*` directories. Junctions on Windows become directory symbolic links on other platforms. No provider or owner-store evidence is claimed.
+
+The fresh confirmed plan under the data-directory lock now records each entry's identity and the identities of every physical directory on its route: the root first, then every ancestor, including kept folders containing a configured nested database. Immediately before every removal, bigint `lstat` and the shared volume-root/device/file-index identity construction recheck all of those directories and the entry itself. A moved, replaced or newly linked path stops through `ResetIncompleteError`, naming the entry and what changed, with completed, partial and remaining targets. Replacements and outside bytes stay intact; a rerun plans what remains again. Links in an unchanged plan are removed as links.
+
+Node offers no handle-relative removal. The checks narrow but cannot eliminate a race with an external process changing the tree between the check and `unlink`/`rmdir`. The data-directory lock prevents GraphGoblin itself from changing the tree concurrently.
+
+Baseline command (Node v22.23.4): `pnpm --filter @graphgoblin/api exec vitest run src/reset/tree.test.ts src/reset/reset-identity.test.ts`. Result: **9 failed, 1 passed**. Failure evidence, before production changes:
+
+| Case                                                             | Failure on `32568edd`                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Component: same-kind database replacement                        | `expected undefined to be an instance of Error`; `expected 'missing' to be 'replacement bytes'`                                                                                                                                                            |
+| Component: root replaced by a directory                          | `expected 'missing' to be 'replacement bytes'`                                                                                                                                                                                                             |
+| Component: root replaced by a junction                           | `expected 'missing' to be 'outside bytes'`                                                                                                                                                                                                                 |
+| Component: kept ancestor replaced by a directory                 | `expected 'missing' to be 'replacement bytes'`                                                                                                                                                                                                             |
+| Component: kept ancestor replaced by a junction                  | Expected entry-specific `ancestor database is now a link` diagnostic; received `Error: database is no longer a physical directory`. The baseline already refused this case and preserved its bytes; this failure establishes the improved diagnostic only. |
+| Component: planned directory replaced by another empty directory | Replacement-directory existence: `expected false to be true`                                                                                                                                                                                               |
+| Public CLI: database replacement at `Removing:`                  | `expected +0 to be 1`; `expected 'missing' to be 'replacement database'`                                                                                                                                                                                   |
+| Public CLI: root junction pivot at `Removing:`                   | `expected +0 to be 1`; `expected 'missing' to be 'outside database'`                                                                                                                                                                                       |
+| Public CLI: kept ancestor replaced after `removed artifacts`     | `expected +0 to be 1`; both replacement database and WAL were `missing`                                                                                                                                                                                    |
+
+The unchanged-tree component control passed on the baseline, including link removal and preservation of the outside file. The public-boundary regressions assert stdout, stderr, exit status, replacement/outside bytes and (where restored) successful reruns. `pnpm test:reset` remains the ordinary built CLI process control for dry run, wrong target, reset and fresh start. Existing lock, stale-lock, refusal, partial-failure and master-key controls remain in `reset.test.ts`.
