@@ -154,6 +154,8 @@ export class SqliteApiKeys {
 export type { ModelCatalogEntry } from '@graphgoblin/contracts';
 
 const CODEX_EFFORTS: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+/** Codex sends efforts unchanged; CLI 0.160.0's own model catalog tops GPT-5.5 out at `xhigh`. */
+const CODEX_EFFORTS_TO_XHIGH: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh'];
 
 /** Harness-owned metadata; Settings may only change enabled. */
 export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
@@ -225,7 +227,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
     source: 'harness',
     model: 'gpt-5.5',
     displayName: 'GPT-5.5',
-    efforts: CODEX_EFFORTS,
+    efforts: CODEX_EFFORTS_TO_XHIGH,
     defaultEffort: 'medium',
     enabled: true,
   },

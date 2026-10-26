@@ -188,7 +188,7 @@ describe('catalog field controls', () => {
         ).toBeDisabled();
         expect(effort()).toHaveAccessibleDescription(
           endsWith(
-            'This effort is not supported by the selected model. The saved choice stays until you change it.',
+            'Effort minimal is not supported by Display claude-opus-5-5. Choose a supported effort or Default.',
           ),
         );
       } else {

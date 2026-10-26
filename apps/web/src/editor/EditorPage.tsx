@@ -1,5 +1,5 @@
 import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { HarnessDefaultsSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,6 +14,7 @@ import {
   useClassifierModels,
   useModelCatalog,
   usePreflight,
+  useProcessModelDefaults,
   useSettings,
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
@@ -29,6 +30,7 @@ import {
   UnsupportedDeviceDraft,
 } from './DeviceCopyNotices.js';
 import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
+import { unsupportedEffortIssues } from './effort-issues.js';
 import {
   fieldErrorIssues,
   issueKey,
@@ -123,7 +125,25 @@ export function EditorPage() {
   const models = useModelCatalog();
   // Start the first no-turn check and defaults load before an inference dialog is opened.
   usePreflight();
-  useSettings();
+  const settings = useSettings();
+  const processDefaults = useProcessModelDefaults();
+  // An inherited model is known only once both defaults levels have been read, as in the pickers.
+  const knownDefaults = useMemo(() => {
+    const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
+    return settings.data !== undefined &&
+      processDefaults.data !== undefined &&
+      !settings.isError &&
+      !processDefaults.isError &&
+      owner.success
+      ? { owner: owner.data, process: processDefaults.data }
+      : undefined;
+  }, [settings.data, settings.isError, processDefaults.data, processDefaults.isError]);
+  // A kept effort the node's model does not offer: the API refuses to save the draft, so its own
+  // check never sees it. Name the node and field here as soon as the model or effort changes.
+  const effortIssues = useMemo(
+    () => (definition ? unsupportedEffortIssues(definition, models.data, knownDefaults) : []),
+    [definition, models.data, knownDefaults],
+  );
   const classifiers = useClassifierModels();
   const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
   // A failed refresh leaves cached choices available, but cannot certify publication readiness.
@@ -192,9 +212,17 @@ export function EditorPage() {
   }, [queryClient, loopId, catalogState]);
   const validation = useMemo(
     () => ({
-      issues: mergeIssues(local, serverCheck.data, fieldErrorIssues(fieldErrors)),
+      issues: mergeIssues(
+        { ...local, issues: [...local.issues, ...effortIssues] },
+        // The API's report of the same node's unsupported effort says less than the editor's.
+        serverCheck.data?.filter(
+          (issue) =>
+            !effortIssues.some((own) => own.code === issue.code && own.nodeId === issue.nodeId),
+        ),
+        fieldErrorIssues(fieldErrors),
+      ),
     }),
-    [local, serverCheck.data, fieldErrors],
+    [local, effortIssues, serverCheck.data, fieldErrors],
   );
 
   const publish = useMutation({

@@ -1,0 +1,207 @@
+{
+  "scenario": "s1-ctrlc-codex",
+  "passed": 22,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "A0 the Codex CLI is not attached to the gateway console (own hidden console)",
+      "ok": true,
+      "detail": {
+        "status": 0,
+        "entries": [
+          "28816:node",
+          "53072:launcher2"
+        ]
+      }
+    },
+    {
+      "id": "A0 run running before Ctrl+C",
+      "ok": true,
+      "detail": "running"
+    },
+    {
+      "id": "A1 one Ctrl+C starts a normal drain and the gateway keeps running",
+      "ok": true,
+      "detail": [
+        "draining",
+        "draining",
+        "draining",
+        "draining",
+        "draining",
+        "draining"
+      ]
+    },
+    {
+      "id": "A1 the Codex CLI survives the Ctrl+C (every sample)",
+      "ok": true,
+      "detail": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "id": "A1 the run stays running and listed as active work",
+      "ok": true,
+      "detail": {
+        "msSinceSignal": 4244,
+        "phase": "draining",
+        "active": [
+          "01M5VV1GK0CYE9SCAV9TNBK40N"
+        ],
+        "gatewayExit": null,
+        "cliAlive": true,
+        "status": "running"
+      }
+    },
+    {
+      "id": "A1 the gateway log has no Codex turn failure (no 3221225786 / 0xC000013A)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "A2 after the grace the notice lists the Codex run with its loop name",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A2 the notice offers Keep waiting and Force stop",
+      "ok": true,
+      "detail": [
+        "Keep waiting",
+        "Force stop"
+      ]
+    },
+    {
+      "id": "A2 the turn is still alive at expiry",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A3 releasing the turn lets the drain complete: gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A3 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A3 the browser sent no shutdown POST",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T10:10:38.523Z",
+          "method": "GET",
+          "tab": "a"
+        },
+        {
+          "at": "2026-10-26T10:10:48.526Z",
+          "method": "GET",
+          "tab": "a"
+        },
+        {
+          "at": "2026-10-26T10:10:50.535Z",
+          "method": "GET",
+          "tab": "a"
+        }
+      ]
+    },
+    {
+      "id": "A4 after restart the run is succeeded (the turn reached its result)",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "A4 the fake CLI ran exactly one turn (no re-run after restart)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "A5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B1 first Ctrl+C drains with the turn alive",
+      "ok": true,
+      "detail": {
+        "msSinceSignal": 2947,
+        "phase": "draining",
+        "active": [
+          "01M5VV2831DDSNQS8Q0NG0VXZY"
+        ],
+        "gatewayExit": null,
+        "cliAlive": true,
+        "status": "running"
+      }
+    },
+    {
+      "id": "B2 a later Ctrl+C forces and the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B2 the Codex CLI is gone",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B2 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B3 after restart the run records RUN_INTERRUPTED_BY_STOP, non-resumable, effects may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "B3 no HARNESS_TERMINATION_UNCONFIRMED or HARNESS_DELIVERY_UNCERTAIN in the run events",
+      "ok": true,
+      "detail": [
+        {
+          "type": "run.failed",
+          "code": "RUN_INTERRUPTED_BY_STOP"
+        }
+      ]
+    },
+    {
+      "id": "B4 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T10:10:38.523Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:10:48.526Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:10:50.535Z",
+      "method": "GET",
+      "tab": "a"
+    }
+  ]
+}

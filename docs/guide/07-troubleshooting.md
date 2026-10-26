@@ -316,7 +316,11 @@ message alone does not prove process exit or resource release. Read access needs
 Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible external
 effects. They do not automatically resume. Inspect what happened before explicitly replaying.
 An unconfirmed termination caused by this force leaves the listener, store and lock held in
-`force-failed`. Inspect logs and native processes. A further force request or deliberate later
+`force-failed`. Inspect logs and native processes. For a Codex turn this is
+`HARNESS_TERMINATION_UNCONFIRMED`: the Codex CLI was stopped, but a process it started kept its
+output open for five seconds. GraphGoblin cannot reach that process, and its parent is gone, so
+find it by its command line (for example in Task Manager's Details tab with the Command line
+column shown) and end it yourself, before or after **Force exit**. A further force request or deliberate later
 signal exits with code 1 after a 100 ms response-flush allowance, retains the failure and leaves
 the lock for next-start reclamation. Earlier unconfirmed failures appear in `unconfirmedRunIds`
 but do not trap a later normal stop. A drain observation failure uses `drain-failed`; invalid
@@ -330,6 +334,10 @@ SIGKILL cannot record managed force evidence.
 On Windows, use the API controls when stopping from another process. Windows `taskkill`
 and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
 they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.
+Ctrl+C in the gateway's own terminal window does work on Windows: scripts, the Claude CLI and
+the Codex CLI each run with their own hidden console, so the keypress reaches only the gateway,
+which drains while their work continues. A Windows-only test drives this with a real console
+Ctrl+C (`apps/api/src/shutdown-console.test.ts`).
 
 ## A provider conversation is missing
 

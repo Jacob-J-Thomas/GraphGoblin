@@ -175,6 +175,14 @@ function sharedEfforts(entries: readonly ModelCatalogEntry[]): readonly string[]
   );
 }
 
+/**
+ * A kept explicit effort the selected model does not offer, for the Effort field and the editor's
+ * issue list alike. The choice is never changed for the user; they pick another effort or Default.
+ */
+export function unsupportedEffortMessage(effort: string, model: string): string {
+  return `Effort ${effort} is not supported by ${model}. Choose a supported effort or Default.`;
+}
+
 /** Catalog warnings from the editor validation list, already relative to this form's value. */
 export const CatalogWarningsContext = createContext<
   readonly { path?: string | undefined; code: string; message: string }[]
@@ -480,7 +488,13 @@ function CatalogField({
                   : `This model is ${status === 'not in catalog' ? 'not in the catalog' : status}. ${kept}`,
               ]
             : []),
-          ...(unsupported ? [`This effort is not supported by the selected model. ${kept}`] : []),
+          ...(unsupported
+            ? [
+                entry
+                  ? unsupportedEffortMessage(value, entry.displayName)
+                  : `This effort is not supported by the selected model. ${kept}`,
+              ]
+            : []),
           ...(supportUnknown
             ? [`Effort support is unknown until the inherited model can be read. ${kept}`]
             : []),

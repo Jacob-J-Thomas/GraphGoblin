@@ -1,0 +1,57 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+
+// PR #417 behaviour QA: controlled fake Codex CLI (no network, no provider). Written for this QA.
+// - Answers the adapter's preflight probes (--version, --help, login status).
+// - For a turn: writes its PID to %QA_CODEX_PID%, prints thread.started and turn.started, then
+//   holds the turn until %QA_CODEX_PID%.release exists, when it completes the turn
+//   (agent_message + turn.completed) and exits 0. It gives up after 300 s and exits 0 without
+//   completing (the turn then fails), so a forgotten fixture cannot run for ever.
+// - With QA_CODEX_TOOL_CHILD=1 it first starts one "tool" child (itself with --qa-tool) that
+//   inherits its standard handles, including its stdout pipe, like a CLI running a long command.
+//   The tool writes its PID to %QA_CODEX_PID%.tool and sleeps 240 s.
+// - Every turn's argv is appended to %QA_CODEX_PID%.argv (one line per turn).
+public static class QaCodex {
+  public static int Main(string[] args) {
+    if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return 0; }
+    if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
+    if (Array.IndexOf(args, "login") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return 0; }
+    string pidFile = Environment.GetEnvironmentVariable("QA_CODEX_PID");
+    if (Array.IndexOf(args, "--qa-tool") >= 0) {
+      File.WriteAllText(pidFile + ".tool", Process.GetCurrentProcess().Id.ToString());
+      Thread.Sleep(240000);
+      return 0;
+    }
+    File.AppendAllText(pidFile + ".argv", string.Join(" ", args) + Environment.NewLine);
+    if (Environment.GetEnvironmentVariable("QA_CODEX_TOOL_CHILD") == "1") {
+      var psi = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, "--qa-tool");
+      psi.UseShellExecute = false;
+      psi.CreateNoWindow = true;
+      psi.RedirectStandardInput = true;
+      psi.RedirectStandardOutput = true;
+      psi.RedirectStandardError = true;
+      Process.Start(psi);
+      for (int i = 0; i < 100 && !File.Exists(pidFile + ".tool"); i++) Thread.Sleep(50);
+    }
+    // Drain stdin (the prompt) without blocking the turn.
+    var reader = new Thread(() => { try { Console.In.ReadToEnd(); } catch { } });
+    reader.IsBackground = true;
+    reader.Start();
+    File.WriteAllText(pidFile, Process.GetCurrentProcess().Id.ToString());
+    Console.WriteLine("{\"type\":\"thread.started\",\"thread_id\":\"qa-417-session-" + Process.GetCurrentProcess().Id + "\"}");
+    Console.WriteLine("{\"type\":\"turn.started\"}");
+    Console.Out.Flush();
+    for (int waited = 0; waited < 300000; waited += 50) {
+      if (File.Exists(pidFile + ".release")) {
+        Console.WriteLine("{\"type\":\"item.completed\",\"item\":{\"id\":\"qa\",\"type\":\"agent_message\",\"text\":\"Released by QA\"}}");
+        Console.WriteLine("{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":1,\"cached_input_tokens\":0,\"output_tokens\":1,\"reasoning_output_tokens\":0}}");
+        Console.Out.Flush();
+        return 0;
+      }
+      Thread.Sleep(50);
+    }
+    return 0;
+  }
+}
