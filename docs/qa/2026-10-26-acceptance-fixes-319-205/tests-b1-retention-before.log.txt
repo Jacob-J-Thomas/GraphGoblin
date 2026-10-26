@@ -1,0 +1,26 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/packages/adapter-codex
+
+ ❯ src/retention.test.ts (1 test | 1 failed) 27ms
+   × keeps no consumed stream step reachable, so a long progress stream holds bounded memory 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/retention.test.ts > keeps no consumed stream step reachable, so a long progress stream holds bounded memory
+AssertionError: expected 2000 to be less than 20
+ ❯ src/retention.test.ts:51:20
+     49|   await expect(session.sessionId).resolves.toBe('retention-thread');
+     50|   // Every one of them stays reachable when each step's wait outlives …
+     51|   expect(retained).toBeLessThan(count / 100);
+       |                    ^
+     52| });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  05:13:18
+   Duration  3.20s (import 57%, transform 42%, tests 1%)
+

@@ -127,6 +127,33 @@ Run from the worktree root with Node `v22.23.4` first on `PATH`; API tests with 
 
 The two native shutdown test files pinned ports 5760-5769, outside this run's allocation. Commit `4ea76524` lets them use the range given by `GG_TEST_PORT_START` when it is set and keeps 5760-5769 otherwise.
 
+## Review round 1 (PR #417 scan 1)
+
+**B1, blocking: the termination deadline retained every stream step.** The Task 2 harness raced each SDK step against one promise that stays pending for the whole turn (`Promise.race([step, expired])`). Every losing race left a reaction on that promise, which kept the settled race promise and its event reachable while the session was. The reviewer's driver ([scripts/stream-probe.mjs](scripts/stream-probe.mjs)) streams 200,000 ignored progress events through the public `CodexHarness`, drains them and forces GC at each measurement. On the round-1 head the heap grew from 16 to 104 MiB ([stream-probe-before.log.txt](stream-probe-before.log.txt)); the original harness stayed at 16 MiB ([stream-probe-baseline.log.txt](stream-probe-baseline.log.txt)).
+
+- **Fix** (`packages/adapter-codex/src/harness.ts`). The shared pending promise is gone. Each wait registers its own reject function as the one current interrupt and unregisters it as soon as its step settles. When it fires, the deadline timer rejects whichever wait is registered. Until the turn finishes, the pump waits only in these steps and passes from one step to the next within a single microtask chain, so the timer always finds a wait to interrupt. The five-second acknowledgement, the failure code and its precedence are unchanged, and every Task 2 cancellation test passes unchanged.
+- **After:** the same driver stays at 16 MiB throughout, through completion and a later `cancel()` ([stream-probe-after.log.txt](stream-probe-after.log.txt)).
+- **Regression test:** `packages/adapter-codex/src/retention.test.ts`, `keeps no consumed stream step reachable, so a long progress stream holds bounded memory`.
+  - Through the public `CodexHarness` and its `clientFactory`, it streams 2,000 `item.updated` progress events that the turn ignores and keeps a `WeakRef` to each.
+  - After draining the events and the result, it ends the current job, forces GC and counts the events still reachable while the caller still holds the session.
+  - The bound is fewer than 20 (1%). On the round-1 head all 2,000 stayed reachable: `expected 2000 to be less than 20` ([tests-b1-retention-before.log.txt](tests-b1-retention-before.log.txt)). With the fix it passed in each of three consecutive runs.
+  - The adapter's Vitest configuration now starts its workers with `--expose-gc`, as the infrastructure and API packages already do.
+
+**N2, non-blocking: fixed delays in the exited-root tests.** Both tests slept 200 ms to assume Node had seen the root's exit, while the process holding the output left on its own after 1.5 s.
+
+- The holder now waits for a release file that the test writes just after cancelling, with a 30 s exit of its own so a failed run leaves nothing behind.
+- The `ProcessScripts` test observes the real root's `exit` through the public `spawnImpl` seam before cancelling.
+- `runClaudeProcess` exposes no such seam. That test cancels once the root is gone at the operating-system level. Release is the required outcome whether or not Node has reported the exit yet, and `killTree`'s own tests cover each of those two paths separately.
+
+**Checks after the fix** ([gates/](gates/) `b1-*`):
+
+| Check                                                                                                       | Result                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                                                    | 512 passed, 4 skipped. Statements 97.9%, branches 94.87%, functions 99%, lines 99.22%. In `harness.ts` only the two branches that were already uncovered remain uncovered.    |
+| `pnpm --filter @graphgoblin/infrastructure test:coverage` (`GG_TEST_PORT_START=6100 GG_TEST_PORT_COUNT=50`) | 803 passed. Statements 97.93%, branches 95.91%, functions 98.27%, lines 99.08%.                                                                                               |
+| `pnpm build`, then the seven `apps/api/src/shutdown-*.test.ts` files (API ports 6100-6149)                  | 28 passed. The 5 skipped are the Linux-only signal cases and the two cases that skip when this host confirms termination (D-015). All three new Windows console cases passed. |
+| `apps/web`: `pnpm exec playwright test e2e/shutdown.spec.ts` (Edge)                                         | 2/2 passed.                                                                                                                                                                   |
+
 ## Live provider checks for the orchestrator
 
 - **LP-1 (D-1).** On Windows, start the API in a terminal with the installed Codex login and this branch built, run a cheap inference that takes several seconds, press Ctrl+C once. Expected now: `GET /system/shutdown` reports `draining` with the run active, the run keeps going and completes, and the gateway then exits 0.
@@ -137,7 +164,7 @@ The two native shutdown test files pinned ports 5760-5769, outside this run's al
 
 ## Files
 
-- `README.md`; `sdk-releases.log.txt`; `console-probe.log.txt`; `j-before.log.txt`, `j-after.log.txt`; `o1-before.log.txt`, `o1-after.log.txt`; `codex-effort-probe.log.txt`; `codex-model-catalog.log.txt`; `tests-*-before.log.txt` (regression tests run against the original code) and `tests-console-after.log.txt`; `gates/*.log.txt`.
+- `README.md`; `sdk-releases.log.txt`; `console-probe.log.txt`; `j-before.log.txt`, `j-after.log.txt`; `o1-before.log.txt`, `o1-after.log.txt`; `codex-effort-probe.log.txt`; `codex-model-catalog.log.txt`; `tests-*-before.log.txt` (regression tests run against the original code, `tests-b1-*` against the round-1 head) and `tests-console-after.log.txt`; `stream-probe-*.log.txt` (review round 1); `gates/*.log.txt` (`b1-*` after review round 1).
 - `scripts/`: the drivers and probes (`*.mjs`), the C# helpers (`*.cs.txt`, compile with `Add-Type -TypeDefinition (Get-Content -Raw <file>) -OutputAssembly <exe> -OutputType ConsoleApplication`), and `redact-copy.mjs`, which copied captured output here.
 - Paths, the machine name and SIDs are redacted. Every file is under 1 MB, so there is no `NOT-KEPT.md`.
 
