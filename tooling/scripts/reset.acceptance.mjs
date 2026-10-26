@@ -104,7 +104,7 @@ test(
   'the built API refuses an older store, lists and then performs an explicit reset, and starts fresh',
   { timeout: 6 * TIMEOUT },
   async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-reset-acceptance-'));
+    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-acceptance-'));
     try {
       const dataDir = join(base, 'data');
       const outside = join(base, 'outside-repo');

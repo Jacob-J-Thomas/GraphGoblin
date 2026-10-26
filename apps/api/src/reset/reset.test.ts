@@ -41,7 +41,7 @@ let seeded: string;
 const bases: string[] = [];
 
 beforeAll(async () => {
-  seeded = await mkdtemp(join(tmpdir(), 'gg-reset-seeded-'));
+  seeded = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-seeded-'));
   await seedStores(seeded);
 }, 240_000);
 afterEach(async () => {
@@ -66,7 +66,7 @@ const linkDirectory = (target: string, path: string) =>
  * directory point at. `base` holds both, so one snapshot covers everything a reset could touch.
  */
 async function prepare(store: 'current' | 'format-3' | 'unmarked' | 'corrupt' | 'none') {
-  const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+  const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
   bases.push(base);
   const dataDir = join(base, 'data');
   const outside = join(base, 'outside-repo');
@@ -277,7 +277,7 @@ describe('reset dry run', () => {
   });
 
   it('says there is nothing to reset when the data directory does not exist, and creates nothing', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-reset-missing-'));
+    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-missing-'));
     bases.push(base);
     const dataDir = join(base, 'never-created');
     for (const argv of [['--reset'], ['--reset', '--yes', '--data-dir', dataDir]]) {
@@ -443,7 +443,7 @@ describe('confirmed reset', () => {
     await linkDirectory(outside, join(dataDir, 'artifacts', 'text'));
     await writeFile(join(outside, 'abc123'), 'same name as the listed artifact');
     await expect(executeReset(plan, () => undefined)).rejects.toThrow(
-      /^Reset stopped: could not remove artifacts\/text\/abc123: artifacts[/\\]text is no longer a physical directory/,
+      'Reset stopped: could not remove artifacts/text/abc123: artifacts/text/abc123: ancestor artifacts/text is now a link during the reset; no longer a physical directory',
     );
     expect(await snapshotTree(outside)).toEqual(
       [...outsideBefore, { path: 'abc123', kind: 'file', sha256: expect.any(String) }].sort(
@@ -564,7 +564,7 @@ describe('refused resets change nothing', () => {
   ])(
     'refuses a %s whose database is a regular file named like a directory the reset owns, reading nothing',
     async (_name, argv) => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -596,7 +596,7 @@ describe('refused resets change nothing', () => {
   it.runIf(CASE_INSENSITIVE_NAMES)(
     'compares names the way a case-insensitive volume does: reserved names in any case are refused and the database is listed once',
     async () => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -660,7 +660,7 @@ describe('refused resets change nothing', () => {
   it.runIf(process.platform === 'win32')(
     'resolves a Windows short-name alias to the listed entry it identifies',
     async ({ skip }) => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -850,7 +850,7 @@ describe('refused resets change nothing', () => {
   // confused: identity, not case folding, decides which entry a spelling names (the Sol
   // re-review's round-3 reproduction deleted the other file).
   it('plans exactly the configured file when another entry has a look-alike name', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
     bases.push(base);
     const dataDir = join(base, 'data');
     await mkdir(dataDir);
@@ -899,7 +899,7 @@ describe('refused resets change nothing', () => {
   it.skipIf(process.platform === 'win32')(
     'refuses a database that is a FIFO before reading it',
     async () => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -1035,7 +1035,7 @@ describe('refused resets change nothing', () => {
   });
 
   it('refuses a data directory that is a file', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-reset-file-'));
+    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-file-'));
     bases.push(base);
     await writeFile(join(base, 'data'), 'not a directory');
     const result = await reset(['--reset'], { GG_DATA_DIR: join(base, 'data') });
@@ -1057,7 +1057,7 @@ describe('refused resets change nothing', () => {
 
 describe('data directory layouts', () => {
   it('lists an empty data directory as nothing but the lock', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-reset-empty-'));
+    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-empty-'));
     bases.push(base);
     const result = await reset(['--reset'], { GG_DATA_DIR: base });
     expect(result.code).toBe(0);
@@ -1111,7 +1111,15 @@ describe('data directory layouts', () => {
             {
               path: '../outside-repo',
               what: 'artifacts',
-              entries: [{ path: '../outside-repo', kind: 'directory', bytes: 0, identity: '0:0' }],
+              entries: [
+                {
+                  path: '../outside-repo',
+                  kind: 'directory',
+                  bytes: 0,
+                  identity: '0:0',
+                  ancestors: [],
+                },
+              ],
             },
           ],
           kept: [],
@@ -1154,7 +1162,13 @@ describe('entry kinds and manifest invariants', () => {
   });
 
   it('refuses a manifest that lists an entry twice or both removes and keeps it', () => {
-    const entry = { path: 'artifacts', kind: 'file' as const, bytes: 1, identity: '1:7' };
+    const entry = {
+      path: 'artifacts',
+      kind: 'file' as const,
+      bytes: 1,
+      identity: '1:7',
+      ancestors: [],
+    };
     expect(() =>
       assertDisjointManifest(
         [

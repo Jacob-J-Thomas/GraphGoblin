@@ -1,10 +1,10 @@
 import { lstat, readdir, rmdir, unlink } from 'node:fs/promises';
-import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
+import { isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
 
 /**
- * Filesystem entries of a reset, read and removed without following links (ADR-0042). A symbolic
- * link or Windows junction is an entry of its own: listing never descends into it and removal
- * removes the link, never its target. Anything that is neither a regular file, a directory nor a
+ * Filesystem entries of a reset (ADR-0042). An entry identified as a symbolic link or Windows
+ * junction is listed without descending into it and unlinked itself. See removeEntry for the
+ * remaining external-process race. Anything that is neither a regular file, a directory nor a
  * link (a FIFO, a socket, a device) is `other`: it is never accepted as a database file, and inside
  * a removed directory it is unlinked like any other non-directory entry.
  */
@@ -18,6 +18,8 @@ export interface TreeEntry {
   bytes: number;
   /** Filesystem identity (device and file index), so two spellings of one entry compare equal. */
   identity: string;
+  /** Physical directories from the root (`path: ''`) inward, including kept ancestors. */
+  ancestors: { path: string; identity: string }[];
 }
 
 export function hasCode(error: unknown, code: string): boolean {
@@ -70,6 +72,19 @@ const absolute = (root: string, path: string): string => join(root, ...path.spli
 export async function statEntry(root: string, path: string): Promise<TreeEntry | undefined> {
   try {
     const full = absolute(root, path);
+    if (!isInside(root, full)) throw new Error(`${path} is not inside the data directory`);
+    const segments = path.split('/');
+    const ancestors: TreeEntry['ancestors'] = [];
+    // Snapshot the whole route before inspecting the leaf, without entering a link. In a confirmed
+    // reset these identities come from the fresh plan made while holding the data-directory lock.
+    for (let depth = 0; depth < segments.length; depth += 1) {
+      const parent = segments.slice(0, depth).join('/');
+      const parentFull = absolute(root, parent);
+      const stats = await lstat(parentFull, { bigint: true });
+      if (kindOf(stats) !== 'directory')
+        throw new Error(`${parent || 'data-directory root'} is not a physical directory`);
+      ancestors.push({ path: parent, identity: identityFrom(parentFull, stats) });
+    }
     const stats = await lstat(full, { bigint: true });
     const kind = kindOf(stats);
     return {
@@ -77,6 +92,7 @@ export async function statEntry(root: string, path: string): Promise<TreeEntry |
       kind,
       bytes: kind === 'file' ? Number(stats.size) : 0,
       identity: identityFrom(full, stats),
+      ancestors,
     };
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
@@ -99,23 +115,47 @@ export async function listEntry(root: string, path: string): Promise<TreeEntry[]
 }
 
 /**
- * Remove one listed entry. Immediately before the change, every ancestor up to `root` must still
- * be a physical directory and the entry must still be what was listed, so a directory swapped for
- * a link after listing is refused rather than followed. Directories are removed only when empty.
+ * Remove one listed entry. Recheck the planned identity of the physical root, every physical
+ * ancestor (including kept directories), and the entry, root first, immediately before removal.
+ * Node offers no handle-relative removal: these checks narrow but cannot eliminate a race with
+ * an external process changing the tree between a check and unlink/rmdir. The reset holds the
+ * data-directory lock, so GraphGoblin itself does not change it concurrently. Only empty physical
+ * directories are removed; links are unlinked themselves.
  */
 export async function removeEntry(root: string, entry: TreeEntry): Promise<void> {
   const full = absolute(root, entry.path);
   if (!isInside(root, full)) throw new Error(`${entry.path} is not inside the data directory`);
-  for (let parent = dirname(full); parent !== root; parent = dirname(parent)) {
-    const stats = await lstat(parent);
-    if (!stats.isDirectory() || stats.isSymbolicLink())
-      throw new Error(`${relative(root, parent)} is no longer a physical directory`);
+  for (const parent of entry.ancestors) {
+    const parentFull = absolute(root, parent.path);
+    const description = `${entry.path}: ${parent.path ? `ancestor ${parent.path}` : 'data-directory root'}`;
+    const stats = await removalStat(parentFull, description);
+    const kind = kindOf(stats);
+    if (kind !== 'directory')
+      throw new Error(
+        `${description} is now a ${kind} during the reset; no longer a physical directory`,
+      );
+    if (identityFrom(parentFull, stats) !== parent.identity)
+      throw new Error(`${description} was replaced during the reset`);
   }
-  const now = kindOf(await lstat(full));
+  const stats = await removalStat(full, entry.path);
+  const now = kindOf(stats);
   if (now !== entry.kind)
     throw new Error(`${entry.path} changed from a ${entry.kind} to a ${now} during the reset`);
+  if (identityFrom(full, stats) !== entry.identity)
+    throw new Error(`${entry.path} was replaced during the reset`);
   // `unlink` removes a symbolic link or Windows junction itself (libuv uses RemoveDirectory for a
   // directory link), never its target.
   if (entry.kind === 'directory') await rmdir(full);
   else await unlink(full);
+}
+
+/** Missing paths are a changed plan too; identify what moved instead of reporting only ENOENT. */
+async function removalStat(path: string, description: string) {
+  try {
+    return await lstat(path, { bigint: true });
+  } catch (error) {
+    if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR'))
+      throw new Error(`${description} was moved or removed during the reset`, { cause: error });
+    throw error;
+  }
 }
