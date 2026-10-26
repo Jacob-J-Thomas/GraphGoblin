@@ -2,6 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { execFile, fork } from 'node:child_process';
 import { promisify } from 'node:util';
+import { finished } from 'node:stream/promises';
 import { createServer } from 'node:http';
 import { createServer as createSocketServer } from 'node:net';
 import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises';
@@ -239,8 +240,9 @@ test('native measurement worker rejects malformed IPC and cancels an unfinished 
     execArgv: ['--experimental-import-meta-resolve', '--expose-gc'],
     stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
   });
-  const cleanup = () => {
+  const cleanup = async () => {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    await deadline(exited, 'forced worker cleanup');
   };
   t.onTestFinished(cleanup);
   let stderr = '';
@@ -254,10 +256,15 @@ test('native measurement worker rejects malformed IPC and cancels an unfinished 
   });
   const pending = new Map();
   let nextId = 0;
-  const exited = new Promise((resolve, reject) => {
-    child.once('error', reject);
-    child.once('close', (code, signal) => resolve({ code, signal }));
-  });
+  // Observe the process and its only pipe separately: explicit IPC disconnect can omit
+  // ChildProcess's aggregate 'close' event even after 'exit' and stderr completion.
+  const exited = Promise.all([
+    new Promise((resolve, reject) => {
+      child.once('error', reject);
+      child.once('exit', (code, signal) => resolve({ code, signal }));
+    }),
+    finished(child.stderr),
+  ]).then(([exit]) => exit);
   void exited.then(() => {
     readyReject(new Error('worker closed: ' + stderr));
     for (const entry of pending.values()) {
@@ -308,6 +315,7 @@ test('native measurement worker rejects malformed IPC and cancels an unfinished 
     assert.equal(empty.walBytes, 0);
     await assert.rejects(call('unknown-command'), /not a function/);
     const booted = await call('boot');
+    assert.equal(booted.pid, child.pid, 'the API runs inside the measurement worker');
     await assert.rejects(call('begin', { passes: 0, inference: true }), /VALIDATION_FAILED/);
     const started = await call('begin', {
       passes: 3,
@@ -319,17 +327,16 @@ test('native measurement worker rejects malformed IPC and cancels an unfinished 
     });
     await call('close');
     const reopened = await call('boot');
+    assert.equal(reopened.pid, child.pid);
     assert.equal((await json(reopened.base, '/runs/' + started.runId)).status, 'cancelled');
     assert.match(booted.base, /^http:\/\/127\.0\.0\.1:/);
     await call('close');
+    // Let disconnect finish the worker's API/profile cleanup and flush subprocess coverage.
+    // SIGKILL is reserved for failure cleanup, which must also observe exit and pipe closure.
     child.disconnect();
-    // IPC disconnect did not produce a close event in the Windows sandbox. The cancelled
-    // run/file-reopen assertions above are separate from forced fixture cleanup;
-    // no graceful worker-exit claim is made (see the #264 QA record).
-    cleanup();
-    await deadline(exited, 'forced worker cleanup');
+    assert.deepEqual(await deadline(exited, 'worker shutdown'), { code: 0, signal: null });
   } finally {
-    cleanup();
+    await cleanup();
   }
 });
 
