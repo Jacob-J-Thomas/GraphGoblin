@@ -28,7 +28,7 @@ export class HistoryCleanup {
     private readonly capacity: StorageCapacityPort,
     private readonly store: Pick<
       SqliteHistoryCleanup,
-      'prepareBatch' | 'reapBatch' | 'reusableBytes'
+      'prepareBatch' | 'reapBatch' | 'reusableBytes' | 'hasApprovedCandidates'
     >,
     private readonly paths: { name: 'data' | 'database'; path: string }[],
     private readonly clock: ClockPort,
@@ -98,14 +98,18 @@ export class HistoryCleanup {
       const result = this.stopped
         ? { bytes: 0, pending: this.snapshot.pendingResources, preserved: 0 }
         : await this.store.reapBatch();
+      const reusableDatabaseBytes = await this.store.reusableBytes();
+      // A bounded pass may leave candidates behind. Do not claim none exist without a final
+      // indexed probe, including approvals committed while this pass was reaping resources.
+      const candidatesRemain = await this.store.hasApprovedCandidates('local');
       this.snapshot = {
         ...this.snapshot,
         deletedRuns,
         removedFileBytes: result.bytes,
-        reusableDatabaseBytes: await this.store.reusableBytes(),
+        reusableDatabaseBytes,
         pendingResources: result.pending,
         preservedResources: result.preserved,
-        state: deletedRuns || result.bytes ? 'pressure' : 'no-eligible',
+        state: deletedRuns || result.bytes || candidatesRemain ? 'pressure' : 'no-eligible',
       };
       this.logger.warn(
         { deletedRuns, pendingResources: result.pending, preservedResources: result.preserved },

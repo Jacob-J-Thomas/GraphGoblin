@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { writeFile, lstat, mkdtemp, rm } from 'node:fs/promises';
+import { writeFile, lstat, mkdtemp, rm, readFile, symlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { DeletionPreview, RunRecord, StorageStatus } from '@graphgoblin/contracts';
@@ -141,6 +141,95 @@ it('warns with no eligible history and treats successful and failed retained run
   );
 });
 
+it('cleans an older run approved between pressure passes without a false no-eligible status', async () => {
+  const { api, poll } = await controlled();
+  const pair = [await complete(api), await complete(api)].sort((a, b) => a.id.localeCompare(b.id));
+  const older = pair[0]!,
+    newer = pair[1]!;
+  await mark(api, [newer.id]);
+  await poll(0);
+  expect((await api.app.inject(`/runs/${newer.id}`)).statusCode).toBe(404);
+  await mark(api, [older.id]);
+  await poll(0);
+  expect(api.container.historyCleanup.status()).toMatchObject({
+    state: 'pressure',
+    deletedRuns: 1,
+  });
+  expect((await api.app.inject(`/runs/${older.id}`)).statusCode).toBe(404);
+});
+
+it('refuses noncanonical artifact references before retained input can depend on them', async () => {
+  const { api, poll } = await controlled();
+  const owner = await complete(api, true);
+  const artifact = (await api.container.manager.getThread(owner.id))!.artifacts[0]!;
+  const [kind, hash] = artifact.ref.slice('artifact:'.length).split('/');
+  const spellings = [
+    artifact.ref.toUpperCase(),
+    `artifact:${kind!.toUpperCase()}/${hash}`,
+    `artifact:${kind}/${hash!.toUpperCase()}`,
+    artifact.ref + '\n',
+    artifact.ref.replace('/', '\\'),
+    artifact.ref.replace('/', '//'),
+    artifact.ref.replace('/', '/./'),
+    artifact.ref.replace(':', ':/'),
+  ];
+  for (const ref of spellings)
+    expect(await api.container.ports.artifacts.get(ref), ref).toBeUndefined();
+  const loop = await api.publishLoop(minimalLoop());
+  const response = await api.app.inject({
+    method: 'POST',
+    url: `/loops/${loop}/runs`,
+    payload: { input: { refs: spellings, canonical: artifact.ref } },
+  });
+  expect(response.statusCode).toBe(202);
+  const retained = response.json<{ run: RunRecord }>().run;
+  await api.idle();
+  await mark(api, [owner.id]);
+  await poll(0);
+  expect((await api.app.inject(`/runs/${retained.id}`)).statusCode).toBe(200);
+  expect(await api.container.ports.artifacts.get(artifact.ref)).toBeDefined();
+  for (const ref of spellings) expect(await api.container.ports.artifacts.get(ref)).toBeUndefined();
+});
+
+it.each(['direct', 'missing-descendant', 'containing'] as const)(
+  'protects a waiting run workspace configured through a %s junction',
+  async (mode) => {
+    const { api, poll } = await controlled();
+    const owner = await complete(api, true);
+    const workspace = api.harness.started[0]!.workingDirectory;
+    await writeFile(join(workspace, 'retain.txt'), 'retained input bytes');
+    const alias = join(api.dataDir, 'configured-alias');
+    await symlink(
+      mode === 'containing' ? join(api.dataDir, 'workspaces') : workspace,
+      alias,
+      'junction',
+    );
+    const path = mode === 'missing-descendant' ? join(alias, 'missing', 'child') : alias;
+    const definition = singleNodeLoop('Retained waiting work', {
+      id: 'wait',
+      kind: 'wait',
+      label: 'Wait',
+      config: { mode: 'duration', seconds: 3600 },
+    });
+    definition.settings = { workingDirectory: { kind: 'fixed', path } };
+    const loop = await api.publishLoop(definition);
+    const started = await api.app.inject({
+      method: 'POST',
+      url: `/loops/${loop}/runs`,
+      payload: {},
+    });
+    expect(started.statusCode).toBe(202);
+    const retained = started.json<{ run: RunRecord }>().run;
+    await api.idle();
+    const before = (await api.app.inject(`/runs/${retained.id}`)).json<RunRecord>();
+    expect(before.status).toBe('waiting');
+    await mark(api, [owner.id]);
+    await poll(0);
+    expect(await readFile(join(workspace, 'retain.txt'), 'utf8')).toBe('retained input bytes');
+    expect((await api.app.inject(`/runs/${retained.id}`)).json()).toEqual(before);
+  },
+);
+
 it('deletes disposable owned outputs and approved rows while retained shared artifacts remain retrievable', async () => {
   const { api, poll } = await controlled();
   api.harness.script([
@@ -240,6 +329,7 @@ it('schedules one pass per minute and cancels its timer on stop', async () => {
     prepareBatch: vi.fn(() => Promise.resolve(0)),
     reapBatch: vi.fn(() => Promise.resolve({ bytes: 0, preserved: 0, pending: 0 })),
     reusableBytes: vi.fn(() => Promise.resolve(0)),
+    hasApprovedCandidates: vi.fn(() => Promise.resolve(false)),
   };
   const cleanup = new HistoryCleanup(
     { read },
@@ -258,6 +348,24 @@ it('schedules one pass per minute and cancels its timer on stop', async () => {
   clock.advance(60_000);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(read).toHaveBeenCalledTimes(2);
+});
+
+it('keeps a pressure status when a bounded pass leaves approved candidates unexamined', async () => {
+  const cleanup = new HistoryCleanup(
+    { read: () => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 0 }) },
+    {
+      prepareBatch: () => Promise.resolve(0),
+      reapBatch: () => Promise.resolve({ bytes: 0, preserved: 0, pending: 0 }),
+      reusableBytes: () => Promise.resolve(0),
+      hasApprovedCandidates: () => Promise.resolve(true),
+    },
+    [{ name: 'data', path: 'unused' }],
+    new FakeClock(),
+    new CapturingLogger(),
+  );
+  await cleanup.start(false);
+  expect(cleanup.status()).toMatchObject({ state: 'pressure', deletedRuns: 0 });
+  await cleanup.stop();
 });
 
 it('observes an external SQLite volume through the public capacity port without exposing its path', async () => {

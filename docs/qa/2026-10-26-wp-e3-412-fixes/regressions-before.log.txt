@@ -1,0 +1,105 @@
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/api
+
+ ❯ src/history-cleanup.test.ts (17 tests | 5 failed) 5779ms
+   × cleans an older run approved between pressure passes without a false no-eligible status 363ms
+   × refuses noncanonical artifact references before retained input can depend on them 352ms
+   × protects a waiting run workspace configured through a direct junction 392ms
+   × protects a waiting run workspace configured through a missing-descendant junction 446ms
+   × protects a waiting run workspace configured through a containing junction 458ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > cleans an older run approved between pressure passes without a false no-eligible status
+AssertionError: expected { state: 'no-eligible', …(8) } to match object { state: 'pressure', deletedRuns: 1 }
+(7 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "deletedRuns": 1,
+-   "state": "pressure",
++   "deletedRuns": 0,
++   "state": "no-eligible",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/history-cleanup.test.ts:153:49
+    151|   await mark(api, [older.id]);
+    152|   await poll(0);
+    153|   expect(api.container.historyCleanup.status()).toMatchObject({ state:…
+       |                                                 ^
+    154|   expect((await api.app.inject(`/runs/${older.id}`)).statusCode).toBe(…
+    155| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > refuses noncanonical artifact references before retained input can depend on them
+AssertionError: ARTIFACT:TRANSCRIPT/9D0D7FE60D44E79C506DA7285E1F5DDE2939BFBCD83CE11BC1443E4A42D337AC: expected '[{"id":"i1","type":"message","summary…' to be undefined
+System.Management.Automation.RemoteException
+- Expected:
+undefined
+System.Management.Automation.RemoteException
++ Received:
+"[{\"id\":\"i1\",\"type\":\"message\",\"summary\":\"OK\"}]"
+System.Management.Automation.RemoteException
+ ❯ src/history-cleanup.test.ts:168:90
+    166|     artifact.ref.replace('/', '/./'), artifact.ref.replace(':', ':/'),
+    167|   ];
+    168|   for (const ref of spellings) expect(await api.container.ports.artifa…
+       |                                                                                          ^
+    169|   const loop = await api.publishLoop(minimalLoop());
+    170|   const response = await api.app.inject({ method: 'POST', url: `/loops…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > protects a waiting run workspace configured through a direct junction
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-I9IKjX\workspaces\01M3Y7RKG0K8TQB5PXMARC51Y1\retain.txt'
+ ❯ src/history-cleanup.test.ts:203:12
+    201|     await mark(api, [owner.id]);
+    202|     await poll(0);
+    203|     expect(await readFile(join(workspace, 'retain.txt'), 'utf8')).toBe…
+       |            ^
+    204|     expect((await api.app.inject(`/runs/${retained.id}`)).json()).toEq…
+    205|   },
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > protects a waiting run workspace configured through a missing-descendant junction
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-uTMcqJ\workspaces\01M3Y7RKG09TPP6DQQ37FAGB96\retain.txt'
+ ❯ src/history-cleanup.test.ts:203:12
+    201|     await mark(api, [owner.id]);
+    202|     await poll(0);
+    203|     expect(await readFile(join(workspace, 'retain.txt'), 'utf8')).toBe…
+       |            ^
+    204|     expect((await api.app.inject(`/runs/${retained.id}`)).json()).toEq…
+    205|   },
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > protects a waiting run workspace configured through a containing junction
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-IHmxX9\workspaces\01M3Y7RKG067XYFPD433EBT6S9\retain.txt'
+ ❯ src/history-cleanup.test.ts:203:12
+    201|     await mark(api, [owner.id]);
+    202|     await poll(0);
+    203|     expect(await readFile(join(workspace, 'retain.txt'), 'utf8')).toBe…
+       |            ^
+    204|     expect((await api.app.inject(`/runs/${retained.id}`)).json()).toEq…
+    205|   },
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 12 passed (17)
+   Start at  02:28:12
+   Duration  15.35s (tests 39%, import 38%, transform 23%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\api
+System.Management.Automation.RemoteException
+EXIT 1

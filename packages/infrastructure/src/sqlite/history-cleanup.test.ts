@@ -8,6 +8,7 @@ import {
   lstat,
   readdir,
   rename,
+  symlink,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -368,4 +369,57 @@ it('protects artifact references in retained inbound input even after its produc
   expect(await store.prepareBatch('local')).toBe(1);
   expect(await store.reapBatch()).toMatchObject({ bytes: 0, preserved: 1, pending: 1 });
   expect(await resources.artifacts.get(artifact.ref)).toBe('retained input');
+});
+
+it.each(['alias', 'missing-descendant', 'case', 'error', 'deep'] as const)(
+  'keeps owned workspaces when a recorded retained use resolves through %s',
+  async (mode) => {
+    const owner = await seed('owner'),
+      retained = await seed('retained');
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+    await writeFile(join(workspace, 'keep.txt'), 'retained bytes');
+    const alias = join(directory, 'alias');
+    await symlink(workspace, alias, 'junction');
+    let path = alias;
+    if (mode === 'missing-descendant') path = join(alias, 'missing', 'child');
+    if (mode === 'case') path = process.platform === 'win32' ? alias.toUpperCase() : alias;
+    if (mode === 'error') {
+      const file = join(directory, 'not-a-directory');
+      await writeFile(file, 'blocker');
+      path = join(file, 'child');
+    }
+    if (mode === 'deep') path = join(directory, ...Array.from({ length: 65 }, () => 'x'));
+    await new SqliteRunResources(handle.db).use(retained, `workspace:${path}`, path);
+    await mark([owner]);
+    expect(await store.prepareBatch('local')).toBe(1);
+    expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending: 1, preserved: 1 });
+    expect(await readFile(join(workspace, 'keep.txt'), 'utf8')).toBe('retained bytes');
+    expect(await repo.get(retained)).toBeDefined();
+  },
+);
+
+it('wraps the root batch in the same pass after an older run is newly approved', async () => {
+  const ids = [await seed('a'), await seed('z')].sort();
+  await mark([ids[1]!]);
+  expect(await store.prepareBatch('local')).toBe(1);
+  await mark([ids[0]!]);
+  expect(await store.prepareBatch('local')).toBe(1);
+  expect(await store.hasApprovedCandidates('local')).toBe(false);
+});
+
+it('keeps workspace bytes when retained paths exceed the 2000-path proof budget', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+  await writeFile(join(workspace, 'keep.txt'), 'unproven bytes');
+  const paths = Array.from({ length: 2001 }, (_, i) => join(directory, `missing-${i}`));
+  await handle.client.execute({
+    sql: `INSERT INTO run_resource_uses(run_id,key,path) VALUES ${paths.map(() => '(?,?,?)').join(',')}`,
+    args: paths.flatMap((path) => [retained, `workspace:${path}`, path]),
+  });
+  await mark([owner]);
+  expect(await store.hasApprovedCandidates('local')).toBe(true);
+  expect(await store.prepareBatch('local')).toBe(1);
+  expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending: 1, preserved: 1 });
+  expect(await readFile(join(workspace, 'keep.txt'), 'utf8')).toBe('unproven bytes');
 });

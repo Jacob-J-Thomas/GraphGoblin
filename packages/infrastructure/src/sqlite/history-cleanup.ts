@@ -1,6 +1,7 @@
 import { DeletionApprovalSchema, TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import { and, eq, gt, inArray, sql } from 'drizzle-orm';
-import { resolve, sep } from 'node:path';
+import { realpath, stat } from 'node:fs/promises';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import type { OwnedRunResource, OwnedRunResources } from '../fs/owned-resources.js';
 import type { Database, SqliteTransaction } from './db.js';
 import { deleteRuns } from './delete-runs.js';
@@ -15,6 +16,33 @@ type Member = {
 };
 const normalized = (path: string) =>
   process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path);
+
+// promises.realpath uses realpath.native: resolve junctions/short names as well as symlinks.
+// Missing descendants still inherit the physical identity of their deepest existing ancestor.
+async function physicalPath(path: string): Promise<string> {
+  let ancestor = resolve(path);
+  const missing: string[] = [];
+  for (let depth = 0; depth < 64; depth++) {
+    try {
+      const actual = await realpath(ancestor);
+      if (!(await stat(actual)).isDirectory())
+        throw new Error('Workspace reference ancestor is not a directory');
+      return normalized(join(actual, ...missing));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const parent = dirname(ancestor);
+      if (parent === ancestor) throw error;
+      missing.unshift(basename(ancestor));
+      ancestor = parent;
+    }
+  }
+  throw new Error('Workspace reference resolution exceeds its ancestor budget');
+}
+
+const overlaps = (a: string, b: string) =>
+  a === b ||
+  a.startsWith(b.endsWith(sep) ? b : b + sep) ||
+  b.startsWith(a.endsWith(sep) ? a : a + sep);
 
 /** Only background polling calls this storage boundary. No event/write-path hooks. */
 export class SqliteHistoryCleanup {
@@ -32,6 +60,14 @@ export class SqliteHistoryCleanup {
         const roots = await tx.all<{ id: string }>(sql`SELECT id FROM runs
         WHERE owner_id = ${ownerId} AND deletion_approval IS NOT NULL AND id > ${this.runCursor}
         ORDER BY id LIMIT 20`);
+        // Fill the same bounded batch from the beginning; never spend an empty pass wrapping.
+        // Newly confirmed older history is visible on the next pass, not one poll later.
+        if (this.runCursor && roots.length < 20) {
+          const wrapped = await tx.all<{ id: string }>(sql`SELECT id FROM runs
+            WHERE owner_id = ${ownerId} AND deletion_approval IS NOT NULL AND id <= ${this.runCursor}
+            ORDER BY id LIMIT ${20 - roots.length}`);
+          roots.push(...wrapped);
+        }
         this.runCursor = roots.at(-1)?.id ?? '';
         const selected = new Set<string>();
         for (const root of roots) {
@@ -78,6 +114,13 @@ export class SqliteHistoryCleanup {
     );
   }
 
+  /** Conservative final status probe: unexamined/protected approvals are not proof of absence. */
+  async hasApprovedCandidates(ownerId: string): Promise<boolean> {
+    const rows = await this.db.all(sql`SELECT 1 FROM runs
+      WHERE owner_id = ${ownerId} AND deletion_approval IS NOT NULL LIMIT 1`);
+    return rows.length > 0;
+  }
+
   private async referenced(tx: SqliteTransaction, resource: OwnedRunResource): Promise<boolean> {
     const use = await tx.all(
       sql`SELECT 1 FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key = ${resource.key} LIMIT 1`,
@@ -93,12 +136,16 @@ export class SqliteHistoryCleanup {
         path: string;
       }>(sql`SELECT u.path FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key LIKE 'workspace:%'
         UNION SELECT json_extract(definition, '$.settings.workingDirectory.path') FROM loop_versions
-          WHERE json_valid(definition) AND json_extract(definition, '$.settings.workingDirectory.kind') = 'fixed'`);
-      return paths.some(({ path }) => {
-        const a = normalized(resource.path),
-          b = normalized(path);
-        return a === b || a.startsWith(b + sep) || b.startsWith(a + sep);
-      });
+          WHERE json_valid(definition) AND json_extract(definition, '$.settings.workingDirectory.kind') = 'fixed'
+        LIMIT 2001`);
+      if (paths.length > 2000) return true;
+      try {
+        const actual = await physicalPath(resource.path);
+        for (const { path } of paths) if (overlaps(actual, await physicalPath(path))) return true;
+        return false;
+      } catch {
+        return true; // Any non-missing I/O error or exhausted proof budget means unknown/keep.
+      }
     }
     // Retained history includes initial/checkpoint threads, definition pins and event tails.
     // Decode JSON strings so escaped references are protected too. Damaged JSON fails closed.

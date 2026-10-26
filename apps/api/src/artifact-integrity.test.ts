@@ -3,11 +3,42 @@ import { join } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { singleNodeLoop } from '@graphgoblin/engine/testing';
+import { fakeUlid } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp | undefined;
 afterEach(async () => {
   await t?.close();
+});
+
+it('returns missing for noncanonical artifact references in stored history through the download route', async () => {
+  t = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
+  const loopId = await t.publishLoop(
+    singleNodeLoop('Artifact spelling', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'Infer',
+      config: { prompt: { template: 'Hello' }, output: { captureTranscript: 'artifact' } },
+    }),
+  );
+  const started = await t.app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} });
+  const owner = started.json<{ run: RunRecord }>().run;
+  await t.idle();
+  const record = (await t.container.repos.runs.get(owner.id))!;
+  const thread = (await t.container.manager.getThread(owner.id))!;
+  const artifact = thread.artifacts[0]!;
+  const id = fakeUlid('noncanonical-artifact');
+  await t.container.repos.runs.create(
+    { ...record, id, invocationId: fakeUlid('noncanonical-inv') },
+    {
+      ...thread,
+      artifacts: [{ ...artifact, ref: artifact.ref.toUpperCase() }],
+    },
+  );
+  const refused = await t.app.inject(`/runs/${id}/artifacts/${artifact.id}`);
+  expect(refused.statusCode).toBe(404);
+  expect(refused.json()).toMatchObject({ code: 'ARTIFACT_NOT_FOUND' });
+  expect((await t.app.inject(`/runs/${owner.id}/artifacts/${artifact.id}`)).statusCode).toBe(200);
 });
 
 it('serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content', async () => {
