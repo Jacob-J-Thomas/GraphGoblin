@@ -2,7 +2,13 @@ import { DeletionApprovalSchema, TERMINAL_RUN_STATUSES } from '@graphgoblin/cont
 import { and, eq, gt, inArray, sql } from 'drizzle-orm';
 import { realpath, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve, sep } from 'node:path';
-import type { OwnedRunResource, OwnedRunResources } from '../fs/owned-resources.js';
+import { setImmediate as yieldTurn } from 'node:timers/promises';
+import {
+  originalResource,
+  quarantinedKey,
+  type OwnedRunResource,
+  type ResourceCleanupPort,
+} from '../fs/owned-resources.js';
 import type { Database, SqliteTransaction } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import { runResources, runs } from './schema.js';
@@ -19,12 +25,14 @@ const normalized = (path: string) =>
 
 // promises.realpath uses realpath.native: resolve junctions/short names as well as symlinks.
 // Missing descendants still inherit the physical identity of their deepest existing ancestor.
-async function physicalPath(path: string): Promise<string> {
+async function physicalPath(path: string, budget: { remaining: number }): Promise<string> {
   let ancestor = resolve(path);
   const missing: string[] = [];
   for (let depth = 0; depth < 64; depth++) {
     try {
+      if (budget.remaining-- <= 0) throw new Error('Workspace resolution budget exceeded');
       const actual = await realpath(ancestor);
+      if (budget.remaining-- <= 0) throw new Error('Workspace resolution budget exceeded');
       if (!(await stat(actual)).isDirectory())
         throw new Error('Workspace reference ancestor is not a directory');
       return normalized(join(actual, ...missing));
@@ -50,7 +58,7 @@ export class SqliteHistoryCleanup {
   private resourceCursor = '';
   constructor(
     private readonly db: Database,
-    private readonly resources: OwnedRunResources,
+    private readonly resources: ResourceCleanupPort,
   ) {}
 
   /** Complete dependency components, at most 20 roots / 500 records per pass. */
@@ -121,7 +129,10 @@ export class SqliteHistoryCleanup {
     return rows.length > 0;
   }
 
-  private async referenced(tx: SqliteTransaction, resource: OwnedRunResource): Promise<boolean> {
+  private async referenced(
+    tx: SqliteTransaction | Database,
+    resource: OwnedRunResource,
+  ): Promise<boolean> {
     const use = await tx.all(
       sql`SELECT 1 FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key = ${resource.key} LIMIT 1`,
     );
@@ -137,11 +148,13 @@ export class SqliteHistoryCleanup {
       }>(sql`SELECT u.path FROM run_resource_uses u JOIN runs r ON r.id = u.run_id WHERE u.key LIKE 'workspace:%'
         UNION SELECT json_extract(definition, '$.settings.workingDirectory.path') FROM loop_versions
           WHERE json_valid(definition) AND json_extract(definition, '$.settings.workingDirectory.kind') = 'fixed'
-        LIMIT 2001`);
-      if (paths.length > 2000) return true;
+        LIMIT 33`);
+      if (paths.length > 32) return true;
       try {
-        const actual = await physicalPath(resource.path);
-        for (const { path } of paths) if (overlaps(actual, await physicalPath(path))) return true;
+        const budget = { remaining: 64 };
+        const actual = await physicalPath(resource.path, budget);
+        for (const { path } of paths)
+          if (overlaps(actual, await physicalPath(path, budget))) return true;
         return false;
       } catch {
         return true; // Any non-missing I/O error or exhausted proof budget means unknown/keep.
@@ -173,43 +186,150 @@ export class SqliteHistoryCleanup {
     return references.length > 0;
   }
 
-  /** One resource transaction at a time; missing files finish a previously interrupted job. */
-  async reapBatch(): Promise<{ bytes: number; preserved: number; pending: number }> {
+  async pendingResources(): Promise<number> {
+    const [row] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(runResources)
+      .where(eq(runResources.pending, true));
+    return Number(row!.count);
+  }
+
+  private async resourceSummary() {
+    const [row] = await this.db.all<{
+      pending: number;
+      changes: number;
+      version: number;
+    }>(sql`SELECT
+      (SELECT count(*) FROM run_resources WHERE pending = 1) AS pending,
+      total_changes() AS changes, (SELECT data_version FROM pragma_data_version) AS version`);
+    return row!;
+  }
+
+  /** At most 256 candidate reads and 32 inventories/removals; blocked keys cannot starve later work. */
+  async reapBatch(
+    signal?: AbortSignal,
+  ): Promise<{ bytes: number; preserved: number; pending: number; remaining: boolean }> {
     const jobs = await this.db
       .select()
       .from(runResources)
       .where(and(eq(runResources.pending, true), gt(runResources.key, this.resourceCursor)))
       .orderBy(runResources.key)
-      .limit(32);
-    this.resourceCursor = jobs.at(-1)?.key ?? '';
+      .limit(256);
+    if (this.resourceCursor && jobs.length < 256)
+      jobs.push(
+        ...(await this.db
+          .select()
+          .from(runResources)
+          .where(
+            and(eq(runResources.pending, true), sql`${runResources.key} <= ${this.resourceCursor}`),
+          )
+          .orderBy(runResources.key)
+          .limit(256 - jobs.length)),
+      );
+    const blocked = new Set<string>();
     let bytes = 0,
-      preserved = 0;
+      inspected = 0;
     for (const job of jobs) {
+      if (signal?.aborted || inspected >= 32) break;
+      this.resourceCursor = job.key;
+      let finalKey = job.key;
       try {
         if (!DeletionApprovalSchema.safeParse(job.approval).success) {
-          preserved++;
+          blocked.add(job.key);
           continue;
         }
-        const removed = await this.resources.exclusive(() =>
+        const original = originalResource(job);
+        const staged = job.key.startsWith('quarantine:');
+        if (!staged && (await this.referenced(this.db, original))) continue;
+        inspected++;
+        // No transaction or process publication gate spans inventory or recursive deletion.
+        const plan = await this.resources.inspect(job);
+        if (signal?.aborted) break;
+        if (!plan) {
+          blocked.add(job.key);
+          continue;
+        }
+        finalKey = staged ? job.key : quarantinedKey(original);
+        const moved = await this.resources.exclusive(() =>
           this.db.transaction(async (tx) => {
-            // A publication/new run since prepareBatch can retain the same resource.
-            if (await this.referenced(tx, job)) return { removed: false, bytes: 0 };
-            const result = await this.resources.remove(job);
-            if (result.removed) await tx.delete(runResources).where(eq(runResources.key, job.key));
-            return result;
+            const [current] = await tx
+              .select()
+              .from(runResources)
+              .where(
+                and(
+                  eq(runResources.key, job.key),
+                  eq(runResources.identity, job.identity),
+                  eq(runResources.pending, true),
+                ),
+              );
+            if (
+              !current ||
+              current.path !== job.path ||
+              current.ownerRunId !== job.ownerRunId ||
+              current.kind !== job.kind ||
+              !DeletionApprovalSchema.safeParse(current.approval).success
+            )
+              return false;
+            if (!staged && (await this.referenced(tx, original))) return false;
+            if (!(await this.resources.stage(job, plan))) return false;
+            if (!staged)
+              await tx
+                .update(runResources)
+                .set({ key: finalKey })
+                .where(eq(runResources.key, job.key));
+            return true;
           }),
         );
-        bytes += removed.bytes;
-        if (!removed.removed) preserved++;
+        if (!moved) {
+          blocked.add(job.key);
+          continue;
+        }
+        const result = await this.resources.remove({ ...job, key: finalKey }, plan, signal);
+        if (result.removed)
+          await this.db
+            .delete(runResources)
+            .where(and(eq(runResources.key, finalKey), eq(runResources.identity, job.identity)));
+        // A stopped partial purge remains potentially removable on the next pass.
+        bytes += result.bytes;
       } catch {
-        preserved++;
-      } // Journal remains for the next pass; never broaden scope.
+        blocked.add(finalKey);
+      } // Keep the durable generation and its original consent.
+      await yieldTurn();
     }
-    const [count] = await this.db
-      .select({ count: sql<number>`count(*)` })
+    if (!jobs.length) this.resourceCursor = '';
+    // Whole-store count, not this cursor window. Unseen work keeps pressure rather than falsely
+    // claiming absence. Recheck references at the conclusion, outside a write transaction.
+    const before = await this.resourceSummary();
+    const current = await this.db
+      .select()
       .from(runResources)
-      .where(eq(runResources.pending, true));
-    return { bytes, preserved, pending: Number(count!.count) };
+      .where(eq(runResources.pending, true))
+      .orderBy(runResources.key)
+      .limit(257);
+    let remaining = current.length > 256;
+    for (const job of current.slice(0, 256)) {
+      if (signal?.aborted) {
+        remaining = current.length > 0;
+        break;
+      }
+      if (blocked.has(job.key) && job.key.startsWith('quarantine:')) continue;
+      if (!DeletionApprovalSchema.safeParse(job.approval).success) continue;
+      if (
+        job.key.startsWith('quarantine:') ||
+        (!blocked.has(job.key) && !(await this.referenced(this.db, originalResource(job))))
+      ) {
+        remaining = true;
+        break;
+      }
+    }
+    const after = await this.resourceSummary();
+    const pending = Number(after.pending);
+    // No event hook: SQLite already maintains these counters. Concurrent writes make an
+    // absence proof uncertain; do not publish no-eligible from a stale census.
+    remaining =
+      pending > 0 &&
+      (remaining || before.changes !== after.changes || before.version !== after.version);
+    return { bytes, preserved: pending, pending, remaining };
   }
 
   async reusableBytes(): Promise<number> {

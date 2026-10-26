@@ -11,6 +11,7 @@ import {
   unlink,
 } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { setImmediate as yieldTurn } from 'node:timers/promises';
 import type { ArtifactStorePort, WorkspacePort } from '@graphgoblin/engine';
 import { ArtifactStoreError } from '@graphgoblin/engine';
 import { Mutex } from '../sqlite/db.js';
@@ -24,6 +25,39 @@ export interface OwnedRunResource {
   path: string;
   identity: string;
 }
+export interface ResourceRemovalPlan {
+  target: string;
+  entries: { rel: string; directory: boolean; identity: string; bytes: number }[];
+}
+export interface ResourceCleanupPort {
+  exclusive<T>(operation: () => Promise<T>): Promise<T>;
+  inspect(resource: OwnedRunResource): Promise<ResourceRemovalPlan | undefined>;
+  stage(resource: OwnedRunResource, plan: ResourceRemovalPlan): Promise<boolean>;
+  remove(
+    resource: OwnedRunResource,
+    plan: ResourceRemovalPlan,
+    signal?: AbortSignal,
+  ): Promise<{ removed: boolean; bytes: number }>;
+}
+/** A quarantined generation is separate from a later publication at its original key. */
+export function originalResource(resource: OwnedRunResource): OwnedRunResource {
+  if (!resource.key.startsWith('quarantine:')) return resource;
+  const key = resource.key.slice(76);
+  if (quarantinedKey({ ...resource, key }) !== resource.key)
+    throw new Error('Invalid quarantine job');
+  return { ...resource, key };
+}
+export function quarantinedKey(resource: OwnedRunResource): string {
+  return (
+    'quarantine:' +
+    createHash('sha256')
+      .update(resource.key + resource.identity)
+      .digest('hex') +
+    ':' +
+    resource.key
+  );
+}
+
 export interface RunResourceJournal {
   find(key: string): Promise<OwnedRunResource | undefined>;
   claim(resource: OwnedRunResource): Promise<void>;
@@ -170,8 +204,9 @@ export class OwnedRunResources {
     return root;
   }
 
-  /** Called under exclusive() and the SQLite reference-check transaction. Never follows links. */
-  async remove(resource: OwnedRunResource): Promise<{ removed: boolean; bytes: number }> {
+  /** Inventory is bounded and runs outside every SQLite transaction and publication gate. */
+  async inspect(job: OwnedRunResource): Promise<ResourceRemovalPlan | undefined> {
+    const resource = originalResource(job);
     const root = await this.directory(resource.kind === 'workspace' ? 'workspaces' : 'artifacts');
     const rel = relative(root, resource.path);
     if (
@@ -180,7 +215,7 @@ export class OwnedRunResources {
       rel.startsWith('..') ||
       resolve(root, rel) !== resolve(resource.path)
     )
-      return { removed: false, bytes: 0 };
+      return undefined;
     const quarantine = await this.directory('cleanup-pending');
     const target = join(
       quarantine,
@@ -189,51 +224,99 @@ export class OwnedRunResources {
         .digest('hex'),
     );
     const staged = await exists(target);
-    const original = staged ? undefined : await exists(resource.path);
-    const stat = staged ?? original;
-    if (!stat) return { removed: true, bytes: 0 };
+    const stat =
+      staged ?? (job.key.startsWith('quarantine:') ? undefined : await exists(resource.path));
+    const plan: ResourceRemovalPlan = { target, entries: [] };
+    if (!stat) return plan;
     const source = staged ? target : resource.path;
     if (
       stat.isSymbolicLink() ||
       identity(stat) !== resource.identity ||
       (resource.kind === 'artifact' ? !stat.isFile() || stat.nlink !== 1n : !stat.isDirectory())
     )
-      return { removed: false, bytes: 0 };
-    // A linked intermediate directory must never turn a recorded path into traversal elsewhere.
-    if (canonical(await realpath(source)) !== canonical(source))
-      return { removed: false, bytes: 0 };
-    const entries: { rel: string; directory: boolean; identity: string; bytes: number }[] = [];
+      return undefined;
+    if (canonical(await realpath(source)) !== canonical(source)) return undefined;
     const inventory = async (path: string): Promise<boolean> => {
-      if (entries.length >= 2000) return false;
-      const stat = await info(path);
-      if (stat.isSymbolicLink() || (!stat.isDirectory() && (!stat.isFile() || stat.nlink !== 1n)))
+      if (plan.entries.length >= 2000) return false;
+      const item = await info(path);
+      if (item.isSymbolicLink() || (!item.isDirectory() && (!item.isFile() || item.nlink !== 1n)))
         return false;
-      entries.push({
+      plan.entries.push({
         rel: relative(source, path),
-        directory: stat.isDirectory(),
-        identity: identity(stat),
-        bytes: stat.isFile() ? Number(stat.size) : 0,
+        directory: item.isDirectory(),
+        identity: identity(item),
+        bytes: item.isFile() ? Number(item.size) : 0,
       });
-      if (stat.isDirectory())
+      if (plan.entries.length % 32 === 0) await yieldTurn();
+      if (item.isDirectory())
         for await (const entry of await opendir(path))
           if (!(await inventory(join(path, entry.name)))) return false;
       return true;
     };
-    if (!(await inventory(source))) return { removed: false, bytes: 0 };
-    if (!staged) await rename(source, target);
+    return (await inventory(source)) ? plan : undefined;
+  }
+
+  /** Constant-size ownership recheck and rename only; the caller holds its short transaction. */
+  async stage(job: OwnedRunResource, plan: ResourceRemovalPlan): Promise<boolean> {
+    const resource = originalResource(job);
+    const expected = join(
+      resolve(this.dataDir, 'cleanup-pending'),
+      createHash('sha256')
+        .update(resource.key + resource.identity)
+        .digest('hex'),
+    );
+    if (plan.target !== expected) return false;
+    for (const path of [this.dataDir, dirname(expected)])
+      if (canonical(await realpath(path)) !== canonical(path)) return false;
+    const staged = await exists(expected);
+    const stat =
+      staged ?? (job.key.startsWith('quarantine:') ? undefined : await exists(resource.path));
+    if (!stat) return true;
+    const source = staged ? expected : resource.path;
+    if (
+      stat.isSymbolicLink() ||
+      identity(stat) !== resource.identity ||
+      (resource.kind === 'artifact' ? !stat.isFile() || stat.nlink !== 1n : !stat.isDirectory()) ||
+      canonical(await realpath(source)) !== canonical(source)
+    )
+      return false;
+    if (!staged) await rename(source, expected);
+    return true;
+  }
+
+  /** Quarantine-only unlinking, after commit; a new original-path generation is never touched. */
+  async remove(
+    job: OwnedRunResource,
+    prepared: ResourceRemovalPlan,
+    signal?: AbortSignal,
+  ): Promise<{ removed: boolean; bytes: number }> {
+    const plan = prepared;
+    const resource = originalResource(job);
+    const expected = join(
+      resolve(this.dataDir, 'cleanup-pending'),
+      createHash('sha256')
+        .update(resource.key + resource.identity)
+        .digest('hex'),
+    );
+    if (plan.target !== expected) return { removed: false, bytes: 0 };
     let bytes = 0;
-    for (const entry of entries.reverse()) {
-      const path = join(target, entry.rel);
+    for (const entry of [...plan.entries].reverse()) {
+      if (signal?.aborted) return { removed: false, bytes };
+      const path = join(plan.target, entry.rel);
+      const current = await info(path);
       if (
         canonical(await realpath(path)) !== canonical(path) ||
-        identity(await info(path)) !== entry.identity
+        current.isSymbolicLink() ||
+        (!entry.directory && (!current.isFile() || current.nlink !== 1n)) ||
+        identity(current) !== entry.identity
       )
         throw new Error('Owned resource changed during cleanup');
       if (entry.directory) await rmdir(path);
       else {
         await unlink(path);
-        bytes += entry.bytes;
+        bytes += Number(current.size);
       }
+      await yieldTurn();
     }
     return { removed: true, bytes };
   }

@@ -34,7 +34,9 @@ export function StorageNotice() {
     >
       <p>
         {message}{' '}
-        {status.preservedResources > 0 ? 'Shared, linked or unproven resources are kept.' : null}
+        {status.preservedResources > 0
+          ? 'Shared, linked, unproven or deferred resources are kept.'
+          : null}
       </p>
       <Link to="/runs" className="text-link underline">
         Review run history

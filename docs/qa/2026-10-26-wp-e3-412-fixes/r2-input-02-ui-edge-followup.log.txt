@@ -1,0 +1,84 @@
+after confirm, count text 2 selected
+a/b after pressure 404 404
+open Runs page after cleanup: row for deleted run visible=0, count text "2 selected"
+count after selecting one visible run 3 selected
+dialog after cleanup removed earlier selected runs
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5VHB1BG6H8PRW1PZKATBAJM
+      - paragraph: Run not found.
+    - listitem:
+      - code: 01M5VHB1CYKGVX69FCMDWK96VZ
+      - paragraph: Run not found.
+    - listitem:
+      - code: 01M5VHB1DZ0YG0999EZPTW64EQ
+  - alert: No history will be marked. Resolve every protected record and review the selection again.
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection" [disabled]
+screenshot ui-ghost-selection.png
+FAIL a selection containing runs removed by cleanup cannot approve the visible run until the page is reset :: {"confirmDisabled":true}
+deleted run rows available to uncheck: 0
+unfinalized run dialog
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5VHD1D40CNRG5SF8KHQFV1V
+      - paragraph: Run finalization is incomplete.
+  - alert: No history will be marked. Resolve every protected record and review the selection again.
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection" [disabled]
+PASS unfinalized terminal run cannot be confirmed
+d1 approval before loop deletion (never marked) null
+loop delete dialog
+- alertdialog "Delete “Deletable loop”?":
+  - heading "Delete “Deletable loop”?" [level=2]
+  - paragraph: The loop, all its versions, its triggers and all its runs (2) will be deleted, including run history and artifact references. Loops using it as a subloop will no longer be able to start it. Cancel active runs first.
+  - paragraph: This cannot be undone.
+  - button "Confirm delete Deletable loop": Confirm delete
+  - button "Keep"
+  - status
+focus on open Keep
+PASS Keep leaves loop and history
+PASS Confirm delete removes the loop and both runs (succeeded and failed), without delete-ready marks
+focus after delete H1 loops-heading Loops
+active-run refusal
+- alertdialog "Delete “Follow-up history”?":
+  - heading "Delete “Follow-up history”?" [level=2]
+  - paragraph: The loop, all its versions, its triggers and all its runs (2) will be deleted, including run history and artifact references. Loops using it as a subloop will no longer be able to start it. Cancel active runs first.
+  - paragraph: This cannot be undone.
+  - alert:
+    - paragraph: Could not delete “Follow-up history”.
+    - text: the loop has active runs; cancel them first (LOOP_IN_USE)
+  - button "Confirm delete Follow-up history": Confirm delete
+  - button "Keep"
+  - status
+screenshot ui-loop-delete-refused.png
+PASS loop with an active run is kept with its history
+parent loop delete dialog text Delete “Follow-up parent”?
+
+The loop, all its versions, its triggers and all its runs (1) will be deleted, including run history and artifact references. Loops using it as a subloop will no longer be able to start it. Cancel active runs first.
+
+This cannot be undone.
+
+Confirm delete
+Keep
+PASS child-loop run survives parent loop deletion with its parent association cleared :: {"status":200,"parentRunId":null}
+child inspector parent text ["These runs stay retained. Approval for related parent, child and replay history is also withdrawn so required records remain protected.","Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected."]
+phone width horizontal overflow px 0
+screenshot ui-phone-runs.png
+screenshot ui-phone-dialog.png
+server stop {"code":0,"signal":null}
+failures 1

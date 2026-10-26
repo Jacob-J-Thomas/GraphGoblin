@@ -64,9 +64,46 @@ it('cancels without confirmation, freezes an explicit bulk selection while new h
     ).runIds,
   ).toEqual([first.id, second.id]);
   expect(await screen.findAllByText('Delete-ready')).toHaveLength(2);
+  expect(screen.getByText('0 selected')).toHaveAttribute('aria-live', 'polite');
   expect(api.runs.get(fresh.id)?.deletionApproval).toBeUndefined();
   await user.selectOptions(screen.getByLabelText('Status'), 'failed');
   expect(screen.getByText('0 selected')).toBeInTheDocument();
+});
+
+it('removes vanished rows from selection before the next review', async () => {
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const gone = api.addRun(),
+    kept = api.addRun();
+  const rendered = renderApp('/runs', api);
+  await user.click(await screen.findByRole('checkbox', { name: `Select history ${gone.id}` }));
+  api.runs.delete(gone.id);
+  await act(() => rendered.queryClient.invalidateQueries({ queryKey: ['runs'] }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('checkbox', { name: `Select history ${gone.id}` }),
+    ).not.toBeInTheDocument(),
+  );
+  await user.click(screen.getByRole('checkbox', { name: `Select history ${kept.id}` }));
+  expect(screen.getByText('1 selected')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
+  expect(await screen.findByRole('dialog')).not.toHaveTextContent(gone.id);
+});
+
+it('formats deletion confirmation time using the inspector local date convention', async () => {
+  const api = fakeConsent();
+  const ts = '2026-10-26T07:15:09.424Z';
+  const run = api.addRun({
+    status: 'succeeded',
+    deletionApproval: {
+      confirmedAt: ts,
+      confirmedBy: { ownerId: 'local', kind: 'user', id: 'local' },
+    },
+  });
+  renderApp(`/runs/${run.id}`, api);
+  const label = await screen.findByText(/Delete-ready: confirmed by/);
+  expect(label).toHaveTextContent(new Date(ts).toLocaleString());
+  expect(label).not.toHaveTextContent(ts);
 });
 
 it('shows every protection reason and permits explicit withdrawal', async () => {
@@ -180,3 +217,46 @@ it.each([200, 409])(
     ).toBeEnabled();
   },
 );
+
+it('clears the Runs selection after a successful withdrawal', async () => {
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({
+    status: 'succeeded',
+    deletionApproval: {
+      confirmedAt: '2026-10-26T07:15:09.424Z',
+      confirmedBy: { ownerId: 'local', kind: 'user', id: 'local' },
+    },
+  });
+  renderApp('/runs', api);
+  await user.click(await screen.findByRole('checkbox', { name: `Select history ${run.id}` }));
+  await user.click(screen.getByRole('button', { name: 'Withdraw delete-ready mark' }));
+  await user.click(await screen.findByRole('button', { name: 'Confirm withdrawal' }));
+  await waitFor(() => expect(screen.getByText('0 selected')).toBeInTheDocument());
+  expect(api.runs.get(run.id)?.deletionApproval).toBeUndefined();
+});
+
+it('keeps a retained run selected when polling moves its protected status outside the filter', async () => {
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({ status: 'failed' });
+  const rendered = renderApp('/runs?status=failed', api);
+  await user.click(await screen.findByRole('checkbox', { name: `Select history ${run.id}` }));
+  run.status = 'running';
+  api.override('POST /runs/deletion-eligibility/preview', () =>
+    Response.json({
+      token: 'a'.repeat(64),
+      items: [{ runId: run.id, reasons: ['Run is running; protected.'] }],
+    }),
+  );
+  await act(() => rendered.queryClient.invalidateQueries({ queryKey: ['runs'] }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('checkbox', { name: `Select history ${run.id}` }),
+    ).not.toBeInTheDocument(),
+  );
+  expect(screen.getByText('1 selected')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
+  expect(await screen.findByText('Run is running; protected.')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Confirm delete-ready selection' })).toBeDisabled();
+});

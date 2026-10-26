@@ -6,6 +6,8 @@ import type { DeletionPreview, RunRecord, StorageStatus } from '@graphgoblin/con
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { singleNodeLoop, FakeClock, CapturingLogger } from '@graphgoblin/engine/testing';
 import { HistoryCleanup } from './history-cleanup.js';
+import { buildApp } from './app.js';
+import { freePort } from './testing/api-subprocess.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let app: TestApp | undefined;
@@ -24,6 +26,60 @@ it('exposes measured storage state without granting deletion consent', async () 
   const response = await app.app.inject('/system/storage');
   expect(response.statusCode).toBe(200);
   expect(response.json()).toMatchObject({ state: 'adequate', deletedRuns: 0, removedFileBytes: 0 });
+});
+
+it('timestamps an unavailable capacity attempt and clears the preceding volumes', async () => {
+  let unavailable = false;
+  app = await createTestApp({
+    tempPrefix: 'gg-wp-e3-',
+    storageCapacity: {
+      read: () =>
+        unavailable
+          ? Promise.reject(new Error('unavailable'))
+          : Promise.resolve({ totalBytes: 100 * 1024 ** 3, availableBytes: 50 * 1024 ** 3 }),
+    },
+  });
+  expect(app.container.historyCleanup.status().volumes).not.toHaveLength(0);
+  app.clock.advance(60_000);
+  unavailable = true;
+  await app.container.historyCleanup.poll();
+  expect(app.container.historyCleanup.status()).toMatchObject({
+    state: 'unavailable',
+    checkedAt: app.clock.now().toISOString(),
+    volumes: [],
+  });
+});
+
+it('returns from startup measurement before background reclamation finishes', async () => {
+  let release!: () => void;
+  const blocked = new Promise<number>((resolve) => {
+    release = () => resolve(0);
+  });
+  const cleanup = new HistoryCleanup(
+    { read: () => Promise.resolve({ totalBytes: 100 * 1024 ** 3, availableBytes: 0 }) },
+    {
+      prepareBatch: () => blocked,
+      reapBatch: () => Promise.resolve({ bytes: 0, pending: 0, preserved: 0, remaining: false }),
+      reusableBytes: () => Promise.resolve(0),
+      hasApprovedCandidates: () => Promise.resolve(false),
+      pendingResources: () => Promise.resolve(0),
+    },
+    [{ name: 'data', path: 'unused' }],
+    new FakeClock(),
+    new CapturingLogger(),
+  );
+  let returned = false;
+  const starting = cleanup.start(false).then(() => {
+    returned = true;
+  });
+  try {
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    expect(returned).toBe(true);
+  } finally {
+    release();
+    await starting;
+    await cleanup.stop();
+  }
 });
 
 it('requires system read permission to observe storage and exposes no deletion command', async () => {
@@ -327,9 +383,12 @@ it('schedules one pass per minute and cancels its timer on stop', async () => {
   const read = vi.fn(() => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 50 * GiB }));
   const store = {
     prepareBatch: vi.fn(() => Promise.resolve(0)),
-    reapBatch: vi.fn(() => Promise.resolve({ bytes: 0, preserved: 0, pending: 0 })),
+    reapBatch: vi.fn(() =>
+      Promise.resolve({ bytes: 0, preserved: 0, pending: 0, remaining: false }),
+    ),
     reusableBytes: vi.fn(() => Promise.resolve(0)),
     hasApprovedCandidates: vi.fn(() => Promise.resolve(false)),
+    pendingResources: vi.fn(() => Promise.resolve(0)),
   };
   const cleanup = new HistoryCleanup(
     { read },
@@ -339,6 +398,8 @@ it('schedules one pass per minute and cancels its timer on stop', async () => {
     new CapturingLogger(),
   );
   await cleanup.start(true);
+  cleanup.afterListen();
+  await cleanup.poll();
   expect(read).toHaveBeenCalledTimes(1);
   clock.advance(60_000);
   await vi.advanceTimersByTimeAsync(60_000);
@@ -355,9 +416,10 @@ it('keeps a pressure status when a bounded pass leaves approved candidates unexa
     { read: () => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 0 }) },
     {
       prepareBatch: () => Promise.resolve(0),
-      reapBatch: () => Promise.resolve({ bytes: 0, preserved: 0, pending: 0 }),
+      reapBatch: () => Promise.resolve({ bytes: 0, preserved: 0, pending: 0, remaining: false }),
       reusableBytes: () => Promise.resolve(0),
       hasApprovedCandidates: () => Promise.resolve(true),
+      pendingResources: () => Promise.resolve(0),
     },
     [{ name: 'data', path: 'unused' }],
     new FakeClock(),
@@ -425,4 +487,51 @@ it('keeps immutable Event delivery provenance while removing approved run links'
   expect(events.items).toHaveLength(1);
   expect(events.items[0]).toMatchObject({ runIds: [], delivery: { state: 'admitted' } });
   expect((await api.app.inject(`/runs/${run!.id}`)).statusCode).toBe(404);
+});
+
+it('serves HTTP requests while a startup cleanup pass is still reclaiming', async () => {
+  app = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
+  let enter!: () => void, release!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const hold = new Promise<number>((resolve) => {
+    release = () => resolve(0);
+  });
+  const cleanup = new HistoryCleanup(
+    { read: () => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 0 }) },
+    {
+      prepareBatch: () => {
+        enter();
+        return hold;
+      },
+      reapBatch: () => Promise.resolve({ bytes: 0, pending: 0, preserved: 0, remaining: false }),
+      reusableBytes: () => Promise.resolve(0),
+      hasApprovedCandidates: () => Promise.resolve(false),
+      pendingResources: () => Promise.resolve(0),
+    },
+    [{ name: 'data', path: 'unused' }],
+    app.clock,
+    app.logger,
+  );
+  await cleanup.start(false);
+  const server = await buildApp({ ...app.container, historyCleanup: cleanup });
+  try {
+    // Dedicated test port in the assigned API pool; no owner listener is probed.
+    const url = await server.listen({
+      port: await freePort(
+        Number(process.env['GG_TEST_PORT_START'] ?? 5600),
+        Number(process.env['GG_TEST_PORT_COUNT'] ?? 100),
+      ),
+      host: '127.0.0.1',
+    });
+    await entered;
+    expect(cleanup.status().cleaning).toBe(true);
+    expect((await fetch(url + '/runs?limit=1')).status).toBe(200);
+    expect(cleanup.status().cleaning).toBe(true);
+  } finally {
+    release();
+    await cleanup.stop();
+    await server.close();
+  }
 });

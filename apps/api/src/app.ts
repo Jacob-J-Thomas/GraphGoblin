@@ -93,6 +93,10 @@ export async function buildApp(
   registerClassifierRoutes(app, container);
   registerTriggerRoutes(app, container);
   await registerStatic(app, container.config.webDist);
+  app.addHook('onListen', (done) => {
+    container.historyCleanup.afterListen();
+    done();
+  });
 
   return app;
 }

@@ -1,0 +1,11 @@
+﻿pnpm.cmd exec node docs/qa/2026-10-26-wp-e3-412-fixes/r2-d1-api.mjs
+older 01M5VRY5Y7CKA5Z6Q32702QK52 newer 01M5VRY70T0F62SMJXRYV7EVJ9 older < newer true
+PASS step 1: mark the newer run
+step 2: first pressure pass {"state":"pressure","deletedRuns":1} newer 404
+PASS step 3: mark the older run right after the pass
+older approval {"confirmedAt":"2026-10-26T09:34:44.185Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+step 4: next pass {"state":"pressure","deletedRuns":1} older run status 404
+PASS the very next pass deletes the newly approved older run :: {"state":"pressure","olderStatus":404}
+server stop {"code":0,"signal":null}
+failures 0
+EXIT 0

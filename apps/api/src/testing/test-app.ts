@@ -83,6 +83,8 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   await container.start();
   const app = await buildApp(container, { logger: false });
   await app.ready();
+  container.historyCleanup.afterListen();
+  await container.historyCleanup.poll();
   return {
     app,
     container,

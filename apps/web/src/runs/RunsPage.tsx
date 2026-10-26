@@ -1,7 +1,8 @@
 import { HistoryState } from '../components/HistoryState.js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HistoryEligibility } from './HistoryEligibility.js';
-import type { ListRunsQuery } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, runs, type ListRunsQuery } from '@graphgoblin/api-client';
+import { useApi } from '../api/context.js';
 import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
@@ -45,6 +46,36 @@ export function RunsPage() {
   };
   const loopsQuery = useLoops();
   const runsQuery = useRuns(query, 5000);
+  const client = useApi();
+  useEffect(() => {
+    if (!runsQuery.data) return;
+    const visible = new Set(
+      runsQuery.data.pages.flatMap((page) => page.items.map((run) => run.id)),
+    );
+    const absent = selected.filter((id) => !visible.has(id));
+    if (!absent.length) return;
+    let cancelled = false;
+    void Promise.all(
+      absent.map(async (id) => {
+        try {
+          await runs.get(client, id);
+        } catch (error) {
+          if (error instanceof GraphGoblinApiError && error.status === 404) return id;
+        }
+        return undefined; // Existing, protected and unknown records remain in the explicit selection.
+      }),
+    ).then((missing) => {
+      if (cancelled) return;
+      const removed = new Set(missing.filter((id) => id !== undefined));
+      if (removed.size)
+        setSelected((ids) =>
+          ids.some((id) => removed.has(id)) ? ids.filter((id) => !removed.has(id)) : ids,
+        );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [client, runsQuery.data, selected]);
 
   const setFilter = (key: string, value: string) => {
     setSelected([]);
@@ -125,7 +156,12 @@ export function RunsPage() {
           ) : null}
         </FieldRow>
       </Card>
-      <HistoryEligibility runIds={selected} />
+      <HistoryEligibility
+        runIds={selected}
+        onConfirmed={(confirmedIds) =>
+          setSelected((ids) => ids.filter((id) => !confirmedIds.includes(id)))
+        }
+      />
       <HistoryState query={runsQuery} what="Runs">
         {(items) =>
           items.length === 0 ? (

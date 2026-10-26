@@ -36,7 +36,7 @@ it.each([
   const notice = await screen.findByRole('status', { name: 'Storage pressure' });
   expect(notice).toHaveAttribute('aria-live', 'polite');
   expect(notice).toHaveTextContent(message);
-  expect(notice).toHaveTextContent('Shared, linked or unproven resources are kept.');
+  expect(notice).toHaveTextContent('Shared, linked, unproven or deferred resources are kept.');
   expect(screen.getByRole('link', { name: 'Review run history' })).toHaveAttribute('href', '/runs');
 });
 it('does not imply adequate storage or consent when observation is forbidden', async () => {

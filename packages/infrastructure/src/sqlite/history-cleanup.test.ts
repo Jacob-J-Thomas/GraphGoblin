@@ -143,7 +143,12 @@ it('reaps a positively owned workspace and artifact but preserves run-shaped, fi
   await writeFile(join(shaped, 'keep'), 'unrelated');
   await mark([id]);
   expect(await store.prepareBatch('local')).toBe(1);
-  expect(await store.reapBatch()).toEqual({ bytes: 25, preserved: 0, pending: 0 });
+  expect(await store.reapBatch()).toEqual({
+    bytes: 25,
+    preserved: 0,
+    pending: 0,
+    remaining: false,
+  });
   await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT' });
   expect(await resources.artifacts.get(artifact.ref)).toBeUndefined();
   expect(await readFile(join(fixed, 'keep'), 'utf8')).toBe('user bytes');
@@ -205,14 +210,14 @@ it('retains journal state when a transaction fails after file removal, then fini
   await handle.client.execute(
     "CREATE TRIGGER fail_reap BEFORE DELETE ON run_resources BEGIN SELECT RAISE(ABORT, 'injected stop after unlink'); END",
   );
-  expect(await store.reapBatch()).toEqual({ bytes: 0, preserved: 1, pending: 1 });
+  expect(await store.reapBatch()).toEqual({ bytes: 0, preserved: 1, pending: 1, remaining: false });
   handle.close();
   globalThis.gc?.();
   handle = openDatabase({ url: `file:${join(directory, 'history.db').replaceAll('\\', '/')}` });
   await handle.client.execute('DROP TRIGGER fail_reap');
   resources = new OwnedRunResources(directory, new SqliteRunResources(handle.db));
   store = new SqliteHistoryCleanup(handle.db, resources);
-  expect(await store.reapBatch()).toEqual({ bytes: 0, preserved: 0, pending: 0 });
+  expect(await store.reapBatch()).toEqual({ bytes: 0, preserved: 0, pending: 0, remaining: false });
   expect(await readdir(join(directory, 'cleanup-pending'))).toEqual([]);
 });
 
@@ -407,6 +412,42 @@ it('wraps the root batch in the same pass after an older run is newly approved',
   expect(await store.hasApprovedCandidates('local')).toBe(false);
 });
 
+it('does not let 61 budget-protected artifact jobs hide removable workspaces in a later window', async () => {
+  const retained = await seed('retained');
+  await handle.client.execute({
+    sql: 'UPDATE runs SET thread_snapshot=? WHERE id=?',
+    args: [JSON.stringify(sampleThread({ vars: { large: 'x'.repeat(2 * 1024 ** 2) } })), retained],
+  });
+  const ids: string[] = [];
+  for (let i = 0; i < 61; i++) {
+    const id = await seed('window-' + i);
+    ids.push(id);
+    const path = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+    await writeFile(join(path, 'result'), 'owned');
+    await resources.artifacts.put('text', 'protected-' + i, id);
+  }
+  await mark(ids);
+  while (await store.prepareBatch('local')) {
+    /* Consume only the confirmed roots. */
+  }
+  const result = await store.reapBatch();
+  expect(result.bytes).toBeGreaterThan(0);
+  for (let i = 0; i < 4; i++) await store.reapBatch();
+  expect((await store.reapBatch()).preserved).toBe(61);
+});
+
+it('reports every preserved resource across repeated passes instead of alternating by cursor', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  for (let i = 0; i < 3; i++) {
+    await resources.artifacts.put('text', 'shared-' + i, owner);
+    await resources.artifacts.put('text', 'shared-' + i, retained);
+  }
+  await mark([owner]);
+  await store.prepareBatch('local');
+  for (let i = 0; i < 3; i++) expect((await store.reapBatch()).preserved).toBe(3);
+});
+
 it('keeps workspace bytes when retained paths exceed the 2000-path proof budget', async () => {
   const owner = await seed('owner'),
     retained = await seed('retained');
@@ -422,4 +463,100 @@ it('keeps workspace bytes when retained paths exceed the 2000-path proof budget'
   expect(await store.prepareBatch('local')).toBe(1);
   expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending: 1, preserved: 1 });
   expect(await readFile(join(workspace, 'keep.txt'), 'utf8')).toBe('unproven bytes');
+});
+
+it('serves a database read while quarantine removal is held through the public cleanup port', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  await resources.artifacts.put('text', 'owned', owner);
+  await mark([owner]);
+  await store.prepareBatch('local');
+  let enter!: () => void, release!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const cleanup = new SqliteHistoryCleanup(handle.db, {
+    exclusive: (operation) => resources.exclusive(operation),
+    inspect: (resource) => resources.inspect(resource),
+    stage: (resource, plan) => resources.stage(resource, plan),
+    remove: async (resource, plan, signal) => {
+      enter();
+      await released;
+      return resources.remove(resource, plan, signal);
+    },
+  });
+  const pass = cleanup.reapBatch();
+  await entered;
+  let readCompleted = false;
+  const read = repo.get(retained).then(() => {
+    readCompleted = true;
+  });
+  try {
+    for (let i = 0; i < 20; i++) await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(readCompleted).toBe(true);
+  } finally {
+    release();
+    await read;
+    await pass;
+  }
+});
+
+it('never deletes a newly published generation while an older quarantine generation is being removed', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  const artifact = await resources.artifacts.put('text', 'same bytes', owner);
+  await mark([owner]);
+  await store.prepareBatch('local');
+  const cleanup = new SqliteHistoryCleanup(handle.db, {
+    exclusive: (operation) => resources.exclusive(operation),
+    inspect: (resource) => resources.inspect(resource),
+    stage: (resource, plan) => resources.stage(resource, plan),
+    remove: async (resource, plan, signal) => {
+      const published = await resources.artifacts.put('text', 'same bytes', retained);
+      expect(published.ref).toBe(artifact.ref);
+      return resources.remove(resource, plan, signal);
+    },
+  });
+  expect((await cleanup.reapBatch()).bytes).toBe(10);
+  expect(await resources.artifacts.get(artifact.ref)).toBe('same bytes');
+  expect((await new SqliteRunResources(handle.db).find(artifact.ref))?.ownerRunId).toBe(retained);
+});
+
+it('recovers rename-before-commit while a new publisher takes the original artifact key', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  const artifact = await resources.artifacts.put('text', 'same bytes', owner);
+  await mark([owner]);
+  await store.prepareBatch('local');
+  await handle.client.execute(
+    "CREATE TRIGGER fail_stage BEFORE UPDATE OF key ON run_resources BEGIN SELECT RAISE(ABORT, 'crash before commit'); END",
+  );
+  expect((await store.reapBatch()).pending).toBe(1);
+  await handle.client.execute('DROP TRIGGER fail_stage');
+  await resources.artifacts.put('text', 'same bytes', retained);
+  expect((await new SqliteHistoryCleanup(handle.db, resources).reapBatch()).bytes).toBe(10);
+  expect(await resources.artifacts.get(artifact.ref)).toBe('same bytes');
+});
+
+it('rechecks retained usage added after inventory before moving anything out of reach', async () => {
+  const owner = await seed('owner'),
+    retained = await seed('retained');
+  const artifact = await resources.artifacts.put('text', 'retained bytes', owner);
+  await mark([owner]);
+  await store.prepareBatch('local');
+  const cleanup = new SqliteHistoryCleanup(handle.db, {
+    exclusive: (operation) => resources.exclusive(operation),
+    inspect: async (resource) => {
+      const plan = await resources.inspect(resource);
+      await new SqliteRunResources(handle.db).use(retained, artifact.ref, resource.path);
+      return plan;
+    },
+    stage: (resource, plan) => resources.stage(resource, plan),
+    remove: (resource, plan, signal) => resources.remove(resource, plan, signal),
+  });
+  expect((await cleanup.reapBatch()).bytes).toBe(0);
+  expect(await resources.artifacts.get(artifact.ref)).toBe('retained bytes');
 });

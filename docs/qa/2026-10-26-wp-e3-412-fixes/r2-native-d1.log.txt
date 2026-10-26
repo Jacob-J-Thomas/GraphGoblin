@@ -1,0 +1,15 @@
+﻿pnpm.cmd exec node docs/qa/2026-10-26-wp-e3-412-fixes/r2-d1-repro.mjs
+older 01M5VRKBC67KK031JQBBMCQEHJ newer 01M5VRKCQ0P4S8K648K6A6J8XN older < newer true
+PASS step 1: mark the newer run
+step 2: first pressure pass {"state":"pressure","deletedRuns":1} newer 404
+PASS step 3: mark the older run right after the pass
+older approval {"confirmedAt":"2026-10-26T09:28:52.399Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+step 4: next pass {"state":"pressure","deletedRuns":1} older run status 404
+ERROR locator.waitFor: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('status', { name: 'Storage pressure' }) to be visible[22m
+
+    at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322\docs\qa\2026-10-26-wp-e3-412-fixes\r2-d1-repro.mjs:41:16
+server stop {"code":0,"signal":null}
+failures 0
+EXIT 0

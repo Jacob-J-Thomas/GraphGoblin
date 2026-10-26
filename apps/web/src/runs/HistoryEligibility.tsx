@@ -7,7 +7,13 @@ import { Alert, Button, Dialog } from '../components/ui/index.js';
 import { errorMessage } from '../lib/utils.js';
 
 /** Freeze the explicit IDs at review time: polling and new history cannot extend consent. */
-export function HistoryEligibility({ runIds }: { runIds: string[] }) {
+export function HistoryEligibility({
+  runIds,
+  onConfirmed,
+}: {
+  runIds: string[];
+  onConfirmed?: (confirmedIds: string[]) => void;
+}) {
   const client = useApi();
   const queryClient = useQueryClient();
   const [review, setReview] = useState<{
@@ -48,6 +54,7 @@ export function HistoryEligibility({ runIds }: { runIds: string[] }) {
         token: review.preview.token,
         confirmed: true,
       });
+      onConfirmed?.(review.ids);
       if (generationRef.current === request) dismiss();
       await queryClient.invalidateQueries({ queryKey: ['runs'] });
     } catch (failure) {
@@ -77,7 +84,9 @@ export function HistoryEligibility({ runIds }: { runIds: string[] }) {
         >
           Withdraw delete-ready mark
         </Button>
-        <span className="text-sm text-muted">{runIds.length} selected</span>
+        <span className="text-sm text-muted" aria-live="polite" aria-atomic="true">
+          {runIds.length} selected
+        </span>
       </div>
       <Dialog
         open={review !== undefined}
