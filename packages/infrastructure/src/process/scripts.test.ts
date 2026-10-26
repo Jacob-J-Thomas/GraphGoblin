@@ -1,9 +1,9 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter, once } from 'node:events';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ProcessScripts, killTree } from './scripts.js';
 
 const node = process.execPath;
@@ -273,15 +273,30 @@ describe('ProcessScripts', () => {
     async () => {
       const dir = await mkdtemp(join(tmpdir(), 'gg-af-exited-root-'));
       const marker = join(dir, 'pids.json');
-      // The root exits at once; a detached process it started keeps its stdout open for 1.5 s.
+      const release = join(dir, 'release');
+      // The root exits at once. A detached process it started keeps its stdout open until the
+      // test creates the release file (or 30 s pass, so a failed run leaves nothing behind).
+      const holder =
+        "const fs=require('node:fs');setInterval(()=>{if(fs.existsSync(process.argv[1]))process.exit(0)},25);setTimeout(()=>process.exit(0),30000)";
       const script =
         "const {spawn}=require('node:child_process');" +
-        "const holder=spawn(process.execPath,['-e','setTimeout(()=>{},1500)'],{detached:true,stdio:['ignore','inherit','ignore'],windowsHide:true});" +
+        `const holder=spawn(process.execPath,['-e',${JSON.stringify(holder)},process.argv[2]],{detached:true,stdio:['ignore','inherit','ignore'],windowsHide:true});` +
         'holder.unref();' +
         "require('node:fs').writeFileSync(process.argv[1],JSON.stringify({root:process.pid,holder:holder.pid}));";
+      // Observe the real root through the public spawn seam; later spawns are taskkill.
+      let root: ChildProcess | undefined;
+      const scripts = new ProcessScripts({
+        spawnImpl: new Proxy(spawn, {
+          apply(target, _receiver, args: Parameters<typeof spawn>) {
+            const child = target(args[0], args[1], args[2]);
+            root ??= child;
+            return child;
+          },
+        }),
+      });
       const controller = new AbortController();
-      const pending = new ProcessScripts().run(
-        request({ args: ['-e', script, marker], signal: controller.signal }),
+      const pending = scripts.run(
+        request({ args: ['-e', script, marker, release], signal: controller.signal }),
       );
       const running = (pid: number) => {
         try {
@@ -292,24 +307,19 @@ describe('ProcessScripts', () => {
         }
       };
       try {
-        let pids: { root: number; holder: number } | undefined;
-        await vi.waitFor(
-          async () => {
-            pids = JSON.parse(await readFile(marker, 'utf8')) as { root: number; holder: number };
-          },
-          { timeout: 10_000 },
-        );
-        await vi.waitFor(() => expect(running(pids!.root)).toBe(false), { timeout: 10_000 });
-        // Let Node report the exit too, so the cancellation meets a root it already saw exit.
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(running(pids!.holder)).toBe(true);
+        // Cancel only after Node itself has reported the root's exit.
+        if (root!.exitCode === null && root!.signalCode === null) await once(root!, 'exit');
+        const pids = JSON.parse(await readFile(marker, 'utf8')) as { root: number; holder: number };
+        expect(running(pids.holder)).toBe(true);
         controller.abort();
+        await writeFile(release, 'release');
         const result = await pending;
         expect(result).not.toHaveProperty('terminationUnconfirmed');
         expect(result).toMatchObject({ state: 'completed', exitCode: 0 });
-        expect(running(pids!.holder)).toBe(false);
+        expect(running(pids.holder)).toBe(false);
       } finally {
         controller.abort();
+        await writeFile(release, 'release');
         await pending;
         await rm(dir, { recursive: true, force: true, maxRetries: 10 });
       }
