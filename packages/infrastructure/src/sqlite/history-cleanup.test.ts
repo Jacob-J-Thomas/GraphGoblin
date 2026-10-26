@@ -198,7 +198,9 @@ it('retains journal state when a transaction fails after file removal, then fini
   const consent = await handle.client.execute(
     'SELECT approval FROM run_resources WHERE pending = 1',
   );
-  expect(JSON.parse(String(consent.rows[0]?.approval))).toEqual(approval);
+  const storedApproval = consent.rows[0]?.approval;
+  if (typeof storedApproval !== 'string') throw new Error('pending resource has no approval text');
+  expect(JSON.parse(storedApproval)).toEqual(approval);
   await handle.client.execute(
     "CREATE TRIGGER fail_reap BEFORE DELETE ON run_resources BEGIN SELECT RAISE(ABORT, 'injected stop after unlink'); END",
   );
