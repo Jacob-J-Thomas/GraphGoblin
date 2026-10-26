@@ -6,9 +6,9 @@ import { expect, it, vi } from 'vitest';
 import { TemplateCatalog } from './catalog.js';
 
 const source = fileURLToPath(new URL('../../templates', import.meta.url));
-async function gate(input: string) {
+async function gate(input?: string) {
   const previous = process.argv;
-  process.argv = [process.execPath, 'check-templates.mjs', input];
+  process.argv = [process.execPath, 'check-templates.mjs', ...(input ? [input] : [])];
   try {
     vi.resetModules();
     await import('../../scripts/check-templates.mjs');
@@ -58,4 +58,8 @@ it('catalog build entry copies independent drafts and refuses an invalid source 
   const before = await readFile(join(target, 'catalog.json'), 'utf8');
   await expect(copy(join(root, 'missing'), target)).rejects.toThrow();
   expect(await readFile(join(target, 'catalog.json'), 'utf8')).toBe(before);
+});
+
+it('template gate validates the shipped catalogue when no input override is supplied', async () => {
+  await expect(gate()).resolves.toBeUndefined();
 });

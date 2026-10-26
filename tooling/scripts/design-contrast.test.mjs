@@ -199,8 +199,8 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
   );
 });
 
-test('CLI writes a formatted temporary table, checks freshness and reports missing inputs', (t) => {
-  const temporary = mkdtempSync(join(tmpdir(), 'graphgoblin-contrast-'));
+function cliFixture(t) {
+  const temporary = mkdtempSync(join(tmpdir(), 'gg-wp-a5b-contrast-'));
   t.onTestFinished(() => rmSync(temporary, { recursive: true, force: true }));
   const output = join(temporary, 'nested/table.md');
   const run = (args, env = {}) =>
@@ -208,6 +208,11 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
       encoding: 'utf8',
       env: { ...process.env, GG_DESIGN_TOKENS: shippedPath, ...env },
     });
+  return { temporary, output, run };
+}
+
+test('CLI writes a formatted table and accepts explicit tokens and CRLF freshness', (t) => {
+  const { output, run } = cliFixture(t);
   const write = run(['--output', output]);
   assert.equal(write.status, 0, write.stderr);
   assert.match(write.stderr, /0 failing enforced pair/);
@@ -216,6 +221,11 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   const table = readFileSync(output, 'utf8');
   writeFileSync(output, table.replace(/\n/g, '\r\n'));
   assert.equal(run(['--check', '--output', output]).status, 0);
+});
+
+test('CLI rejects stale and absent tables and checks the repository table read-only', (t) => {
+  const { temporary, output, run } = cliFixture(t);
+  mkdirSync(dirname(output));
   writeFileSync(output, 'stale');
   const stale = run(['--check', '--output', output]);
   assert.equal(stale.status, 1);
@@ -227,6 +237,10 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   const repositoryCheck = run(['--check']);
   assert.equal(repositoryCheck.status, 0, repositoryCheck.stderr);
   assert.match(repositoryCheck.stderr, /0 failing enforced pair/);
+});
+
+test('CLI reports unreadable output, missing tokens and malformed arguments', (t) => {
+  const { temporary, run } = cliFixture(t);
   const directoryOutput = join(temporary, 'directory.md');
   mkdirSync(directoryOutput);
   const unreadable = run(['--check', '--output', directoryOutput]);
@@ -239,6 +253,10 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   assert.equal(invalid.status, 2);
   assert.match(invalid.stderr, /Usage:/);
   assert.equal(run(['--tokens']).status, 2);
+});
+
+test('CLI writes and checks a fresh table while returning failing contrast', (t) => {
+  const { temporary, output, run } = cliFixture(t);
   const badTokens = join(temporary, 'bad.css');
   writeFileSync(
     badTokens,
@@ -250,6 +268,10 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   const failingCheck = run(['--tokens', badTokens, '--output', output, '--check']);
   assert.equal(failingCheck.status, 1);
   assert.doesNotMatch(failingCheck.stderr, /table stale/);
+});
+
+test('CLI rejects token CSS with no required colours', (t) => {
+  const { temporary, output, run } = cliFixture(t);
   const unparseable = join(temporary, 'empty.css');
   writeFileSync(unparseable, ':root {}');
   assert.equal(run(['--tokens', unparseable, '--output', output]).status, 2);

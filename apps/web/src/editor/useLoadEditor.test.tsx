@@ -283,6 +283,7 @@ it.each([0, Infinity])(
     const server = slowServer(api);
     const view = mount(api, loop.id, queryClient);
     await waitFor(() => expect(api.callsTo('GET', `/loops/${loop.id}`)).toHaveLength(2));
+    await waitFor(() => expect(view.result.current.deviceInspected).toBe(true));
     expect(view.result.current.query.isFetching).toBe(true);
     expect(view.result.current.serverReconciled).toBe(false);
     act(() => {
