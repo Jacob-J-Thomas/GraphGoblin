@@ -219,7 +219,7 @@ defect of the fix and three accessibility defects of round 2's Timeline.
 - **Bounded evidence lookups.** `/observation`'s latest gate scanned every decision newer than the
   last one carrying gate evidence, all of them in an ungated cyclic loop, which is valid (review
   measured 7.5, 27.4 and 302.5 ms at 99, 10,099 and 100,099 decisions). The fresh-session choices
-  scanned resumes the same way. Migration 0024 adds two partial indexes on `run_events (run_id,
+  scanned resumes the same way. Migration 0021 adds two partial indexes on `run_events (run_id,
 seq)`: one holding the decisions whose payload has gate evidence, one holding the resumes that
   record a fresh-session choice. Both also hold rows whose JSON is malformed, so a read of the
   newest one still reports the corruption instead of skipping it. Each read names its index and
@@ -248,9 +248,9 @@ seq)`: one holding the decisions whose payload has gate evidence, one holding th
   through every retained row instead). Paging controls stay focusable while they cannot act
   (`aria-disabled`), so Follow live keeps keyboard focus after it resumes following.
 
-The migration number follows the delivery plan: 0021 and 0022 belong to PR #412 and 0023 is reserved
-for #256. Whichever of these merges later renumbers its migration, restamps its journal time after
-the earlier ones and rechains its snapshot. Regression tests, each of which
+The migration is 0021, the next free number on `main`: this fix merges ahead of PR #412 and #256,
+which renumber their migrations, restamp their journal times after it and rechain their snapshots
+when they integrate. Regression tests, each of which
 failed on the code before this round: infrastructure `evidence-index.test.ts` (query plans through
 Drizzle's public query logger), web `live-follow.test.tsx` (overtaken first read, serialized
 return, thread kept during a selection's read) and `Timeline.test.tsx` (announcements, Tab out,
