@@ -249,7 +249,7 @@ describe('pendingMigrations', () => {
       "insert into __drizzle_migrations (hash, created_at) values ('x', 1)",
     );
     expect(await handle.pendingMigrations()).toBe(shipped);
-    await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
     await handle.client.execute('DELETE FROM __drizzle_migrations');
     await handle.migrate();
     expect(await handle.pendingMigrations()).toBe(0);

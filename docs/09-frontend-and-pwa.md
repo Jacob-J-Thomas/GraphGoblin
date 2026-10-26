@@ -330,8 +330,8 @@ Eligible current-format device work renders before a slow server answers. Warm n
 uses the latest per-loop in-memory copy, including edits whose durable write is still pending
 or failed; it never borrows another loop's copy. Memory presence and successful durable
 persistence are separate facts. Active writes are ordered per loop; an older completion
-cannot mark a newer copy durable. Format-3 copies still use the lazy converter and verified
-original archival described below; archives are never converted or activated.
+cannot mark a newer copy durable. Copies in another format are listed as unsupported and
+never loaded (below); archives are never activated.
 
 Loading has two independent milestones: **editor available** means a device or server
 copy can be edited; **server reconciled** means this opening's fresh server request and
@@ -368,44 +368,39 @@ query cache at 205 ms, device read at 212?214 ms and first render at 219 ms, wit
 or 409. After the change, a cold copy rendered at 40 ms before the server answered at 254 ms; a warm copy rendered at 3 ms before its server answered at 168 ms. These are controlled test timings, not a production latency guarantee. The test requires device rendering and the device read to precede the held
 server response. It also exercises cold and warm openings. Browser regressions in
 `e2e/device-first.spec.ts` cover a slow server, two-loop warm navigation, edits before a
-late response, offline reload/recovery and explicit conflict overwrite; two-tab 409 and
-conversion cases remain in `e2e/drafts.spec.ts`.
+late response, offline reload/recovery and explicit conflict overwrite; two-tab 409 cases
+remain in `e2e/drafts.spec.ts`.
 
 A completed save from a previous editor advances the cached base token before
 reconciliation chooses a device copy. A matching server token prevents that accepted
 save from producing a newer-server prompt, including when newer edits remain in memory.
 Server-save recording marks only the definition actually stored as durable; a different
 memory-only definition stays memory-only. Current-format recovery copies retained in
-the archive are labelled **Saved device backup**, separately from unconverted originals.
+the archive are labelled **Saved device backup**, separately from unsupported older copies.
 A successful server read with no draft or published definition finishes checking: device
 work remains available, or the editor explains that no definition is available.
 
-### Device format conversion
+### Device drafts in another format
 
-`readDeviceDraft` loads the converter lazily only for an older-format device copy.
-If the converter chunk cannot load, every device key stays untouched and editing
-and autosave stay paused. The notice offers **Retry conversion** or a page reload;
-the next editor load tries again. A chunk-load failure does not archive or mark a
-draft unconvertible.
+A device copy written by an older build (its definition's `schemaVersion` is not the
+current format, or it has no definition) is never converted, loaded into the editor or
+overwritten ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
+`useLoadEditor` lists it as **Unsupported device draft (format N)**, naming the loop,
+which copy it is (an unsaved draft, a set-aside draft or an archived copy) and when it
+was saved. While such a copy sits under the active or set-aside key, the editor shows only
+these notices: editing, autosave and device writes pause, and a write that would replace
+it is refused inside its IndexedDB transaction (`UnsupportedDeviceDraftError`), so even
+another window cannot overwrite it silently. **Export this device draft** downloads the
+stored record unchanged. **Discard this device draft** (its description says that only
+this browser's copy is removed) deletes exactly that record; when the last copy that paused
+editing is gone, the editor reads device storage and reconciles with the server again, as
+on opening. An old archived copy is listed the same way without pausing editing.
 
-Automatic conversion archives and reads back the complete original, including
-metadata and tokens, before replacing an active or set-aside key. A synced mirror
-stays a clean cache; the server definition wins whenever available. Genuinely
-unsynced work stays unsynced. If the server timestamp is newer, the converted work
-is set aside using the existing restore/discard notice.
-
-The old `baseToken` is invalidated with `unreconciled-device-format`, including on
-an offline synced cache in case it is edited later. Reconciliation of converted edits, or a subsequent save,
-requires an explicit conflict decision; its notice explains the format conversion and requires
-**Reload server draft** or explicit **Overwrite with this copy** with a fresh token.
-Opening a synced mirror does not make it dirty and does not trigger this conflict.
-
-Pending review or conversion failure keeps an inert, exportable raw original in
-its active, set-aside or archive slot. The notice lists review IDs and reasons;
-issues retain their hashes. Archives are labelled without hashing or reconverting them and are never activated automatically. Failed
-archive writes or verification block editing and overwriting autosave. Incomplete
-current drafts still reopen unchanged. Restoring a converted set-aside copy is an
-explicit choice to overwrite using the currently displayed server token.
+Current-format copies archived before a newer set-aside replaced them are labelled
+**Saved device backup**. When such an archive write or its read-back fails, editing pauses
+on **Device copy preservation failed** until the blocked copy is exported or discarded.
+Regression: `editor/EditorPage.restore.test.tsx`, `editor/useLoadEditor.test.tsx`,
+`drafts/local-drafts.test.ts` and Edge `e2e/device-draft-format.spec.ts`.
 
 Run events and their SSE resume cursors are the only persisted run data, in
 `sessionStorage`. Their key is `graphgoblin-run-events-v4`; earlier keys are removed

@@ -1,0 +1,66 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --testTimeout=30000 --hookTimeout=30000 
+--coverage.reportOnFailure=true
+At line:2 char:101
++ ... +$env:PATH; pnpm.cmd --filter @graphgoblin/engine test:coverage --max ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-b3-integrate/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/webhook-returns.test.ts (20 tests | 1 failed) 6348ms
+   ❯ durable webhook returns through RunManager (7)
+     × delivers or exhausts with one identity (2 attempts) 1431ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-returns.test.ts > durable webhook returns through RunManager > delivers or exhausts with one 
+identity (2 attempts)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/webhook-returns.test.ts:92:67
+     90|     );
+     91|     const run = await engine.start(version.loopId);
+     92|     await vi.waitFor(() => expect(engine.ports.delivery.webhooks).toHa…
+       |                                                                   ^
+     93|     // Delivery remains pending while execution has already succeeded.
+     94|     expect((await engine.ports.runs.get(run.id))?.status).toBe('succee…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 53 passed (54)
+      Tests  1 failed | 1701 passed (1702)
+   Start at  20:13:25
+   Duration  533.37s (import 47%, tests 44%, transform 7%, worker 2%)
+
+     Import  141 modules were evaluated 220 times · 170.24s total, 47% of tracked time
+             ~61.13s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.04% ( 3203/3335 )
+Branches     : 91.27% ( 2551/2795 )
+Functions    : 97.4% ( 600/616 )
+Lines        : 97.39% ( 2916/2994 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-b3-
+  │ integrate\packages\engine
+

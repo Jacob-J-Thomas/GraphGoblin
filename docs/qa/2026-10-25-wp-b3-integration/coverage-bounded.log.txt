@@ -1,0 +1,106 @@
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/web
+   • Running test:coverage in 9 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache bypass, force executing a8ed07421a273379
+@graphgoblin/engine:test:coverage: cache bypass, force executing 70b38effcbac466b
+@graphgoblin/engine:test:coverage: $ vitest run --coverage --maxWorkers=2
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:test:coverage: cache bypass, force executing 3f829d7e36d6fd6e
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:  RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-b3-integrate/packages/engine
+@graphgoblin/engine:test:coverage:       Coverage enabled with v8
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: $ vitest run --coverage --maxWorkers=2
+pnpm.cmd :  WARNING  IO error: Access is denied. (os error 5)
+At line:2 char:338
++ ... integrate'; pnpm.cmd exec turbo run test:coverage --concurrency=2 --f ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( WARNING  IO er...d. (os error 5):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-b3-integrate/packages/adapter-codex
+@graphgoblin/adapter-codex:test:coverage:       Coverage enabled with v8
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/engine:test:coverage:  ❯ src/own-session.test.ts (26 tests | 2 failed) 29759ms
+@graphgoblin/engine:test:coverage:    ❯ codex own-session isolation (10)
+@graphgoblin/engine:test:coverage:      × honors only the authored reset boundary undefined and keeps loop context 5332ms
+@graphgoblin/engine:test:coverage:    ❯ claude own-session isolation (10)
+@graphgoblin/engine:test:coverage:      × honors only the authored reset boundary undefined and keeps loop context 5031ms
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  Test Files  9 passed | 1 skipped (10)
+@graphgoblin/adapter-codex:test:coverage:       Tests  501 passed | 5 skipped (506)
+@graphgoblin/adapter-codex:test:coverage:    Start at  20:03:57
+@graphgoblin/adapter-codex:test:coverage:    Duration  86.56s (tests 45%, transform 33%, import 22%)
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:   Transform  transforming modules took 43.69s · 33% of tracked time, re-done on every run
+@graphgoblin/adapter-codex:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/adapter-codex:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  % Coverage report from v8
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/adapter-codex:test:coverage: Statements   : 97.27% ( 393/404 )
+@graphgoblin/adapter-codex:test:coverage: Branches     : 94.21% ( 342/363 )
+@graphgoblin/adapter-codex:test:coverage: Functions    : 97.84% ( 91/93 )
+@graphgoblin/adapter-codex:test:coverage: Lines        : 98.63% ( 361/366 )
+@graphgoblin/adapter-codex:test:coverage: ================================================================================
+@graphgoblin/domain:build: cache bypass, force executing 0f5e3276fc76752c
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:test:coverage: cache bypass, force executing 57d7e861829d3c0f
+@graphgoblin/infrastructure:test:coverage: $ vitest run --coverage --maxWorkers=2
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-b3-integrate/packages/infrastructure
+@graphgoblin/infrastructure:test:coverage:       Coverage enabled with v8
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/engine:test:coverage: {"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+@graphgoblin/infrastructure:test:coverage:  ❯ src/adversarial.test.ts (20 tests | 1 failed) 16725ms
+@graphgoblin/infrastructure:test:coverage:    ❯ adversarial infrastructure invariants (forks pool) (11)
+@graphgoblin/infrastructure:test:coverage:      × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 9000ms
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:  FAIL  src/own-session.test.ts > codex own-session isolation > honors only the authored reset boundary undefined and keeps loop context
+@graphgoblin/engine:test:coverage:  FAIL  src/own-session.test.ts > claude own-session isolation > honors only the authored reset boundary undefined and keeps loop context
+@graphgoblin/engine:test:coverage: Error: Test timed out in 5000ms.
+@graphgoblin/engine:test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@graphgoblin/engine:test:coverage:  ❯ src/own-session.test.ts:184:29
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:     182|   });
+@graphgoblin/engine:test:coverage:     183|
+@graphgoblin/engine:test:coverage:     184|   it.each([1, 2, undefined])(
+@graphgoblin/engine:test:coverage:        |                             ^
+@graphgoblin/engine:test:coverage:     185|     'honors only the authored reset boundary %s and keeps loop context…
+@graphgoblin/engine:test:coverage:     186|     async (reset) => {
+@graphgoblin/engine:test:coverage:  Test Files  1 failed | 53 passed (54)
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:       Tests  2 failed | 1700 passed (1702)
+@graphgoblin/engine:test:coverage:    Start at  20:03:39
+@graphgoblin/engine:test:coverage:    Duration  192.94s (tests 52%, import 34%, transform 13%, worker 1%)
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:      Import  141 modules were evaluated 302 times · 103.76s total, 34% of tracked time
+@graphgoblin/engine:test:coverage:              ~13.23s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+@graphgoblin/engine:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/adapter-jev:test:coverage: cache bypass, force executing a5df093d3ade06f6
+@graphgoblin/engine:build: cache bypass, force executing 4100ea968f4fb3ad
+@graphgoblin/engine#test:coverage:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-b3-integrate\packages\engine) 
+C:\nvm4w\nodejs\pnpm.cmd run test:coverage --maxWorkers=2 exited (1)
+
+ Tasks:    3 successful, 7 total
+Cached:    0 cached, 7 total
+  Time:    3m27.921s 
+Failed:    @graphgoblin/engine#test:coverage
+
+ ERROR  run failed: command  exited (1)

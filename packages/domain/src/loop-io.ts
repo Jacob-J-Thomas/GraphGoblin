@@ -14,13 +14,44 @@ export class LoopImportError extends DomainError {
   }
 }
 
-export class LoopFormatUpgradeRequiredError extends DomainError {
-  constructor() {
+/**
+ * The document is a loop export or definition in a format this build does not read. Older
+ * formats are refused, never converted (ADR-0042); `details` names the found and required format.
+ */
+export class LoopFormatUnsupportedError extends DomainError {
+  constructor(
+    readonly foundFormat: number,
+    document: 'export' | 'definition',
+  ) {
     super(
-      'LOOP_FORMAT_UPGRADE_REQUIRED',
-      'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 4',
+      'LOOP_FORMAT_UNSUPPORTED',
+      `This loop ${document} is format ${String(foundFormat)}; this build reads only format ${String(CURRENT_DEFINITION_FORMAT)} and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format ${String(CURRENT_DEFINITION_FORMAT)}.`,
+      { foundFormat, requiredFormat: CURRENT_DEFINITION_FORMAT },
     );
   }
+}
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * The declared format of an export envelope (its `formatVersion`, then its loop's
+ * `schemaVersion`) or of a bare definition, when it is a number.
+ */
+function declaredFormat(
+  input: unknown,
+): { found: number; document: 'export' | 'definition' } | undefined {
+  if (!isObject(input)) return undefined;
+  if (input.format === 'graphgoblin-loop' && typeof input.formatVersion === 'number') {
+    if (input.formatVersion !== CURRENT_DEFINITION_FORMAT)
+      return { found: input.formatVersion, document: 'export' };
+    return isObject(input.loop) && typeof input.loop.schemaVersion === 'number'
+      ? { found: input.loop.schemaVersion, document: 'export' }
+      : undefined;
+  }
+  return typeof input.schemaVersion === 'number'
+    ? { found: input.schemaVersion, document: 'definition' }
+    : undefined;
 }
 
 /** Wrap a definition in the portable export envelope. */
@@ -34,20 +65,17 @@ export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport 
 }
 
 /**
- * Parse an export document (or a bare definition) into a validated definition.
- * Schema problems throw LoopImportError; structural issues are returned for the caller to show.
+ * Parse an export document (or a bare definition) into a validated definition. A document that
+ * declares another format throws LoopFormatUnsupportedError; other schema problems throw
+ * LoopImportError; structural issues are returned for the caller to show.
  */
 export function importLoop(input: unknown): {
   definition: LoopDefinition;
   issues: ValidationIssue[];
 } {
-  if (
-    typeof input === 'object' &&
-    input !== null &&
-    (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
-      ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
-  )
-    throw new LoopFormatUpgradeRequiredError();
+  const declared = declaredFormat(input);
+  if (declared && declared.found !== CURRENT_DEFINITION_FORMAT)
+    throw new LoopFormatUnsupportedError(declared.found, declared.document);
   const envelope =
     typeof input === 'object' &&
     input !== null &&

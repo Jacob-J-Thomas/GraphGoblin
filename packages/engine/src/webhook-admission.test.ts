@@ -4,8 +4,6 @@ import { AdmissionConflictError, parseRunAdmission } from './admission.js';
 import { RunManager } from './run-manager.js';
 import { createTestEngine } from './testing/scenario.js';
 import { DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
-import { V3LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { convertDefinitionV3ToV4, type DefinitionResolutions } from '@graphgoblin/domain';
 const managers: RunManager[] = [];
 afterEach(() => {
   for (const manager of managers.splice(0)) manager.stop();
@@ -49,84 +47,6 @@ async function setup() {
   return { engine, version, input, claim };
 }
 describe('durable webhook admission', () => {
-  it.each([false, true])(
-    'executes the reviewed stored filter with allow=%s and restores the exact output',
-    async (allow) => {
-      const engine = await createTestEngine();
-      managers.push(engine.manager);
-      const frozen = V3LoopDefinitionSchema.parse({
-        schemaVersion: 3,
-        name: 'Stored filter execution',
-        settings: { maxIterations: 20 },
-        nodes: [
-          {
-            id: 'start',
-            kind: 'trigger',
-            label: 'Start',
-            config: { subtype: 'event', eventType: 'ready', filter: 'allow' },
-          },
-          {
-            id: 'record',
-            kind: 'mutate',
-            label: 'Record incoming output',
-            config: {
-              operations: [
-                {
-                  op: 'set',
-                  path: '/vars/observed',
-                  value: { kind: 'expression', jsonata: 'lastOutput' },
-                },
-              ],
-            },
-          },
-          { id: 'done', kind: 'exit', label: 'Done', config: {} },
-        ],
-        edges: [
-          { id: 'successor', from: { node: 'start', port: 'out' }, to: { node: 'record' } },
-          { id: 'finish', from: { node: 'record', port: 'out' }, to: { node: 'done' } },
-        ],
-      });
-      const preview = await convertDefinitionV3ToV4(frozen, {}, 'stored-version');
-      const resolutions: DefinitionResolutions = Object.fromEntries(
-        preview.reviewItems
-          .filter((item) => item.status === 'pending')
-          .map((item) => [
-            item.id,
-            { action: 'approve', hash: item.hash, reason: 'Reviewed graph and visit timing.' },
-          ]),
-      );
-      const converted = await convertDefinitionV3ToV4(frozen, resolutions, 'stored-version');
-      expect(converted).toMatchObject({ ok: true, ready: true });
-      if (!converted.ok) return;
-      const version = engine.publish(converted.value);
-      const payload = { allow, nested: [false, null, { exact: true }] };
-      const run = await engine.runToIdle(version.loopId, payload, {
-        triggerKind: 'event',
-        source: 'event',
-        triggerNodeId: 'start',
-      });
-      expect(run.status).toBe('succeeded');
-      const thread = await engine.ports.runs.getThread(run.id);
-      const visited = engine
-        .events(run.id)
-        .filter((event) => event.type === 'node.started')
-        .map((event) => event.nodeId);
-      expect(visited).toEqual(
-        allow
-          ? ['start', 'start-check', 'start-restore', 'record', 'done']
-          : ['start', 'start-check', 'start-quiet-exit'],
-      );
-      if (allow) {
-        expect(thread?.vars.observed).toEqual(thread?.outputs.start);
-        expect(thread?.vars.observed).toMatchObject({
-          nodeId: 'start',
-          value: payload,
-          at: engine.ports.clock.now().toISOString(),
-        });
-      } else expect(thread?.vars.observed).toBeUndefined();
-      expect(engine.events(run.id).some((event) => event.type === 'return.delivered')).toBe(false);
-    },
-  );
   it('keeps a claimed delivery recoverable when dispatch and retry-metadata writes both fail', async () => {
     const { engine, input, claim } = await setup();
     vi.spyOn(engine.ports.admission, 'create').mockRejectedValueOnce(

@@ -30,6 +30,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Reset acceptance
+        run: pnpm test:reset
+
       - name: Recovery process acceptance
         run: pnpm test:recovery-process
 
@@ -41,7 +44,7 @@ jobs:
       - name: Webhook retry acceptance
         run: pnpm test:webhook-retry
 
-      - name: Offline upgrade acceptance
+      - name: Current-format migration acceptance
         run: pnpm test:upgrade
 
       - name: Typecheck

@@ -1,0 +1,169 @@
+{
+  "versionId": "01M5GGDQDWS6HF14BCHP25NE5T",
+  "detail": {
+    "status": 409,
+    "body": {
+      "loopId": "01M5GGDQDW3JVXXG4XCCPHM0BP",
+      "versionId": "01M5GGDQDWS6HF14BCHP25NE5T",
+      "version": 1,
+      "paths": ["/nodes/1/config/destinations/0"],
+      "type": "https://graphgoblin.dev/problems/loop-upgrade-required",
+      "title": "loop upgrade required",
+      "status": 409,
+      "code": "LOOP_UPGRADE_REQUIRED",
+      "detail": "Loop 01M5GGDQDW3JVXXG4XCCPHM0BP: published version 1 (01M5GGDQDWS6HF14BCHP25NE5T) has an exit that publishes an Event at /nodes/1/config/destinations/0. Event destinations were retired (ADR-0044) and this definition cannot be served or run. Replace each such destination with a Subloop call to the receiving loop and publish a new version. A published version or draft that still holds one can be repaired by removing the destination from its stored JSON by hand with GraphGoblin stopped. A draft-run snapshot cannot be edited, even then: delete the loop (DELETE /loops/01M5GGDQDW3JVXXG4XCCPHM0BP, once its runs are terminal, removes its runs and snapshots) or reset the store."
+    }
+  },
+  "healthy": {
+    "status": 200,
+    "body": {
+      "loop": {
+        "id": "01M5GGDQG1VRB6NM5F4PY6JE5D",
+        "ownerId": "local",
+        "name": "healthy loop",
+        "currentVersionId": "01M5GGDQG1FAPQCPT887K52017",
+        "createdAt": "2026-10-22T00:33:22.433Z",
+        "updatedAt": "2026-10-22T00:33:22.553Z"
+      },
+      "current": {
+        "id": "01M5GGDQG1FAPQCPT887K52017",
+        "loopId": "01M5GGDQG1VRB6NM5F4PY6JE5D",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "healthy loop",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": ["ui", "api", "mcp"]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-22T00:33:22.433Z",
+        "publishedAt": "2026-10-22T00:33:22.553Z"
+      },
+      "draftToken": "17a7657a2772b514"
+    }
+  },
+  "exported": {
+    "status": 200,
+    "body": {
+      "format": "graphgoblin-loop",
+      "formatVersion": 4,
+      "exportedAt": "2026-10-22T00:33:34.482Z",
+      "loop": {
+        "schemaVersion": 4,
+        "name": "healthy loop",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": ["ui", "api", "mcp"]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 300,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

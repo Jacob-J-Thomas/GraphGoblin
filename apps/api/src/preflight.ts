@@ -11,13 +11,20 @@ import {
   SqliteModelCatalog,
   SqliteClassifierModels,
   SqliteSecrets,
+  UnsupportedStoreError,
   databaseFilePath,
+  databaseView,
+  guardCurrentStore,
   openDatabase,
+  openReadOnlyDatabaseClient,
+  pendingMigrationCount,
+  type Database,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
 import { z } from 'zod';
 import { loadConfig, type ApiConfig } from './config.js';
 import { JEV_SECRET, LOCAL_OWNER, type Container } from './container.js';
+import { dataDirArgument, RESET_COMMAND } from './store-refusal.js';
 
 /**
  * First-run preflight (docs/11): is this machine ready to run GraphGoblin? Each check reports
@@ -272,7 +279,16 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
       checks.push(check('database', 'Database', 'ok', 'reachable and migrated'));
     }
   } catch (error) {
-    checks.push(check('database', 'Database', 'fail', `not reachable: ${message(error)}`));
+    checks.push(
+      check(
+        'database',
+        'Database',
+        'fail',
+        error instanceof UnsupportedStoreError
+          ? `${error.reason}. Start refuses this store and converts nothing; to start fresh, list what a reset removes with ${RESET_COMMAND} ${dataDirArgument(config.dataDir)}`
+          : `not reachable: ${message(error)}`,
+      ),
+    );
   }
 
   checks.push(...(await checkHarnesses(sources.harnesses, config)));
@@ -388,11 +404,19 @@ export async function assertCreatable(file: string, probeName?: ProbeName): Prom
   }
 }
 
+/** The connection preflight inspects a store through: read-only for a file on disk. */
+interface InspectedDatabase {
+  client: ReturnType<typeof openReadOnlyDatabaseClient>;
+  db: Database;
+  pendingMigrations(): Promise<number>;
+  close(): void;
+}
+
 /** What the CLI can learn about the database before the server has started. */
 type DatabaseState =
   | { kind: 'missing' }
   | { kind: 'broken'; error: unknown }
-  | { kind: 'open'; handle: ReturnType<typeof openDatabase> };
+  | { kind: 'open'; handle: InspectedDatabase };
 
 async function inspectDatabase(url: string): Promise<DatabaseState> {
   const file = databaseFilePath(url);
@@ -410,6 +434,20 @@ async function inspectDatabase(url: string): Promise<DatabaseState> {
     }
   }
   try {
+    if (file !== undefined) {
+      // The same read-only connection as startup's guard: a refused or healthy store keeps its
+      // database and write-ahead log bytes (a mutable connection checkpoints the log on close).
+      const client = openReadOnlyDatabaseClient(file);
+      return {
+        kind: 'open',
+        handle: {
+          client,
+          db: databaseView(client),
+          pendingMigrations: () => pendingMigrationCount(client),
+          close: () => client.close(),
+        },
+      };
+    }
     return { kind: 'open', handle: openDatabase({ url }) };
   } catch (error) {
     return { kind: 'broken', error };
@@ -468,7 +506,11 @@ export async function configPreflightSources(
   const { handle } = database;
   return {
     ...base,
-    pendingMigrations: () => handle.pendingMigrations(),
+    // A store start would refuse is reported as such, never as migrations it would apply.
+    pendingMigrations: async () => {
+      await guardCurrentStore(handle.client);
+      return handle.pendingMigrations();
+    },
     jevKey: () =>
       key
         ? new SqliteSecrets(handle.db, { now: () => new Date() }, key, LOCAL_OWNER).resolve(

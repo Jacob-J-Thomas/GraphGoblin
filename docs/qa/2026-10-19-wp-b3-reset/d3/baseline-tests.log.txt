@@ -1,0 +1,901 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-b3-reset-identity/apps/api
+
+ ❯ src/reset/reset-locked-plan.test.ts (8 tests | 6 failed) 13362ms
+   ❯ confirmed reset retains the run IDs until their workspaces can be removed (7)
+     × refuses before removal when only the locked read fails: store reader exited with 1 245ms
+     × refuses before removal when only the locked read fails: store reader timed out 190ms
+     × refuses before removal when only the locked read fails: store reader exited with SIGKILL 181ms
+     × refuses when two readable plans would keep a previously identified run workspace 163ms
+     × refuses after a real built copy owner is killed during the locked read 11837ms
+   × names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory 527ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected +0 to be 1 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 1
++ 0
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:76:28
+     74|   const before = await snapshotTree(data);
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+       |                            ^
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+AssertionError: expected 'GraphGoblin reset\n\nData directory: …' to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
++ GraphGoblin reset
++
++ Data directory: %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-tMaZmA\data
++ Database:       %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-tMaZmA\data\graphgoblin.db (unreadable: store reader exited with 1)
++
++ Removes:
++   artifacts                              artifacts                1 file, 2 directories, 39 B
++   graphgoblin.db                         database                 1 file, 32 B
++   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 36 B
++   graphgoblin.db-shm                     SQLite shared memory     1 file, 36 B
++   graphgoblin.db-journal                 SQLite rollback journal  1 file, 40 B
++   graphgoblin.lock                       the reset's own lock     removed last, on release
++
++ Keeps:
++   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
++   notes.txt                              not part of the store
++   workspaces/my-notes                    the store could not be read to match run IDs
++   workspaces/run-a                       the store could not be read to match run IDs
++   workspaces/run-b                       the store could not be read to match run IDs
++   Browser device drafts stay in each browser; discard them from the loop editor.
++
++ Total removed: 5 files, 2 directories, 183 B in 5 items.
++
++ Removing:
++   removed artifacts (1 file, 2 directories, 39 B)
++   removed graphgoblin.db (1 file, 32 B)
++   removed graphgoblin.db-wal (1 file, 36 B)
++   removed graphgoblin.db-shm (1 file, 36 B)
++   removed graphgoblin.db-journal (1 file, 40 B)
++   removed graphgoblin.lock
++ Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-tMaZmA\data.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:77:27
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+       |                           ^
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected '' to contain 'reset refused:'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- reset refused:
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:78:27
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+       |                           ^
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+AssertionError: expected '' to contain 'store reader exited with 1'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- store reader exited with 1
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected '' to contain 'run the reset again'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- run the reset again
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:80:27
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+       |                           ^
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected '' to contain 'Nothing in the data directory was cha…'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- Nothing in the data directory was changed.
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:81:27
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+       |                           ^
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected [ { path: 'master.key', …(2) }, …(10) ] to deeply equal [ { path: 'artifacts', …(1) }, …(17) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -1,40 +1,7 @@
+  [
+    {
+-     "kind": "directory",
+-     "path": "artifacts",
+-   },
+-   {
+-     "kind": "directory",
+-     "path": "artifacts/text",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "artifacts/text/output",
+-     "sha256": "bbcfeb33438bfca3b5cad72b9042591611fe8b63c54d952dba0ddd20ec78129a",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db",
+-     "sha256": "206b8b75ed79f2daa8946c70fc53e25364d588f7cc767a6607add2dc25477b43",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-journal",
+-     "sha256": "280da8b46b408e303a44cc212dc864cea4726d7a28e40f18b09c6baa26c7d582",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-shm",
+-     "sha256": "13869175425819248fc93bf331084d33a9451bf95dbc9bdfce30a99f2941e782",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-wal",
+-     "sha256": "308632433fe5a1fa8bc596c196cc2ac3d56ffdc3a63679891c3c1f6a846427bd",
+-   },
+-   {
+      "kind": "file",
+      "path": "master.key",
+      "sha256": "4d8dafb12b861c044148d961b4fda3158e02e468f3f86eee4b76e47fa4756e3c",
+    },
+    {
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:84:36
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+     84|   expect(await snapshotTree(data)).toEqual(before);
+       |                                    ^
+     85| }
+     86|
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+AssertionError: expected 'GraphGoblin reset\n\nData directory: …' to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
++ GraphGoblin reset
++
++ Data directory: %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-kcE1eg\data
++ Database:       %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-kcE1eg\data\graphgoblin.db (unreadable: store reader timed out)
++
++ Removes:
++   artifacts                              artifacts                1 file, 2 directories, 39 B
++   graphgoblin.db                         database                 1 file, 32 B
++   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 36 B
++   graphgoblin.db-shm                     SQLite shared memory     1 file, 36 B
++   graphgoblin.db-journal                 SQLite rollback journal  1 file, 40 B
++   graphgoblin.lock                       the reset's own lock     removed last, on release
++
++ Keeps:
++   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
++   notes.txt                              not part of the store
++   workspaces/my-notes                    the store could not be read to match run IDs
++   workspaces/run-a                       the store could not be read to match run IDs
++   workspaces/run-b                       the store could not be read to match run IDs
++   Browser device drafts stay in each browser; discard them from the loop editor.
++
++ Total removed: 5 files, 2 directories, 183 B in 5 items.
++
++ Removing:
++   removed artifacts (1 file, 2 directories, 39 B)
++   removed graphgoblin.db (1 file, 32 B)
++   removed graphgoblin.db-wal (1 file, 36 B)
++   removed graphgoblin.db-shm (1 file, 36 B)
++   removed graphgoblin.db-journal (1 file, 40 B)
++   removed graphgoblin.lock
++ Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-kcE1eg\data.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:77:27
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+       |                           ^
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out
+AssertionError: expected '' to contain 'store reader timed out'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- store reader timed out
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected 'GraphGoblin reset\n\nData directory: …' to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
++ GraphGoblin reset
++
++ Data directory: %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-SYmEH1\data
++ Database:       %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-SYmEH1\data\graphgoblin.db (unreadable: store reader exited with SIGKILL)
++
++ Removes:
++   artifacts                              artifacts                1 file, 2 directories, 39 B
++   graphgoblin.db                         database                 1 file, 32 B
++   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 36 B
++   graphgoblin.db-shm                     SQLite shared memory     1 file, 36 B
++   graphgoblin.db-journal                 SQLite rollback journal  1 file, 40 B
++   graphgoblin.lock                       the reset's own lock     removed last, on release
++
++ Keeps:
++   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
++   notes.txt                              not part of the store
++   workspaces/my-notes                    the store could not be read to match run IDs
++   workspaces/run-a                       the store could not be read to match run IDs
++   workspaces/run-b                       the store could not be read to match run IDs
++   Browser device drafts stay in each browser; discard them from the loop editor.
++
++ Total removed: 5 files, 2 directories, 183 B in 5 items.
++
++ Removing:
++   removed artifacts (1 file, 2 directories, 39 B)
++   removed graphgoblin.db (1 file, 32 B)
++   removed graphgoblin.db-wal (1 file, 36 B)
++   removed graphgoblin.db-shm (1 file, 36 B)
++   removed graphgoblin.db-journal (1 file, 40 B)
++   removed graphgoblin.lock
++ Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-SYmEH1\data.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:77:27
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+       |                           ^
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL
+AssertionError: expected '' to contain 'store reader exited with SIGKILL'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- store reader exited with SIGKILL
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:95:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected +0 to be 1 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 1
++ 0
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:76:28
+     74|   const before = await snapshotTree(data);
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+       |                            ^
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected 'GraphGoblin reset\n\nData directory: …' to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
++ GraphGoblin reset
++
++ Data directory: %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-fOYXZD\data
++ Database:       %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-fOYXZD\data\graphgoblin.db (no format marker (an older build wrote it))
++
++ Removes:
++   workspaces/run-a                       run workspace            1 file, 2 directories, 45 B
++   artifacts                              artifacts                1 file, 2 directories, 39 B
++   graphgoblin.db                         database                 1 file, 32 B
++   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 36 B
++   graphgoblin.db-shm                     SQLite shared memory     1 file, 36 B
++   graphgoblin.db-journal                 SQLite rollback journal  1 file, 40 B
++   graphgoblin.lock                       the reset's own lock     removed last, on release
++
++ Keeps:
++   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
++   notes.txt                              not part of the store
++   workspaces/my-notes                    not a stored run ID
++   workspaces/run-b                       not a stored run ID
++   Browser device drafts stay in each browser; discard them from the loop editor.
++
++ Total removed: 6 files, 4 directories, 228 B in 6 items.
++
++ Removing:
++   removed workspaces/run-a (1 file, 2 directories, 45 B)
++   removed artifacts (1 file, 2 directories, 39 B)
++   removed graphgoblin.db (1 file, 32 B)
++   removed graphgoblin.db-wal (1 file, 36 B)
++   removed graphgoblin.db-shm (1 file, 36 B)
++   removed graphgoblin.db-journal (1 file, 40 B)
++   removed graphgoblin.lock
++ Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-fOYXZD\data.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:77:27
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+       |                           ^
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected '' to contain 'reset refused:'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- reset refused:
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:78:27
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+       |                           ^
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected '' to contain 'workspaces/run-b'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- workspaces/run-b
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected '' to contain 'run the reset again'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- run the reset again
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:80:27
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+       |                           ^
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected '' to contain 'Nothing in the data directory was cha…'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- Nothing in the data directory was changed.
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:81:27
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+       |                           ^
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace
+AssertionError: expected [ { path: 'master.key', …(2) }, …(7) ] to deeply equal [ { path: 'artifacts', …(1) }, …(17) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -1,41 +1,8 @@
+  [
+    {
+-     "kind": "directory",
+-     "path": "artifacts",
+-   },
+-   {
+-     "kind": "directory",
+-     "path": "artifacts/text",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "artifacts/text/output",
+-     "sha256": "bbcfeb33438bfca3b5cad72b9042591611fe8b63c54d952dba0ddd20ec78129a",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db",
+-     "sha256": "206b8b75ed79f2daa8946c70fc53e25364d588f7cc767a6607add2dc25477b43",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-journal",
+-     "sha256": "280da8b46b408e303a44cc212dc864cea4726d7a28e40f18b09c6baa26c7d582",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-shm",
+-     "sha256": "13869175425819248fc93bf331084d33a9451bf95dbc9bdfce30a99f2941e782",
+-   },
+-   {
+      "kind": "file",
+-     "path": "graphgoblin.db-wal",
+-     "sha256": "308632433fe5a1fa8bc596c196cc2ac3d56ffdc3a63679891c3c1f6a846427bd",
+-   },
+-   {
+-     "kind": "file",
+      "path": "master.key",
+      "sha256": "4d8dafb12b861c044148d961b4fda3158e02e468f3f86eee4b76e47fa4756e3c",
+    },
+    {
+      "kind": "file",
+@@ -52,23 +19,10 @@
+    },
+    {
+      "kind": "file",
+      "path": "workspaces/my-notes/keep",
+      "sha256": "02542edfe230c58377e64744af0f92cbd6b09c2e16107f1e7c882670446368a4",
+-   },
+-   {
+-     "kind": "directory",
+-     "path": "workspaces/run-a",
+-   },
+-   {
+-     "kind": "directory",
+-     "path": "workspaces/run-a/src",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "workspaces/run-a/src/output",
+-     "sha256": "b3745a9bf3d90b17bb1e63145ca5a22ab85432f9d6c3ee04f3b4236db321709c",
+    },
+    {
+      "kind": "directory",
+      "path": "workspaces/run-b",
+    },
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:84:36
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+     84|   expect(await snapshotTree(data)).toEqual(before);
+       |                                    ^
+     85| }
+     86|
+ ❯ src/reset/reset-locked-plan.test.ts:120:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected +0 to be 1 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 1
++ 0
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:76:28
+     74|   const before = await snapshotTree(data);
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+       |                            ^
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected 'GraphGoblin reset\n\nData directory: …' to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
++ GraphGoblin reset
++
++ Data directory: %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-Ezwfpy\data
++ Database:       %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-Ezwfpy\data\graphgoblin.db (unreadable: store reader exited with SIGKILL)
++
++ Removes:
++   artifacts                              artifacts                1 file, 2 directories, 39 B
++   graphgoblin.db                         database                 1 file, 4.0 KB
++   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 334.0 KB
++   graphgoblin.db-shm                     SQLite shared memory     1 file, 36 B
++   graphgoblin.db-journal                 SQLite rollback journal  1 file, 40 B
++   graphgoblin.lock                       the reset's own lock     removed last, on release
++
++ Keeps:
++   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
++   notes.txt                              not part of the store
++   workspaces/01JRESETRUNAAAAAAAAAAAAAAA  the store could not be read to match run IDs
++   workspaces/01JRESETRUNBBBBBBBBBBBBBBB  the store could not be read to match run IDs
++   workspaces/my-notes                    the store could not be read to match run IDs
++   Browser device drafts stay in each browser; discard them from the loop editor.
++
++ Total removed: 5 files, 2 directories, 338.1 KB in 5 items.
++
++ Removing:
++   removed artifacts (1 file, 2 directories, 39 B)
++   removed graphgoblin.db (1 file, 4.0 KB)
++   removed graphgoblin.db-wal (1 file, 334.0 KB)
++   removed graphgoblin.db-shm (1 file, 36 B)
++   removed graphgoblin.db-journal (1 file, 40 B)
++   removed graphgoblin.lock
++ Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-Ezwfpy\data.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:77:27
+     75|   const result = await reset(data, readStore);
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+       |                           ^
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected '' to contain 'reset refused:'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- reset refused:
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:78:27
+     76|   expect.soft(result.code).toBe(1);
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+       |                           ^
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected '' to contain 'store reader exited with'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- store reader exited with
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected '' to contain 'run the reset again'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- run the reset again
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:80:27
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+       |                           ^
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected '' to contain 'Nothing in the data directory was cha…'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- Nothing in the data directory was changed.
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:81:27
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+       |                           ^
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read
+AssertionError: expected [ { path: 'master.key', …(2) }, …(10) ] to deeply equal [ { path: 'artifacts', …(1) }, …(17) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -1,40 +1,7 @@
+  [
+    {
+-     "kind": "directory",
+-     "path": "artifacts",
+-   },
+-   {
+-     "kind": "directory",
+-     "path": "artifacts/text",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "artifacts/text/output",
+-     "sha256": "bbcfeb33438bfca3b5cad72b9042591611fe8b63c54d952dba0ddd20ec78129a",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db",
+-     "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-journal",
+-     "sha256": "280da8b46b408e303a44cc212dc864cea4726d7a28e40f18b09c6baa26c7d582",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-shm",
+-     "sha256": "13869175425819248fc93bf331084d33a9451bf95dbc9bdfce30a99f2941e782",
+-   },
+-   {
+-     "kind": "file",
+-     "path": "graphgoblin.db-wal",
+-     "sha256": "bd6b7eda02cb085928b709db30e560291ce90bc4059c2dedef97ffe984d1fe72",
+-   },
+-   {
+      "kind": "file",
+      "path": "master.key",
+      "sha256": "4d8dafb12b861c044148d961b4fda3158e02e468f3f86eee4b76e47fa4756e3c",
+    },
+    {
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  00:34:19
+   Duration  18.94s (tests 72%, import 15%, transform 14%)
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:84:36
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+     84|   expect(await snapshotTree(data)).toEqual(before);
+       |                                    ^
+     85| }
+     86|
+ ❯ src/reset/reset-locked-plan.test.ts:184:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory
+AssertionError: expected 'reset refused: EBUSY: resource busy o…' to contain 'stale private reset copy C:\Users\98j…'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- stale private reset copy %USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-zkBRaS\temp\gg-reset-store-D3held
++ reset refused: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-zkBRaS\temp\gg-reset-store-D3held\store.db-wal'
++ Nothing was changed.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:79:27
+     77|   expect.soft(result.out).toBe('');
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+       |                           ^
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+ ❯ src/reset/reset-locked-plan.test.ts:285:7
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory
+AssertionError: expected 'reset refused: EBUSY: resource busy o…' to contain 'run the reset again'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- run the reset again
++ reset refused: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-zkBRaS\temp\gg-reset-store-D3held\store.db-wal'
++ Nothing was changed.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:80:27
+     78|   expect.soft(result.err).toContain('reset refused:');
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+       |                           ^
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+ ❯ src/reset/reset-locked-plan.test.ts:285:7
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory
+AssertionError: expected 'reset refused: EBUSY: resource busy o…' to contain 'Nothing in the data directory was cha…'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- Nothing in the data directory was changed.
++ reset refused: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-zkBRaS\temp\gg-reset-store-D3held\store.db-wal'
++ Nothing was changed.
++
+System.Management.Automation.RemoteException
+ ❯ assertRefused src/reset/reset-locked-plan.test.ts:81:27
+     79|   expect.soft(result.err).toContain(cause);
+     80|   expect.soft(result.err).toContain('run the reset again');
+     81|   expect.soft(result.err).toContain('Nothing in the data directory was…
+       |                           ^
+     82|   // Includes every sidecar, artifact, run/user workspace, master.key …
+     83|   // proves the newly acquired lock was released. No filesystem API is…
+ ❯ src/reset/reset-locked-plan.test.ts:285:7
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/39]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/reset/reset-locked-plan.test.ts > names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory
+AssertionError: expected 'reset refused: EBUSY: resource busy o…' to contain 'Close the program holding its files'
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- Close the program holding its files
++ reset refused: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-b3-d3-zkBRaS\temp\gg-reset-store-D3held\store.db-wal'
++ Nothing was changed.
++
+System.Management.Automation.RemoteException
+ ❯ src/reset/reset-locked-plan.test.ts:288:26
+    286|       const result = await reset(data, async () => readable);
+    287|       expect(result.err.split('\n')).toHaveLength(3);
+    288|       expect(result.err).toContain('Close the program holding its file…
+       |                          ^
+    289|       expect(result.err).not.toContain('EBUSY');
+    290|       expect(await readFile(join(stale, 'owner.json'), 'utf8')).toCont…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/39]⎯
+System.Management.Automation.RemoteException
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-b3-reset-
+  │ identity\apps\api
+System.Management.Automation.RemoteException

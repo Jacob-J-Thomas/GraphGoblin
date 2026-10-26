@@ -1,0 +1,76 @@
+{
+  "head": "b31b0cd04536418d7523bf0644b5bf20a84e42f4",
+  "node": "v22.14.0",
+  "port": 5651,
+  "directory": "%TEMP%\\gg-qa-266-r3-wal-raUfpD",
+  "verdicts": [
+    {
+      "kind": "truncated-ledger",
+      "checks": [
+        {
+          "check": "preflight preserves DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "CLI refuses expected reason and prints exact reset command for its configured directory",
+          "pass": true
+        },
+        {
+          "check": "startup guard refuses expected reason, preserving DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "built startup exit 1, expected reason and reset instruction, preserving DB/WAL and all three files",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "kind": "healthy-current",
+      "checks": [
+        {
+          "check": "preflight preserves DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "healthy CLI exit 0, migrated database and stored default model",
+          "pass": true,
+          "controlledCodexReadiness": true
+        },
+        {
+          "check": "controlled preflight preserves DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "startup read-only guard accepts current, pending migrations 0, catalog listed, bytes intact",
+          "pass": true
+        },
+        {
+          "check": "built API starts healthy and serves model catalog",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "kind": "format-3",
+      "checks": [
+        {
+          "check": "preflight preserves DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "CLI refuses expected reason and prints exact reset command for its configured directory",
+          "pass": true
+        },
+        {
+          "check": "startup guard refuses expected reason, preserving DB/WAL and all three files",
+          "pass": true
+        },
+        {
+          "check": "built startup exit 1, expected reason and reset instruction, preserving DB/WAL and all three files",
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

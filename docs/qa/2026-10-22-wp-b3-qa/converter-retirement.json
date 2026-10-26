@@ -1,0 +1,76 @@
+{
+  "Pattern": "inspectDatabaseUpgrade|applyDatabaseUpgrade|graphgoblin-upgrade|V2LoopDefinition|V3LoopDefinition|upgradeLoopDefinition|capture-upgrade-v[23]",
+  "SourceSearchExit": 1,
+  "SourceMatches": [],
+  "BuiltSearchExit": 0,
+  "BuiltMatches": [
+    "packages\\domain\\dist\\convert-v3-v4\\filters.d.ts",
+    "packages\\domain\\dist\\convert-v3-v4\\index.d.ts",
+    "packages\\domain\\dist\\convert-v3-v4\\index.js",
+    "packages\\contracts\\dist\\upgrade-v3.js",
+    "packages\\contracts\\dist\\upgrade-v3.d.ts",
+    "packages\\contracts\\dist\\upgrade-v2.js",
+    "packages\\contracts\\dist\\upgrade-v2.d.ts",
+    "packages\\domain\\dist\\upgrade-v2-v3.js",
+    "packages\\domain\\dist\\upgrade-v2-v3.d.ts",
+    "packages\\domain\\dist\\upgrade.d.ts",
+    "packages\\domain\\dist\\upgrade.js"
+  ],
+  "RootConverterScript": null,
+  "RootUpgradeTest": null,
+  "ApiBin": {
+    "graphgoblin-api": "./dist/main.js"
+  },
+  "RetiredBuiltPaths": [
+    {
+      "Exists": false,
+      "Path": "apps/api/dist/upgrade"
+    },
+    {
+      "Exists": true,
+      "Path": "packages/contracts/dist/upgrade-v2.js"
+    },
+    {
+      "Exists": true,
+      "Path": "packages/contracts/dist/upgrade-v3.js"
+    },
+    {
+      "Exists": true,
+      "Path": "packages/domain/dist/upgrade.js"
+    }
+  ],
+  "CurrentGuide": [
+    "1:# Reset and fresh start",
+    "3:This build reads only the current format, format 4: its data store, loop exports and browser device drafts. Anything older is refused clearly and never converted ([ADR-0042](../decisions/ADR-0042-explicit-resets-replace-conversion.md)). The way forward is an explicit **reset** of the data directory, run by you, which lists exactly what it removes before it removes anything.",
+    "5:The offline `graphgoblin-upgrade` tool and the automatic conversion of old imports and device drafts were retired on 2026-10-18. Builds up to `cfae696` still include them, if you need to bring an old export forward once (this page keeps its old file name so older links land here).",
+    "14:  Found:    format 3",
+    "15:  Requires: format 4",
+    "16:  Reason:   The store is format 3; this build reads only format 4",
+    "17:No stored data was changed. This build does not convert stores from other formats.",
+    "18:To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):",
+    "19:  node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\.graphgoblin\"",
+    "22:`Found` is `format N` for an older store, `no valid format marker` for a store written before format markers existed (or with a damaged marker), and `format 4, but the store is damaged or unfinished` when a format-4 store fails a structure, ledger or data check; `Reason` names the check. No stored data is changed in any case (SQLite may refresh its `-shm` index file while reading). `node apps/api/dist/main.js --preflight` reports the same store as a failed **Database** check.",
+    "24:A damaged format-4 store can be repaired by hand if you know what broke (the reason names the table or check). Otherwise, reset it.",
+    "26:## What a reset removes and keeps",
+    "28:A reset removes, inside the data directory only:",
+    "33:- the lock file, last, when the reset releases it.",
+    "37:A reset cannot be undone. If you might want the data later, stop GraphGoblin and copy the whole data directory somewhere safe first.",
+    "39:## List what a reset would remove",
+    "44:node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\.graphgoblin\"",
+    "47:This dry run reads and prints; it changes nothing. It does not open the database with SQLite, which would rewrite its sidecar files: the format marker and run IDs are read from a temporary copy. `--data-dir` is optional here; when given it must name the configured data directory. Sample output:",
+    "50:GraphGoblin reset (dry run: nothing is removed)",
+    "53:Database:       %USERPROFILE%\\.graphgoblin\\graphgoblin.db (format 3; this build requires format 4)",
+    "56:  workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B",
+    "61:  graphgoblin.lock                       the reset's own lock     removed last, on release",
+    "70:Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:",
+    "71:  node apps/api/dist/main.js --reset --yes --data-dir \"%USERPROFILE%\\.graphgoblin\"",
+    "76:## Reset",
+    "81:node apps/api/dist/main.js --reset --yes --data-dir \"%USERPROFILE%\\.graphgoblin\"",
+    "84:`--yes` alone is refused: the confirmation must name the data directory, and it must be the one this environment configures (`GG_DATA_DIR`, or `~/.graphgoblin` when it is unset), so a different shell cannot reset another store by accident. The reset takes the data-directory lock (it refuses while GraphGoblin is running), lists the same manifest again, removes exactly those items, prints each one, and ends with `Reset complete.` It refuses, changing nothing, when the database is outside the data directory, is not a local file (for example `:memory:`), is reached through a link, is not a regular file, or lies inside `artifacts/` or `workspaces/`.",
+    "86:If something goes wrong part of the way (for example another program holds a file open), the reset stops, releases its lock and reports exactly what it removed, what it removed partly (with counts) and what it did not remove. Do not start GraphGoblin on that directory until the reset finishes: fix the cause and run the same command again; it lists and removes what is left.",
+    "88:Exit codes: 0 done (or nothing to reset), 1 refused or stopped, 2 a mistyped command line (nothing is read or changed).",
+    "90:In the container image, stop the service and run the same command in a one-off container, for example `docker compose run --rm graphgoblin node apps/api/dist/main.js --reset --data-dir /data`.",
+    "94:Start GraphGoblin as usual. On an empty data directory it creates a new format-4 store in one transaction: the schema, its migration ledger and the format marker. Then re-create or import your loops (current-format exports import as before), set secrets again if the store held them, and re-arm triggers.",
+    "98:`POST /loops/import` and the web import refuse a document that declares another format with `400 LOOP_FORMAT_UNSUPPORTED`, for example:"
+  ]
+}

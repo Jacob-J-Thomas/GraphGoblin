@@ -1,0 +1,275 @@
+{
+  "classification": "Minor adjacent behavior: CLI preflight opens an unsupported WAL-backed store with a mutable SQLite connection; refusal is correct, but close checkpoints existing committed WAL and removes sidecars. No conversion, ledger repair or logical-data change observed.",
+  "results": [
+    {
+      "iteration": 1,
+      "preflight": {
+        "code": 1,
+        "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-1 is writable\n  WARN    Master key      %TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-1\\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)\n  FAIL    Database        The format-4 store is damaged: the migration ledger is behind the store structure. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-1\"\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start\n\n2 failed, 2 warning(s): fix the failed checks before starting\n",
+        "stderr": "",
+        "killed": false,
+        "durationMs": 2707
+      },
+      "before": [
+        [
+          "graphgoblin.db",
+          "sha256",
+          "1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780"
+        ],
+        [
+          "graphgoblin.db-shm",
+          "sha256",
+          "6af5573433a7aeb34595696a7b402028195f6b6334ee8dd28e818ecf005fd117"
+        ],
+        [
+          "graphgoblin.db-wal",
+          "sha256",
+          "9b40398f514753fb89001804ea25ceee39bac429a846635285aa9cb3fad069c7"
+        ]
+      ],
+      "after": [
+        [
+          "graphgoblin.db",
+          "sha256",
+          "1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780"
+        ],
+        [
+          "graphgoblin.db-shm",
+          "sha256",
+          "f96e520ffe3dd72fe55e489777fd8102f6d0140aa3f3cad0454f8e9e87c27c1f"
+        ],
+        [
+          "graphgoblin.db-wal",
+          "sha256",
+          "9b40398f514753fb89001804ea25ceee39bac429a846635285aa9cb3fad069c7"
+        ]
+      ],
+      "physicalChange": true,
+      "dbChanged": false,
+      "logicalRowsBefore": [
+        {
+          "created_at": 1790994664038
+        },
+        {
+          "created_at": 1790999415943
+        },
+        {
+          "created_at": 1791044399130
+        },
+        {
+          "created_at": 1791079869396
+        },
+        {
+          "created_at": 1791136800000
+        },
+        {
+          "created_at": 1791152101266
+        },
+        {
+          "created_at": 1791185767298
+        },
+        {
+          "created_at": 1791309600000
+        },
+        {
+          "created_at": 1791396000000
+        },
+        {
+          "created_at": 1791482400000
+        },
+        {
+          "created_at": 1791568800000
+        },
+        {
+          "created_at": 1791655200000
+        },
+        {
+          "created_at": 1791741600000
+        },
+        {
+          "created_at": 1791828000000
+        }
+      ],
+      "logicalRowsAfter": [
+        {
+          "created_at": 1790994664038
+        },
+        {
+          "created_at": 1790999415943
+        },
+        {
+          "created_at": 1791044399130
+        },
+        {
+          "created_at": 1791079869396
+        },
+        {
+          "created_at": 1791136800000
+        },
+        {
+          "created_at": 1791152101266
+        },
+        {
+          "created_at": 1791185767298
+        },
+        {
+          "created_at": 1791309600000
+        },
+        {
+          "created_at": 1791396000000
+        },
+        {
+          "created_at": 1791482400000
+        },
+        {
+          "created_at": 1791568800000
+        },
+        {
+          "created_at": 1791655200000
+        },
+        {
+          "created_at": 1791741600000
+        },
+        {
+          "created_at": 1791828000000
+        }
+      ],
+      "logicalDataChanged": false
+    },
+    {
+      "iteration": 2,
+      "preflight": {
+        "code": 1,
+        "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-2 is writable\n  WARN    Master key      %TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-2\\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)\n  FAIL    Database        The format-4 store is damaged: the migration ledger is behind the store structure. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r2-ledger-triage-PksrJz\\data-2\"\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start\n\n2 failed, 2 warning(s): fix the failed checks before starting\n",
+        "stderr": "",
+        "killed": false,
+        "durationMs": 2637
+      },
+      "before": [
+        [
+          "graphgoblin.db",
+          "sha256",
+          "1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780"
+        ],
+        [
+          "graphgoblin.db-shm",
+          "sha256",
+          "f42351cad494b3290411078bab265db11023898afc6727edb747a38d92e3e6b2"
+        ],
+        [
+          "graphgoblin.db-wal",
+          "sha256",
+          "390fb655298fe10e0d96f5245a8dc60ddb898faf27d88358e4b61351e02e6849"
+        ]
+      ],
+      "after": [
+        [
+          "graphgoblin.db",
+          "sha256",
+          "1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780"
+        ],
+        [
+          "graphgoblin.db-shm",
+          "sha256",
+          "48e58d30746cff06e9c9f77bce956092b387c284669cdf0b450d913398ef8202"
+        ],
+        [
+          "graphgoblin.db-wal",
+          "sha256",
+          "390fb655298fe10e0d96f5245a8dc60ddb898faf27d88358e4b61351e02e6849"
+        ]
+      ],
+      "physicalChange": true,
+      "dbChanged": false,
+      "logicalRowsBefore": [
+        {
+          "created_at": 1790994664038
+        },
+        {
+          "created_at": 1790999415943
+        },
+        {
+          "created_at": 1791044399130
+        },
+        {
+          "created_at": 1791079869396
+        },
+        {
+          "created_at": 1791136800000
+        },
+        {
+          "created_at": 1791152101266
+        },
+        {
+          "created_at": 1791185767298
+        },
+        {
+          "created_at": 1791309600000
+        },
+        {
+          "created_at": 1791396000000
+        },
+        {
+          "created_at": 1791482400000
+        },
+        {
+          "created_at": 1791568800000
+        },
+        {
+          "created_at": 1791655200000
+        },
+        {
+          "created_at": 1791741600000
+        },
+        {
+          "created_at": 1791828000000
+        }
+      ],
+      "logicalRowsAfter": [
+        {
+          "created_at": 1790994664038
+        },
+        {
+          "created_at": 1790999415943
+        },
+        {
+          "created_at": 1791044399130
+        },
+        {
+          "created_at": 1791079869396
+        },
+        {
+          "created_at": 1791136800000
+        },
+        {
+          "created_at": 1791152101266
+        },
+        {
+          "created_at": 1791185767298
+        },
+        {
+          "created_at": 1791309600000
+        },
+        {
+          "created_at": 1791396000000
+        },
+        {
+          "created_at": 1791482400000
+        },
+        {
+          "created_at": 1791568800000
+        },
+        {
+          "created_at": 1791655200000
+        },
+        {
+          "created_at": 1791741600000
+        },
+        {
+          "created_at": 1791828000000
+        }
+      ],
+      "logicalDataChanged": false
+    }
+  ]
+}

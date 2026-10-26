@@ -1,5 +1,9 @@
 ﻿import { loops } from '@graphgoblin/api-client';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  deviceKeys,
+  formatThreeDraft,
+  storeRawDeviceRecord,
+} from '../__fixtures__/device-drafts.js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -48,7 +52,7 @@ function mount(
       const load = useLoadEditor(loopId);
       const definition = useEditorStore((s) => s.definition);
       const flush = useAutosave(client, 20, {
-        enabled: autosave && load.ready && !load.preservationBlocked && !load.conversionLoadFailed,
+        enabled: autosave && load.ready && !load.preservationBlocked && !load.unsupportedBlocked,
         deviceReady: load.deviceWritable,
         serverReconciled: load.serverReconciled,
       });
@@ -308,7 +312,7 @@ it('F4: a transient active-read failure keeps mirrors memory-only and preserves 
   );
 });
 
-it('F5: a current-format set-aside backup reopens with a backup label, not an unconverted-original label', async () => {
+it('F5: a current-format set-aside backup reopens with a backup label, apart from an unsupported archived copy', async () => {
   const api = new FakeApi();
   const loop = api.addLoop(newLoopDefinition('server'));
   const oldest = {
@@ -318,14 +322,10 @@ it('F5: a current-format set-aside backup reopens with a backup label, not an un
     synced: false,
   };
   const active = { ...oldest, definition: newLoopDefinition('active work'), savedAt: '2000' };
-  const legacy = {
-    ...oldest,
-    definition: { ...oldest.definition, schemaVersion: 3 } as unknown as LoopDefinitionInput,
-    savedAt: '1800',
-  };
+  const legacy = formatThreeDraft(loop.id, 'earlier set-aside', '1800');
+  await storeRawDeviceRecord(deviceKeys(loop.id).archive, [legacy]);
   await drafts.saveSetAsideDraft(oldest);
   await drafts.saveLocalDraft(active);
-  await drafts.saveArchivedDraft(legacy);
   const first = renderApp(`/loops/${loop.id}/edit`, api);
   mounted.push(first);
   await screen.findByRole('heading', { name: 'server' });
@@ -336,7 +336,7 @@ it('F5: a current-format set-aside backup reopens with a backup label, not an un
   const reopened = renderApp(`/loops/${loop.id}/edit`, api);
   mounted.push(reopened);
   expect((await screen.findAllByText('Saved device backup')).length).toBeGreaterThan(0);
-  expect(screen.getByText('Original device copy preserved')).toBeVisible();
+  expect(screen.getByText('Unsupported device draft (format 3)')).toBeVisible();
   expect(
     (await drafts.loadArchivedDrafts(loop.id)).find((copy) => copy.savedAt === oldest.savedAt),
   ).toEqual(oldest);

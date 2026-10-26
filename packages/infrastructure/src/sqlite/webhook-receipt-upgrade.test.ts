@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from 'vitest';
-import { RunEventSchema, V3RunEventSchema } from '@graphgoblin/contracts';
+import { RunEventSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 
@@ -66,8 +66,6 @@ async function insert(payload: unknown, type = 'return.delivered') {
 
 it.each(cases)('frozen receipt contract: $name', async ({ payload, valid }) => {
   const type = 'error' in payload ? 'return.failed' : 'return.delivered';
-  const historical = { runId, seq: 1, ts: FIXTURE_TS, type, ...payload };
-  expect(V3RunEventSchema.safeParse(historical).success).toBe(valid);
   const before = await insert(payload, type);
   await handle.migrate();
   const after = (await handle.client.execute('SELECT * FROM run_events')).rows;

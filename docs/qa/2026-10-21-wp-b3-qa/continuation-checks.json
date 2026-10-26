@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c6-per-loop-boundary",
+    "steps": "Create and publish two current loops; stop API; edit one published exit destination to event; restart; request each loop and export.",
+    "expected": "Store starts; retired loop 409 LOOP_UPGRADE_REQUIRED naming version/path; healthy loop and export work.",
+    "status": "PASS",
+    "actual": {
+      "retiredDetail": 409,
+      "healthyDetail": 200,
+      "healthyExport": 200,
+      "otherInvalid": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "GraphGoblin did not start: this build cannot open the store in data directory %TEMP%\\gg-qa-266-20261021-ii1C1N\\c6.\n  Database: %TEMP%\\gg-qa-266-20261021-ii1C1N\\c6\\graphgoblin.db\n  Found:    format 4, but the store is damaged or unfinished\n  Requires: format 4\n  Reason:   The format-4 store is damaged: stored loop version 01M5GGDQDWS6HF14BCHP25NE5T is not a valid definition\nNo stored data was changed. This build does not convert stores from other formats.\nRepair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-20261021-ii1C1N\\c6\"\n",
+        "killed": false
+      }
+    }
+  },
+  {
+    "id": "current-store-reopen",
+    "steps": "Reopen the fresh recipe store in a new built process at 5653; create loop, export, import and restart.",
+    "expected": "Current-format data survives restart and current-format export/import work.",
+    "status": "FAIL",
+    "actual": "AssertionError [ERR_ASSERTION]: {\"status\":404,\"body\":{\"type\":\"https://graphgoblin.dev/problems/version-not-found\",\"title\":\"version not found\",\"status\":404,\"code\":\"VERSION_NOT_FOUND\",\"detail\":\"the loop has no published version\"}}\n\n404 !== 200\n\n    at file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:53:489\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:32:165)\n    at async file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:53:2"
+  }
+]

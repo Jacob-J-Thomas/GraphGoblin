@@ -13,14 +13,7 @@ import {
   type LoopRecord,
   type LoopVersionRecord,
 } from '@graphgoblin/contracts';
-import {
-  exportLoop,
-  importLoop,
-  stableHash,
-  upgradeExportCurrent,
-  upgradeLoopCurrent,
-  type UpgradeIssue,
-} from '@graphgoblin/domain';
+import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
 import { EngineRequestError, assertCurrentDefinition } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
@@ -190,57 +183,20 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'Create or update a loop from exported JSON',
+        description:
+          'Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.',
         body: z.record(z.string(), z.unknown()),
         response: {
           201: z.object({
             loop: LoopRecordSchema,
             draft: LoopVersionRecordSchema,
             issues: z.array(IssueSchema),
-            notices: z.array(z.object({ code: z.string(), path: z.string(), message: z.string() })),
           }),
         },
       },
     },
     async (request, reply) => {
-      let input: unknown = request.body;
-      let notices: UpgradeIssue[] = [];
-      if (
-        typeof input === 'object' &&
-        input !== null &&
-        (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
-          ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
-      ) {
-        const result =
-          'formatVersion' in input
-            ? await upgradeExportCurrent(input)
-            : await upgradeLoopCurrent(input);
-        if (!result.ok) {
-          const pending = result.issues.some((issue) => issue.kind === 'pending');
-          const invalid = result.issues.some((issue) => issue.kind === 'invalid');
-          return problem(
-            reply,
-            400,
-            pending ? 'LOOP_FORMAT_UPGRADE_REQUIRED' : 'LOOP_IMPORT_SOURCE_INVALID',
-            [
-              ...(invalid
-                ? [
-                    'The source, export envelope or conversion has invalid issues. Correct the listed invalid issues; graphgoblin-upgrade export cannot convert invalid source.',
-                  ]
-                : []),
-              ...(pending
-                ? [
-                    'Review is required. Run graphgoblin-upgrade export --input old.json --out review.json. For v3 items, create resolutions.json with {"v3":{"<id>":{"hash":"<reported hash>","action":"approve","reason":"Reviewed this exact proposal"}}}, using each reported id/hash. Some items require action "replace" with a value, or allow "remove". Earlier-stage items use the v1/v2 namespaces in the guide. Retry export with --resolutions resolutions.json and a new output path.',
-                  ]
-                : []),
-              'See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
-            ].join(' '),
-            { issues: result.issues, reviewItems: result.reviewItems },
-          );
-        }
-        input = result.value;
-        notices = result.notices;
-      }
-      const imported = importLoop(input);
+      const imported = importLoop(request.body);
       const admission = await publishIssues(
         request.auth.ownerId,
         imported.definition,
@@ -264,7 +220,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         created.loop.id,
         false,
       );
-      return { ...created, issues, notices };
+      return { ...created, issues };
     },
   );
 

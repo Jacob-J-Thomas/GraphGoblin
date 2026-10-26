@@ -1,0 +1,148 @@
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg
+shipped migrations: 21; head 0020_targeted_event_admission (when 1792897422989)
+
+=== Empty, existing data directory ===
+PASS: first start: API starts ()
+first start: /healthz 200 {"status":"ok"}; /version {"name":"graphgoblin-api","version":"0.1.0"}
+PASS: first start: empty loop list
+PASS: first start: drains and exits 0
+first start: data directory: ["graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+first start: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+first start: ledger 21 rows, last created_at 1792897422989
+PASS: first start: one complete format-4 marker
+PASS: first start: migration ledger at the shipped head (21 rows, last 0020_targeted_event_admission)
+PASS: restart: API starts ()
+restart: /healthz 200 {"status":"ok"}; /version {"name":"graphgoblin-api","version":"0.1.0"}
+PASS: restart: empty loop list
+PASS: restart: drains and exits 0
+restart: data directory: ["graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+restart: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+restart: ledger 21 rows, last created_at 1792897422989
+PASS: restart: one complete format-4 marker
+PASS: restart: migration ledger at the shipped head (21 rows, last 0020_targeted_event_admission)
+PASS: restart leaves the marker and ledger unchanged
+$ node apps/api/dist/main.js --preflight
+exit code: 0; 3886 ms
+--- preflight on the fresh store stdout ---
+GraphGoblin preflight
+
+  STATUS  CHECK           DETAIL
+  ok      Node.js         Node 22.23.4
+  ok      Data directory  %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty is writable
+  ok      Master key      read from %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty\master.key
+  ok      Database        reachable and migrated
+  ok      Harness codex   codex 0.160.0 is installed and logged in
+  ok      Harness claude  claude 2.1.308 is installed and logged in
+  ok      Jev             API key set (secret "jev-api-key")
+  ok      Default model   gpt-6-luna (codex) is in the model catalog
+
+0 failed, 0 warning(s): ready to start
+--- end preflight on the fresh store stdout ---
+PASS: --preflight reports the Database check ok
+
+=== Missing data directory (two levels deep) ===
+PASS: missing directory: API starts ()
+missing directory: /healthz 200 {"status":"ok"}; /version {"name":"graphgoblin-api","version":"0.1.0"}
+PASS: missing directory: empty loop list
+PASS: missing directory: drains and exits 0
+missing directory: data directory: ["graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+missing directory: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+missing directory: ledger 21 rows, last created_at 1792897422989
+PASS: missing directory: one complete format-4 marker
+PASS: missing directory: migration ledger at the shipped head (21 rows, last 0020_targeted_event_admission)
+
+=== Reset of a fresh current store, then start again ===
+$ node apps/api/dist/main.js --reset
+exit code: 0; 4383 ms
+--- dry run of a fresh store stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty\graphgoblin.db (format 4, the current format)
+
+Removes:
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 382.3 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3 files, 418.3 KB in 3 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty"
+--- end dry run of a fresh store stdout ---
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty
+exit code: 0; 7608 ms
+--- reset of a fresh store stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty\graphgoblin.db (format 4, the current format)
+
+Removes:
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 382.3 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3 files, 418.3 KB in 3 items.
+
+Removing:
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 382.3 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\empty.
+--- end reset of a fresh store stdout ---
+PASS: reset of a fresh current store completes (0)
+PASS: start after reset: API starts ()
+start after reset: /healthz 200 {"status":"ok"}; /version {"name":"graphgoblin-api","version":"0.1.0"}
+PASS: start after reset: empty loop list
+PASS: start after reset: drains and exits 0
+start after reset: data directory: ["graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+start after reset: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+start after reset: ledger 21 rows, last created_at 1792897422989
+PASS: start after reset: one complete format-4 marker
+PASS: start after reset: migration ledger at the shipped head (21 rows, last 0020_targeted_event_admission)
+
+=== Reset of an empty directory and of a missing one ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\bare
+exit code: 0; 2167 ms
+--- reset of an empty directory stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\bare
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\bare\graphgoblin.db (no database file)
+
+Removes:
+  nothing but the lock file
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  nothing else is in the data directory
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 0 files, 0 B in 0 items.
+
+Removing:
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\bare.
+--- end reset of an empty directory stdout ---
+PASS: an empty directory resets to empty (only the lock is taken and removed) ([])
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\gone
+exit code: 0; 16154 ms
+--- reset of a missing directory stdout ---
+Nothing to reset: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c08-LZAoRg\gone does not exist.
+--- end reset of a missing directory stdout ---
+PASS: a missing directory: nothing to reset, exit 0 (0)
+PASS: a missing directory is not created by the reset
+
+SUMMARY c08-fresh-init: 26 passed, 0 failed
