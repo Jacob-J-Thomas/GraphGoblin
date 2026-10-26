@@ -8,7 +8,7 @@
  * first. The output is formatted with the repository's Prettier config so `format:check` agrees.
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as prettier from 'prettier';
 import { renderApiReference } from './api-reference.mjs';
@@ -78,12 +78,21 @@ export function staleFiles(generated, read = (path) => readFileSync(path, 'utf8'
 }
 
 async function main(argv) {
-  const generated = await generate();
+  const index = argv.indexOf('--output');
+  if (index >= 0 && !argv[index + 1])
+    throw new Error('Usage: gen-docs.mjs [--check] [--output <directory>]');
+  const output = index >= 0 ? resolve(argv[index + 1]) : undefined;
+  const generated = Object.fromEntries(
+    Object.entries(await generate()).map(([path, content]) => [
+      output ? join(output, basename(path)) : path,
+      content,
+    ]),
+  );
   if (argv.includes('--check')) {
     const stale = staleFiles(generated);
     if (stale.length > 0) {
       console.error(
-        `Generated docs are out of date: ${stale.map((p) => p.slice(root.length + 1)).join(', ')}.\nRun \`pnpm docs:generate\` and commit the result.`,
+        `Generated docs are out of date: ${stale.map((p) => relative(root, p)).join(', ')}.\nRun \`pnpm docs:generate\` and commit the result.`,
       );
       return 1;
     }
@@ -93,7 +102,7 @@ async function main(argv) {
   for (const [path, content] of Object.entries(generated)) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content, 'utf8');
-    console.warn(`wrote ${path.slice(root.length + 1)}`);
+    console.warn(`wrote ${relative(root, path)}`);
   }
   return 0;
 }

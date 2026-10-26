@@ -1,0 +1,22 @@
+2026-10-26T07:11:45.630Z +3.9s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=0 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"}
+2026-10-26T07:11:49.412Z +7.7s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=-5 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"}
+2026-10-26T07:11:53.500Z +11.8s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=abc is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Invalid input: expected number, received NaN"}
+2026-10-26T07:11:57.740Z +16.1s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=2147483648 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too big: expected number to be <=2147483647"}
+2026-10-26T07:12:02.873Z +21.2s gateway g1 listening {"pid":18788,"port":6467,"viaConsole":false}
+2026-10-26T07:12:05.131Z +23.4s provider work started {"run":"01M5VGTKQKD9PY4JCXH3Z2SFHT","cliPid":37388,"tree":[{"pid":48008,"ppid":18788,"name":"conhost.exe","cmd":"\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"},{"pid":37388,"ppid":18788,"name":"shutdown-codex.exe","cmd":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-c-g-TPfeTN\\shutdown-codex.exe exec --experimental-json --model gpt-6-luna --sandbox workspace-write --cd %USERPROFILE%"}]}
+2026-10-26T07:12:05.556Z +23.9s CHECK PASS G1 fake CLI alive null
+2026-10-26T07:12:05.563Z +23.9s CHECK PASS G2 wait before any drain is refused with 409 current state 409
+2026-10-26T07:12:05.578Z +23.9s CHECK PASS G2 repeated drain is accepted idempotently (same drain, 202) {"first":"2026-10-26T07:12:05.566Z","second":"2026-10-26T07:12:05.566Z"}
+2026-10-26T07:12:05.579Z +23.9s CHECK PASS G2 force is available before the 10-minute grace expires ["wait","force"]
+2026-10-26T07:12:06.283Z +24.6s process sample during forcing {"at":"immediately after force responses","cli":false,"gateway":true}
+2026-10-26T07:12:06.284Z +24.6s two concurrent forces {"f1":{"status":202,"phase":"forcing"},"f2":{"status":202,"phase":"forcing"}}
+2026-10-26T07:12:06.284Z +24.6s CHECK PASS G3 concurrent duplicate forces are both acknowledged without error [202,202]
+2026-10-26T07:12:06.293Z +24.6s CHECK PASS G3 wait during force is refused (409) or the gateway is already gone; it cannot cancel the force "network-error"
+2026-10-26T07:12:06.405Z +24.7s CHECK PASS G4 force before expiry completes with exit 0 0
+2026-10-26T07:12:07.041Z +25.4s CHECK PASS G4 provider CLI and the gateway are gone after exit (tasklist) {"cli":false,"gateway":false}
+2026-10-26T07:12:10.876Z +29.2s CHECK PASS G4 CIM: nothing names the store []
+2026-10-26T07:12:17.060Z +35.4s gateway g2 listening {"pid":34688,"port":6467,"viaConsole":false}
+2026-10-26T07:12:17.086Z +35.4s CHECK PASS G5 provider run interrupted truthfully (RUN_INTERRUPTED_BY_STOP, non-resumable, effect may have happened) {"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}
+2026-10-26T07:12:17.087Z +35.4s CHECK PASS G5 the provider CLI was not started again after restart null
+2026-10-26T07:12:17.206Z +35.5s CHECK PASS G5 restarted gateway drains to exit 0 0
+2026-10-26T07:12:17.219Z +35.5s DONE passed=16 failed=0

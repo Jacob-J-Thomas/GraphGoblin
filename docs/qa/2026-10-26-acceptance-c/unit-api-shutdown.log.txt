@@ -1,0 +1,29 @@
+v22.23.4
+%USERPROFILE%/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api
+
+ ✓ src/shutdown-signals.test.ts > one foreground SIGINT and pnpm forwarding drain once; deliberate later signals force 8ms
+ ✓ src/shutdown-signals.test.ts > a signal after an API-initiated stop explicitly forces, while its forwarded duplicate is ignored 1ms
+ ✓ src/shutdown-controller.test.ts > B3 reports an earlier unconfirmed timeout but completes a normal stop 65ms
+ ✓ src/shutdown-controller.test.ts > B3 force failure offers an explicit nonzero exit acknowledgement, retaining the failure 105ms
+ ✓ src/shutdown-controller.test.ts > labels a drain observation failure accurately and rejects invalid transitions 61ms
+ ✓ src/shutdown-controller.test.ts > captures admission before returning state and wait has no hidden kill timer 133ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: drain-first 2ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: force-first 1ms
+ ✓ src/shutdown-controller.test.ts > an observation failure during an open drain keeps its origin when force races it 64ms
+ ✓ src/shutdown-choice.test.ts > rejects a stale tab force instead of acknowledging a newly failed cleanup 795ms
+ ✓ src/shutdown-choice.test.ts > rejects a force prepared before another control chose to keep waiting (after the phase recurs) 173ms
+ ✓ src/shutdown-choice.test.ts > rejects a force prepared before another control chose to keep waiting (after a wait within draining) 124ms
+ ✓ src/shutdown-choice.test.ts > keeps tokens stable per phase and rejects another route incarnation without starting drain 150ms
+ ✓ src/shutdown-choice.test.ts > requires system read/write scopes and preserves authentication with the conditional header 140ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  02:02:53
+   Duration  14.21s (transform 52%, import 39%, tests 9%)
+
+  Transform  transforming modules took 11.24s · 52% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

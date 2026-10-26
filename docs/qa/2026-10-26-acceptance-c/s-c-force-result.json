@@ -1,0 +1,391 @@
+{
+  "scenario": "s-c-force",
+  "passed": 28,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "C0 OS tree shows script root, its grandchild, fake Codex CLI and child script under the gateway",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C0 the independent run beyond capacity is queued",
+      "ok": true,
+      "detail": "queued"
+    },
+    {
+      "id": "C1 active work lists the script, harness and child runs",
+      "ok": true,
+      "detail": [
+        "01M5VGDVQECXTR51DMMJNP21SC",
+        "01M5VGDVR3ZN4MRFJ90X9V3MQ1",
+        "01M5VGDW5M43B7N31AZNMGXDTB"
+      ]
+    },
+    {
+      "id": "C1 the durable wait and the independent queued run are not force targets",
+      "ok": true,
+      "detail": [
+        "01M5VGDVQECXTR51DMMJNP21SC",
+        "01M5VGDVR3ZN4MRFJ90X9V3MQ1",
+        "01M5VGDW5M43B7N31AZNMGXDTB"
+      ]
+    },
+    {
+      "id": "C2 notice names each active run with its pinned loop name",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C2 all work still alive at expiry",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C3 confirmation lists the runs, required children, uncertain effects and non-automatic recovery",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C3 Go back sends nothing and leaves the choice open",
+      "ok": true,
+      "detail": {
+        "posts": 22,
+        "phase": "awaiting-choice"
+      }
+    },
+    {
+      "id": "C4 a later stale Keep waiting cannot undo the force (409 or gateway already gone)",
+      "ok": true,
+      "detail": 409
+    },
+    {
+      "id": "C4 force completes and the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "C5 the lock is released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C5 tasklist: script root, grandchild, fake Codex CLI, child script and gateway are gone",
+      "ok": true,
+      "detail": {
+        "treeRoot": false,
+        "grandchild": false,
+        "fakeCodex": false,
+        "childScript": false,
+        "gateway": false
+      }
+    },
+    {
+      "id": "C5 CIM: no process command line names the store",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "C5 tab a sent exactly one POST (the confirmed force)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C6 script run: RUN_INTERRUPTED_BY_STOP at node hold, attempt 1, non-resumable, effect may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5VGDVQECXTR51DMMJNP21SC:5",
+          "dispatchId": "01M5VGDVSGFYX99DNQFWHEK1X5",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "C6 harness run: RUN_INTERRUPTED_BY_STOP at node infer, attempt 1, non-resumable, effect may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "C6 child run: RUN_INTERRUPTED_BY_STOP at node hold",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5VGDW5M43B7N31AZNMGXDTB:5",
+          "dispatchId": "01M5VGDW7N7032F875QXDT9517",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "C6 durable wait run unchanged (waiting)",
+      "ok": true,
+      "detail": "waiting"
+    },
+    {
+      "id": "C6 script run events record run.failed RUN_INTERRUPTED_BY_STOP and no node success",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C6 interruption is not recorded as user cancellation",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C7 queued independent run was not interrupted and runs after restart",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "C7 parent did not succeed with fabricated child output",
+      "ok": true,
+      "detail": "failed"
+    },
+    {
+      "id": "C8 no blind replay: the fake Codex CLI did not run again after restart",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C8 no script re-ran after restart",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "C8 an interrupted run is not resumable through Resume",
+      "ok": true,
+      "detail": 409
+    },
+    {
+      "id": "C9 inspector shows the interruption and possible external effects",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C10 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "C10 no process names the store",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T07:05:09.551Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:10.087Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:11.555Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:12.095Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:13.565Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:14.106Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:15.576Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:16.124Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:17.590Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:18.138Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:19.596Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:20.144Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:21.606Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:22.161Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:23.897Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:24.191Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:25.620Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:26.278Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:27.636Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:28.318Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:29.659Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:30.341Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:31.670Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:32.356Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:33.684Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:34.371Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:35.696Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:36.013Z",
+      "method": "POST",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    },
+    {
+      "at": "2026-10-26T07:05:36.117Z",
+      "method": "POST",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:41.321Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6462/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:41.322Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6462/app/runs/01M5VGDVR3ZN4MRFJ90X9V3MQ1"
+    }
+  ]
+}

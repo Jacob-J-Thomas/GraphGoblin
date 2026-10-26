@@ -1,0 +1,11 @@
+PASS 205-ui-placement: inference Settings tab shows Model and one Effort dropdown with Advanced collapsed; no separate Mode/Explicit selector; Default names the inherited effort
+PASS 205-ui-explicit-roundtrip: choosing xhigh saves effort "xhigh", survives reload, and the Codex CLI receives model_reasoning_effort="xhigh" with the inherited model
+PASS 205-ui-default-roundtrip: choosing Default (medium) removes the override and the CLI receives the process default medium
+PASS 205-ui-owner-default: after owner Settings set effort high, the editor shows Default (high) and the CLI receives high
+FAIL 205-ui-codex-max: Codex "max": what the editor offers and saves is what the CLI receives (observation; documented max->xhigh adapter mapping)
+  detail: {"offered":["max"],"saved":"max","sent":"xhigh","sessionRow":"max","description":"Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: high."}
+PASS 205-ui-claude-efforts: Claude effort offers low..max without minimal; choosing max sends --effort max
+PASS 205-ui-llm-decision: LLM decision shows Model and one Effort dropdown (Default names the inherited value); explicit picks save as explicit selections and reach the structured Codex request
+PASS 33-ui-session-control: Session policy offers resume-own (default fresh); own reveals an optional Reset after visits outside Advanced; 0 is refused; 3 and blank save exactly
+PASS 265-ui-inspector: inspector names the lost handle and origin, explains the choice, offers Start fresh session; clicking it starts one fresh turn; after reload a durable note records who, when, node and the lost handle
+8/9 checks passed

@@ -1,0 +1,15 @@
+PASS 205-ui-placement: inference Settings tab shows Model and one Effort dropdown with Advanced collapsed; no separate Mode/Explicit selector; Default names the inherited effort
+PASS 205-ui-explicit-roundtrip: choosing xhigh saves effort "xhigh", survives reload, and the Codex CLI receives model_reasoning_effort="xhigh" with the inherited model
+PASS 205-ui-default-roundtrip: choosing Default (medium) removes the override and the CLI receives the process default medium
+file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-a/docs/qa/2026-10-26-acceptance-a/lib.mjs:105
+    throw new Error(`${method} ${path} -> ${response.status}, expected ${expected}: ${text}`);
+          ^
+
+Error: POST /loops/01M5VGBX4J1C0J613NFAGP1BGP/publish -> 409, expected 200: {"type":"https://graphgoblin.dev/problems/no-draft","title":"no draft","status":409,"code":"NO_DRAFT","detail":"the loop has no draft to publish"}
+    at call (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-a/docs/qa/2026-10-26-acceptance-a/lib.mjs:105:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async post (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-a/docs/qa/2026-10-26-acceptance-a/lib.mjs:110:4)
+    at async publishAndRun (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-a/docs/qa/2026-10-26-acceptance-a/s5-browser.mjs:98:3)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-a/docs/qa/2026-10-26-acceptance-a/s5-browser.mjs:218:22
+
+Node.js v22.23.4

@@ -1,0 +1,120 @@
+{
+  "scenario": "s-g-force-before-expiry",
+  "passed": 16,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "G0 GG_SHUTDOWN_GRACE_MS=0 is refused at startup",
+      "ok": true,
+      "detail": {
+        "status": 1,
+        "excerpt": "Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"
+      }
+    },
+    {
+      "id": "G0 GG_SHUTDOWN_GRACE_MS=-5 is refused at startup",
+      "ok": true,
+      "detail": {
+        "status": 1,
+        "excerpt": "Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"
+      }
+    },
+    {
+      "id": "G0 GG_SHUTDOWN_GRACE_MS=abc is refused at startup",
+      "ok": true,
+      "detail": {
+        "status": 1,
+        "excerpt": "Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Invalid input: expected number, received NaN"
+      }
+    },
+    {
+      "id": "G0 GG_SHUTDOWN_GRACE_MS=2147483648 is refused at startup",
+      "ok": true,
+      "detail": {
+        "status": 1,
+        "excerpt": "Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too big: expected number to be <=2147483647"
+      }
+    },
+    {
+      "id": "G1 fake CLI alive",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "G2 wait before any drain is refused with 409 current state",
+      "ok": true,
+      "detail": 409
+    },
+    {
+      "id": "G2 repeated drain is accepted idempotently (same drain, 202)",
+      "ok": true,
+      "detail": {
+        "first": "2026-10-26T07:12:05.566Z",
+        "second": "2026-10-26T07:12:05.566Z"
+      }
+    },
+    {
+      "id": "G2 force is available before the 10-minute grace expires",
+      "ok": true,
+      "detail": [
+        "wait",
+        "force"
+      ]
+    },
+    {
+      "id": "G3 concurrent duplicate forces are both acknowledged without error",
+      "ok": true,
+      "detail": [
+        202,
+        202
+      ]
+    },
+    {
+      "id": "G3 wait during force is refused (409) or the gateway is already gone; it cannot cancel the force",
+      "ok": true,
+      "detail": "network-error"
+    },
+    {
+      "id": "G4 force before expiry completes with exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "G4 provider CLI and the gateway are gone after exit (tasklist)",
+      "ok": true,
+      "detail": {
+        "cli": false,
+        "gateway": false
+      }
+    },
+    {
+      "id": "G4 CIM: nothing names the store",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "G5 provider run interrupted truthfully (RUN_INTERRUPTED_BY_STOP, non-resumable, effect may have happened)",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "G5 the provider CLI was not started again after restart",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "G5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

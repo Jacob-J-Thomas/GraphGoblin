@@ -1,0 +1,27 @@
+pnpm.cmd --filter @graphgoblin/engine test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/engine
+      Coverage enabled with v8
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  58 passed (58)
+      Tests  1728 passed (1728)
+   Start at  00:50:42
+   Duration  71.93s (tests 49%, import 39%, transform 11%, worker 1%)
+
+    Isolate  58 workers spawned · ~1.25s startup each (spawn + environment, per file)
+             at least ~5.36s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.14% ( 3371/3506 )
+Branches     : 91.43% ( 2691/2943 )
+Functions    : 97.49% ( 622/638 )
+Lines        : 97.48% ( 3068/3147 )
+================================================================================
+EXIT 0

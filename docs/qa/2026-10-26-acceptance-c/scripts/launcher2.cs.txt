@@ -1,0 +1,49 @@
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+// Run as the console owner of a terminal-like console (started by Start-Process in its own
+// console): restore normal Ctrl+C processing, start the command attached to this console with
+// stdout/stderr appended to a log, ignore Ctrl+C itself, wait, and exit with the child's code.
+public static class Launcher2 {
+  [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+  struct STARTUPINFO { public int cb; public string lpReserved; public string lpDesktop; public string lpTitle;
+    public int dwX; public int dwY; public int dwXSize; public int dwYSize; public int dwXCountChars; public int dwYCountChars;
+    public int dwFillAttribute; public int dwFlags; public short wShowWindow; public short cbReserved2; public IntPtr lpReserved2;
+    public IntPtr hStdInput; public IntPtr hStdOutput; public IntPtr hStdError; }
+  [StructLayout(LayoutKind.Sequential)]
+  struct PROCESS_INFORMATION { public IntPtr hProcess; public IntPtr hThread; public int dwProcessId; public int dwThreadId; }
+  [StructLayout(LayoutKind.Sequential)]
+  struct SECURITY_ATTRIBUTES { public int nLength; public IntPtr lpSecurityDescriptor; public bool bInheritHandle; }
+  [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+  static extern bool CreateProcess(string app, string cmd, IntPtr pa, IntPtr ta, bool inherit, uint flags, IntPtr env, string cwd, ref STARTUPINFO si, out PROCESS_INFORMATION pi);
+  [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+  static extern IntPtr CreateFile(string name, uint access, uint share, ref SECURITY_ATTRIBUTES sa, uint disposition, uint flags, IntPtr template);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleCtrlHandler(IntPtr handler, bool add);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool CloseHandle(IntPtr h);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern uint WaitForSingleObject(IntPtr h, uint ms);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetExitCodeProcess(IntPtr h, out uint code);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern uint GetConsoleProcessList(uint[] list, uint count);
+  [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
+  public static int Main(string[] args) {
+    if (args.Length != 3) return 2;
+    string log = args[0];
+    var list = new uint[64]; uint n = GetConsoleProcessList(list, 64);
+    var ids = new System.Collections.Generic.List<string>(); for (int i = 0; i < n && i < 64; i++) ids.Add(list[i].ToString());
+    File.AppendAllText(log + ".launcher.txt", DateTime.UtcNow.ToString("o") + " launcher pid " + System.Diagnostics.Process.GetCurrentProcess().Id + " console window " + GetConsoleWindow() + " console processes [" + string.Join(",", ids.ToArray()) + "]\r\n");
+    var sa = new SECURITY_ATTRIBUTES { nLength = Marshal.SizeOf(typeof(SECURITY_ATTRIBUTES)), bInheritHandle = true };
+    IntPtr h = CreateFile(log, 0x0004 | 0x00100000, 0x1 | 0x2, ref sa, 4, 0x80, IntPtr.Zero);
+    IntPtr nul = CreateFile("NUL", 0x80000000, 0x1 | 0x2, ref sa, 3, 0x80, IntPtr.Zero);
+    SetConsoleCtrlHandler(IntPtr.Zero, false);
+    var si = new STARTUPINFO(); si.cb = Marshal.SizeOf(typeof(STARTUPINFO));
+    si.dwFlags = 0x100; si.hStdInput = nul; si.hStdOutput = h; si.hStdError = h;
+    PROCESS_INFORMATION pi;
+    if (!CreateProcess(null, args[2], IntPtr.Zero, IntPtr.Zero, true, 0x400, IntPtr.Zero, args[1], ref si, out pi)) {
+      File.AppendAllText(log + ".launcher.txt", "CreateProcess failed " + Marshal.GetLastWin32Error() + "\r\n"); return 4; }
+    SetConsoleCtrlHandler(IntPtr.Zero, true);
+    File.WriteAllText(log + ".pid", pi.dwProcessId.ToString());
+    WaitForSingleObject(pi.hProcess, 0xFFFFFFFF);
+    uint code; GetExitCodeProcess(pi.hProcess, out code);
+    File.AppendAllText(log + ".launcher.txt", DateTime.UtcNow.ToString("o") + " child " + pi.dwProcessId + " exited with code " + code + "\r\n");
+    return (int)code;
+  }
+}

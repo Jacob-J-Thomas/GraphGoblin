@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /** Validate shipped data without a running app or any harness invocation. */
 import assert from 'node:assert/strict';
-import { fileURLToPath, URL } from 'node:url';
+import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import process from 'node:process';
 import { readdir } from 'node:fs/promises';
 import { TemplateBundleError, validateTemplateDraft } from '@graphgoblin/domain';
 import { TemplateCatalog } from '../src/templates/catalog.js';
 
-const catalog = new TemplateCatalog(fileURLToPath(new URL('../templates', import.meta.url)));
+const source = process.argv[2]
+  ? new URL('./', pathToFileURL(process.argv[2] + '/'))
+  : new URL('../templates/', import.meta.url);
+const catalog = new TemplateCatalog(fileURLToPath(source));
 const entries = await catalog.list();
 assert.deepEqual(entries.map(({ manifest }) => manifest.id).sort(), [
   'implementation',
@@ -32,7 +35,7 @@ async function assetFiles(root) {
     .sort();
 }
 assert.deepEqual(
-  await assetFiles(new URL('../templates/', import.meta.url)),
+  await assetFiles(source),
   [
     'catalog.json',
     ...entries.flatMap(({ manifest }) => [

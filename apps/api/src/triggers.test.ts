@@ -30,6 +30,7 @@ import { createContainer, type Container } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { FixedWindowRateLimiter } from './triggers/rate-limit.js';
 import { PollTriggers } from './triggers/poll.js';
+import { TriggerService } from './triggers/trigger-service.js';
 
 let t: TestApp;
 
@@ -350,7 +351,7 @@ describe('cron triggers', () => {
 describe('boot', () => {
   let dataDir: string;
   beforeEach(async () => {
-    dataDir = await mkdtemp(join(tmpdir(), 'gg-boot-'));
+    dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-boot-'));
   });
   afterEach(async () => {
     await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
@@ -473,6 +474,150 @@ describe('boot', () => {
       await second.stop();
     }
   });
+  it.each(['claimed', 'lost acknowledgement'] as const)(
+    'recovers a %s body delivery across a real SQLite close/reopen and consumes redelivery once',
+    async (interruption) => {
+      const clock = new FakeClock();
+      const first = await boot(clock);
+      first.manager.stop();
+      first.triggers.stop();
+      await first.manager.waitForIdle();
+      // Inject a new port facade through the public constructor. The real SQLite
+      // collaborator and the container's original manager remain unmodified.
+      const admission = first.ports.admission;
+      const manager: RunManager = new RunManager(
+        {
+          ...first.ports,
+          admission: {
+            events: admission.events,
+            create: (...args) => admission.create(...args),
+            createPollItem: (...args) => admission.createPollItem(...args),
+            get: (...args) => admission.get(...args),
+            due: (...args) => admission.due(...args),
+            failed: (...args) => admission.failed(...args),
+            hasPendingPin: (...args) => admission.hasPendingPin(...args),
+            claim: async (...args) => {
+              const saved = await admission.claim(...args);
+              manager.stop();
+              if (interruption === 'lost acknowledgement')
+                throw new Error('claim committed, acknowledgement lost');
+              return saved;
+            },
+          },
+        },
+        first.settings,
+      );
+      await manager.start();
+      const triggers = new TriggerService({
+        loops: first.repos.loops,
+        runs: first.repos.runs,
+        schedules: first.repos.schedules,
+        endpoints: first.repos.endpoints,
+        inbound: first.repos.inbound,
+        manager,
+        eventAdmission: first.ports.admission.events,
+        cron: first.cron,
+        secretsFor: (ownerId) => first.repos.secretsFor(ownerId),
+        clock: first.ports.clock,
+        ids: first.ports.ids,
+        logger: first.ports.logger,
+        polls: first.polls,
+      });
+      triggers.start();
+      const app = await buildApp({ ...first, manager, triggers }, { logger: false });
+      let firstClosed = false;
+      try {
+        const created = await app.inject({
+          method: 'POST',
+          url: '/loops',
+          payload: {
+            definition: triggerLoop(
+              'interrupted-file-hook',
+              hookTrigger({
+                dedupeKey: 'delivery',
+                authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+              }),
+            ),
+          },
+        });
+        expect(created.statusCode).toBe(201);
+        const id = created.json<{ loop: { id: string } }>().loop.id;
+        await app.inject({ method: 'PUT', url: '/secrets/hook-secret', payload: { value: 'shh' } });
+        expect((await app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+          200,
+        );
+        const path = (await app.inject(`/loops/${id}/triggers`)).json<TriggerList>().webhooks[0]!
+          .path;
+        const body = '{"delivery":"interrupted"}';
+        const request = {
+          method: 'POST' as const,
+          url: path,
+          payload: body,
+          headers: {
+            'content-type': 'application/json',
+            'x-hub-signature-256': signRawBody('shh', Buffer.from(body)),
+          },
+        };
+        expect((await app.inject(request)).statusCode).toBe(202);
+        await manager.waitForWebhookRecovery();
+        const receipts = (await first.handle.client.execute('SELECT id FROM webhook_receipts'))
+          .rows;
+        expect(receipts).toHaveLength(1);
+        const receiptId = receipts[0]!.id;
+        if (typeof receiptId !== 'string') throw new Error('missing durable receipt');
+        const receipt = await first.ports.admission.get(receiptId);
+        expect(receipt?.status).toBe('pending');
+        const runId = receipt!.intent!.run.id;
+        expect(await first.repos.runs.list({ loopId: id })).toHaveLength(0);
+        await app.close();
+        triggers.stop();
+        manager.stop();
+        await manager.waitForIdle();
+        await first.stop();
+        firstClosed = true;
+        const second = await boot(clock);
+        const reopened = await buildApp(second, { logger: false });
+        try {
+          await second.manager.waitForIdle();
+          expect(await second.ports.admission.get(receiptId)).toMatchObject({ status: 'admitted' });
+          expect((await reopened.inject(request)).statusCode).toBe(202);
+          await second.manager.waitForIdle();
+          expect((await second.repos.runs.list({ loopId: id })).map((run) => run.id)).toEqual([
+            runId,
+          ]);
+          const events = await second.repos.events.read(runId, 0);
+          expect(events.filter((event) => event.type === 'run.queued')).toHaveLength(1);
+          expect(events.filter((event) => event.type === 'run.finished')).toHaveLength(1);
+          const inbound = (await reopened.inject('/events')).json<{ items: unknown[] }>();
+          expect(inbound.items).toHaveLength(2);
+          expect(inbound.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                delivery: { state: 'admitted', attempts: 0 },
+                runIds: [runId],
+              }),
+              expect.objectContaining({
+                delivery: { state: 'deduplicated', attempts: 0 },
+                runIds: [],
+              }),
+            ]),
+          );
+        } finally {
+          await reopened.close();
+          await second.stop();
+        }
+      } finally {
+        triggers.stop();
+        manager.stop();
+        await manager.waitForIdle();
+        if (!firstClosed) {
+          await app.close();
+          await first.stop();
+        }
+      }
+    },
+  );
+
   it('logs and continues when a loop cannot be re-armed', async () => {
     const id = await t.publishLoop(minimalLoop());
     const spy = vi

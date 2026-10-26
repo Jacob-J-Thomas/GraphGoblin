@@ -1,4 +1,3 @@
-/* global process */
 import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { basename } from 'node:path';

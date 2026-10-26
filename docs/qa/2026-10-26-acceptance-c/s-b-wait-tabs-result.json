@@ -1,0 +1,741 @@
+{
+  "scenario": "s-b-wait-tabs",
+  "passed": 30,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "B1 running gateway shows no shutdown notice",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B1 no control in the browser starts a drain",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B1 closing a tab while running: phase stays running",
+      "ok": true,
+      "detail": "running"
+    },
+    {
+      "id": "B1 closing every tab and the browser: phase running, run running, script alive",
+      "ok": true,
+      "detail": "running"
+    },
+    {
+      "id": "B1 server received no shutdown POST from tab closure",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B2 draining notice explains refused starts, finishing work, saved waits and queued recovery",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B2 draining notice names the active run with its loop name, not the parked wait",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B2 notice says waiting never starts a browser countdown",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B3 reload, navigation and closing a tab during drain leave the phase unchanged",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "B3 browser sent no POST while reloading/navigating/closing",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "B4 expiry: awaiting-choice with wait and force; script alive",
+      "ok": true,
+      "detail": {
+        "phase": "awaiting-choice",
+        "graceMs": 15000,
+        "startedAt": "2026-10-26T06:58:12.530Z",
+        "choiceAt": "2026-10-26T06:58:27.530Z",
+        "activeRunIds": [
+          "01M5VG0YYGN265ZA66GRR0KH9Q"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "f7a1757c-9433-4d8b-a7da-e1fa12a329d2:2:awaiting-choice"
+      }
+    },
+    {
+      "id": "B5 Keep waiting returns the gateway to draining with a new token",
+      "ok": true,
+      "detail": "f7a1757c-9433-4d8b-a7da-e1fa12a329d2:3:draining"
+    },
+    {
+      "id": "B5 a delayed force carrying the pre-wait token is refused with 409 current state",
+      "ok": true,
+      "detail": 409
+    },
+    {
+      "id": "B5 a stale wait is refused with 409 current state",
+      "ok": true,
+      "detail": 409
+    },
+    {
+      "id": "B5 a repeated unconditional wait is accepted and stays draining",
+      "ok": true,
+      "detail": {
+        "status": 202,
+        "json": {
+          "phase": "draining",
+          "graceMs": 15000,
+          "startedAt": "2026-10-26T06:58:12.530Z",
+          "choiceAt": "2026-10-26T06:58:27.530Z",
+          "activeRunIds": [
+            "01M5VG0YYGN265ZA66GRR0KH9Q"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "f7a1757c-9433-4d8b-a7da-e1fa12a329d2:4:draining"
+        }
+      }
+    },
+    {
+      "id": "B5 after stale/repeated actions the work is untouched",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "B6 another tab keeping waiting withdraws the open force confirmation (fresh choice required)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B6 tab c sent no POST",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T06:58:31.053Z",
+          "method": "POST",
+          "tab": "a",
+          "page": "http://127.0.0.1:6461/app/events"
+        },
+        {
+          "at": "2026-10-26T06:58:35.793Z",
+          "method": "POST",
+          "tab": "a",
+          "page": "http://127.0.0.1:6461/app/events"
+        }
+      ]
+    },
+    {
+      "id": "B7 62 s (four 15 s graces) after Keep waiting: still draining, no second expiry, run running, script alive",
+      "ok": true,
+      "detail": {
+        "sinceWaitS": 63,
+        "phase": "draining",
+        "run": "running",
+        "alive": true
+      }
+    },
+    {
+      "id": "B7 the browser sent exactly the two Keep waiting POSTs that were clicked",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T06:58:31.053Z",
+          "method": "POST",
+          "tab": "a",
+          "page": "http://127.0.0.1:6461/app/events"
+        },
+        {
+          "at": "2026-10-26T06:58:35.793Z",
+          "method": "POST",
+          "tab": "a",
+          "page": "http://127.0.0.1:6461/app/events"
+        }
+      ]
+    },
+    {
+      "id": "B8 closing all tabs and the browser during drain: still draining, work alive",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "B9 work completed during the decision: gateway exits 0 on its own",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B9 the open force confirmation is withdrawn once the gateway is gone",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B9 no force POST was sent",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "id": "B9 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B9 server-side POST count equals operator POSTs plus clicked browser choices",
+      "ok": true,
+      "detail": {
+        "serverPosts": 6,
+        "operatorPosts": 4,
+        "browserPosts": 2
+      }
+    },
+    {
+      "id": "B10 after restart the held run succeeded",
+      "ok": true,
+      "detail": "succeeded"
+    },
+    {
+      "id": "B10 the durable wait run is still waiting",
+      "ok": true,
+      "detail": "waiting"
+    },
+    {
+      "id": "B10 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B11 no process names the store",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T06:58:04.423Z",
+      "method": "GET",
+      "tab": "p1",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:04.592Z",
+      "method": "GET",
+      "tab": "p2",
+      "page": "http://127.0.0.1:6461/app/runs/01M5VG0YYGN265ZA66GRR0KH9Q"
+    },
+    {
+      "at": "2026-10-26T06:58:11.973Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:21.990Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:22.559Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:22.782Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:23.698Z",
+      "method": "GET",
+      "tab": "b",
+      "page": "http://127.0.0.1:6461/app/runs/01M5VG0YYGN265ZA66GRR0KH9Q"
+    },
+    {
+      "at": "2026-10-26T06:58:24.759Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:26.787Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:28.792Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:30.812Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:30.971Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:31.053Z",
+      "method": "POST",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:32.994Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:33.072Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:34.998Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:35.083Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:35.793Z",
+      "method": "POST",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:37.006Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:38.264Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:39.015Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:39.880Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:41.036Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:42.263Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:43.041Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:43.877Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:45.057Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:46.258Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:47.061Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:47.911Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:49.076Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:49.929Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:51.081Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:51.971Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:53.086Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:53.958Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:55.091Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:56.141Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:57.100Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:58:58.014Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:58:59.113Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:00.015Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:01.119Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:02.025Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:03.132Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:04.044Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:05.171Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:06.054Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:07.155Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:08.085Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:09.943Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:10.084Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:11.176Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:12.096Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:13.518Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:14.121Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:15.198Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:16.132Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:17.203Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:18.145Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:19.256Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:20.992Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:21.400Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:22.170Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:23.282Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:24.769Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:25.326Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:26.216Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:27.313Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:28.393Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:29.312Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:30.241Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:31.320Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:32.254Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:33.329Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:34.289Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:36.274Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:36.283Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:37.367Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:38.435Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:40.121Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:40.315Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:41.595Z",
+      "method": "GET",
+      "tab": "c",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:42.398Z",
+      "method": "GET",
+      "tab": "a",
+      "page": "http://127.0.0.1:6461/app/events"
+    },
+    {
+      "at": "2026-10-26T06:59:48.301Z",
+      "method": "GET",
+      "tab": "d",
+      "page": "http://127.0.0.1:6461/app/loops"
+    },
+    {
+      "at": "2026-10-26T06:59:50.305Z",
+      "method": "GET",
+      "tab": "d",
+      "page": "http://127.0.0.1:6461/app/loops"
+    }
+  ]
+}

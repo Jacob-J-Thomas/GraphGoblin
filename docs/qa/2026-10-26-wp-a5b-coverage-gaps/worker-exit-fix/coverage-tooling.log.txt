@@ -1,0 +1,143 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage --maxWorkers 1 --coverage.reportOnFailure --reporter verbose
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --reporter verbose
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ✓ scripts/cli-gates.test.mjs > layer CLI loads package manifests, accepts allowed imports and rejects a forbidden import 400ms
+ ✓ scripts/cli-gates.test.mjs > licence CLI checks supplied pnpm metadata, rejects forbidden and empty trees, and reports collection failure 638ms
+ ✓ scripts/cli-gates.test.mjs > shared config preserves numerical policy, source fixtures and generated exclusions when extending includes 2ms
+ ✓ scripts/cli-gates.test.mjs > reference generator writes formatted outputs, detects stale output and refuses a missing destination 4051ms
+ ✓ scripts/cli-gates.test.mjs > licence CLI collects the installed production dependency tree through pnpm 551ms
+ ✓ scripts/cli-gates.test.mjs > migration CLI confirms the installed schema without mutating the shipped ledger 2052ms
+ ✓ scripts/cli-gates.test.mjs > layer CLI tolerates absent workspace folders and reports an unnamed manifest 310ms
+ ✓ scripts/check-migrations.test.mjs > migration gate confirms no-op generation and leaves shipped migrations untouched 2277ms
+ ✓ scripts/check-migrations.test.mjs > migration gate rejects a journal that would renumber, skip or misdiff migrations 1719ms
+ ✓ scripts/check-migrations.test.mjs > migration gate rejects an additive schema change without writing shipped migrations 2179ms
+ ✓ scripts/design-contrast.test.mjs > theme parsing resolves root defaults and independent explicit overrides 6ms
+ ✓ scripts/design-contrast.test.mjs > alias resolution catches missing and circular tokens, and supports fallbacks 0ms
+ ✓ scripts/design-contrast.test.mjs > WCAG reference results, symmetry and both channel transfer branches 1ms
+ ✓ scripts/design-contrast.test.mjs > pair data validates all groups and preserves the sample with focus on every surface 21ms
+ ✓ scripts/design-contrast.test.mjs > report measures both themes, enforcing unrounded ratios and listing decorative pairs 16ms
+ ✓ scripts/design-contrast.test.mjs > CLI writes a formatted table and accepts explicit tokens and CRLF freshness 11764ms
+ ✓ scripts/design-contrast.test.mjs > CLI rejects stale and absent tables and checks the repository table read-only 10587ms
+ ✓ scripts/design-contrast.test.mjs > CLI reports unreadable output, missing tokens and malformed arguments 4070ms
+ ✓ scripts/design-contrast.test.mjs > CLI writes and checks a fresh table while returning failing contrast 7368ms
+ ✓ scripts/design-contrast.test.mjs > CLI rejects token CSS with no required colours 116ms
+ ✓ perf/runtime.test.mjs > measurement helpers count nested files, tolerate absent stores and reject invalid HTTP responses 99ms
+ ✓ perf/runtime.test.mjs > raw replay reads real HTTP framing and rejects an incomplete chunked response 1022ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded long workload with disposable stores 5809ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded context workload with disposable stores 5344ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded artifacts workload with disposable stores 4721ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded replay workload with disposable stores 6898ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded readiness workload with disposable stores 12364ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded browser workload with disposable stores 177914ms
+ ✓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded append workload with disposable stores 13525ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'unknown' ] before opening a store 830ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--unknown=x' ] before opening a store 770ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', 'bad-argument' ] before opening a store 2360ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'readiness', '--passes=2' ] before opening a store 725ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--profile=unknown' ] before opening a store 832ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--aged=-1' ] before opening a store 942ms
+ ✓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--passes=0' ] before opening a store 799ms
+ ✓ perf/runtime.test.mjs > summary CLI writes compact records and refuses absent output arguments 553ms
+ ✓ perf/runtime.test.mjs > browser observation refuses an unavailable API before starting a browser 9ms
+ ✓ perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 6378ms
+ ✓ perf/runtime.test.mjs > comparison CLI accepts identical stored histories and rejects changed workload/state 10814ms
+ ✓ perf/runtime.test.mjs > measurement refuses reused evidence and unsafe store prefixes without starting an API 937ms
+ ✓ scripts/release-notes.test.mjs > release and non-QA documentation never mention the migration ledger table 1527ms
+ ✓ scripts/design-tokens.test.mjs > scan scope includes source and the two configs, with precise exclusions 3ms
+ ✓ scripts/design-tokens.test.mjs > comments preserve line offsets and quoted strings, not suppressions 2ms
+ ✓ scripts/design-tokens.test.mjs > complete colour utilities cover variants, opacity, important and all colour families 1ms
+ ✓ scripts/design-tokens.test.mjs > arbitrary colours reject literals and literal fallbacks but permit token references 0ms
+ ✓ scripts/design-tokens.test.mjs > classes in arrays and variant maps are checked, while CSS URLs and strings are not classes 0ms
+ ✓ scripts/design-tokens.test.mjs > colour literal tokenizer handles all required functions and hex lengths 0ms
+ ✓ scripts/design-tokens.test.mjs > CSS declarations, shorthands and @apply distinguish colours from ordinary values 0ms
+ ✓ scripts/design-tokens.test.mjs > JS style properties, JSX attributes, inline CSS and tagged CSS report exact offsets 0ms
+ ✓ scripts/design-tokens.test.mjs > four-digit hex (#rgba) is a colour in CSS, JSX styles, SVG attributes, and arbitrary utilities 1ms
+ ✓ scripts/design-tokens.test.mjs > HTML theme metadata is checked regardless of attribute order 0ms
+ ✓ scripts/design-tokens.test.mjs > config exceptions are named exact declarations, never entire files or values 1ms
+ ✓ scripts/design-tokens.test.mjs > CLI deliberate violation fixture fails; clean fixture passes 484ms
+ ✓ scripts/dockerignore.test.mjs > the build context leaves out local data, keys, scratch files, and secrets 4ms
+ ✓ scripts/dockerignore.test.mjs > the build context keeps the sources and manifests the image needs 1ms
+ ✓ scripts/dockerignore.test.mjs > every tracked source file the image builds from stays in the context 107ms
+ ✓ scripts/dockerignore.test.mjs > the evaluator follows Docker semantics for the forms it supports 1ms
+ ✓ scripts/dockerignore.test.mjs > trailing double-star and escaped punctuation preserve Docker path boundaries 0ms
+ ✓ perf/observers.test.mjs > SSE observer preserves fragmented frames and detects cursor gaps 3ms
+ ✓ perf/observers.test.mjs > bounded timing histogram has truthful counts, totals and percentile bounds 3ms
+ ✓ perf/observers.test.mjs > cyclic fixture uses per-node visit cap, gate limit and an initialization outside the cycle 1ms
+ ✓ perf/observers.test.mjs > payload hashing survives reconnect without hashing transport comments 0ms
+ ✓ perf/observers.test.mjs > raw replay decoder separates HTTP framing across fragmented socket reads 1ms
+ ✓ perf/observers.test.mjs > CPU profile guard rejects empty or out-of-range execution samples 0ms
+ ✓ perf/observers.test.mjs > compact summary removes process paths and distinguishes shell from history readiness 2ms
+ ✓ perf/observers.test.mjs > measurement graphs preserve inference-only and explicit return-control modes 1ms
+ ✓ perf/observers.test.mjs > portable summaries bound sparse browser/replay samples and strip external CPU paths 1ms
+ ✓ scripts/licenses.test.mjs > plain licences 4ms
+ ✓ scripts/licenses.test.mjs > OR expressions pass when any side is allowed 0ms
+ ✓ scripts/licenses.test.mjs > AND expressions require every side 0ms
+ ✓ scripts/licenses.test.mjs > evaluateLicenses reports violations and honours exceptions 1ms
+ ✓ scripts/licenses.test.mjs > flattenPnpmLicenses flattens the pnpm shape 0ms
+ ✓ scripts/licenses.test.mjs > grouping cannot discard a required non-permissive licence 0ms
+ ✓ scripts/licenses.test.mjs > malformed expression "(MIT" has a parse-error violation 1ms
+ ✓ scripts/licenses.test.mjs > malformed expression "MIT OR" has a parse-error violation 0ms
+ ✓ scripts/licenses.test.mjs > malformed expression "AND MIT" has a parse-error violation 0ms
+ ✓ scripts/licenses.test.mjs > malformed expression "" has a parse-error violation 0ms
+ ✓ scripts/licenses.test.mjs > malformed expression "MIT OR (ISC AND)" has a parse-error violation 0ms
+ ✓ scripts/licenses.test.mjs > guessed metadata has a distinct violation reason 0ms
+ ✓ scripts/licenses.test.mjs > WITH requires explicit approval of the exact licence and exception pair 1ms
+ ✓ scripts/licenses.test.mjs > nested grouping and SPDX precedence preserve all obligations 0ms
+ ✓ scripts/licenses.test.mjs > WITH binds to one licence and never drops its exception 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "()" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT)" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT ISC" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT OR (ISC" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT OR" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT WITH" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT WITH AND" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT WITH (LLVM-exception)" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "(MIT OR ISC) WITH LLVM-exception" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT WITH LLVM-exception WITH Other" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT**" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT/ISC" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT WITH LLVM-exception*" 0ms
+ ✓ scripts/licenses.test.mjs > rejects all of malformed expression "MIT or ISC" 0ms
+ ✓ scripts/licenses.test.mjs > guessed markers require policy opt-in across every alternative; provenance is retained 0ms
+ ✓ scripts/licenses.test.mjs > package metadata overrides do not approve WITH pairs; inherited names are not exceptions 0ms
+ ✓ scripts/node-reference.test.mjs > typeOf renders the common JSON Schema shapes briefly 3ms
+ ✓ scripts/node-reference.test.mjs > discriminator finds the shared const property 1ms
+ ✓ scripts/node-reference.test.mjs > advancedMarker says yes, nothing, or which fields of a split object stay basic 0ms
+ ✓ scripts/node-reference.test.mjs > nodeFieldDocs reads each field of each variant with the metadata reader 1ms
+ ✓ scripts/node-reference.test.mjs > fieldRows lists name, type, required, default, Advanced, and description 0ms
+ ✓ scripts/node-reference.test.mjs > undocumented fields and kinds are reported, and the renderer refuses them 1ms
+ ✓ scripts/node-reference.test.mjs > renders every evaluator-specific decision branch and its applicable fields 1ms
+ ✓ scripts/node-reference.test.mjs > renders one section per kind, with a table per variant and Advanced only when used 1ms
+ ✓ scripts/node-reference.test.mjs > every catalog kind has a title, purpose, and ports 0ms
+ ✓ scripts/api-reference.test.mjs > schemaName names components and summarises inline bodies 4ms
+ ✓ scripts/api-reference.test.mjs > operations are grouped by first tag in document order, untagged last 2ms
+ ✓ scripts/api-reference.test.mjs > renders a table per tag with parameters, body, and responses 1ms
+ ✓ scripts/api-reference.test.mjs > renders parameter descriptions from OpenAPI parameters and schemas 0ms
+ ✓ scripts/api-reference.test.mjs > an operation without a summary fails the render 1ms
+ ✓ scripts/api-reference.test.mjs > staleFiles reports changed and missing files, ignoring CRLF 0ms
+ ✓ perf/hot-path-observers.test.mjs > equivalence ignores observed clocks and consistently renames generated identities, preserving payloads 5ms
+ ✓ perf/hot-path-observers.test.mjs > append observer measures the supplied client and transaction without changing arguments or results 2ms
+ ✓ scripts/layers.test.mjs > findLayer matches by regex 3ms
+ ✓ scripts/layers.test.mjs > allowed dependencies pass 1ms
+ ✓ scripts/layers.test.mjs > forbidden dependency is reported 0ms
+ ✓ scripts/layers.test.mjs > tooling dependency is ignored 0ms
+ ✓ scripts/layers.test.mjs > unknown package and wrong scope are reported 0ms
+ ✓ scripts/layers.test.mjs > collectDependencies merges production, peer, and optional fields but not dev 0ms
+
+ Test Files  13 passed (13)
+      Tests  122 passed (122)
+   Start at  04:10:02
+   Duration  311.37s (tests 99%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 94.81% ( 1793/1891 )
+Branches     : 90.87% ( 1096/1206 )
+Functions    : 91.44% ( 310/339 )
+Lines        : 95.97% ( 1596/1663 )
+================================================================================
+EXIT 0

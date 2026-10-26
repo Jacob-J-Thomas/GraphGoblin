@@ -1,0 +1,43 @@
+2026-10-26T06:58:02.551Z +4.7s gateway b1 listening {"pid":8704,"port":6461,"viaConsole":false}
+2026-10-26T06:58:03.030Z +5.1s work started {"heldRun":"01M5VG0YYGN265ZA66GRR0KH9Q","parkRun":"01M5VG0YSQD2GWPBAJ8F4HJFM4","scriptPid":36116}
+2026-10-26T06:58:06.246Z +8.3s CHECK PASS B1 running gateway shows no shutdown notice null
+2026-10-26T06:58:06.282Z +8.4s CHECK PASS B1 no control in the browser starts a drain null
+2026-10-26T06:58:07.297Z +9.4s CHECK PASS B1 closing a tab while running: phase stays running "running"
+2026-10-26T06:58:10.294Z +12.4s CHECK PASS B1 closing every tab and the browser: phase running, run running, script alive "running"
+2026-10-26T06:58:10.305Z +12.4s CHECK PASS B1 server received no shutdown POST from tab closure 0
+2026-10-26T06:58:12.540Z +14.6s operator drain {"status":202,"json":{"phase":"draining","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:1:draining"}}
+2026-10-26T06:58:22.032Z +24.1s notice appeared after drain {"latencyMs":9492}
+2026-10-26T06:58:22.063Z +24.2s draining notice "Gateway is draining\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\nWaiting never starts a browser countdown. Any further choice comes from the gateway.\nTab test held work — 01M5VG0YYGN265ZA66GRR0KH9Q\nKeep waiting\nForce stop"
+2026-10-26T06:58:22.160Z +24.3s CHECK PASS B2 draining notice explains refused starts, finishing work, saved waits and queued recovery null
+2026-10-26T06:58:22.161Z +24.3s CHECK PASS B2 draining notice names the active run with its loop name, not the parked wait null
+2026-10-26T06:58:22.161Z +24.3s CHECK PASS B2 notice says waiting never starts a browser countdown null
+2026-10-26T06:58:25.150Z +27.3s CHECK PASS B3 reload, navigation and closing a tab during drain leave the phase unchanged "draining"
+2026-10-26T06:58:25.242Z +27.3s CHECK PASS B3 browser sent no POST while reloading/navigating/closing []
+2026-10-26T06:58:27.600Z +29.7s expiry {"sinceDrainMs":15060,"expired":{"phase":"awaiting-choice","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:2:awaiting-choice"}}
+2026-10-26T06:58:29.909Z +32.0s CHECK PASS B4 expiry: awaiting-choice with wait and force; script alive {"phase":"awaiting-choice","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:2:awaiting-choice"}
+2026-10-26T06:58:31.059Z +33.2s after browser Keep waiting {"phase":"draining","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:3:draining"}
+2026-10-26T06:58:31.130Z +33.2s CHECK PASS B5 Keep waiting returns the gateway to draining with a new token "f7a1757c-9433-4d8b-a7da-e1fa12a329d2:3:draining"
+2026-10-26T06:58:31.135Z +33.2s stale force with the expiry token {"status":409,"json":{"phase":"draining","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:3:draining"}}
+2026-10-26T06:58:31.136Z +33.2s CHECK PASS B5 a delayed force carrying the pre-wait token is refused with 409 current state 409
+2026-10-26T06:58:31.139Z +33.2s CHECK PASS B5 a stale wait is refused with 409 current state 409
+2026-10-26T06:58:31.143Z +33.2s CHECK PASS B5 a repeated unconditional wait is accepted and stays draining {"status":202,"json":{"phase":"draining","graceMs":15000,"startedAt":"2026-10-26T06:58:12.530Z","choiceAt":"2026-10-26T06:58:27.530Z","activeRunIds":["01M5VG0YYGN265ZA66GRR0KH9Q"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"f7a1757c-9433-4d8b-a7da-e1fa12a329d2:4:draining"}}
+2026-10-26T06:58:31.872Z +34.0s CHECK PASS B5 after stale/repeated actions the work is untouched "draining"
+2026-10-26T06:58:34.553Z +36.7s force confirmation in tab c "Force stop active work?\n\nInterrupt the active executors and queued family work listed below, including required children. Already saved waits and paused runs stay saved.\n\nTab test held work — 01M5VG0YYGN265ZA66GRR0KH9Q\n\nExternal effects may be uncertain. Interrupted work does not automatically resume; inspect the run evidence before an explicit replay. Work may finish or a required child may start while you decide.\n\nGo back\nConfirm force stop"
+2026-10-26T06:58:37.367Z +39.5s CHECK PASS B6 another tab keeping waiting withdraws the open force confirmation (fresh choice required) null
+2026-10-26T06:58:37.368Z +39.5s CHECK PASS B6 tab c sent no POST [{"at":"2026-10-26T06:58:31.053Z","method":"POST","tab":"a","page":"http://127.0.0.1:6461/app/events"},{"at":"2026-10-26T06:58:35.793Z","method":"POST","tab":"a","page":"http://127.0.0.1:6461/app/events"}]
+2026-10-26T06:59:43.124Z +105.2s after-wait timeline [{"sinceWaitS":1,"phase":"draining","run":"running","alive":true},{"sinceWaitS":5,"phase":"draining","run":"running","alive":true},{"sinceWaitS":9,"phase":"draining","run":"running","alive":true},{"sinceWaitS":12,"phase":"draining","run":"running","alive":true},{"sinceWaitS":15,"phase":"draining","run":"running","alive":true},{"sinceWaitS":19,"phase":"draining","run":"running","alive":true},{"sinceWaitS":22,"phase":"draining","run":"running","alive":true},{"sinceWaitS":25,"phase":"draining","run":"running","alive":true},{"sinceWaitS":29,"phase":"draining","run":"running","alive":true},{"sinceWaitS":33,"phase":"draining","run":"running","alive":true},{"sinceWaitS":36,"phase":"draining","run":"running","alive":true},{"sinceWaitS":40,"phase":"draining","run":"running","alive":true},{"sinceWaitS":44,"phase":"draining","run":"running","alive":true},{"sinceWaitS":47,"phase":"draining","run":"running","alive":true},{"sinceWaitS":51,"phase":"draining","run":"running","alive":true},{"sinceWaitS":55,"phase":"draining","run":"running","alive":true},{"sinceWaitS":59,"phase":"draining","run":"running","alive":true},{"sinceWaitS":63,"phase":"draining","run":"running","alive":true}]
+2026-10-26T06:59:43.125Z +105.2s CHECK PASS B7 62 s (four 15 s graces) after Keep waiting: still draining, no second expiry, run running, script alive {"sinceWaitS":63,"phase":"draining","run":"running","alive":true}
+2026-10-26T06:59:43.126Z +105.2s CHECK PASS B7 the browser sent exactly the two Keep waiting POSTs that were clicked [{"at":"2026-10-26T06:58:31.053Z","method":"POST","tab":"a","page":"http://127.0.0.1:6461/app/events"},{"at":"2026-10-26T06:58:35.793Z","method":"POST","tab":"a","page":"http://127.0.0.1:6461/app/events"}]
+2026-10-26T06:59:46.926Z +109.0s CHECK PASS B8 closing all tabs and the browser during drain: still draining, work alive "draining"
+2026-10-26T06:59:48.898Z +111.0s CHECK PASS B9 work completed during the decision: gateway exits 0 on its own 0
+2026-10-26T06:59:50.752Z +112.9s CHECK PASS B9 the open force confirmation is withdrawn once the gateway is gone null
+2026-10-26T06:59:50.845Z +112.9s notice after completion "Gateway stopped or disconnected\nThe shutdown connection closed; the gateway may have stopped. Check its process if the disconnect was unexpected. No shutdown action will be retried automatically.\nCheck gateway state"
+2026-10-26T06:59:50.845Z +112.9s CHECK PASS B9 no force POST was sent 2
+2026-10-26T06:59:50.846Z +112.9s CHECK PASS B9 lock released null
+2026-10-26T06:59:50.858Z +113.0s CHECK PASS B9 server-side POST count equals operator POSTs plus clicked browser choices {"serverPosts":6,"operatorPosts":4,"browserPosts":2}
+2026-10-26T06:59:58.765Z +120.9s gateway b2 listening {"pid":26792,"port":6461,"viaConsole":false}
+2026-10-26T06:59:58.796Z +120.9s CHECK PASS B10 after restart the held run succeeded "succeeded"
+2026-10-26T06:59:58.797Z +120.9s CHECK PASS B10 the durable wait run is still waiting "waiting"
+2026-10-26T06:59:58.921Z +121.0s CHECK PASS B10 restarted gateway drains to exit 0 0
+2026-10-26T07:00:01.221Z +123.3s CHECK PASS B11 no process names the store []
+2026-10-26T07:00:01.241Z +123.3s DONE passed=30 failed=0

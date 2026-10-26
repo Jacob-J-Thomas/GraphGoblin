@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -96,4 +96,12 @@ test('the evaluator follows Docker semantics for the forms it supports', () => {
   assert.equal(isExcluded(custom, 'x/y'), true);
   assert.equal(isExcluded(custom, 'x/1/2/y/z'), true);
   assert.equal(isExcluded(custom, './build/a'), true);
+});
+
+test('trailing double-star and escaped punctuation preserve Docker path boundaries', () => {
+  const rules = parseDockerignore('assets/**\n!assets/keep.txt\na+b(1).txt');
+  assert.equal(isExcluded(rules, 'assets/deep/file.txt'), true);
+  assert.equal(isExcluded(rules, 'assets/keep.txt'), false);
+  assert.equal(isExcluded(rules, 'a+b(1).txt'), true);
+  assert.equal(isExcluded(rules, 'aaab1.txt'), false);
 });

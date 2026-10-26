@@ -1,0 +1,1533 @@
+{
+  "checks": [
+    {
+      "id": "205-process-defaults-exposed",
+      "description": "GET /system/model-defaults reports the GG_DEFAULTS process layer",
+      "pass": true,
+      "detail": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6-sol",
+            "effort": "minimal"
+          },
+          "claude": {
+            "model": "claude-sonnet-5-5",
+            "effort": "medium"
+          }
+        }
+      }
+    },
+    {
+      "id": "205-inherit-process-codex",
+      "description": "codex: an inheriting node sends the process defaults",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "gpt-6-sol",
+          "effort": "minimal"
+        },
+        "request": {
+          "model": "gpt-6-sol",
+          "effort": "minimal"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7GJX6N1HXEE8Y7BM09BF",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "13889260-7730-4caa-9833-0b0a019e6727",
+          "status": "finished",
+          "model": "gpt-6-sol",
+          "effort": "minimal",
+          "updatedAt": "2026-10-26T07:01:37.949Z"
+        }
+      }
+    },
+    {
+      "id": "205-inherit-process-claude",
+      "description": "claude: an inheriting node sends the process defaults",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "claude-sonnet-5-5",
+          "effort": "medium"
+        },
+        "request": {
+          "model": "claude-sonnet-5-5",
+          "effort": "medium"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7HA2XC4D4CDC32DPHW8K",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "b9459e21-6219-4d0a-93e7-5d49ed0ed531",
+          "status": "finished",
+          "model": "claude-sonnet-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T07:01:38.795Z"
+        }
+      }
+    },
+    {
+      "id": "205-inherit-owner-codex",
+      "description": "codex: owner Settings layer wins field by field over process defaults",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "gpt-6-sol",
+          "effort": "high"
+        },
+        "request": {
+          "model": "gpt-6-sol",
+          "effort": "high"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7JG5TVFFW5ZXXN9X3RFA",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "6325723f-5d30-480e-8e96-7bce63c82874",
+          "status": "finished",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "updatedAt": "2026-10-26T07:01:40.110Z"
+        }
+      }
+    },
+    {
+      "id": "205-inherit-owner-claude",
+      "description": "claude: owner Settings layer wins field by field over process defaults",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "claude-haiku-5-5",
+          "effort": "medium"
+        },
+        "request": {
+          "model": "claude-haiku-5-5",
+          "effort": "medium"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7KHXS61XBKJTCMCX09N0",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "ba40b10c-2324-43ba-9480-48e20f993def",
+          "status": "finished",
+          "model": "claude-haiku-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T07:01:41.218Z"
+        }
+      }
+    },
+    {
+      "id": "205-inherit-loop-codex",
+      "description": "codex: loop defaults win over owner and process layers",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "request": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7MM78QHCGZW48RV1FS2V",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "383ddcc4-19a4-4bcf-9170-71211955d16a",
+          "status": "finished",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "updatedAt": "2026-10-26T07:01:42.039Z"
+        }
+      }
+    },
+    {
+      "id": "205-inherit-loop-claude",
+      "description": "claude: loop defaults win over owner and process layers",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "claude-haiku-5-5",
+          "effort": "xhigh"
+        },
+        "request": {
+          "model": "claude-haiku-5-5",
+          "effort": "xhigh"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7NA5QMMH8YTJ9TMMHZYP",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "1ef60e65-75d0-4734-8a7d-63c9f8954453",
+          "status": "finished",
+          "model": "claude-haiku-5-5",
+          "effort": "xhigh",
+          "updatedAt": "2026-10-26T07:01:42.883Z"
+        }
+      }
+    },
+    {
+      "id": "205-explicit-codex-gpt-6-luna-low",
+      "description": "codex: explicit gpt-6-luna/low is what the CLI receives",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "request": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7PATKWN2EG9P0Z9JXNMQ",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "27d0e011-d90b-440d-977c-5261d7921600",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-26T07:01:43.800Z"
+        }
+      }
+    },
+    {
+      "id": "205-explicit-codex-gpt-6-luna-xhigh",
+      "description": "codex: explicit gpt-6-luna/xhigh is what the CLI receives",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "gpt-6-luna",
+          "effort": "xhigh"
+        },
+        "request": {
+          "model": "gpt-6-luna",
+          "effort": "xhigh"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7Q3BSDBMCHPT4ZQ2ZP1M",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "24aa326a-8625-4e6a-b3f4-0c2e388146c4",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "xhigh",
+          "updatedAt": "2026-10-26T07:01:44.723Z"
+        }
+      }
+    },
+    {
+      "id": "205-explicit-claude-claude-opus-5-5-max",
+      "description": "claude: explicit claude-opus-5-5/max is what the CLI receives",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "claude-opus-5-5",
+          "effort": "max"
+        },
+        "request": {
+          "model": "claude-opus-5-5",
+          "effort": "max"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7RKW7PPXBKSPZQVXPBGE",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "32d2a84b-51e4-4a37-ace4-44f04f1a6fb3",
+          "status": "finished",
+          "model": "claude-opus-5-5",
+          "effort": "max",
+          "updatedAt": "2026-10-26T07:01:47.178Z"
+        }
+      }
+    },
+    {
+      "id": "205-explicit-claude-claude-fable-5-1-low",
+      "description": "claude: explicit claude-fable-5-1/low is what the CLI receives",
+      "pass": true,
+      "detail": {
+        "expected": {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        },
+        "request": {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        },
+        "sessionRow": {
+          "runId": "01M5VG7TNP6WZH6DRZBJQEYKG4",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "baf54180-bc3b-4445-a60f-7d1479a2929d",
+          "status": "finished",
+          "model": "claude-fable-5-1",
+          "effort": "low",
+          "updatedAt": "2026-10-26T07:01:48.466Z"
+        }
+      }
+    },
+    {
+      "id": "205-codex-max-mapping",
+      "description": "codex explicit max: run succeeds; record saved/session effort versus the CLI effort (documented max->xhigh mapping)",
+      "pass": true,
+      "detail": {
+        "request": "xhigh",
+        "sessionRow": "max"
+      }
+    },
+    {
+      "id": "205-claude-minimal-refused",
+      "description": "claude minimal effort is refused before any provider request (validation/publish/admission)",
+      "pass": true,
+      "detail": {
+        "create": 400,
+        "createBody": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "EFFORT_UNSUPPORTED",
+              "severity": "error",
+              "nodeId": "work",
+              "path": "config.effort",
+              "message": "The selected reasoning effort is not supported by this model"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "205-llm-explicit",
+      "description": "LLM decision explicit: the structured Codex request carries gpt-6.1-sol/xhigh",
+      "pass": true,
+      "detail": {
+        "request": {
+          "model": "gpt-6.1-sol",
+          "effort": "xhigh"
+        }
+      }
+    },
+    {
+      "id": "205-llm-inherit",
+      "description": "LLM decision inherit: the structured Codex request carries gpt-6-sol/high",
+      "pass": true,
+      "detail": {
+        "request": {
+          "model": "gpt-6-sol",
+          "effort": "high"
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "processDefaults": {
+      "byHarness": {
+        "codex": {
+          "model": "gpt-6-sol",
+          "effort": "minimal"
+        },
+        "claude": {
+          "model": "claude-sonnet-5-5",
+          "effort": "medium"
+        }
+      }
+    },
+    "process-codex": {
+      "loopId": "01M5VG7G8Z6DB84X7HK1VX4FSQ",
+      "runId": "01M5VG7GJX6N1HXEE8Y7BM09BF",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "13889260-7730-4caa-9833-0b0a019e6727",
+          "conversationTurn": 1,
+          "model": "gpt-6-sol",
+          "effort": "minimal",
+          "prompt": "EFFORT-p-codex run=01M5VG7GJX6N1HXEE8Y7BM09BF task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-sol",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7GJX6N1HXEE8Y7BM09BF",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"minimal\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7GJX6N1HXEE8Y7BM09BF",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "13889260-7730-4caa-9833-0b0a019e6727",
+          "status": "finished",
+          "model": "gpt-6-sol",
+          "effort": "minimal",
+          "updatedAt": "2026-10-26T07:01:37.949Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "p-codex",
+        "label": "p-codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "process-claude": {
+      "loopId": "01M5VG7H2XH6RXSSDK9F9F6Q98",
+      "runId": "01M5VG7HA2XC4D4CDC32DPHW8K",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "b9459e21-6219-4d0a-93e7-5d49ed0ed531",
+          "conversationTurn": 1,
+          "model": "claude-sonnet-5-5",
+          "effort": "medium",
+          "prompt": "EFFORT-p-claude run=01M5VG7HA2XC4D4CDC32DPHW8K task.",
+          "argv": [
+            "--safe-mode",
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--restricted",
+            "--tools",
+            "Read,Glob,Grep",
+            "--permission-mode",
+            "dontAsk",
+            "--permission-prompts",
+            "none",
+            "--model",
+            "claude-sonnet-5-5",
+            "--effort",
+            "medium",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--input-format",
+            "text",
+            "--print"
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7HA2XC4D4CDC32DPHW8K",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "b9459e21-6219-4d0a-93e7-5d49ed0ed531",
+          "status": "finished",
+          "model": "claude-sonnet-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T07:01:38.795Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "p-claude",
+        "label": "p-claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "ownerSettings": {
+      "defaults": {
+        "byHarness": {
+          "codex": {
+            "effort": "high"
+          },
+          "claude": {
+            "model": "claude-haiku-5-5"
+          }
+        }
+      }
+    },
+    "owner-codex": {
+      "loopId": "01M5VG7J125CVMF6634A4MJ64Z",
+      "runId": "01M5VG7JG5TVFFW5ZXXN9X3RFA",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "6325723f-5d30-480e-8e96-7bce63c82874",
+          "conversationTurn": 1,
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "prompt": "EFFORT-o-codex run=01M5VG7JG5TVFFW5ZXXN9X3RFA task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-sol",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7JG5TVFFW5ZXXN9X3RFA",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"high\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7JG5TVFFW5ZXXN9X3RFA",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "6325723f-5d30-480e-8e96-7bce63c82874",
+          "status": "finished",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "updatedAt": "2026-10-26T07:01:40.110Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "o-codex",
+        "label": "o-codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "owner-claude": {
+      "loopId": "01M5VG7K6Q7J1WRKJD2M7XMP04",
+      "runId": "01M5VG7KHXS61XBKJTCMCX09N0",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "ba40b10c-2324-43ba-9480-48e20f993def",
+          "conversationTurn": 1,
+          "model": "claude-haiku-5-5",
+          "effort": "medium",
+          "prompt": "EFFORT-o-claude run=01M5VG7KHXS61XBKJTCMCX09N0 task.",
+          "argv": [
+            "--safe-mode",
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--restricted",
+            "--tools",
+            "Read,Glob,Grep",
+            "--permission-mode",
+            "dontAsk",
+            "--permission-prompts",
+            "none",
+            "--model",
+            "claude-haiku-5-5",
+            "--effort",
+            "medium",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--input-format",
+            "text",
+            "--print"
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7KHXS61XBKJTCMCX09N0",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "ba40b10c-2324-43ba-9480-48e20f993def",
+          "status": "finished",
+          "model": "claude-haiku-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T07:01:41.218Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "o-claude",
+        "label": "o-claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "loop-codex": {
+      "loopId": "01M5VG7M9DJ15BA0XV1S2PW4HD",
+      "runId": "01M5VG7MM78QHCGZW48RV1FS2V",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "383ddcc4-19a4-4bcf-9170-71211955d16a",
+          "conversationTurn": 1,
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "prompt": "EFFORT-l-codex run=01M5VG7MM78QHCGZW48RV1FS2V task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6.1-sol",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7MM78QHCGZW48RV1FS2V",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"high\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7MM78QHCGZW48RV1FS2V",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "383ddcc4-19a4-4bcf-9170-71211955d16a",
+          "status": "finished",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "updatedAt": "2026-10-26T07:01:42.039Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "l-codex",
+        "label": "l-codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "loop-claude": {
+      "loopId": "01M5VG7N2MG7SZ42Z52TYNC5PG",
+      "runId": "01M5VG7NA5QMMH8YTJ9TMMHZYP",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "1ef60e65-75d0-4734-8a7d-63c9f8954453",
+          "conversationTurn": 1,
+          "model": "claude-haiku-5-5",
+          "effort": "xhigh",
+          "prompt": "EFFORT-l-claude run=01M5VG7NA5QMMH8YTJ9TMMHZYP task.",
+          "argv": [
+            "--safe-mode",
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--restricted",
+            "--tools",
+            "Read,Glob,Grep",
+            "--permission-mode",
+            "dontAsk",
+            "--permission-prompts",
+            "none",
+            "--model",
+            "claude-haiku-5-5",
+            "--effort",
+            "xhigh",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--input-format",
+            "text",
+            "--print"
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7NA5QMMH8YTJ9TMMHZYP",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "1ef60e65-75d0-4734-8a7d-63c9f8954453",
+          "status": "finished",
+          "model": "claude-haiku-5-5",
+          "effort": "xhigh",
+          "updatedAt": "2026-10-26T07:01:42.883Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "l-claude",
+        "label": "l-claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "explicit-e-codex-gpt-6-luna-low": {
+      "loopId": "01M5VG7P0G70BXAWVXR3BQGNCB",
+      "runId": "01M5VG7PATKWN2EG9P0Z9JXNMQ",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "27d0e011-d90b-440d-977c-5261d7921600",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "EFFORT-e-codex-gpt-6-luna-low run=01M5VG7PATKWN2EG9P0Z9JXNMQ task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-luna",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7PATKWN2EG9P0Z9JXNMQ",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"low\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7PATKWN2EG9P0Z9JXNMQ",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "27d0e011-d90b-440d-977c-5261d7921600",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-26T07:01:43.800Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "e-codex-gpt-6-luna-low",
+        "label": "e-codex-gpt-6-luna-low v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "explicit-e-codex-gpt-6-luna-xhigh": {
+      "loopId": "01M5VG7PSNWYNH4XY0VHC4NYJ9",
+      "runId": "01M5VG7Q3BSDBMCHPT4ZQ2ZP1M",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "24aa326a-8625-4e6a-b3f4-0c2e388146c4",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "xhigh",
+          "prompt": "EFFORT-e-codex-gpt-6-luna-xhigh run=01M5VG7Q3BSDBMCHPT4ZQ2ZP1M task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-luna",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7Q3BSDBMCHPT4ZQ2ZP1M",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"xhigh\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7Q3BSDBMCHPT4ZQ2ZP1M",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "24aa326a-8625-4e6a-b3f4-0c2e388146c4",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "xhigh",
+          "updatedAt": "2026-10-26T07:01:44.723Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "e-codex-gpt-6-luna-xhigh",
+        "label": "e-codex-gpt-6-luna-xhigh v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "explicit-e-claude-claude-opus-5-5-max": {
+      "loopId": "01M5VG7QSPKMWYRBGFTPPPC3EQ",
+      "runId": "01M5VG7RKW7PPXBKSPZQVXPBGE",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "32d2a84b-51e4-4a37-ace4-44f04f1a6fb3",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "max",
+          "prompt": "EFFORT-e-claude-claude-opus-5-5-max run=01M5VG7RKW7PPXBKSPZQVXPBGE task.",
+          "argv": [
+            "--safe-mode",
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--restricted",
+            "--tools",
+            "Read,Glob,Grep",
+            "--permission-mode",
+            "dontAsk",
+            "--permission-prompts",
+            "none",
+            "--model",
+            "claude-opus-5-5",
+            "--effort",
+            "max",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--input-format",
+            "text",
+            "--print"
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7RKW7PPXBKSPZQVXPBGE",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "32d2a84b-51e4-4a37-ace4-44f04f1a6fb3",
+          "status": "finished",
+          "model": "claude-opus-5-5",
+          "effort": "max",
+          "updatedAt": "2026-10-26T07:01:47.178Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "e-claude-claude-opus-5-5-max",
+        "label": "e-claude-claude-opus-5-5-max v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "explicit-e-claude-claude-fable-5-1-low": {
+      "loopId": "01M5VG7T39Q2E2JZCG7QCDS6MV",
+      "runId": "01M5VG7TNP6WZH6DRZBJQEYKG4",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "baf54180-bc3b-4445-a60f-7d1479a2929d",
+          "conversationTurn": 1,
+          "model": "claude-fable-5-1",
+          "effort": "low",
+          "prompt": "EFFORT-e-claude-claude-fable-5-1-low run=01M5VG7TNP6WZH6DRZBJQEYKG4 task.",
+          "argv": [
+            "--safe-mode",
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--restricted",
+            "--tools",
+            "Read,Glob,Grep",
+            "--permission-mode",
+            "dontAsk",
+            "--permission-prompts",
+            "none",
+            "--model",
+            "claude-fable-5-1",
+            "--effort",
+            "low",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--input-format",
+            "text",
+            "--print"
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7TNP6WZH6DRZBJQEYKG4",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "baf54180-bc3b-4445-a60f-7d1479a2929d",
+          "status": "finished",
+          "model": "claude-fable-5-1",
+          "effort": "low",
+          "updatedAt": "2026-10-26T07:01:48.466Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "e-claude-claude-fable-5-1-low",
+        "label": "e-claude-claude-fable-5-1-low v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "codex-max": {
+      "loopId": "01M5VG7VD0H53TF03HW9C5REBM",
+      "runId": "01M5VG7W3CKA0BRDAEAVQ1NR37",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "e9a61684-b288-4dac-8aad-d2fc92912d8a",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "xhigh",
+          "prompt": "EFFORT-codex-max run=01M5VG7W3CKA0BRDAEAVQ1NR37 task.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-luna",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-a-5aa3e391\\data-s4\\workspaces\\01M5VG7W3CKA0BRDAEAVQ1NR37",
+            "--skip-git-repo-check",
+            "--config",
+            "model_reasoning_effort=\"xhigh\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VG7W3CKA0BRDAEAVQ1NR37",
+          "nodeId": "work",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "e9a61684-b288-4dac-8aad-d2fc92912d8a",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "max",
+          "updatedAt": "2026-10-26T07:01:49.867Z"
+        }
+      ],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "codex-max",
+        "label": "codex-max v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      }
+    },
+    "claude-minimal": {
+      "create": 400,
+      "createBody": {
+        "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+        "title": "evaluation invalid configuration",
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "detail": "invalid evaluator or model configuration",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    "llm-explicit": {
+      "loopId": "01M5VG7WTW8MKS77Y9D8P4SHGV",
+      "runId": "01M5VG7XKBJ5M2SXRXG2F99D45",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "4dd54f24-0702-456d-a075-acffb62c0216",
+          "conversationTurn": 1,
+          "model": "gpt-6.1-sol",
+          "effort": "xhigh",
+          "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nDECIDE-explicit run=01M5VG7XKBJ5M2SXRXG2F99D45 choose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6.1-sol",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\graphgoblin-structured-nRc9OU",
+            "--skip-git-repo-check",
+            "--output-schema",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\codex-output-schema-6Kh6QA\\schema.json",
+            "--config",
+            "model_reasoning_effort=\"xhigh\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "llm explicit",
+        "label": "llm explicit v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "decision": [
+        {
+          "provenance": {
+            "kind": "llm",
+            "provider": "codex",
+            "classifierId": null,
+            "model": "gpt-6.1-sol",
+            "effort": "xhigh"
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "yes",
+            "confidence": 0.9,
+            "reasoning": "synthetic"
+          },
+          "portId": "yes",
+          "diagnostics": [],
+          "runId": "01M5VG7XKBJ5M2SXRXG2F99D45",
+          "seq": 6,
+          "ts": "2026-10-26T07:01:52.067Z",
+          "type": "decision.made",
+          "nodeId": "pick"
+        }
+      ]
+    },
+    "llm-inherit": {
+      "loopId": "01M5VG7YXZ630TAGCHF37CP21Q",
+      "runId": "01M5VG7ZA59N06YB950Y7J3PK9",
+      "status": "succeeded",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "dbd564ed-dcca-454f-9c47-422ece6a264b",
+          "conversationTurn": 1,
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nDECIDE-inherit run=01M5VG7ZA59N06YB950Y7J3PK9 choose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+          "argv": [
+            "exec",
+            "--experimental-json",
+            "--model",
+            "gpt-6-sol",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\graphgoblin-structured-NnY813",
+            "--skip-git-repo-check",
+            "--output-schema",
+            "%USERPROFILE%\\AppData\\Local\\Temp\\codex-output-schema-JDB4Ed\\schema.json",
+            "--config",
+            "model_reasoning_effort=\"high\"",
+            "--config",
+            "sandbox_workspace_write.network_access=false",
+            "--config",
+            "web_search=\"disabled\"",
+            "--config",
+            "approval_policy=\"never\""
+          ]
+        }
+      ],
+      "sessions": [],
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "llm inherit",
+        "label": "llm inherit v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "effort": "high"
+              },
+              "claude": {
+                "model": "claude-haiku-5-5"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "minimal"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "medium"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "decision": [
+        {
+          "provenance": {
+            "kind": "llm",
+            "provider": "codex",
+            "classifierId": null,
+            "model": "gpt-6-sol",
+            "effort": "high"
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "yes",
+            "confidence": 0.9,
+            "reasoning": "synthetic"
+          },
+          "portId": "yes",
+          "diagnostics": [],
+          "runId": "01M5VG7ZA59N06YB950Y7J3PK9",
+          "seq": 6,
+          "ts": "2026-10-26T07:01:53.085Z",
+          "type": "decision.made",
+          "nodeId": "pick"
+        }
+      ]
+    }
+  }
+}

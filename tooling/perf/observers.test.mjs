@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { Frames, Timings, definition, assertSampleCount, root } from './common.mjs';
 import { HttpBody } from './replay.mjs';
@@ -126,4 +126,51 @@ test('compact summary removes process paths and distinguishes shell from history
   );
   assert.equal(samples, 8);
   assert.ok(Buffer.byteLength(encoded) < 4000);
+});
+
+test('measurement graphs preserve inference-only and explicit return-control modes', () => {
+  const plain = definition(4, { passes: 2 });
+  assert.equal(plain.variables, undefined);
+  assert.equal(
+    plain.nodes.some((node) => node.id === 'init'),
+    false,
+  );
+  assert.equal(
+    plain.nodes.find((node) => node.id === 'work').config.output.captureTranscript,
+    'none',
+  );
+  const returns = definition(4, { passes: 2, returnControl: true });
+  assert.deepEqual(returns.nodes.find((node) => node.id === 'done').config.destinations, [
+    { kind: 'caller' },
+    { kind: 'log' },
+  ]);
+});
+
+test('portable summaries bound sparse browser/replay samples and strip external CPU paths', () => {
+  const r = {
+    timings: {},
+    checkpoints: [],
+    cpuSamples: { top: [['C:/private/native.js', 1]] },
+    browser: {
+      pages: [
+        { name: 'empty', ttiMs: 3, metrics: [{ elapsedMs: 1, nodes: 0, sessionStorageBytes: 0 }] },
+      ],
+    },
+    replays: {
+      first: {},
+      late: {},
+      slow: {},
+      reconnect: { ok: true, interrupted: {}, reconnected: {} },
+    },
+  };
+  const output = summarize([{ workload: 'sparse', cases: [r, r, { cli: { exitCode: 1 } }] }]);
+  assert.deepEqual(output.cpuLocations, ['external/native.js']);
+  assert.equal(output.browserPages[0].shellReadyMs, 3);
+  assert.equal(output.browserPages[0].historyReadyMs, null);
+  assert.equal(
+    output.replays[0].sampleScope,
+    'round-1 post-replay samples; lag buffering unmeasured',
+  );
+  assert.equal(output.cases[2].preflight.databaseReady, false);
+  assert.ok(!JSON.stringify(output).includes('private'));
 });

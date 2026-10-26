@@ -1,0 +1,69 @@
+pnpm.cmd typecheck
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing e0f6c92a1f238374
+@graphgoblin/contracts:typecheck: cache miss, executing 75ff4988dcadec88
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing 3a791b92edab77c3
+@graphgoblin/domain:typecheck: cache miss, executing 39e8effe3e39c326
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 2ac2922048ed815d
+@graphgoblin/engine:typecheck: cache miss, executing 775c8117af315399
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: cache miss, executing bd14ab476e29c30d
+@graphgoblin/adapter-jev:build: cache miss, executing de2fdc41f4d5f7c1
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 36cba597a3e10b32
+@graphgoblin/infrastructure:typecheck: cache miss, executing 67af1dc77431e4b2
+@graphgoblin/adapter-codex:build: cache miss, executing cc0ad262e4eb37d4
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:build: cache miss, executing 0f6692937ce1db0f
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 94fb58a606003e47
+@graphgoblin/api:typecheck: cache miss, executing 34a619a329752a1a
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 18f9d8c7f4a5488e
+@graphgoblin/api-client:typecheck: cache miss, executing 1811a1c05165fec7
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:typecheck: cache miss, executing 0baebe0d527624d4
+@graphgoblin/web:typecheck: cache miss, executing 1dcc5aa47a425384
+@graphgoblin/mcp:build: cache miss, executing de32749899418dbf
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing f06023f69e43a096
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/preflight.test.ts(330,11): error TS2322: Type '() => Promise<({ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | ... 4 more ... | "max"; enabled: boolean; } | { ...; })[]>' is not assignable to type '() => Promise<{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | ... 4 more ... | "max"; enabled: boolean; }[]>'.
+@graphgoblin/api:typecheck:   Type 'Promise<({ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | ... 4 more ... | "max"; enabled: boolean; } | { ...; })[]>' is not assignable to type 'Promise<{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; }[]>'.
+@graphgoblin/api:typecheck:     Type '({ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; } | { ...; })[]' is not assignable to type '{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; }[]'.
+@graphgoblin/api:typecheck:       Type '{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; } | { ...; }' is not assignable to type '{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; }'.
+@graphgoblin/api:typecheck:         Property 'defaultEffort' is missing in type '{ harness: string; source: "harness"; model: string; displayName: string; efforts: "low"[]; enabled: boolean; }' but required in type '{ harness: string; model: string; source: "harness" | "litellm"; displayName: string; efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[]; defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max"; enabled: boolean; }'.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-264\apps\api) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    15 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    46.543s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.
+EXIT 2

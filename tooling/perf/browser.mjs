@@ -1,4 +1,3 @@
-/* global performance, window, PerformanceObserver, requestAnimationFrame, document, sessionStorage, process, setInterval, clearInterval */
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dependency, sleep, json } from './common.mjs';
@@ -42,11 +41,9 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       ['events', '/app/events'],
     ]) {
       if (name === 'events') {
-        for (let index = 0; index < 50; index++)
-          await json(base, '/events', {
-            type: 'perf.measurement',
-            payload: { index, nested: { value: 'v'.repeat(32_768) } },
-          });
+        // Historical inbound rows are a browser dataset, not new targeted Event admissions.
+        // Seeding through the repository avoids creating 50 unrelated runs in this measurement.
+        await call('seedInbound', { count: 50, payloadValueBytes: 32_768 });
       }
       const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       const page = await context.newPage();

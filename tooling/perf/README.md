@@ -12,14 +12,14 @@ uses a new temporary file-backed store and fake execution (plus native main.js f
 provider calls. Edge runs headlessly using the installed Microsoft Edge channel.
 No owner instance, home store, browser profile, or service worker is modified.
 
-| Workload                  | One command                                                 | Default size                                                                                                                   |
-| ------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Cyclic streaming          | `node tooling/perf/measure.mjs long`                        | 100, 1,000, 10,000 passes; 2 items/turn                                                                                        |
-| Growing context           | `node tooling/perf/measure.mjs context`                     | 100, 1,000, 10,000 passes; append 128 bytes/pass                                                                               |
-| Finished-run SSE replay   | `node tooling/perf/measure.mjs replay`                      | 1,000 passes; 32 items/turn, 256 bytes/item                                                                                    |
-| Transcript artifacts      | `node tooling/perf/measure.mjs artifacts --passes=100,1000` | 8 items/turn, 4,096 bytes/item; unique transcripts                                                                             |
-| Readiness                 | `node tooling/perf/measure.mjs readiness`                   | Real CLI preflight, native main.js cold first GET /runs, then warm harness reopen                                              |
-| Edge inspector and Events | `node tooling/perf/measure.mjs browser`                     | 1,000 streaming + mutation passes; 2 items/turn; 512 bytes/pass; 50 ms minimum fake completion delay; 50 inbound 32 KiB values |
+| Workload                  | One command                                                 | Default size                                                                                                                                                |
+| ------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cyclic streaming          | `node tooling/perf/measure.mjs long`                        | 100, 1,000, 10,000 passes; 2 items/turn                                                                                                                     |
+| Growing context           | `node tooling/perf/measure.mjs context`                     | 100, 1,000, 10,000 passes; append 128 bytes/pass                                                                                                            |
+| Finished-run SSE replay   | `node tooling/perf/measure.mjs replay`                      | 1,000 passes; 32 items/turn, 256 bytes/item                                                                                                                 |
+| Transcript artifacts      | `node tooling/perf/measure.mjs artifacts --passes=100,1000` | 8 items/turn, 4,096 bytes/item; unique transcripts                                                                                                          |
+| Readiness                 | `node tooling/perf/measure.mjs readiness`                   | Real CLI preflight, native main.js cold first GET /runs, then warm harness reopen                                                                           |
+| Edge inspector and Events | `node tooling/perf/measure.mjs browser`                     | 1,000 streaming + mutation passes; 2 items/turn; 512 bytes/pass; 50 ms minimum fake completion delay; 50 repository-seeded historical inbound 32 KiB values |
 
 Append `--aged=2000` to any command for the aged comparison. Population runs real
 trigger-to-exit graphs through API admission and the engine, in batches of 50 with

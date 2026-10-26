@@ -1,0 +1,20 @@
+using System;
+using System.Runtime.InteropServices;
+// Deliver a real console Ctrl+C (CTRL_C_EVENT) to every process attached to the console of
+// the target PID, exactly as a keypress in that console window would.
+public static class CtrlC {
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool FreeConsole();
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool AttachConsole(uint pid);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleCtrlHandler(IntPtr handler, bool add);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool GenerateConsoleCtrlEvent(uint ev, uint group);
+  public static int Main(string[] args) {
+    uint pid = uint.Parse(args[0]);
+    FreeConsole();
+    if (!AttachConsole(pid)) { Console.Error.WriteLine("AttachConsole failed " + Marshal.GetLastWin32Error()); return 2; }
+    SetConsoleCtrlHandler(IntPtr.Zero, true);
+    if (!GenerateConsoleCtrlEvent(0, 0)) { Console.Error.WriteLine("GenerateConsoleCtrlEvent failed " + Marshal.GetLastWin32Error()); return 3; }
+    System.Threading.Thread.Sleep(300);
+    FreeConsole();
+    return 0;
+  }
+}

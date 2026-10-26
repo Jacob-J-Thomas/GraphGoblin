@@ -1,0 +1,53 @@
+// Scenario I: recovery after explicit force is explicit. The interrupted run stays failed and
+// non-resumable across restart; an explicit API replay from the interrupted node starts a new
+// run (the documented route), which completes normally.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-i-explicit-replay');
+const dir = L.makeStore('i');
+let g;
+let g2;
+try {
+  g = await L.startGateway({ dir, port: 6468, label: 'i1', env: { GG_SHUTDOWN_GRACE_MS: '300000' }, rec });
+  const loop = await L.publishLoop(g.call, L.scriptLoop('Replay after force', L.heldScriptSource({ dir, name: 'held', maxMs: 120_000 })));
+  const run = await L.startRun(g.call, loop);
+  const pid = Number(await L.waitFile(path.join(dir, 'held.pid')));
+  await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  await g.call('/system/shutdown', { method: 'POST', body: { action: 'force' } });
+  rec.check('I1 force exits 0 and the script is gone', (await g.waitExit(30_000)) === 0 && !L.tasklistAlive(pid), null);
+  g.copyLog('s-i-gateway-i1.log.txt');
+  fs.rmSync(path.join(dir, 'held.pid'));
+  g2 = await L.startGateway({ dir, port: 6468, label: 'i2', rec });
+  await L.sleep(3000);
+  const failed = (await g2.call(`/runs/${run}`)).json;
+  rec.check('I2 after restart the run is still failed with RUN_INTERRUPTED_BY_STOP and was not re-run', failed.status === 'failed' && failed.failure?.code === 'RUN_INTERRUPTED_BY_STOP' && !fs.existsSync(path.join(dir, 'held.pid')), { status: failed.status, code: failed.failure?.code });
+  const replay = await g2.call(`/runs/${run}/replay`, { method: 'POST', body: { nodeId: 'hold' } });
+  rec.log('explicit replay', { status: replay.status, newRun: replay.json?.run?.id, replayOf: replay.json?.run?.invocation?.replayOf });
+  rec.check('I3 explicit replay from the interrupted node is accepted (202, new run)', replay.status === 202 && replay.json?.run?.id && replay.json.run.id !== run, replay.status);
+  const newPid = Number(await L.waitFile(path.join(dir, 'held.pid')));
+  fs.writeFileSync(path.join(dir, 'held.release'), 'go');
+  await L.waitFor(async () => (await g2.call(`/runs/${replay.json.run.id}`)).json.status === 'succeeded', { timeoutMs: 30_000 });
+  rec.check('I3 the replayed run reran the script and succeeded', (await g2.call(`/runs/${replay.json.run.id}`)).json.status === 'succeeded' && newPid !== pid, { newPid });
+  rec.check('I3 the source run keeps its interruption record', (await g2.call(`/runs/${run}`)).json.failure?.code === 'RUN_INTERRUPTED_BY_STOP', null);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('I4 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  g2.copyLog('s-i-gateway-i2.log.txt');
+} catch (error) {
+  rec.check('I scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+  }
+  rec.finish();
+  for (const p of L.storeProcesses(dir)) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  L.rmStore(dir);
+}

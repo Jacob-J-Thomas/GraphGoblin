@@ -1,0 +1,61 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage --maxWorkers 1 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ❯ perf/runtime.test.mjs (21 tests | 1 failed) 256974ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 24460ms
+ ❯ scripts/design-contrast.test.mjs (10 tests | 1 failed) 31659ms
+   × CLI rejects stale and absent tables and checks the repository table read-only 15ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 59512
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:292:45
+    290|   const deadline = (promise, label) =>
+    291|     new Promise((resolve, reject) => {
+    292|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    293|       promise.then(
+    294|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  scripts/design-contrast.test.mjs > CLI rejects stale and absent tables and checks the repository table read-only
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-contrast-s75H77\nested\table.md'
+ ❯ scripts/design-contrast.test.mjs:228:3
+    226| test('CLI rejects stale and absent tables and checks the repository ta…
+    227|   const { temporary, output, run } = cliFixture(t);
+    228|   writeFileSync(output, 'stale');
+       |   ^
+    229|   const stale = run(['--check', '--output', output]);
+    230|   assert.equal(stale.status, 1);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 11 passed (13)
+      Tests  2 failed | 120 passed (122)
+   Start at  03:09:25
+   Duration  318.46s (tests 99%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.45% ( 1805/1891 )
+Branches     : 92.12% ( 1111/1206 )
+Functions    : 90.85% ( 308/339 )
+Lines        : 96.45% ( 1604/1663 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

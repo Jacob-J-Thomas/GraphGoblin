@@ -1,0 +1,47 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage --maxWorkers 1 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ❯ perf/runtime.test.mjs (21 tests | 1 failed) 293196ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 25867ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 48524
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:292:45
+    290|   const deadline = (promise, label) =>
+    291|     new Promise((resolve, reject) => {
+    292|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    293|       promise.then(
+    294|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 121 passed (122)
+   Start at  03:16:48
+   Duration  396.91s (tests 99%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.5% ( 1806/1891 )
+Branches     : 92.45% ( 1115/1206 )
+Functions    : 90.85% ( 308/339 )
+Lines        : 96.51% ( 1605/1663 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

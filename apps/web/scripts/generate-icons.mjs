@@ -5,12 +5,12 @@
  * Run with `node scripts/generate-icons.mjs` after changing the design; the output is committed.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const out = join(here, '..', 'public', 'icons');
+const out = process.argv[2] ? resolve(process.argv[2]) : join(here, '..', 'public', 'icons');
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
   let c = n;
