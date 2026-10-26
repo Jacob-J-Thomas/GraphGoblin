@@ -169,20 +169,30 @@ export class CodexHarness implements HarnessPort {
     const grace = this.options.cancelGraceMs ?? 5_000;
     let finished = false;
     let acknowledgement: ReturnType<typeof setTimeout> | undefined;
-    let expire!: (error: Error) => void;
-    const expired = new Promise<never>((_resolve, reject) => {
-      expire = reject;
-    });
-    expired.catch(() => undefined);
+    // The one step currently waiting. Each wait registers here and unregisters when its step
+    // settles, so nothing long-lived keeps a consumed step (or its event) reachable. Until the
+    // turn finishes, the pump only ever waits in `bounded`, and it moves from one step to the next
+    // within a single microtask chain, so the deadline (a timer) always finds a wait registered.
+    let interrupt: ((error: Error) => void) | undefined;
     controller.signal.addEventListener(
       'abort',
       () => {
-        if (!finished)
-          acknowledgement = setTimeout(() => expire(terminationUnconfirmed(grace)), grace);
+        if (finished) return;
+        acknowledgement = setTimeout(() => interrupt?.(terminationUnconfirmed(grace)), grace);
       },
       { once: true },
     );
-    const bounded = <T>(work: Promise<T>): Promise<T> => Promise.race([work, expired]);
+    const bounded = <T>(work: Promise<T>): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        interrupt = reject;
+        // The work's outcome is observed even after the deadline has won; the wait unregisters
+        // as soon as the step settles.
+        work
+          .finally(() => {
+            interrupt = undefined;
+          })
+          .then(resolve, reject);
+      });
     const onAbort = (): void => controller.abort();
     if (signal.aborted) controller.abort();
     else signal.addEventListener('abort', onAbort, { once: true });
