@@ -1,0 +1,137 @@
+// Scenario D: the documented terminal signal path on Windows. The gateway runs in its own
+// console (like a terminal window) and receives real console Ctrl+C events (CTRL_C_EVENT via
+// GenerateConsoleCtrlEvent), exactly as a keypress in that window delivers them.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-d-ctrlc');
+const GRACE = 10_000;
+const gateways = [];
+const dirs = [];
+let browser;
+try {
+  // D1: script tree + blocking fake Codex turn; Ctrl+C, coalesced duplicate, browser, later Ctrl+C forces.
+  const dir = L.makeStore('d1');
+  dirs.push(dir);
+  const env = { ...L.fakeCodex(dir), GG_SHUTDOWN_GRACE_MS: String(GRACE) };
+  const g = await L.startGateway({ dir, port: 6463, label: 'd1', env, viaConsole: true, rec });
+  gateways.push(g);
+  const treeLoop = await L.publishLoop(g.call, L.scriptLoop('Ctrl+C script tree', L.heldScriptSource({ dir, name: 'tree', tree: true, maxMs: 300_000 })));
+  const harnessLoop = await L.publishLoop(g.call, L.inferenceLoop('Ctrl+C harness turn'));
+  const treeRun = await L.startRun(g.call, treeLoop);
+  const harnessRun = await L.startRun(g.call, harnessLoop);
+  const treePid = Number(await L.waitFile(path.join(dir, 'tree.pid')));
+  const grandPid = Number(await L.waitFile(path.join(dir, 'tree.grandchild')));
+  const codexPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  rec.log('D1 work started', { treeRun, harnessRun, treePid, grandPid, codexPid, gatewayPid: g.pid });
+  rec.log('D1 gateway tree (CIM)', L.descendants(g.pid));
+  rec.log('D1 console launcher', fs.readFileSync(g.logFile + '.launcher.txt', 'utf8'));
+
+  const first = L.ctrlC(g.pid);
+  const firstAt = Date.now();
+  rec.log('D1 Ctrl+C #1 delivered', first);
+  await L.sleep(300);
+  const second = L.ctrlC(g.pid);
+  rec.log('D1 Ctrl+C #2 delivered ~300 ms later (duplicate-forwarding case)', second);
+  await L.sleep(1500);
+  const afterFirst = (await g.call('/system/shutdown')).json;
+  rec.log('D1 state after Ctrl+C #1 and #2', afterFirst);
+  rec.check('D1 first Ctrl+C starts a normal drain', ['draining'].includes(afterFirst.phase), afterFirst.phase);
+  rec.check('D1 a second Ctrl+C within one second is coalesced (not force)', afterFirst.phase === 'draining', afterFirst.phase);
+  const aliveAfterFirst = { treeRoot: L.tasklistAlive(treePid), grandchild: L.tasklistAlive(grandPid), fakeCodex: L.tasklistAlive(codexPid) };
+  rec.log('D1 processes ~1.8 s after the first Ctrl+C', aliveAfterFirst);
+  rec.check('D1 script tree survives the drain-starting Ctrl+C', aliveAfterFirst.treeRoot && aliveAfterFirst.grandchild, aliveAfterFirst);
+  rec.check('D1 the in-flight Codex CLI survives the drain-starting Ctrl+C (active work may finish)', aliveAfterFirst.fakeCodex, aliveAfterFirst);
+  const harnessAfterFirst = (await g.call(`/runs/${harnessRun}`)).json;
+  rec.log('D1 harness run after the first Ctrl+C', { status: harnessAfterFirst.status, failure: harnessAfterFirst.failure });
+  rec.check('D1 harness run still running during normal drain', harnessAfterFirst.status === 'running', { status: harnessAfterFirst.status, failure: harnessAfterFirst.failure });
+
+  browser = await L.launchEdge();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const page = await ctx.newPage();
+  const posts = [];
+  L.watchShutdownRequests(page, posts, 'd1');
+  await page.goto(g.origin + '/app/loops');
+  await page.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'awaiting-choice', { timeoutMs: GRACE + 10_000, intervalMs: 250 });
+  await page.getByText(/The gateway grace period elapsed/).waitFor({ timeout: 10_000 });
+  const noticeText = await L.noticeText(page);
+  rec.log('D1 notice after Ctrl+C drain expiry', noticeText);
+  await L.shot(page, 's-d-ctrlc-expiry-notice');
+  rec.check('D1 browser notice explains the expiry of a Ctrl+C drain', /grace period elapsed/.test(noticeText), null);
+  rec.log('D1 log line for expiry', g.readLog().split(/\r?\n/).filter((l) => l.includes('grace elapsed')).map((l) => L.redact(l)));
+
+  const third = L.ctrlC(g.pid);
+  const forcedAt = Date.now();
+  rec.log('D1 Ctrl+C #3 delivered (seconds after #2)', { ...third, sinceFirstMs: forcedAt - firstAt });
+  const code = await g.waitExit(60_000);
+  rec.log('D1 gateway exit after Ctrl+C #3', { code, afterMs: Date.now() - forcedAt });
+  rec.check('D1 a later Ctrl+C explicitly forces and the gateway exits 0', code === 0, code);
+  rec.check('D1 lock released', !fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  const liveAfter = { treeRoot: L.tasklistAlive(treePid), grandchild: L.tasklistAlive(grandPid), fakeCodex: L.tasklistAlive(codexPid), gateway: L.tasklistAlive(g.pid) };
+  rec.check('D1 no script, grandchild, Codex CLI or gateway process remains (tasklist)', Object.values(liveAfter).every((v) => !v), liveAfter);
+  rec.check('D1 browser sent no shutdown POST', posts.filter((p) => p.method === 'POST').length === 0, posts.filter((p) => p.method === 'POST'));
+  await page.getByText('Gateway stopped or disconnected', { exact: true }).waitFor({ timeout: 20_000 }).catch(() => undefined);
+  await L.shot(page, 's-d-ctrlc-after-force');
+  await browser.close();
+  browser = undefined;
+  g.copyLog('s-d-gateway-d1.log.txt');
+  rec.log('D1 log lines for signals', g.readLog().split(/\r?\n/).filter((l) => /shutting down|grace elapsed|shutdown control/.test(l)).map((l) => L.redact(l)));
+
+  const r = await L.startGateway({ dir, port: 6463, label: 'd1r', env, rec });
+  gateways.push(r);
+  const tr = (await r.call(`/runs/${treeRun}`)).json;
+  const hr = (await r.call(`/runs/${harnessRun}`)).json;
+  rec.log('D1 runs after restart', { tree: { status: tr.status, failure: tr.failure }, harness: { status: hr.status, failure: hr.failure } });
+  rec.check('D1 script run recorded RUN_INTERRUPTED_BY_STOP (non-resumable, effect may have happened)', tr.failure?.code === 'RUN_INTERRUPTED_BY_STOP' && tr.failure?.resumable === false && tr.failure?.details?.effectMayHaveHappened === true, tr.failure);
+  rec.check('D1 harness run recorded RUN_INTERRUPTED_BY_STOP from the explicit force', hr.failure?.code === 'RUN_INTERRUPTED_BY_STOP', hr.failure);
+  await r.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('D1 restarted gateway drains to exit 0', (await r.waitExit(30_000)) === 0, r.exitCode());
+  r.copyLog('s-d-gateway-d1r.log.txt');
+
+  // D2: Ctrl+C drain with only a held script, then normal completion.
+  const dir2 = L.makeStore('d2');
+  dirs.push(dir2);
+  const g2 = await L.startGateway({ dir: dir2, port: 6465, label: 'd2', env: { GG_SHUTDOWN_GRACE_MS: String(GRACE) }, viaConsole: true, rec });
+  gateways.push(g2);
+  const loop2 = await L.publishLoop(g2.call, L.scriptLoop('Ctrl+C drain completes', L.heldScriptSource({ dir: dir2, name: 'held', maxMs: 300_000 })));
+  const run2 = await L.startRun(g2.call, loop2);
+  const pid2 = Number(await L.waitFile(path.join(dir2, 'held.pid')));
+  rec.log('D2 ctrl+c', L.ctrlC(g2.pid));
+  await L.sleep(1500);
+  const s2 = (await g2.call('/system/shutdown')).json;
+  rec.check('D2 Ctrl+C drain keeps the script running', s2.phase === 'draining' && L.tasklistAlive(pid2), { phase: s2.phase });
+  await L.waitFor(async () => (await g2.call('/system/shutdown')).json.phase === 'awaiting-choice', { timeoutMs: GRACE + 10_000, intervalMs: 250 });
+  await L.sleep(3000);
+  rec.check('D2 after expiry with no choice the script still runs', L.tasklistAlive(pid2), null);
+  fs.writeFileSync(path.join(dir2, 'held.release'), 'go');
+  const code2 = await g2.waitExit(60_000);
+  rec.check('D2 the Ctrl+C drain completes normally with exit 0', code2 === 0, code2);
+  g2.copyLog('s-d-gateway-d2.log.txt');
+  const r2 = await L.startGateway({ dir: dir2, port: 6465, label: 'd2r', rec });
+  gateways.push(r2);
+  const run2After = (await r2.call(`/runs/${run2}`)).json;
+  rec.check('D2 the run succeeded', run2After.status === 'succeeded', { status: run2After.status, failure: run2After.failure });
+  await r2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('D2 restarted gateway exits 0', (await r2.waitExit(30_000)) === 0, r2.exitCode());
+} catch (error) {
+  rec.check('D scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of gateways) {
+    if (x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+  }
+  rec.finish();
+  for (const d of dirs) {
+    for (const p of L.storeProcesses(d)) {
+      try {
+        process.kill(p.pid);
+      } catch {}
+    }
+    L.rmStore(d);
+  }
+}

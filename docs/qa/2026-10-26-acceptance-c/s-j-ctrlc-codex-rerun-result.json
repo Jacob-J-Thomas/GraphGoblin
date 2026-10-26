@@ -1,0 +1,32 @@
+{
+  "scenario": "s-j-ctrlc-codex-rerun",
+  "passed": 0,
+  "failed": 3,
+  "checks": [
+    {
+      "id": "J1 one Ctrl+C is a normal drain: the gateway keeps running while inference is active",
+      "ok": false,
+      "detail": {
+        "exit": 0
+      }
+    },
+    {
+      "id": "J1 the in-flight Codex CLI survives a normal drain",
+      "ok": false,
+      "detail": {
+        "t": 0.5,
+        "unreachable": "ECONNREFUSED",
+        "gatewayExit": 0,
+        "codexAlive": false
+      }
+    },
+    {
+      "id": "J2 the run is recorded as an interruption by explicit stop (not a provider failure during normal drain)",
+      "ok": false,
+      "detail": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "resumable": true
+      }
+    }
+  ]
+}

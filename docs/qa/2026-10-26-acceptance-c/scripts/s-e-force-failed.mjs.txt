@@ -1,0 +1,113 @@
+// Scenario E: a real native cleanup failure. The script's root exits while a grandchild keeps
+// its output pipe open, so the node is still running but the process tree can no longer be
+// terminated through its root. Force must report failure truthfully, keep ownership, and only
+// an explicit Force exit may leave (code 1, lock retained for next-start reclamation).
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-e-force-failed');
+const dir = L.makeStore('e');
+const PORT = 6464;
+const GRACE = 5000;
+let g;
+let g2;
+let browser;
+let grandPid;
+const posts = [];
+try {
+  g = await L.startGateway({ dir, port: PORT, label: 'e1', env: { GG_SHUTDOWN_GRACE_MS: String(GRACE) }, rec });
+  const base = path.join(dir, 'orphan');
+  const source = [
+    `const fs=require('node:fs'),cp=require('node:child_process');`,
+    `fs.writeFileSync(${JSON.stringify(base + '.pid')},String(process.pid));`,
+    `cp.spawn(process.execPath,['-e',"require('node:fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},1000);setTimeout(()=>process.exit(0),240000)",${JSON.stringify(base + '.grandchild')}],{stdio:'inherit',detached:true});`,
+    `setTimeout(()=>process.exit(0),500);`,
+  ].join('');
+  const loop = await L.publishLoop(g.call, L.scriptLoop('Orphaned pipe script', source));
+  const run = await L.startRun(g.call, loop);
+  const rootPid = Number(await L.waitFile(base + '.pid'));
+  grandPid = Number(await L.waitFile(base + '.grandchild'));
+  await L.sleep(1500);
+  const before = (await g.call(`/runs/${run}`)).json;
+  rec.log('work started', { run, rootPid, grandPid, rootAlive: L.tasklistAlive(rootPid), grandAlive: L.tasklistAlive(grandPid), status: before.status });
+  rec.check('E0 root exited, grandchild holds the pipe, run still running', !L.tasklistAlive(rootPid) && L.tasklistAlive(grandPid) && before.status === 'running', null);
+
+  browser = await L.launchEdge();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const page = await ctx.newPage();
+  L.watchShutdownRequests(page, posts, 'e');
+  await page.goto(g.origin + '/app/loops');
+  await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'awaiting-choice', { timeoutMs: GRACE + 10_000, intervalMs: 250 });
+  // Wait until this tab has observed expiry (its confirmation would otherwise carry the draining token).
+  await page.getByText(/The gateway grace period elapsed/).waitFor({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Force stop', exact: true }).click({ timeout: 15_000 });
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm force stop' }).click();
+  await L.waitFor(async () => !['forcing', 'awaiting-choice'].includes((await g.call('/system/shutdown').catch(() => ({ json: { phase: 'gone' } }))).json.phase), { timeoutMs: 20_000, intervalMs: 200 });
+  const failed = (await g.call('/system/shutdown').catch(() => ({ json: { phase: 'gone' } }))).json;
+  rec.log('state after force', failed);
+  rec.check('E1 force cleanup failure is reported as force-failed (not a clean stop)', failed.phase === 'force-failed', failed.phase);
+  rec.check('E1 force-failed offers only a further explicit force', JSON.stringify(failed.choices) === '["force"]', failed.choices);
+  rec.check('E1 listener and lock retained in force-failed', fs.existsSync(path.join(dir, 'graphgoblin.lock')) && g.exitCode() === null, null);
+  rec.check('E1 the surviving grandchild is real (cleanup truly unconfirmed)', L.tasklistAlive(grandPid), null);
+  await page.getByRole('heading', { name: 'Force stop failed' }).waitFor({ timeout: 15_000 });
+  const text = await L.noticeText(page);
+  rec.log('force-failed notice', text);
+  await L.shot(page, 's-e-force-failed-notice');
+  rec.check('E2 notice explains failed cleanup, retained lock and native inspection', /lock stays for reclamation/.test(text) && /Inspect logs and native processes/.test(text), null);
+  rec.log('gateway error lines', g.readLog().split(/\r?\n/).filter((l) => /"level":50/.test(l)).map((l) => L.redact(l)));
+  await L.sleep(4000);
+  rec.check('E2 force-failed is stable: no automatic exit after several seconds', g.exitCode() === null && (await g.call('/system/shutdown')).json.phase === 'force-failed', null);
+
+  await page.getByRole('button', { name: 'Force exit' }).click();
+  const dlg = page.getByRole('dialog');
+  await dlg.waitFor({ timeout: 5000 });
+  const dlgText = await dlg.innerText();
+  rec.log('force exit confirmation', dlgText);
+  await L.shot(page, 's-e-force-exit-confirmation');
+  rec.check('E3 Force exit needs its own confirmation naming the retained lock', /Force exit after failed cleanup\?/.test(dlgText) && /lock stays for next-start reclamation/.test(dlgText), null);
+  await dlg.getByRole('button', { name: 'Confirm force exit' }).click();
+  const code = await g.waitExit(20_000);
+  rec.check('E3 explicit Force exit leaves with exit code 1', code === 1, code);
+  rec.check('E3 lock retained after the failed-cleanup exit', fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  rec.log('browser POSTs', posts.filter((p) => p.method === 'POST'));
+  rec.check('E3 browser sent exactly two POSTs (confirmed force, confirmed force exit)', posts.filter((p) => p.method === 'POST').length === 2, null);
+  await browser.close();
+  browser = undefined;
+
+  g2 = await L.startGateway({ dir, port: PORT, label: 'e2', env: { GG_SHUTDOWN_GRACE_MS: String(GRACE) }, rec });
+  rec.check('E4 next start reclaims the dead owner lock', true, g2.readLog().split(/\r?\n/).filter((l) => /lock|reclaim/i.test(l)).map((l) => L.redact(l)).slice(0, 5));
+  const after = (await g2.call(`/runs/${run}`)).json;
+  rec.log('run after restart', { status: after.status, failure: after.failure });
+  rec.check('E4 run records an unconfirmed termination, not a clean interruption or success', after.status === 'failed' && /TERMINATION_UNCONFIRMED/.test(after.failure?.code ?? ''), after.failure);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('E5 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+} catch (error) {
+  rec.check('E scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(15_000);
+      if (x.exitCode() === null) {
+        await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+        await x.waitExit(15_000);
+      }
+    }
+    x?.copyLog(`s-e-gateway-${x.label}.log.txt`);
+  }
+  // Clean up the deliberately orphaned grandchild.
+  const left = L.storeProcesses(dir);
+  rec.log('store processes before cleanup', left);
+  for (const p of left) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  await L.sleep(500);
+  rec.check('E6 cleanup: no process names the store', L.storeProcesses(dir).length === 0, L.storeProcesses(dir));
+  rec.finish({ shutdownRequestsFromBrowser: posts });
+  L.rmStore(dir);
+}

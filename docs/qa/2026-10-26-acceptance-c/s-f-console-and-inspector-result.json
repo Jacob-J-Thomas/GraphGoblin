@@ -1,0 +1,54 @@
+{
+  "scenario": "s-f-console-and-inspector",
+  "passed": 8,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "F1 the fake Codex CLI shares the gateway console (receives terminal Ctrl+C)",
+      "ok": true,
+      "detail": "49028:shutdown-codex,36324:node,40228:launcher2"
+    },
+    {
+      "id": "F1 the script process does not share the gateway console (own hidden console)",
+      "ok": true,
+      "detail": "49028:shutdown-codex,36324:node,40228:launcher2"
+    },
+    {
+      "id": "F2 contrast: an API drain leaves the in-flight Codex CLI running",
+      "ok": true,
+      "detail": {
+        "phase": "draining",
+        "codexAlive": true,
+        "status": "running"
+      }
+    },
+    {
+      "id": "F3 Ctrl+C after an API drain forces and exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "F3 script run records RUN_INTERRUPTED_BY_STOP",
+      "ok": true,
+      "detail": "RUN_INTERRUPTED_BY_STOP"
+    },
+    {
+      "id": "F3 harness run records RUN_INTERRUPTED_BY_STOP (managed force) rather than a provider failure",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "resumable": false
+      }
+    },
+    {
+      "id": "F4 inspector shows the force-stop interruption and possible external effects for the script run",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "F5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

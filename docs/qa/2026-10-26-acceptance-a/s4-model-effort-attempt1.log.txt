@@ -1,0 +1,17 @@
+PASS 205-process-defaults-exposed: GET /system/model-defaults reports the GG_DEFAULTS process layer
+PASS 205-inherit-process-codex: codex: an inheriting node sends the process defaults
+PASS 205-inherit-process-claude: claude: an inheriting node sends the process defaults
+PASS 205-inherit-owner-codex: codex: owner Settings layer wins field by field over process defaults
+PASS 205-inherit-owner-claude: claude: owner Settings layer wins field by field over process defaults
+PASS 205-inherit-loop-codex: codex: loop defaults win over owner and process layers
+PASS 205-inherit-loop-claude: claude: loop defaults win over owner and process layers
+PASS 205-explicit-codex-gpt-6-luna-low: codex: explicit gpt-6-luna/low is what the CLI receives
+PASS 205-explicit-codex-gpt-6-luna-xhigh: codex: explicit gpt-6-luna/xhigh is what the CLI receives
+PASS 205-explicit-claude-claude-opus-5-5-max: claude: explicit claude-opus-5-5/max is what the CLI receives
+PASS 205-explicit-claude-claude-fable-5-1-low: claude: explicit claude-fable-5-1/low is what the CLI receives
+PASS 205-codex-max-mapping: codex explicit max: run succeeds; record saved/session effort versus the CLI effort (documented max->xhigh mapping)
+FAIL 205-claude-minimal-refused: claude minimal effort is refused before any provider request (validation/publish/admission)
+  detail: {"create":400}
+PASS 205-llm-explicit: LLM decision explicit: the structured Codex request carries gpt-6.1-sol/xhigh
+PASS 205-llm-inherit: LLM decision inherit: the structured Codex request carries gpt-6-sol/high
+14/15 checks passed

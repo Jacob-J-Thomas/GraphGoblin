@@ -1,0 +1,87 @@
+// Scenario G: force before grace expiry through the API, repeated/invalid actions during force,
+// and release of the provider CLI (the repository's controlled fake CLI).
+// Also checks invalid grace configuration is refused at startup.
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-g-force-before-expiry');
+const dirs = [];
+let g;
+let g2;
+try {
+  // Invalid grace values are refused before listening.
+  for (const value of ['0', '-5', 'abc', '2147483648']) {
+    const d = L.makeStore('g-cfg');
+    dirs.push(d);
+    const r = spawnSync(L.NODE, [path.join(L.ROOT, 'apps', 'api', 'dist', 'main.js')], {
+      cwd: L.ROOT,
+      env: L.baseEnv(d, 6468, { GG_SHUTDOWN_GRACE_MS: value }),
+      timeout: 30_000,
+      windowsHide: true,
+    });
+    const text = L.redact(String(r.stdout) + String(r.stderr));
+    rec.check(`G0 GG_SHUTDOWN_GRACE_MS=${value} is refused at startup`, r.status !== 0 && !text.includes('GraphGoblin API listening'), { status: r.status, excerpt: text.split(/\r?\n/).find((l) => /SHUTDOWN_GRACE/.test(l))?.slice(0, 300) });
+  }
+
+  const dir = L.makeStore('g');
+  dirs.push(dir);
+  // The repository's fake CLI (no child processes); the tool-child variant is scenario H.
+  const env = { ...L.fakeCodex(dir), GG_SHUTDOWN_GRACE_MS: '600000' };
+  g = await L.startGateway({ dir, port: 6467, label: 'g1', env, rec });
+  const loop = await L.publishLoop(g.call, L.inferenceLoop('Provider CLI before expiry'));
+  const run = await L.startRun(g.call, loop);
+  const cliPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  rec.log('provider work started', { run, cliPid, tree: L.descendants(g.pid) });
+  rec.check('G1 fake CLI alive', L.tasklistAlive(cliPid), null);
+
+  const wait0 = await g.call('/system/shutdown', { method: 'POST', body: { action: 'wait' } });
+  rec.check('G2 wait before any drain is refused with 409 current state', wait0.status === 409 && wait0.json.phase === 'running', wait0.status);
+  const drain = await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  const drainAgain = await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('G2 repeated drain is accepted idempotently (same drain, 202)', drain.status === 202 && drainAgain.status === 202 && drainAgain.json.startedAt === drain.json.startedAt, { first: drain.json.startedAt, second: drainAgain.json.startedAt });
+  rec.check('G2 force is available before the 10-minute grace expires', drain.json.choices.includes('force'), drain.json.choices);
+  const [f1, f2] = await Promise.all([
+    g.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }),
+    g.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }),
+  ]);
+  const sample = { at: 'immediately after force responses', cli: L.tasklistAlive(cliPid), gateway: L.tasklistAlive(g.pid) };
+  rec.log('process sample during forcing', sample);
+  rec.log('two concurrent forces', { f1: { status: f1.status, phase: f1.json.phase }, f2: { status: f2.status, phase: f2.json.phase } });
+  rec.check('G3 concurrent duplicate forces are both acknowledged without error', [f1.status, f2.status].every((s) => s === 202), [f1.status, f2.status]);
+  const waitDuringForce = await g.call('/system/shutdown', { method: 'POST', body: { action: 'wait' } }).catch(() => ({ status: 'network-error' }));
+  rec.check('G3 wait during force is refused (409) or the gateway is already gone; it cannot cancel the force', waitDuringForce.status === 409 || waitDuringForce.status === 'network-error', waitDuringForce.status);
+  const code = await g.waitExit(60_000);
+  rec.check('G4 force before expiry completes with exit 0', code === 0, code);
+  const after = { cli: L.tasklistAlive(cliPid), gateway: L.tasklistAlive(g.pid) };
+  rec.check('G4 provider CLI and the gateway are gone after exit (tasklist)', Object.values(after).every((v) => !v), after);
+  rec.check('G4 CIM: nothing names the store', L.storeProcesses(dir).length === 0, L.storeProcesses(dir));
+  g.copyLog('s-g-gateway-g1.log.txt');
+
+  g2 = await L.startGateway({ dir, port: 6467, label: 'g2', env, rec });
+  const r = (await g2.call(`/runs/${run}`)).json;
+  rec.check('G5 provider run interrupted truthfully (RUN_INTERRUPTED_BY_STOP, non-resumable, effect may have happened)', r.failure?.code === 'RUN_INTERRUPTED_BY_STOP' && r.failure?.resumable === false && r.failure?.details?.effectMayHaveHappened === true, r.failure);
+  rec.check('G5 the provider CLI was not started again after restart', !fs.existsSync(path.join(dir, 'harness.pid')) || Number(fs.readFileSync(path.join(dir, 'harness.pid'), 'utf8')) === cliPid, null);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('G5 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  g2.copyLog('s-g-gateway-g2.log.txt');
+} catch (error) {
+  rec.check('G scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+  }
+  rec.finish();
+  for (const d of dirs) {
+    for (const p of L.storeProcesses(d)) {
+      try {
+        process.kill(p.pid);
+      } catch {}
+    }
+    L.rmStore(d);
+  }
+}

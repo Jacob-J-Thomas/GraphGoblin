@@ -1,0 +1,161 @@
+{
+  "scenario": "s-d-ctrlc",
+  "passed": 15,
+  "failed": 3,
+  "checks": [
+    {
+      "id": "D1 first Ctrl+C starts a normal drain",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "D1 a second Ctrl+C within one second is coalesced (not force)",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "D1 script tree survives the drain-starting Ctrl+C",
+      "ok": true,
+      "detail": {
+        "treeRoot": true,
+        "grandchild": true,
+        "fakeCodex": false
+      }
+    },
+    {
+      "id": "D1 the in-flight Codex CLI survives the drain-starting Ctrl+C (active work may finish)",
+      "ok": false,
+      "detail": {
+        "treeRoot": true,
+        "grandchild": true,
+        "fakeCodex": false
+      }
+    },
+    {
+      "id": "D1 harness run still running during normal drain",
+      "ok": false,
+      "detail": {
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: Codex Exec exited with code 3221225786: ",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M5VG4F4ZDHZKHB1R7BSH55PA:5",
+            "turnId": "01M5VG4FRNMRTY4PKXY3HRWQRF",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "shutdown-controlled-session"
+          }
+        }
+      }
+    },
+    {
+      "id": "D1 browser notice explains the expiry of a Ctrl+C drain",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D1 a later Ctrl+C explicitly forces and the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D1 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D1 no script, grandchild, Codex CLI or gateway process remains (tasklist)",
+      "ok": true,
+      "detail": {
+        "treeRoot": false,
+        "grandchild": false,
+        "fakeCodex": false,
+        "gateway": false
+      }
+    },
+    {
+      "id": "D1 browser sent no shutdown POST",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "D1 script run recorded RUN_INTERRUPTED_BY_STOP (non-resumable, effect may have happened)",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5VG4ETACKKSDNVMQ50TFZEN:5",
+          "dispatchId": "01M5VG4F97A16EEVFBGKS48XT5",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "D1 harness run recorded RUN_INTERRUPTED_BY_STOP from the explicit force",
+      "ok": false,
+      "detail": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Codex Exec exited with code 3221225786: ",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5VG4F4ZDHZKHB1R7BSH55PA:5",
+          "turnId": "01M5VG4FRNMRTY4PKXY3HRWQRF",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "shutdown-controlled-session"
+        }
+      }
+    },
+    {
+      "id": "D1 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D2 Ctrl+C drain keeps the script running",
+      "ok": true,
+      "detail": {
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "D2 after expiry with no choice the script still runs",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D2 the Ctrl+C drain completes normally with exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D2 the run succeeded",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "D2 restarted gateway exits 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

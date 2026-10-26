@@ -1,0 +1,230 @@
+{
+  "checks": [
+    {
+      "name": "A normal replay: every event 1..last in order, then stream.complete",
+      "ok": true,
+      "detail": {
+        "delivered": 609,
+        "last": 609,
+        "completion": "{\"after\":609}",
+        "eof": true,
+        "maxPrivateMiB": null
+      }
+    },
+    {
+      "name": "B 3 s stall: completes without a failure control",
+      "ok": true,
+      "detail": {
+        "delivered": 609,
+        "how": "end"
+      }
+    },
+    {
+      "name": "C 15 s stall: explicit SSE_SLOW_CONSUMER control or severed connection, never completion with a gap",
+      "ok": true,
+      "detail": {
+        "explicit": false,
+        "how": "end",
+        "chunkedTerminated": false,
+        "lastCompleteEvent": 10
+      }
+    },
+    {
+      "name": "C recovery from Last-Event-ID: combined history is exactly 1..last with no gap or duplicate",
+      "ok": true,
+      "detail": {
+        "before": 10,
+        "after": 599,
+        "last": 609
+      }
+    },
+    {
+      "name": "D five stalled readers: server private memory growth stays far below 5 x history size",
+      "ok": true,
+      "detail": {
+        "baseD": {
+          "privateMiB": 140.3,
+          "workingSetMiB": 118.6
+        },
+        "peakPrivateMiB": 167.6,
+        "growthMiB": 27.3,
+        "historyMiB": 22.7,
+        "outcomes": [
+          {
+            "how": "end",
+            "delivered": 5,
+            "error": null
+          },
+          {
+            "how": "end",
+            "delivered": 5,
+            "error": null
+          },
+          {
+            "how": "end",
+            "delivered": 5,
+            "error": null
+          },
+          {
+            "how": "end",
+            "delivered": 5,
+            "error": null
+          },
+          {
+            "how": "end",
+            "delivered": 5,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "E api-client slow consumer: every event once, in order, done resolves after stream.complete",
+      "ok": true,
+      "detail": {
+        "delivered": 609,
+        "duplicates": 0,
+        "ordered": true,
+        "errors": []
+      }
+    }
+  ],
+  "memoryIdle": {
+    "privateMiB": 124.7,
+    "workingSetMiB": 125
+  },
+  "history": {
+    "events": 609,
+    "historyBytes": 23843761,
+    "largestEventBytes": 196860
+  },
+  "memoryAfterRun": {
+    "privateMiB": 146.3,
+    "workingSetMiB": 147.4
+  },
+  "memoryNormalReader": [],
+  "memoryStalledReader": [
+    {
+      "t": 1792997573175,
+      "privateMiB": 114.2,
+      "workingSetMiB": 111.6
+    },
+    {
+      "t": 1792997576101,
+      "privateMiB": 114.2,
+      "workingSetMiB": 111.6
+    },
+    {
+      "t": 1792997578089,
+      "privateMiB": 114.2,
+      "workingSetMiB": 111.7
+    },
+    {
+      "t": 1792997580439,
+      "privateMiB": 114.2,
+      "workingSetMiB": 112.1
+    },
+    {
+      "t": 1792997582798,
+      "privateMiB": 114.2,
+      "workingSetMiB": 112.4
+    },
+    {
+      "t": 1792997586393,
+      "privateMiB": 114.2,
+      "workingSetMiB": 112.9
+    }
+  ],
+  "memoryFiveStalled": {
+    "baseD": {
+      "privateMiB": 140.3,
+      "workingSetMiB": 118.6
+    },
+    "samplesD": [
+      {
+        "t": 0,
+        "privateMiB": 167.3,
+        "workingSetMiB": 148.3
+      },
+      {
+        "t": 1,
+        "privateMiB": 167.6,
+        "workingSetMiB": 148.5
+      },
+      {
+        "t": 2,
+        "privateMiB": 98.9,
+        "workingSetMiB": 102.5
+      },
+      {
+        "t": 3,
+        "privateMiB": 100.2,
+        "workingSetMiB": 103.6
+      },
+      {
+        "t": 4,
+        "privateMiB": 100.2,
+        "workingSetMiB": 103.8
+      },
+      {
+        "t": 5,
+        "privateMiB": 102.6,
+        "workingSetMiB": 106.1
+      },
+      {
+        "t": 6,
+        "privateMiB": 102.6,
+        "workingSetMiB": 106.3
+      },
+      {
+        "t": 7,
+        "privateMiB": 102.6,
+        "workingSetMiB": 106.5
+      },
+      {
+        "t": 8,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 9,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 10,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 11,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 12,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 13,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 14,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      },
+      {
+        "t": 15,
+        "privateMiB": 105,
+        "workingSetMiB": 108.2
+      }
+    ]
+  },
+  "memoryEnd": {
+    "privateMiB": 148.3,
+    "workingSetMiB": 125.6
+  }
+}

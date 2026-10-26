@@ -1,0 +1,85 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/apps/api
+
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 389ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 90ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 14ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 39ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 37ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 44ms
+ ✓ src/thread-history.test.ts > reconciles persisted failure, unfinished resume and success without writing on reads 1829ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 1737ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation 2040ms
+ ✓ src/thread-history.test.ts > does not apply the resumed script patch when that attempt is cancelled 464ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {} 2139ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves absent through execution, rejected updates and reopen 2176ms
+ ✓ src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during in-flight without orphan events 2431ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {invalid-json 374ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > keeps anchored reads owner-scoped and filtered and rejects ambiguous bounds 538ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 2649ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > replays a real failed, resumed and succeeded run through its current outcome 2857ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion 190ms
+ ✓ src/thread-history.test.ts > reopens the persisted failed history and reconciles reads without writing its stale snapshot 692ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=1 limit=1 318ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves null through execution, rejected updates and reopen 655ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=0 limit=3 294ms
+ ✓ src/thread-history.test.ts > REST preserves a different open visit at a persisted delayed-duplicate checkpoint 356ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 557ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > uses sequence existence through exhaustion and retains owner scoping 300ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > rejects invalid cursors and filter values with typed readable 4xx problems 613ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 0 640ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves false through execution, rejected updates and reopen 579ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged payload outside the requested page 248ms
+ ✓ src/routes/run-history.test.ts > browses opaque run-scoped history in both directions and resolves threads beyond the browser window 3750ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 128 287ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 3186ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged run_ids outside the requested page 222ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves zero through execution, rejected updates and reopen 435ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 131 306ms
+ ✓ src/routes/run-history.test.ts > reads the latest cancellation and the request that led to it, whatever history the browser holds 406ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves empty string through execution, rejected updates and reopen 469ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 132 450ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1218ms
+ ✓ src/finalization.test.ts > keeps terminal and consumed-cursor streams live until HTTP 200 finalization 4760ms
+ ✓ src/routes/run-history.test.ts > resolves a historical thread without decoding events past the requested boundary 679ms
+ ✓ src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during backoff without orphan events 2398ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves array through execution, rejected updates and reopen 425ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 232 371ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves object through execution, rejected updates and reopen 378ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 818ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves nested null through execution, rejected updates and reopen 414ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves settings null and falsy JSON values across reopen 309ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 452ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 4186ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 317ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 253ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 270ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 198ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > completes a cursor past the durable tail when a later outcome lands at or below it 97ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > does not complete a cursor past the tail when a resume races the confirmation 1511ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 212ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > confirms a consumed outcome while the run status still lags (empty replay) 5ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > confirms a consumed outcome while the run status still lags (audit suffix) 5ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a audit 3ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a resume 3ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 0 past the end 25ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 100 past the end 28ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 0 past the end 33ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 100 past the end 33ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds confirmation after catching up through post-terminal delivery audit events 37ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a missing current terminal marker 5ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a resumed current terminal marker 7ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport 51ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 550ms
+ ↓ src/live.test.ts > API live smoke with the real Codex adapter > runs trigger -> inference -> exit through Codex and records usage
+ ↓ src/live.test.ts > API live smoke with the installed Claude CLI > runs trigger -> claude-sonnet-5-5 inference -> exit and records the requested model and effort
+ ↓ src/live.test.ts > API live smoke with the installed Claude CLI > runs trigger -> claude-haiku-5-5 inference -> exit and records the requested model and effort
+ ✓ src/finalization.test.ts > keeps terminal and consumed-cursor streams live until HTTP 400 finalization 2651ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > rechecks a pending finalization at most every 250 ms, even with frequent heartbeats 1218ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 4279ms
+
+ Test Files  11 passed | 1 skipped (12)
+      Tests  73 passed | 3 skipped (76)
+   Start at  03:13:54
+   Duration  23.07s (import 47%, tests 33%, transform 19%)
+

@@ -1,0 +1,11 @@
+PASS 33-restart-codex: codex: after hard kills and restarts, visits 2 and 3 resume the worker's visit-1 conversation
+PASS 33-restart-claude: claude: after hard kills and restarts, visits 2 and 3 resume the worker's visit-1 conversation
+PASS 33-reset-codex-2: codex resetAfterVisits=2: visits 1:fresh 2:resume 3:fresh 4:resume 5:fresh; each block resumes its own first visit
+PASS 33-reset-codex-others: codex: the reviewer's conversation is never reset; the loop context in the worker's prompt keeps growing across the reset boundary
+PASS 33-reset-claude-3: claude resetAfterVisits=3: visits 1:fresh 2:resume 3:resume 4:fresh; each block resumes its own first visit
+PASS 33-reset-claude-others: claude: the reviewer's conversation is never reset; the loop context in the worker's prompt keeps growing across the reset boundary
+PASS 33-no-hidden-reset: without resetAfterVisits, 12 visits (past the old ten-visit proposal) share one conversation
+PASS 33-interrupted-codex-accepted: Codex visit 2 accepted (turn.started) then gateway killed: recovery continues on the worker's own conversation, without resending the authored task
+PASS 33-interrupted-claude-unaccepted: Claude visit 2 initialized but not accepted, gateway killed: the run stops non-resumably (HARNESS_DELIVERY_UNCERTAIN), no blind resend or continuation
+cli dir %TEMP%/gg-acc-a-5aa3e391/cli
+9/9 checks passed

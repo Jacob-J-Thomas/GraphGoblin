@@ -1,0 +1,1937 @@
+{
+  "scenario": "s-a-default-grace",
+  "passed": 29,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "A1 default grace is 300000 ms (five minutes) with GG_SHUTDOWN_GRACE_MS unset",
+      "ok": true,
+      "detail": 300000
+    },
+    {
+      "id": "A1 running gateway advertises no choices",
+      "ok": true,
+      "detail": {
+        "phase": "running",
+        "graceMs": 300000,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "controlToken": "e37e840d-fc50-40dc-99ed-3141cb514697:0:running"
+      }
+    },
+    {
+      "id": "A2 drain accepted (202) and phase draining",
+      "ok": true,
+      "detail": 202
+    },
+    {
+      "id": "A2 choiceAt is startedAt + 300 s",
+      "ok": true,
+      "detail": {
+        "startedAt": "2026-10-26T06:56:02.396Z",
+        "choiceAt": "2026-10-26T07:01:02.396Z"
+      }
+    },
+    {
+      "id": "A2 held script run is active work; the durable wait is not",
+      "ok": true,
+      "detail": [
+        "01M5VFX8N1SK94TVSFX3ZB9QS1"
+      ]
+    },
+    {
+      "id": "A2 independent start refused while draining (503 SHUTTING_DOWN)",
+      "ok": true,
+      "detail": {
+        "status": 503,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/shutting-down",
+          "title": "shutting down",
+          "status": 503,
+          "code": "SHUTTING_DOWN",
+          "detail": "Independent admission is closed while the gateway shuts down"
+        }
+      }
+    },
+    {
+      "id": "A3 phase stayed draining until expiry",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T06:56:02.421Z",
+          "sinceStartMs": 25,
+          "phase": "draining"
+        },
+        {
+          "at": "2026-10-26T07:01:02.781Z",
+          "sinceStartMs": 300385,
+          "phase": "awaiting-choice"
+        }
+      ]
+    },
+    {
+      "id": "A3 awaiting-choice reached about 300 s after drain (298-306 s window)",
+      "ok": true,
+      "detail": 300385
+    },
+    {
+      "id": "A3 expiry offers wait and force",
+      "ok": true,
+      "detail": [
+        "wait",
+        "force"
+      ]
+    },
+    {
+      "id": "A3 expiry logged a warning naming keep waiting / force",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A3 expiry interrupted nothing: script process alive and run running",
+      "ok": true,
+      "detail": {
+        "scriptPid": 24548
+      }
+    },
+    {
+      "id": "A4 with no UI and no choice, awaiting-choice persists 120 s with the work alive",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A5 notice explains expiry and names the active run with its loop name",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A5 notice does not list the durable wait run",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A5 Keep waiting and Force stop offered",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A5 opening the page sent no shutdown POST",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T07:03:10.046Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:10.515Z",
+          "method": "POST",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:12.531Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:14.539Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:16.549Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:18.556Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:20.569Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:22.586Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:24.600Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:26.604Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:28.617Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:30.625Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:32.656Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:34.656Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:36.751Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:38.666Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:40.675Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:42.683Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:44.692Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:46.703Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:48.710Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:50.717Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:52.725Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:54.735Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:56.868Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:03:58.749Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:00.828Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:02.776Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:04.778Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:06.779Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:08.784Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:10.795Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:12.794Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:14.805Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:16.808Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:18.824Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:20.832Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:22.848Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:24.860Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:26.878Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:28.909Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:30.903Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:32.915Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:34.914Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:36.920Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:38.955Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:40.952Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:43.052Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:44.950Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:46.976Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:48.973Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:50.971Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:52.976Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:54.978Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:56.985Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:04:58.995Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:01.004Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:03.011Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:05.020Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:07.027Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:09.128Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:11.086Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:13.091Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:15.107Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:17.118Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:19.121Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:21.127Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:23.135Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:25.196Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:27.150Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:29.203Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:31.165Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:33.175Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:35.204Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:37.218Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:39.260Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:41.269Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:43.258Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:45.270Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:47.299Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:49.286Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:51.297Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:53.315Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:55.340Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:57.335Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:05:59.347Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:01.356Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:03.470Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:05.371Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:07.391Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:09.402Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:11.406Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:13.420Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:16.768Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:17.450Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:19.473Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:21.475Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:23.513Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:25.517Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:27.596Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:29.556Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:31.535Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:33.538Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:35.611Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:37.758Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:39.647Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:41.651Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:43.655Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:45.707Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:47.684Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:49.696Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:51.701Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:53.741Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:55.721Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:57.729Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:06:59.762Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:01.743Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:04.178Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:05.760Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:07.775Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:09.796Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:11.795Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:13.808Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:15.819Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:17.820Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:19.830Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:21.849Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:23.972Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:25.867Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:27.894Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:29.877Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:31.883Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:33.927Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:35.937Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:37.947Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:39.952Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:41.960Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:43.970Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:45.979Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:47.990Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:50.386Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:52.003Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:54.012Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:56.043Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:07:58.035Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:00.038Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:02.056Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:04.062Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:06.068Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:08.078Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:10.085Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:12.090Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:14.101Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:16.106Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:18.163Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:20.124Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:22.137Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:24.228Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:26.209Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:28.186Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:30.164Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:32.180Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:34.195Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:36.194Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:38.199Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:40.210Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:42.284Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:44.240Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:46.255Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:48.258Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:50.278Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        },
+        {
+          "at": "2026-10-26T07:08:52.311Z",
+          "method": "GET",
+          "page": "http://127.0.0.1:6460/app/loops"
+        }
+      ]
+    },
+    {
+      "id": "A6 Keep waiting sent exactly one POST from the browser",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T07:03:10.515Z",
+          "method": "POST",
+          "page": "http://127.0.0.1:6460/app/loops"
+        }
+      ]
+    },
+    {
+      "id": "A6 gateway back to draining with choices still available",
+      "ok": true,
+      "detail": {
+        "phase": "draining",
+        "graceMs": 300000,
+        "startedAt": "2026-10-26T06:56:02.396Z",
+        "choiceAt": "2026-10-26T07:01:02.396Z",
+        "activeRunIds": [
+          "01M5VFX8N1SK94TVSFX3ZB9QS1"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "e37e840d-fc50-40dc-99ed-3141cb514697:3:draining"
+      }
+    },
+    {
+      "id": "A6 notice shows no countdown or timer text",
+      "ok": true,
+      "detail": "Gateway is draining\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\nWaiting never starts a browser countdown. Any further choice comes from the gateway.\nDefault grace held work — 01M5VFX8N1SK94TVSFX3ZB9QS1\nKeep waiting\nForce stop"
+    },
+    {
+      "id": "A7 330 s after Keep waiting (more than the 300 s grace): still draining, run running, script alive",
+      "ok": true,
+      "detail": {
+        "sinceWaitS": 326,
+        "phase": "draining",
+        "run": "running",
+        "alive": true
+      }
+    },
+    {
+      "id": "A7 browser sent no further POST while observing",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "A8 released work completes and the gateway exits 0 by itself",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A8 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A8 browser reports stopped or disconnected",
+      "ok": true,
+      "detail": "Gateway stopped or disconnected\nThe shutdown connection closed; the gateway may have stopped. Check its process if the disconnect was unexpected. No shutdown action will be retried automatically.\nCheck gateway state"
+    },
+    {
+      "id": "A8 server log: exactly two shutdown POSTs (operator drain + browser wait)",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "id": "A9 held run succeeded (normal completion, not interruption)",
+      "ok": true,
+      "detail": "succeeded"
+    },
+    {
+      "id": "A9 durable wait run still waiting after restart",
+      "ok": true,
+      "detail": "waiting"
+    },
+    {
+      "id": "A9 restarted gateway drains to exit 0 (durable park does not hold drain)",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A10 no process names the store after exit",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T07:03:10.046Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:10.515Z",
+      "method": "POST",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:12.531Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:14.539Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:16.549Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:18.556Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:20.569Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:22.586Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:24.600Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:26.604Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:28.617Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:30.625Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:32.656Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:34.656Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:36.751Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:38.666Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:40.675Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:42.683Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:44.692Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:46.703Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:48.710Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:50.717Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:52.725Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:54.735Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:56.868Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:03:58.749Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:00.828Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:02.776Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:04.778Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:06.779Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:08.784Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:10.795Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:12.794Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:14.805Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:16.808Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:18.824Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:20.832Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:22.848Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:24.860Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:26.878Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:28.909Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:30.903Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:32.915Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:34.914Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:36.920Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:38.955Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:40.952Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:43.052Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:44.950Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:46.976Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:48.973Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:50.971Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:52.976Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:54.978Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:56.985Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:04:58.995Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:01.004Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:03.011Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:05.020Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:07.027Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:09.128Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:11.086Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:13.091Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:15.107Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:17.118Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:19.121Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:21.127Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:23.135Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:25.196Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:27.150Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:29.203Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:31.165Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:33.175Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:35.204Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:37.218Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:39.260Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:41.269Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:43.258Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:45.270Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:47.299Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:49.286Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:51.297Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:53.315Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:55.340Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:57.335Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:05:59.347Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:01.356Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:03.470Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:05.371Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:07.391Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:09.402Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:11.406Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:13.420Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:16.768Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:17.450Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:19.473Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:21.475Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:23.513Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:25.517Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:27.596Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:29.556Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:31.535Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:33.538Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:35.611Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:37.758Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:39.647Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:41.651Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:43.655Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:45.707Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:47.684Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:49.696Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:51.701Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:53.741Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:55.721Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:57.729Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:06:59.762Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:01.743Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:04.178Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:05.760Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:07.775Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:09.796Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:11.795Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:13.808Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:15.819Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:17.820Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:19.830Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:21.849Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:23.972Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:25.867Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:27.894Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:29.877Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:31.883Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:33.927Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:35.937Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:37.947Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:39.952Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:41.960Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:43.970Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:45.979Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:47.990Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:50.386Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:52.003Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:54.012Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:56.043Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:07:58.035Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:00.038Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:02.056Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:04.062Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:06.068Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:08.078Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:10.085Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:12.090Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:14.101Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:16.106Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:18.163Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:20.124Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:22.137Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:24.228Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:26.209Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:28.186Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:30.164Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:32.180Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:34.195Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:36.194Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:38.199Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:40.210Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:42.284Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:44.240Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:46.255Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:48.258Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:50.278Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    },
+    {
+      "at": "2026-10-26T07:08:52.311Z",
+      "method": "GET",
+      "page": "http://127.0.0.1:6460/app/loops"
+    }
+  ]
+}

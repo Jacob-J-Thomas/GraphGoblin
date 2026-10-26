@@ -1,0 +1,708 @@
+{
+  "checks": [
+    {
+      "id": "205-ui-placement",
+      "description": "inference Settings tab shows Model and one Effort dropdown with Advanced collapsed; no separate Mode/Explicit selector; Default names the inherited effort",
+      "pass": true,
+      "detail": {
+        "settingsSelected": "true",
+        "advancedExpanded": "false",
+        "modelVisible": true,
+        "effortVisible": true,
+        "effortControls": 1,
+        "modeOrExplicitControls": 0,
+        "effortTag": "SELECT",
+        "effortOptions": [
+          "Default (medium)",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "effortValues": [
+          "",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "modelOptions": [
+          "(loop default) (gpt-6-sol)",
+          "GPT-5.5 (gpt-5.5)",
+          "GPT-5.6 Luna (gpt-5.6-luna)"
+        ],
+        "modelDescription": "Model; inherits within this harness from loop, owner, then process defaults. | Default model: gpt-6-sol.",
+        "effortDescription": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: medium."
+      }
+    },
+    {
+      "id": "205-ui-explicit-roundtrip",
+      "description": "choosing xhigh saves effort \"xhigh\", survives reload, and the Codex CLI receives model_reasoning_effort=\"xhigh\" with the inherited model",
+      "pass": true,
+      "detail": {
+        "savedConfig": {
+          "harness": "codex",
+          "effort": "xhigh",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "UI205 run={{ run.id }} task."
+          },
+          "input": [],
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "transforms": []
+          }
+        },
+        "reloaded": "xhigh",
+        "run": {
+          "runId": "01M5VGEVNZ330S21NSK19Q8YHM",
+          "status": "succeeded",
+          "requests": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "1b01129a-ecd4-45c1-93f1-40b94883b9a9",
+              "conversationTurn": 1,
+              "model": "gpt-6-sol",
+              "effort": "xhigh",
+              "prompt": "UI205 run=01M5VGEVNZ330S21NSK19Q8YHM task."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "205-ui-default-roundtrip",
+      "description": "choosing Default (medium) removes the override and the CLI receives the process default medium",
+      "pass": true,
+      "detail": {
+        "savedConfig": {
+          "harness": "codex",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "UI205 run={{ run.id }} task."
+          },
+          "input": [],
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "transforms": []
+          }
+        },
+        "run": {
+          "runId": "01M5VGEYWWHMVPFV5QMBMQ5M8Q",
+          "status": "succeeded",
+          "requests": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "a5abdb3d-d8e3-47f8-b995-4b153d3cdb51",
+              "conversationTurn": 1,
+              "model": "gpt-6-sol",
+              "effort": "medium",
+              "prompt": "UI205 run=01M5VGEYWWHMVPFV5QMBMQ5M8Q task."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "205-ui-owner-default",
+      "description": "after owner Settings set effort high, the editor shows Default (high) and the CLI receives high",
+      "pass": true,
+      "detail": {
+        "label": "Default (high)",
+        "run": {
+          "runId": "01M5VGF03QKS1KB5TNGAZ7ERNE",
+          "status": "succeeded",
+          "requests": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "c1892dca-2059-4786-a72b-4102dbb0231f",
+              "conversationTurn": 1,
+              "model": "gpt-6-sol",
+              "effort": "high",
+              "prompt": "UI205 run=01M5VGF03QKS1KB5TNGAZ7ERNE task."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "205-ui-codex-max",
+      "description": "Codex \"max\": what the editor offers and saves is what the CLI receives (observation; documented max->xhigh adapter mapping)",
+      "pass": false,
+      "detail": {
+        "offered": [
+          "max"
+        ],
+        "saved": "max",
+        "sent": "xhigh",
+        "sessionRow": "max",
+        "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: high."
+      }
+    },
+    {
+      "id": "205-ui-claude-efforts",
+      "description": "Claude effort offers low..max without minimal; choosing max sends --effort max",
+      "pass": true,
+      "detail": {
+        "values": [
+          "",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "texts": [
+          "Default (unavailable)",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "run": {
+          "runId": "01M5VGF66RXWBADWA1YB2KE84E",
+          "status": "succeeded",
+          "requests": [
+            {
+              "harness": "claude",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "299a7bda-9e71-4627-8681-bb9b2511e0bd",
+              "conversationTurn": 1,
+              "model": "claude-opus-5-5",
+              "effort": "max",
+              "prompt": "UI205C run=01M5VGF66RXWBADWA1YB2KE84E task."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "205-ui-llm-decision",
+      "description": "LLM decision shows Model and one Effort dropdown (Default names the inherited value); explicit picks save as explicit selections and reach the structured Codex request",
+      "pass": true,
+      "detail": {
+        "placement": {
+          "advancedButtons": 0,
+          "effortControls": 1,
+          "modeOrExplicitControls": 0,
+          "modelFirst": "Default (gpt-6-sol)",
+          "effortFirst": "Default (medium)"
+        },
+        "savedConfig": {
+          "model": {
+            "mode": "explicit",
+            "value": "gpt-6.1-sol"
+          },
+          "effort": {
+            "mode": "explicit",
+            "value": "low"
+          }
+        },
+        "run": {
+          "runId": "01M5VGF924AJQF1BG68KTRX3RA",
+          "status": "succeeded",
+          "requests": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "db780a2c-62bf-4360-b6e9-27a9026db182",
+              "conversationTurn": 1,
+              "model": "gpt-6.1-sol",
+              "effort": "low",
+              "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nUI205D run=01M5VGF924AJQF1BG68KTRX3RA choose\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "33-ui-session-control",
+      "description": "Session policy offers resume-own (default fresh); own reveals an optional Reset after visits outside Advanced; 0 is refused; 3 and blank save exactly",
+      "pass": true,
+      "detail": {
+        "options": [
+          "fresh",
+          "resume-previous",
+          "resume-named",
+          "resume-own"
+        ],
+        "initial": "0",
+        "resetBefore": 0,
+        "resetVisibleWithAdvancedCollapsed": true,
+        "helpText": "SessionPolicyfreshresume-previousresume-namedresume-ownFresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.Reset after visitsOptional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+        "zeroProblem": 1,
+        "savedWithReset": {
+          "policy": "resume-own",
+          "resetAfterVisits": 3
+        },
+        "savedBlank": {
+          "policy": "resume-own"
+        }
+      }
+    },
+    {
+      "id": "265-ui-inspector",
+      "description": "inspector names the lost handle and origin, explains the choice, offers Start fresh session; clicking it starts one fresh turn; after reload a durable note records who, when, node and the lost handle",
+      "pass": true,
+      "detail": {
+        "runId": "01M5VGFDK50AQ3V3VKWVBXKJT9",
+        "lostHandle": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+        "pageMentionsHandle": true,
+        "pageMentionsOrigin": true,
+        "explanationShown": true,
+        "modelEffortShown": true,
+        "plainResumeButtons": 0,
+        "horizontalOverflowAt390": 0,
+        "callsBeforeChoice": 2,
+        "afterChoiceStatus": "waiting",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=1 task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "4d794957-239e-4735-9d10-dac78f93daff",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+          }
+        ],
+        "finished": "succeeded",
+        "noteText": "10/26/2026, 2:05:58 AM: user local chose a fresh session for worker; prior provider context was not carried over (resume-own, d548f9f7-4da8-4458-8c6d-a9c410b885be).",
+        "buttonsAfter": 0,
+        "resumed": [
+          {
+            "runId": "01M5VGFDK50AQ3V3VKWVBXKJT9",
+            "seq": 26,
+            "ts": "2026-10-26T07:05:58.236Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            },
+            "freshSession": {
+              "visitId": "01M5VGFDK50AQ3V3VKWVBXKJT9:21",
+              "harness": "codex",
+              "sessionId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+              "origin": "resume-own",
+              "model": "gpt-6-luna",
+              "effort": "medium",
+              "nodeId": "worker",
+              "failureSeq": 25,
+              "priorContextCarried": false,
+              "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "205-codex-placement": {
+      "settingsSelected": "true",
+      "advancedExpanded": "false",
+      "modelVisible": true,
+      "effortVisible": true,
+      "effortControls": 1,
+      "modeOrExplicitControls": 0,
+      "effortTag": "SELECT",
+      "effortOptions": [
+        "Default (medium)",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "effortValues": [
+        "",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "modelOptions": [
+        "(loop default) (gpt-6-sol)",
+        "GPT-5.5 (gpt-5.5)",
+        "GPT-5.6 Luna (gpt-5.6-luna)"
+      ],
+      "modelDescription": "Model; inherits within this harness from loop, owner, then process defaults. | Default model: gpt-6-sol.",
+      "effortDescription": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: medium."
+    },
+    "205-codex-explicit": {
+      "savedConfig": {
+        "harness": "codex",
+        "effort": "xhigh",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "UI205 run={{ run.id }} task."
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reloaded": "xhigh",
+      "run": {
+        "runId": "01M5VGEVNZ330S21NSK19Q8YHM",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "1b01129a-ecd4-45c1-93f1-40b94883b9a9",
+            "conversationTurn": 1,
+            "model": "gpt-6-sol",
+            "effort": "xhigh",
+            "prompt": "UI205 run=01M5VGEVNZ330S21NSK19Q8YHM task."
+          }
+        ]
+      }
+    },
+    "205-codex-default": {
+      "savedConfig": {
+        "harness": "codex",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "UI205 run={{ run.id }} task."
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "run": {
+        "runId": "01M5VGEYWWHMVPFV5QMBMQ5M8Q",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "a5abdb3d-d8e3-47f8-b995-4b153d3cdb51",
+            "conversationTurn": 1,
+            "model": "gpt-6-sol",
+            "effort": "medium",
+            "prompt": "UI205 run=01M5VGEYWWHMVPFV5QMBMQ5M8Q task."
+          }
+        ]
+      }
+    },
+    "205-codex-owner": {
+      "label": "Default (high)",
+      "run": {
+        "runId": "01M5VGF03QKS1KB5TNGAZ7ERNE",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "c1892dca-2059-4786-a72b-4102dbb0231f",
+            "conversationTurn": 1,
+            "model": "gpt-6-sol",
+            "effort": "high",
+            "prompt": "UI205 run=01M5VGF03QKS1KB5TNGAZ7ERNE task."
+          }
+        ]
+      }
+    },
+    "205-codex-max": {
+      "optionText": [
+        "max"
+      ],
+      "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: high.",
+      "savedConfig": {
+        "harness": "codex",
+        "effort": "max",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "UI205 run={{ run.id }} task."
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "run": {
+        "runId": "01M5VGF3A789YC5KPCBDAPSTMQ",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "83efac54-b852-45b5-b781-6e33358c6db6",
+            "conversationTurn": 1,
+            "model": "gpt-6-sol",
+            "effort": "xhigh",
+            "prompt": "UI205 run=01M5VGF3A789YC5KPCBDAPSTMQ task."
+          }
+        ]
+      },
+      "sessionRow": {
+        "runId": "01M5VGF3A789YC5KPCBDAPSTMQ",
+        "nodeId": "work",
+        "attempt": 1,
+        "harness": "codex",
+        "sessionId": "83efac54-b852-45b5-b781-6e33358c6db6",
+        "status": "finished",
+        "model": "gpt-6-sol",
+        "effort": "max",
+        "updatedAt": "2026-10-26T07:05:47.016Z"
+      }
+    },
+    "205-claude": {
+      "values": [
+        "",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "texts": [
+        "Default (unavailable)",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "run": {
+        "runId": "01M5VGF66RXWBADWA1YB2KE84E",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "299a7bda-9e71-4627-8681-bb9b2511e0bd",
+            "conversationTurn": 1,
+            "model": "claude-opus-5-5",
+            "effort": "max",
+            "prompt": "UI205C run=01M5VGF66RXWBADWA1YB2KE84E task."
+          }
+        ]
+      }
+    },
+    "205-llm": {
+      "placement": {
+        "advancedButtons": 0,
+        "effortControls": 1,
+        "modeOrExplicitControls": 0,
+        "modelFirst": "Default (gpt-6-sol)",
+        "effortFirst": "Default (medium)"
+      },
+      "savedConfig": {
+        "model": {
+          "mode": "explicit",
+          "value": "gpt-6.1-sol"
+        },
+        "effort": {
+          "mode": "explicit",
+          "value": "low"
+        }
+      },
+      "run": {
+        "runId": "01M5VGF924AJQF1BG68KTRX3RA",
+        "status": "succeeded",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "db780a2c-62bf-4360-b6e9-27a9026db182",
+            "conversationTurn": 1,
+            "model": "gpt-6.1-sol",
+            "effort": "low",
+            "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nUI205D run=01M5VGF924AJQF1BG68KTRX3RA choose\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning."
+          }
+        ]
+      }
+    },
+    "33-ui": {
+      "options": [
+        "fresh",
+        "resume-previous",
+        "resume-named",
+        "resume-own"
+      ],
+      "initial": "0",
+      "resetBefore": 0,
+      "resetVisibleWithAdvancedCollapsed": true,
+      "helpText": "SessionPolicyfreshresume-previousresume-namedresume-ownFresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.Reset after visitsOptional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+      "zeroProblem": 1,
+      "savedWithReset": {
+        "policy": "resume-own",
+        "resetAfterVisits": 3
+      },
+      "savedBlank": {
+        "policy": "resume-own"
+      }
+    },
+    "265-ui": {
+      "runId": "01M5VGFDK50AQ3V3VKWVBXKJT9",
+      "lostHandle": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+      "pageMentionsHandle": true,
+      "pageMentionsOrigin": true,
+      "explanationShown": true,
+      "modelEffortShown": true,
+      "plainResumeButtons": 0,
+      "horizontalOverflowAt390": 0,
+      "callsBeforeChoice": 2,
+      "afterChoiceStatus": "waiting",
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=1 task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "4d794957-239e-4735-9d10-dac78f93daff",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+        }
+      ],
+      "finished": "succeeded",
+      "noteText": "10/26/2026, 2:05:58 AM: user local chose a fresh session for worker; prior provider context was not carried over (resume-own, d548f9f7-4da8-4458-8c6d-a9c410b885be).",
+      "buttonsAfter": 0,
+      "resumed": [
+        {
+          "runId": "01M5VGFDK50AQ3V3VKWVBXKJT9",
+          "seq": 26,
+          "ts": "2026-10-26T07:05:58.236Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          },
+          "freshSession": {
+            "visitId": "01M5VGFDK50AQ3V3VKWVBXKJT9:21",
+            "harness": "codex",
+            "sessionId": "d548f9f7-4da8-4458-8c6d-a9c410b885be",
+            "origin": "resume-own",
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "nodeId": "worker",
+            "failureSeq": 25,
+            "priorContextCarried": false,
+            "prompt": "UI265 run=01M5VGFDK50AQ3V3VKWVBXKJT9 visit=2 task."
+          }
+        }
+      ]
+    }
+  }
+}

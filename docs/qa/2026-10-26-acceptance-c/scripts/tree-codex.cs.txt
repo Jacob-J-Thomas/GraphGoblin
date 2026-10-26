@@ -1,0 +1,27 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Diagnostics;
+// Controlled fake Codex CLI (this QA's variant of apps/web/e2e/shutdown-fake-codex.ps1) that, like a
+// real CLI running a tool command, starts a child process before blocking in its turn.
+public static class TreeFakeCodex {
+  public static void Main(string[] args) {
+    if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return; }
+    if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return; }
+    if (Array.IndexOf(args, "login") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return; }
+    string pidFile = Environment.GetEnvironmentVariable("SHUTDOWN_FAKE_PID");
+    if (Array.IndexOf(args, "--tool-child") >= 0) {
+      File.WriteAllText(pidFile + ".tool", Process.GetCurrentProcess().Id.ToString());
+      Thread.Sleep(180000); return;
+    }
+    var psi = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, "--tool-child");
+    psi.UseShellExecute = false; psi.CreateNoWindow = true;
+    psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.RedirectStandardInput = true;
+    Process.Start(psi);
+    File.WriteAllText(pidFile, Process.GetCurrentProcess().Id.ToString());
+    Console.WriteLine("{\"type\":\"thread.started\",\"thread_id\":\"shutdown-controlled-session\"}");
+    Console.WriteLine("{\"type\":\"turn.started\"}");
+    Console.Out.Flush();
+    Thread.Sleep(180000);
+  }
+}

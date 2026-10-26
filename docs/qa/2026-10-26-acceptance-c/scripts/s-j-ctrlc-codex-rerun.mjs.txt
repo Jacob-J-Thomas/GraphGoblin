@@ -1,0 +1,66 @@
+// Scenario J: isolated rerun of the D1 finding. One blocking fake Codex turn, gateway in its own
+// console, one terminal Ctrl+C (a normal drain), then observe; finish with an API force.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-j-ctrlc-codex-rerun');
+const dir = L.makeStore('j');
+let g;
+let g2;
+try {
+  const env = { ...L.fakeCodex(dir), GG_SHUTDOWN_GRACE_MS: '300000' };
+  g = await L.startGateway({ dir, port: 6469, label: 'j1', env, viaConsole: true, rec });
+  const loop = await L.publishLoop(g.call, L.inferenceLoop('Ctrl+C rerun harness turn'));
+  const run = await L.startRun(g.call, loop);
+  const codexPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  await L.sleep(1000);
+  const before = (await g.call(`/runs/${run}`)).json;
+  rec.log('before Ctrl+C', { run, codexPid, codexAlive: L.tasklistAlive(codexPid), status: before.status });
+  rec.log('Ctrl+C', L.ctrlC(g.pid));
+  const samples = [];
+  for (let i = 0; i < 6; i++) {
+    await L.sleep(500);
+    try {
+      const s = (await g.call('/system/shutdown')).json;
+      const r = (await g.call(`/runs/${run}`)).json;
+      samples.push({ t: (i + 1) * 0.5, phase: s.phase, active: s.activeRunIds, codexAlive: L.tasklistAlive(codexPid), status: r.status, code: r.failure?.code, resumable: r.failure?.resumable });
+    } catch (e) {
+      samples.push({ t: (i + 1) * 0.5, unreachable: String(e.cause?.code ?? e), gatewayExit: g.exitCode(), codexAlive: L.tasklistAlive(codexPid) });
+      if (g.exitCode() !== null) break;
+    }
+  }
+  rec.log('samples after one Ctrl+C', samples);
+  await L.sleep(1000);
+  const last = samples.at(-1);
+  rec.log('gateway exit code after one Ctrl+C', g.exitCode());
+  rec.check('J1 one Ctrl+C is a normal drain: the gateway keeps running while inference is active', g.exitCode() === null, { exit: g.exitCode() });
+  rec.check('J1 the in-flight Codex CLI survives a normal drain', last.codexAlive === true, last);
+  if (g.exitCode() === null) {
+    await g.call('/system/shutdown', { method: 'POST', body: { action: 'force' } });
+    rec.log('API force exit', await g.waitExit(30_000));
+  }
+  g.copyLog('s-j-gateway-j1.log.txt');
+  g2 = await L.startGateway({ dir, port: 6469, label: 'j2', env, rec });
+  const after = (await g2.call(`/runs/${run}`)).json;
+  rec.log('run after restart', { status: after.status, failure: after.failure });
+  rec.check('J2 the run is recorded as an interruption by explicit stop (not a provider failure during normal drain)', after.failure?.code === 'RUN_INTERRUPTED_BY_STOP', { code: after.failure?.code, resumable: after.failure?.resumable });
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.log('restart exit', await g2.waitExit(30_000));
+} catch (error) {
+  rec.check('J scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+  }
+  rec.finish();
+  for (const p of L.storeProcesses(dir)) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  L.rmStore(dir);
+}

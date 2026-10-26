@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { OUT, TOOLS, redact } from './lib.mjs';
+const put = (rel, text) => {
+  const file = path.join(OUT, rel);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, redact(text));
+};
+const scripts = ['lib.mjs', 's-a-default-grace.mjs', 's-b-wait-tabs.mjs', 's-c-force.mjs', 's-d-ctrlc.mjs', 's-e-force-failed.mjs', 's-f-console-and-inspector.mjs', 's-g-force-before-expiry.mjs', 's-h-cli-descendant.mjs', 's-i-explicit-replay.mjs', 's-j-ctrlc-codex-rerun.mjs', 'smoke.mjs', 'sigprobe.cjs', 'collect.mjs', 'ctrlc.cs', 'launcher2.cs', 'conslist.cs', 'tree-codex.cs', 'shutdown-fake-codex.cs'];
+for (const s of scripts) put(path.join('scripts', s + '.txt'), fs.readFileSync(path.join(TOOLS, s), 'utf8'));
+const attempts = {
+  's-c.attempt1.console.txt': 'attempts/s-c-attempt1-inspector-locator.log.txt',
+  's-e.attempt1.console.txt': 'attempts/s-e-attempt1-grandchild-in-job.log.txt',
+  's-e.attempt2.console.txt': 'attempts/s-e-attempt2-confirmation-crossed-expiry.log.txt',
+  's-e.attempt2.gateway-e1.log.txt': 'attempts/s-e-attempt2-gateway-e1.log.txt',
+  's-g.attempt1.console.txt': 'attempts/s-g-attempt1-tool-child-hang.log.txt',
+  's-j.attempt1.console.txt': 'attempts/s-j-attempt1-gateway-exited.log.txt',
+  'probe-record.txt': 'probe-console-ctrlc.log.txt',
+};
+for (const [from, to] of Object.entries(attempts)) put(to, fs.readFileSync(path.join(TOOLS, from), 'utf8'));
+for (const [from, to] of [['unit-api-shutdown.raw.txt', 'unit-api-shutdown.log.txt'], ['unit-web-shutdown-notice.raw.txt', 'unit-web-shutdown-notice.log.txt'], ['build.log.txt', 'build.log.txt']]) {
+  const text = fs.readFileSync(path.join(OUT, from), 'utf8');
+  fs.writeFileSync(path.join(OUT, to), redact(text));
+  if (from !== to) fs.rmSync(path.join(OUT, from));
+}
+console.log('collected');

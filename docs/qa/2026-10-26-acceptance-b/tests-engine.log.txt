@@ -1,0 +1,64 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/engine
+
+ ✓ src/finalization.test.ts > terminal append survives crash before status: exit-success 97ms
+ ✓ src/thread-read.test.ts > reads only the checkpoint event for a current terminal snapshot 67ms
+ ✓ src/thread-read.test.ts > catches up a completed checkpoint without replaying a duplicate completion patch 27ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: exit-failure 58ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: exit-exhausted 61ms
+ ✓ src/thread-read.test.ts > uses the recorded open visit at a parked checkpoint without reading its prefix 21ms
+ ✓ src/thread-read.test.ts > falls back to the full seed/history when the checkpoint event is missing 24ms
+ ✓ src/thread-read.test.ts > uses writer-recorded state even when the event type does not identify an open visit 16ms
+ ✓ src/thread-read.test.ts > replays the full history when no checkpoint exists 31ms
+ ✓ src/thread-read.test.ts > uses a recorded unfinished started checkpoint without applying a patch early 30ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: harness 62ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: harness-uninstalled 63ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: inference-timeout 1065ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: repair 73ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: decider 69ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: decision 62ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: heartbeat-cap 61ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: timeout 91ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: script 62ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: script-timeout 64ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: missing-edge 63ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: missing-version 62ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: missing-node 62ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: invalid-patch 55ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: executor-error 55ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: subloop-missing 69ms
+ ✓ src/finalization.test.ts > terminal append survives crash before status: mutate-error 72ms
+ ✓ src/finalization.test.ts > recovery completes terminal log from queued status 30ms
+ ✓ src/finalization.test.ts > recovery completes terminal log from running status 32ms
+ ✓ src/finalization.test.ts > recovery completes terminal log from waiting status 33ms
+ ✓ src/finalization.test.ts > recovery completes terminal log from paused status 27ms
+ ✓ src/finalization.test.ts > cancel event before status: input 77ms
+ ✓ src/finalization.test.ts > cancel event before status: signal 92ms
+ ✓ src/finalization.test.ts > cancel event before status: duration 95ms
+ ✓ src/finalization.test.ts > cancel event before status: until 77ms
+ ✓ src/finalization.test.ts > cancel event before status: heartbeat 95ms
+ ✓ src/finalization.test.ts > cancel event before status: child 129ms
+ ✓ src/finalization.test.ts > cancel event before status: inference 120ms
+ ✓ src/finalization.test.ts > cancel event before status: paused 94ms
+ ✓ src/finalization.test.ts > cancel event before status: queued 72ms
+ ✓ src/finalization.test.ts > return delivery survives a crash just after terminal status commits 67ms
+ ✓ src/finalization.test.ts > cancellation propagates to children after parent status commits and process dies 124ms
+ ✓ src/finalization.test.ts > domain status prediction and replay summary match resume of a parked run 33ms
+ ✓ src/finalization.test.ts > a resumed failed run is finalized again after a crash on its next terminal status 92ms
+ ✓ src/finalization.test.ts > a child cancellation error leaves the parent finalization pending for the next recovery 63ms
+ ✓ src/finalization.test.ts > a resume of a failed run whose run.resumed is durable when the process dies 124ms
+ ✓ src/finalization.test.ts > a resume of a failed run whose run.resumed is not durable when the process dies 96ms
+ ✓ src/finalization.test.ts > an older finalizer in flight cannot hide the next success 107ms
+ ✓ src/finalization.test.ts > an older finalizer in flight cannot hide the durable resume 140ms
+ ✓ src/finalization.test.ts > of two concurrent resumes of one failure, only one acts (same failure) 78ms
+ ✓ src/finalization.test.ts > of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 78ms
+
+ Test Files  2 passed (2)
+      Tests  51 passed (51)
+   Start at  03:15:04
+   Duration  7.91s (tests 41%, import 34%, transform 26%)
+
+  Transform  transforming modules took 2.85s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

@@ -1,0 +1,1387 @@
+{
+  "checks": [
+    {
+      "id": "265-own-codex-clear-cause",
+      "description": "codex: removed own session stops the run with HARNESS_SESSION_MISSING naming the handle, its origin and the fresh-session choice",
+      "pass": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"e3799414-8bee-4125-8838-4dd448e43481\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+          "turnId": "01M5VFWTY4VCJ2J1FYKEFDVNWV",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481"
+        },
+        "missingSession": {
+          "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+          "harness": "codex",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      }
+    },
+    {
+      "id": "265-own-codex-no-silent-fallback",
+      "description": "codex: exactly one refused resume of the old handle; no fresh fallback turn and no resumed-session claim",
+      "pass": true,
+      "detail": {
+        "afterFailure": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=1 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "e3799414-8bee-4125-8838-4dd448e43481",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+          }
+        ],
+        "visit2Sessions": []
+      }
+    },
+    {
+      "id": "265-own-codex-plain-resume-refused",
+      "description": "codex: plain Resume is refused (409)",
+      "pass": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "cannot resume a run that is failed"
+      }
+    },
+    {
+      "id": "265-own-codex-declined-restart",
+      "description": "codex: a declined choice survives a hard restart unchanged: still failed, same failure, no provider call, Resume still refused",
+      "pass": true,
+      "detail": {
+        "status": "failed",
+        "calls": 2,
+        "resume": 409
+      }
+    },
+    {
+      "id": "265-own-codex-stale-concurrent",
+      "description": "codex: wrong node and stale failure sequence are refused; of two concurrent choices one succeeds and one is refused",
+      "pass": true,
+      "detail": {
+        "wrongNode": [
+          409,
+          "INVALID_STATE"
+        ],
+        "staleSeq": [
+          409,
+          "INVALID_STATE"
+        ],
+        "concurrent": [
+          200,
+          409
+        ]
+      }
+    },
+    {
+      "id": "265-own-codex-fresh-choice",
+      "description": "codex: the explicit choice starts one fresh conversation with the original authored task, model and effort, records loss of the prior handle, and later visits resume the new conversation",
+      "pass": true,
+      "detail": {
+        "all": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=1 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "e3799414-8bee-4125-8838-4dd448e43481",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+            "sessionId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=4 authored task."
+          }
+        ],
+        "fs": {
+          "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+          "harness": "codex",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "nodeId": "worker",
+          "failureSeq": 25,
+          "priorContextCarried": false,
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+        }
+      }
+    },
+    {
+      "id": "265-own-claude-clear-cause",
+      "description": "claude: removed own session stops the run with HARNESS_SESSION_MISSING naming the handle, its origin and the fresh-session choice",
+      "pass": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The claude session \"b2debd6f-7e2c-4f99-a16b-8c3ab875ce98\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+          "turnId": "01M5VFXD0C5RGZ5QJZWHW31SR4",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+          "harness": "claude",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "origin": "resume-own",
+          "model": "claude-opus-5-5",
+          "effort": "medium"
+        }
+      }
+    },
+    {
+      "id": "265-own-claude-no-silent-fallback",
+      "description": "claude: exactly one refused resume of the old handle; no fresh fallback turn and no resumed-session claim",
+      "pass": true,
+      "detail": {
+        "afterFailure": [
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+            "conversationTurn": 1,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=1 authored task."
+          },
+          {
+            "harness": "claude",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+          }
+        ],
+        "visit2Sessions": []
+      }
+    },
+    {
+      "id": "265-own-claude-plain-resume-refused",
+      "description": "claude: plain Resume is refused (409)",
+      "pass": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "cannot resume a run that is failed"
+      }
+    },
+    {
+      "id": "265-own-claude-declined-restart",
+      "description": "claude: a declined choice survives a hard restart unchanged: still failed, same failure, no provider call, Resume still refused",
+      "pass": true,
+      "detail": {
+        "status": "failed",
+        "calls": 2,
+        "resume": 409
+      }
+    },
+    {
+      "id": "265-own-claude-stale-concurrent",
+      "description": "claude: wrong node and stale failure sequence are refused; of two concurrent choices one succeeds and one is refused",
+      "pass": true,
+      "detail": {
+        "wrongNode": [
+          409,
+          "INVALID_STATE"
+        ],
+        "staleSeq": [
+          409,
+          "INVALID_STATE"
+        ],
+        "concurrent": [
+          200,
+          409
+        ]
+      }
+    },
+    {
+      "id": "265-own-claude-fresh-choice",
+      "description": "claude: the explicit choice starts one fresh conversation with the original authored task, model and effort, records loss of the prior handle, and later visits resume the new conversation",
+      "pass": true,
+      "detail": {
+        "all": [
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+            "conversationTurn": 1,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=1 authored task."
+          },
+          {
+            "harness": "claude",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+          },
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+            "conversationTurn": 1,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+          },
+          {
+            "harness": "claude",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+            "sessionId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+            "conversationTurn": 2,
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=4 authored task."
+          }
+        ],
+        "fs": {
+          "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+          "harness": "claude",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "origin": "resume-own",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "nodeId": "worker",
+          "failureSeq": 25,
+          "priorContextCarried": false,
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+        }
+      }
+    },
+    {
+      "id": "265-previous-codex",
+      "description": "resume-previous: a missing inherited handle stops with HARNESS_SESSION_MISSING naming the handle and origin resume-previous; no fresh fallback",
+      "pass": true,
+      "detail": {
+        "firstStatus": "waiting",
+        "before": [
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=1 authored task."
+          }
+        ],
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc\" from resume-previous is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+          "nodeId": "worker",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5VFXTRPSD3TY9GZNMJN0AN6:28",
+            "turnId": "01M5VFXVXSWS2P87VCPVZY3B8R",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc"
+          },
+          "missingSession": {
+            "visitId": "01M5VFXTRPSD3TY9GZNMJN0AN6:28",
+            "harness": "codex",
+            "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "origin": "resume-previous",
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        },
+        "after": [
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=1 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=2 authored task."
+          }
+        ]
+      }
+    },
+    {
+      "id": "265-init-then-missing-codex",
+      "description": "codex init-then-missing: the run stops explicitly without a resumed-session claim and without a fresh fallback turn",
+      "pass": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "resumable": false,
+        "resumedClaims": [],
+        "calls": 2
+      }
+    },
+    {
+      "id": "265-init-then-missing-claude",
+      "description": "claude init-then-missing: the run stops explicitly without a resumed-session claim and without a fresh fallback turn",
+      "pass": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "resumable": false,
+        "resumedClaims": [],
+        "calls": 2
+      }
+    },
+    {
+      "id": "265-different-id-codex",
+      "description": "codex different-id: the run stops explicitly without a resumed-session claim and without a fresh fallback turn",
+      "pass": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "resumable": false,
+        "resumedClaims": [],
+        "calls": 2
+      }
+    },
+    {
+      "id": "265-different-id-claude",
+      "description": "claude different-id: the run stops explicitly without a resumed-session claim and without a fresh fallback turn",
+      "pass": false,
+      "detail": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "resumable": false,
+        "resumedClaims": [],
+        "calls": 2
+      }
+    },
+    {
+      "id": "265-child",
+      "description": "a child's missing session fails the parent with a clear cause; parent Resume is refused until the child's explicit fresh choice, then the parent completes",
+      "pass": false,
+      "detail": {
+        "childFailure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"2288b8b2-fb9b-47f0-be90-48fc82c50622\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+          "nodeId": "worker",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5VFY50Q94BMT2DYGAX7M2TG:21",
+            "turnId": "01M5VFY6BZDSY0G5CVCBG2JEYF",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622"
+          },
+          "missingSession": {
+            "visitId": "01M5VFY50Q94BMT2DYGAX7M2TG:21",
+            "harness": "codex",
+            "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+            "origin": "resume-own",
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        },
+        "parentStatusAfterChildFailure": "waiting",
+        "parentResumeEarly": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is running"
+          }
+        },
+        "choice": 200,
+        "parentResumeLater": {
+          "status": 200,
+          "body": "running"
+        },
+        "parentEnd": "succeeded",
+        "childRequests": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=1 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "refused-missing",
+            "resumeId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+            "sessionId": null,
+            "conversationTurn": 0,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=2 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "3cd80815-1949-4780-86f9-50a37990c09f",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=2 authored task."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "3cd80815-1949-4780-86f9-50a37990c09f",
+            "sessionId": "3cd80815-1949-4780-86f9-50a37990c09f",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=4 authored task."
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "own-codex-failure": {
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"e3799414-8bee-4125-8838-4dd448e43481\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+          "turnId": "01M5VFWTY4VCJ2J1FYKEFDVNWV",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481"
+        },
+        "missingSession": {
+          "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+          "harness": "codex",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      },
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+        }
+      ],
+      "visit2HarnessSessionEvents": [],
+      "sessions": [
+        {
+          "runId": "01M5VFWSFQQBXJ5MQPSSSFH2AA",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "status": "failed",
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:55:47.735Z"
+        }
+      ],
+      "plainResume": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "cannot resume a run that is failed"
+        }
+      },
+      "failedEventSeq": 25
+    },
+    "own-codex-recovered": {
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "e3799414-8bee-4125-8838-4dd448e43481",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+          "sessionId": "c6a21d2a-1f76-483f-88e4-76eecba9e2d9",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=4 authored task."
+        }
+      ],
+      "resumedEvents": [
+        {
+          "runId": "01M5VFWSFQQBXJ5MQPSSSFH2AA",
+          "seq": 26,
+          "ts": "2026-10-26T06:56:02.614Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          },
+          "freshSession": {
+            "visitId": "01M5VFWSFQQBXJ5MQPSSSFH2AA:21",
+            "harness": "codex",
+            "sessionId": "e3799414-8bee-4125-8838-4dd448e43481",
+            "origin": "resume-own",
+            "model": "gpt-6-luna",
+            "effort": "medium",
+            "nodeId": "worker",
+            "failureSeq": 25,
+            "priorContextCarried": false,
+            "prompt": "WORKER run=01M5VFWSFQQBXJ5MQPSSSFH2AA visit=2 authored task."
+          }
+        }
+      ],
+      "status": "succeeded",
+      "repeat": 409
+    },
+    "own-claude-failure": {
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The claude session \"b2debd6f-7e2c-4f99-a16b-8c3ab875ce98\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+          "turnId": "01M5VFXD0C5RGZ5QJZWHW31SR4",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+          "harness": "claude",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "origin": "resume-own",
+          "model": "claude-opus-5-5",
+          "effort": "medium"
+        }
+      },
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=1 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+        }
+      ],
+      "visit2HarnessSessionEvents": [],
+      "sessions": [
+        {
+          "runId": "01M5VFXB9W4FBG9945ZX32NK1Y",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "status": "failed",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:56:06.997Z"
+        }
+      ],
+      "plainResume": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "cannot resume a run that is failed"
+        }
+      },
+      "failedEventSeq": 25
+    },
+    "own-claude-recovered": {
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=1 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+          "sessionId": "d671c86b-bac8-4c91-9a3a-03de6fbaea03",
+          "conversationTurn": 2,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=4 authored task."
+        }
+      ],
+      "resumedEvents": [
+        {
+          "runId": "01M5VFXB9W4FBG9945ZX32NK1Y",
+          "seq": 26,
+          "ts": "2026-10-26T06:56:17.987Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          },
+          "freshSession": {
+            "visitId": "01M5VFXB9W4FBG9945ZX32NK1Y:21",
+            "harness": "claude",
+            "sessionId": "b2debd6f-7e2c-4f99-a16b-8c3ab875ce98",
+            "origin": "resume-own",
+            "model": "claude-opus-5-5",
+            "effort": "medium",
+            "nodeId": "worker",
+            "failureSeq": 25,
+            "priorContextCarried": false,
+            "prompt": "WORKER run=01M5VFXB9W4FBG9945ZX32NK1Y visit=2 authored task."
+          }
+        }
+      ],
+      "status": "succeeded",
+      "repeat": 409
+    },
+    "previous-codex": {
+      "firstStatus": "waiting",
+      "before": [
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=1 authored task."
+        }
+      ],
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc\" from resume-previous is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXTRPSD3TY9GZNMJN0AN6:28",
+          "turnId": "01M5VFXVXSWS2P87VCPVZY3B8R",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXTRPSD3TY9GZNMJN0AN6:28",
+          "harness": "codex",
+          "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "origin": "resume-previous",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      },
+      "after": [
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "sessionId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "7d03e390-f7fa-4fe2-8639-a3e8c5cc88dc",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXTRPSD3TY9GZNMJN0AN6 visit=2 authored task."
+        }
+      ]
+    },
+    "init-then-missing-codex": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"8ad94c98-b643-43f2-a14f-342a9ca6683e\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXWHSZ7Y77ASF1X5YBPK3:21",
+          "turnId": "01M5VFXXC7FR5Y8FXDFBEJN5XV",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXWHSZ7Y77ASF1X5YBPK3:21",
+          "harness": "codex",
+          "sessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      },
+      "visit2HarnessEvents": [
+        {
+          "runId": "01M5VFXWHSZ7Y77ASF1X5YBPK3",
+          "seq": 22,
+          "ts": "2026-10-26T06:56:22.919Z",
+          "type": "harness.turn",
+          "nodeId": "worker",
+          "visitId": "01M5VFXWHSZ7Y77ASF1X5YBPK3:21",
+          "turnId": "01M5VFXXC7FR5Y8FXDFBEJN5XV",
+          "harness": "codex",
+          "promptKind": "authored",
+          "prompt": "WORKER run=01M5VFXWHSZ7Y77ASF1X5YBPK3 visit=2 authored task.",
+          "resumeSessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e"
+        },
+        {
+          "runId": "01M5VFXWHSZ7Y77ASF1X5YBPK3",
+          "seq": 23,
+          "ts": "2026-10-26T06:56:23.012Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXWHSZ7Y77ASF1X5YBPK3:21",
+          "turnId": "01M5VFXXC7FR5Y8FXDFBEJN5XV",
+          "submission": "session-missing"
+        },
+        {
+          "runId": "01M5VFXWHSZ7Y77ASF1X5YBPK3",
+          "seq": 24,
+          "ts": "2026-10-26T06:56:23.039Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXWHSZ7Y77ASF1X5YBPK3:21",
+          "turnId": "01M5VFXXC7FR5Y8FXDFBEJN5XV",
+          "submission": "session-missing"
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFXWHSZ7Y77ASF1X5YBPK3",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e",
+          "status": "failed",
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:56:23.041Z"
+        }
+      ],
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXWHSZ7Y77ASF1X5YBPK3 visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "init-then-missing",
+          "resumeId": "8ad94c98-b643-43f2-a14f-342a9ca6683e",
+          "sessionId": "8ad94c98-b643-43f2-a14f-342a9ca6683e",
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXWHSZ7Y77ASF1X5YBPK3 visit=2 authored task."
+        }
+      ]
+    },
+    "init-then-missing-claude": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The claude session \"77965a9f-f510-4efa-8a4f-51dda04dbea8\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXXZA5P736KF5Z99PNSFC:21",
+          "turnId": "01M5VFXZ6SA8VN4DQ4X2FHKQ6Y",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXXZA5P736KF5Z99PNSFC:21",
+          "harness": "claude",
+          "sessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8",
+          "origin": "resume-own",
+          "model": "claude-opus-5-5",
+          "effort": "medium"
+        }
+      },
+      "visit2HarnessEvents": [
+        {
+          "runId": "01M5VFXXZA5P736KF5Z99PNSFC",
+          "seq": 22,
+          "ts": "2026-10-26T06:56:24.794Z",
+          "type": "harness.turn",
+          "nodeId": "worker",
+          "visitId": "01M5VFXXZA5P736KF5Z99PNSFC:21",
+          "turnId": "01M5VFXZ6SA8VN4DQ4X2FHKQ6Y",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "WORKER run=01M5VFXXZA5P736KF5Z99PNSFC visit=2 authored task.",
+          "resumeSessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8"
+        },
+        {
+          "runId": "01M5VFXXZA5P736KF5Z99PNSFC",
+          "seq": 24,
+          "ts": "2026-10-26T06:56:25.097Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXXZA5P736KF5Z99PNSFC:21",
+          "turnId": "01M5VFXZ6SA8VN4DQ4X2FHKQ6Y",
+          "submission": "session-missing"
+        },
+        {
+          "runId": "01M5VFXXZA5P736KF5Z99PNSFC",
+          "seq": 25,
+          "ts": "2026-10-26T06:56:25.116Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXXZA5P736KF5Z99PNSFC:21",
+          "turnId": "01M5VFXZ6SA8VN4DQ4X2FHKQ6Y",
+          "submission": "session-missing"
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFXXZA5P736KF5Z99PNSFC",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8",
+          "status": "failed",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:56:25.118Z"
+        }
+      ],
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXXZA5P736KF5Z99PNSFC visit=1 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "init-then-missing",
+          "resumeId": "77965a9f-f510-4efa-8a4f-51dda04dbea8",
+          "sessionId": "77965a9f-f510-4efa-8a4f-51dda04dbea8",
+          "conversationTurn": 0,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXXZA5P736KF5Z99PNSFC visit=2 authored task."
+        }
+      ]
+    },
+    "different-id-codex": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"947ee01e-f398-4cba-b0cc-d4006f93a458\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFXZYHPFBSCFVT69XRAB92:21",
+          "turnId": "01M5VFY137JRTF8ZAE41JN3W1S",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "947ee01e-f398-4cba-b0cc-d4006f93a458"
+        },
+        "missingSession": {
+          "visitId": "01M5VFXZYHPFBSCFVT69XRAB92:21",
+          "harness": "codex",
+          "sessionId": "947ee01e-f398-4cba-b0cc-d4006f93a458",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      },
+      "visit2HarnessEvents": [
+        {
+          "runId": "01M5VFXZYHPFBSCFVT69XRAB92",
+          "seq": 22,
+          "ts": "2026-10-26T06:56:26.727Z",
+          "type": "harness.turn",
+          "nodeId": "worker",
+          "visitId": "01M5VFXZYHPFBSCFVT69XRAB92:21",
+          "turnId": "01M5VFY137JRTF8ZAE41JN3W1S",
+          "harness": "codex",
+          "promptKind": "authored",
+          "prompt": "WORKER run=01M5VFXZYHPFBSCFVT69XRAB92 visit=2 authored task.",
+          "resumeSessionId": "947ee01e-f398-4cba-b0cc-d4006f93a458"
+        },
+        {
+          "runId": "01M5VFXZYHPFBSCFVT69XRAB92",
+          "seq": 23,
+          "ts": "2026-10-26T06:56:26.799Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXZYHPFBSCFVT69XRAB92:21",
+          "turnId": "01M5VFY137JRTF8ZAE41JN3W1S",
+          "submission": "session-missing"
+        },
+        {
+          "runId": "01M5VFXZYHPFBSCFVT69XRAB92",
+          "seq": 24,
+          "ts": "2026-10-26T06:56:26.824Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFXZYHPFBSCFVT69XRAB92:21",
+          "turnId": "01M5VFY137JRTF8ZAE41JN3W1S",
+          "submission": "session-missing"
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFXZYHPFBSCFVT69XRAB92",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "947ee01e-f398-4cba-b0cc-d4006f93a458",
+          "status": "failed",
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:56:26.857Z"
+        }
+      ],
+      "requests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "947ee01e-f398-4cba-b0cc-d4006f93a458",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXZYHPFBSCFVT69XRAB92 visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "different-id",
+          "resumeId": "947ee01e-f398-4cba-b0cc-d4006f93a458",
+          "sessionId": "25dba30e-63dc-4669-a6c6-13f0cd1c00b9",
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFXZYHPFBSCFVT69XRAB92 visit=2 authored task."
+        }
+      ]
+    },
+    "different-id-claude": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "interruptedByStop": false
+        },
+        "inference": {
+          "visitId": "01M5VFY1Q4HD03MZYKF4B7Q4KF:21",
+          "turnId": "01M5VFY34VBCP3GJ1GAKD038WT",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "05794d45-eae3-4356-9d14-0c5e64155b95"
+        }
+      },
+      "visit2HarnessEvents": [
+        {
+          "runId": "01M5VFY1Q4HD03MZYKF4B7Q4KF",
+          "seq": 22,
+          "ts": "2026-10-26T06:56:28.827Z",
+          "type": "harness.turn",
+          "nodeId": "worker",
+          "visitId": "01M5VFY1Q4HD03MZYKF4B7Q4KF:21",
+          "turnId": "01M5VFY34VBCP3GJ1GAKD038WT",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "WORKER run=01M5VFY1Q4HD03MZYKF4B7Q4KF visit=2 authored task.",
+          "resumeSessionId": "05794d45-eae3-4356-9d14-0c5e64155b95"
+        },
+        {
+          "runId": "01M5VFY1Q4HD03MZYKF4B7Q4KF",
+          "seq": 23,
+          "ts": "2026-10-26T06:56:29.366Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFY1Q4HD03MZYKF4B7Q4KF:21",
+          "turnId": "01M5VFY34VBCP3GJ1GAKD038WT",
+          "submission": "delivery-uncertain"
+        },
+        {
+          "runId": "01M5VFY1Q4HD03MZYKF4B7Q4KF",
+          "seq": 24,
+          "ts": "2026-10-26T06:56:29.397Z",
+          "type": "harness.submission",
+          "nodeId": "worker",
+          "visitId": "01M5VFY1Q4HD03MZYKF4B7Q4KF:21",
+          "turnId": "01M5VFY34VBCP3GJ1GAKD038WT",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFY1Q4HD03MZYKF4B7Q4KF",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "05794d45-eae3-4356-9d14-0c5e64155b95",
+          "status": "failed",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "updatedAt": "2026-10-26T06:56:29.431Z"
+        }
+      ],
+      "requests": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "05794d45-eae3-4356-9d14-0c5e64155b95",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY1Q4HD03MZYKF4B7Q4KF visit=1 authored task."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "different-id",
+          "resumeId": "05794d45-eae3-4356-9d14-0c5e64155b95",
+          "sessionId": "03f410fc-6d1d-4c03-9732-7722d2a6e45f",
+          "conversationTurn": 0,
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY1Q4HD03MZYKF4B7Q4KF visit=2 authored task."
+        }
+      ]
+    },
+    "child": {
+      "childFailure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"2288b8b2-fb9b-47f0-be90-48fc82c50622\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5VFY50Q94BMT2DYGAX7M2TG:21",
+          "turnId": "01M5VFY6BZDSY0G5CVCBG2JEYF",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622"
+        },
+        "missingSession": {
+          "visitId": "01M5VFY50Q94BMT2DYGAX7M2TG:21",
+          "harness": "codex",
+          "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      },
+      "parentStatusAfterChildFailure": "waiting",
+      "parentResumeEarly": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "cannot resume a run that is running"
+        }
+      },
+      "choice": 200,
+      "parentResumeLater": {
+        "status": 200,
+        "body": "running"
+      },
+      "parentEnd": "succeeded",
+      "childRequests": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=1 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "refused-missing",
+          "resumeId": "2288b8b2-fb9b-47f0-be90-48fc82c50622",
+          "sessionId": null,
+          "conversationTurn": 0,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=2 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "3cd80815-1949-4780-86f9-50a37990c09f",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=2 authored task."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "3cd80815-1949-4780-86f9-50a37990c09f",
+          "sessionId": "3cd80815-1949-4780-86f9-50a37990c09f",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "medium",
+          "prompt": "WORKER run=01M5VFY50Q94BMT2DYGAX7M2TG visit=4 authored task."
+        }
+      ]
+    }
+  }
+}

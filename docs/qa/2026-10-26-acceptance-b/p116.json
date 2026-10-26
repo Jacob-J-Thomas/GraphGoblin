@@ -1,0 +1,382 @@
+{
+  "checks": [
+    {
+      "name": "#183 expression failure: current thread counts the failed node start (nodeVisits.bad = 1) and has no patch from it; MCP thread equals REST",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "expression failed: deliberate expression failure",
+          "nodeId": "bad",
+          "resumable": true,
+          "details": {
+            "name": "ExpressionError",
+            "stack": "ExpressionError: expression failed: deliberate expression failure\n    at run (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/domain/dist/expression.js:123:15)\n    at async resolveValue (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/domain/dist/mutations.js:25:27)\n    at async planMutation (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/domain/dist/mutations.js:85:27)\n    at async applyMutations (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/domain/dist/mutations.js:221:22)\n    at async runMutations (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/engine/dist/handlers/common.js:187:24)\n    at async Object.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-b/packages/engine/dist/run-manager.js:1842:26)"
+          }
+        },
+        "nodeVisits": {
+          "start": 1,
+          "prep": 1,
+          "bad": 1
+        },
+        "vars": {
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "unfinished script visit: current thread counts the start (nodeVisits.work = 1) without its output",
+      "ok": true,
+      "detail": {
+        "nodeVisits": {
+          "start": 1,
+          "prep": 1,
+          "work": 1
+        },
+        "vars": {
+          "items": [
+            "seed"
+          ]
+        },
+        "storedSnapshotSeq": 6
+      }
+    },
+    {
+      "name": "failed: SCRIPT_EXIT_CODE resumable; the printed patch of the failed visit is not applied; REST run/thread equal MCP get_run/get_run_thread",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 1",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "exitCode": 1,
+            "stderr": "",
+            "stdout": "[{\"op\":\"add\",\"path\":\"/vars/items/-\",\"value\":\"from-script\"},{\"op\":\"add\",\"path\":\"/vars/scriptOk\",\"value\":true}]"
+          },
+          "script": {
+            "visitId": "01M5VKTGN1ZQCGT8C2ZEAVAEZB:7",
+            "dispatchId": "01M5VKTGQNXAM4XSN4GM1KK062",
+            "state": "completed",
+            "exitCode": 1
+          }
+        },
+        "vars": {
+          "items": [
+            "seed"
+          ]
+        },
+        "nodeVisits": {
+          "start": 1,
+          "prep": 1,
+          "work": 1
+        }
+      }
+    },
+    {
+      "name": "reads do not mutate: stored status, last_event_seq, checkpoint (snapshot/seq/state) and event count identical before and after REST+MCP reads",
+      "ok": true,
+      "detail": {
+        "seq": 10,
+        "snapshotSeq": 6,
+        "state": "{\"strict\":true}",
+        "events": 10
+      }
+    },
+    {
+      "name": "failed: existing tab and a fresh tab served a delayed (stale running) run record both settle on Failed: SCRIPT_EXIT_CODE with the run.failed row",
+      "ok": true,
+      "detail": {
+        "t1": {
+          "total": 10,
+          "status": "complete"
+        },
+        "t2": {
+          "total": 10,
+          "status": "complete",
+          "staleRecordResponses": 6
+        },
+        "apiLast": 10
+      }
+    },
+    {
+      "name": "failed: the existing tab's thread JSON matches the API thread at the same boundary",
+      "ok": true,
+      "detail": {
+        "heading": "Current thread",
+        "vars": {
+          "items": [
+            "seed"
+          ]
+        }
+      }
+    },
+    {
+      "name": "resumed (another client): run running again; current thread still has no unfinished patch",
+      "ok": true,
+      "detail": {
+        "status": "running",
+        "nodeVisits": {
+          "start": 1,
+          "prep": 1,
+          "work": 1
+        }
+      }
+    },
+    {
+      "name": "succeeded: patch applied exactly once (items = [seed, from-script]), nodeVisits.work = 2, REST equals MCP",
+      "ok": true,
+      "detail": {
+        "vars": {
+          "items": [
+            "seed",
+            "from-script"
+          ],
+          "scriptOk": true,
+          "done": true
+        },
+        "nodeVisits": {
+          "start": 1,
+          "prep": 1,
+          "work": 2,
+          "after": 1,
+          "finish": 1
+        },
+        "result": {
+          "items": [
+            "seed",
+            "from-script"
+          ],
+          "scriptOk": true,
+          "done": true
+        }
+      }
+    },
+    {
+      "name": "succeeded: existing tab followed the resume without reload (failed -> resumed -> finished rows, Succeeded, complete, total = API last)",
+      "ok": true,
+      "detail": {
+        "total": 22,
+        "status": "complete",
+        "header": "Run 01M5VKTGN1ZQCGT8C2ZEAVAEZB succeeded loop child runs",
+        "lastRows": [
+          "17:node.finished",
+          "18:node.started",
+          "19:exit.evaluated",
+          "20:node.finished",
+          "21:run.finished",
+          "22:return.delivered"
+        ]
+      }
+    },
+    {
+      "name": "succeeded: fresh tab followed the resume without reload (failed -> resumed -> finished rows, Succeeded, complete, total = API last)",
+      "ok": true,
+      "detail": {
+        "total": 22,
+        "status": "complete",
+        "header": "Run 01M5VKTGN1ZQCGT8C2ZEAVAEZB succeeded loop child runs",
+        "lastRows": [
+          "17:node.finished",
+          "18:node.started",
+          "19:exit.evaluated",
+          "20:node.finished",
+          "21:run.finished",
+          "22:return.delivered"
+        ]
+      }
+    },
+    {
+      "name": "reconnected tab (offline through failure and resume): catches up to Succeeded with every row up to the API last",
+      "ok": true,
+      "detail": {
+        "total": 22,
+        "status": "complete"
+      }
+    },
+    {
+      "name": "reloaded tab: Succeeded and its thread JSON equals the API thread",
+      "ok": true,
+      "detail": {
+        "heading": "Current thread"
+      }
+    },
+    {
+      "name": "lagging checkpoint (checkpoint at prep completion, recorded state {strict:true}): REST, MCP and the inspector reconcile to the full thread; the lagging checkpoint is left untouched",
+      "ok": true,
+      "detail": {
+        "injectedSeq": 6,
+        "storedAfterSeq": 6,
+        "storedState": "{\"strict\":true}",
+        "browserHeading": "Current thread"
+      }
+    },
+    {
+      "name": "lagging checkpoint (checkpoint at the resumed work start (open visit), state {strict:true, openNodeId:\"work\"}): REST, MCP and the inspector reconcile to the full thread; the lagging checkpoint is left untouched",
+      "ok": true,
+      "detail": {
+        "injectedSeq": 12,
+        "storedAfterSeq": 12,
+        "storedState": "{\"strict\":true,\"openNodeId\":\"work\"}",
+        "browserHeading": "Current thread"
+      }
+    },
+    {
+      "name": "lagging checkpoint (checkpoint at prep completion without recorded state (NULL: full prefix)): REST, MCP and the inspector reconcile to the full thread; the lagging checkpoint is left untouched",
+      "ok": true,
+      "detail": {
+        "injectedSeq": 6,
+        "storedAfterSeq": 6,
+        "storedState": null,
+        "browserHeading": "Current thread"
+      }
+    }
+  ],
+  "phases": {
+    "failed": {
+      "failure": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "script exited with code 1",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "exitCode": 1,
+          "stderr": "",
+          "stdout": "[{\"op\":\"add\",\"path\":\"/vars/items/-\",\"value\":\"from-script\"},{\"op\":\"add\",\"path\":\"/vars/scriptOk\",\"value\":true}]"
+        },
+        "script": {
+          "visitId": "01M5VKTGN1ZQCGT8C2ZEAVAEZB:7",
+          "dispatchId": "01M5VKTGQNXAM4XSN4GM1KK062",
+          "state": "completed",
+          "exitCode": 1
+        }
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5VKTGN1ZQCGT8C2ZEAVAEZB",
+          "loopId": "01M5VKTFTJFNMRHKZCB0C530TY",
+          "versionId": "01M5VKTFTJFNMRHKZCB0C530TZ",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5VKTGN1ZQCGT8C2ZEAVAEZC",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-26T08:04:25.889Z"
+          }
+        },
+        "messages": [],
+        "vars": {
+          "items": [
+            "seed"
+          ]
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-26T08:04:25.917Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-26T08:04:25.917Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "prep": 1,
+            "work": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "lastEventSeq": 10
+    },
+    "succeeded": {
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5VKTGN1ZQCGT8C2ZEAVAEZB",
+          "loopId": "01M5VKTFTJFNMRHKZCB0C530TY",
+          "versionId": "01M5VKTFTJFNMRHKZCB0C530TZ",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5VKTGN1ZQCGT8C2ZEAVAEZC",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-26T08:04:25.889Z"
+          }
+        },
+        "messages": [],
+        "vars": {
+          "items": [
+            "seed",
+            "from-script"
+          ],
+          "scriptOk": true,
+          "done": true
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-26T08:04:25.917Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-26T08:04:25.917Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "prep": 1,
+            "work": 2,
+            "after": 1,
+            "finish": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "lastEventSeq": 22
+    }
+  },
+  "originalCheckpoint": {
+    "seq": 21,
+    "state": "{\"strict\":true}"
+  }
+}

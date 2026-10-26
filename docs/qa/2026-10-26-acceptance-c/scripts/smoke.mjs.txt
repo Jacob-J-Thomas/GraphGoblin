@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const dir = L.makeStore('smoke');
+const g = await L.startGateway({ dir, port: 6469, label: 'smoke' });
+console.log('state', JSON.stringify((await g.call('/system/shutdown')).json));
+const loop = await L.publishLoop(g.call, L.scriptLoop('Smoke', L.heldScriptSource({ dir, name: 's1', tree: true, maxMs: 60000 })));
+const run = await L.startRun(g.call, loop);
+const pid = await L.waitFile(path.join(dir, 's1.pid'));
+const gpid = await L.waitFile(path.join(dir, 's1.grandchild'));
+console.log('run', run, 'pid', pid, 'grandchild', gpid, 'alive', L.tasklistAlive(pid), L.tasklistAlive(gpid));
+console.log('tree', JSON.stringify(L.descendants(g.pid)));
+console.log('store procs', JSON.stringify(L.storeProcesses(dir)));
+fs.writeFileSync(path.join(dir, 's1.release'), 'x');
+await L.waitFor(async () => (await g.call(`/runs/${run}`)).json.status === 'succeeded');
+console.log('run status', (await g.call(`/runs/${run}`)).json.status);
+console.log('drain', JSON.stringify((await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } })).json));
+console.log('exit', await g.waitExit(20000));
+console.log('lock exists', fs.existsSync(path.join(dir, 'graphgoblin.lock')));
+console.log('posts in log', L.serverShutdownPosts(g.readLog()));
+console.log(g.readLog().split('\n').filter((l) => l.includes('system/shutdown')).slice(0, 3).join('\n'));
+L.rmStore(dir);
