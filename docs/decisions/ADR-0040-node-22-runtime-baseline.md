@@ -1,6 +1,6 @@
 # ADR-0040: Node 22 LTS runtime baseline
 
-- Status: Accepted
+- Status: Accepted; the `^22` range for development and gates is amended by [ADR-0058](ADR-0058-node-22-patch-floor-for-development.md) (22.22.2 or later)
 - Date: 2026-10-18
 - Scope: Installation, development, quality gates and built Node applications (#263).
 
