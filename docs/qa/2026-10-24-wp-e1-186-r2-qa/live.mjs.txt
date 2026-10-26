@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa', checks=[],samples=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection');
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+await context.addInitScript(token=>localStorage.setItem('graphgoblin-api-key',token),c.keys.admin);
+const page=await context.newPage(),requests=[],errors=[];
+page.on('pageerror',e=>errors.push(String(e)));
+page.on('request',req=>{if(req.headers().accept==='text/event-stream')requests.push(req.url());});
+const run=await ctl('/start',{passes:350,delay:70,items:3,payload:4000});
+const cache=()=>page.evaluate(id=>{const raw=sessionStorage.getItem('graphgoblin-run-events-v4');const log=JSON.parse(raw??'{}').state?.runs?.[id];return {persistedUTF16Bytes:(raw?.length??0)*2,log};},run.id);
+const until=async(fn,label,ms=45000)=>{const end=Date.now()+ms;while(Date.now()<end){if(await fn())return;await sleep(100);}throw Error(label);};
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2500),stack:e.stack?.slice(0,3500)});}await writeFile(out+'/live-results.json',JSON.stringify({runId:run.id,checks,samples,requests,errors},null,2));}
+await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
+await check('thousands of payload-heavy live events stay bounded in Edge',async()=>{
+ const begin=Date.now();let status;
+ do{
+  const x=await cache();const heap=await cdp.send('Runtime.getHeapUsage');const rows=await list.getByRole('listitem').count();
+  if(x.log){assert.ok(x.log.events.length+x.log.uncached.length<=512);assert.ok(x.log.bytes<=1048576);}
+  assert.ok(rows<=80);
+  samples.push({elapsedMs:Date.now()-begin,heapUsed:heap.usedSize,heapTotal:heap.totalSize,rows,dom:await list.locator('*').count(),count:x.log?.events.length+x.log?.uncached.length,retainedUTF16Bytes:x.log?.bytes,persistedUTF16Bytes:x.persistedUTF16Bytes,ack:x.log?.lastSeq});
+  status=(await (await fetch(c.url+'/runs/'+run.id,{headers:{authorization:'Bearer '+c.keys.reader}})).json()).status;
+  if(samples.length===8)break;
+  await sleep(800);
+ }while(status==='running'||status==='queued');
+ return {samples:samples.length,last:samples.at(-1)};
+});
+await check('browsing while executing freezes window but advances acknowledgement',async()=>{
+ await until(async()=>(await cache()).log?.lastSeq>700,'too few events');
+ await page.getByRole('button',{name:'Load older',exact:true}).click();
+ await until(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'older pending');
+ const before=(await cache()).log;assert.equal(before.mode,'history');
+ await until(async()=>(await cache()).log.lastSeq>=before.lastSeq+50,'live did not advance');
+ const after=(await cache()).log;assert.deepEqual(after.events,before.events);assert.equal(after.mode,'history');
+ return {first:before.events[0].seq,last:before.events.at(-1).seq,ackBefore:before.lastSeq,ackAfter:after.lastSeq,identicalWindow:true};
+});
+await check('reload during active historical browsing uses acknowledged cursor',async()=>{
+ const before=(await cache()).log,n=requests.length;await page.reload();await list.waitFor();
+ await until(()=>requests.length>n,'no reopen');assert.equal(new URL(requests[n]).searchParams.get('after'),String(before.lastSeq));
+ const after=(await cache()).log;assert.deepEqual(after.events,before.events);assert.equal(after.mode,'history');
+ return {after:before.lastSeq,reopen:requests[n],windowFirst:after.events[0].seq};
+});
+await check('Follow live rejoins executing stream with exact retained suffix',async()=>{
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache()).log.mode==='live','not live');
+ await ctl('/idle');await until(async()=> (await cache()).log.lastSeq===(await ctl('/oracle',{runId:run.id})).last,'not tail');
+ const full=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186/live-full.json',JSON.stringify(full));
+ const x=(await cache()).log;assert.deepEqual(x.events,full.events.slice(-x.events.length));assert.equal(x.lastSeq,full.last);
+ assert.ok(x.events.length<512);assert.ok(x.bytes<=1048576);assert.ok(full.total>3000);
+ const heap=await cdp.send('Runtime.getHeapUsage');const follow=await page.getByRole('button',{name:'Follow live',exact:true}).isDisabled();
+ const scroll=await list.evaluate(e=>({scrollTop:e.scrollTop,clientHeight:e.clientHeight,scrollHeight:e.scrollHeight}));
+ assert.ok(follow);assert.ok(scroll.scrollTop+scroll.clientHeight>=scroll.scrollHeight-8);
+ return {total:full.total,retained:x.events.length,bytes:x.bytes,persistedUTF16Bytes:(await cache()).persistedUTF16Bytes,first:x.events[0].seq,last:x.lastSeq,heapUsed:heap.usedSize,scroll,exact:true};
+});
+await check('oversized event retains identity and exact transient payload',async()=>{
+ const appended=await ctl('/append',{runId:run.id,count:1,payload:600000});
+ await until(async()=>(await cache()).log.lastSeq===appended.last,'oversized not observed');let x=(await cache()).log;assert.equal(x.uncached.at(-1).seq,appended.last);assert.ok(x.bytes<=1048576);
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill(String(appended.last));await page.getByRole('button',{name:'Go to event',exact:true}).click();
+ await page.getByTestId('event-payload').waitFor();await page.getByRole('button',{name:'Show all of Event payload',exact:true}).click();
+ const payload=JSON.parse(await page.getByTestId('event-payload').innerText());assert.equal(payload.payload,'x'.repeat(600000));
+ x=(await cache()).log;assert.ok(!JSON.stringify(x).includes('x'.repeat(10000)));return {seq:appended.last,exactCharacters:payload.payload.length,marker:x.uncached.at(-1),cachedBytes:x.bytes};
+});
+await check('actual session quota exhaustion remains nonfatal',async()=>{
+ const quota=await page.evaluate(()=>{sessionStorage.removeItem('graphgoblin-run-events-v4');let n=0;try{for(;n<100;n++)sessionStorage.setItem('qa-fill-'+n,'q'.repeat(100000));}catch(e){return {entries:n,name:e.name};}return {entries:n,name:'not-exhausted'};});
+ assert.equal(quota.name,'QuotaExceededError');await page.reload();await list.waitFor();
+ await until(async()=>Number((await list.getByRole('button').last().getAttribute('data-seq')))===run.lastEventSeq || (await list.getByRole('listitem').count())>0,'inspector failed quota');
+ assert.ok(await page.getByRole('heading',{name:/^Run /}).isVisible());assert.ok(await list.getByRole('listitem').count()<=80);
+ await page.evaluate(()=>{for(let n=0;n<100;n++)sessionStorage.removeItem('qa-fill-'+n);});return {quota,rows:await list.getByRole('listitem').count(),pageErrors:[...errors]};
+});
+await check('old cache version discarded and fresh SSE begins at zero',async()=>{
+ const n=requests.length;await page.evaluate(id=>{sessionStorage.setItem('graphgoblin-run-events-v4',JSON.stringify({version:1,state:{runs:{[id]:{lastSeq:999999,events:[{seq:999999,type:'run.started',runId:id,attempt:1,ts:new Date().toISOString()}]}}}}));sessionStorage.setItem('graphgoblin-run-events-v3','old');},run.id);
+ await page.reload();await list.waitFor();await until(()=>requests.length>n,'no SSE');
+ assert.equal(new URL(requests[n]).searchParams.get('after'),'0');await until(async()=>(await cache()).log?.lastSeq>0,'no rehydration');const x=await cache();assert.notEqual(x.log.lastSeq,999999);assert.equal(await page.evaluate(()=>sessionStorage.getItem('graphgoblin-run-events-v3')),null);return {reopen:requests[n],ack:x.log.lastSeq};
+});
+await context.close();await browser.close();
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass).map(x=>({name:x.name,error:x.error.slice(0,350)})),samples:samples.length,errors}));

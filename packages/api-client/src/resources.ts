@@ -47,6 +47,7 @@ export type LoopDefinitionBody = RequestBody<'/loops', 'post'>['definition'];
 export type StartRunBody = RequestBody<'/loops/{id}/runs', 'post'>;
 export type ListRunsQuery = QueryParams<'/runs', 'get'>;
 export type RunSnapshot = ResponseBody<'/runs/{id}', 'get'>;
+export type ListEventsQuery = QueryParams<'/events', 'get'>;
 export type RunEventsPage = ResponseBody<'/runs/{id}/events', 'get'>;
 
 const id = (value: string) => ({ params: { path: { id: value } } });
@@ -120,24 +121,49 @@ export const runs = {
   /** Start a run from a manual trigger. Returns the queued run; it executes in the background. */
   start: async (client: GraphGoblinClient, loopId: string, body: StartRunBody = {}) =>
     unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,
-  list: async (client: GraphGoblinClient, query: ListRunsQuery = {}) =>
-    unwrap(await client.GET('/runs', { params: { query } })).items,
+  list: async (
+    client: GraphGoblinClient,
+    query: ListRunsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
   get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
     unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
-  thread: async (client: GraphGoblinClient, runId: string) =>
-    unwrap(await client.GET('/runs/{id}/thread', id(runId))),
-  /** One page of the persisted event log after `after`; use `subscribeRunEvents` for a live tail. */
+  thread: async (
+    client: GraphGoblinClient,
+    runId: string,
+    query: { at?: number } = {},
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/thread', { params: { path: { id: runId }, query }, ...options }),
+    ),
+  observation: async (
+    client: GraphGoblinClient,
+    runId: string,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs/{id}/observation', { ...id(runId), ...options })),
+  /** Forward replay uses `after`; browsing seeks `around` then passes opaque older/newer cursors unchanged. Use `subscribeRunEvents` for a live tail. */
   events: async (
     client: GraphGoblinClient,
     runId: string,
     query: QueryParams<'/runs/{id}/events', 'get'> = {},
-  ) => unwrap(await client.GET('/runs/{id}/events', { params: { path: { id: runId }, query } })),
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/events', { params: { path: { id: runId }, query }, ...options }),
+    ),
   cancel: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/cancel', id(runId))),
   pause: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/pause', id(runId))),
   resume: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/resume', id(runId))),
+  /** Deliberately abandon the missing provider context for this observed failed node. */
+  recoverSession: async (
+    client: GraphGoblinClient,
+    runId: string,
+    body: RequestBody<'/runs/{id}/recover-session', 'post'>,
+  ) => unwrap(await client.POST('/runs/{id}/recover-session', { ...id(runId), body })),
   /** Answer the observed input wait; take waitId from runs.get(...).waiting.waitId. */
   provideInput: async (
     client: GraphGoblinClient,
@@ -256,13 +282,19 @@ export const classifierModels = {
 };
 
 export const events = {
-  /** Publish an inbound event on the bus. */
+  /** Durably accept an external Event for one published loop and eligible trigger. */
   publish: async (client: GraphGoblinClient, event: RequestBody<'/events', 'post'>) =>
     unwrap(await client.POST('/events', { body: event })),
-  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/events')).items,
+  list: async (
+    client: GraphGoblinClient,
+    query: ListEventsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/events', { params: { query }, ...options })),
 };
 
 export const system = {
+  modelDefaults: async (client: GraphGoblinClient) =>
+    unwrap(await client.GET('/system/model-defaults')),
   health: async (client: GraphGoblinClient) => unwrap(await client.GET('/healthz')),
   version: async (client: GraphGoblinClient) => unwrap(await client.GET('/version')),
   /** Is each configured harness installed and authenticated? */

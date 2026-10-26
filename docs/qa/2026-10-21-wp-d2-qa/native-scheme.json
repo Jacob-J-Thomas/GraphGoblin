@@ -1,0 +1,192 @@
+{
+  "name": "scheme",
+  "id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+  "expected": "1 attempts; failed",
+  "actual": [
+    {
+      "id": "01M5GHE0G370TPKP7RZ0BFX0VW",
+      "channel": {
+        "kind": "webhook",
+        "url": "ftp://127.0.0.1:5811/unsupported"
+      },
+      "status": "failed",
+      "attempts": 1,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "not_sent",
+      "effectMayHaveHappened": false,
+      "lastError": {
+        "code": "invalid_destination",
+        "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+        "retryable": false,
+        "acknowledgement": "not_sent"
+      }
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHE0E9B2VCG9BA1X823W9Z",
+      "seq": 9,
+      "ts": "2026-10-22T00:51:00.227Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHE0G370TPKP7RZ0BFX0VW",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1:5811/unsupported"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHE0E9B2VCG9BA1X823W9Z",
+      "seq": 10,
+      "ts": "2026-10-22T00:51:00.241Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHE0G370TPKP7RZ0BFX0VW",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1:5811/unsupported"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:12.240Z"
+      }
+    },
+    {
+      "runId": "01M5GHE0E9B2VCG9BA1X823W9Z",
+      "seq": 11,
+      "ts": "2026-10-22T00:51:00.247Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHE0G370TPKP7RZ0BFX0VW",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1:5811/unsupported"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:51:00.263Z",
+      "last_event_seq": 11
+    },
+    "events": [
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 1,
+        "ts": "2026-10-22T00:51:00.169Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHE0CX662YN352KVYD2PYH\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA scheme\",\"label\":\"QA scheme v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHE0E9B2VCG9BA1X823W9Z\",\"loopId\":\"01M5GHE0CX10V0CN15KBWR5SCT\",\"versionId\":\"01M5GHE0CX662YN352KVYD2PYH\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHE0E9NWWAK7RF8D2K5HY6\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5GHDVJ7EHE58D5C73745QWV\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{\"qa\":\"scheme\"},\"receivedAt\":\"2026-10-22T00:51:00.169Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 2,
+        "ts": "2026-10-22T00:51:00.187Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 3,
+        "ts": "2026-10-22T00:51:00.201Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 4,
+        "ts": "2026-10-22T00:51:00.206Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"scheme\"},\"at\":\"2026-10-22T00:51:00.206Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"scheme\"},\"at\":\"2026-10-22T00:51:00.206Z\"}}],\"route\":\"out\",\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 5,
+        "ts": "2026-10-22T00:51:00.224Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"d34b5acf35518594\"}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 6,
+        "ts": "2026-10-22T00:51:00.227Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 7,
+        "ts": "2026-10-22T00:51:00.227Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 8,
+        "ts": "2026-10-22T00:51:00.227Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 9,
+        "ts": "2026-10-22T00:51:00.227Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0G370TPKP7RZ0BFX0VW\",\"channel\":{\"kind\":\"webhook\",\"url\":\"ftp://127.0.0.1:5811/unsupported\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 10,
+        "ts": "2026-10-22T00:51:00.241Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0G370TPKP7RZ0BFX0VW\",\"channel\":{\"kind\":\"webhook\",\"url\":\"ftp://127.0.0.1:5811/unsupported\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:12.240Z\"}}"
+      },
+      {
+        "run_id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+        "seq": 11,
+        "ts": "2026-10-22T00:51:00.247Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0G370TPKP7RZ0BFX0VW\",\"channel\":{\"kind\":\"webhook\",\"url\":\"ftp://127.0.0.1:5811/unsupported\"},\"status\":\"failed\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false,\"lastError\":{\"code\":\"invalid_destination\",\"message\":\"Webhook destination must be an HTTP(S) URL without credentials.\",\"retryable\":false,\"acknowledgement\":\"not_sent\"}}}"
+      }
+    ]
+  },
+  "pass": true,
+  "gapsMs": []
+}

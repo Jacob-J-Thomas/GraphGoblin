@@ -1,0 +1,73 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd typecheck *> docs/qa/wp-d4-343/round-4/typecheck ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache miss, executing 0b3fb821769d29f9
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs cd73701f0236c528
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache miss, executing 703ae3b98ce46d6a
+@graphgoblin/domain:build: cache miss, executing b59d154848ca793f
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing be368fe64a6a99e5
+@graphgoblin/engine:typecheck: cache miss, executing 38a7837d1ef1689b
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:typecheck: cache miss, executing f2f4fbe706703386
+@graphgoblin/adapter-codex:typecheck: cache miss, executing f15f92cb9eeb86c3
+@graphgoblin/adapter-codex:build: cache miss, executing cd2122332c332d66
+@graphgoblin/adapter-jev:build: cache miss, executing 48822ba32049b665
+@graphgoblin/infrastructure:build: cache miss, executing 67eefe976cecc8dd
+@graphgoblin/adapter-jev:typecheck: cache miss, executing e157e79b344135f8
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:typecheck: cache miss, executing 5fa7314446148c51
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing c4cb59e35c472a4e
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:typecheck: cache miss, executing 747a3ef7e43d435f
+@graphgoblin/api-client:build: cache miss, executing 1967745c8469f917
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: src/event-admission.test.ts(238,48): error TS2345: Argument of type '(intent: any, receiptId: any, onCommitted: any) => Promise<{ id: string; ownerId: string; loopId: string; versionId: string; pinned: { source: "draft" | "published"; version: number; name: string; label: string; defaults: { ...; }; limits: { ...; }; classifiers: Record<...>; }; ... 15 more ...; finishedAt?: string |...' is not assignable to parameter of type '(intent: RunAdmission, id: string) => Promise<{ id: string; ownerId: string; loopId: string; versionId: string; pinned: { source: "draft" | "published"; version: number; name: string; label: string; defaults: { ...; }; limits: { ...; }; classifiers: Record<...>; }; ... 15 more ...; finishedAt?: string | undefined; }>'.
+@graphgoblin/engine:typecheck:   Target signature provides too few arguments. Expected 3 or more, but got 2.
+@graphgoblin/engine:typecheck: src/event-admission.test.ts(238,49): error TS7006: Parameter 'intent' implicitly has an 'any' type.
+@graphgoblin/engine:typecheck: src/event-admission.test.ts(238,57): error TS7006: Parameter 'receiptId' implicitly has an 'any' type.
+@graphgoblin/engine:typecheck: src/event-admission.test.ts(238,68): error TS7006: Parameter 'onCommitted' implicitly has an 'any' type.
+@graphgoblin/engine:typecheck: src/event-admission.test.ts(240,38): error TS2554: Expected 2 arguments, but got 3.
+@graphgoblin/mcp:build: cache miss, executing f009d784062b5f1e
+@graphgoblin/web:typecheck: cache miss, executing 59acd670677991a5
+@graphgoblin/mcp:typecheck: cache miss, executing e785e944f6230f90
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-343\packages\engine) C:\nvm4w\nodejs\pnpm.cmd 
+run typecheck exited (2)
+
+ Tasks:    11 successful, 19 total
+Cached:    1 cached, 19 total
+  Time:    1m37.158s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

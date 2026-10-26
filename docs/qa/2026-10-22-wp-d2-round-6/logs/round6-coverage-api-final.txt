@@ -1,0 +1,67 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true
+At line:2 char:99
++ ... un='false'; pnpm.cmd --filter @graphgoblin/api test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 %WORKTREE%/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792700502400,"pid":49900,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5668"}
+{"level":30,"time":1792700502401,"pid":49900,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5668,"dataDir":"%TEMP%\\gg-api-process-XUq5T0","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792700502612,"pid":49900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792700502622,"pid":49900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":9.400999999998021,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 217884ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a child finished while down with one continuation per parent 76661ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 50 passed | 2 skipped (53)
+      Tests  1 failed | 701 passed | 6 skipped (708)
+   Start at  15:21:06
+   Duration  531.11s (tests 72%, import 23%, transform 4%, worker 1%)
+
+    Isolate  53 workers spawned · ~757ms startup each (spawn + environment, per file)
+             at least ~19.29s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.46% ( 1938/2009 )
+Branches     : 92.88% ( 1253/1349 )
+Functions    : 94.3% ( 381/404 )
+Lines        : 97.83% ( 1761/1800 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\apps\api

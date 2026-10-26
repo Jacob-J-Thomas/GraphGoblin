@@ -1,0 +1,18 @@
+HEAD: a9df185eecdb192a79b90665ee682ee7916b2ac0
+Command: pnpm.cmd format:check
+Capture: buffered in memory; transcript written after command exit.
+$ prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+Exit: 0
+
+Final evidence check: pnpm.cmd exec prettier --check round-2/*.{md,mjs,json}
+Checking formatting...
+[warn] docs/qa/2026-10-22-wp-g2-qa/round-2/round-1-preservation.json
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+Scoped exit: 1
+
+Final evidence check after fixing the QA JSON generator: pnpm.cmd exec prettier --check round-2/*.{md,mjs,json}
+Checking formatting...
+All matched files use Prettier code style!
+Scoped exit: 0

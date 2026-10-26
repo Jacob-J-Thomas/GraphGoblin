@@ -1,0 +1,273 @@
+{
+  "workload": "engine-control",
+  "command": [
+    ".tmp/gg-wp-e1-268-guard.mjs",
+    ".tmp/gg-wp-e1-268-guard-before-1"
+  ],
+  "environment": {
+    "node": "v22.14.0",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+    "logicalCpus": 12,
+    "freeRamBefore": 28010098688,
+    "evidence": "Controlled public RunManager with fake ports; not SQLite/API throughput or native recovery evidence",
+    "hostBusyFraction": 0.6212332463674379,
+    "freeRamAfter": 26959278080
+  },
+  "cases": [
+    {
+      "specification": {
+        "passes": 100,
+        "items": 2,
+        "itemBytes": 120,
+        "inference": true
+      },
+      "wallMs": 535.9617,
+      "cpu": {
+        "user": 188000,
+        "system": 31000
+      },
+      "msPerPass": 5.359616999999999,
+      "events": 1108,
+      "correctness": {
+        "ok": true,
+        "visits": {
+          "start": 1,
+          "work": 100,
+          "gate": 100,
+          "done": 1
+        },
+        "gatePasses": 100
+      },
+      "equivalence": {
+        "eventsSha256": "3616a1fb9d0f39e07770a1bf987dd5bb3db3fb22298ec67981cdcab64204d6e8",
+        "stateSha256": "e76a691482b650e1e5a6a2c85a6ff6eb0a4781de6d572c84b40e8aac70d1764d",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "profileWindow": {
+        "startUs": 670984807155,
+        "endUs": 670985343085
+      },
+      "cpuSamples": {
+        "count": 344,
+        "guard": [
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            2
+          ]
+        ],
+        "top": [
+          [
+            ":0 (idle)",
+            288
+          ],
+          [
+            "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+            8
+          ],
+          [
+            ":0 (program)",
+            6
+          ],
+          [
+            "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/doc.js:32 compile",
+            4
+          ],
+          [
+            ":3 ",
+            4
+          ],
+          [
+            "node:internal/timers:514 processTimers",
+            3
+          ],
+          [
+            "packages/domain/dist/json-schema.js:73 stableHash",
+            3
+          ],
+          [
+            "packages/engine/dist/run-manager.js:1561 execute",
+            2
+          ],
+          [
+            "node:internal/timers:534 listOnTimeout",
+            2
+          ],
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "specification": {
+        "passes": 1000,
+        "items": 2,
+        "itemBytes": 120,
+        "inference": true
+      },
+      "wallMs": 4562.841700000001,
+      "cpu": {
+        "user": 1609000,
+        "system": 547000
+      },
+      "msPerPass": 4.562841700000001,
+      "events": 11008,
+      "correctness": {
+        "ok": true,
+        "visits": {
+          "start": 1,
+          "work": 1000,
+          "gate": 1000,
+          "done": 1
+        },
+        "gatePasses": 1000
+      },
+      "equivalence": {
+        "eventsSha256": "9efc67919c4b821fb7d0005ad610a1ff3a61f40260615ce66ccdb568e01606b0",
+        "stateSha256": "9c592cf304b19f331ef29c6df865ea03febde793d8b05f999a722c215bbdf4bf",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "profileWindow": {
+        "startUs": 670985376248,
+        "endUs": 670989939055
+      },
+      "cpuSamples": {
+        "count": 2901,
+        "guard": [
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            17
+          ]
+        ],
+        "top": [
+          [
+            ":0 (idle)",
+            2496
+          ],
+          [
+            ":0 (program)",
+            71
+          ],
+          [
+            "packages/engine/dist/run-manager.js:1561 execute",
+            44
+          ],
+          [
+            "packages/engine/dist/handlers/inference-turn.js:3 visitTurn",
+            29
+          ],
+          [
+            ":0 (garbage collector)",
+            22
+          ],
+          [
+            "packages/engine/dist/handlers/inference.js:175 execute",
+            19
+          ],
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            17
+          ],
+          [
+            "node:internal/timers:534 listOnTimeout",
+            16
+          ],
+          [
+            ":3 ",
+            15
+          ],
+          [
+            "node:internal/timers:514 processTimers",
+            14
+          ]
+        ]
+      }
+    },
+    {
+      "specification": {
+        "passes": 10000,
+        "items": 2,
+        "itemBytes": 120,
+        "inference": true
+      },
+      "wallMs": 148351.649,
+      "cpu": {
+        "user": 93328000,
+        "system": 24172000
+      },
+      "msPerPass": 14.8351649,
+      "events": 110008,
+      "correctness": {
+        "ok": true,
+        "visits": {
+          "start": 1,
+          "work": 10000,
+          "gate": 10000,
+          "done": 1
+        },
+        "gatePasses": 10000
+      },
+      "equivalence": {
+        "eventsSha256": "9f99ba06ee2baa924906362653301061bf64e44c1fafd022d9449a5c0985022f",
+        "stateSha256": "bde4480585dafb3a68b333755b84474ba36966a0a1927c1d78e3fd85c23e0945",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "profileWindow": {
+        "startUs": 670990067218,
+        "endUs": 671138418782
+      },
+      "cpuSamples": {
+        "count": 91507,
+        "guard": [
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            6713
+          ]
+        ],
+        "top": [
+          [
+            ":0 (idle)",
+            28174
+          ],
+          [
+            "packages/engine/dist/handlers/inference.js:175 execute",
+            21796
+          ],
+          [
+            "packages/engine/dist/handlers/inference-turn.js:3 visitTurn",
+            17986
+          ],
+          [
+            "packages/engine/dist/run-manager.js:1561 execute",
+            8679
+          ],
+          [
+            "packages/engine/dist/run-manager.js:118 countEntries",
+            6713
+          ],
+          [
+            "packages/engine/dist/testing/fakes.js:89 read",
+            1056
+          ],
+          [
+            ":0 (program)",
+            819
+          ],
+          [
+            ":0 (garbage collector)",
+            633
+          ],
+          [
+            "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1723 inst._zod.parse",
+            347
+          ],
+          [
+            ":3 ",
+            323
+          ]
+        ]
+      }
+    }
+  ]
+}

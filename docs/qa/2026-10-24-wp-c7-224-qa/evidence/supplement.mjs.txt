@@ -1,0 +1,46 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Derives the unchanged public-HTTP helpers and the one unexecuted scenario from runtime.mjs.txt.
+// The initial 20-second cold-start failure is retained. This is a bounded missing-case recovery,
+// not a repeat of the passing suite. The generated full script is retained before execution.
+const dir = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const source = await readFile(join(dir, 'runtime.mjs.txt'), 'utf8');
+const helpers = source.slice(0, source.indexOf("await scenario('01-drain-family'"))
+  .replace('const summary = [];', 'const summary = [];')
+  .replace("'runtime-summary.json'", "'supplement-summary.json'")
+  .replace("const deadline = Date.now() + timeout;", "const deadline = Date.now() + (label === 'API listening' ? 60000 : timeout);");
+let admission = source.slice(source.indexOf("await scenario('03-admission'"), source.indexOf("await scenario('04-controls'"))
+  .replace("'03-admission'", "'03b-admission'");
+const extras = `
+await scenario('07-signal-component', async () => {
+  const { ShutdownSignals } = await import(pathToFileURL(resolve('apps/api/dist/shutdown-signals.js')).href);
+  let stopping = false;
+  const actions = [];
+  const signals = new ShutdownSignals(action => { actions.push({ action, at: Date.now() }); stopping = true; }, () => stopping);
+  signals.receive(); signals.receive();
+  await sleep(200); signals.receive();
+  check('duplicate signals within 1 second coalesced - component only', actions.map(a => a.action), ['drain']);
+  await sleep(950); signals.receive(); signals.receive();
+  check('later signal forces and its duplicate coalesces - component only', actions.map(a => a.action), ['drain','force']);
+  note('signal-actions-component-only', { actions, nativeEvidence: false });
+  const apiActions = [];
+  const apiSignals = new ShutdownSignals(a => apiActions.push(a), () => true);
+  apiSignals.receive();
+  check('signal after API drain requests force - component only', apiActions, ['force']);
+});
+
+await scenario('08-default-config', async () => {
+  const f = await fixture('default', { GG_SHUTDOWN_GRACE_MS: undefined });
+  check('default grace is five minutes', (await state(f)).graceMs, 300000);
+  await stop(f);
+});
+
+console.log(JSON.stringify(summary));
+process.exitCode = summary.some(s => s.error || s.failed.length) ? 1 : 0;
+`;
+const generated = "import { pathToFileURL } from 'node:url';\n" + helpers + admission + extras;
+await writeFile(join(dir, 'supplement-generated.mjs.txt'), generated);
+// A data URL keeps execution inside the current process; all production calls use built modules.
+await import('data:text/javascript;base64,' + Buffer.from(generated).toString('base64'));

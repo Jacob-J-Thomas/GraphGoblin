@@ -62,7 +62,8 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
   const context = dialog.getByRole('tab', { name: /^Context\b/ });
   await expect(dialog.getByRole('tablist', { name: 'Node configuration' })).toBeVisible();
   await expect(main).toHaveAttribute('aria-selected', 'true');
-  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
+  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Add input', exact: true })).toBeHidden();
   await main.focus();

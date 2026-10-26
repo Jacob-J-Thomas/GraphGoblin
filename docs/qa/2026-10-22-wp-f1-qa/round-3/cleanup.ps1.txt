@@ -1,0 +1,39 @@
+param([Parameter(Mandatory=$true)][string]$QaRoot)
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false)
+$qaResolved=[IO.Path]::GetFullPath($QaRoot).TrimEnd('\')
+$qaTemp=[IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')
+if ((Split-Path $qaResolved -Parent) -ne $qaTemp -or (Split-Path $qaResolved -Leaf) -notlike 'gg-qa-f1-*') {throw 'Cleanup scope rejected'}
+# WMI process inspection is denied in this sandbox. Use retained binding/PID evidence
+# and executable paths, with process-start checks that reject recycled PIDs.
+$owned=@();$observed=@{}
+$portLog=Join-Path $qaResolved 'ports.jsonl'
+if(Test-Path -LiteralPath $portLog){
+  foreach($line in Get-Content -LiteralPath $portLog){$item=$line|ConvertFrom-Json;$at=[DateTime]::Parse($item.at).ToUniversalTime();if(-not $observed.ContainsKey([int]$item.pid) -or $observed[[int]$item.pid] -lt $at){$observed[[int]$item.pid]=$at}}
+}
+foreach($file in @(Get-ChildItem -LiteralPath $qaResolved -Recurse -Force -File | Where-Object {$_.Name -eq 'api-pid.txt' -or ($_.Name -eq 'grandchild.pid' -and $_.Directory.Name -like 'gg-process-tree-*')})){
+  $value=0;if([int]::TryParse((Get-Content -LiteralPath $file.FullName -Raw).Trim(),[ref]$value)){$observed[$value]=$file.LastWriteTimeUtc}
+}
+foreach($id in $observed.Keys){$item=Get-Process -Id $id -ErrorAction SilentlyContinue;if($item -and $item.ProcessName -eq 'node' -and $item.StartTime.ToUniversalTime() -le $observed[$id]){$owned+=$item}}
+$owned+=@(Get-Process -Name claude,codex,claude-r3,codex-r3 -ErrorAction SilentlyContinue | Where-Object {$_.Path -and $_.Path.StartsWith($qaResolved+'\',[StringComparison]::OrdinalIgnoreCase)})
+$owned=@($owned|Sort-Object Id -Unique)
+$stops=@()
+foreach($item in $owned) {
+  try {Stop-Process -Id $item.Id -Force -ErrorAction Stop; $stops+=@{pid=$item.Id;stopped=$true}}
+  catch {$stops+=@{pid=$item.Id;stopped=$false;error=$_.Exception.Message}}
+}
+Start-Sleep -Milliseconds 500
+$remaining=@($owned|ForEach-Object {Get-Process -Id $_.Id -ErrorAction SilentlyContinue})
+$files=@(Get-ChildItem -LiteralPath $qaResolved -Recurse -Force -File)
+$links=@(Get-ChildItem -LiteralPath $qaResolved -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint })
+if($links.Count){throw 'Unexpected reparse point; no file cleanup attempted'}
+$removed=0;$errors=@()
+foreach($file in $files) {
+  $target=[IO.Path]::GetFullPath($file.FullName)
+  if(-not $target.StartsWith($qaResolved+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Escaping target'}
+  try {Remove-Item -LiteralPath $target -Force -ErrorAction Stop;$removed++}
+  catch {$errors+=@{relative=$target.Substring($qaResolved.Length+1);message=$_.Exception.Message}}
+}
+$directories=@(Get-ChildItem -LiteralPath $qaResolved -Recurse -Force -Directory | ForEach-Object {$_.FullName.Substring($qaResolved.Length+1)})
+@{root='<temp>/gg-qa-f1-<id>';stops=$stops;remainingProcesses=@($remaining | Select-Object Id,ProcessName);filesRemoved=$removed;errors=$errors;emptyDirectoriesLeft=$directories;rootLeft=$true;processInspectionLimit='Win32_Process WMI query denied; no exhaustive claim about unidentified Node descendants'} | ConvertTo-Json -Depth 8
+# Deliberately no directory deletion: the orchestrator owns the empty directories.

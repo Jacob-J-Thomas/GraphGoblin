@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[],requests=[],errors=[];
+const ctl=async(path,body={})=>(await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)})).json();
+const c=await ctl('/connection'),r=JSON.parse(await readFile('.tmp/qa186r2/run.json','utf8')),all=await ctl('/oracle',{runId:r.runId,full:true});
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+await context.addInitScript(token=>localStorage.setItem('graphgoblin-api-key',token),c.keys.admin);
+const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));
+page.on('request',req=>{if(req.headers().accept==='text/event-stream')requests.push(req.url());});
+let opened=0;
+await page.route('**/runs/'+r.runId+'/events**',async route=>{
+ if(route.request().headers().accept!=='text/event-stream'||++opened>1)return route.continue();
+ const prefix=all.events.slice(0,600).map(e=>'event: '+e.type+'\ndata: '+JSON.stringify(e)+'\nid: '+e.seq+'\n\n').join('');
+ await route.fulfill({status:200,contentType:'text/event-stream',body:prefix+'event: stream.error\ndata: {"status":503,"code":"SSE_SLOW_CONSUMER","detail":"Independent QA transport: reader fell behind."}\n\n'});
+});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const until=async(fn,msg)=>{for(let i=0;i<300;i++){if(await fn())return;await sleep(100);}throw Error(msg);};
+const cache=()=>page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')??'{}').state?.runs?.[id],r.runId);
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2000)});}await writeFile(out+'/recovery-results.json',JSON.stringify({checks,requests,errors},null,2));}
+await page.goto(c.url+'/app/runs/'+r.runId);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+await check('typed slow-consumer reason is visible and resumes from complete event 600',async()=>{
+ await page.getByText('Independent QA transport: reader fell behind.',{exact:true}).waitFor({timeout:15000});
+ await page.screenshot({path:out+'/slow-consumer-note.png'});
+ await until(async()=>(await cache())?.lastSeq===all.last,'no catchup');
+ assert.equal(new URL(requests[1]).searchParams.get('after'),'600');const x=await cache();assert.deepEqual(x.events,all.events.slice(-x.events.length));return {fault:'controlled public HTTP stream, real browser parser, real gateway reconnect',receivedPrefix:600,reopen:requests[1],count:x.events.length,first:x.events[0].seq,last:x.events.at(-1).seq};
+});
+await check('after typed failure older/newer, reload and live suffix remain exact',async()=>{
+ await page.getByRole('button',{name:'Load older',exact:true}).click();await until(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'older busy');
+ const before=await cache();await page.reload();await list.waitFor();await until(async()=>!!(await cache()),'no cache');assert.deepEqual((await cache()).events,before.events);
+ await page.getByRole('button',{name:'Load newer',exact:true}).click();await until(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'newer busy');
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache()).mode==='live','not live');
+ const x=await cache();assert.deepEqual(x.events,all.events.slice(-x.events.length));return {reloadedFirst:before.events[0].seq,last:x.events.at(-1).seq,count:x.events.length,exactSuffix:true};
+});
+await check('selected node patch before and after equal full replay boundary',async()=>{
+ const event=all.events.find(e=>e.type==='node.finished'&&e.nodeId==='work'&&e.seq>40);assert.ok(event);
+ const oracle=await ctl('/oracle',{runId:r.runId,at:[event.seq-1,event.seq]});
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill(String(event.seq));await page.getByRole('button',{name:'Go to event',exact:true}).click();
+ await page.getByRole('heading',{name:'Thread at event '+event.seq,exact:true}).waitFor();
+ const diff=page.getByRole('list',{name:'Patch diff',exact:true});await diff.waitFor();
+ const pointer=(o,path)=>path.split('/').slice(1).reduce((x,k)=>x?.[k.replaceAll('~1','/').replaceAll('~0','~')],o);
+ const results=[];for(const patch of event.patch){if(!['add','replace','remove'].includes(patch.op)||patch.path.endsWith('/-'))continue;
+ const before=pointer(oracle.threads[event.seq-1],patch.path),after=pointer(oracle.threads[event.seq],patch.path);
+ for(const [side,value] of [['before',before],['after',after]]){const field=page.getByLabel('Value '+side+' '+patch.path,{exact:true});const actual=await field.innerText();assert.equal(actual,value===undefined?'(absent)':JSON.stringify(value,null,2));}
+ results.push({path:patch.path,before,after});}
+ assert.ok(results.length);return {seq:event.seq,boundaryBefore:event.seq-1,results};
+});
+await check('two independent tabs restore separate history windows',async()=>{
+ const second=await context.newPage();await second.goto(c.url+'/app/runs/'+r.runId);await second.getByRole('list',{name:'Timeline',exact:true}).waitFor();await until(async()=>Number(await second.getByRole('list',{name:'Timeline',exact:true}).getByRole('button').last().getAttribute('data-seq'))===all.last,'second no tail');
+ const a=await cache(),b=await second.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],r.runId);
+ assert.equal(a.mode,'history');assert.equal(b.mode,'live');assert.notEqual(a.events[0].seq,b.events[0].seq);await second.close();return {tab1:{mode:a.mode,first:a.events[0].seq},tab2:{mode:b.mode,first:b.events[0].seq,ack:b.lastSeq}};
+});
+await context.close();await browser.close();
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failures:checks.filter(x=>!x.pass),errors}));

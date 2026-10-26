@@ -1,0 +1,38 @@
+import assert from'node:assert/strict';
+import{writeFile}from'node:fs/promises';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+import{definition}from'../../tooling/perf/common.mjs';
+import{CURRENT_DEFINITION_FORMAT}from'../../packages/contracts/dist/index.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const ctl=async(path,b={})=>(await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)})).json();
+const c=await ctl('/connection'),headers={authorization:'Bearer '+c.keys.admin,'content-type':'application/json'};
+const post=async(path,b={})=>{const r=await fetch(c.url+path,{method:'POST',headers,body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+const def=definition(CURRENT_DEFINITION_FORMAT,{passes:150,inference:false,contextBytes:16});def.name='QA variable replay '+Date.now();
+const {loop}=await post('/loops',{definition:def});await post('/loops/'+loop.id+'/publish');const {run}=await post('/loops/'+loop.id+'/runs');
+await ctl('/idle');const all=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186/vars-full.json',JSON.stringify(all));
+const event=all.events.find(e=>e.type==='node.finished'&&e.nodeId==='work'&&e.seq>200);
+const oracle=await ctl('/oracle',{runId:run.id,at:[event.seq-1,event.seq,all.last]});
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);const page=await context.newPage();
+const results={runId:run.id,total:all.total,selected:event.seq,checks:[]};
+const until=async(fn,msg)=>{for(let i=0;i<250;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+async function shown(){const more=page.getByRole('button',{name:'Show all of Full thread JSON',exact:true});if(await more.isVisible())await more.click();return JSON.parse(await page.getByTestId('thread-json').innerText());}
+try{
+ await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+ await until(async()=>Number(await list.getByRole('button').last().getAttribute('data-seq'))===all.last,'no tail');
+ await page.getByRole('button',{name:'Full thread JSON',exact:true}).click();await until(async()=>{try{assert.deepEqual(await shown(),oracle.threads[all.last]);return true;}catch{return false;}},'live vars mismatch');
+ assert.equal(oracle.threads[all.last].vars.history.length,150);results.checks.push({name:'current variables, gates and counters equal fresh full replay beyond retained window',pass:true,historyLength:150,counters:oracle.threads[all.last].counters});
+ const cached=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],run.id);
+ assert.ok(cached.events[0].seq>event.seq);
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill(String(event.seq));await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event '+event.seq,exact:true}).waitFor();
+ await until(async()=>{try{assert.deepEqual(await shown(),oracle.threads[event.seq]);return true;}catch{return false;}},'selected vars mismatch');
+ const before=(await (await fetch(c.url+'/runs/'+run.id+'/thread?at='+(event.seq-1),{headers})).json());assert.deepEqual(before,oracle.threads[event.seq-1]);
+ results.checks.push({name:'evicted variable patch selection and exact before thread',pass:true,beforeCount:before.vars.history.length,afterCount:oracle.threads[event.seq].vars.history.length});
+ const log=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],run.id);
+ const expected=all.events.filter(e=>e.seq>=log.events[0].seq&&e.seq<=log.events.at(-1).seq&&['node.progress','harness.session','harness.usage','decision.made','exit.evaluated','heartbeat.beat'].includes(e.type));
+ const groups=new Set(expected.map(e=>e.nodeId));const progress=page.getByRole('button',{name:/^Node progress/});assert.equal(await progress.innerText(),'Node progress ('+groups.size+' nodes)');await progress.click();
+ await page.getByText('Activity below covers the retained history window. Earlier activity is available through Load older.',{exact:true}).waitFor();
+ results.checks.push({name:'progress groups equal server full-read slice for labelled retained window',pass:true,groups:[...groups],activityEvents:expected.length,window:[log.events[0].seq,log.events.at(-1).seq]});
+ await writeFile(out+'/vars-progress.aria.txt',await page.locator('body').ariaSnapshot());results.pass=true;
+}catch(e){results.pass=false;results.error=String(e).slice(0,3000);}
+await writeFile(out+'/vars-progress-results.json',JSON.stringify(results,null,2));await context.close();await browser.close();console.log(JSON.stringify(results));

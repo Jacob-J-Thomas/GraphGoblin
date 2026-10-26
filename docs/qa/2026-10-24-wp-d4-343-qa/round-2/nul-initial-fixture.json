@@ -1,0 +1,259 @@
+{
+  "facts": [
+    {
+      "key": "before\u0000after",
+      "first": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      },
+      "retry": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      },
+      "receipt": [],
+      "inbound": [],
+      "runs": []
+    },
+    {
+      "key": "plain-control",
+      "first": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      },
+      "retry": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      },
+      "receipt": [],
+      "inbound": [],
+      "runs": []
+    }
+  ],
+  "log": [
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSDW",
+          "ownerId": "local",
+          "name": "NUL key isolated reproduction",
+          "draftVersionId": "01M5PSF7XK5CWPJR774ENCKSDX",
+          "createdAt": "2026-10-24T11:06:55.795Z",
+          "updatedAt": "2026-10-24T11:06:55.795Z"
+        },
+        "draft": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSDX",
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSDW",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "NUL key isolated reproduction",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "nul-repro"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T11:06:55.795Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5PSF7XK5CWPJR774ENCKSDW/publish",
+      "status": 400,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/malformed-body",
+        "title": "malformed body",
+        "status": 400,
+        "code": "MALFORMED_BODY",
+        "detail": "Body cannot be empty when content-type is set to 'application/json'"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-published",
+        "title": "version not published",
+        "status": 409,
+        "code": "VERSION_NOT_PUBLISHED",
+        "detail": "target loop has no published version"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    }
+  ]
+}

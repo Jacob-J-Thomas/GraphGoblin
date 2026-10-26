@@ -1,0 +1,13 @@
+import {readFile,writeFile,open} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import path from 'node:path';
+const out=path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa');
+let gates=[];while(gates.length<12){try{gates=JSON.parse(await readFile(path.join(out,'gates.json'),'utf8'));}catch{}if(gates.length<12)await new Promise(r=>setTimeout(r,1000));}
+const reruns=[];
+for(const g of gates.filter(g=>g.code!==0)){
+ const text=(await readFile(path.join(out,g.log),'utf8')).replace(/\x1b\[[0-9;]*m/g,'');
+ const pkg=g.command.match(/--filter @graphgoblin\/(\S+)/)?.[1];if(!pkg)continue;
+ const timed=new Set();for(const block of text.split(/\n\s*FAIL\s+/).slice(1)){const file=block.match(/^(src\/[^\s]+\.test\.(?:ts|tsx))/)?.[1];if(file&&/timed out|timeout|Timeout/.test(block))timed.add(file);}
+ for(const file of timed){const log=`isolated-${pkg}-${file.replaceAll('/','-')}.log.txt`;const command=`pnpm.cmd --filter @graphgoblin/${pkg} exec vitest run ${file} --maxWorkers=1`;const h=await open(path.join(out,log),'w');const begin=Date.now();const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{stdio:['ignore',h.fd,h.fd],windowsHide:true});const code=await new Promise(r=>child.on('exit',r));await h.close();reruns.push({originalGate:g.log,package:pkg,file,command,code,seconds:(Date.now()-begin)/1000,log,attempt:1});await writeFile(path.join(out,'timing-reruns.json'),JSON.stringify(reruns,null,2));console.log(JSON.stringify(reruns.at(-1)));}
+}
+await writeFile(path.join(out,'timing-reruns.json'),JSON.stringify(reruns,null,2));

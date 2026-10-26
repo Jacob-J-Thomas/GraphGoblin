@@ -68,13 +68,23 @@ describe('system routes', () => {
       items: { harness: string; ok: boolean }[];
     }>();
     expect(preflight.items).toEqual([
-      { harness: 'codex', ok: true, version: 'fake', authenticated: true, problems: [] },
+      {
+        harness: 'codex',
+        state: 'ready',
+        ok: true,
+        version: 'fake',
+        authenticated: true,
+        problems: [],
+      },
     ]);
     t.harness.preflight = () => Promise.reject(new Error('codex missing'));
     const broken = (await t.app.inject('/harness/preflight')).json<{
       items: { ok: boolean; problems: string[] }[];
     }>();
-    expect(broken.items[0]).toMatchObject({ ok: false, problems: ['codex missing'] });
+    expect(broken.items[0]).toMatchObject({
+      ok: false,
+      problems: [expect.stringMatching(/readiness could not be confirmed/)],
+    });
     delete t.container.ports.harnesses.codex;
     const none = (await t.app.inject('/harness/preflight')).json<{
       items: { problems: string[] }[];
@@ -619,11 +629,19 @@ describe('settings, secrets, api keys, catalog, events', () => {
     ).toBe(404);
   });
 
-  it('publishes and lists inbound events', async () => {
+  it('publishes and lists same-millisecond inbound events in reverse creation order', async () => {
+    const firstDefinition = minimalLoop();
+    firstDefinition.name = 'First Event ordering';
+    firstDefinition.nodes[0]!.config = { type: 'event', eventType: 'issue-ready' };
+    const firstLoopId = await t.publishLoop(firstDefinition);
+    const secondDefinition = minimalLoop();
+    secondDefinition.name = 'Second Event ordering';
+    secondDefinition.nodes[0]!.config = { type: 'event', eventType: 'second' };
+    const secondLoopId = await t.publishLoop(secondDefinition);
     const published = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'issue-ready', payload: { n: 1 }, dedupeKey: 'k' },
+      payload: { loopId: firstLoopId, type: 'issue-ready', payload: { n: 1 }, dedupeKey: 'k' },
     });
     expect(published.statusCode).toBe(202);
     expect(published.json()).toMatchObject({
@@ -632,7 +650,14 @@ describe('settings, secrets, api keys, catalog, events', () => {
       dedupeKey: 'k',
       ownerId: 'local',
     });
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'second' } });
+    const second = await t.app.inject({
+      method: 'POST',
+      url: '/events',
+      payload: { loopId: secondLoopId, type: 'second' },
+    });
+    expect(second.json<{ receivedAt: string }>().receivedAt).toBe(
+      published.json<{ receivedAt: string }>().receivedAt,
+    );
     const list = (await t.app.inject('/events')).json<{ items: { type: string }[] }>();
     expect(list.items.map((e) => e.type)).toEqual(['second', 'issue-ready']);
   });

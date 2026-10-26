@@ -1,0 +1,127 @@
+import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {join,resolve} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-f3-270-qa/round-2');
+const readText=async name=>{const b=await readFile(join(out,name));return b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'')};
+const readJson=async name=>JSON.parse(await readText(name));
+const scrub=s=>{for(const prefix of ['file:///'+process.env.USERPROFILE.replaceAll('\\','/'),process.env.USERPROFILE.replaceAll('\\','\\\\'),process.env.USERPROFILE,process.env.USERPROFILE.replaceAll('\\','/'),process.env.USERPROFILE.slice(2).replaceAll('\\','\\\\'),process.env.USERPROFILE.slice(2),process.env.USERPROFILE.slice(2).replaceAll('\\','/')])s=s.replaceAll(prefix,'%USERPROFILE%');return s};
+async function files(dir='',acc=[]){for(const entry of await readdir(join(out,dir),{withFileTypes:true})){const p=(dir?dir+'/':'')+entry.name;if(entry.isDirectory())await files(p,acc);else acc.push(p)}return acc}
+const omitted=[];for(const p of await files()){const file=join(out,p),s=await stat(file);if(s.size>1000000){const b=await readFile(file);omitted.push({path:p,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});await unlink(file);continue}if(/\.(json|txt|md)$/.test(p)&&p!=='README.md'){const text=await readText(p),clean=scrub(text);if(clean!==text||/\.log\.txt$/.test(p))await writeFile(file,clean)}}
+await writeFile(join(out,'NOT-KEPT.md'),omitted.length?'# Captures not kept\n\n'+omitted.map(x=>`- ${x.path}: ${x.bytes} bytes; SHA-256 ${x.sha256}.`).join('\n')+'\n':'# Captures not kept\n\nNo evidence capture exceeded 1,000,000 bytes. Disposable SQLite stores and temporary runtime copies remain outside this evidence folder for orchestrator cleanup; only their retained row exports and resource inventories are cited.\n');
+const results=await readJson('results.json'),supplement=await readJson('supplemental-results.json'),browser=await readJson('browser-results.json'),webhook=await readJson('webhook-final-results.json'),gates=await readJson('gates.json'),environment=await readJson('environment.json');
+const caseBy=name=>results.find(r=>r.name===name),decision=caseBy('decision-timeout-capacity-late-and-pin').data,unlimited=caseBy('unlimited-no-timer-explicit-cancel-late').data,repair=caseBy('structured-output-transform-timeout-provenance-resume').data;
+const upgrade=await readJson('upgrade-public-reads.json'),before=await readJson('store-before.json'),stable=await readJson('store-after-and-second-start.json'),nested=await readJson('direct-migration-nested-values.json');
+const gateRows=gates.map(g=>`| \`${g.command}\` | ${g.exitCode===0?'PASS':'FAIL'} (${(g.elapsedMs/1000).toFixed(2)} s; exit ${g.exitCode}) | [${g.name}](${g.name}.log.txt) |`).join('\n');
+const coverage=[];for(const g of gates.filter(g=>g.name.endsWith('-coverage'))){const log=await readText(g.name+'.log.txt');const summary=[...log.matchAll(/(Statements|Branches|Functions|Lines)\s*:\s*([^\r\n]+)/g)].map(m=>m[1]+': '+m[2].trim()).join('; ');const line=summary||log.split(/\r?\n/).find(l=>/^All files\s*\|/.test(l.trim()));coverage.push(`| ${g.pkg} | ${g.exitCode===0?'PASS':'FAIL'} | ${line?line.trim().replaceAll('|',' / '):'No passing coverage denominator established'} | [log](${g.name}.log.txt) |`)}
+const gateFailures=gates.filter(g=>g.exitCode!==0);const failureDetails=[];for(const g of gateFailures){const text=await readText(g.name+'.log.txt');failureDetails.push({...g,failedTests:[...text.matchAll(/^ FAIL[^\r\n]*/gm)].map(m=>m[0]),errors:[...text.matchAll(/^(?:Error:|AssertionError:)[^\r\n]*/gm)].map(m=>m[0])})}await writeFile(join(out,'gate-failure-details.json'),JSON.stringify(failureDetails,null,2));
+let markdown=`# Independent QA round 2: WP-F3 bolt #270
+
+## 1. Verdict
+
+**PASS WITH MINOR DEFECTS** at \`827c4f39eb906a0df0bfe6acc07c613e8fda5ae4\`: the functional D2/D3 corrections and deadline regressions passed; the requested generated-reference wording check fails (R2-D1, minor). This is independent QA, not implementation, review, merge approval, or integrated acceptance of #306/#288. No production code, tests, Git index, or commits were changed. Only this round-2 evidence directory was added.
+
+Branch \`codex-qa-wp-f3-270-2\`; worktree \`%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f3-270-2\`; comparison base \`0a1ff340dc8e0eb0ad6621b4020d100dcdc3be71\`. Exact head and nonempty local dependencies were confirmed before building. Node **22.14.0** was first on PATH for build, gates, and runtime scripts. The build passed **11/11 tasks**, with no cache hits. [Environment](environment.json), [build](build.log.txt), [binding instructions and issues](requirements.log.txt), [complete candidate diff](candidate-diff.log.txt).
+
+Built API composition roots, built web assets, real child processes and real SQLite files were exercised at **127.0.0.1:5880**. API-created keys were generated; fake harness and fake structured-completion ports were injected through supported constructors. **No live provider turns** occurred. Microsoft Edge ran headless at **1440 x 1000** and **390 x 1000**; [installed version](edge-version.json). All manually created data/runtime directories use \`gg-qa-f3-270-2-\` under system Temp. The explicitly requested upgrade suite and package tests own their own fixture directories. No owner ports/store or main checkout were used.
+
+All owned API children exited through cooperative stdin shutdown. Native process-tree termination is unavailable in this sandbox (**D-015**), and no OS process-tree cleanup or live provider termination is claimed. Port 5880 was bindable after the owned instances stopped. Disposable folders and generated coverage directories were retained for orchestrator cleanup: [generated directories](generated-directories.log.txt), [inventory](temporary-directories.log.txt), [main processes](processes.json), [main resources](temporary-resources.json), [supplement resources](supplemental-resources.json), and [final webhook resources](webhook-final-results.json).
+
+## 2. Defects
+
+### R2-D1 - Minor: generated references omit the completion-limit scope
+
+1. Inspect the generated \`docs/reference/api.md\` and \`docs/reference/nodes.md\` at the tested head.
+2. Search for \`structuredTimeoutMs\`, LLM decision evaluation, output-transform repair and the same-session schema-repair exception.
+3. Inspect \`structuredTimeoutMs\` in generated \`packages/api-client/openapi.json\`.
+
+Expected: the generated reference states that this limit bounds LLM decision evaluations and output-transform repairs through StructuredPort, while same-session schema repairs follow the node timeout. Actual: both Markdown references contain **zero** field/scope mentions. OpenAPI has **9** field mentions and the nullable numeric shape, but **zero** scope wording mentions and no field description. The Loop tab, schema metadata, numbered docs, ADR and CHANGELOG have the correct wording; this finding is limited to the explicitly requested generated-reference check. Generation freshness alone does not establish this requirement.
+
+Evidence: [counts, sizes and SHA-256](generated-reference-evidence.json), [kept generated API reference](generated-api-reference.log.txt), [kept generated node reference](generated-node-reference.log.txt), [kept generated OpenAPI](generated-openapi.json), and \`generated-reference-scope\` in [supplemental results](supplemental-results.json). No corrective production change was made.
+
+Round-1 **D2 and D3 are fixed** at this head for the tested cases. Round-1 **D1 was disposed by the owner/orchestrator**; this run uses the clarified node-timeout semantics and does not reopen that disposition.
+
+## 3. Coverage of criteria
+
+Touched systems: additive contracts and nullable defaults; engine decision and repair boundaries; cancellation and queue capacity; per-run definition/limit pins; Codex adapter cancellation boundary; SQLite migration ledger, definitions, immutable snapshots, run/event pins and webhook admission intents; startup recovery; REST definition/version/export/import/run routes; web editor controls/help, Settings and inspector; generated client/OpenAPI and generated references; operator upgrade instructions. Public constructors/ports, REST, SQL fixture injection and real browser/process boundaries were used; no component under test was monkey-patched and no private member was accessed.
+
+| Case / system | Steps and expected | Actual and verdict | Kept evidence |
+| --- | --- | --- | --- |
+| Exact head and dependencies | Verify requested HEAD and nonempty node_modules before work | PASS: exact full hash; local dependencies present; no install/link | [environment](environment.json) |
+| Build before runtime | Select Node 22 and build all apps/packages | PASS: 11/11 tasks, 0 cached; 263.113 s | [build](build.log.txt) |
+| Genuine migration-0017 fixture | Migrate an independent SQLite file only through 0017; populate valid API-created data with pre-field shapes | PASS: **${before.migrations.length} ledger entries**, last 0017; **${before.versions.length} versions**, **${before.runs.length} runs**, **${before.queued.length} queued events** and a saved admission intent exported | [script](qa.mjs.txt), [before rows and ledger](store-before.json), [fixture IDs](fixture-identities.json) |
+| Pre-#243 and post-#243 definitions | Drafts/published versions missing both fields or only structuredTimeoutMs; read detail/version/export | PASS: all **8 healthy loop fixtures** reopen; version/export reads are 200; missing values materialized as null | [public reads](upgrade-public-reads.json), [script](supplemental.mjs.txt) |
+| Authored values | Preserve deadline-only 9876 and explicitly authored 765 ms / 456 s | PASS: values unchanged through migration and browser reopening | [reads](upgrade-public-reads.json), [authored desktop](authored-1440.png), [authored narrow](authored-390.png) |
+| Draft-run snapshot and finished pin | Migrate a snapshot pinned by a completed draft run; read snapshot and finished run | PASS: both null defaults present; original finished run still succeeded | [before](store-before.json), [reads](upgrade-public-reads.json) |
+| Snapshot protection | Attempt an UPDATE outside migration | PASS: SQLite refuses with LOOP_VERSION_SNAPSHOT_IMMUTABLE | [guard and restart comparison](store-after-and-second-start.json) |
+| Waiting-run recovery | Cold-start old waiting run, submit its observed waitId, finish | PASS: original run is succeeded after input; waiting and input history retained | [before rows](store-before.json), [run and events](upgrade-public-reads.json) |
+| Queued Event recovery | Save a real inbound Event's queued run while admission is stopped; cold start | PASS: original Event run admits and succeeds; null pinned limit retained | [source fixture](fixture-identities.json), [before rows](store-before.json), [after run](upgrade-public-reads.json) |
+| Webhook admission recovery | Create receipt via public RunManager.receiveWebhook while stopped; clone, restore pre-0020 pin shape/0017 ledger, cold start built API | PASS: same run succeeds, receipt admitted, exactly one run.queued, null limits in run and queued pin | [public-port fixture script](webhook-final.mjs.txt), [before](webhook-final-before.json), [after](webhook-final-results.json), [process log](webhook-final-cold-api.log.txt) |
+| Nested admission fields | Check run pin, queued pin and optional snapshot settings after SQL migration | PASS: both missing deadlines become null in all nested locations | [nested values](direct-migration-nested-values.json) |
+| Damaged JSON | Cold-start mixed store containing literal malformed JSON; retain existing refusal; separately migrate through public DB interface with definition prevalidation skipped | PASS for preservation: startup retains DATA_UPGRADE_REQUIRED; direct migration leaves exact bytes \`{broken\` unchanged. Mixed damaged store cannot serve healthy loops because the existing guard refuses it before migrations | [refusal and split-store method](damaged-row-evidence.json), [cold-start log](damaged-cold-start.log.txt), [post-migration rows](direct-migration-nested-values.json) |
+| Second native start / no rewrite | Stop the original process; start PID ${stable.restart.pid} on the same store; compare raw definition/pin/event/intent bytes and migration rows | PASS: 19 ledger entries; 0020 recorded once; all captured raw values unchanged; snapshot guard restored | [before/after equality](store-after-and-second-start.json), [processes](processes.json) |
+| LLM decision timeout and capacity | Stall fake completion at 400 ms; queue quick successor; expect typed failure and slot release | PASS: child abort at **${decision.abortedAfterMs} ms**; STRUCTURED_COMPLETION_TIMEOUT; queued successor succeeds | [decision case](results.json), [observations](observations.json), [server](server.mjs.txt) |
+| Late decision result | Release valid answer after failure, compare failure/thread and terminal count | PASS: failure/thread unchanged; exactly one terminal event; no overwrite | [decision before/after](results.json) |
+| Run pin survives draft edit | Edit draft limit to null while 400 ms execution runs | PASS: current run remains pinned at 400 ms and times out | [pin case](results.json) |
+| D3 output-transform repair | Invalid inference output; stall structured coerce repair at 350 ms; inspect timeout | PASS: details.timeoutMs=350; details.provenance provider=codex, model=gpt-6-luna, effort=low; resumable typed failure | [repair case](results.json), [observations](observations.json) |
+| Repair late barrier and Resume | Release late 7, compare state; make repair fast, deliberately Resume | PASS: late repair cannot mutate prior failure/thread; Resume succeeds | [repair before/late/after](results.json) |
+| Same-session schema repair | Set structured limit 100 ms, node timeout 2 s; delay repair 4 s | PASS: running past structured cutoff; INFERENCE_TIMEOUT at node timeout; zero StructuredPort calls | [node-timeout case](results.json), [harness observations](observations.json) |
+| Unlimited and explicit Cancel | Null completion/run deadlines; stall beyond 2 s; count completion timers, cancel and release late result | PASS: running after **${unlimited.elapsedMs} ms**; timer count **${unlimited.timersBefore} to ${unlimited.timersAfter}**; cancelled with no timeout failure; late result unchanged | [Unlimited case](results.json), [timer instrumentation](server.mjs.txt) |
+| Fast decision | Return prompt fake route before 1000 ms | PASS: succeeds | [fast case](results.json) |
+| API boundaries and export/import | Accept null, 1 and 31536000000; refuse 0, -1, fraction, string, boolean and above maximum; roundtrip finite export | PASS: accepted values exact; invalid requests 400; finite export/import remains 1000 ms | [boundary responses](results.json) |
+| Migrated editor, both widths | Open all 8 healthy fixture editors at 1440 and 390 | PASS: 16 opens; Unlimited except authored finite fixture; no page errors | [browser results](browser-results.json), [desktop](preDraft-1440.png), [narrow](preDraft-390.png) |
+| D1 help / keyboard / validation / persistence | Read scope text; choose Limited by keyboard; reject invalid numbers; save 650; reload and read second tab | PASS at both widths: suggestion 120000; visible alerts and aria-invalid; 650 persists; correct node-timeout exception | [browser results](browser-results.json), [desktop help](help-saved-1440.png), [narrow help](help-saved-390.png), [desktop invalid](validation-1440.png), [narrow invalid](validation-390.png) |
+| Browser export/import | Download actual export and import through API | PASS at both widths; 650 ms roundtrips | [desktop export](ui-export-1440.json), [narrow export](ui-export-390.json), [browser results](browser-results.json) |
+| Settings and inspector | Show no default deadline; inspect a waiting run's 650 ms pin | PASS at both widths; visually inspected desktop editor and narrow editor/inspector captures | [desktop Settings](settings-1440.png), [narrow Settings](settings-390.png), [desktop inspector](inspector-1440.png), [narrow inspector](inspector-390.png) |
+| Generated reference wording | Inspect both generated references and OpenAPI field descriptions | FAIL R2-D1: explanation absent | [counts/hashes](generated-reference-evidence.json), [kept references](generated-api-reference.log.txt), [OpenAPI](generated-openapi.json) |
+| Upgrade instructions | Compare CHANGELOG upgrade note and actual cold migration | PASS: automatic 0020 migration and nullable/client/embedding changes described; authored limits preserved | [candidate diff](candidate-diff.log.txt), [public migration evidence](upgrade-public-reads.json) |
+
+### Gates and package coverage
+
+All commands below used Node 22.14.0. The initial \`pnpm.cmd test:upgrade\` was launched before build completion and failed on a missing dist module; it is retained as a QA sequencing error, not a product defect. The required post-build run **passed: 21 passed, 0 failed, 3 platform skips, 438566.1123 ms**. Skips are Windows FIFO and unavailable symlink fixtures. [Initial output](upgrade-gate.log.txt), [post-build output](upgrade-gate-built.log.txt).
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${gateRows}
+
+| Package | Gate result | Coverage summary (statements / branches / functions / lines, as emitted) | Evidence |
+| --- | --- | --- | --- |
+${coverage.join('\n')}
+
+The new README and NOT-KEPT files were separately formatted and checked with pnpm.cmd exec prettier --write/--check; see [report formatting](report-format.log.txt).
+
+Full API package coverage (pnpm.cmd --filter @graphgoblin/api test:coverage) was **not run**: its current native subprocess helper explicitly selects ports 5600-5699, outside this assignment's 5880-5889 range; see [live helper evidence](api-coverage-port-constraint.log.txt). Focused in-process API tests are listed above and do not establish a full package denominator. \`check:licenses\` was not run because the candidate changes no dependencies. No coverage thresholds or exclusions were changed. No command reported ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK; no direct-tool fallback was used. ${gateFailures.length} recorded gate/isolated commands returned nonzero; passing isolated rechecks never replace their original failed run. Package failure logs and isolated commands remain above. Native process-control failures are classified under D-015 only when their actual log supports that cause. Timing failures in unchanged files receive one isolated run after the broad gates; both outputs are retained.
+
+### Limits and interpretation
+
+- #270's configured timeout/capacity/late-result/cancel criterion was tested and passed through built APIs with fake providers. Adapter unit/port evidence is fake-only. No real successful provider response, native provider subprocess shutdown, or OS descendant inventory was tested: live provider turns are explicitly out of scope and native termination is denied (D-015).
+- D2's healthy current-format upgrade, authored values, snapshots, finished/waiting/queued runs, due webhook intent and second-start stability passed. A combined malformed-and-healthy store cannot serve any loop: the unchanged strict startup guard refuses malformed JSON before 0020. Damaged-byte preservation was therefore separately established with the public migration API and the explicit prevalidation bypass; this is not claimed as a successful damaged-store cold start.
+- D3 passed, including late barrier and deliberate Resume. D1's clarified same-session node-timeout behavior and UI help passed; its generated-reference wording is incomplete (minor R2-D1).
+- #306 is covered only for this bolt's visible/persisted/runtime completion-limit seam. No overall #306 or #288 acceptance is claimed. Live MCP and whole-application regression were not exercised. New real-time Unlimited dwell is about two seconds plus timer-allocation evidence; round 1's two-minute dwell is historical, not a result of this run. Exact-boundary cancellation is covered only to the extent established by the retained engine test run, not by a claimed exact-tick HTTP delivery.
+- 400/350/100 ms fixtures, the two-second node timeout and dwell, and polling/watchdog windows are QA engineering choices, not product defaults or owner-approved policy.
+
+### QA fixture corrections and original observations
+
+No production code or production tests were added or changed. The first mixed fixture was deliberately refused before migration because it contained malformed JSON; subsequent healthy checks used an independent physical copy, with the damaged-loop case preserved separately. The original script then produced connection-refused cascades because it continued after that startup refusal. Those are incomplete checks, not product failures. [Initial script/results/logs](initial-attempt/qa.mjs.txt), [initial result](initial-attempt/results.json), [initial runtime log](initial-attempt/qa.log.txt).
+
+The first hand-built webhook receipt omitted its due timestamp, then a second version referenced a not-yet-stored snapshot and lacked the corresponding inbound claim. The existing engine refused the target as WEBHOOK_TARGET_REMOVED; it did not demonstrate a migration defect. The final case uses public receiveWebhook to generate all claim/intent/inbound metadata and preserves the exact identity through migration. [Initial receipt diagnostic](receipt-diagnostic.json), [first supplemental results](supplement-initial-attempt/supplemental-results.json), [final public-port fixture](webhook-final-before.json), [final result](webhook-final-results.json). A supplemental launch also had a QA path-expansion error for the redacted %USERPROFILE% path; the original failure is retained.
+
+The first browser wording assertion expected plural \`evaluations\` while the product says singular \`evaluation\`; the corrected assertion checks the actual required meaning. Both original failures and the final passing checks are retained: [initial browser results](browser-initial-results.json), [final results](browser-results.json), [final script](browser.mjs.txt). The generated-reference failure remains a product documentation finding after this harness correction. No failed product result was silently retried to green.
+
+## 4. Report path and evidence folder
+
+Report: \`docs/qa/2026-10-24-wp-f3-270-qa/round-2/README.md\`. Evidence: this directory and its linked initial-attempt subdirectories. Every retained file is linked in the artifact inventory below. Captures over 1,000,000 bytes are recorded with their exact size and SHA-256 in [NOT-KEPT.md](NOT-KEPT.md); no unkept capture is cited as evidence. Scripts are retained as .mjs.txt and logs as .log.txt. Local user paths use %USERPROFILE%.
+
+## 5. Observations outside scope
+
+- D-015 limits native process-tree termination evidence. Owned fake-harness API processes stopped cooperatively; this does not establish provider-tree termination.
+- The unchanged strict current-format preflight refuses any malformed stored definition before migration. Retaining that diagnostic means the combined damaged store does not start; see the limitation and separated evidence above.
+- Full API coverage's current subprocess helper selects 5600-5699, which conflicts with this assignment's 5880-5889 range. No such subprocess suite was launched in this round. **Environment deviation:** API-client component tests use listen(port:0), unconstrained to the assigned range; actual allocated ports were not captured. See [kept source excerpt](api-client-listener-constraint.json). This does not change the controlled built-app port of 5880.
+- The adapter probe file had two 5000 ms timeouts; the API-client template file had a test timeout and a hook timeout. Infrastructure failures were in src/adversarial.test.ts, src/claude/process.test.ts, src/claude/readiness.test.ts and src/process/scripts.test.ts; native process cancellation/cleanup is constrained by D-015, and other assertions are retained without automatically attributing them to that limitation. Exact test names, errors and reproduction commands are in [gate failure details](gate-failure-details.json). Gate/environment failures and unresolved denominators are reported above; no fix, threshold change, dependency install, GitHub write, stage, or commit was attempted.
+
+## Artifact inventory
+
+`;
+const manifest=[];for(const p of await files()){if(p==='README.md')continue;const bytes=await readFile(join(out,p));manifest.push({path:p,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')})}
+await writeFile(join(out,'artifact-manifest.json'),JSON.stringify(manifest,null,2));
+const paths=[...new Set([...(await files()).filter(p=>p!=='README.md'),'README.md','verification.json'])].sort();markdown+=paths.map(p=>`- [${p}](${p})`).join('\n')+'\n';await writeFile(join(out,'README.md'),scrub(markdown));
+console.log(JSON.stringify({report:'README.md',artifacts:paths.length,omitted:omitted.length,gateFailures:gateFailures.length,verdict:'PASS WITH MINOR DEFECTS'}));

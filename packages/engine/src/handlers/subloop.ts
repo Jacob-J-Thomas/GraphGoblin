@@ -13,8 +13,9 @@ import {
   threadView,
   type MutationError,
 } from '@graphgoblin/domain';
-import { ChildCancelledError, RunFailureError } from '../errors.js';
+import { ChildCancelledError, describeError, RunFailureError } from '../errors.js';
 import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
+import type { EventDraft } from '../ports.js';
 import {
   addUsage,
   makeMessage,
@@ -230,17 +231,21 @@ async function finishWithChild(
   ctx: NodeContext<'subloop'>,
   child: ChildOutcome,
 ): Promise<NodeResult> {
-  await ctx.services.record({
+  // The child's completion is written in the same append as this visit's own outcome: its
+  // `node.finished`, its `run.failed` or its cancellation (#398). A process that dies first leaves
+  // neither, so the re-executed visit records the completion exactly once, and a visit that never
+  // durably reached an outcome never claims to have observed one.
+  const completion: EventDraft = {
     type: 'child_run.finished',
     nodeId: ctx.node.id,
     childRunId: child.runId,
     status: child.status,
     ...(child.outcome ? { outcome: child.outcome } : {}),
-  });
+  };
   // Ordinary failure rules (#251): the child's execution error or cancellation is the parent's,
   // exactly as if the failing work had run inline. An authored outcome (Success, Failure or
   // Exhausted exit) is data for the output mapping.
-  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId);
+  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId, [completion]);
   if (child.failure) {
     const { code, message, resumable, nodeId, details } = child.failure;
     throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
@@ -251,10 +256,27 @@ async function finishWithChild(
         ...(nodeId ? { childNodeId: nodeId } : {}),
         ...(details !== undefined ? { childDetails: details } : {}),
       },
+      records: [completion],
     });
   }
-  const patch = await outputMapping(ctx, child);
-  return { kind: 'done', patch, route: 'out' };
+  let patch: NodeResult['patch'];
+  try {
+    patch = await outputMapping(ctx, child);
+  } catch (error) {
+    // The completion stands even when this run cannot map it; keep it with the failure, classified
+    // exactly as the executor classifies an error a handler lets escape.
+    if (error instanceof RunFailureError)
+      throw new RunFailureError(error.code, error.message, {
+        ...error.options,
+        records: [completion, ...(error.options.records ?? [])],
+      });
+    throw new RunFailureError('INTERNAL_ERROR', describeError(error), {
+      resumable: true,
+      details: error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
+      records: [completion],
+    });
+  }
+  return { kind: 'done', patch, route: 'out', records: [completion] };
 }
 
 /**

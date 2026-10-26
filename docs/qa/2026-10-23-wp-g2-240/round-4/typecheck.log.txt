@@ -1,0 +1,64 @@
+pnpm.cmd : $ turbo run typecheck
+At line:4 char:1
++ pnpm.cmd typecheck *> docs/qa/2026-10-23-wp-g2-240/round-4/typecheck. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 15b21fc16c2286b0
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 51bea7c6237eb76e
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs c23f3b7a693183e9
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 2991fa86bbba8a3c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 73a80cacdac17fb8
+@graphgoblin/engine:typecheck: cache miss, executing 99c8385a34a1f1e2
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 030a675d70f0267d
+@graphgoblin/infrastructure:build: cache miss, executing 3681cf63e5bfe07f
+@graphgoblin/adapter-codex:typecheck: cache miss, executing d96ecc3b630a092e
+@graphgoblin/adapter-jev:build: cache miss, executing a658fd2f629f8e96
+@graphgoblin/infrastructure:typecheck: cache miss, executing 775218610157628d
+@graphgoblin/adapter-codex:build: cache miss, executing 7e2b4d8da14f2648
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 07f07c382812e980
+@graphgoblin/api:typecheck: cache miss, executing bbeba3aa003914b2
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing 8cd761064b6b4716
+@graphgoblin/api-client:typecheck: cache miss, executing 8180904b6019a509
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: cache miss, executing 1817c29bd4f8847c
+@graphgoblin/mcp:build: cache miss, executing f4ede3ff806c3faf
+@graphgoblin/mcp:typecheck: cache miss, executing 3b644ad98ef21cb8
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing f4dd4831f6b3281a
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    3m14.427s 
+
+EXIT_CODE=0

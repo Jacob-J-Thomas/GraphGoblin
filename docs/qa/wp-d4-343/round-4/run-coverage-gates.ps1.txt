@@ -1,0 +1,17 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$evidence = Join-Path (Get-Location) 'docs/qa/wp-d4-343/round-4'
+$results = @()
+foreach ($package in @('contracts', 'engine', 'infrastructure', 'api', 'api-client')) {
+  $reportDir = Join-Path $env:TEMP ("gg-wp-d4-343-round4-$package-coverage-" + [guid]::NewGuid().ToString('N').Substring(0,8))
+  $arguments = @('--filter', "@graphgoblin/$package", 'test:coverage', '--coverage.reportOnFailure', "--coverage.reportsDirectory=$reportDir")
+  if ($package -eq 'infrastructure') { $arguments += '--maxWorkers=1' }
+  $started = [DateTimeOffset]::UtcNow
+  & pnpm.cmd @arguments *> (Join-Path $evidence ("coverage-$package.log.txt"))
+  $code = $LASTEXITCODE
+  $summary = Join-Path $reportDir 'coverage-summary.json'
+  if (Test-Path -LiteralPath $summary) { Copy-Item -LiteralPath $summary -Destination (Join-Path $evidence ("coverage-$package-summary.json")) }
+  $results += [pscustomobject]@{ command = 'pnpm.cmd ' + ($arguments -join ' '); exitCode = $code; started = $started.ToString('o'); finished = [DateTimeOffset]::UtcNow.ToString('o'); reportDirectory = $reportDir; log = "coverage-$package.log.txt" }
+  $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $evidence 'coverage-gates.json')
+  Write-Output "$package coverage exit $code"
+}
+if ($results.Where({ $_.exitCode -ne 0 }).Count) { exit 1 }

@@ -1,0 +1,58 @@
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:52320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/webhook-d ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:52320) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › e2e\webhook-delivery.spec.ts:28:1 › inspector retains unknown acknowledgement after a rejection and eventual success (19.8s)
+
+
+  1) [chromium] › e2e\webhook-delivery.spec.ts:28:1 › inspector retains unknown acknowledgement after a rejection and eventual success
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/An acknowledgement was unknown/)
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/An acknowledgement was unknown/) with timeout 10000ms
+      - waiting for getByText(/An acknowledgement was unknown/)
+
+
+      42 |   await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
+      43 |   await expect(page.getByText(/HTTP 429/)).toBeVisible();
+    > 44 |   await expect(page.getByText(/An acknowledgement was unknown/)).toBeVisible();
+         |                                                                  ^
+      45 |   expect(uncertainRequests).toHaveLength(3);
+      46 |   expect(new Set(uncertainRequests).size).toBe(1);
+      47 |   expect((await (await request.get('/runs/' + run.id)).json()).deliveries[0]).toMatchObject({
+        at %WORKTREE%\apps\web\e2e\webhook-delivery.spec.ts:44:66
+
+    Error Context: test-results\webhook-delivery-inspector-6c0b1-ection-and-eventual-success-chromium\error-context.md
+
+    Error Context: test-results\webhook-delivery-inspector-6c0b1-ection-and-eventual-success-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\webhook-delivery-inspector-6c0b1-ection-and-eventual-success-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\webhook-delivery-inspector-6c0b1-ection-and-eventual-success-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\webhook-delivery.spec.ts:28:1 › inspector retains unknown acknowledgement after a rejection and eventual success
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\apps\web

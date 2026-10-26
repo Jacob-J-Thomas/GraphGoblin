@@ -1,0 +1,51 @@
+// From the repository root: node --input-type=module - < this-file label
+import { createHash } from 'node:crypto';
+import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { basename, join, relative, resolve } from 'node:path';
+
+const label = process.argv[2];
+if (!/^[a-z0-9-]+$/.test(label ?? '')) throw new Error('Expected a run label');
+const evidence = resolve('docs/qa/2026-10-24-wp-a2-241');
+const output = join(evidence, label + '-failures');
+async function files(root) {
+  const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+  return (await Promise.all(entries.map(async (entry) => entry.isDirectory()
+    ? files(join(root, entry.name)) : [join(root, entry.name)]))).flat();
+}
+const artifacts = [];
+for (const root of ['apps/web/test-results', 'apps/web/playwright-report']) {
+  for (const path of await files(root)) {
+    const bytes = await readFile(path);
+    const source = path.replaceAll('\\', '/');
+    const artifact = { source, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), kept: false };
+    if (bytes.length <= 1_000_000 && (basename(path) === 'error-context.md' || basename(path) === '.last-run.json')) {
+      const name = relative('apps/web/test-results', path).replaceAll('\\', '--') + (path.endsWith('.md') ? '.txt' : '');
+      await mkdir(output, { recursive: true });
+      const destination = join(output, name);
+      await copyFile(path, destination);
+      artifact.kept = true;
+      artifact.destination = relative(evidence, destination).replaceAll('\\', '/');
+    }
+    artifacts.push(artifact);
+  }
+}
+await writeFile(join(evidence, label + '-artifacts.json'), JSON.stringify(artifacts, null, 2) + '\n');
+const manifests = (await readdir(evidence)).filter((file) => file.endsWith('-artifacts.json'));
+const rows = [];
+for (const manifest of ['seed-discarded-files.json', 'seed-preparation-discarded-files.json']) {
+  const discarded = await readFile(join(evidence, manifest), 'utf8').then(JSON.parse).catch(() => []);
+  for (const artifact of discarded.filter((entry) => entry.bytes > 1_000_000))
+    rows.push(`| ${manifest.replace('.json', '')} | ${artifact.artifact} | ${artifact.bytes} | ${artifact.sha256} |`);
+}
+const seed = await readFile(join(evidence, 'seed.json'), 'utf8').then(JSON.parse).catch(() => undefined);
+if (seed) {
+  rows.push(`| seed-original | apps/web/dist/${seed.artifact} | ${seed.original.bytes} | ${seed.original.sha256} |`);
+  rows.push(`| seed-copy | disposable copy/${seed.artifact} | ${seed.seeded.bytes} | ${seed.seeded.sha256} |`);
+}
+for (const manifest of manifests) {
+  const entries = JSON.parse(await readFile(join(evidence, manifest), 'utf8'));
+  for (const artifact of entries.filter((entry) => !entry.kept && (entry.bytes > 1_000_000 || entry.source.endsWith('trace.zip') || entry.source.endsWith('index.html'))))
+    rows.push(`| ${manifest.replace('-artifacts.json', '')} | ${artifact.source} | ${artifact.bytes} | ${artifact.sha256} |`);
+}
+await writeFile(join(evidence, 'NOT-KEPT.md'), '# Captures not kept\n\nRaw browser captures and HTML reports remain disposable local output; they are not committed or relied on as linked evidence. Failure DOM snapshots and command logs are kept beside this file. Every capture over 1,000,000 bytes, plus each failure trace and HTML entry, is inventoried below. The per-run artifact manifests also inventory smaller discarded captures.\n\n| Run | Capture | Bytes | SHA-256 |\n| --- | --- | ---: | --- |\n' + rows.join('\n') + '\n');
+console.log(JSON.stringify({ label, artifacts: artifacts.length, kept: artifacts.filter((artifact) => artifact.kept).length }));

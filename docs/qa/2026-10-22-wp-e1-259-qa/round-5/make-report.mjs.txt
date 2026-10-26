@@ -1,0 +1,149 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-5'),prettier=createRequire(resolve('package.json'))('prettier'),read=n=>readFile(resolve(dir,n),'utf8'),json=async n=>JSON.parse(await read(n));
+const assessment=await json('assessment.json'),main=assessment.main,focus=await json('focus-results.json'),prior=await json('prior-evidence-audit.json'),old=await json('focus-small-repro.json'),replay=await json('incremental-replay-results.json'),env=await json('browser-environment.json');
+const clean=s=>String(s??'').replaceAll('|',' / ').replaceAll('\n',' '),ms=n=>n?.toFixed(1),target=x=>`${x?.tag??''} ${x?.label??x?.text??''}${x?.tabindex?' (tabindex '+x.tabindex+')':''}`;
+function actual(r){const a=r.actual;if(!a)return r.error;if(a.cold)return `exact 4097-character prefix, cold ${ms(a.cold.wallMs)} ms; cached selections retained`;if(a.probe)return `${ms(a.probe.wallMs)} ms; ${a.probe.longTasks.length} long tasks; ${a.keys??a.storedCount??a.probe.messages} keys/messages`;if(a.semanticEqual)return `API values equal; ${a.bytes} download bytes`;if(a.probes)return `latest 50 on every selection; ${a.bytes} exact messages-download bytes`;if(a.b)return `2322721-character full value returns to 4097; ${a.bytes} exact download bytes`;return JSON.stringify(a);}
+const rows=main.map(r=>`| ${clean(r.id)} | ${clean(r.expected)} | ${clean(actual(r))} | **${r.pass?'PASS':'FAIL'}** | [Assessed case](assessment.json), [original](performance-results.json) |`).join('\n');
+const frows=focus.map(r=>`| ${clean(r.id)} | ${clean(r.expected)} | ${r.actual?`${target(r.actual.before)} -> ${target(r.actual.after)}; Tab -> ${target(r.actual.afterTab)}; list tabindex after Tab ${r.actual.listTabindexAfterTab}`:clean(r.error)} | **${r.pass?'PASS':'FAIL'}** | [Focus case](focus-results.json) |`).join('\n');
+const measures=[];for(const r of main){const a=r.actual;if(!a)continue;for(const p of [a.cold,...a.cached??[],a.probe,...a.probes??[],a.b,a.a].filter(Boolean))measures.push(`| ${r.id.split(':')[0]} | ${clean(p.name)} | ${ms(p.wallMs)} | ${p.longTasks.map(t=>t.duration+' ms @ '+t.start.toFixed(1)).join('; ')||'none'} |`);}
+const paints=assessment.paint.map(p=>`| ${p.width} / ${p.source.startsWith('visible')?'3000':'normal'} height | ${p.kind} | ${ms(p.firstSerializer)} | ${ms(p.pendingDom)} | ${ms(p.firstPaintAfterPending)} | ${p.pass?'PASS':'FAIL'} | [Probe](${p.probeFile}) |`).join('\n');
+const gateRows=[];for(const name of ['build','focused-tests','lint','typecheck','playwright','source-format','layers','deps','tokens','format']){let log='';try{log=await read(name+'.log.txt');}catch{}const command=log.match(/^Command: (.+)/m)?.[1]??'pending',code=log.match(/^Exit: (.+)/m)?.[1]??'pending';gateRows.push(`| ${clean(command)} | ${code==='0'?'PASS':code==='pending'?'PENDING':'FAIL (details in log)'} | [Log](${name}.log.txt) |`);}
+const planned=['format.log.txt','format-qa.log.txt','validation.json','validation.log.txt'];const files=[...new Set([...(await readdir(dir)).filter(n=>n!=='README.md'),...planned])].sort();
+let report=`# 1. Verdict
+
+**FAIL** at **314bbcb18e56a0180653d710979913d6afeeb15e**. **QA-259-R4-01 is fixed**, including the exact older-message region reproduction, a focused control in the last-50 window, Show all, outside focus and the list fallback. Two minor issues remain: **QA-259-R5-01**, stale value-level hand-off steals keyboard focus on a cached return; and **QA-259-R5-02**, a new diff preview still enumerates synchronously before cold selection/placeholder paint.
+
+Worktree **codex-qa-wp-e1-259**, detached at the assigned HEAD; comparison base **8984d7f44b1e3f88e9f7ada8388da2f616bad6f2**. Independent QA only. No production or maintained-test edits, commits, index changes, branch switches, stashes, sub-agents, GitHub writes or live provider turns. Only this round-5 directory was added; evidence is **uncommitted; ready for orchestrator commit**. [Diff tested](change.diff.txt), [final state](final-state.json).
+
+# 2. Defects
+
+## QA-259-R5-01 — minor — returning to a cached value reuses an old focus hand-off while the keyboard is outside
+
+Reproduced once at **1440 x 900** and **390 x 844** through a real mutate/wait run:
+
+1. Set Variables to a 20,000-character A marker and wait at ask; a later mutation sets a 21,000-character B marker and waits at notouch.
+2. Expand Variables at the current A wait; Shift+Tab into the Variables region.
+3. Supply the wait input through HTTP. On live B arrival, the keyboard correctly moves to **Show all of Variables**.
+4. Focus seed node.finished in the timeline and press Enter to select A. The keyboard remains on that timeline button.
+5. Focus the remembered run.waiting notouch event (B) in the timeline and press Enter.
+
+Expected: the keyboard stays on the timeline button used to select B. Actual at **both widths**: it is moved to **Show all of Variables**, although the keyboard was outside the value component before this selection. The value remains bounded; this is a keyboard-ownership defect, not a return of full-value expansion.
+
+Evidence: [desktop stages](outside-return-1440.json), [narrow stages](outside-return-390.json), [failing focus cases](focus-results.json), [public-API/keyboard script](focus.mjs.txt), [execution log](focus.log.txt). The source retains handoffFor by value identity; the effect runs again when that cached value returns, while blur only clears ownsFocus (apps/web/src/components/ui/bounded-value.tsx:84, :132 and :149). Source reading explains the observation; no component state was inspected or patched.
+
+## QA-259-R5-02 — minor — a newly mounted diff preview bypasses cold-selection deferral
+
+Reproduction at both widths:
+
+1. Admit 350,000 properties through a mutate node and park at a wait.
+2. Load the inspector; select run.queued, then select the previously unseen seed node.finished event. This mounts its Patch diff and changes Variables from the empty object to the wide value.
+3. Record DOM commits, Chrome Paint events, a source-mapped sampled CPU profile, long tasks and compositor frames.
+
+Expected from the stated cold-selection behavior and docs 09: selection/placeholder paints before wide preview serialization. Actual: a new diff BoundedValue has its first value settled immediately, so its 1,024-character preview enumerates in the urgent render. In the ordinary-viewport follow-up, the first serializer sample precedes even the Variables placeholder DOM commit by **89.4 ms desktop / 73.0 ms narrow**. The first Paint after that commit follows the enumeration, rather than preceding it. The urgent tasks are **500/414 ms**, followed by the separately deferred Variables tasks of **92/77 ms**. All values remain exact and bounded.
+
+Evidence: [ordinary-height paint runs](paint-results.json), [paint assessment](assessment.json), [desktop cold seed trace](paint-seed-1440.trace.json.txt), [desktop CPU profile](paint-seed-1440.cpuprofile.json.txt), [narrow trace](paint-seed-390.trace.json.txt), [narrow CPU profile](paint-seed-390.cpuprofile.json.txt), [script](paint.mjs.txt), [log](paint.log.txt). Frames before the urgent commit still show the queued selection: [desktop](paint-seed-1440-frame-57.png), [narrow](paint-seed-390-frame-60.png). The additional [390 x 3000 confirmation](visible-paint-results.json) has the same ordering. The mounting behavior is in bounded-value.tsx:100 and ThreadViewer.tsx:38.
+
+The existing Variables component **does** pass the ordering check on the cold wait-event path without a newly mounted diff: Paint occurs before deferred serializer sampling. That path still pays **375–380 ms** of replay/reconstruction before the urgent commit in ordinary-height runs. This finding is limited to the new diff preview; it does not claim every deferred render fails to paint.
+
+# 3. Coverage of criteria
+
+## Environment, isolation and retention
+
+- Node **${env.node}** first on PATH; dependencies installed; pnpm build passed before the built API/web app was served.
+- Installed Microsoft Edge **${env.browser}**, headless Playwright. Normal viewports **1440 x 900 / 390 x 844**. Primary wide traces use **3000 px height** at each required width to expose more content. Separate full-resolution paint runs use normal heights; an additional **390 x 3000** run puts the narrow Variables area on screen. Heights are recorded, and these timings are not presented as a controlled before/after comparison with earlier rounds.
+- Disposable API **127.0.0.1:5720**, fake control **127.0.0.1:5721**, system-temp data directory **${env.server.dataDir}**. Real HTTP, SQLite, engine, mutate and wait paths. Inference evidence is **fake-only** through FakeHarness/FakeStructured; no live provider or CLI turn. An API-created QA key was minted; only non-secret [metadata](api-key-metadata.json) are retained. [Environment](browser-environment.json), [server](server.mjs.txt), [server log](server.log.txt).
+- COMMON, QA-COMMON and the relevant docs/source were read. Owner ports/store were not accessed. The disposable process was stopped, its exec session exited 0, and both ports became unreachable. [Shutdown](shutdown.json), [shutdown log](shutdown.log.txt). Temp stores/helper/output directories remain for the orchestrator; no directories were deleted.
+- **All ${prior.references} prior report references exist.** **${prior.untracked} round-4 artifacts are untracked** on this assigned HEAD, contrary to the handoff's committed description. They were already untracked at admission and are preserved unchanged. [Prior existence/tracking/hash audit](prior-evidence-audit.json); all prior reference hashes remain equal in [final state](final-state.json).
+
+Touched systems tested: Messages focus ownership, window reset and list fallback; BoundedValue deferred preview, focus hand-off and expansion lifetime; incremental thread cache and untouched Variables identity; replay equivalence and failure behavior; large message/variable presentation, exact downloads, timeline selection and narrow layout; relevant Result/progress/wait regressions. No production changes or new dependencies were made by QA.
+
+## Requested criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| 1: exact QA-259-R4-01 action/data sequence | PASS at both widths | all region exact R4 cases: 6,000 messages, m0 content 20,000 characters, expanded region, external append, Show all messages focused |
+| 1: focused control slides out of last-50 window | PASS at both widths | window control cases use m5950; Tab then reaches Download messages |
+| 1: Show all and outside keyboard | PASS at both widths | all control, outside Full thread JSON and outside timeline cases |
+| 1: list fallback when controls disappear | PASS at both widths | list takes focus at tabindex -1; Tab reaches Full thread JSON and removes tabindex |
+| 2: first/cached wide selections, exact prefix and long tasks | MEASURED; exact/bounded data pass; cold diff deferral FAIL | CPU/paint/long-task tables below |
+| 2: untouched vars live append | PASS within profiling resolution | retained exact value, no repeated wide enumeration observed; serializer samples total 0.732/0 ms, unit identity check passes |
+| 2: changed vars live append | PASS for fresh exact preview and expected new serializer work | changed key0 includes a surrogate pair and NUL; sampled serializer work 83.5/58.7 ms |
+| 3: 6,000 messages re-selection and live appends, window/Show all | PASS at both widths | 50 mounted; stored count grows 6000 -> 6002 -> 6004 |
+| 4: original QA-259-01 A/B/A | PASS at both widths | 2,322,721-character full value returns to a 4,097-character preview |
+| 4: prior value-level live small focus hand-off | PASS, four exact prior cases | [Direct and 500 ms cases](focus-small-repro.json), [log](focus-small.log.txt) |
+| 4: outside keyboard after value-level hand-off and cached return | FAIL at both widths | QA-259-R5-01 |
+| 4: nested Variables and messages download bytes | PASS at both widths | raw .json.txt files, integrity validation |
+| Incremental replay compared with full API result | PASS, four live-completion cases without reload | [Live replay results](incremental-replay-results.json), [script](incremental-replay.mjs.txt), [log](incremental-replay.log.txt) |
+
+## Every core case
+
+Exact steps are in [performance script](performance.mjs.txt) and [browser measurement support](browser-support.mjs.txt). Fixtures are created through the public API; [fixture generator](fixtures.mjs.txt), [admission values/hashes](fixtures.json), [log](fixtures.log.txt). The API retains 6,000 messages and 350,000 properties. The source-map/CPU tooling observes browser execution through CDP; no cache counters, private state, test-only exports or component monkey-patches were introduced.
+
+| Case | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- |
+${rows}
+
+## Every message and value-focus case
+
+Common message steps: seed 6,000 valid messages with one older 20,000-character content value; focus its Show all control or expanded region; deliver wait input externally; inspect the new 50-message window and document.activeElement; Tab once and inspect tabindex cleanup. The no-controls case intentionally clears messages through a mutate node. Outside targets are focused without changing the followed event. The exact R4 region case uses Show all messages -> Show all of Message m0 content -> Shift+Tab -> external append.
+
+| Case | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- |
+${frows}
+
+The four prior Variables focus reproductions pass: direct and 500 ms fake-delayed replacements at both widths hold the small pre at tabindex -1, then Tab reaches Full thread JSON and removes that attribute. [Results](focus-small-repro.json), [script](focus-small-repro.mjs.txt), [log](focus-small.log.txt). New message-window focus fixes do not reopen QA-259-R2-01.
+
+## Measurements and every long task in the primary action windows
+
+Wall time is from the action to two animation frames after the value settles; it includes automation/scheduling overhead and is **not INP**. Long tasks use the browser's **50 ms** definition. Entries are allowed 80 ms for delivery after the measured end. Appends include server execution and waiting for the next wait; they are not continuous browser-block times. Main timings ran after build, fixture and unit/lint/typecheck jobs finished. CDP tracing and 1 ms CPU sampling add overhead; no owner-approved performance threshold is inferred.
+
+| Width | Action | Wall ms | Every long-task duration and start (document-relative ms) |
+| --- | --- | --- | --- |
+${measures.join('\n')}
+
+The complete per-action trace JSON retains DOM state times, Chrome Paint events, all traced screenshot times and long-task starts/durations. The CPU profiles retain every sample and source-mapped frame. [Source map retained with host prefixes redacted](app-source-map.json.txt), [original/retained hashes and mapping provenance](source-map-provenance.json). The initial integrity check found the source map's host prefix; [initial result](validation-initial.json.txt) and [initial log](validation-initial.log.txt) are retained. [Sanitization](sanitization.json), [script](sanitize-source-map.mjs.txt), [log](sanitization.log.txt) confirm that the mapping table, downloads and profiles were unchanged. Primary Trace Screenshot frames are thumbnails and cap during long appends; their absence after that cap is not evidence of no paint. The separate full-resolution screencasts resolve the cold-selection visibility check. [Paint script](paint.mjs.txt), [paint log](paint.log.txt), [visible narrow setup](prepare-visible-paint.mjs.txt), [visible narrow script](visible-paint.mjs.txt), [log](visible-paint.log.txt).
+
+## Paint ordering, including the failure boundary
+
+Times below share the document-relative clock: Chrome trace marks correlate CPU profile timestamps with DOM observers and Paint events. A DOM mutation alone is not called a paint. Source mapping identifies prettyJsonPrefix and its nested serializer functions (utils.ts:41–147); cachedJsonPrefix is mapped separately. A Paint after the pending commit and before serializer sampling is supported by compositor frames showing the placeholder. The ordinary narrow layout puts Variables below the timeline, so the tall full-resolution capture additionally shows the literal placeholder on screen: [390 px visible placeholder](visible-paint-wait-390-frame-2.png). Desktop: [visible placeholder](paint-wait-1440-frame-65.png).
+
+| Width / height | Cold event | First serializer sample ms | Placeholder DOM ms | First Paint after placeholder commit ms | Ordering | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+${paints}
+
+For the changed-vars live traces, pending DOM appears before sampled serializer work, but the traces do not show an intervening Paint before that work. The retained filmstrip is capped before that late phase; no additional visual guarantee is claimed for it. The cold wait and cold diff cases above provide the directly checked paint boundary.
+
+## Untouched identity, replay equivalence and exactness
+
+The new projection test compares incremental and full replay results, checks untouched vars/messages with reference equality, then checks a messages-only patch preserves vars identity. Browser no-vars appends preserve the entire API Variables value and exact preview. The initial desktop assertion required zero serializer samples anywhere in the page and failed on **one 0.732 ms sample**; that test was broader than the requested absence of another wide enumeration. Cold positive controls capture **64–174 ms** of serializer-stack sample weight. The desktop no-vars append has 0.732 ms and narrow has zero, supporting no repeated wide enumeration within sampling resolution. Other short JSON values may still be previewed. The original failure is retained in [raw results](performance-results.json) and [log](performance.log.txt); [offline assessment](assessment.json), [assessment script](assess.mjs.txt), [log](assessment.log.txt) correct its interpretation without rerunning the test or rewriting the original results. It is not recorded as a product defect or as a retry pass.
+
+The initial full-thread comparisons in the main script are fresh-load comparisons. A separate check warms the remembered thread, supplies one more real input to finish the run, and downloads Full thread JSON **without a reload**. All four current reconstructions equal the live API values, including **350,000 keys** and the completed message thread's **6,005 messages**. [Incremental completion comparisons](incremental-replay-results.json), [script](incremental-replay.mjs.txt), [log](incremental-replay.log.txt). Full-thread property-order differences remain the accepted QA-259-02 representation difference; parsed values are compared exactly.
+
+Messages downloads are **1,989,782 UTF-8 bytes**, SHA-256 **aac60dc3440df7074966ddd4e7352460d2238fb4d883e8a72cf35d43fcc70778**. Nested Variables downloads are **2,322,734 bytes**, SHA-256 **7f2577a2a104addc52573d9df76bdcc880ca0db6e5ae294dd7cba67ad935941f**. Both widths match retained API bytes exactly, including the earlier Unicode/escape fixture. Raw JSON and profile/trace evidence use .json.txt; formatters do not modify them. Execution-context data remain complete. No browser page/console errors were observed in the main, focus or incremental replay scripts.
+
+## Tests, gates and coverage limits
+
+**79/79 tests pass in nine affected files**, including the new Messages ownership regression and incremental/full replay and identity regression. The maintained Edge file passes **5/5** (large Result/progress/page width and wait prompts at both widths, plus live value hand-off). Retries are disabled. The prior production head was not checked out or executed here; the historical R4 failure and fresh current reproductions are distinguished from source reasoning about regression tests. Current browser failures are retained as executable QA scripts; no production fixes were attempted.
+
+| Exact command | Result | Evidence |
+| --- | --- | --- |
+${gateRows.join('\n')}
+| pnpm --filter @graphgoblin/web test:coverage | NOT RUN — full coverage explicitly waived for this round | User's round-5 scope |
+| pnpm check:docs | NOT RUN — no node schema/route changed | [Diff](change.diff.txt) |
+| pnpm check:licenses | NOT RUN — no dependencies changed | [Diff](change.diff.txt) |
+
+The build reports a nonfatal Turbo cache-write Access denied warning while all build tasks succeed. No numbered docs, ADRs, CHANGELOG, generated references, thresholds or dependencies were changed by QA. Docs 09's changed-value paint claim was included in the cold-selection assessment. Earlier full adversarial surface, session-reset/restart, actual screen-reader and live-provider campaigns were not all rerun in this narrowed round; their evidence remains historical. CPU sampling supports attribution at its resolution; it does not count every helper invocation or inspect private object references in the running UI.
+
+# 4. Report path and evidence folder
+
+Report: **docs/qa/2026-10-22-wp-e1-259-qa/round-5/README.md**. Evidence: **docs/qa/2026-10-22-wp-e1-259-qa/round-5/**. [Artifact/link/path/download validation](validation.json), [validation log](validation.log.txt). A successful integrity check preserves the failing product verdict and the original over-broad sampling assertion result.
+
+${files.map(n=>`- [${n}](${n})`).join('\n')}
+
+# 5. Observations outside scope
+
+- Untouched-vars live appends still have seven long tasks at each width (**136–182 ms** desktop, **122–176 ms** narrow), with end-to-end wall times **5,424.4/4,475.8 ms**. Those are retained rather than attributed to another wide preview. Cold reconstruction still blocks before the urgent commit even where deferred preview paint works. No unrelated event-storage/engine optimization is attempted.
+- The round-4 artifacts are present but untracked on admission. They are left unchanged for the orchestrator's retention/commit handling.
+- Neither the passing maintained tests nor this narrowed QA round establishes full-package coverage, live-provider behavior or integrated intent acceptance.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(report,{parser:'markdown'}));console.log(JSON.stringify({verdict:'FAIL',defects:assessment.defects.map(x=>x.id),coreCases:main.length,focusCases:focus.length,liveReplayCases:replay.length,priorFocusCases:old.length}));

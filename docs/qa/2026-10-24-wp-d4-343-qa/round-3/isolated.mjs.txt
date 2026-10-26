@@ -1,0 +1,14 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {spawn,execFileSync} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+for(;;){if(await readFile(join(out,'gates-finished.json')).then(()=>true).catch(()=>false))break;await new Promise(r=>setTimeout(r,2000))}
+const changed=new Set(execFileSync('git',['diff','--name-only','74e78bb212a58af15d5c1792fa599ec8a6f4bbad','HEAD','--','.'],{encoding:'utf8'}).trim().split('\n'));
+const results=[];
+for(const pkg of ['domain','engine','api-client','web','infrastructure','api']){
+ const directory=(pkg==='web'||pkg==='api'?'apps/':'packages/')+pkg;const log=await readFile(join(out,'coverage-'+pkg+'.log.txt'),'utf8').catch(()=>'');const plain=log.replace(/\u001b\[[0-9;]*m/g,'');
+ const files=[...new Set([...plain.matchAll(/(?:FAIL|❯)\s+(src[\\/][^\s]+\.test\.[jt]sx?)/g)].map(m=>m[1].replaceAll('\\','/')))];
+ for(const file of files){if(changed.has(directory+'/'+file))continue;const name='isolated-'+pkg+'-'+file.replaceAll('/','-');let command='pnpm.cmd --filter @graphgoblin/'+pkg+' exec vitest run '+file+' --maxWorkers=1';let text='';const start=Date.now();const p=spawn('cmd.exe',['/d','/c',command],{cwd:root,env:process.env,windowsHide:true});p.stdout.on('data',d=>text+=d);p.stderr.on('data',d=>text+=d);const code=await new Promise(r=>{p.on('exit',r);p.on('error',e=>{text+=String(e);r(-1)})});await writeFile(join(out,name+'.log.txt'),text.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+ const r={name,pkg,file,command,code,ms:Date.now()-start,summary:text.replace(/\u001b\[[0-9;]*m/g,'').split('\n').filter(l=>/^\s*(Test Files|Tests\s)/.test(l)).join('; ').trim(),fullGateStillFailed:true,lock:text.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')};results.push(r);await writeFile(join(out,'isolated-results.json'),JSON.stringify(results,null,2));console.log(file,code);
+ if(r.lock){let alt='';const cmd='..\\..\\node_modules\\.bin\\vitest.cmd run '+file+' --maxWorkers=1';const f=spawn('cmd.exe',['/d','/c',cmd],{cwd:join(root,directory),env:process.env,windowsHide:true});f.stdout.on('data',d=>alt+=d);f.stderr.on('data',d=>alt+=d);r.fallbackCommand=cmd;r.fallbackCode=await new Promise(done=>f.on('exit',done));await writeFile(join(out,name+'-fallback.log.txt'),alt.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));await writeFile(join(out,'isolated-results.json'),JSON.stringify(results,null,2));}
+ }
+}
+await writeFile(join(out,'isolated-finished.json'),JSON.stringify({complete:true,files:results.length},null,2));

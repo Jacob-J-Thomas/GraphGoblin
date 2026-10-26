@@ -1,0 +1,78 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+pnpm.cmd : $ turbo run build
+At line:2 char:129
++ ... | Out-Null; pnpm.cmd build *> docs/qa/2026-10-25-wp-e1-268/baseline-b ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run build:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs 43e0a539555c711d
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs fc566adaeddc5d03
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing d9e63edd9aec9d47
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:build: cache miss, executing 0585bf928da4f736
+@graphgoblin/adapter-codex:build: cache miss, executing 841959a9a7935462
+@graphgoblin/infrastructure:build: cache miss, executing 309fb89fe80c6e21
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 0c6f2b436a481e56
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing f50e5b3b59b530b8
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: cache miss, executing 3cb93f90e93ac657
+@graphgoblin/mcp:build: cache miss, executing 1aeba85479ca4c41
+@graphgoblin/web:build: $ vite build
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/plugin-codex:build: cache miss, executing 893c46e931ef6e06
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/web:build: ✓ 739 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-268\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest                    0.47 kB
+@graphgoblin/web:build: dist/index.html                              2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-DnHF7jLv.css              88.31 kB │ gzip:  16.79 kB
+@graphgoblin/web:build: dist/assets/upgrade-current-B45IbXGI.js    187.88 kB │ gzip:  35.94 kB │ map:   704.31 kB
+@graphgoblin/web:build: dist/assets/index-C6dr1w7n.js            1,856.10 kB │ gzip: 581.70 kB │ map: 8,482.00 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 5.62s
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (2552.54 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+@graphgoblin/web:build: [33m[PLUGIN_TIMINGS] [0mJavaScript callbacks ran for 25.2s. The build took 5.6s. Callbacks such as `closeBundle` run after the build ends, so callback time can be more than build time.
+@graphgoblin/web:build: The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+@graphgoblin/web:build:   - plugin vite-plugin-pwa:build closeBundle (100%, 20.3s, 1 call)
+@graphgoblin/web:build:   - plugin @tailwindcss/vite:generate:build transform (33%, 1.8s, 2 calls)
+@graphgoblin/web:build:   - plugin vite:css transform (31%, 1.7s, 2 calls)
+@graphgoblin/web:build: Additional callback time came from callbacks under 1s.
+@graphgoblin/web:build: See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+@graphgoblin/web:build: 
+
+ Tasks:    11 successful, 11 total
+Cached:    2 cached, 11 total
+  Time:    1m5.698s 
+

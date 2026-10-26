@@ -1,0 +1,51 @@
+
+Running 1 test using 1 worker
+
+(node:49712) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49712) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event (33.5s)
+
+
+  1) [chromium] › e2e\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Timeline \(1212 events, complete\)/)
+    Expected: visible
+    Timeout: 30000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/Timeline \(1212 events, complete\)/) with timeout 30000ms
+      - waiting for getByText(/Timeline \(1212 events, complete\)/)
+
+
+      107 |   const started = Date.now();
+      108 |   await page.goto(`/app/runs/${runId}`);
+    > 109 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+          |                                                                      ^
+      110 |     timeout: 30_000,
+      111 |   });
+      112 |   const live = Date.now() - started;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\apps\web\e2e\qa.spec.ts:109:70
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

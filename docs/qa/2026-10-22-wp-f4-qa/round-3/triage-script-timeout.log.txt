@@ -1,0 +1,44 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1 -t kills the process tree on timeout
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/process/scripts.test.ts (39 tests | 1 failed | 38 skipped) 15033ms
+   ❯ ProcessScripts (36)
+     × kills the process tree on timeout 15030ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  14:07:22
+   Duration  16.45s (tests 98%, transform 1%, import 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ <user-path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=24.53

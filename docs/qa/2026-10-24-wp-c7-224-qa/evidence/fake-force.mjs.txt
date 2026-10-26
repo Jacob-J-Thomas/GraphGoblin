@@ -1,0 +1,78 @@
+import { readFile, writeFile, mkdtemp } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
+const dir = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const uri = path => pathToFileURL(resolve(path)).href;
+const bootstrap = `
+import {loadConfig} from ${JSON.stringify(uri('apps/api/dist/config.js'))};
+import {createContainer} from ${JSON.stringify(uri('apps/api/dist/container.js'))};
+import {buildApp} from ${JSON.stringify(uri('apps/api/dist/app.js'))};
+import {runCreateApiKeyCli} from ${JSON.stringify(uri('apps/api/dist/create-api-key.js'))};
+import {FakeHarness} from ${JSON.stringify(uri('packages/engine/dist/testing/index.js'))};
+if (process.argv.includes('--create-api-key')) process.exit(await runCreateApiKeyCli());
+const config = loadConfig();
+const harness = new FakeHarness([{delayMs:60000,finalText:'must not appear'}]);
+const container = await createContainer(config,{harnesses:{codex:harness}});
+await container.start();
+const app = await buildApp(container,{logger:false});
+await app.listen({host:config.host,port:config.port});
+console.log('QA built API fake-harness process listening '+process.pid);
+void container.waitForShutdown().then(async()=>{
+  console.log('QA cleanup ready '+JSON.stringify({state:container.shutdown.state(),cancelled:harness.cancelled}));
+  await app.close(); await container.dispose(); process.exit(0);
+});
+void container.shutdown.abandoned.then(()=>setTimeout(()=>process.exit(1),100));
+`;
+await writeFile(join(dir,'fake-bootstrap.mjs.txt'), bootstrap);
+const temp = await mkdtemp(join(tmpdir(),'gg-qa-c7-224-fake-bootstrap-'));
+const tempEntry = join(temp,'bootstrap.mjs');
+await writeFile(tempEntry,bootstrap);
+const source = await readFile(join(dir,'runtime.mjs.txt'),'utf8');
+const helpers = source.slice(0,source.indexOf("await scenario('01-drain-family'"))
+  .replace("const entry = resolve('apps/api/dist/main.js');", 'const entry = '+JSON.stringify(tempEntry)+';')
+  .replace("'runtime-summary.json'", "'fake-force-summary.json'")
+  .replace('const deadline = Date.now() + timeout;', "const deadline = Date.now() + (label === 'API listening' ? 60000 : timeout);");
+const exercise = `
+await scenario('09-force-fake-harness', async()=>{
+  const f = await fixture('fake-force');
+  note('evidence-tier',{kind:'built API in real process, injected FakeHarness, real SQLite',nativeProcessTreeEvidence:false,bootstrapDir:${JSON.stringify(temp)}});
+  const infer = {id:'infer',kind:'inference',label:'Fake native boundary',config:{harness:'codex',prompt:{template:'Hold for explicit force'}}};
+  const id = await publish(f,definition('QA force fake harness',[infer]));
+  const r = await start(f,id);
+  await until('inference turn submitted',async()=> (await events(f,r.id)).some(e=>e.type==='harness.submission'));
+  const queued = await start(f,id);
+  // There are two slots; both executions are interrupted. A separate park is preserved.
+  const inputLoop = await publish(f,definition('QA park with fake force',[inputNode]));
+  const parked = await start(f,inputLoop);
+  // The second fake has an immediate turn and frees its slot. The parked input becomes durable.
+  const before = await waitRun(f,parked.id,'waiting');
+  await sleep(100);
+  const stream = await sse(f,r.id,'forced');
+  const t = Date.now();
+  const response = await call(f,'POST','/system/shutdown',{action:'force'});
+  check('fake-harness force accepted',response.status,202);
+  note('force-answer',{state:response.data});
+  const exit = await f.current.exit; await stream.done;
+  check('fake-harness force exits zero after cleanup',exit.code,0);
+  check('force stream has truthful failure',stream.text.includes('event: run.failed'));
+  check('force releases lock after cleanup',await exists(f.lock),false);
+  note('force-elapsed',{elapsedMs:Date.now()-t});
+  await boot(f);
+  const failed = await run(f,r.id,false);
+  check('interruption status',failed.status,'failed');
+  check('interruption code',failed.failure?.code,'RUN_INTERRUPTED_BY_STOP');
+  check('interruption node identity',failed.failure?.nodeId,'infer');
+  check('interruption attempt',failed.failure?.details?.attempt,1);
+  check('forced work nonresumable',failed.failure?.resumable,false);
+  check('park preserved during another executor force',await run(f,parked.id,false),before);
+  check('blind resume refused', (await call(f,'POST','/runs/'+r.id+'/resume',{})).status,409);
+  await events(f,r.id);
+  await stop(f);
+});
+console.log(JSON.stringify(summary));
+process.exitCode=summary.some(s=>s.error||s.failed.length)?1:0;
+`;
+const full = helpers + exercise;
+await writeFile(join(dir,'fake-force-generated.mjs.txt'),full);
+await import('data:text/javascript;base64,'+Buffer.from(full).toString('base64'));

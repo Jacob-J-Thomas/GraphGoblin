@@ -1,12 +1,25 @@
-import { Link } from 'react-router';
+import { HistoryState } from '../components/HistoryState.js';
+import { Link, useSearchParams } from 'react-router';
+import { useRef } from 'react';
 import { useInboundEvents } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
-import { QueryState } from '../components/status.js';
-import { Badge, Card, Table, Td, Th, type Tone } from '../components/ui/index.js';
+import {
+  Badge,
+  Button,
+  BoundedValue,
+  Card,
+  CELL_PREVIEW_CHARS,
+  Table,
+  Td,
+  Th,
+  type Tone,
+} from '../components/ui/index.js';
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
 const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
-type InboundEvent = NonNullable<Awaited<ReturnType<typeof useInboundEvents>>['data']>[number];
+type InboundEvent = NonNullable<
+  ReturnType<typeof useInboundEvents>['data']
+>['pages'][number]['items'][number];
 type EventDelivery = NonNullable<InboundEvent['delivery']>;
 
 const DELIVERY: Record<EventDelivery['state'], { label: string; tone: Tone; explanation: string }> =
@@ -98,18 +111,93 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
 }
 
 /**
- * Events received on the inbound bus: `POST /events`, webhook deliveries, and exit events
- * of other runs, with the runs each one started.
+ * External Events and webhook deliveries, their selected recipients and admission progress.
  */
 export function EventsPage() {
-  const query = useInboundEvents();
+  const [params, setParams] = useSearchParams();
+  const refreshRef = useRef<HTMLButtonElement>(null);
+  const type = params.get('type');
+  const before = params.get('before');
+  const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
+  const query = useInboundEvents(filters);
+  const busy = query.isFetching || query.isRefreshing;
+  const status = [
+    query.isRefreshing
+      ? 'Refreshing events…'
+      : query.refreshFailed
+        ? 'Refresh failed. Your current events are still shown. Refresh to try again.'
+        : query.hasRefreshed && !query.newerAvailable
+          ? 'Showing the newest events.'
+          : null,
+    query.newerAvailable ? 'New events available' : null,
+    query.newerCheckFailed ? 'Could not check for new events. Refresh to try again.' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  function clearFilter(name: 'type' | 'before') {
+    const next = new URLSearchParams(params);
+    next.delete(name);
+    refreshRef.current?.focus({ preventScroll: true });
+    setParams(next);
+  }
   return (
     <Page>
-      <PageHeader title="Events" />
-      <QueryState query={query} what="Events">
+      <PageHeader
+        title="Events"
+        actions={
+          <Button
+            ref={refreshRef}
+            variant="outline"
+            aria-disabled={busy}
+            aria-busy={busy}
+            onClick={() => {
+              if (!busy) query.refresh();
+            }}
+          >
+            Refresh
+          </Button>
+        }
+      >
+        <span role="status" className="text-sm text-muted">
+          {status}
+        </span>
+      </PageHeader>
+      {type || before ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted">
+          {type ? (
+            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
+              <span className="min-w-0 wrap-anywhere">Type: {type}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Clear type filter"
+                onClick={() => clearFilter('type')}
+              >
+                Clear
+              </Button>
+            </span>
+          ) : null}
+          {before ? (
+            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
+              <span className="min-w-0 wrap-anywhere">Before: {before}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Clear before filter"
+                onClick={() => clearFilter('before')}
+              >
+                Clear
+              </Button>
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <HistoryState query={query} what="Events" keepDataOnError>
         {(items) =>
           items.length === 0 ? (
-            <p className="text-sm text-muted">No inbound events yet.</p>
+            <p className="text-sm text-muted">
+              {type || before ? 'No inbound events match these filters.' : 'No inbound events yet.'}
+            </p>
           ) : (
             <Card flush>
               <Table stack="lg">
@@ -118,6 +206,7 @@ export function EventsPage() {
                     <Th>Received</Th>
                     <Th>Type</Th>
                     <Th>Source</Th>
+                    <Th>Target</Th>
                     <Th>Delivery</Th>
                     <Th>Dedupe key</Th>
                     <Th>Started runs</Th>
@@ -136,6 +225,34 @@ export function EventsPage() {
                       <Td label="Source" className="text-sm">
                         <Source source={event.source} />
                         <WebhookConfiguration webhook={event.webhook} />
+                      </Td>
+                      <Td label="Target" className="text-xs wrap-anywhere">
+                        <div className="grid min-w-0 gap-1">
+                          {event.target ? (
+                            <>
+                              <span>
+                                Loop{' '}
+                                <Link
+                                  to={`/loops/${event.target.loopId}/edit`}
+                                  className={`${LINK} font-mono`}
+                                >
+                                  {event.target.loopId}
+                                </Link>
+                              </span>
+                              <span>
+                                Entry <code>{event.target.triggerNodeId}</code>
+                              </span>
+                            </>
+                          ) : null}
+                          {event.admissionId ? (
+                            <span>
+                              Admission <code>{event.admissionId}</code>
+                            </span>
+                          ) : null}
+                          {!event.target && !event.admissionId ? (
+                            <span className="text-muted">not recorded</span>
+                          ) : null}
+                        </div>
                       </Td>
                       <Td label="Delivery" className="text-sm">
                         <Delivery delivery={event.delivery} />
@@ -159,9 +276,14 @@ export function EventsPage() {
                         )}
                       </Td>
                       <Td label="Payload">
-                        <pre className="max-w-md min-w-0 overflow-auto rounded-md border border-default bg-code-bg px-2 py-1 text-xs text-code-fg">
-                          {prettyJson(event.payload)}
-                        </pre>
+                        <BoundedValue
+                          value={event.payload}
+                          label={`Payload of event ${event.id}`}
+                          previewChars={CELL_PREVIEW_CHARS}
+                          fileName={`event-${event.id}-payload`}
+                          className="max-w-md"
+                          testId={`payload-${event.id}`}
+                        />
                       </Td>
                     </tr>
                   ))}
@@ -170,7 +292,7 @@ export function EventsPage() {
             </Card>
           )
         }
-      </QueryState>
+      </HistoryState>
     </Page>
   );
 }

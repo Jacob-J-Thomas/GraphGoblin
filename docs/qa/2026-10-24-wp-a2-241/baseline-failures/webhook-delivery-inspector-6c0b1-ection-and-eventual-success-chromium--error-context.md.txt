@@ -1,0 +1,167 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: webhook-delivery.spec.ts >> inspector retains unknown acknowledgement after a rejection and eventual success
+- Location: e2e\webhook-delivery.spec.ts:28:1
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText(/HTTP 429/)
+Expected: visible
+Error: strict mode violation: getByText(/HTTP 429/) resolved to 2 elements:
+    1) <p>http: Webhook returned HTTP 429.</p> aka getByText('http: Webhook returned HTTP')
+    2) <span class="min-w-0 break-words text-muted">Webhook pending, 2/5 attempts: Webhook returned H…</span> aka getByRole('button', { name: '#13 delivery.attempt_finished' })
+
+Call log:
+  - Expect "toBeVisible" getByText(/HTTP 429/) with timeout 10000ms
+  - waiting for getByText(/HTTP 429/)
+
+```
+
+# Test source
+
+```ts
+  1   | import { test, expect } from './fixtures.js';
+  2   | import { createServer, type ServerResponse } from 'node:http';
+  3   | 
+  4   | let receiverUrl: string;
+  5   | let acknowledge = false;
+  6   | const uncertainRequests: string[] = [];
+  7   | const held = new Set<ServerResponse>();
+  8   | const receiver = createServer((req, res) => {
+  9   |   req.resume();
+  10  |   req.on('end', () => {
+  11  |     if (req.url === '/uncertainty') {
+  12  |       uncertainRequests.push(String(req.headers['idempotency-key']));
+  13  |       if (uncertainRequests.length === 1) {
+  14  |         res.writeHead(200, { 'content-length': '100' });
+  15  |         res.write('partial');
+  16  |         setTimeout(() => res.destroy(), 5);
+  17  |       } else res.writeHead(uncertainRequests.length === 2 ? 429 : 200).end('ack');
+  18  |       return;
+  19  |     }
+  20  |     if (acknowledge) res.writeHead(200).end('ack');
+  21  |     else {
+  22  |       held.add(res);
+  23  |       res.once('close', () => held.delete(res));
+  24  |     }
+  25  |   });
+  26  | });
+  27  | 
+  28  | test('inspector retains unknown acknowledgement after a rejection and eventual success', async ({
+  29  |   page,
+  30  |   request,
+  31  | }) => {
+  32  |   const made = await request.post('/loops', {
+  33  |     data: {
+  34  |       definition: {
+  35  |         schemaVersion: 4,
+  36  |         name: 'Uncertainty across three attempts',
+  37  |         nodes: [
+  38  |           { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+  39  |           {
+  40  |             id: 'done',
+  41  |             kind: 'exit',
+  42  |             label: 'Done',
+  43  |             config: {
+  44  |               returns: 'trigger.payload',
+  45  |               destinations: [{ kind: 'webhook', url: receiverUrl + '/uncertainty' }],
+  46  |             },
+  47  |           },
+  48  |         ],
+  49  |         edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  50  |       },
+  51  |     },
+  52  |   });
+  53  |   expect(made.status()).toBe(201);
+  54  |   const { loop } = (await made.json()) as { loop: { id: string } };
+  55  |   expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+  56  |   const { run } = (await (
+  57  |     await request.post('/loops/' + loop.id + '/runs', { data: { input: 42 } })
+  58  |   ).json()) as { run: { id: string } };
+  59  |   await page.goto('/app/runs/' + run.id);
+  60  |   await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
+> 61  |   await expect(page.getByText(/HTTP 429/)).toBeVisible();
+      |                                            ^ Error: expect(locator).toBeVisible() failed
+  62  |   await expect(page.getByText(/An acknowledgement was unknown/)).toBeVisible();
+  63  |   expect(uncertainRequests).toHaveLength(3);
+  64  |   expect(new Set(uncertainRequests).size).toBe(1);
+  65  |   expect((await (await request.get('/runs/' + run.id)).json()).deliveries[0]).toMatchObject({
+  66  |     status: 'delivered',
+  67  |     attempts: 3,
+  68  |     acknowledgement: 'accepted',
+  69  |     acknowledgementUncertain: true,
+  70  |     lastError: { httpStatus: 429, acknowledgement: 'rejected' },
+  71  |   });
+  72  | });
+  73  | 
+  74  | test.beforeAll(async () => {
+  75  |   await new Promise<void>((ok, no) => {
+  76  |     receiver.once('error', no);
+  77  |     receiver.listen(0, '127.0.0.1', ok);
+  78  |   });
+  79  |   const address = receiver.address();
+  80  |   if (!address || typeof address === 'string') throw Error('Missing receiver address');
+  81  |   receiverUrl = 'http://127.0.0.1:' + address.port;
+  82  | });
+  83  | test.afterAll(async () => {
+  84  |   receiver.closeAllConnections();
+  85  |   await new Promise<void>((ok) => receiver.close(() => ok()));
+  86  | });
+  87  | 
+  88  | test('inspector updates pending delivery to delivered without a reload while execution stays succeeded', async ({
+  89  |   page,
+  90  |   request,
+  91  | }, testInfo) => {
+  92  |   const made = await request.post('/loops', {
+  93  |     data: {
+  94  |       definition: {
+  95  |         schemaVersion: 4,
+  96  |         name: 'Browser webhook delivery',
+  97  |         nodes: [
+  98  |           { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+  99  |           {
+  100 |             id: 'done',
+  101 |             kind: 'exit',
+  102 |             label: 'Done',
+  103 |             config: {
+  104 |               returns: 'trigger.payload',
+  105 |               destinations: [{ kind: 'webhook', url: receiverUrl + '/hook' }],
+  106 |             },
+  107 |           },
+  108 |         ],
+  109 |         edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  110 |       },
+  111 |     },
+  112 |   });
+  113 |   expect(made.status()).toBe(201);
+  114 |   const { loop } = (await made.json()) as { loop: { id: string } };
+  115 |   expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+  116 |   const started = await request.post('/loops/' + loop.id + '/runs', {
+  117 |     data: { input: { answer: 42 } },
+  118 |   });
+  119 |   const { run } = (await started.json()) as { run: { id: string } };
+  120 |   await page.goto('/app/runs/' + run.id);
+  121 |   await expect(
+  122 |     page.getByText('Execution: succeeded. Delivery is tracked separately.'),
+  123 |   ).toBeVisible();
+  124 |   await expect(page.getByText(/Pending \(\d\/5 attempts\)/)).toBeVisible();
+  125 |   await expect(page.getByText(/Delivery identity:/)).toBeVisible();
+  126 |   acknowledge = true;
+  127 |   for (const res of held) res.writeHead(200).end('ack');
+  128 |   await expect(page.getByText(/Delivered after \d attempts?/)).toBeVisible();
+  129 |   await expect(
+  130 |     page.getByText('Execution: succeeded. Delivery is tracked separately.'),
+  131 |   ).toBeVisible();
+  132 |   await page.screenshot({ path: testInfo.outputPath('delivered.png'), fullPage: true });
+  133 | });
+  134 | 
+```

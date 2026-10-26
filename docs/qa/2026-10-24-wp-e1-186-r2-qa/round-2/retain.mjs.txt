@@ -1,0 +1,30 @@
+import {readFile,writeFile,readdir,stat,mkdir,copyFile,rename}from'node:fs/promises';
+import {createHash}from'node:crypto';
+import {resolve}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',tmp='.tmp/qa186r2',omitted=[];
+const sha=b=>createHash('sha256').update(b).digest('hex');
+await copyFile(tmp+'/report-body.md',out+'/report-body.md.txt');
+for(const name of await readdir(tmp)){
+ const path=tmp+'/'+name,s=await stat(path);if(!s.isFile())continue;
+ if(name.endsWith('.mjs'))await copyFile(path,out+'/'+name+'.txt');
+ if(s.size>1000000&&/\.json$|\.txt$/.test(name)){const raw=await readFile(path);omitted.push({name:'temporary capture '+name,bytes:raw.length,sha256:sha(raw)});}
+}
+for(const name of ['api-full.json','vars-full.json','restart-full.json','paused-stream.txt']){
+ const path=tmp+'/'+name;try{const raw=await readFile(path);if(raw.length<=1000000)await writeFile(out+'/'+(name==='paused-stream.txt'?'paused-stream.log.txt':name),raw);}catch{}
+}
+for(const name of await readdir(out)){
+ const path=out+'/'+name,s=await stat(path);if(!s.isFile())continue;
+ if(s.size>1000000){const raw=await readFile(path);omitted.push({name,bytes:raw.length,sha256:sha(raw)});await mkdir(tmp+'/omitted',{recursive:true});const target=resolve(tmp+'/omitted/'+name);if(!target.startsWith(resolve(tmp)+'/')&&!target.startsWith(resolve(tmp)+'\\'))throw Error('capture move escaped QA workspace');await rename(path,target);}
+}
+await writeFile(out+'/NOT-KEPT.md','# Captures not retained\n\nCaptures above 1,000,000 bytes are identified below, without claiming their bytes are retained in this evidence folder. Temporary originals remain in the ignored QA scratch directory for orchestrator cleanup. Assertions and digests in the retained scripts/results identify what was compared. No directory was deleted.\n\n| Capture | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+omitted.map(x=>'| '+x.name+' | '+x.bytes+' | '+x.sha256+' |').join('\n')+'\n');
+let previous=[];try{previous=JSON.parse(await readFile(out+'/normalization.json','utf8')).files;}catch{}
+const normalized=[...previous];const profile=process.env.USERPROFILE,forward=profile.replaceAll('\\','/');
+for(const name of await readdir(out))if(!name.endsWith('.png')){
+ const path=out+'/'+name,raw=await readFile(path);let s=raw.toString('utf8');const before=s;
+ s=s.replace(/^\uFEFF/,'').replaceAll('file:///'+forward,'%USERPROFILE%').replaceAll(profile,'%USERPROFILE%').replaceAll(forward,'%USERPROFILE%').replaceAll(JSON.stringify(profile).slice(1,-1),'%USERPROFILE%');
+ let escaped=profile;for(let i=0;i<4;i++){s=s.replaceAll(escaped,'%USERPROFILE%');escaped=JSON.stringify(escaped).slice(1,-1);}
+ if(s!==before){normalized.push({name,beforeBytes:raw.length,beforeSHA256:sha(raw),afterBytes:Buffer.byteLength(s),afterSHA256:sha(s)});await writeFile(path,s);}
+}
+await writeFile(out+'/normalization.json',JSON.stringify({policy:'UTF-8 without BOM; local user prefixes normalized to %USERPROFILE%. Any modified bytes are identified here. Download equality digests refer to original downloaded bytes.',files:normalized},null,2));
+const files=[];for(const name of (await readdir(out)).sort()){if(['artifact-manifest.json','report-verification.json'].includes(name))continue;const raw=await readFile(out+'/'+name);files.push({name,bytes:raw.length,sha256:sha(raw),bom:raw.subarray(0,3).equals(Buffer.from([239,187,191]))});}
+await writeFile(out+'/artifact-manifest.json',JSON.stringify(files,null,2));console.log(JSON.stringify({files:files.length,omitted:omitted.length,normalized:normalized.length,oversizedRetained:files.filter(x=>x.bytes>1000000).length}));

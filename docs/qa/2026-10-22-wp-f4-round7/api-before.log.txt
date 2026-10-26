@@ -1,0 +1,502 @@
+
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+
+
+
+ ❯ src/prompt-provenance.test.ts (7 tests | 4 failed) 3700ms
+
+   ❯ inference recovery contract over the API (7)
+
+     × blocks synchronous codex missing-session repair refusal with retriable=false 1411ms
+
+     × blocks synchronous codex missing-session repair refusal with retriable=true 506ms
+
+     × blocks synchronous claude missing-session repair refusal with retriable=false 395ms
+
+     × blocks synchronous claude missing-session repair refusal with retriable=true 489ms
+
+pnpm.cmd : 
+
+At line:3 char:1
+
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/prompt-provena ...
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=false
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=true
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=true
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+-   "resumable": false,
+
++   "resumable": true,
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:79:55
+
+     77|         await test.idle();
+
+     78|         const failed = await test.app.inject({ method: 'GET', url: `/r…
+
+     79|         expect.soft(failed.json<RunRecord>().failure).toMatchObject({
+
+       |                                                       ^
+
+     80|           code: 'HARNESS_SESSION_MISSING', resumable: false,
+
+     81|           details: { adapterCode: 'HARNESS_SESSION_MISSING' },
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=false
+
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "submission": "session-missing",
+
++   "submission": "definitely-not-submitted",
+
+    "turnId": "01M3Y7RKG0GZP8AAYJCY64Q4BJ",
+
+    "visitId": "01M3Y7RKG0MR4M735WVT8P98KE:5",
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:89:12
+
+     87|         expect(repair.prompt).toBe('Repair exactly: "invalid"');
+
+     88|         expect.soft(events.filter((event) => event.type === 'harness.s…
+
+     89|           .toMatchObject({
+
+       |            ^
+
+     90|             submission: 'session-missing', visitId: repair.visitId, tu…
+
+     91|           });
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=false
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=true
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=true
+
+AssertionError: expected 200 to be 409 // Object.is equality
+
+
+
+- Expected
+
++ Received
+
+
+
+- 409
+
++ 200
+
+
+
+ ❯ src/prompt-provenance.test.ts:97:41
+
+     95|         });
+
+     96|         await test.idle();
+
+     97|         expect.soft(resumed.statusCode).toBe(409);
+
+       |                                         ^
+
+     98|         expect.soft(calls).toBe(2);
+
+     99|       } finally {
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=false
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=true
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=true
+
+AssertionError: expected 3 to be 2 // Object.is equality
+
+
+
+- Expected
+
++ Received
+
+
+
+- 2
+
++ 3
+
+
+
+ ❯ src/prompt-provenance.test.ts:98:28
+
+     96|         await test.idle();
+
+     97|         expect.soft(resumed.statusCode).toBe(409);
+
+     98|         expect.soft(calls).toBe(2);
+
+       |                            ^
+
+     99|       } finally {
+
+    100|         await test.close();
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous codex 
+
+missing-session repair refusal with retriable=true
+
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "submission": "session-missing",
+
++   "submission": "definitely-not-submitted",
+
+    "turnId": "01M3Y7RKG0J9REZ01RQ158Z1BD",
+
+    "visitId": "01M3Y7RKG071ACHYAQWW1JGG09:5",
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:89:12
+
+     87|         expect(repair.prompt).toBe('Repair exactly: "invalid"');
+
+     88|         expect.soft(events.filter((event) => event.type === 'harness.s…
+
+     89|           .toMatchObject({
+
+       |            ^
+
+     90|             submission: 'session-missing', visitId: repair.visitId, tu…
+
+     91|           });
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=false
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+ Test Files  1 failed (1)
+
+      Tests  4 failed | 3 passed (7)
+
+   Start at  16:18:35
+
+   Duration  16.03s (import 40%, transform 37%, tests 24%)
+
+
+
+  Transform  transforming modules took 5.71s · 37% of tracked time, re-done on every run
+
+             persist transforms across runs with fsModuleCache: true
+
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+    "resumable": false,
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:79:55
+
+     77|         await test.idle();
+
+     78|         const failed = await test.app.inject({ method: 'GET', url: `/r…
+
+     79|         expect.soft(failed.json<RunRecord>().failure).toMatchObject({
+
+       |                                                       ^
+
+     80|           code: 'HARNESS_SESSION_MISSING', resumable: false,
+
+     81|           details: { adapterCode: 'HARNESS_SESSION_MISSING' },
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=false
+
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "submission": "session-missing",
+
++   "submission": "definitely-not-submitted",
+
+    "turnId": "01M3Y7RKG0GMCKE2Q8A17RDX3S",
+
+    "visitId": "01M3Y7RKG03G9S5XKNWR8MPJEA:5",
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:89:12
+
+     87|         expect(repair.prompt).toBe('Repair exactly: "invalid"');
+
+     88|         expect.soft(events.filter((event) => event.type === 'harness.s…
+
+     89|           .toMatchObject({
+
+       |            ^
+
+     90|             submission: 'session-missing', visitId: repair.visitId, tu…
+
+     91|           });
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks synchronous claude 
+
+missing-session repair refusal with retriable=true
+
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "submission": "session-missing",
+
++   "submission": "definitely-not-submitted",
+
+    "turnId": "01M3Y7RKG0ZGTKPR2VBN74WBBE",
+
+    "visitId": "01M3Y7RKG0DN7WSSGWBFHY407Z:5",
+
+  }
+
+
+
+ ❯ src/prompt-provenance.test.ts:89:12
+
+     87|         expect(repair.prompt).toBe('Repair exactly: "invalid"');
+
+     88|         expect.soft(events.filter((event) => event.type === 'harness.s…
+
+     89|           .toMatchObject({
+
+       |            ^
+
+     90|             submission: 'session-missing', visitId: repair.visitId, tu…
+
+     91|           });
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+
+
+  × "pnpm recursive exec" failed in C:
+
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+
+  │ prompt-provenance\apps\api
+
+
+

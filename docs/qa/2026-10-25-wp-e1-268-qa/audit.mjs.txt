@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:net';
+import { join } from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(head,'07fa8456a70e786116e8dd0e7907686bda6b5078');
+const branch=execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim();assert.equal(branch,'codex-qa-wp-e1-268');
+const tracked=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim(),staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();assert.equal(tracked,'');assert.equal(staged,'');
+const names=(await readdir(out)).filter(n=>n!=='artifact-index.json');
+const README=await readFile(join(out,'README.md'),'utf8');
+const links=new Set([...README.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]));
+const files=[];
+for(const name of names){const p=join(out,name),s=await stat(p);assert(s.isFile(),name+' is not a file');assert(s.size<=1000000,name+' exceeds capture bound');const b=await readFile(p);assert(!(b[0]===239&&b[1]===187&&b[2]===191),name+' has BOM');assert(!/C:[\\/]+Users[\\/]+(?!%)[^\\/%]+/i.test(b.toString()),name+' has unredacted user path');if(name!=='README.md')assert(links.has(name),name+' is not linked from README');files.push({name,bytes:s.size,sha256:createHash('sha256').update(b).digest('hex')});}
+for(const target of links)if(!/^(https?:|#)/.test(target))await stat(join(out,target));
+const before=JSON.parse(await readFile(join(out,'native-before-events.json'),'utf8')),after=JSON.parse(await readFile(join(out,'native-after-events.json'),'utf8')),native=JSON.parse(await readFile(join(out,'native-restart.json'),'utf8'));
+assert.deepEqual(after.slice(0,before.length),before);assert.equal(after.length-before.length,2);assert.equal(createHash('sha256').update(JSON.stringify(before)).digest('hex'),native.crash.eventsSha256);
+for(const variant of ['after','baseline']){const r=JSON.parse(await readFile(join(out,'independent-'+variant+'.json'),'utf8'));assert.equal(r.checks.length,26);assert(r.checks.every(c=>c.status==='pass'));}
+const ports=[];
+for(const port of [6190,6191]){const server=createServer();const free=await new Promise(resolve=>{server.once('error',()=>resolve(false));server.listen(port,'127.0.0.1',()=>resolve(true));});if(free)await new Promise(resolve=>server.close(resolve));ports.push({port,freeAtAudit:free});}
+const format=await readFile(join(out,'report-format.log.txt'),'utf8');assert(format.includes('WRITE_EXIT=0')&&format.includes('CHECK_EXIT=0'));
+const record={status:'pass',head,branch,node:process.version,trackedChanges:[],stagedChanges:[],qaOnly:true,allArtifactsLinked:true,allKeptFilesAtMost1000000Bytes:true,utf8WithoutBom:true,userPathsRedacted:true,nativeRetainedPrefixExactlyEqual:true,nativeAdditionalDeliveryEvents:2,independentCasesPerRuntime:26,ports,markdownFormatPass:true,limitations:'Port availability checks are local snapshots, not a global process inventory or process-tree cleanup claim.'};
+await writeFile(join(out,'evidence-audit.json'),JSON.stringify(record,null,2)+'\n');
+const auditBytes=await readFile(join(out,'evidence-audit.json'));const ix=files.findIndex(f=>f.name==='evidence-audit.json');files[ix]={name:'evidence-audit.json',bytes:auditBytes.length,sha256:createHash('sha256').update(auditBytes).digest('hex')};
+await writeFile(join(out,'artifact-index.json'),JSON.stringify({files,exclusion:'artifact-index.json excludes its own self hash'},null,2)+'\n');
+console.log('EVIDENCE_AUDIT_PASS',files.length,'artifacts',JSON.stringify(ports));

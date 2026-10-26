@@ -441,6 +441,120 @@ test('an unavailable explicit classifier fails without switching evaluator', asy
   });
   expect(await endpointRequests(request, target.endpoint)).toEqual([]);
 });
+
+/**
+ * #129: a gate whose repeat is a classifier Choice option keeps what loop-back exits offered. The
+ * options carry their list-level help and unique-label rule, a duplicate label is refused where
+ * it is entered, and the run shows each pass, the stopping limit and the chosen option's
+ * criterion. The fake endpoint always answers the first option, so the gate repeats to its limit.
+ */
+test('a classifier Choice gate explains its options, refuses a duplicate label, and shows pass evidence', async ({
+  page,
+  request,
+}) => {
+  const target = await instance(request);
+  await registerKev(request, target);
+  const loopId = await createLoop(request, target.url, {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name: 'Choice gate evidence',
+    nodes: [
+      start,
+      {
+        id: 'work',
+        kind: 'mutate',
+        label: 'Work',
+        config: { operations: [{ op: 'append-message', role: 'note', content: 'pass' }] },
+        ui: { x: 260, y: 80 },
+      },
+      {
+        id: 'gate',
+        kind: 'decision',
+        label: 'Gate',
+        config: {
+          kind: 'classifier',
+          model: 'kev',
+          question: 'Is the work done?',
+          maxPasses: 3,
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'again', label: 'Again', repeat: true, criteria: 'More work is needed' },
+              { id: 'done', label: 'Done', criteria: 'The work is complete' },
+            ],
+          },
+        },
+        ui: { x: 520, y: 80 },
+      },
+      { id: 'finished', kind: 'exit', label: 'Finished', config: {}, ui: { x: 800, y: 0 } },
+      {
+        id: 'gave-up',
+        kind: 'exit',
+        label: 'Gave up',
+        config: { outcome: 'exhausted', returns: 'gates.gate.passes' },
+        ui: { x: 800, y: 200 },
+      },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+      { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'gate' } },
+      { id: 'e3', from: { node: 'gate', port: 'again' }, to: { node: 'work' } },
+      { id: 'e4', from: { node: 'gate', port: 'done' }, to: { node: 'finished' } },
+      { id: 'e5', from: { node: 'gate', port: 'limit-reached' }, to: { node: 'gave-up' } },
+    ],
+  });
+  await page.goto(`${target.url}/app/loops/${loopId}/edit`);
+  const editor = await openNode(page, 'gate');
+  const options = editor.getByRole('group', { name: 'Options', exact: true });
+  await expect(options).toHaveAccessibleDescription(
+    'At least 2 items. Two to sixty-four uniquely labelled options, each with a unique stable id (its output port) and a nonblank criterion.',
+  );
+  const label = options.locator('[data-field="answer.options.1.label"] input');
+  await expect(label).toHaveAccessibleDescription('Unique readable option label.');
+  await expect(options.locator('[data-field="answer.options.1.criteria"]')).toContainText(
+    'Authored criterion sent to the selected evaluator.',
+  );
+  await label.fill('Again');
+  await label.blur();
+  await expect(options.getByText('option labels must be unique', { exact: true })).toBeVisible();
+  await label.fill('Done');
+  await label.blur();
+  await expect(options.getByText('option labels must be unique', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  expect((await request.post(`${target.url}/loops/${loopId}/publish`)).status()).toBe(200);
+
+  const started = await request.post(`${target.url}/loops/${loopId}/runs`, { data: {} });
+  expect(started.status()).toBe(202);
+  const runId = ((await started.json()) as { run: { id: string } }).run.id;
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get(`${target.url}/runs/${runId}`)).json()) as { status: string })
+          .status,
+    )
+    .toBe('exhausted');
+  await page.goto(`${target.url}/app/runs/${runId}`);
+  await expect(
+    page.getByText(
+      'Last gate decision: Gate (gate) chose Again (again) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(page.getByTestId('run-result')).toHaveText('3');
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await expect(timeline.getByText('decision.made')).toHaveCount(3);
+  await expect(timeline).toContainText('passes 1 → 2 of 3');
+  await expect(timeline).toContainText('passes 3 → 3 of 3; Limit reached (max-passes)');
+  await timeline.getByText('decision.made').last().click();
+  const term = (name: string) =>
+    page.getByText(name, { exact: true }).locator('xpath=following-sibling::dd[1]');
+  await expect(term('Option ID')).toHaveText('again');
+  await expect(term('Selected port')).toHaveText('limit-reached');
+  await expect(term('Label')).toHaveText('Again');
+  await expect(term('Criterion')).toHaveText('More work is needed');
+  await expect(term('Limit stopping repeat')).toHaveText('Maximum passes');
+});
 for (const theme of ['dark', 'light'] as const) {
   test(`Settings and the picker in ${theme}, at 768 px: empty, with a custom entry, a missing secret`, async ({
     page,

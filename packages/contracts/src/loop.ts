@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { field } from './meta.js';
 import { SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
 import { NodeSchema } from './nodes.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
@@ -15,10 +16,53 @@ export const WorkingDirectorySpecSchema = z.discriminatedUnion('kind', [
 ]);
 export type WorkingDirectorySpec = z.infer<typeof WorkingDirectorySpecSchema>;
 
+export const ExecutionLimitsSchema = z.strictObject({
+  maxNodeVisits: z
+    .number()
+    .int()
+    .positive()
+    .max(10_000)
+    .nullable()
+    .default(10)
+    .meta(
+      field('Fresh entries per node. Default 10; unlimited removes this cutoff.', {
+        control: 'execution-limit',
+      }),
+    ),
+  // Long waits and heartbeats have no deadline unless their author sets one.
+  runDeadlineSeconds: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000)
+    .nullable()
+    .default(null)
+    .meta(
+      field(
+        'Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.',
+        { control: 'execution-limit' },
+      ),
+    ),
+  structuredTimeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000_000)
+    .nullable()
+    .default(null)
+    .meta(
+      field(
+        'Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.',
+        { control: 'execution-limit' },
+      ),
+    ),
+});
+export type ExecutionLimits = z.infer<typeof ExecutionLimitsSchema>;
+
 export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: HarnessDefaultsSchema.prefault({}),
-  maxNodeVisits: z.number().int().positive().max(10_000).default(10),
+  ...ExecutionLimitsSchema.shape,
   subloopDepthLimit: z.number().int().positive().max(64).default(8),
 });
 export type LoopSettings = z.infer<typeof LoopSettingsSchema>;

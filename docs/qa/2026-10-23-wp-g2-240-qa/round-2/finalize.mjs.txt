@@ -1,0 +1,44 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+const root=process.cwd(),parent=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa'),dir=path.join(parent,'round-2');
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replace(/C:[\\/][\r\n\s│]*[\\/]*Users[\\/]+%USERNAME%/gi,'%USERPROFILE%');
+for(const n of fs.readdirSync(dir))if(n.endsWith('.json')||n.endsWith('.log.txt')){const b=fs.readFileSync(path.join(dir,n)),t=b[0]===255&&b[1]===254?b.toString('utf16le'):b.toString('utf8');fs.writeFileSync(path.join(dir,n),clean(t.replace(/^\uFEFF/,'')));}
+const read=n=>JSON.parse(fs.readFileSync(path.join(dir,n),'utf8'));
+const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+if(git('rev-parse','HEAD')!=='cc1c3fceca4f9ed914915fd1e2a2e2fbde6cecd1')throw new Error('HEAD changed');
+const old=JSON.parse(fs.readFileSync(path.join(parent,'artifact-manifest.json'),'utf8'));
+const oldMismatches=old.filter(e=>sha(fs.readFileSync(path.join(parent,e.name)))!==e.sha256).map(e=>e.name);
+const coverage=read('coverage-result.json'),format=read('format-result.json'),race=read('races-history-results.json');
+const serverLogs=fs.readdirSync(dir).filter(n=>n.includes('server')&&n.endsWith('.log.txt')).map(name=>{const s=fs.readFileSync(path.join(dir,name),'utf8');return{name,starts:(s.match(/"ready":true/g)||[]).length,stops:(s.match(/STOPPED/g)||[]).length};});
+const outcomes={primaryBrowser:{exitCode:0,checks:52},supplemental:{exitCode:0,checks:4},raceInitialAttempt:{exitCode:1,completedProductChecks:6,reason:'Loops fault injection also intercepted HTML navigation; QA route corrected'},raceContinuation:{exitCode:0,combinedChecks:race.checks.length},coverage,format,serverLogs};
+if(fs.existsSync(path.join(dir,'error-boundary-isolated.json')))outcomes.errorBoundaryIsolated=read('error-boundary-isolated.json');
+fs.writeFileSync(path.join(dir,'outcomes.json'),JSON.stringify(outcomes,null,2)+'\n');
+fs.writeFileSync(path.join(dir,'final-state.log.txt'),['HEAD: '+git('rev-parse','HEAD'),'Git state: '+git('rev-parse','--abbrev-ref','HEAD'),'Tracked diff: '+(git('diff','--stat')||'(none)'),'Staged diff: '+(git('diff','--cached','--stat')||'(none)'),'Status: '+git('status','--short')].join('\n')+'\n');
+const lcov=path.join(root,'apps/web/coverage/lcov.info');
+if(fs.existsSync(lcov)&&fs.statSync(lcov).size>1000000){const b=fs.readFileSync(lcov);fs.writeFileSync(path.join(dir,'NOT-KEPT.md'),`# Generated capture not retained in QA evidence\n\n| Artifact | Bytes | SHA-256 | Disposition |\n| --- | --- | --- | --- |\n| apps/web/coverage/lcov.info | ${b.length} | ${sha(b)} | Generated coverage output left in the worktree for the orchestrator; not copied here or cited as evidence. The kept coverage-summary.json and command log establish reported numbers. |\n`);}
+let text=fs.readFileSync(path.join(dir,'README.md'),'utf8');
+text=text.replace('All native instances use the assigned port range and data prefix.','All native instances use the assigned port range and data prefix. Every recorded ready API has a matching STOPPED marker; see [outcomes.json](outcomes.json).');
+text=text.replace('No directories were deleted.','No directories were deleted.');
+text=text.replace('No owner ports/store were touched.','No owner ports/store were touched. [final-state.log.txt](final-state.log.txt) confirms no tracked/staged edits. [artifact-audit.json](artifact-audit.json) confirms every round-1 manifest hash still matches.');
+const auditPath=path.join(dir,'artifact-audit.json');fs.writeFileSync(auditPath,'{}\n');
+if(!fs.existsSync(path.join(dir,'artifact-manifest.json')))fs.writeFileSync(path.join(dir,'artifact-manifest.json'),'[]\n');
+const first=text.indexOf('| Artifact'),last=text.indexOf('## 5. Observations outside scope',first);
+if(first<0||last<0)throw new Error('Artifact table not found');
+const before=text.slice(0,first),after=text.slice(last),table=()=>{let t='| Artifact | Bytes |\n| --- | --- |\n';for(const n of fs.readdirSync(dir).sort())if(n!=='README.md'&&n!=='artifact-manifest.json')t+=`| [${n}](${n}) | ${fs.statSync(path.join(dir,n)).size} |\n`;return t;};
+text=before+table()+'\n'+after;
+const missing=[...text.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]).filter(n=>!n.includes('://')&&!fs.existsSync(path.join(dir,n)));
+const oversized=fs.readdirSync(dir).filter(n=>fs.statSync(path.join(dir,n)).size>1000000),leaks=[],tokens=[];
+for(const n of fs.readdirSync(dir)){if(n.endsWith('.png'))continue;const t=fs.readFileSync(path.join(dir,n),'utf8');if(/C:[/\\]+Users[/\\]+%USERNAME%/i.test(t))leaks.push(n);if(/\bgg_[A-Za-z0-9_-]{25,}\b/.test(t))tokens.push(n);}
+const audit={head:git('rev-parse','HEAD'),missingLinks:missing,userPathLeaks:leaks,possibleTokenFiles:tokens,oversizedFiles:oversized,round1ArtifactsVerified:old.length,round1Mismatches:oldMismatches,trackedDiff:git('diff','--name-only'),stagedDiff:git('diff','--cached','--name-only'),nativeServerBalanced:serverLogs.every(x=>x.starts===x.stops),primaryChecks:52,supplementalChecks:4,raceHistoryChecks:race.checks.length};
+if(missing.length||leaks.length||tokens.length||oversized.length||oldMismatches.length||audit.trackedDiff||audit.stagedDiff||!audit.nativeServerBalanced)throw new Error(JSON.stringify(audit));
+fs.writeFileSync(auditPath,JSON.stringify(audit,null,2)+'\n');
+const prettier=createRequire(path.join(root,'package.json'))('prettier'),target=path.join(dir,'README.md'),config=await prettier.resolveConfig(target);
+text=await prettier.format(before+table()+'\n'+after,{...config,filepath:target});fs.writeFileSync(target,text);
+if(!await prettier.check(text,{...config,filepath:target}))throw new Error('Final README not formatted');
+const entries=fs.readdirSync(dir).filter(n=>n!=='artifact-manifest.json').sort().map(name=>{const b=fs.readFileSync(path.join(dir,name));return{name,bytes:b.length,sha256:sha(b)};});
+fs.writeFileSync(path.join(dir,'artifact-manifest.json'),JSON.stringify(entries,null,2)+'\n');
+console.log(JSON.stringify({audit,artifactCount:entries.length+1,verdict:text.match(/\*\*(PASS|FAIL|IN PROGRESS)\*\*/)?.[1]},null,2));

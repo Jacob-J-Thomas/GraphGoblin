@@ -1,0 +1,318 @@
+
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts (10 tests | 6 failed) 490ms
+
+   × does not downgrade synchronous HARNESS_TURN_FAILED delivery uncertainty to safe non-submission 109ms
+
+   × does not downgrade synchronous HARNESS_TERMINATION_UNCONFIRMED delivery uncertainty to safe non-submission 25ms
+
+   × preserves sync codex missing-session repair refusal with retriable=false 128ms
+
+   × preserves sync codex missing-session repair refusal with retriable=true 32ms
+
+   × preserves sync claude missing-session repair refusal with retriable=false 42ms
+
+   × preserves sync claude missing-session repair refusal with retriable=true 32ms
+
+pnpm.cmd : 
+
+At line:3 char:1
+
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/in ...
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > does not downgrade synchronous HARNESS_TURN_FAILED delivery 
+
+uncertainty to safe non-submission
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(3) }
+
+(7 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_DELIVERY_UNCERTAIN",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "inference": {
+
+-     "submission": "delivery-uncertain",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+-   "resumable": false,
+
++   "resumable": true,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:35:27
+
+     33|     try {
+
+     34|       const run = await e.runToIdle(version.loopId);
+
+     35|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+     36|         code: code === 'HARNESS_TURN_FAILED' ? 'HARNESS_DELIVERY_UNCER…
+
+     37|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > does not downgrade synchronous HARNESS_TERMINATION_UNCONFIRMED 
+
+delivery uncertainty to safe non-submission
+
+AssertionError: expected { …(6) } to match object { …(3) }
+
+(7 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+
+    "inference": {
+
+-     "submission": "delivery-uncertain",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+    "resumable": false,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:35:27
+
+     33|     try {
+
+     34|       const run = await e.runToIdle(version.loopId);
+
+     35|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+     36|         code: code === 'HARNESS_TURN_FAILED' ? 'HARNESS_DELIVERY_UNCER…
+
+     37|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync codex missing-session repair refusal with 
+
+retriable=false
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync codex missing-session repair refusal with retriable=true
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync claude missing-session repair refusal with 
+
+retriable=true
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+-   "resumable": false,
+
++   "resumable": true,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:100:27
+
+     98|       const run = await e.runToIdle(version.loopId);
+
+     99|       expect(run.status).toBe('failed');
+
+    100|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+    101|         code: 'HARNESS_SESSION_MISSING',
+
+    102|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync claude missing-session repair refusal with 
+
+retriable=false
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+    "resumable": false,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:100:27
+
+     98|       const run = await e.runToIdle(version.loopId);
+
+     99|       expect(run.status).toBe('failed');
+
+    100|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+    101|         code: 'HARNESS_SESSION_MISSING',
+
+    102|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+
+
+
+ Test Files  1 failed (1)
+
+      Tests  6 failed | 4 passed (10)
+
+   Start at  16:19:36
+
+   Duration  6.13s (transform 51%, import 40%, tests 9%)
+
+
+
+  Transform  transforming modules took 2.82s · 51% of tracked time, re-done on every run
+
+             persist transforms across runs with fsModuleCache: true
+
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+
+
+  × "pnpm recursive exec" failed in C:
+
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+
+  │ prompt-provenance\packages\engine
+
+
+

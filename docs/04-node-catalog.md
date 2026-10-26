@@ -31,15 +31,15 @@ the raw expression; a timezone issue focuses the time zone control.
 
 Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md).
 
-| Kind         | Required authored fields                                                                      | Result and ports                                               |
-| ------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.        |
-| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route.    |
-| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports. |
+| Kind         | Required authored fields                                                                      | Result and ports                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.                                                                |
+| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route, bounded by the pinned completion deadline when configured. |
+| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports.                                                         |
 
 Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in` and `limit-reached`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
 
-Classifier Choice retains options with IDs, labels and criteria. Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
+Classifier Choice retains 2-64 options with IDs, labels and criteria; option IDs and trimmed labels are unique, as are Score band IDs and labels and the two Noul sides'. Every ID is a stable output port. The editor shows these rules as list-level and per-field help and reports a duplicate at the field (#129). Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
 
 LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational and has no acceptance threshold. There is no repair or evaluator fallback.
 
@@ -51,7 +51,7 @@ Current definitions/exports use format 4. Older exports, stores and device draft
 
 ### Gates and repeat limits (#164 E1)
 
-A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1 to 10,000 or null for Unlimited); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
 Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
@@ -70,7 +70,11 @@ type InferenceConfig = {
   harness: 'codex' | 'claude';
   model?: string;
   effort?: Effort;
-  session: { policy: 'fresh' | 'resume-previous' | 'resume-named'; key?: string };
+  session:
+    | { policy: 'fresh' }
+    | { policy: 'resume-previous' }
+    | { policy: 'resume-named'; key: string }
+    | { policy: 'resume-own'; resetAfterVisits?: number };
   prompt: { template: string }; // Liquid, rendered against the thread
   input: InputTransform[]; // applied to the thread view the template sees
   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
@@ -99,7 +103,26 @@ type RepairPolicy = {
 };
 ```
 
-Behaviour: the engine writes the harness session row, renders the prompt and context files, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+Behaviour: the engine renders the prompt and context files, persists the pending turn and harness session row, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+
+`fresh` remains the default. Supply main-loop context deliberately through the prompt,
+input transforms or context files. Opt-in `resume-own` preserves only this node's provider
+conversation within this run and harness, including after restart; forks and children
+start fresh. Its optional `resetAfterVisits` accepts positive safe integers, without a
+default. N completed visits share a conversation; visit N+1 starts fresh. Retries and
+repairs stay in their visit. Reset never clears shared context or another node's session.
+Previous/named selection remains unchanged. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
+Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
+prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
+records refusal, uncertainty, missing-session status and any positive acceptance marker.
+A definitely-not-submitted turn retries that saved task with its original session-policy
+selection when the cause is resumable. Uncertain authored work cannot continue a previous/named/own
+conversation on its inherited ID alone: this visit needs durable acceptance or a newly
+established session. Repairs and continuations can use the visit's own session. Without a
+usable session, the run fails non-resumably. Missing sessions have the explicit recovery choice below; Replay from the node
+is the available deliberate new attempt. Named-session lookup still applies on replay.
+See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
 
 Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
 pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
@@ -249,8 +272,49 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
 
+With `returns: "none"` the run finishes without a result and no destination receives anything: neither the exit's own nor those added by the start request's `return`. The engine records no delivery event for them. This is valid configuration, not a failure. A quiet exit is `returns: "none"` with no destinations. A return expression that evaluates to nothing returns `null`, which is a value and is delivered. The exit editor says which case applies, and the inspector states that a run returned nothing by configuration, naming the destinations that received nothing, or identifies the quiet exit (#129, #258).
+
 ## Post-1.0 node ideas (recorded, not planned)
 
 - Error or debug node: an explicit place to route to when run inspection is not enough for debugging.
 - Fan-out and fan-in nodes.
 - Summarise node once an LLM provider port exists.
+
+## Visible execution limits and unlimited mode (#243)
+
+The editor's Loop tab and Settings show the defaults before a run exists:
+`maxNodeVisits: 10` and no run deadline (`runDeadlineSeconds: null`). Omission means the
+contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
+with a warning. The deadline's neutral No run deadline choice is the default; choose
+Limited and enter seconds to add one. Each new run pins the effective
+values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
+Definition changes and Settings edits cannot alter an existing run's pin.
+
+A run deadline starts on first execution, includes waits, pauses and restart downtime,
+and excludes queue time. A durable timer aborts active work or fails a parked run with
+`RUN_DEADLINE_EXCEEDED` (non-resumable). Late node results cannot overwrite this outcome;
+explicit Cancel remains `cancelled`. Null removes the run timer. Node `timeoutSeconds`
+and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+
+Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
+unlimited marked repetition; evidence records null and passes continue increasing.
+The gate's authored non-repeat routes and explicit time check still apply. Disable both
+loop controls, pass limits and any authored watchdogs to permit intentionally indefinite
+execution, ending through authored exits, Cancel or an external/resource failure.
+GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
+Authors may use script/decision nodes for their own usage-aware behavior.
+
+### Missing provider sessions (#265)
+
+`HARNESS_SESSION_MISSING` names the harness, missing handle (or absent completed
+own-session reference) and origin: previous, named, own, or this visit's continuation
+or repair. Plain Resume refuses. The run inspector offers **Start fresh session for
+<node>**, also available through `POST /runs/{id}/recover-session` with `nodeId` and
+the observed failed event's `failureSeq`. Leaving it untouched keeps the run failed.
+
+The explicit choice restarts this node's authored task without prior provider
+conversation, retaining its context mode, selected loop inputs, model and effort.
+Earlier actions are not undone. The shared thread and other nodes are preserved;
+later visits use the configured session policy normally. Actor, time, node and
+lost-context decision persist in `run.resumed.freshSession` across restart.
+See [ADR-0055](decisions/ADR-0055-explicit-missing-session-recovery.md).

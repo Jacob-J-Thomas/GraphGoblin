@@ -1,0 +1,16 @@
+import {readFile,writeFile,copyFile,stat} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');assert.match(process.version,/^v22\./);assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');
+try{await stat(join(out,'artifact-repair.json'));throw Error('Repair already recorded')}catch(e){if(e.code!=='ENOENT')throw e}
+for(const [from,to]of [['qa-audit.json','qa-audit-before-repair.json'],['format.log.txt','format-before-repair.log.txt'],['format-result.json','format-before-repair-result.json']])await copyFile(join(out,from),join(out,to));
+const original=await readFile(join(out,'build.log.txt'));assert.equal(original[0],255);assert.equal(original[1],254);
+const decoded=new TextDecoder('utf-16le',{fatal:true}).decode(original),profile=process.env.USERPROFILE;
+const count=decoded.split(profile).length-1;assert.ok(count>0,'Expected literal decoded user path');
+const canonical=decoded.replaceAll(JSON.stringify(profile).slice(1,-1),'%USERPROFILE%').replaceAll(profile,'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%');
+assert.ok(!canonical.includes(profile));assert.ok(!canonical.includes('\0'));await writeFile(join(out,'build.log.txt'),canonical);
+const after=await readFile(join(out,'build.log.txt'));
+await writeFile(join(out,'artifact-repair.json'),JSON.stringify({at:new Date().toISOString(),case:'Build capture encoding/path normalization',expected:'Canonical UTF-8 text with user paths normalized',before:{encoding:'UTF-16LE with BOM',bytes:original.length,sha256:createHash('sha256').update(original).digest('hex'),decodedUnnormalizedPaths:count,manualPathReview:'FAIL',initialAuditMissedInterleavedNulPaths:true},after:{encoding:'UTF-8',bytes:after.length,sha256:createHash('sha256').update(after).digest('hex'),decodedUnnormalizedPaths:0,pathReview:'PASS'},auditRule:'Reject UTF-16, invalid UTF-8 and NUL-containing text; validate normalized paths',testOutcomesChanged:false},null,2));
+console.log('PASS: UTF-16LE build capture converted; '+count+' user path normalized; initial audit/format results retained');

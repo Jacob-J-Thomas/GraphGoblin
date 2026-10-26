@@ -1,3 +1,4 @@
+import { describeEvent } from '../projections.js';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -32,6 +33,33 @@ function noulDefinition(truthThreshold?: number) {
 }
 
 describe('EvaluationDetails', () => {
+  it('shows unlimited pass evidence explicitly in the inspector and timeline', () => {
+    const recorded = event('run', 1, 'decision.made', {
+      nodeId: 'check',
+      portId: 'again',
+      diagnostics: [],
+      observation: { kind: 'route', routeId: 'again', confidence: null, reasoning: null },
+      provenance: {
+        kind: 'expression',
+        provider: null,
+        classifierId: null,
+        model: null,
+        effort: null,
+      },
+      gate: {
+        previousPasses: 15,
+        passes: 16,
+        repeatRouteId: 'again',
+        maxPasses: null,
+        elapsedSeconds: 5,
+        limit: null,
+      },
+    });
+    render(<EvaluationDetails event={recorded} />);
+    expect(screen.getByText('Maximum passes').nextElementSibling).toHaveTextContent('Unlimited');
+    expect(describeEvent(recorded)).toContain('passes 15 \u2192 16 (unlimited)');
+  });
+
   it.each<{ type: string; observation: EvaluationObservation }>([
     {
       type: 'Noul',
@@ -233,7 +261,7 @@ describe('EvaluationDetails', () => {
         })}
       />,
     );
-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.4');
+    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('40%');
     expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent(
       'Recorded historical explanation.',
     );
@@ -242,9 +270,9 @@ describe('EvaluationDetails', () => {
 
   it.each([
     [undefined, 0.8, 'No minimum configured in run version'],
-    [0.7, 0.8, 'Meets run-version minimum 0.7'],
-    [0.9, 0.8, 'Below run-version minimum 0.9'],
-    [0.7, null, 'Not recorded; run-version minimum 0.7'],
+    [0.7, 0.8, 'Meets run-version minimum 70%'],
+    [0.9, 0.8, 'Below run-version minimum 90%'],
+    [0.7, null, 'Not recorded; run-version minimum 70%'],
   ] as const)(
     'shows recorded Choice evidence and factual confidence comparison %#',
     (minimum, confidence, expected) => {
@@ -289,8 +317,9 @@ describe('EvaluationDetails', () => {
       expect(screen.getByText('Option ID').parentElement).toHaveTextContent('ship');
       expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(expected);
       expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
-        'review: 0.2',
+        'Review (review): 20%',
       );
+      expect(screen.getByText('Alternative probabilities', { selector: 'p' })).toBeVisible();
       rerender(
         <EvaluationDetails
           event={event('run', 2, 'decision.made', {
@@ -379,7 +408,7 @@ describe('EvaluationDetails', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Not recorded')).toHaveLength(3);
-    expect(screen.getByText('0.7')).toBeInTheDocument();
+    expect(screen.getByText('70%')).toBeInTheDocument();
   });
 
   it('shows typed Noul and fractional Score evidence with stable ports and rubric anchors', () => {
@@ -443,8 +472,9 @@ describe('EvaluationDetails', () => {
       'Anchor 2: Fully meets',
     ]);
     expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
-      '1: 0.92',
+      '1: 92%',
     );
+    expect(screen.getByText('Rubric index probabilities', { selector: 'p' })).toBeVisible();
   });
 
   it('shows a confidence-gate rejection as a proposed answer with no selected route', () => {
@@ -488,10 +518,10 @@ describe('EvaluationDetails', () => {
       screen.getByRole('region', { name: 'Rejected classifier evaluation' }),
     ).toHaveTextContent('No decision was accepted and no route was selected.');
     expect(screen.getByText('Proposed answer').parentElement).toHaveTextContent('Noul false');
-    expect(screen.getByText('True probability').parentElement).toHaveTextContent('0.3');
-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.42');
-    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('0.8');
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
+    expect(screen.getByText('True probability').parentElement).toHaveTextContent('30%');
+    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('42%');
+    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('80%');
+    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('20%');
     expect(screen.getByText('Provider').parentElement).toHaveTextContent('typesafe');
     expect(screen.getByText('Classifier').parentElement).toHaveTextContent('jev');
     expect(screen.getByText('Model').parentElement).toHaveTextContent('jev-latest');
@@ -524,7 +554,7 @@ describe('EvaluationDetails', () => {
         definition={noulDefinition()}
       />,
     );
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.5');
+    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('50%');
   });
 
   it('keeps the rejected Score rubric and classifier identity when alternatives are absent', () => {
@@ -570,5 +600,209 @@ describe('EvaluationDetails', () => {
     expect(screen.getByText('Provider').parentElement).toHaveTextContent('typesafe');
     expect(screen.getByText('Classifier').parentElement).toHaveTextContent('jev');
     expect(screen.getByText('Model').parentElement).toHaveTextContent('jev-latest');
+  });
+
+  it('replaces the result pointer with the reason when the exit returned nothing', () => {
+    const reason =
+      'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.';
+    render(
+      <EvaluationDetails
+        event={event('run', 1, 'exit.evaluated', { nodeId: 'done', outcome: 'success' })}
+        exitReturns={reason}
+      />,
+    );
+    expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(
+      `Exit outcome: success. This exit is terminal. ${reason}`,
+    );
+    expect(screen.queryByText(/See the run result/)).toBeNull();
+  });
+});
+
+/** Chosen-route evidence (#129): the authored label, and a classifier's criterion, from the run version. */
+describe('EvaluationDetails chosen route', () => {
+  const definition = LoopDefinitionSchema.parse({
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name: 'Chosen route fixture',
+    nodes: [
+      {
+        id: 'gate',
+        kind: 'decision',
+        label: 'Gate',
+        config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Is the work done?',
+          maxPasses: 3,
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'again', label: 'Again', repeat: true, criteria: 'More work is needed' },
+              { id: 'done', label: 'Done', criteria: 'The work is complete' },
+            ],
+          },
+        },
+      },
+      {
+        id: 'route',
+        kind: 'decision',
+        label: 'Route',
+        config: {
+          kind: 'expression',
+          jsonata: '"ship"',
+          routes: [
+            { id: 'ship', label: 'Ship it' },
+            { id: 'hold', label: 'Hold' },
+          ],
+        },
+      },
+      {
+        id: 'grade',
+        kind: 'decision',
+        label: 'Grade',
+        config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Grade it.',
+          answer: {
+            type: 'score',
+            anchors: ['Poor', 'Fair', 'Good'],
+            bands: [
+              { id: 'low', label: 'Needs work', min: 0, max: 1 },
+              { id: 'high', label: 'Good enough', min: 1, max: 2 },
+            ],
+          },
+        },
+      },
+    ],
+    edges: [],
+  });
+  const classifier = {
+    kind: 'classifier',
+    provider: 'typesafe',
+    classifierId: 'jev',
+    model: 'jev-latest',
+    effort: null,
+  } as const;
+  const expression = {
+    kind: 'expression',
+    provider: null,
+    classifierId: null,
+    model: null,
+    effort: null,
+  } as const;
+  const choice = (optionId: string) =>
+    ({
+      kind: 'classifier',
+      answer: { type: 'choice', optionId, confidence: 0.9, probabilities: null },
+    }) as const;
+  const row = (term: string) => screen.getByText(term, { selector: 'dt' }).nextElementSibling;
+
+  it('names a Choice option and the criterion the classifier was given', () => {
+    render(
+      <EvaluationDetails
+        definition={definition}
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'gate',
+          portId: 'done',
+          diagnostics: [],
+          provenance: classifier,
+          observation: choice('done'),
+          gate: {
+            previousPasses: 2,
+            passes: 2,
+            repeatRouteId: 'again',
+            maxPasses: 3,
+            elapsedSeconds: 1,
+            limit: null,
+          },
+        })}
+      />,
+    );
+    expect(row('Label')).toHaveTextContent('Done');
+    expect(row('Criterion')).toHaveTextContent('The work is complete');
+  });
+
+  it('keeps the refused repeat option while Selected port is Limit reached', () => {
+    render(
+      <EvaluationDetails
+        definition={definition}
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'gate',
+          portId: 'limit-reached',
+          diagnostics: [],
+          provenance: classifier,
+          observation: choice('again'),
+          gate: {
+            previousPasses: 3,
+            passes: 3,
+            repeatRouteId: 'again',
+            maxPasses: 3,
+            elapsedSeconds: 1,
+            limit: 'max-passes',
+          },
+        })}
+      />,
+    );
+    expect(row('Selected port')).toHaveTextContent('limit-reached');
+    expect(row('Label')).toHaveTextContent('Again');
+    expect(row('Criterion')).toHaveTextContent('More work is needed');
+  });
+
+  it('names an expression route and a Score band without inventing a criterion', () => {
+    const { unmount } = render(
+      <EvaluationDetails
+        definition={definition}
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'route',
+          portId: 'ship',
+          diagnostics: [],
+          provenance: expression,
+          observation: { kind: 'route', routeId: 'ship', confidence: null, reasoning: null },
+        })}
+      />,
+    );
+    expect(row('Label')).toHaveTextContent('Ship it');
+    expect(screen.queryByText('Criterion', { selector: 'dt' })).toBeNull();
+    unmount();
+    render(
+      <EvaluationDetails
+        definition={definition}
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'grade',
+          portId: 'high',
+          diagnostics: [],
+          provenance: classifier,
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'score',
+              score: 1.25,
+              confidence: 0.7,
+              legend: { '0': 'Poor', '1': 'Fair', '2': 'Good' },
+              probabilities: null,
+            },
+          },
+        })}
+      />,
+    );
+    expect(row('Label')).toHaveTextContent('Good enough');
+    expect(screen.queryByText('Criterion', { selector: 'dt' })).toBeNull();
+  });
+
+  it('says when the run version is loading, unavailable, or lacks the chosen route', () => {
+    const made = (nodeId: string) =>
+      event('run', 1, 'decision.made', {
+        nodeId,
+        portId: 'ship',
+        diagnostics: [],
+        provenance: expression,
+        observation: { kind: 'route', routeId: 'ship', confidence: null, reasoning: null },
+      });
+    const { rerender } = render(<EvaluationDetails event={made('route')} definitionLoading />);
+    expect(row('Label')).toHaveTextContent('Loading run-version configuration…');
+    rerender(<EvaluationDetails event={made('route')} />);
+    expect(row('Label')).toHaveTextContent('Not recorded (decision configuration unavailable)');
+    rerender(<EvaluationDetails event={made('gate')} definition={definition} />);
+    expect(row('Label')).toHaveTextContent('Not in the run-version configuration');
   });
 });

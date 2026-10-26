@@ -1,0 +1,253 @@
+apps/web/scripts\replay-seed-repro.ts:32:  const response = await fetch(
+apps/web/scripts\replay-seed-repro.ts:37:          method: 'POST',
+apps/web/e2e\cron.spec.ts:20:  const created = await request.post('/loops', {
+apps/web/e2e\cron.spec.ts:127:  const created = await request.post('/loops', {
+apps/web/e2e\cron.spec.ts:200:  const created = await request.post('/loops', {
+apps/web/e2e\cron.spec.ts:285:  const preview = await request.post('/triggers/cron/preview', {
+apps/web/e2e\cron.spec.ts:296:  const created = await request.post('/loops', {
+apps/web/e2e\claude-harness.spec.ts:51:  const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\claude-harness.spec.ts:54:  const published = await request.post(url + '/loops/' + loop.id + '/publish');
+apps/web/e2e\claude-harness.spec.ts:94:  const created = await request.post(instance.url + '/loops', {
+apps/web/e2e\claude-harness.spec.ts:174:    const created = await request.post(instance.url + '/loops', {
+apps/web/e2e\claude-harness.spec.ts:225:    const started = await request.post(instance.url + '/loops/' + loop.id + '/runs', {
+apps/web/e2e\claude-harness.spec.ts:283:    const created = await request.post(instance.url + '/loops', { data: { definition } });
+apps/web/e2e\claude-harness.spec.ts:345:  const created = await request.post(instance.url + '/loops', { data: { definition } });
+apps/web/e2e\claude-harness.spec.ts:400:  const preflightControl = await request.post(controlUrl + '/harness/preflight', {
+apps/web/e2e\claude-harness.spec.ts:405:  const unknown = await request.post(controlUrl + '/harness/requests', {
+apps/web/e2e\claude-harness.spec.ts:412:  const wrongFamily = await request.post(controlUrl + '/harness/requests', {
+apps/web/e2e\claude-harness.spec.ts:576:  const start = await request.post(instance.url + '/loops/' + loopId + '/runs', {
+apps/web/e2e\claude-harness.spec.ts:603:    await request.get(instance.url + '/runs/' + run.id + '/events')
+apps/web/e2e\claude-harness.spec.ts:642:  const failedStart = await request.post(instance.url + '/loops/' + failedLoop + '/runs', {
+apps/web/e2e\claude-harness.spec.ts:649:      const eventsResponse = await request.get(instance.url + '/runs/' + failedRun.id + '/events');
+apps/web/e2e\claude-harness.spec.ts:664:  const resume = await request.post(instance.url + '/runs/' + failedRun.id + '/resume');
+apps/web/e2e\claude-harness.spec.ts:685:  const cancelStart = await request.post(instance.url + '/loops/' + cancelLoop + '/runs', {
+apps/web/e2e\claude-harness.spec.ts:692:      const eventsResponse = await request.get(instance.url + '/runs/' + cancelRun.id + '/events');
+apps/web/e2e\claude-harness.spec.ts:718:    const created = await request.post(instance.url + '/loops', { data: { definition } });
+apps/web/e2e\claude-harness.spec.ts:722:      const response = await route.fetch();
+apps/web/e2e\classifiers.spec.ts:25:  method: string;
+apps/web/e2e\classifiers.spec.ts:164:  const created = await request.post(`${url}/loops`, { data: { definition } });
+apps/web/e2e\classifiers.spec.ts:171:  const started = await request.post(`${url}/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\classifiers.spec.ts:396:      method: 'POST',
+apps/web/e2e\classifiers.spec.ts:421:  expect((await request.post(`${target.url}/loops/${loopId}/publish`)).status()).toBe(200);
+apps/web/e2e\classifiers.spec.ts:525:  expect((await request.post(`${target.url}/loops/${loopId}/publish`)).status()).toBe(200);
+apps/web/e2e\classifiers.spec.ts:527:  const started = await request.post(`${target.url}/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\api-key-current.spec.ts:18:    const created = await request.post(`${url}/api-keys`, {
+apps/web/e2e\actions.spec.ts:81:  const response = await request.post(`/loops/${id}/runs`, { data: {} });
+apps/web/e2e\actions.spec.ts:96:    await request.post(`/runs/${run.id}/cancel`);
+apps/web/e2e\actions.spec.ts:592:  const response = await request.post('/api-keys', {
+apps/web/e2e\exit-primitives.spec.ts:73:    const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\exit-primitives.spec.ts:147:    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+apps/web/e2e\exit-primitives.spec.ts:159:    const eventsResponse = await request.get(url + '/runs/' + runId + '/events');
+apps/web/e2e\exit-primitives.spec.ts:233:    const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\exit-primitives.spec.ts:262:    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+apps/web/e2e\exit-primitives.spec.ts:277:        (await (await request.get(url + '/runs/' + runId + '/events')).json()) as {
+apps/web/e2e\exit-primitives.spec.ts:334:  const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\exit-primitives.spec.ts:337:  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+apps/web/e2e\exit-primitives.spec.ts:338:  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+apps/web/e2e\events-refresh.spec.ts:11:    (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+apps/web/e2e\events-refresh.spec.ts:31:      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+apps/web/e2e\events-refresh.spec.ts:34:  for (let i = 0; i < 101; i++) await send('refresh-events', i);
+apps/web/e2e\events-refresh.spec.ts:39:  await send('refresh-events', 'first-arrival');
+apps/web/e2e\events-refresh.spec.ts:51:  await send('refresh-events', 'older-arrival');
+apps/web/e2e\events-refresh.spec.ts:55:    return parsed.pathname === '/events' && parsed.searchParams.get('limit') === '1';
+apps/web/e2e\events-refresh.spec.ts:87:      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+apps/web/e2e\events-refresh.spec.ts:115:    await expect(status).toContainText('Could not check for new events');
+apps/web/e2e\events-refresh.spec.ts:134:  await expect(status).not.toContainText('Could not check for new events');
+apps/web/e2e\events-refresh.spec.ts:204:      parsed.pathname !== '/events' ||
+apps/web/e2e\events-refresh.spec.ts:215:    const response = await route.fetch();
+apps/web/e2e\events-refresh.spec.ts:280:    if (parsed.pathname !== '/events' || parsed.searchParams.get('type') !== 'receipt-boundary') {
+apps/web/e2e\events-refresh.spec.ts:284:    const response = await route.fetch();
+apps/web/e2e\editor-modal.spec.ts:19:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\edge-routes.spec.ts:92:  const response = await request.post('/loops', { data: { definition } });
+apps/web/e2e\edge-routes.spec.ts:488:  const imported = await request.post('/loops/import', { data: exported });
+apps/web/e2e\edge-routes.spec.ts:510:  const started = await request.post(`/loops/${copy}/runs`, { data: {} });
+apps/web/e2e\drafts.spec.ts:29:  const created = await request.post('/loops', {
+apps/web/e2e\drafts.spec.ts:84:  const created = await request.post('/loops', {
+apps/web/e2e\drafts.spec.ts:163:  const created = await request.post('/loops', {
+apps/web/e2e\drafts.spec.ts:216:    const created = await request.post('/loops', {
+apps/web/e2e\earlier-node-outputs.spec.ts:80:    const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\forms.spec.ts:17:  const created = await request.post('/loops', {
+apps/web/e2e\forms.spec.ts:154:  const created = await request.post('/loops', {
+apps/web/e2e\forms.spec.ts:259:    const refused = await request.post(`/loops/${rawId}/publish`);
+apps/web/e2e\forms.spec.ts:287:  const validated = await request.post(`/loops/${id}/validate`, {
+apps/web/e2e\forms.spec.ts:291:  expect((await request.post(`/loops/${id}/publish`)).status()).toBe(200);
+apps/web/e2e\forms.spec.ts:293:  const imported = await request.post('/loops/import', { data: await exported.json() });
+apps/web/e2e\forms.spec.ts:337:  const imported = await request.post('/loops/import', { data: raw });
+apps/web/e2e\forms.spec.ts:349:  const validated = await request.post(`/loops/${result.loop.id}/validate`, {
+apps/web/e2e\forms.spec.ts:356:  expect((await request.post(`/loops/${result.loop.id}/publish`)).status()).toBe(422);
+apps/web/e2e\device-first.spec.ts:5:  const response = await request.post('/loops', { data: { definition: approvalLoop(name) } });
+apps/web/e2e\form-controls.spec.ts:11:  const created = await request.post('/loops', {
+apps/web/e2e\fixtures.ts:76:  const res = await request.post(`${base}${path}`, { data: body });
+apps/web/e2e\fixtures.ts:133:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\fixtures.ts:136:  const published = await request.post(`/loops/${loop.id}/publish`);
+apps/web/e2e\github-checks.spec.ts:13:    const created = await request.post('/loops', {
+apps/web/e2e\github-checks.spec.ts:45:      'dedupeKey',
+apps/web/e2e\github-triggers.spec.ts:47:  const response = await request.post('/loops', { data: { definition: triggerLoop(name) } });
+apps/web/e2e\github-triggers.spec.ts:67:  const response = await request.get('/events');
+apps/web/e2e\github-triggers.spec.ts:125:      eventType: { source: 'header', name: 'x-github-event', fallback: 'webhook' },
+apps/web/e2e\github-triggers.spec.ts:145:  expect((await request.post(`/loops/${loopId}/publish`)).status()).toBe(200);
+apps/web/e2e\github-triggers.spec.ts:163:    request.post(endpoint.path, {
+apps/web/e2e\github-triggers.spec.ts:201:  await page.goto('/app/events');
+apps/web/e2e\github-triggers.spec.ts:252:        dedupeKey: '"octo-team/fixture-repo:issue:" & $string(item.number)',
+apps/web/e2e\github-triggers.spec.ts:283:      id: 'pending-event',
+apps/web/e2e\github-triggers.spec.ts:284:      payload: { marker: 'pending-event' },
+apps/web/e2e\github-triggers.spec.ts:290:      id: 'failed-event',
+apps/web/e2e\github-triggers.spec.ts:291:      payload: { marker: 'failed-event' },
+apps/web/e2e\github-triggers.spec.ts:297:      id: 'admitted-event',
+apps/web/e2e\github-triggers.spec.ts:298:      payload: { marker: 'admitted-event' },
+apps/web/e2e\github-triggers.spec.ts:304:      id: 'deduplicated-event',
+apps/web/e2e\github-triggers.spec.ts:305:      payload: { marker: 'deduplicated-event' },
+apps/web/e2e\github-triggers.spec.ts:311:      id: 'filtered-event',
+apps/web/e2e\github-triggers.spec.ts:312:      payload: { marker: 'filtered-event' },
+apps/web/e2e\github-triggers.spec.ts:317:  await page.route('**/events', async (route) => {
+apps/web/e2e\github-triggers.spec.ts:318:    if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== '/events')
+apps/web/e2e\github-triggers.spec.ts:326:  await page.goto('/app/events');
+apps/web/e2e\github-triggers.spec.ts:329:  await expect(row('pending-event')).toContainText('Pending admission');
+apps/web/e2e\github-triggers.spec.ts:330:  await expect(row('pending-event')).toContainText('Admission failures: 2');
+apps/web/e2e\github-triggers.spec.ts:331:  await expect(row('pending-event')).toContainText('Retry at');
+apps/web/e2e\github-triggers.spec.ts:332:  await expect(row('failed-event')).toContainText('Failure: ADMISSION_UNAVAILABLE');
+apps/web/e2e\github-triggers.spec.ts:333:  await expect(row('failed-event')).toContainText('Admission ended with a safe failure code.');
+apps/web/e2e\github-triggers.spec.ts:334:  await expect(row('admitted-event').getByRole('link', { name: runId })).toHaveAttribute(
+apps/web/e2e\github-triggers.spec.ts:338:  await expect(row('deduplicated-event')).toContainText('none');
+apps/web/e2e\github-triggers.spec.ts:339:  await expect(row('filtered-event')).toContainText(
+apps/web/e2e\harness-switch-native.mjs:5:import { once } from 'node:events';
+apps/web/e2e\harness-switch-native.mjs:56:  const response = await globalThis.fetch(url + path, {
+apps/web/e2e\qa.spec.ts:40:  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\qa.spec.ts:94:test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+apps/web/e2e\qa.spec.ts:420:    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+apps/web/e2e\qa.spec.ts:421:      method: 'POST',
+apps/web/e2e\qa.spec.ts:448:    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+apps/web/e2e\qa.spec.ts:449:      method: 'POST',
+apps/web/e2e\qa.spec.ts:458:  const run = await api.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\qa.spec.ts:499:    '/app/events',
+apps/web/e2e\pwa.spec.ts:10:for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspector'].entries()) {
+apps/web/e2e\pwa.spec.ts:17:    const started = await request.post(`/loops/${loopId}/runs`, {
+apps/web/e2e\pwa.spec.ts:73:  const response = await request.post(`/loops/${loopId}/runs`, {
+apps/web/e2e\pwa.spec.ts:155:  const response = await request.post(`/loops/${loopId}/runs`, {
+apps/web/e2e\prereview.spec.ts:3:for (const from of ['manual', 'event']) {
+apps/web/e2e\prereview.spec.ts:6:    const created = await request.post('/loops', {
+apps/web/e2e\prereview.spec.ts:11:            from === 'event' && n.id === 'start'
+apps/web/e2e\prereview.spec.ts:12:              ? { ...n, config: { type: 'event', eventType: 'synthetic' } }
+apps/web/e2e\prereview.spec.ts:49:  const created = await request.post('/loops', { data: { definition: { ...base, nodes, edges } } });
+apps/web/e2e\palette.spec.ts:5:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\own-session.spec.ts:27:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\node-placement.spec.ts:25:  const response = await request.post('/loops', {
+apps/web/e2e\node-json.spec.ts:24:  const response = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:50:    const created = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:111:  const created = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:117:  const rejectedImport = await request.post('/loops/import', {
+apps/web/e2e\model-picker.spec.ts:163:  const created = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:247:  const invalid = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:253:  const created = await request.post('/loops', { data: { definition: withDecision('high') } });
+apps/web/e2e\model-picker.spec.ts:291:  const created = await request.post('/loops', {
+apps/web/e2e\model-picker.spec.ts:381:  const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\model-picker.spec.ts:402:    (await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: null } })).status(),
+apps/web/e2e\model-picker.spec.ts:423:  const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\model-effort.spec.ts:36:  const created = await request.post(url + '/loops', {
+apps/web/e2e\model-effort.spec.ts:41:  expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+apps/web/e2e\model-effort.spec.ts:68:  expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
+apps/web/e2e\model-effort.spec.ts:90:  const created = await request.post(url + '/loops', {
+apps/web/e2e\model-effort.spec.ts:133:    const created = await request.post(url + '/loops', {
+apps/web/e2e\model-effort.spec.ts:144:    expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+apps/web/e2e\model-effort.spec.ts:160:    const rejected = await request.post(url + `/loops/${loop.id}/runs`, { data: {} });
+apps/web/e2e\model-effort.spec.ts:178:    expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
+apps/web/e2e\model-effort.spec.ts:249:      const created = await request.post(url + '/loops', { data: { definition } });
+apps/web/e2e\model-effort.spec.ts:302:        (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
+apps/web/e2e\model-effort.spec.ts:323:  const created = await request.post('/loops', {
+apps/web/e2e\model-effort.spec.ts:404:  const created = await request.post(url + '/loops', {
+apps/web/e2e\model-effort.spec.ts:429:  expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+apps/web/e2e\model-effort.spec.ts:444:  const queued = await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } });
+apps/web/e2e\loop-lifecycle.spec.ts:64:  const duplicate = await request.post('/runs/' + runId + '/input', {
+apps/web/e2e\live.spec.ts:15:  const res = await request.post(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps/live`, {
+apps/web/e2e\issue-7-qa.spec.ts:71:  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\issue-7-qa.spec.ts:121:    await request.post(`/runs/${runId}/cancel`);
+apps/web/e2e\issue-7-qa.spec.ts:135:  await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\issue-7-qa.spec.ts:167:  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\issue-170-qa.spec.ts:137:  const res = await request.post(`${origin}/loops`, {
+apps/web/e2e\inspector-large-values.spec.ts:57:    const created = await request.post(url + '/loops', {
+apps/web/e2e\inspector-large-values.spec.ts:62:    expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+apps/web/e2e\inspector-large-values.spec.ts:64:    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+apps/web/e2e\inspector-large-values.spec.ts:126:    const created = await request.post(url + '/loops', { data: { definition: loopDefinition } });
+apps/web/e2e\inspector-large-values.spec.ts:129:    expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+apps/web/e2e\inspector-large-values.spec.ts:130:    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+apps/web/e2e\inspector-large-values.spec.ts:172:  const created = await request.post(url + '/loops', {
+apps/web/e2e\inspector-large-values.spec.ts:177:  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+apps/web/e2e\inspector-large-values.spec.ts:179:  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+apps/web/e2e\inspector-large-values.spec.ts:200:  const answered = await request.post(url + '/runs/' + runId + '/input', {
+apps/web/e2e\inspector-large-values.spec.ts:224:  const created = await request.post(url + '/loops', {
+apps/web/e2e\inspector-large-values.spec.ts:229:  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+apps/web/e2e\inspector-large-values.spec.ts:231:  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+apps/web/e2e\inspector-large-values.spec.ts:258:  const answered = await request.post(url + '/runs/' + runId + '/input', {
+apps/web/e2e\template-gallery.spec.ts:252:  const freshResponse = await page.request.post('/templates/starter/draft', { data: {} });
+apps/web/e2e\server.ts:81:  authMethod: 'claude.ai',
+apps/web/e2e\server.ts:88:      authMethod: 'claude.ai',
+apps/web/e2e\server.ts:97:      authMethod: 'claude.ai',
+apps/web/e2e\server.ts:422:          method: r.method,
+apps/web/e2e\screens.capture.ts:224:    (await json<{ loop: { id: string } }>(await api.post('/loops', { data: { definition } }))).loop
+apps/web/e2e\screens.capture.ts:226:  const publish = async (id: string) => json(await api.post(`/loops/${id}/publish`));
+apps/web/e2e\screens.capture.ts:228:    (await json<{ run: { id: string } }>(await api.post(`/loops/${id}/runs`, { data: {} }))).run.id;
+apps/web/e2e\screens.capture.ts:271:  await api.post(`/runs/${docsRun}/cancel`);
+apps/web/e2e\screens.capture.ts:300:  await api.post(`/runs/${pausedRun}/pause`);
+apps/web/e2e\screens.capture.ts:305:    await api.post(`/runs/${pausedRun}/cancel`);
+apps/web/e2e\screens.capture.ts:343:    await api.post('/events', {
+apps/web/e2e\screens.capture.ts:347:        dedupeKey: 'issue-482',
+apps/web/e2e\screens.capture.ts:352:    await api.post('/events', { data: { type: 'build.finished', payload: { ok: true } } }),
+apps/web/e2e\screens.capture.ts:356:  await json(await api.post('/api-keys', { data: { label: 'ci-bot', scopes: ['*'] } }));
+apps/web/e2e\screens.capture.ts:508:  { name: 'events', path: () => '/app/events', ready: 'issue.opened' },
+apps/web/e2e\screens.capture.ts:551:    path: () => '/app/events',
+apps/web/e2e\screens.capture.ts:556:        (url) => url.pathname === '/events',
+apps/web/e2e\screens.capture.ts:653:    await api.post(`/runs/${seeded.liveRun}/cancel`);
+apps/web/e2e\screens.capture.ts:654:    if (seeded.pausedRun) await api.post(`/runs/${seeded.pausedRun}/cancel`);
+apps/web/e2e\routing.spec.ts:54:  const response = await request.post('/loops', { data: { definition } });
+apps/web/e2e\responsive.spec.ts:211:  const created = await request.post('/loops', {
+apps/web/e2e\responsive.spec.ts:245:      const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\responsive.spec.ts:247:      await request.post('/events', { data: { type: 'issue.opened', payload: { number: 41 } } });
+apps/web/e2e\responsive.spec.ts:321:        ['Events', '/app/events', 'issue.opened'],
+apps/web/e2e\responsive.spec.ts:379:          (url) => url.pathname === '/events',
+apps/web/e2e\responsive.spec.ts:389:        await page.goto('/app/events');
+apps/web/e2e\responsive.spec.ts:454:      for (const name of ['Loops', 'Runs', 'Events', 'Settings']) {
+apps/web/e2e\responsive.spec.ts:475:      for (const name of ['Loops', 'Runs', 'Events', 'Settings'])
+apps/web/e2e\responsive.spec.ts:568:      const created = await request.post('/loops', {
+apps/web/e2e\responsive.spec.ts:621:      const created = await request.post('/loops', {
+apps/web/e2e\responsive.spec.ts:753:          ['/app/events', 'issue.opened'],
+apps/web/e2e\responsive.spec.ts:929:      const response = await request.post('/loops', { data: { definition } });
+apps/web/e2e\responsive.spec.ts:988:        const created = await request.post('/loops', { data: { definition: dense } });
+apps/web/e2e\replay-seed.spec.ts:11:test('a replay inspector shows inherited counters and values at its first event', async ({
+apps/web/e2e\replay-seed.spec.ts:17:  const started = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\replay-seed.spec.ts:36:  const replay = await request.post(`/runs/${source.id}/replay`, { data: { nodeId: 'gate' } });
+apps/web/e2e\undo.spec.ts:11:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\trigger-types.spec.ts:12:    const response = await request.post('/loops', {
+apps/web/e2e\trigger-types.spec.ts:21:    await expect(type.locator('option')).toHaveText(['Manual', 'Cron', 'Poll', 'Event', 'Webhook']);
+apps/web/e2e\trigger-types.spec.ts:43:    await type.selectOption('event');
+apps/web/e2e\trigger-types.spec.ts:63:    await dialog.getByLabel('Event header').fill('x-provider-event');
+apps/web/e2e\trigger-types.spec.ts:127:    const created = await request.post('/loops', {
+apps/web/e2e\trigger-types.spec.ts:182:      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+apps/web/e2e\thread-history.spec.ts:32:    const response = await request.post(ready.url + '/loops/' + ready.loopId + '/runs', {
+apps/web/e2e\thread-history.spec.ts:87:    expect((await request.post(ready.url + '/runs/' + run.id + '/resume')).ok()).toBe(true);
+apps/web/e2e\validation.spec.ts:12:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\unlimited-mode.spec.ts:7:  const created = await request.post('/loops', {
+apps/web/e2e\unlimited-mode.spec.ts:56:  const started = await request.post(`/loops/${loop.id}/runs`, {
+apps/web/e2e\unlimited-mode.spec.ts:63:  await request.post(`/runs/${run.id}/cancel`, { data: {} });
+apps/web/e2e\unlimited-mode.spec.ts:75:  const created = await request.post('/loops', {
+apps/web/e2e\webhook-delivery.spec.ts:32:  const made = await request.post('/loops', {
+apps/web/e2e\webhook-delivery.spec.ts:55:  expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+apps/web/e2e\webhook-delivery.spec.ts:57:    await request.post('/loops/' + loop.id + '/runs', { data: { input: 42 } })
+apps/web/e2e\webhook-delivery.spec.ts:92:  const made = await request.post('/loops', {
+apps/web/e2e\webhook-delivery.spec.ts:115:  expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+apps/web/e2e\webhook-delivery.spec.ts:116:  const started = await request.post('/loops/' + loop.id + '/runs', {
+apps/web/e2e\definition-pins.spec.ts:41:  const started = await request.post(`/loops/${loopId}/runs`, {
+apps/web/e2e\definition-pins.spec.ts:53:  const created = await request.post('/loops', { data: { definition: askThenReturn('"old"') } });
+apps/web/e2e\webhook-receiver.spec.ts:12:    eventType: { source: 'constant', value: 'webhook' },
+apps/web/e2e\webhook-receiver.spec.ts:34:  const accepted = await request.post(url, { data: payload });
+apps/web/e2e\decision-routes.spec.ts:117:  const created = await request.post('/loops', { data: { definition } });
+apps/web/e2e\decision-routes.spec.ts:566:  const created = await request.post(`${url}/loops`, {
+apps/web/e2e\decision-routes.spec.ts:637:  const created = await request.post(`${url}/loops`, {
+apps/web/e2e\decision-routes.spec.ts:647:  const published = await request.post(`${url}/loops/${loop.id}/publish`);
+apps/web/e2e\decision-routes.spec.ts:649:  const started = await request.post(`${url}/loops/${loop.id}/runs`, { data: {} });
+apps/web/e2e\global-setup.ts:2:import { once } from 'node:events';
+apps/web/e2e\history.spec.ts:11:    const response = await request.post(`/loops/${loopId}/runs`, { data: {} });
+apps/web/e2e\history.spec.ts:59:        await request.post(url + '/events', {
+apps/web/e2e\history.spec.ts:60:          data: { type: 'paging-events', payload: { index: i } },
+apps/web/e2e\history.spec.ts:65:  await page.goto(url + '/app/events');
+apps/web/e2e\history.spec.ts:90:  const oldResponse = await request.post(`/loops/${oldId}/runs`, { data: {} });
+apps/web/e2e\history.spec.ts:95:    expect((await request.post(`/loops/${busyId}/runs`, { data: {} })).status()).toBe(202);

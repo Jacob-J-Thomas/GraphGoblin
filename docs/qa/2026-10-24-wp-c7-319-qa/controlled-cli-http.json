@@ -1,0 +1,495 @@
+[
+  {
+    "at": "2026-10-24T23:06:07.137Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Synthetic CLI, no provider",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "infer",
+            "kind": "inference",
+            "label": "Controlled inference",
+            "config": {
+              "harness": "codex",
+              "prompt": {
+                "template": "Fixture only; never a provider turn"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "infer"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "infer",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R2M3WD23RVWF511JGNYJMY",
+        "ownerId": "local",
+        "name": "Synthetic CLI, no provider",
+        "draftVersionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "createdAt": "2026-10-24T23:06:07.117Z",
+        "updatedAt": "2026-10-24T23:06:07.117Z"
+      },
+      "draft": {
+        "id": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Synthetic CLI, no provider",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "infer",
+              "label": "Controlled inference",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture only; never a provider turn"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "infer",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "infer",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:07.117Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:10.393Z",
+    "path": "/loops/01M5R2M3WD23RVWF511JGNYJMY/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Synthetic CLI, no provider",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "infer",
+              "label": "Controlled inference",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture only; never a provider turn"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "infer",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "infer",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:07.117Z",
+        "publishedAt": "2026-10-24T23:06:10.382Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:16.588Z",
+    "path": "/loops/01M5R2M3WD23RVWF511JGNYJMY/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R2M7334KVCKBTJYQZ3AQ8B",
+        "ownerId": "local",
+        "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+        "versionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Synthetic CLI, no provider",
+          "label": "Synthetic CLI, no provider v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2M7334KVCKBTJYQZ3AQ8C",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:06:10.403Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:16.959Z",
+    "path": "/runs/01M5R2M7334KVCKBTJYQZ3AQ8B",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2M7334KVCKBTJYQZ3AQ8B",
+      "ownerId": "local",
+      "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+      "versionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Synthetic CLI, no provider",
+        "label": "Synthetic CLI, no provider v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2M7334KVCKBTJYQZ3AQ8C",
+      "status": "running",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:10.403Z",
+      "startedAt": "2026-10-24T23:06:16.596Z",
+      "lastEventSeq": 8
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:16.964Z",
+    "path": "/runs/01M5R2M7334KVCKBTJYQZ3AQ8B",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2M7334KVCKBTJYQZ3AQ8B",
+      "ownerId": "local",
+      "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+      "versionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Synthetic CLI, no provider",
+        "label": "Synthetic CLI, no provider v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2M7334KVCKBTJYQZ3AQ8C",
+      "status": "running",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:10.403Z",
+      "startedAt": "2026-10-24T23:06:16.596Z",
+      "lastEventSeq": 8
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:16.992Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "force"
+    },
+    "status": 202,
+    "body": {
+      "phase": "forcing",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:06:16.981Z",
+      "choiceAt": "2026-10-24T23:06:17.781Z",
+      "activeRunIds": [
+        "01M5R2M7334KVCKBTJYQZ3AQ8B"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [],
+      "controlToken": "a8b9d9c1-54fe-48e2-a2ff-7adcacf925cf:forcing"
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:16.998Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "forcing",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:06:16.981Z",
+      "choiceAt": "2026-10-24T23:06:17.781Z",
+      "activeRunIds": [
+        "01M5R2M7334KVCKBTJYQZ3AQ8B"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [],
+      "controlToken": "a8b9d9c1-54fe-48e2-a2ff-7adcacf925cf:forcing"
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:17.101Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "forcing",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:06:16.981Z",
+      "choiceAt": "2026-10-24T23:06:17.781Z",
+      "activeRunIds": [
+        "01M5R2M7334KVCKBTJYQZ3AQ8B"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [],
+      "controlToken": "a8b9d9c1-54fe-48e2-a2ff-7adcacf925cf:forcing"
+    }
+  }
+]

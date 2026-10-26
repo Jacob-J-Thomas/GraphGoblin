@@ -1,0 +1,40 @@
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHook } from 'node:async_hooks';
+const root = process.cwd(), out = resolve(root, 'docs/qa/2026-10-24-wp-f3-270-qa/round-2');
+const load = p => import(pathToFileURL(resolve(root,p)).href);
+const { createContainer } = await load('apps/api/dist/container.js');
+const { loadConfig } = await load('apps/api/dist/config.js');
+const { buildApp } = await load('apps/api/dist/app.js');
+const { FakeHarness } = await load('packages/engine/dist/testing/index.js');
+let options = { mode:'stall' };
+const calls=[], logs=[], timers=[];
+const hook=createHook({init(id,type){if(type==='Timeout'){const stack=new Error().stack;if(stack.includes('completion-deadline.js'))timers.push({id,at:Date.now(),stack});}}}).enable();
+const fake=new FakeHarness([], 'codex');
+const structured={complete(request,signal){
+  const c={id:calls.length,at:Date.now(),request,signal,abortedAt:null};calls.push(c);
+  signal.addEventListener('abort',()=>{c.abortedAt=Date.now();c.reason=String(signal.reason)},{once:true});
+  return new Promise((resolve,reject)=>{c.release=(value,error)=>{c.releasedAt=Date.now();error?reject(new Error(error)):resolve({value:value??options.value??{route:'yes',confidence:1,reasoning:'QA'}})};if(options.mode==='fast')setTimeout(()=>c.release(options.value),options.delayMs??20);});
+}};
+const logger=Object.fromEntries(['debug','info','warn','error'].map(level=>[level,(data,msg)=>logs.push({level,at:Date.now(),data,msg})]));
+const container=await createContainer(loadConfig({...process.env,GG_WEB_DIST:resolve(root,'apps/web/dist'),GG_MAX_CONCURRENT_RUNS:'1',GG_MASTER_KEY:Buffer.alloc(32,11).toString('base64')}),{harnesses:{codex:fake},structured,logger});
+await container.start();
+const app=await buildApp(container,{logger:false});
+app.post('/qa/config',async req=>{options=req.body;if(options.turns)fake.script(options.turns);return{ok:true}});
+app.get('/qa/observations',async()=>({calls:calls.map(({release,signal,...c})=>({...c,aborted:signal.aborted})),logs,timers,started:fake.started,resumed:fake.resumed}));
+app.post('/qa/release',async req=>{calls[req.body.id].release(req.body.value,req.body.error);return{ok:true}});
+app.post('/qa/pause-admission',async()=>{container.manager.stop();return{ok:true}});
+app.post('/qa/claim-webhook',async req=>{
+  container.manager.stop();const now=container.ports.clock.now().toISOString(),payload={qa:'cold-recovery'};
+  const input={ownerId:'local',loopId:req.body.loopId,versionId:req.body.versionId,triggerNodeId:'start',triggerKind:'webhook',source:'webhook',payload};
+  const claim={id:container.ports.ids.next(),ownerId:'local',loopId:input.loopId,triggerNodeId:'start',contentHash:'c'.repeat(64),inbound:{id:container.ports.ids.next(),ownerId:'local',type:'webhook',payload,source:'webhook:qa',receivedAt:now,runIds:[]}};
+  return container.manager.receiveWebhook(claim,input);
+});
+const url=await app.listen({host:'127.0.0.1',port:Number(process.env.GG_PORT)});
+const keyResponse=await fetch(url+'/api-keys',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'Independent round-2 QA'})});
+const key=await keyResponse.json();
+console.log(JSON.stringify({ready:true,pid:process.pid,node:process.version,url,dataDir:process.env.GG_DATA_DIR,keyCreated:keyResponse.status===201,keyId:key.key?.id}));
+let stopping=false;
+async function stop(){if(stopping)return;stopping=true;container.manager.stop();await app.close();await container.stop();hook.disable();console.log(JSON.stringify({stopped:true,pid:process.pid}));process.exit(0)}
+process.stdin.once('data',()=>stop().catch(e=>{console.error(e);process.exit(1)}));process.stdin.resume();

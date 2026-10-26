@@ -1,0 +1,1575 @@
+{
+  "schema": 2,
+  "workload": "append",
+  "command": [
+    "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-268\\tooling\\perf\\measure.mjs",
+    "append",
+    "--passes=10",
+    "--items=100",
+    "--profile=inspector",
+    "--port=6190",
+    "--store-prefix=gg-qa-e1-268-",
+    "--out=%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-supplemental-UjQCrO\\append-paced-after",
+    "--item-pause-ms=10"
+  ],
+  "output": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-supplemental-UjQCrO\\append-paced-after",
+  "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-supplemental-UjQCrO\\append-paced-after\\gg-qa-e1-268-oyrANE",
+  "aged": 0,
+  "environment": {
+    "measurePid": 57972,
+    "launcherPid": 34964,
+    "timestamp": "2026-10-25T11:54:18.361Z",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+    "logicalCpus": 12,
+    "ramBytes": 68662202368,
+    "freeRamBefore": 26878414848,
+    "node": "v22.14.0",
+    "profileMode": "inspector",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "loadAverage": [
+      0,
+      0,
+      0
+    ],
+    "commit": "07fa8456a70e786116e8dd0e7907686bda6b5078",
+    "loadConditions": "Unspecified; record concurrent activity externally and inspect hostBusyFraction/free RAM.",
+    "freeRamAfter": 26725752832,
+    "hostBusyFraction": 0.7218577153788226
+  },
+  "cases": [
+    {
+      "runId": "01M5SEJVH77QSV5P103ZEZ87VE",
+      "profileWindow": {
+        "startUs": 677582640858,
+        "endUs": 677596362303
+      },
+      "specification": {
+        "passes": 10,
+        "items": 100,
+        "itemBytes": 120,
+        "contextBytes": 128,
+        "inference": true,
+        "grow": false,
+        "artifacts": false,
+        "itemPauseMs": 10,
+        "returnControl": true,
+        "delayMs": 0
+      },
+      "wallMs": 13724.541099999999,
+      "msPerPass": 1372.45411,
+      "cpu": {
+        "user": 2016000,
+        "system": 1484000
+      },
+      "durableAdmissionToStartMs": 28,
+      "timings": {
+        "loops.getVersion": {
+          "count": 4,
+          "totalMs": 2.131400000001122,
+          "meanMs": 0.5328500000002805,
+          "p50UpperMs": 0.44579156845259255,
+          "p95UpperMs": 0.7897469567994436,
+          "maxMs": 0.7880000000004657
+        },
+        "settings.ownerDefaults": {
+          "count": 1,
+          "totalMs": 0.4227000000000771,
+          "meanMs": 0.4227000000000771,
+          "p50UpperMs": 0.44579156845259255,
+          "p95UpperMs": 0.44579156845259255,
+          "maxMs": 0.4227000000000771
+        },
+        "admission.create": {
+          "count": 1,
+          "totalMs": 16.53060000000005,
+          "meanMs": 16.53060000000005,
+          "p50UpperMs": 16.674540931185085,
+          "p95UpperMs": 16.674540931185085,
+          "maxMs": 16.53060000000005
+        },
+        "runs.get": {
+          "count": 71,
+          "totalMs": 109.82269999999517,
+          "meanMs": 1.5467985915492277,
+          "p50UpperMs": 1.39908490853458,
+          "p95UpperMs": 2.999062754174601,
+          "maxMs": 6.009599999999409
+        },
+        "events.read": {
+          "count": 8,
+          "totalMs": 42.528300000000854,
+          "meanMs": 5.316037500000107,
+          "p50UpperMs": 3.6288659325512675,
+          "p95UpperMs": 10.353578016395476,
+          "maxMs": 9.636200000000827
+        },
+        "runs.getThreadCheckpoint": {
+          "count": 1,
+          "totalMs": 0.9324999999998909,
+          "meanMs": 0.9324999999998909,
+          "p50UpperMs": 0.955593817727327,
+          "p95UpperMs": 0.955593817727327,
+          "maxMs": 0.9324999999998909
+        },
+        "runs.getInitialThread": {
+          "count": 1,
+          "totalMs": 0.6635999999998603,
+          "meanMs": 0.6635999999998603,
+          "p50UpperMs": 0.7179517789085851,
+          "p95UpperMs": 0.7179517789085851,
+          "maxMs": 0.6635999999998603
+        },
+        "runs.transition": {
+          "count": 2,
+          "totalMs": 6.617600000000493,
+          "meanMs": 3.3088000000002467,
+          "p50UpperMs": 3.2989690295920613,
+          "p95UpperMs": 3.6288659325512675,
+          "maxMs": 3.3203999999996086
+        },
+        "events.append": {
+          "count": 1087,
+          "totalMs": 2445.2548999999644,
+          "meanMs": 2.2495445262189184,
+          "p50UpperMs": 2.2532402360440273,
+          "p95UpperMs": 2.999062754174601,
+          "maxMs": 6.414099999999962
+        },
+        "runs.update": {
+          "count": 43,
+          "totalMs": 101.78150000000369,
+          "meanMs": 2.3670116279070625,
+          "p50UpperMs": 2.2532402360440273,
+          "p95UpperMs": 3.6288659325512675,
+          "maxMs": 4.42910000000029
+        },
+        "runs.saveThread": {
+          "count": 22,
+          "totalMs": 31.434400000001006,
+          "meanMs": 1.4288363636364094,
+          "p50UpperMs": 1.156268519450066,
+          "p95UpperMs": 3.2989690295920613,
+          "maxMs": 3.32260000000133
+        },
+        "modelCatalog.list": {
+          "count": 10,
+          "totalMs": 7.644099999996797,
+          "meanMs": 0.7644099999996797,
+          "p50UpperMs": 0.7179517789085851,
+          "p95UpperMs": 1.156268519450066,
+          "maxMs": 1.1327999999994063
+        },
+        "workspace.resolve": {
+          "count": 1,
+          "totalMs": 1.4914999999991778,
+          "meanMs": 1.4914999999991778,
+          "p50UpperMs": 1.5389933993880383,
+          "p95UpperMs": 1.5389933993880383,
+          "maxMs": 1.4914999999991778
+        },
+        "sessions.upsert": {
+          "count": 30,
+          "totalMs": 40.66440000000421,
+          "meanMs": 1.3554800000001401,
+          "p50UpperMs": 1.39908490853458,
+          "p95UpperMs": 1.8621820132595264,
+          "maxMs": 2.276600000000144
+        },
+        "events.lastLifecycleEvent": {
+          "count": 1,
+          "totalMs": 2.9415999999982887,
+          "meanMs": 2.9415999999982887,
+          "p50UpperMs": 2.999062754174601,
+          "p95UpperMs": 2.999062754174601,
+          "maxMs": 2.9415999999982887
+        },
+        "events.finalizationRead": {
+          "count": 5,
+          "totalMs": 40.08709999999701,
+          "meanMs": 8.017419999999401,
+          "p50UpperMs": 9.412343651268614,
+          "p95UpperMs": 10.353578016395476,
+          "maxMs": 9.642400000000634
+        },
+        "runs.markFinalized": {
+          "count": 1,
+          "totalMs": 1.3565999999991618,
+          "meanMs": 1.3565999999991618,
+          "p50UpperMs": 1.39908490853458,
+          "p95UpperMs": 1.39908490853458,
+          "maxMs": 1.3565999999991618
+        }
+      },
+      "awaitedPortMs": 2852.3054999999613,
+      "observationMs": 12.464399999998932,
+      "residualMs": 10859.771200000037,
+      "maxConcurrentPortCalls": 2,
+      "checkpoints": [
+        {
+          "pass": 1,
+          "elapsedMs": 1429.7766999999994,
+          "snapshotBytes": 800,
+          "snapshotSerializeMs": 0.07739999999921565,
+          "getThreadMs": 1.067599999999402,
+          "rss": 146026496,
+          "heapTotal": 77156352,
+          "heapUsed": 48431880,
+          "external": 2973846,
+          "arrayBuffers": 118142
+        },
+        {
+          "pass": 2,
+          "elapsedMs": 2815.1139999999996,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.030000000000654836,
+          "getThreadMs": 0.8019000000003871,
+          "rss": 148103168,
+          "heapTotal": 77418496,
+          "heapUsed": 52949704,
+          "external": 2991030,
+          "arrayBuffers": 135326
+        },
+        {
+          "pass": 3,
+          "elapsedMs": 4200.220200000001,
+          "snapshotBytes": 1188,
+          "snapshotSerializeMs": 0.03210000000035507,
+          "getThreadMs": 1.5424000000002707,
+          "rss": 147873792,
+          "heapTotal": 78467072,
+          "heapUsed": 42310400,
+          "external": 2991040,
+          "arrayBuffers": 92366
+        },
+        {
+          "pass": 4,
+          "elapsedMs": 5555.0986,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.023400000000037835,
+          "getThreadMs": 0.5023000000001048,
+          "rss": 149434368,
+          "heapTotal": 78467072,
+          "heapUsed": 45210200,
+          "external": 2965254,
+          "arrayBuffers": 109550
+        },
+        {
+          "pass": 5,
+          "elapsedMs": 6894.142999999999,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.03570000000036089,
+          "getThreadMs": 0.933999999999287,
+          "rss": 149422080,
+          "heapTotal": 78467072,
+          "heapUsed": 47860360,
+          "external": 2965254,
+          "arrayBuffers": 109550
+        },
+        {
+          "pass": 6,
+          "elapsedMs": 8236.898099999999,
+          "snapshotBytes": 1188,
+          "snapshotSerializeMs": 0.0216999999993277,
+          "getThreadMs": 0.6045000000012806,
+          "rss": 149970944,
+          "heapTotal": 78467072,
+          "heapUsed": 50212944,
+          "external": 2982038,
+          "arrayBuffers": 126334
+        },
+        {
+          "pass": 7,
+          "elapsedMs": 9593.307799999999,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.024300000000948785,
+          "getThreadMs": 1.0246999999999389,
+          "rss": 151461888,
+          "heapTotal": 79253504,
+          "heapUsed": 52151656,
+          "external": 2982838,
+          "arrayBuffers": 127134
+        },
+        {
+          "pass": 8,
+          "elapsedMs": 10928.707699999999,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.019800000000032014,
+          "getThreadMs": 0.48250000000007276,
+          "rss": 151011328,
+          "heapTotal": 79253504,
+          "heapUsed": 54534536,
+          "external": 2991030,
+          "arrayBuffers": 135326
+        },
+        {
+          "pass": 9,
+          "elapsedMs": 12290.461499999998,
+          "snapshotBytes": 1190,
+          "snapshotSerializeMs": 0.028800000000046566,
+          "getThreadMs": 4.143200000002253,
+          "rss": 150556672,
+          "heapTotal": 79515648,
+          "heapUsed": 43290552,
+          "external": 2991040,
+          "arrayBuffers": 92366
+        },
+        {
+          "pass": 10,
+          "elapsedMs": 13632.003399999998,
+          "snapshotBytes": 1193,
+          "snapshotSerializeMs": 0.024399999998422572,
+          "getThreadMs": 0.7819000000017695,
+          "rss": 152645632,
+          "heapTotal": 80039936,
+          "heapUsed": 45768976,
+          "external": 2956662,
+          "arrayBuffers": 100958
+        }
+      ],
+      "samples": [
+        {
+          "label": "before",
+          "elapsedMs": 0.2929999999996653,
+          "rss": 142737408,
+          "heapTotal": 76369920,
+          "heapUsed": 38284016,
+          "external": 3038545,
+          "arrayBuffers": 75966,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 412032
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 252.17460000000028,
+          "rss": 144343040,
+          "heapTotal": 76894208,
+          "heapUsed": 49047528,
+          "external": 2949745,
+          "arrayBuffers": 94041,
+          "writableBytes": 0,
+          "socketBytesWritten": 6734,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 795192
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 502.53099999999995,
+          "rss": 144453632,
+          "heapTotal": 77156352,
+          "heapUsed": 51472416,
+          "external": 2958337,
+          "arrayBuffers": 102633,
+          "writableBytes": 0,
+          "socketBytesWritten": 13479,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 1133032
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 755.2294000000002,
+          "rss": 144773120,
+          "heapTotal": 77156352,
+          "heapUsed": 40944640,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 20579,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 1462632
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1006.0246999999999,
+          "rss": 144773120,
+          "heapTotal": 77156352,
+          "heapUsed": 43291440,
+          "external": 2964854,
+          "arrayBuffers": 109150,
+          "writableBytes": 0,
+          "socketBytesWritten": 27324,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 1783992
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1256.3449,
+          "rss": 145821696,
+          "heapTotal": 77156352,
+          "heapUsed": 45675576,
+          "external": 2973446,
+          "arrayBuffers": 117742,
+          "writableBytes": 0,
+          "socketBytesWritten": 34069,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 2134192
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1508.3485,
+          "rss": 147927040,
+          "heapTotal": 77156352,
+          "heapUsed": 53205000,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 43086,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 2583272
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1760.3165,
+          "rss": 146829312,
+          "heapTotal": 77418496,
+          "heapUsed": 42709568,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 49504,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 2912872
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2009.7894999999999,
+          "rss": 146919424,
+          "heapTotal": 77418496,
+          "heapUsed": 44955680,
+          "external": 2964854,
+          "arrayBuffers": 109150,
+          "writableBytes": 0,
+          "socketBytesWritten": 56287,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 3234232
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2260.3805,
+          "rss": 147116032,
+          "heapTotal": 77418496,
+          "heapUsed": 47209880,
+          "external": 2973446,
+          "arrayBuffers": 117742,
+          "writableBytes": 0,
+          "socketBytesWritten": 63070,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 3621512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2511.2711,
+          "rss": 147718144,
+          "heapTotal": 77418496,
+          "heapUsed": 49471064,
+          "external": 2973846,
+          "arrayBuffers": 118142,
+          "writableBytes": 0,
+          "socketBytesWritten": 69853,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 3942872
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2761.7559,
+          "rss": 148058112,
+          "heapTotal": 77418496,
+          "heapUsed": 51708632,
+          "external": 2982438,
+          "arrayBuffers": 126734,
+          "writableBytes": 0,
+          "socketBytesWritten": 76636,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3011.9058999999997,
+          "rss": 148611072,
+          "heapTotal": 78467072,
+          "heapUsed": 43839344,
+          "external": 2956272,
+          "arrayBuffers": 100568,
+          "writableBytes": 0,
+          "socketBytesWritten": 85658,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3261.4421,
+          "rss": 147947520,
+          "heapTotal": 78467072,
+          "heapUsed": 46173024,
+          "external": 2964864,
+          "arrayBuffers": 109160,
+          "writableBytes": 0,
+          "socketBytesWritten": 92441,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3512.8746999999994,
+          "rss": 149032960,
+          "heapTotal": 78467072,
+          "heapUsed": 48501184,
+          "external": 2973456,
+          "arrayBuffers": 117752,
+          "writableBytes": 0,
+          "socketBytesWritten": 99224,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3764.6050999999998,
+          "rss": 149483520,
+          "heapTotal": 78467072,
+          "heapUsed": 50805920,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 106007,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4015.3383000000003,
+          "rss": 149504000,
+          "heapTotal": 78467072,
+          "heapUsed": 52926576,
+          "external": 2982448,
+          "arrayBuffers": 126744,
+          "writableBytes": 0,
+          "socketBytesWritten": 112433,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4266.431299999999,
+          "rss": 149098496,
+          "heapTotal": 78467072,
+          "heapUsed": 46017304,
+          "external": 2956272,
+          "arrayBuffers": 100568,
+          "writableBytes": 0,
+          "socketBytesWritten": 121823,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4518.102,
+          "rss": 149176320,
+          "heapTotal": 78467072,
+          "heapUsed": 48249808,
+          "external": 2964864,
+          "arrayBuffers": 109160,
+          "writableBytes": 0,
+          "socketBytesWritten": 128598,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4768.0672,
+          "rss": 149204992,
+          "heapTotal": 78467072,
+          "heapUsed": 50369528,
+          "external": 2973456,
+          "arrayBuffers": 117752,
+          "writableBytes": 0,
+          "socketBytesWritten": 135024,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 5017.9129,
+          "rss": 149282816,
+          "heapTotal": 78467072,
+          "heapUsed": 52600488,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 141807,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 5267.4577,
+          "rss": 149368832,
+          "heapTotal": 78467072,
+          "heapUsed": 41870536,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 148947,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 5518.8821,
+          "rss": 149434368,
+          "heapTotal": 78467072,
+          "heapUsed": 44101512,
+          "external": 2956662,
+          "arrayBuffers": 100958,
+          "writableBytes": 0,
+          "socketBytesWritten": 155730,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 5769.540399999999,
+          "rss": 149594112,
+          "heapTotal": 78467072,
+          "heapUsed": 50183000,
+          "external": 2973456,
+          "arrayBuffers": 117752,
+          "writableBytes": 0,
+          "socketBytesWritten": 165112,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 6019.512,
+          "rss": 150040576,
+          "heapTotal": 78467072,
+          "heapUsed": 52519128,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 172252,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 6270.4641,
+          "rss": 150073344,
+          "heapTotal": 78467072,
+          "heapUsed": 54829656,
+          "external": 2990640,
+          "arrayBuffers": 134936,
+          "writableBytes": 0,
+          "socketBytesWritten": 179392,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 6522.484799999999,
+          "rss": 149323776,
+          "heapTotal": 78467072,
+          "heapUsed": 43910680,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 186175,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 6773.4795,
+          "rss": 149192704,
+          "heapTotal": 78467072,
+          "heapUsed": 46090552,
+          "external": 2964854,
+          "arrayBuffers": 109150,
+          "writableBytes": 0,
+          "socketBytesWritten": 192958,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 7024.4996,
+          "rss": 150237184,
+          "heapTotal": 78467072,
+          "heapUsed": 52013984,
+          "external": 2973456,
+          "arrayBuffers": 117752,
+          "writableBytes": 0,
+          "socketBytesWritten": 201984,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 7275.1905,
+          "rss": 150274048,
+          "heapTotal": 78467072,
+          "heapUsed": 54277240,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 209120,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 7524.9952,
+          "rss": 148836352,
+          "heapTotal": 78467072,
+          "heapUsed": 43378160,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 216260,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 7777.219099999999,
+          "rss": 149123072,
+          "heapTotal": 78467072,
+          "heapUsed": 45523176,
+          "external": 2964854,
+          "arrayBuffers": 109150,
+          "writableBytes": 0,
+          "socketBytesWritten": 223043,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 8027.800399999999,
+          "rss": 149331968,
+          "heapTotal": 78467072,
+          "heapUsed": 47667448,
+          "external": 2973446,
+          "arrayBuffers": 117742,
+          "writableBytes": 0,
+          "socketBytesWritten": 229826,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 8282.6911,
+          "rss": 150990848,
+          "heapTotal": 78729216,
+          "heapUsed": 53580504,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 239218,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 8532.3096,
+          "rss": 151490560,
+          "heapTotal": 78729216,
+          "heapUsed": 55647760,
+          "external": 2990640,
+          "arrayBuffers": 134936,
+          "writableBytes": 0,
+          "socketBytesWritten": 245991,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 8783.039700000001,
+          "rss": 150130688,
+          "heapTotal": 78991360,
+          "heapUsed": 44495128,
+          "external": 2956662,
+          "arrayBuffers": 100958,
+          "writableBytes": 0,
+          "socketBytesWritten": 252774,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 9033.2582,
+          "rss": 150175744,
+          "heapTotal": 78991360,
+          "heapUsed": 46551048,
+          "external": 2965254,
+          "arrayBuffers": 109550,
+          "writableBytes": 0,
+          "socketBytesWritten": 259557,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 9283.6679,
+          "rss": 149868544,
+          "heapTotal": 79253504,
+          "heapUsed": 48680112,
+          "external": 2973846,
+          "arrayBuffers": 118142,
+          "writableBytes": 0,
+          "socketBytesWritten": 266340,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 9534.0085,
+          "rss": 151396352,
+          "heapTotal": 79253504,
+          "heapUsed": 50945320,
+          "external": 2982438,
+          "arrayBuffers": 126734,
+          "writableBytes": 0,
+          "socketBytesWritten": 273480,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 9783.9562,
+          "rss": 149729280,
+          "heapTotal": 79253504,
+          "heapUsed": 43489576,
+          "external": 2991040,
+          "arrayBuffers": 92366,
+          "writableBytes": 0,
+          "socketBytesWritten": 282505,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 10034.1921,
+          "rss": 150872064,
+          "heapTotal": 79253504,
+          "heapUsed": 45765896,
+          "external": 2956662,
+          "arrayBuffers": 100958,
+          "writableBytes": 0,
+          "socketBytesWritten": 289645,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 10284.156500000001,
+          "rss": 150913024,
+          "heapTotal": 79253504,
+          "heapUsed": 47970088,
+          "external": 2965254,
+          "arrayBuffers": 109550,
+          "writableBytes": 0,
+          "socketBytesWritten": 296428,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 10534.71,
+          "rss": 150958080,
+          "heapTotal": 79253504,
+          "heapUsed": 50289520,
+          "external": 2973846,
+          "arrayBuffers": 118142,
+          "writableBytes": 0,
+          "socketBytesWritten": 303568,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 10786.664099999998,
+          "rss": 150990848,
+          "heapTotal": 79253504,
+          "heapUsed": 52493336,
+          "external": 2982438,
+          "arrayBuffers": 126734,
+          "writableBytes": 0,
+          "socketBytesWritten": 310351,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 11038.1326,
+          "rss": 150040576,
+          "heapTotal": 79253504,
+          "heapUsed": 45222744,
+          "external": 2948080,
+          "arrayBuffers": 92376,
+          "writableBytes": 0,
+          "socketBytesWritten": 319741,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 11290.1957,
+          "rss": 150343680,
+          "heapTotal": 79253504,
+          "heapUsed": 47582552,
+          "external": 2956672,
+          "arrayBuffers": 100968,
+          "writableBytes": 0,
+          "socketBytesWritten": 326876,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 11540.223999999998,
+          "rss": 150908928,
+          "heapTotal": 79253504,
+          "heapUsed": 49825480,
+          "external": 2965264,
+          "arrayBuffers": 109560,
+          "writableBytes": 0,
+          "socketBytesWritten": 333659,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 11792.230799999998,
+          "rss": 152027136,
+          "heapTotal": 79253504,
+          "heapUsed": 51986720,
+          "external": 2973856,
+          "arrayBuffers": 118152,
+          "writableBytes": 0,
+          "socketBytesWritten": 340442,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 12042.3407,
+          "rss": 152076288,
+          "heapTotal": 79253504,
+          "heapUsed": 54142672,
+          "external": 2982448,
+          "arrayBuffers": 126744,
+          "writableBytes": 0,
+          "socketBytesWritten": 347225,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 12295.357899999999,
+          "rss": 150601728,
+          "heapTotal": 79515648,
+          "heapUsed": 43752200,
+          "external": 2991040,
+          "arrayBuffers": 92366,
+          "writableBytes": 0,
+          "socketBytesWritten": 354462,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 12547.1028,
+          "rss": 152068096,
+          "heapTotal": 79777792,
+          "heapUsed": 48704176,
+          "external": 2964864,
+          "arrayBuffers": 109160,
+          "writableBytes": 0,
+          "socketBytesWritten": 363428,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 12798.042699999998,
+          "rss": 152125440,
+          "heapTotal": 79777792,
+          "heapUsed": 50857176,
+          "external": 2973456,
+          "arrayBuffers": 117752,
+          "writableBytes": 0,
+          "socketBytesWritten": 370268,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 13047.780999999999,
+          "rss": 152211456,
+          "heapTotal": 79777792,
+          "heapUsed": 53008832,
+          "external": 2982048,
+          "arrayBuffers": 126344,
+          "writableBytes": 0,
+          "socketBytesWritten": 377108,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 13299.093799999999,
+          "rss": 152244224,
+          "heapTotal": 79777792,
+          "heapUsed": 55272936,
+          "external": 2990640,
+          "arrayBuffers": 134936,
+          "writableBytes": 0,
+          "socketBytesWritten": 384308,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 13550.188899999997,
+          "rss": 152571904,
+          "heapTotal": 80039936,
+          "heapUsed": 44338712,
+          "external": 2956262,
+          "arrayBuffers": 100558,
+          "writableBytes": 0,
+          "socketBytesWritten": 391148,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        },
+        {
+          "label": "after-before-gc",
+          "elapsedMs": 13724.6508,
+          "rss": 151187456,
+          "heapTotal": 80039936,
+          "heapUsed": 45605432,
+          "external": 2956662,
+          "arrayBuffers": 92366,
+          "writableBytes": 0,
+          "socketBytesWritten": 397156,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        },
+        {
+          "label": "after-gc",
+          "elapsedMs": 13740.9827,
+          "rss": 151617536,
+          "heapTotal": 80302080,
+          "heapUsed": 40849376,
+          "external": 2948470,
+          "arrayBuffers": 76182,
+          "writableBytes": 0,
+          "socketBytesWritten": 397156,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        }
+      ],
+      "eventLoopDelayMs": {
+        "mean": 11.084679237479806,
+        "max": 26.836991,
+        "p99": 20.742143
+      },
+      "eventSerialization": {
+        "count": 2,
+        "totalMs": 3.084900000001653,
+        "meanMs": 1.5424500000008265,
+        "p50UpperMs": 0.25163771862927237,
+        "p95UpperMs": 2.999062754174601,
+        "maxMs": 2.852500000000873,
+        "bytes": 348527,
+        "pageSize": 1000,
+        "sha256": "4159bf716b4b20c145efce644ce23a35fca19a12f31f8201e17c346f6aa54728",
+        "lateAfter": 990,
+        "lateSha256": "96ec5a488285316f435fc3065e50ff9b9b5aea565bb8a254421adef9308ca0bc"
+      },
+      "storageBefore": {
+        "bytes": 448995,
+        "files": 4
+      },
+      "storageAfter": {
+        "bytes": 4873939,
+        "files": 4
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "correctness": {
+        "entries": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "completed": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "types": {
+          "run.queued": 1,
+          "run.started": 1,
+          "node.started": 22,
+          "node.finished": 22,
+          "harness.turn": 10,
+          "harness.session": 10,
+          "harness.submission": 10,
+          "node.progress": 1000,
+          "harness.usage": 10,
+          "decision.made": 10,
+          "exit.evaluated": 1,
+          "run.finished": 1,
+          "return.delivered": 2
+        },
+        "expectedVisits": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "nodeCountsOk": true,
+        "unexpectedAttempts": 0,
+        "succeeded": true,
+        "storedEvents": 1100,
+        "appendEvents": 1099,
+        "progress": 1000,
+        "expectedProgress": 1000,
+        "gates": 10,
+        "passes": 10,
+        "visits": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "history": 0,
+        "historyValuesOk": true,
+        "terminal": 1,
+        "returnsOk": true,
+        "ok": true,
+        "replayOk": true,
+        "recoveryOk": false
+      },
+      "equivalence": {
+        "eventsSha256": "8c21058c399b70d66b87fe95b3c1885812d6d8e39f2a3b0904cd91a9d2143a5b",
+        "stateSha256": "b6cf0c8e20d213c62c7b1c92b2e5ec17818d6845602f03046e41fc2c78918f46",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "appendSql": {
+        "client.otherStatement": {
+          "count": 10,
+          "totalMs": 16.383599999997386,
+          "meanMs": 1.6383599999997387,
+          "p50UpperMs": 1.39908490853458,
+          "p95UpperMs": 3.6288659325512675,
+          "maxMs": 3.3805000000029395
+        },
+        "client.begin": {
+          "count": 1087,
+          "totalMs": 221.67389999993247,
+          "meanMs": 0.2039318307267088,
+          "p50UpperMs": 0.22876156239024756,
+          "p95UpperMs": 0.2768014904921996,
+          "maxMs": 0.4822999999996682
+        },
+        "transaction.sequenceLookup": {
+          "count": 1087,
+          "totalMs": 190.32130000003144,
+          "meanMs": 0.17508859245633068,
+          "p50UpperMs": 0.18905914247127897,
+          "p95UpperMs": 0.22876156239024756,
+          "maxMs": 1.263600000000224
+        },
+        "transaction.insert": {
+          "count": 1087,
+          "totalMs": 133.78549999996358,
+          "meanMs": 0.12307773689049087,
+          "p50UpperMs": 0.12912993816766538,
+          "p95UpperMs": 0.18905914247127897,
+          "maxMs": 0.7731999999996333
+        },
+        "transaction.runSequenceUpdate": {
+          "count": 1087,
+          "totalMs": 111.22920000002159,
+          "meanMs": 0.1023267709291827,
+          "p50UpperMs": 0.09701723378487254,
+          "p95UpperMs": 0.15624722518287512,
+          "maxMs": 1.9596000000001368
+        },
+        "transaction.commit": {
+          "count": 1087,
+          "totalMs": 1129.4029999999802,
+          "meanMs": 1.0390091996319966,
+          "p50UpperMs": 1.0511531995000598,
+          "p95UpperMs": 1.5389933993880383,
+          "maxMs": 5.30279999999766
+        }
+      },
+      "liveReplay": {
+        "after": 0,
+        "pauseMs": 0,
+        "initialPauseMs": 0,
+        "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+        "firstMs": 19.570299999999406,
+        "totalMs": 13883.674299999999,
+        "sha256": "4159bf716b4b20c145efce644ce23a35fca19a12f31f8201e17c346f6aa54728",
+        "events": 1100,
+        "lastSeq": 1100,
+        "gaps": 0,
+        "receivedBytes": 389317,
+        "wireBytesConsumed": 397212,
+        "reads": 1043
+      },
+      "liveReplayComplete": true,
+      "deliveryTailReplay": {
+        "after": 1100,
+        "pauseMs": 0,
+        "initialPauseMs": 0,
+        "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+        "firstMs": null,
+        "totalMs": 7.324200000002747,
+        "sha256": "4159bf716b4b20c145efce644ce23a35fca19a12f31f8201e17c346f6aa54728",
+        "events": 0,
+        "lastSeq": 1100,
+        "gaps": 0,
+        "receivedBytes": 58,
+        "wireBytesConsumed": 292,
+        "reads": 2
+      },
+      "recovery": {
+        "beforeHash": "4159bf716b4b20c145efce644ce23a35fca19a12f31f8201e17c346f6aa54728",
+        "afterHash": "4159bf716b4b20c145efce644ce23a35fca19a12f31f8201e17c346f6aa54728",
+        "events": 1100,
+        "ok": false,
+        "mechanism": "Public clearFinalized port; container close and file-backed reopen; no process crash claim"
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1549,
+        "wallMs": 42.11399999999776
+      },
+      "queueDuring": {
+        "wallMs": 5.378500000000713,
+        "latency": {
+          "count": 16,
+          "totalMs": 50.0600000000004,
+          "meanMs": 3.128750000000025,
+          "p50UpperMs": 5.3130226118483135,
+          "p95UpperMs": 5.3130226118483135,
+          "maxMs": 5.26720000000023
+        }
+      },
+      "cpuSamples": {
+        "count": 8484,
+        "top": [
+          [
+            ":0 (idle)",
+            6920
+          ],
+          [
+            ":0 libsql_js::database::Database::js_default_safe_integers",
+            1092
+          ],
+          [
+            ":0 (program)",
+            49
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+            28
+          ],
+          [
+            ":0 writev",
+            25
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+            23
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+            19
+          ],
+          [
+            ":3 ",
+            14
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+            13
+          ],
+          [
+            "node:internal/timers:514 processTimers",
+            13
+          ],
+          [
+            ":0 (garbage collector)",
+            11
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+            7
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/run-decoding.js:30 decode",
+            5
+          ],
+          [
+            "node:internal/process/task_queues:113 nextTick",
+            5
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:283 sql",
+            5
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:97 inst._zod.run",
+            5
+          ],
+          [
+            "node:internal/timers:534 listOnTimeout",
+            5
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/doc.js:32 compile",
+            4
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/tooling/perf/append-observer.mjs:7 record",
+            4
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:34 runChecks",
+            4
+          ],
+          [
+            "node:internal/process/promises:439 processPromiseRejections",
+            4
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:147 release",
+            4
+          ]
+        ]
+      }
+    }
+  ],
+  "boot": {
+    "base": "http://127.0.0.1:6190",
+    "bootMs": 644.6172999999999,
+    "pid": 18104
+  },
+  "idleSqlQueue": {
+    "wallMs": 1.0453999999999724,
+    "latency": {
+      "count": 16,
+      "totalMs": 9.789699999999357,
+      "meanMs": 0.6118562499999598,
+      "p50UpperMs": 0.5933485776104008,
+      "p95UpperMs": 1.0511531995000598,
+      "maxMs": 0.9614000000001397
+    }
+  },
+  "correctnessFailure": true,
+  "cpuProfile": {
+    "samples": 9272,
+    "top": [
+      [
+        ":0 (idle)",
+        7034
+      ],
+      [
+        ":0 libsql_js::database::Database::js_default_safe_integers",
+        1183
+      ],
+      [
+        ":0 (program)",
+        58
+      ],
+      [
+        ":0 internalModuleStat",
+        53
+      ],
+      [
+        ":0 getNearestParentPackageJSON",
+        49
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+        34
+      ],
+      [
+        ":0 lstat",
+        33
+      ],
+      [
+        ":0 (garbage collector)",
+        31
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+        30
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+        30
+      ],
+      [
+        "node:internal/modules/cjs/loader:1444 wrapSafe",
+        27
+      ],
+      [
+        ":0 writev",
+        25
+      ],
+      [
+        ":3 ",
+        23
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+        21
+      ],
+      [
+        ":0 readFileUtf8",
+        19
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+        18
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+        15
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+        14
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+        13
+      ],
+      [
+        "node:internal/timers:514 processTimers",
+        13
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:17 toEvent",
+        13
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:97 inst._zod.run",
+        10
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:283 sql",
+        8
+      ],
+      [
+        ":0 stat",
+        8
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:504 executeStmt",
+        8
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:149 ",
+        8
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:371 next",
+        8
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/find-my-way@9.9.0/node_modules/find-my-way/lib/node.js:209 _compilePrefixMatch",
+        7
+      ],
+      [
+        "node:internal/process/task_queues:113 nextTick",
+        7
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/run-decoding.js:30 decode",
+        7
+      ]
+    ]
+  }
+}

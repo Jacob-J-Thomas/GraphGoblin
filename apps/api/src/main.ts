@@ -1,3 +1,4 @@
+import { ShutdownSignals } from './shutdown-signals.js';
 import { pino } from 'pino';
 import { buildApp } from './app.js';
 import { bundledWebDist, loadConfig } from './config.js';
@@ -29,32 +30,63 @@ export async function main(): Promise<{
   };
 
   let shuttingDown = false;
-  const shutdown = async (signal: string): Promise<void> => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    logger.info({ signal }, 'shutting down');
-    // A signal during startup must not release ownership while recovery is still running.
-    await startup.catch(() => undefined);
-    removeSignals();
-    await stop();
-    process.exit(0);
-  };
-  const onSigint = (): void => void shutdown('SIGINT');
-  const onSigterm = (): void => void shutdown('SIGTERM');
+  let forceRequested = false;
+  const signals = new ShutdownSignals(
+    (action) => {
+      shuttingDown = true;
+      forceRequested ||= action === 'force';
+      logger.info({ action }, 'shutting down');
+      container?.prepareShutdown();
+      // Startup retains ownership until recovery settles, including deliberate later signals.
+      void startup
+        .catch(() => undefined)
+        .then(async () => {
+          await container?.requestShutdown(forceRequested ? 'force' : 'drain');
+        })
+        .catch((error) => logger.error({ error }, 'shutdown control rejected'));
+    },
+    () =>
+      shuttingDown || (container !== undefined && container.shutdown.state().phase !== 'running'),
+  );
+  const onSigint = (): void => signals.receive();
+  const onSigterm = (): void => signals.receive();
   process.on('SIGINT', onSigint);
   process.on('SIGTERM', onSigterm);
 
   const startup = (async () => {
     const owner = await createContainer(config, { logger });
     container = owner;
+    if (shuttingDown) owner.prepareShutdown();
     await owner.start();
     const server = await buildApp(owner, { logger });
     app = server;
+    let closing = false;
+    server.addHook('preClose', () => {
+      closing = true;
+      return Promise.resolve();
+    });
     server.addHook('onClose', async () => {
       removeSignals();
-      await owner.stop();
+      if (owner.shutdown.state().phase === 'ready') await owner.dispose();
+      else await owner.stop();
     });
     await server.listen({ host: config.host, port: config.port });
+    // HTTP (including SSE and controls) stays open until logical runs and cleanup settle.
+    void owner
+      .waitForShutdown()
+      .then(async () => {
+        if (closing) return;
+        await server.close();
+        await owner.dispose();
+        removeSignals();
+        process.exit(0);
+      })
+      .catch((error) => logger.error({ error }, 'shutdown failed'));
+    void owner.shutdown.abandoned.then(() => {
+      // Allow the control response to flush. This is a nonzero emergency exit, not cleanup:
+      // leave the durable failure and lock for inspection and next-start stale-lock recovery.
+      setTimeout(() => process.exit(1), 100);
+    });
     logger.info(
       {
         host: config.host,

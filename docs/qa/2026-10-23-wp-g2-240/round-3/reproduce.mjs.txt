@@ -1,0 +1,198 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { appendFileSync, mkdtempSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+// One-off native QA evidence, not a Playwright configuration or a test-suite server.
+const root = process.cwd();
+const mode = process.argv[2] ?? 'before';
+assert(['before', 'after'].includes(mode));
+const out = path.join(root, 'docs/qa/2026-10-23-wp-g2-240/round-3');
+const { chromium } = createRequire(path.join(root, 'apps/web/package.json'))('@playwright/test');
+const redact = value => String(value).replace(/(?:C:)?[\\/]+Users[\\/]+[^\\/]+/gi, '%USERPROFILE%');
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const wait = async (check, budget = 15000) => {
+  const deadline = Date.now() + budget;
+  while (Date.now() < deadline) {
+    if (await check()) return;
+    await sleep(50);
+  }
+  throw new Error('Observation did not become ready within the bounded QA wait');
+};
+const serverSource = `
+import { createContainer, buildApp, loadConfig } from '@graphgoblin/api';
+import { FakeHarness } from '@graphgoblin/engine/testing';
+const config = loadConfig(process.env);
+const owner = await createContainer(config, {
+  harnesses: { codex: new FakeHarness([], 'codex'), claude: new FakeHarness([], 'claude') },
+  startTimers: false,
+});
+await owner.start();
+const app = await buildApp(owner, { logger: false });
+await app.listen({ host: config.host, port: config.port });
+process.send({ ready: true });
+process.on('message', async message => {
+  if (message !== 'stop') return;
+  await app.close();
+  await owner.stop();
+  process.exit(0);
+});`;
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+let child;
+const stop = async () => {
+  if (!child || child.exitCode !== null) return;
+  const ownChild = child;
+  const exited = once(ownChild, 'exit');
+  ownChild.send('stop');
+  // This timeout only bounds cleanup of the process this script created.
+  const timer = setTimeout(() => ownChild.kill('SIGTERM'), 15000);
+  try { await exited; } finally { clearTimeout(timer); child = undefined; }
+};
+try {
+  for (const width of [1440, 390]) {
+    const store = mkdtempSync(path.join(tmpdir(), 'gg-wp-g2-240-r3-'));
+    let port;
+    for (let candidate = 5920; candidate <= 5929; candidate++) {
+      const probe = createServer();
+      try {
+        await new Promise((resolve, reject) => {
+          probe.once('error', reject);
+          probe.listen(candidate, '127.0.0.1', resolve);
+        });
+        await new Promise(resolve => probe.close(resolve));
+        port = candidate;
+        break;
+      } catch { /* Select another allowed port without connecting to its occupant. */ }
+    }
+    assert(port, 'No allowed port is free');
+    const base = `http://127.0.0.1:${port}`;
+    const env = { ...process.env, GG_HOST: '127.0.0.1', GG_PORT: String(port),
+      GG_DATA_DIR: store, GG_DB_URL: `file:${path.join(store, 'graphgoblin.db').replaceAll('\\', '/')}`,
+      GG_REQUIRE_API_KEY: 'false', GG_WEB_DIST: path.join(root, 'apps/web/dist'),
+      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'), GG_LOG_LEVEL: 'silent' };
+    const pids = [];
+    const start = async () => {
+      child = spawn(process.execPath, ['--input-type=module', '-'], {
+        cwd: path.join(root, 'apps/web'), env, stdio: ['pipe', 'pipe', 'pipe', 'ipc'], windowsHide: true,
+      });
+      const ownChild = child;
+      let ready = false;
+      child.on('message', message => { if (message.ready) ready = true; });
+      const capture = chunk => appendFileSync(path.join(out, `${mode}-server.log.txt`), redact(chunk));
+      child.stdout.on('data', capture);
+      child.stderr.on('data', capture);
+      child.stdin.end(serverSource);
+      await wait(() => {
+        if (ownChild.exitCode !== null) throw new Error(`Disposable API exited ${ownChild.exitCode}`);
+        return ready;
+      }, 60000);
+      pids.push(child.pid);
+    };
+    const send = async (type, index) => {
+      const response = await fetch(base + '/events', { method: 'POST',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, payload: { index } }) });
+      assert.equal(response.status, 202);
+    };
+    await start();
+    for (let i = 0; i < 201; i++) await send('qa-main', i);
+    await send('qa-other', 'excluded');
+    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const page = await context.newPage();
+    const query = '?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z';
+    const rows = () => page.locator('tbody tr').count();
+    const status = () => page.locator('[role="status"]').allTextContents();
+    const ids = () => page.locator('tbody [data-testid^="payload-"]').evaluateAll(
+      elements => elements.map(element => element.getAttribute('data-testid')));
+    const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
+    const more = page.getByRole('button', { name: 'Load more', exact: true });
+    const note = (defect, actual) => console.log(redact(JSON.stringify({ mode, width, defect, ...actual })));
+    await page.goto(base + '/app/events' + query);
+    await wait(async () => await rows() === 100);
+    const clearType = page.getByRole('button', { name: 'Clear type filter', exact: true });
+    const clearBefore = page.getByRole('button', { name: 'Clear before filter', exact: true });
+    note('D2-controls', { clearType: await clearType.count(), clearBefore: await clearBefore.count() });
+    assert.equal(await clearType.count(), mode === 'before' ? 0 : 1);
+    assert.equal(await clearBefore.count(), mode === 'before' ? 0 : 1);
+    await more.click();
+    await wait(async () => await rows() === 200);
+    await refresh.click();
+    await wait(async () => await rows() === 100);
+    await wait(async () => await refresh.getAttribute('aria-busy') !== 'true' && await refresh.isEnabled());
+    const newestStatus = (await status()).join(' ');
+    note('D3', { rows: await rows(), statuses: await status(), newestExplained: /newest/i.test(newestStatus) });
+    assert.equal(/newest/i.test(newestStatus), mode === 'after');
+    await more.click();
+    await wait(async () => await rows() === 200);
+    await send('qa-main', 'notice-arrival');
+    await wait(async () => (await status()).some(text => text.includes('New events available')));
+    const oldIds = await ids();
+    await stop();
+    // Reproduce QA's six-second window after stopping the real API process.
+    await sleep(6000);
+    const checkStatus = (await status()).join(' ');
+    note('D4-down', { rows: await rows(), statuses: await status(), arrival: checkStatus.includes('New events available'),
+      checkFailed: checkStatus.includes('Could not check for new events'),
+      offlineBanner: (await page.locator('body').innerText()).includes('Cannot reach the GraphGoblin API') });
+    assert(checkStatus.includes('New events available'));
+    assert.equal(checkStatus.includes('Could not check for new events'), mode === 'after');
+    await page.locator('tbody tr').nth(140).scrollIntoViewIfNeeded();
+    const anchorId = oldIds[140];
+    const anchor = page.getByTestId(anchorId);
+    const anchorBefore = (await anchor.boundingBox()).y;
+    await refresh.evaluate(element => element.focus({ preventScroll: true }));
+    await page.keyboard.press('Enter');
+    const during = await rows();
+    await sleep(6000);
+    const retained = JSON.stringify(oldIds) === JSON.stringify(await ids());
+    const anchorAfter = await anchor.count() ? await anchor.boundingBox() : null;
+    note('D1-failed', { beforeRows: 200, duringRows: during, afterRows: await rows(), sameIds: retained,
+      statuses: await status(), filtersRetained: page.url().endsWith(query),
+      anchorShift: anchorAfter ? anchorAfter.y - anchorBefore : null });
+    assert.equal(await rows(), mode === 'before' ? 0 : 200);
+    if (mode === 'after') {
+      assert(retained);
+      assert((await status()).some(text => text.includes('Refresh failed')));
+      assert(Math.abs(anchorAfter.y - anchorBefore) <= 1);
+    }
+    await start();
+    assert.notEqual(pids[0], pids[1]);
+    await send('qa-main', 'after-restart');
+    await wait(async () => !(await status()).some(text => text.includes('Could not check for new events')));
+    note('D4-recovered', { statuses: await status(), pids, sameStore: true });
+    await refresh.evaluate(element => element.focus({ preventScroll: true }));
+    await page.keyboard.press('Enter');
+    await wait(async () => await rows() === 100 && (await page.locator('tbody tr').first().innerText()).includes('after-restart'));
+    note('D1-recovered', { rows: await rows(), filtersRetained: page.url().endsWith(query), statuses: await status() });
+    if (mode === 'after') {
+      await page.goto(base + '/app/events' + query + '&keep=reader');
+      await wait(async () => await rows() === 100);
+      await refresh.focus();
+      await page.keyboard.press('Tab');
+      const typeTab = await clearType.evaluate(element => element === document.activeElement);
+      await page.keyboard.press('Enter');
+      await wait(() => !new URL(page.url()).searchParams.has('type'));
+      const firstUrl = new URL(page.url());
+      const firstFocus = await refresh.evaluate(element => element === document.activeElement);
+      await page.keyboard.press('Tab');
+      const beforeTab = await clearBefore.evaluate(element => element === document.activeElement);
+      await page.keyboard.press('Enter');
+      await wait(() => !new URL(page.url()).searchParams.has('before'));
+      const lastUrl = new URL(page.url());
+      note('D2-cleared', { typeTab, beforeTab, firstFocus,
+        beforePreserved: firstUrl.searchParams.get('before'), unrelatedPreserved: lastUrl.searchParams.get('keep'),
+        finalFocus: await refresh.evaluate(element => element === document.activeElement),
+        overflow: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth) });
+      assert(typeTab && beforeTab && firstFocus);
+      assert(firstUrl.searchParams.has('before'));
+      assert.equal(lastUrl.searchParams.get('keep'), 'reader');
+      assert(await refresh.evaluate(element => element === document.activeElement));
+    }
+    await context.close();
+    await stop();
+    note('environment', { store, pids, port, browser: browser.version(), directoriesDeleted: false });
+  }
+} finally { await stop(); await browser.close(); }

@@ -1,0 +1,62 @@
+[
+  {
+    "stage": "Build",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 0,
+    "node": "v22.14.0",
+    "elapsedSeconds": 8.861,
+    "processExited": true,
+    "command": "pnpm.cmd build",
+    "startedUtc": "2026-10-22T05:58:56.4175997Z"
+  },
+  {
+    "stage": "Collector",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 0,
+    "node": "v22.14.0",
+    "elapsedSeconds": 34.558,
+    "processExited": true,
+    "command": "from apps/web: GG_SWITCH_PORT=5880 GG_SWITCH_EXPECT_FIXED=1 node --import tsx <evidence>/collector.mjs",
+    "startedUtc": "2026-10-22T06:01:52.1671589Z"
+  },
+  {
+    "stage": "Components",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 0,
+    "node": "v22.14.0",
+    "elapsedSeconds": 73.014,
+    "processExited": true,
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/harness-switch.test.tsx src/forms/fields/harness-switch.test.tsx --maxWorkers=1",
+    "startedUtc": "2026-10-22T05:59:16.3561814Z"
+  },
+  {
+    "stage": "Coverage",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 0,
+    "node": "v22.14.0",
+    "elapsedSeconds": 555.714,
+    "processExited": true,
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportOnFailure=true --coverage.reportsDirectory=<disposable>",
+    "startedUtc": "2026-10-22T06:04:47.9704766Z"
+  },
+  {
+    "stage": "Edge",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 1,
+    "node": "v22.14.0",
+    "elapsedSeconds": 122.169,
+    "processExited": true,
+    "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test --config ../../docs/qa/2026-10-22-wp-f2b-qa/round-3/edge.config.ts model-picker.spec.ts",
+    "startedUtc": "2026-10-22T06:00:31.6457828Z"
+  },
+  {
+    "stage": "Served",
+    "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+    "exitCode": 0,
+    "node": "v22.14.0",
+    "elapsedSeconds": 93.811,
+    "processExited": true,
+    "command": "node <evidence>/served-checks.mjs",
+    "startedUtc": "2026-10-22T05:59:14.3083676Z"
+  }
+]

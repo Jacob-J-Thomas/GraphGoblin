@@ -1,0 +1,56 @@
+$ErrorActionPreference = 'Continue'
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$evidenceRoot = Join-Path (Get-Location) 'docs/qa/2026-10-23-wp-g2-240/round-4'
+
+function Read-SharedText([string] $path) {
+  $stream = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+  $reader = New-Object IO.StreamReader($stream)
+  try { return $reader.ReadToEnd() } finally { $reader.Dispose() }
+}
+
+# Wait for both outstanding full runs before adding any test load.
+do {
+  $fullRunsEnded = $true
+  foreach ($name in @('web-coverage.log.txt', 'api-coverage.log.txt')) {
+    $content = Read-SharedText (Join-Path $evidenceRoot $name)
+    if ($content -notmatch 'EXIT_CODE=\d+') { $fullRunsEnded = $false }
+  }
+  if (-not $fullRunsEnded) { Start-Sleep -Seconds 20 }
+} until ($fullRunsEnded)
+
+$packages = @(
+  @{ Name = '@graphgoblin/api-client'; Directory = 'packages/api-client'; Log = 'client-coverage.log.txt'; Slug = 'client' },
+  @{ Name = '@graphgoblin/infrastructure'; Directory = 'packages/infrastructure'; Log = 'infrastructure-coverage.log.txt'; Slug = 'infrastructure' },
+  @{ Name = '@graphgoblin/web'; Directory = 'apps/web'; Log = 'web-coverage.log.txt'; Slug = 'web' },
+  @{ Name = '@graphgoblin/api'; Directory = 'apps/api'; Log = 'api-coverage.log.txt'; Slug = 'api' }
+)
+$summary = Join-Path $evidenceRoot 'isolated-reruns.log.txt'
+Set-Content -LiteralPath $summary -Encoding Unicode -Value ('NODE=' + (& node --version))
+$failures = 0
+foreach ($package in $packages) {
+  $content = [IO.File]::ReadAllText((Join-Path $evidenceRoot $package.Log))
+  $content = [regex]::Replace($content, '\x1b\[[0-9;]*m', '')
+  $files = @([regex]::Matches($content, '(?m)^\s*FAIL\s+(src/[^\s]+\.test\.tsx?)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+  foreach ($file in $files) {
+    $repositoryFile = $package.Directory + '/' + $file
+    & git diff --quiet HEAD -- $repositoryFile
+    if ($LASTEXITCODE -ne 0) {
+      Add-Content -LiteralPath $summary -Value ('CHANGED_FILE_NOT_RERUN=' + $repositoryFile)
+      $failures++
+      continue
+    }
+    $slug = $package.Slug + '-' + ($file -replace '[^a-zA-Z0-9]+', '-')
+    $log = Join-Path $evidenceRoot ($slug + '-isolated.log.txt')
+    if (Test-Path -LiteralPath $log) { throw ('Refusing a second isolated rerun: ' + $log) }
+    $command = 'pnpm.cmd --filter ' + $package.Name + ' exec vitest run ' + $file + ' --maxWorkers=1'
+    Set-Content -LiteralPath $log -Encoding Unicode -Value $command
+    & pnpm.cmd --filter $package.Name exec vitest run $file --maxWorkers=1 *>> $log
+    $result = $LASTEXITCODE
+    Add-Content -LiteralPath $log -Value ('EXIT_CODE=' + $result)
+    Add-Content -LiteralPath $summary -Value ($repositoryFile + '; EXIT_CODE=' + $result + '; LOG=' + (Split-Path -Leaf $log))
+    if ($result -ne 0) { $failures++ }
+  }
+}
+Add-Content -LiteralPath $summary -Value ('FAILED_OR_CHANGED_FILES=' + $failures)
+Write-Output ([IO.File]::ReadAllText($summary))
+exit ([int]($failures -ne 0))

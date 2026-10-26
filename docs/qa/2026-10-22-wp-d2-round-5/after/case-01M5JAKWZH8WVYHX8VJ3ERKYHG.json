@@ -1,0 +1,373 @@
+{
+  "loopId": "01M5JAKWX8R754304DRP248FTA",
+  "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+  "path": "/drop",
+  "run": {
+    "id": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+    "ownerId": "local",
+    "loopId": "01M5JAKWX8R754304DRP248FTA",
+    "versionId": "01M5JAKWX84XE2B0WWF9M92ED9",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /drop",
+      "label": "Audit /drop v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKWZH4WWA3KJW4JVK95B6",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:22.065Z",
+    "startedAt": "2026-10-22T17:30:22.091Z",
+    "finishedAt": "2026-10-22T17:30:22.193Z",
+    "lastEventSeq": 13
+  },
+  "events": [
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:22.065Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKWX84XE2B0WWF9M92ED9",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /drop",
+        "label": "Audit /drop v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+          "loopId": "01M5JAKWX8R754304DRP248FTA",
+          "versionId": "01M5JAKWX84XE2B0WWF9M92ED9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKWZH4WWA3KJW4JVK95B6",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /drop",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:22.065Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:22.121Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:22.148Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:22.161Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /drop",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.161Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /drop",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.161Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:22.182Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "6525da58ed9484dd"
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:22.188Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:22.188Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:22.188Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:22.188Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:22.207Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:34.204Z"
+      }
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:22.266Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:24.262Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:24.269Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:39.268Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:24.276Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:24.282Z",
+      "last_event_seq": 13,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/drop",
+      "n": 1,
+      "ms": 1792690222220,
+      "key": "01M5JAKX3CANJ6G46VCEBE8BCY",
+      "body": {
+        "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+        "loopId": "01M5JAKWX8R754304DRP248FTA",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/drop",
+      "n": 2,
+      "ms": 1792690224274,
+      "key": "01M5JAKX3CANJ6G46VCEBE8BCY",
+      "body": {
+        "runId": "01M5JAKWZH8WVYHX8VJ3ERKYHG",
+        "loopId": "01M5JAKWX8R754304DRP248FTA",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

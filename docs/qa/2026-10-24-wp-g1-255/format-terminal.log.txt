@@ -1,0 +1,26 @@
+**********************
+Windows PowerShell transcript start
+Start time: 20261024150610
+Username: DESKTOP-RQPA3QI\CodexSandboxOnline
+RunAs User: DESKTOP-RQPA3QI\CodexSandboxOnline
+Configuration Name: 
+Machine: DESKTOP-RQPA3QI (Microsoft Windows NT 10.0.26300.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"; $started=[DateTime]::UtcNow.ToString('o'); Start-Transcript -LiteralPath docs/qa/2026-10-24-wp-g1-255/format-terminal.log.txt -Force | Out-Null; pnpm.cmd format:check; $code=$LASTEXITCODE; Stop-Transcript | Out-Null; [pscustomobject]@{ name='format'; command='pnpm.cmd format:check'; code=$code; node='v22.14.0'; started=$started; finished=[DateTime]::UtcNow.ToString('o'); log='format-terminal.log.txt' } | ConvertTo-Json | Set-Content -LiteralPath docs/qa/2026-10-24-wp-g1-255/format.result.json -Encoding utf8; exit $code
+Process ID: 54664
+PSVersion: 5.1.26100.9711
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9711
+BuildVersion: 10.0.26100.9711
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+$ prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+**********************
+Windows PowerShell transcript end
+End time: 20261024153341
+**********************

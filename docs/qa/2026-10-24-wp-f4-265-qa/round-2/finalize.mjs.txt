@@ -1,0 +1,21 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {appendFileSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');assert.match(process.version,/^v22\./);
+JSON.parse(await readFile(join(out,'api-recheck-complete.json'),'utf8'));
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+await writeFile(join(out,'format.log.txt'),'');await writeFile(join(out,'format-result.json'),JSON.stringify({pending:true}));
+const runScript=async name=>import('data:text/javascript;base64,'+Buffer.from(await readFile(join(out,name),'utf8')).toString('base64'));
+await runScript('report.mjs.txt');
+const files=['docs/qa/2026-10-24-wp-f4-265-qa/README.md','docs/qa/2026-10-24-wp-f4-265-qa/round-2/README.md','docs/qa/2026-10-24-wp-f4-265-qa/round-2/NOT-KEPT.md','docs/qa/2026-10-24-wp-f4-265-qa/round-2/round-2-task.md'];
+const results=[];
+for(const option of ['--write','--check']){
+  const command='pnpm.cmd exec prettier '+option+' '+files.join(' '),start=Date.now();appendFileSync(join(out,'format.log.txt'),command+'\n');
+  const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});child.stdout.on('data',x=>appendFileSync(join(out,'format.log.txt'),x));child.stderr.on('data',x=>appendFileSync(join(out,'format.log.txt'),x));
+  const [exitCode,signal]=await once(child,'close');results.push({command,exitCode,signal,ms:Date.now()-start});
+}
+await writeFile(join(out,'format.log.txt'),clean(await readFile(join(out,'format.log.txt'),'utf8')));await writeFile(join(out,'format-result.json'),JSON.stringify(results,null,2));assert.ok(results.every(r=>r.exitCode===0),'Report formatting failed');
+await runScript('audit.mjs.txt');

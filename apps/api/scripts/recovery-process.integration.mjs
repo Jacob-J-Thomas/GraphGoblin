@@ -32,7 +32,9 @@ const { fetch } = globalThis;
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 
 async function freePort() {
-  for (let port = 5600; port <= 5699; port++) {
+  const start = Number(process.env.GG_TEST_PORT_START ?? 5600);
+  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 100);
+  for (let port = start; port < start + count; port++) {
     const server = createServer();
     try {
       await new Promise((resolve, reject) => {
@@ -45,14 +47,16 @@ async function freePort() {
       if (error.code !== 'EADDRINUSE') throw error;
     }
   }
-  throw new Error('No free port in 5600..5699');
+  throw new Error('No free disposable API port in the configured test range');
 }
 
 test(
   'built API recovers healthy work beside damaged event and run rows',
   { timeout: 180_000 },
   async () => {
-    const dataDir = await mkdtemp(join(tmpdir(), 'gg-recovery-process-'));
+    const dataDir = await mkdtemp(
+      join(tmpdir(), process.env.GG_TEST_STORE_PREFIX ?? 'gg-recovery-process-'),
+    );
     const url = `file:${join(dataDir, 'graphgoblin.db').replaceAll('\\', '/')}`;
     const handle = openDatabase({ url });
     await handle.migrate();

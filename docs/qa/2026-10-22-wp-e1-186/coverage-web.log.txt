@@ -1,0 +1,82 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --no-file-parallelism
+At line:5 char:3
++   & pnpm.cmd --filter ('@graphgoblin/'+$taskPackage) test:coverage -- ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ile-parallelism:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/ClassifierField.test.tsx (7 tests | 1 failed) 14557ms
+   ❯ ClassifierField (7)
+     × filters enabled classifiers by Noul and Score while retaining the Choice filter 950ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/ClassifierField.test.tsx > ClassifierField > filters enabled classifiers by Noul and Score while 
+retaining the Choice filter
+TestingLibraryElementError: Unable to find an accessible element with the role "option" and name `/Boolean Judge/`
+
+Here are the accessible roles:
+
+  option:
+
+  Name "(choose a classifier)":
+  <option
+    value=""
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<select
+  aria-describedby="_r_85_-help _r_85_-error _r_85_-status"
+  aria-invalid="true"
+  aria-required="true"
+  class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover 
+bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default 
+placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken 
+disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+  id="_r_85_"
+>
+  <option
+    value=""
+  >
+    (choose a classifier)
+  </option>
+</select>
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/editor/ClassifierField.test.tsx:128:31
+    126|     const noulPicker = setup(noul).picker();
+    127|     await waitFor(() => expect(noulPicker).toHaveValue(''));
+    128|     expect(within(noulPicker).getByRole('option', { name: /Boolean Jud…
+       |                               ^
+    129|     expect(within(noulPicker).queryByRole('option', { name: /Scorer/ }…
+    130|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 128 passed (129)
+      Tests  1 failed | 1636 passed (1637)
+   Start at  19:46:49
+   Duration  3350.65s (tests 43%, environment 31%, import 11%, setup 11%, transform 4%, worker 1%)
+
+Environment  jsdom was created 129 times · 979.68s total, 31% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

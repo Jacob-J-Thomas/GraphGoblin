@@ -1,0 +1,34 @@
+// Run from the worktree root with Node 22 after pnpm build. Copy to a temp .mjs first.
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { resolve, join, basename } from 'node:path';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { createServer } from 'node:http';
+const req = createRequire(resolve('apps/api/package.json'));
+const load = (name) => import(import.meta.resolve(name,pathToFileURL(resolve('apps/api/package.json')).href));
+const { buildApp, createContainer, loadConfig } = await load('@graphgoblin/api');
+const { FakeHarness, FakeStructured } = await load('@graphgoblin/engine/testing');
+const dataDir = process.env.QA_DATA_DIR || await mkdtemp(join(tmpdir(), 'gg-qa-e1-'));
+const fake = new FakeHarness();
+const decision = { id: 'codex', available: () => true, route: async (r) => ({ route: r.routes[0].id, confidence: 1, reasoning: 'R'.repeat(2048) }) };
+const container = await createContainer(loadConfig({ GG_DATA_DIR: dataDir, GG_WEB_DIST: resolve('apps/web/dist'), GG_REQUIRE_API_KEY: 'false', GG_SWAGGER_UI: 'false' }), { harnesses: { codex: fake }, deciders: [decision], structured: new FakeStructured(), startTimers: false });
+await container.start();
+const app = await buildApp(container, { logger: false });
+await app.listen({host:'127.0.0.1',port:5720});
+const control = createServer(async (r,s) => {
+  try {
+    let raw=''; for await (const c of r) raw += c;
+    const body=raw ? JSON.parse(raw) : {};
+    let result;
+    if (r.url === '/script' || r.url === '/harness/script') { fake.script(body.turns); result={ok:true}; }
+    else if(r.url === '/apps') result={url:'http://127.0.0.1:5720',instanceId:'qa-e1'};
+    else if (r.url === '/info') result={dataDir:basename(dataDir),pid:process.pid,started:fake.started.length,resumed:fake.resumed.length,cancelled:fake.cancelled.length};
+    else if (r.url === '/stop') { result={stopped:true}; setTimeout(async()=>{await app.close();await container.stop();control.close();process.exit(0);},100); }
+    else { s.statusCode=404; result={error:'unknown QA control'}; }
+    s.setHeader('content-type','application/json');s.end(JSON.stringify(result));
+  } catch(e) {s.statusCode=500;s.end(JSON.stringify({error:e.message}));}
+});
+await new Promise((ok,fail)=>control.once('error',fail).listen(5721,'127.0.0.1',ok));
+console.log(JSON.stringify({ready:true,api:5720,control:5721,dataDir:basename(dataDir),pid:process.pid,node:process.version}));
+// No directory deletion: leave the disposable store for the orchestrator.

@@ -1,0 +1,707 @@
+[
+  {
+    "id": "patch-browser",
+    "expected": "Each add shows original inserted value; completed replace/remove and later-node values agree with API",
+    "steps": "Select multi-patch and later node.finished, inspect every row, exact event and full thread",
+    "actual": {
+      "inserted": [
+        {
+          "path": "/vars/array",
+          "value": []
+        },
+        {
+          "path": "/vars/nested",
+          "value": {
+            "items": []
+          }
+        },
+        {
+          "path": "/vars/object",
+          "value": {}
+        },
+        {
+          "path": "/vars/array/-",
+          "value": {
+            "marker": "FIRST-original",
+            "n": 0.12345678901234566
+          }
+        },
+        {
+          "path": "/vars/array/-",
+          "value": null
+        },
+        {
+          "path": "/vars/array/-",
+          "value": [
+            "THIRD",
+            false
+          ]
+        },
+        {
+          "path": "/vars/nested/items/-",
+          "value": {
+            "nested": "NESTED-original"
+          }
+        },
+        {
+          "path": "/vars/nested/items/-",
+          "value": "NESTED-second"
+        },
+        {
+          "path": "/vars/object/added",
+          "value": {
+            "truth": true
+          }
+        },
+        {
+          "path": "/vars/object/remove",
+          "value": "REMOVE-me"
+        },
+        {
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PWGDG08JMHRYYN75EY7M50",
+            "role": "note",
+            "content": "APPENDED message alpha",
+            "nodeId": "patch",
+            "ts": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        {
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PWGDG08JMHRYYN75EY7M51",
+            "role": "note",
+            "content": "APPENDED message beta",
+            "nodeId": "patch",
+            "ts": "2026-10-24T12:00:00.000Z"
+          }
+        }
+      ],
+      "firstThread": {
+        "array": [
+          {
+            "marker": "FIRST-replaced-in-same-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-original"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      },
+      "laterThread": {
+        "array": [
+          {
+            "marker": "FIRST-later-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-later-node"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      }
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-expression-null",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "expression route",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M56-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5T-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M62-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M66-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6T-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": "Error: expect(locator).toContainText(expected) failed\n\nLocator: getByRole('list', { name: 'Timeline' })\nExpected substring: \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)\"\nReceived string:    \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 0%) with classifier via typesafe (jev-latest) with confidence 100%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 3 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 2 ms#11run.finishedsucceeded (success)\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"toContainText\" getByRole('list', { name: 'Timeline' }) with timeout 5000ms\n  - waiting for getByRole('list', { name: 'Timeline' })\n    14 × locator resolved to <ol aria-label=\"Timeline\" class=\"max-h-[60vh] overflow-auto p-2\">…</ol>\n       - unexpected value \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 0%) with classifier via typesafe (jev-latest) with confidence 100%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 3 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 2 ms#11run.finishedsucceeded (success)\"\n\n    at captureRawStack (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toContainText (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:38:154\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:37:3",
+    "result": "FAIL",
+    "screenshot": "failure-decision-browser-noul-0.png"
+  },
+  {
+    "id": "decision-browser-noul-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M76-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": "Error: expect(locator).toContainText(expected) failed\n\nLocator: getByRole('list', { name: 'Timeline' })\nExpected substring: \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)\"\nReceived string:    \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability <0.01%) with classifier via typesafe (jev-latest) with confidence >99.99%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 1 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"toContainText\" getByRole('list', { name: 'Timeline' }) with timeout 5000ms\n  - waiting for getByRole('list', { name: 'Timeline' })\n    14 × locator resolved to <ol aria-label=\"Timeline\" class=\"max-h-[60vh] overflow-auto p-2\">…</ol>\n       - unexpected value \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability <0.01%) with classifier via typesafe (jev-latest) with confidence >99.99%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 1 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)\"\n\n    at captureRawStack (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toContainText (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:38:154\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:37:3",
+    "result": "FAIL",
+    "screenshot": "failure-decision-browser-noul-1e-12.png"
+  },
+  {
+    "id": "decision-browser-noul-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": "Error: expect(locator).toContainText(expected) failed\n\nLocator: getByRole('list', { name: 'Timeline' })\nExpected substring: \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)\"\nReceived string:    \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 2 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 12.35%) with classifier via typesafe (jev-latest) with confidence 87.65%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 2 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"toContainText\" getByRole('list', { name: 'Timeline' }) with timeout 5000ms\n  - waiting for getByRole('list', { name: 'Timeline' })\n    14 × locator resolved to <ol aria-label=\"Timeline\" class=\"max-h-[60vh] overflow-auto p-2\">…</ol>\n       - unexpected value \"#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 2 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 12.35%) with classifier via typesafe (jev-latest) with confidence 87.65%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 2 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)\"\n\n    at captureRawStack (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toContainText (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:38:154\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:37:3",
+    "result": "FAIL",
+    "screenshot": "failure-decision-browser-noul-0-12345678901234566.png"
+  },
+  {
+    "id": "decision-browser-score-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M82-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M86-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-cancelled",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-cancelled.png"
+  },
+  {
+    "id": "cause-browser-deadline",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-deadline.png"
+  },
+  {
+    "id": "cause-browser-provider",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-provider.png"
+  },
+  {
+    "id": "cause-browser-parent",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-parent.png"
+  },
+  {
+    "id": "cause-browser-child",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-child.png"
+  },
+  {
+    "id": "cause-browser-resumed-cancelled",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": "locator.innerText: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:51:133\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:50:92",
+    "result": "FAIL",
+    "screenshot": "failure-cause-browser-resumed-cancelled.png"
+  },
+  {
+    "id": "pinned-browser",
+    "expected": "Historical inspector, timeline, progress and run list retain old labels after republish",
+    "steps": "Inspect old patch/Choice runs, exact definition/run JSON, current published version",
+    "actual": [
+      {
+        "key": "patch",
+        "name": "Pinned multi-patch evidence",
+        "artifact": "pinned-definition-patch.json"
+      },
+      {
+        "key": "choice-0.12345678901234566",
+        "name": "Pinned choice-0.12345678901234566",
+        "artifact": "pinned-definition-choice-0.12345678901234566.json"
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "unavailable-definition",
+    "expected": "Unavailable pinned definition is disclosed; no current labels guessed",
+    "steps": "Inject 404 only on immutable version read in fresh browser context",
+    "actual": "locator.innerText: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:64:649\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:63:2",
+    "result": "FAIL",
+    "screenshot": "failure-unavailable-definition.png"
+  },
+  {
+    "id": "historical-browser",
+    "expected": "Missing seed/provenance/confidence/probabilities explicitly not recorded",
+    "steps": "Open current-contract accepted older events and inspect decision/exact payload",
+    "actual": "Error: expect(locator).toContainText(expected) failed\n\nLocator: locator('main')\nExpected substring: \"Not recorded\"\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toContainText\" locator('main') with timeout 5000ms\n  - waiting for locator('main')\n\n    at captureRawStack (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toContainText (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:67:325\n    at async test (%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-browser.mjs:21:60)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-browser.mjs:66:2",
+    "result": "FAIL",
+    "screenshot": "failure-historical-browser.png"
+  },
+  {
+    "id": "replay-browser",
+    "expected": "Replay first event exposes inherited seed/counters; source remains unchanged",
+    "steps": "Select replay queued and completed events, compare reconstructed thread to API",
+    "actual": {
+      "seed": {
+        "array": [
+          {
+            "marker": "FIRST-replaced-in-same-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-original"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      },
+      "counters": {
+        "nodeVisits": {
+          "start": 1,
+          "patch": 1
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      "final": {
+        "array": [
+          {
+            "marker": "FIRST-later-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-later-node"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      }
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "layout-1440-dark",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "raw patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 1440,
+        "scroll": 1440
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-1440-light",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "raw patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 1440,
+        "scroll": 1440
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-390-dark",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "raw patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 390,
+        "scroll": 390
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-390-light",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "raw patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 390,
+        "scroll": 390
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "large-browser",
+    "expected": "Large event and thread stay bounded; exact download preserved; reconstruct on request and show 55 messages",
+    "steps": "Open >2MB history, request reconstruction, keyboard expand/collapse, compare full download hash",
+    "actual": {
+      "bounds": {
+        "client": 390,
+        "scroll": 390
+      },
+      "eventSeq": 6,
+      "size": 2064197,
+      "hash": "bba406b5303d553c0f51bb28ecaa551ca12239dc3040e1bea60e30667c91736e"
+    },
+    "result": "PASS"
+  }
+]

@@ -1,0 +1,5 @@
+import{readFile,writeFile}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const paths={domain:'packages/domain',apiClient:'packages/api-client',infrastructure:'packages/infrastructure',api:'apps/api'};
+const summary={};for(const[name,path]of Object.entries(paths))summary[name]=JSON.parse(await readFile(path+'/coverage/coverage-summary.json','utf8')).total;
+await writeFile(out+'/coverage-summary.json',JSON.stringify(summary,null,2));

@@ -122,7 +122,7 @@ describe('mixed native harness families', () => {
     );
   });
   it.each([false, true])(
-    'guards interrupted row family (foreign=%s) without changing recovery policy',
+    'uses visit provenance instead of mutable session rows (foreign=%s)',
     async (foreign) => {
       const { engine, claude } = await engineWithClaude();
       claude.script([
@@ -137,20 +137,16 @@ describe('mixed native harness families', () => {
       const v = engine.publish(singleNodeLoop('recovery-family', infer('a', 'claude', 'fresh')));
       const run = await engine.runToIdle(v.loopId);
       expect(run.failure?.resumable).toBe(true);
-      if (foreign) engine.ports.sessions.rows[0]!.harness = 'codex';
+      if (foreign) {
+        const row = await engine.ports.sessions.forNode(run.id, 'a');
+        if (!row) throw new Error('Expected session fixture');
+        await engine.ports.sessions.upsert({ ...row, harness: 'codex' });
+      }
       await engine.manager.resume(run.id);
       const resumed = await engine.settle(run.id);
-      if (foreign) {
-        expect(resumed.failure).toMatchObject({
-          code: 'HARNESS_TURN_FAILED',
-          resumable: false,
-          details: { adapterCode: 'HARNESS_SESSION_FAMILY_MISMATCH' },
-        });
-        expect(claude.resumed).toEqual([]);
-      } else {
-        expect(resumed.status).toBe('succeeded');
-        expect(claude.resumed[0]?.request.turn.prompt).toContain('previous turn was interrupted');
-      }
+      // Session rows are lookup hints. This visit's durable turn/session events are authoritative.
+      expect(resumed.status).toBe('succeeded');
+      expect(claude.resumed[0]?.request.turn.prompt).toContain('previous turn was interrupted');
     },
   );
 });
@@ -176,6 +172,7 @@ class UnconfirmedHarness extends FakeHarness {
           code: error.code,
           message: error.message,
           retriable: false,
+          submission: 'delivery-uncertain' as const,
         };
       })(),
       result,
@@ -217,20 +214,65 @@ describe('unconfirmed native cancellation', () => {
         expect(types.filter((t) => t === 'run.cancel_requested')).toHaveLength(1);
     },
   );
+  it.each(
+    (['codex', 'claude'] as const).flatMap((family) =>
+      [
+        'HARNESS_UNSUPPORTED_POLICY',
+        'HARNESS_INVALID_CONFIGURATION',
+        'HARNESS_ARGUMENTS_REJECTED',
+      ].map((code) => ({ family, code })),
+    ),
+  )(
+    'keeps pinned $family $code non-resumable even if marked transient',
+    async ({ family, code }) => {
+      const { engine, claude } = await engineWithClaude();
+      const harness = family === 'claude' ? claude : engine.ports.harness;
+      harness.script([
+        {
+          items: [],
+          announceSession: false,
+          submission: 'definitely-not-submitted',
+          error: {
+            code,
+            message: 'Pinned configuration cannot execute',
+            // Deliberate misreport: the pinned-refusal guard must override this flag.
+            retriable: true,
+          },
+        },
+      ]);
+      const v = engine.publish(
+        singleNodeLoop('pinned refusal-' + family, infer('a', family, 'fresh')),
+      );
+      const run = await engine.runToIdle(v.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'HARNESS_TURN_FAILED',
+        resumable: false,
+        inference: { submission: 'definitely-not-submitted' },
+      });
+      await expect(engine.manager.resume(run.id)).rejects.toThrow();
+    },
+  );
   it.each([
     ['HARNESS_NOT_INSTALLED', 'HARNESS_NOT_INSTALLED', true],
     ['HARNESS_NOT_AUTHENTICATED', 'HARNESS_NOT_AUTHENTICATED', true],
     ['HARNESS_QUOTA_EXHAUSTED', 'HARNESS_QUOTA_EXHAUSTED', true],
     ['HARNESS_TIMEOUT', 'INFERENCE_TIMEOUT', true],
-    ['HARNESS_PROTOCOL_ERROR', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_OUTPUT_INVALID', 'HARNESS_TURN_FAILED', false],
+    ['HARNESS_PROTOCOL_ERROR', 'HARNESS_DELIVERY_UNCERTAIN', false],
+    ['HARNESS_OUTPUT_INVALID', 'HARNESS_DELIVERY_UNCERTAIN', false],
     ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_TURN_FAILED', false],
+    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_OUTPUT_LIMIT', false],
     ['HARNESS_INVALID_CONFIGURATION', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_TURN_FAILED', 'HARNESS_TURN_FAILED', false],
+    ['HARNESS_TURN_FAILED', 'HARNESS_DELIVERY_UNCERTAIN', false],
   ])('maps fixed %s without substring inference', async (code, expected, resumable) => {
     const { engine, claude } = await engineWithClaude();
-    claude.script([{ error: { code, message: 'Safe adapter diagnostic' } }]);
+    claude.script([
+      {
+        submission: ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_INVALID_CONFIGURATION'].includes(code)
+          ? 'definitely-not-submitted'
+          : 'delivery-uncertain',
+        error: { code, message: 'Safe adapter diagnostic' },
+      },
+    ]);
     const v = engine.publish(singleNodeLoop('failure-' + code, infer('a', 'claude', 'fresh')));
     expect((await engine.runToIdle(v.loopId)).failure).toMatchObject({ code: expected, resumable });
   });
@@ -253,6 +295,10 @@ describe('inference consumption keeps engine failures and cleans up both harness
         code: 'INTERNAL_ERROR',
         resumable: true,
         message: 'Synthetic session persistence fault',
+        details: {
+          name: 'Error',
+          stack: expect.stringContaining('Synthetic session persistence fault'),
+        },
       });
       expect(harness.cancelled).toHaveLength(1);
     },
@@ -349,7 +395,7 @@ describe('inference consumption keeps engine failures and cleans up both harness
       });
       const v = engine.publish(singleNodeLoop('stream-' + family, infer('a', family, 'fresh')));
       expect((await engine.runToIdle(v.loopId)).failure).toMatchObject({
-        code: 'HARNESS_TURN_FAILED',
+        code: 'HARNESS_DELIVERY_UNCERTAIN',
         resumable: family === 'codex',
         details: { adapterCode: 'HARNESS_PROTOCOL_ERROR' },
       });

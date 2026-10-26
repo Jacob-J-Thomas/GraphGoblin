@@ -1,0 +1,91 @@
+import { readFile, writeFile, readdir, stat, copyFile, mkdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { join, relative, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { execFileSync } from 'node:child_process';
+
+const root = process.cwd();
+const qa = join(root, 'docs/qa/2026-10-25-wp-e1-268');
+const names = ['before-long', 'before-context', 'rank1-long', 'append-burst', 'append-paced', 'append-burst-v2', 'append-paced-v2', 'after-long', 'after-context', 'after-append-burst', 'after-append-paced', 'guard-before-1', 'guard-after-1', 'guard-after-2', 'guard-before-2'];
+const slash = (s) => s.replaceAll('\\', '/');
+const home = homedir();
+function portable(text) {
+  return text.replaceAll(home.replaceAll('\\', '\\\\'), '%USERPROFILE%')
+    .replaceAll(home, '%USERPROFILE%').replaceAll(slash(home), '%USERPROFILE%')
+    .replaceAll(slash(root) + '/', '').replaceAll(root + '\\', '');
+}
+const manifest = [], measurements = [];
+async function inventory(path) {
+  for (const item of await readdir(path, { withFileTypes: true })) {
+    const file = join(path, item.name);
+    if (item.isDirectory()) await inventory(file);
+    else {
+      const bytes = await readFile(file);
+      manifest.push({ path: slash(relative(root, file)), bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
+    }
+  }
+}
+for (const name of names) {
+  const directory = join(root, '.tmp/gg-wp-e1-268-' + name);
+  const record = JSON.parse(await readFile(join(directory, 'raw-summary.json'), 'utf8'));
+  const profile = JSON.parse(await readFile(join(directory, record.workload === 'engine-control' ? 'engine.cpuprofile' : 'api.cpuprofile'), 'utf8'));
+  const guardFrames = new Map(profile.nodes.filter(({ callFrame: frame }) => frame.functionName === 'countEntries' || frame.url.includes('fresh-entries.js')).map((node) => [node.id, node.callFrame.functionName + ' ' + node.callFrame.url]));
+  for (const entry of record.cases) {
+    const counts = new Map();
+    let at = profile.startTime;
+    for (let index = 0; index < profile.samples.length; index++) {
+      at += profile.timeDeltas[index];
+      if (!entry.profileWindow || at < entry.profileWindow.startUs || at > entry.profileWindow.endUs) continue;
+      const frame = guardFrames.get(profile.samples[index]);
+      if (frame) counts.set(frame, (counts.get(frame) ?? 0) + 1);
+    }
+    entry.freshGuardSamples = [...counts];
+  }
+  const compact = await readFile(join(directory, 'summary.json'));
+  if (compact.length > 1_000_000) throw new Error('Unexpected oversized compact summary');
+  await writeFile(join(qa, name + '-summary.json'), record.workload === 'engine-control' ? portable(compact.toString('utf8')) : compact);
+  measurements.push({ name, workload: record.workload, command: record.workload === 'engine-control' ? ['node', '--experimental-import-meta-resolve', '--expose-gc', '.tmp/gg-wp-e1-268-guard.mjs', ...record.command.slice(1)] : ['node', 'tooling/perf/measure.mjs', ...record.command.slice(1)], environment: record.environment,
+    ...(record.error ? { error: record.error } : {}),
+    ...(record.correctnessFailure ? { correctnessFailure: true } : {}),
+    cases: record.cases.map(({ samples: _samples, ...entry }) => entry),
+  });
+  await inventory(directory);
+}
+await writeFile(join(qa, 'measurements.json'), portable(JSON.stringify(measurements, null, 2)) + '\n');
+
+// Preserve original log bytes in ignored local storage, and label the committed redacted copies.
+const logs = join(root, '.tmp/gg-wp-e1-268-original-logs');
+await mkdir(logs, { recursive: true });
+for (const name of await readdir(qa)) {
+  if (!name.endsWith('.log.txt')) continue;
+  const source = join(qa, name), destination = join(logs, name);
+  const bytes = await readFile(source);
+  await writeFile(destination, bytes);
+  const decoded = bytes[0] === 255 && bytes[1] === 254 ? bytes.subarray(2).toString('utf16le') : bytes.toString('utf8');
+  const result = '[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]\n' + portable(decoded);
+  if (Buffer.byteLength(result) > 1_000_000) throw new Error('Oversized log: ' + name);
+  await writeFile(source, result);
+}
+await inventory(logs);
+const lines = ['# Raw captures not kept in Git', '', 'All originals remain under the ignored `.tmp/` directories in this worktree. None was deleted. Files above 1,000,000 bytes are deliberately not copied into tracked evidence. Smaller originals are also inventoried where portable summaries, the detailed measurements extract or redacted logs are retained instead. SHA-256 values cover original bytes, before redaction. The full SQLite stores and profiles remain available locally; paths below are repository-relative.', '', '| Original | Bytes | SHA-256 |', '| --- | ---: | --- |', ...manifest.map((entry) => `| \`${entry.path}\` | ${entry.bytes} | \`${entry.sha256}\` |`), ''];
+await writeFile(join(qa, 'NOT-KEPT.md'), lines.join('\n'));
+await writeFile(join(qa, 'raw-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+await copyFile(new URL(import.meta.url), join(qa, 'retain-evidence.mjs.txt'));
+
+const diff = execFileSync('git', ['diff', '--unified=0'], { encoding: 'utf8', cwd: root });
+const ranges = [];
+let file;
+for (const line of diff.split('\n')) {
+  if (line.startsWith('+++ b/')) file = line.slice(6).trim();
+  const match = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(line);
+  if (match) ranges.push({ file, beforeStart: Number(match[1]), beforeCount: Number(match[2] ?? 1), afterStart: Number(match[3]), afterCount: Number(match[4] ?? 1) });
+}
+const added = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { encoding: 'utf8', cwd: root }).trim().split('\n').filter(Boolean);
+for (const path of added.filter((path) => !path.startsWith('docs/qa/'))) {
+  const content = await readFile(resolve(root, path), 'utf8');
+  ranges.push({ file: path, added: true, afterStart: 1, afterCount: content.split('\n').length - Number(content.endsWith('\n')) });
+}
+await writeFile(join(qa, 'touched-ranges.json'), JSON.stringify(ranges, null, 2) + '\n');
+const oversized = [];
+for (const name of await readdir(qa)) if ((await stat(join(qa, name))).size > 1_000_000) oversized.push(name);
+if (oversized.length) throw new Error('Oversized retained files: ' + oversized.join(', '));

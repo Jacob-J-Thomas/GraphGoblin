@@ -1,0 +1,26 @@
+node : node:internal/modules/run_main:122
+At line:7 char:1
++ node (Join-Path $qa 'response-outcomes.check.mjs') (Join-Path $qa 'be ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: HTTP 600 must have a bounded final outcome
++ actual - expected
+
++ 'pending'
+- 'failed'
+
+    at file:///%WORKTREE%/docs/qa/2026-10-22-w
+p-d2-round-5/response-outcomes.check.mjs:9:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'pending',
+  expected: 'failed',
+  operator: 'strictEqual'
+}
+
+Node.js v22.14.0

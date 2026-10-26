@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { replayThread } from '@graphgoblin/domain';
+import { replayStateAt, replayThread } from '@graphgoblin/domain';
 import { RunManager } from './run-manager.js';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { FakeStructured } from './testing/fakes.js';
@@ -236,13 +236,18 @@ describe('adversarial engine invariants', () => {
     const replayed: unknown[] = [];
     // Every checkpoint equals a replay of the log up to the seq it names.
     const save = e.ports.runs.saveThread.bind(e.ports.runs);
-    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
-      if (seq !== undefined) {
-        snapshots.push(thread);
-        replayed.push(replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq));
-      }
-      return save(id, thread, seq);
-    });
+    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(
+      async (id, thread, seq, replayState) => {
+        if (seq !== undefined) {
+          expect(replayState).toEqual(replayStateAt(e.events(id), seq));
+          snapshots.push(thread);
+          replayed.push(
+            replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq),
+          );
+        }
+        return save(id, thread, seq, replayState);
+      },
+    );
     const r = await e.runToIdle(v.loopId);
     expect(r.status).toBe('succeeded');
     expect(e.events(r.id).map((x) => x.seq)).toEqual(e.events(r.id).map((_, i) => i + 1));
@@ -380,7 +385,7 @@ describe('adversarial engine invariants', () => {
       };
       if (kind === 'file') vi.spyOn(e.ports.workspace, 'writeFile').mockImplementation(fail);
       if (kind === 'log') vi.spyOn(e.ports.delivery, 'log').mockImplementation(fail);
-      if (kind === 'webhook') vi.spyOn(e.ports.delivery, 'webhook').mockImplementation(fail);
+      if (kind === 'webhook') e.ports.delivery.failWebhooks = true;
       const channel =
         kind === 'file'
           ? { kind, path: 'out.json' }
@@ -401,9 +406,15 @@ describe('adversarial engine invariants', () => {
       );
       const r = await e.runToIdle(v.loopId);
       expect(r).toMatchObject({ status: 'succeeded', result: 42 });
-      expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
-        { error: 'delivery unavailable' },
-      ]);
+      if (kind === 'webhook') {
+        expect(e.events(r.id).filter((x) => x.type === 'delivery.finished')).toMatchObject([
+          { delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } } },
+        ]);
+      } else {
+        expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
+          { error: 'delivery unavailable' },
+        ]);
+      }
       expect(e.eventTypes(r.id).filter((x) => x === 'run.finished')).toHaveLength(1);
     },
   );

@@ -1,0 +1,290 @@
+{
+  "head": "a3dd50ea74c4bbcc926ec43a37134737ce600f07",
+  "results": [
+    {
+      "name": "native large result, bounded detail, no max-turns or per-turn timer",
+      "status": "PASS",
+      "actual": {
+        "runId": "01M5H2YY3QEBNTGZKTBE1VH766",
+        "finalChars": 20000,
+        "detailChars": 16384,
+        "request": {
+          "mode": "large",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "acceptedAt": 3312.1342,
+          "marker": "claude.assistant",
+          "returnedAt": 3317.945,
+          "terminationUnconfirmed": false
+        }
+      }
+    },
+    {
+      "name": "validated result submission is observable before native exit",
+      "status": "PASS",
+      "actual": {
+        "fact": {
+          "mode": "result-only",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "acceptedAt": 4210.5772,
+          "marker": "claude.result",
+          "returnedAt": 4720.8738,
+          "terminationUnconfirmed": false
+        },
+        "acceptanceBeforeReturnMs": 510.2966000000006
+      }
+    },
+    {
+      "name": "native transport failure and one invocation",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 810,
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "Claude connection or provider service failed; check connectivity and retry",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5H2Z0BSWD23NB5GEV3H65GQ:5",
+            "turnId": "01M5H2Z0K59QY9Q0HSQX0GVVR2",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "invocations": 1,
+        "fact": {
+          "mode": "transport",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "returnedAt": 5572.7254,
+          "terminationUnconfirmed": false
+        }
+      }
+    },
+    {
+      "name": "native quota failure and one invocation",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 882,
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Claude account quota exhausted; check the account allowance and retry when it resets",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5H2Z154W06T5XAK9804TXKQ:5",
+            "turnId": "01M5H2Z1CXJXV27920HCC35QTS",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "invocations": 1,
+        "fact": {
+          "mode": "quota",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "returnedAt": 6435.7503,
+          "terminationUnconfirmed": false
+        }
+      }
+    },
+    {
+      "name": "native auth failure and one invocation",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 871,
+        "failure": {
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "Claude authentication failed",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5H2Z20EYH8N0NPHD2CRB0YK:5",
+            "turnId": "01M5H2Z2B3SC62XWXR1ZSWAV7W",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "invocations": 1,
+        "fact": {
+          "mode": "auth",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "returnedAt": 7366.1301,
+          "terminationUnconfirmed": false
+        }
+      }
+    },
+    {
+      "name": "native overflow failure and one invocation",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 1042,
+        "failure": {
+          "code": "HARNESS_OUTPUT_LIMIT",
+          "message": "Claude process output exceeded the configured limit",
+          "nodeId": "work",
+          "resumable": false,
+          "inference": {
+            "visitId": "01M5H2Z2W84ZZ6VGVM37FG9SDJ:5",
+            "turnId": "01M5H2Z33Z96HHQEVZXWPVKF53",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "invocations": 1,
+        "fact": {
+          "mode": "overflow",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "acceptedAt": 8241.2014,
+          "marker": "claude.assistant",
+          "returnedAt": 8373.928,
+          "terminationUnconfirmed": false
+        }
+      }
+    },
+    {
+      "name": "native stall failure and one invocation",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 12954,
+        "failure": {
+          "code": "INFERENCE_TIMEOUT",
+          "message": "inference exceeded 10s",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5H2Z3WT0157QWCD5HSW57CB:5",
+            "turnId": "01M5H2Z44ZM6RC0N5NWJG9PEY5",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "invocations": 1,
+        "fact": {
+          "mode": "stall",
+          "timeoutMs": null,
+          "maxTurns": false,
+          "returnedAt": 21329.0948,
+          "terminationUnconfirmed": false
+        }
+      }
+    }
+  ],
+  "lifecycle": [
+    {
+      "pid": 11596,
+      "exitCode": 0,
+      "confirmedExited": true,
+      "forced": false
+    }
+  ],
+  "nativeLog": {
+    "facts": [
+      {
+        "mode": "large",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "acceptedAt": 3312.1342,
+        "marker": "claude.assistant",
+        "returnedAt": 3317.945,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "result-only",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "acceptedAt": 4210.5772,
+        "marker": "claude.result",
+        "returnedAt": 4720.8738,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "transport",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "returnedAt": 5572.7254,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "quota",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "returnedAt": 6435.7503,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "auth",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "returnedAt": 7366.1301,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "overflow",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "acceptedAt": 8241.2014,
+        "marker": "claude.assistant",
+        "returnedAt": 8373.928,
+        "terminationUnconfirmed": false
+      },
+      {
+        "mode": "stall",
+        "timeoutMs": null,
+        "maxTurns": false,
+        "returnedAt": 21329.0948,
+        "terminationUnconfirmed": false
+      }
+    ],
+    "cli": [
+      {
+        "mode": "large",
+        "pid": 3660,
+        "maxTurns": false
+      },
+      {
+        "mode": "result-only",
+        "pid": 46748,
+        "maxTurns": false
+      },
+      {
+        "mode": "transport",
+        "pid": 48432,
+        "maxTurns": false
+      },
+      {
+        "mode": "quota",
+        "pid": 43916,
+        "maxTurns": false
+      },
+      {
+        "mode": "auth",
+        "pid": 50584,
+        "maxTurns": false
+      },
+      {
+        "mode": "overflow",
+        "pid": 31192,
+        "maxTurns": false
+      },
+      {
+        "mode": "stall",
+        "pid": 35708,
+        "maxTurns": false
+      }
+    ]
+  },
+  "cleanup": {
+    "store": "gg-qa-243-r3-claude-mLWu31",
+    "processConfirmedExited": true,
+    "removed": true
+  }
+}

@@ -1,0 +1,561 @@
+SOURCE: COMMON.md
+# Common brief for the 2026-10-18 GraphGoblin batch (intents I01 to I07)
+
+Every work-package brief in this folder starts by pointing you here. Read this file completely, then the package brief, then the orientation material in the order the brief lists. You are one worker among several running at the same time in separate git worktrees of the same repository.
+
+## 1. Orientation (read in this order)
+
+1. `AGENTS.md` at the worktree root. Its rules are binding.
+2. `docs/README.md`, then `docs/15-issue-workflow.md`.
+3. `docs/architecture/README.md`: the structural map of the code (packages, data, storage, API, web, adapters, triggers, one traced loop).
+4. The roadmap decision ledger: `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\278.md`, sections "Owner decision ledger", "Shared completion standard" and "Engineering parameters". The owner's latest explicit decisions govern; historical comments are evidence, not a competing specification.
+5. The issue bodies your brief names, in `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\<number>.md` (bolt, its UoW parent, and its intent). The "Acceptance criteria", "Verification", "Scope limits" and "Specific owner feedback" sections are the requirements. "Evidence provenance" links describe an older baseline (`c379f80`): reproduce on the current code before relying on them.
+6. The numbered docs and source files the brief lists.
+
+## 2. Hard rules (from AGENTS.md and the owner)
+
+- **Coverage:** every package stays above 90% lines and 90% branches. `pnpm test:coverage` fails otherwise. Never lower a threshold or add an exclusion beyond generated code. Keep denominators truthful.
+- **Types:** `pnpm typecheck` type-checks test files and fixtures too. Fix types; do not cast to `any`, do not add `@ts-expect-error` to hide a real problem.
+- **Imports:** relative imports use explicit `.js` extensions (NodeNext). Reach other packages only through their `@graphgoblin/*` entry points. Zod 4: `.prefault({})` for object defaults whose fields have defaults.
+- **Dependencies:** permissive licences only (MIT, Apache-2.0, BSD, ISC); `pnpm check:licenses` enforces `tooling/license-allowlist.json`; every new dependency gets a line in `docs/research/licenses.md`. Prefer no new dependency.
+- **Docs in sync:** a behaviour change updates the relevant numbered doc under `docs/`; a decision change adds an ADR under `docs/decisions/` (next free number); a node-schema or route change requires `pnpm docs:generate` and the regenerated `docs/reference/*` committed; every user-visible or contract change gets a bullet under `## Unreleased` in `CHANGELOG.md` ending with the issue number in parentheses, for example `(#263)`. Upgrade notes for the owner's instance go in that bullet as **Upgrade:**.
+- **Clean design over backward compatibility (ADR-0020):** no compatibility schemas, deprecated input paths, tolerant parsing of old data shapes, or dual code paths. Change the contract to its clean shape. When stored data must change, the owner resets by hand; say so in the CHANGELOG upgrade note.
+- **Test quality (owner decision, #278 "Test quality"):** test through supported public or component interfaces. Private-method access, reflection, invasive casts, monkey-patching the component under test, and test-only production exports are defects, not tests. Legitimate dependency injection through public constructors or ports, fake clocks, malformed external inputs, and real storage/process/network fault injection are valid. A regression test must demonstrably fail on the current code before your fix and pass after it; say so in the report. No retry-to-green: a test that passes only on retry is a failure to resolve. Do not rerun whole suites repeatedly without a new reason.
+- **Evidence first:** for a bolt marked "Evidence-dependent admission" or any human-reported defect, reproduce or measure on the current code before writing a corrective change. If you cannot reproduce, preserve the report, write down exactly what you tested and stop at a documented negative result. Do not manufacture a change to satisfy an old report, and never call the report disproven.
+- **Native and live claims:** process shutdown, restart, signal and subprocess behaviour require disposable real-process evidence (spawn the built app or a script in a temp data directory), not invocations of captured callbacks. Fake-harness results never establish live-provider behaviour. Live provider turns are out of scope for Codex workers unless the brief says otherwise.
+- **Engineering parameters:** unsettled numbers (grace periods, retry counts, byte bounds, thresholds) are yours to choose and justify in code comments and docs. Never describe one as owner-approved.
+- **Owner environment:** never touch the owner's running app on ports 4747/4748, its store under the user's home (`~/.graphgoblin` or any `GG_DATA_DIR` outside your worktree), or the main checkout at `%USERPROFILE%\source\repos\GraphGoblin` outside your own worktree. Use disposable data directories inside your worktree or the system temp directory, and alternate ports (the e2e server and the API tests pick free ports; for manual runs use 5600 to 5699). Never upgrade or reconfigure the owner's runtime, Node, pnpm, Codex or Claude installation.
+- **Scope:** implement only the bolts in your brief. Something outside scope that looks wrong goes into your report under "Observed outside scope", with file and line; do not fix it.
+- **Git and attribution:** commits carry no assistant attribution of any kind (no Co-Authored-By, no "Generated with", no model names). Never push. Never merge, rebase, stash or switch branches. Codex workers do not commit at all (the sandbox keeps `.git` read-only); leave changes in the worktree and the orchestrator commits after review. Claude workers commit on their worktree branch with clear messages that name the issue, for example `Pin draft run definitions at start (#247)`.
+- **Codex sandbox specifics:** work only in the current worktree and branch; never create symbolic links or junctions to any directory outside the worktree; if dependencies are missing, stop and report instead of linking another checkout's `node_modules`; do not try to delete directories (report `coverage/` or report folders for the orchestrator to remove); work alone in your thread (no sub-agents); in Windows PowerShell call `pnpm.cmd`, in Git Bash call `pnpm`.
+- **GitHub:** workers never post comments, edit issues, open PRs or change labels. The orchestrator does. Everything you want recorded goes into your report.
+
+## 3. Environment
+
+- Windows 11, PowerShell is the default shell; Git Bash is available. The default `node` is v23.10.0. The supported gate runtime is Node 22 at `%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node.exe` (dependency-cruiser refuses Node 23). Run every gate with Node 22 first on PATH:
+  - PowerShell: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` then `pnpm.cmd ...`
+  - Git Bash: `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` then `pnpm ...`
+- Tests, lint and typecheck need no prior build (the `development` export condition resolves TypeScript source). Node at runtime loads `dist/`, so `pnpm build` before starting an app or the browser suite.
+- Browser suite: `pnpm build`, then from `apps/web`: `pnpm exec playwright test` (Microsoft Edge channel by default on Windows; no browser download). Run a single spec with `pnpm exec playwright test e2e/<name>.spec.ts`. The suite takes 10 to 15 minutes; run only the specs relevant to your change unless the brief says otherwise. Six tests in `claude-harness.spec.ts`, `model-picker.spec.ts` and related model-picker flows are known to fail on current main (tracked under #205/#241); do not fix them unless your brief owns them, and list them separately in your report.
+- Turbo caches `typecheck`, `lint` and `test:coverage` results. Because `test:coverage` has no dependency inputs (#127), a cache hit can hide a regression in a dependency. When you need certainty for a package, run `pnpm exec turbo run test:coverage --force --filter=@graphgoblin/<name>` or `pnpm --filter @graphgoblin/<name> test:coverage` directly.
+- Other workers are editing the repository at the same time. `WAVE.md` in this folder lists who owns which files right now. Keep edits to files owned by another package small and additive, and name every such edit in your report.
+
+## 4. Gates before you report
+
+Run with Node 22 on PATH, from the worktree root:
+
+```
+pnpm typecheck
+pnpm lint
+pnpm format:check          # fix with: pnpm format
+pnpm check:layers
+pnpm check:deps
+pnpm --filter @graphgoblin/<each changed package> test:coverage
+pnpm check:docs            # only if a node schema or route changed; regenerate with pnpm docs:generate
+pnpm check:licenses        # only if dependencies changed
+pnpm check:tokens          # only if apps/web source changed
+```
+
+Then the browser specs relevant to any `apps/web` change (after `pnpm build`). Report every gate with its exact command and result. A gate you could not run is reported as not run, with the reason.
+
+## 5. Report shape (end your run with exactly these sections)
+
+1. **Branch and worktree:** branch name, worktree path, base commit, and either the commit list (Claude workers) or "uncommitted; ready for orchestrator commit" (Codex workers).
+2. **Per bolt:** for each issue number, each acceptance criterion with the evidence that satisfies it (test name and file, command output, or measurement), or "unresolved" with the reason. Research bolts end with a clearly labelled "confirmed", "not reproduced" or "measured" result.
+3. **Files changed:** grouped by package; every edit to a file owned by another package in `WAVE.md` called out.
+4. **Tests:** names of new or changed tests; which regression tests failed before the fix (quote the failure); coverage summary for each changed package.
+5. **Gates:** each command and its result.
+6. **Docs:** numbered docs, ADRs, CHANGELOG lines and generated references updated.
+7. **Decisions and parameters:** every engineering choice with its justification.
+8. **Caveats and open items:** what is left undone, what needs the orchestrator or the owner, anything observed outside scope.
+SOURCE: QA-COMMON.md
+# Common instructions for independent QA (2026-10-18 batch)
+
+You test a reviewed work package against the running product and its public interfaces. You are not the implementer or the reviewer. You change no production code; you may add failing regression tests as `test.todo` or clearly skipped tests with the exact reason, and you write a QA report. Read `COMMON.md` first, then the package brief, then the bolt issue bodies (the `qa:touched-systems` scope applies: enumerate every system the change touches and test each with positive and negative cases).
+
+## Setup
+
+- Work in the worktree and branch you are given. With Node 22 first on PATH: `pnpm install --frozen-lockfile` if needed, `pnpm build`, then start a disposable instance: a temporary data directory (inside the worktree or the system temp folder), a free port in 5600 to 5699, an API key created by the binary, the fake harness unless the brief authorises live turns. Never touch ports 4747/4748, the owner's store or the main checkout.
+- Browser testing uses Playwright on Microsoft Edge (`GG_E2E_BROWSER_CHANNEL=msedge`), either through the repository's e2e server (`apps/web/e2e/server.ts`) or a Playwright script against your disposable instance.
+
+## What to test
+
+1. Every acceptance criterion of every bolt in the package, through the UI, the REST API, the MCP tools or the CLI as appropriate: positive case, negative case, and the failure, concurrency, cancellation and restart cases the criterion implies. Restart means stopping the process and starting a new one on the same data directory.
+2. The systems the change touches beyond the bolts' own surface: adjacent routes, inspector views, settings, MCP tools, exports, the CHANGELOG's upgrade note (does it describe what an operator must do?).
+3. Adversarial inputs: boundary sizes, malformed payloads, rapid repeated actions, stale clients, reloads mid-flow, two tabs, narrow viewport, keyboard-only navigation for any UI change.
+4. Native claims (shutdown, restart, subprocess): verify with the real built process, never by reading the code.
+
+## Record
+
+Write `docs/qa/2026-10-18-<package>.md` in the worktree with: build revision, environment (data directory, port, browser), the systems enumerated, a table of every check (system, case, steps, expected, actual, pass/fail, evidence such as a response body, a screenshot path under `docs/qa/2026-10-18-<package>/`, or a log excerpt), every defect with severity (blocker, major, minor) and reproduction steps, and the list of criteria you could not test with the reason. Fake-only evidence is labelled fake-only. Do not call a human-reported defect disproven if you could not reproduce it; record what you tested.
+
+## Report shape
+
+1. **Verdict:** pass, pass with minor defects, or fail, with the revision tested.
+2. **Defects:** numbered, severity, steps, expected, actual, evidence.
+3. **Coverage of criteria:** per bolt, per criterion: tested and passed, tested and failed, or not testable (why).
+4. **Report path and evidence folder.**
+5. **Observations outside scope.**
+
+Codex QA workers: work alone in your thread, never commit, never delete directories (list them for the orchestrator), and finish with this report.
+SOURCE: issues/265.md
+# #265 [I06/U18/B49] Recover explicitly from missing sessions
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:research, area:web, area:harness, backlog, kind:bolt, status:approved-held
+parent: #307 [I06/U18] Preserve deliberate session continuity
+sub-issues: -
+created: 2026-10-17T00:02:20Z updated: 2026-10-18T23:36:51Z
+
+## Body
+
+Part of #307
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B49 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Recover explicitly from missing sessions
+
+## Acceptance criteria
+
+- [ ] A missing provider session stops with a clear cause and explicit fresh-session choice; no silent loss of prior conversation or false reuse claim.
+
+## Verification
+
+Removed/expired session fixture, restart, declined recovery and bounded real adapter evidence.
+
+## Dependencies
+
+- #33 â€” B48
+- #251 â€” B28
+- #279 â€” implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+Missing-session recovery is explicit and preserves the configured context mode; it does not authorize silent model substitution, cross-execution memory, or post-1.0 usage-exhaustion waiting.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#265
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #265 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/adapter-codex/src/harness.ts#L168), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261)
+
+
+## Comments (0)
+SOURCE: issues/307.md
+# #307 [I06/U18] Preserve deliberate session continuity
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:engine, area:harness, backlog, kind:uow, status:approved-held
+parent: #288 [I06] Make repeated model work predictable
+sub-issues: #244(OPEN), #33(OPEN), #265(OPEN), #102(OPEN)
+created: 2026-10-17T19:59:00Z updated: 2026-10-18T23:37:38Z
+
+## Body
+
+Part of #288
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U18 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+Repeated model work preserves intended context without cross-run leakage or duplicate uncertain submission.
+
+## Touched components
+
+- engine inference handler
+- harness ports/adapters
+- session provenance
+- recovery UI
+
+## Bolts
+
+- #244 **[I06/U18/B47] Preserve authored prompts until confirmed submission** â€” A proven pre-submission failure retains the full authored task for retry; uncertain accepted turns are not blindly resubmitted and provenance belongs to the logical visit.
+- #33 **[I06/U18/B48] Add per-node own-session continuity** â€” The three context behaviors above are explicit and testable, using existing controls where suitable. Own-session continuity is opt-in and isolated to the node/run/harness.
+- #265 **[I06/U18/B49] Recover explicitly from missing sessions** â€” A missing provider session stops with a clear cause and explicit fresh-session choice; no silent loss of prior conversation or false reuse claim.
+- #102 **[I06/U18/B50] Diagnose Windows command-launch failure** â€” Compare a supported direct invocation and GraphGoblin in disposable admitted workspaces; localize a reproduced failure and repair only the responsible integration, or preserve an unconfirmed result.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Specific owner feedback
+
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #244 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/sessions.ts#L40), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L241)
+
+### Source #265 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/adapter-codex/src/harness.ts#L168), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261)
+
+
+## Comments (0)
+SOURCE: issues/288.md
+# #288 [I06] Make repeated model work predictable
+
+state: OPEN | milestone: Later | labels: type:epic, area:editor, area:engine, area:contracts, area:harness, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap â€” owner-approved intents, UoWs and bolts
+sub-issues: #305(OPEN), #306(OPEN), #307(OPEN)
+created: 2026-10-17T19:58:18Z updated: 2026-10-18T23:38:11Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I06 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+Model choices, limits and conversation continuity behave explicitly across repeated node visits.
+
+## Priority
+
+6 in the approved next-intent order.
+
+## Units of work
+
+- #305 **U16: Make model configuration truthful** â€” Visible selections and readiness accurately describe what can execute.
+- #306 **U17: Honor visible limits and cancellation** â€” Limits in the UI, persisted configuration and actual execution agree.
+- #307 **U18: Preserve deliberate session continuity** â€” Repeated model work preserves intended context without cross-run leakage or duplicate uncertain submission.
+
+## Intent acceptance
+
+Subscription-backed tests and deterministic tests jointly demonstrate selection, limit, cancellation and session semantics; no new direct API integration is required.
+
+## Source issue coverage
+
+Current delivery: #33, #102, #179, #204, #205, #206, #243, #244, #265, #270.
+
+Deferred model lifecycle: #262 (including consolidated #271), excluded from current completion. Future usage-exhaustion recovery: #335.
+
+## Specific owner feedback
+
+- Separate #206 Sonnet/Haiku support from #204 provider-switch defaults and #205 model/effort visibility; no dependency on deferred model lifecycle/recovery.
+- #262 is post-1.0: unavailable means user-disabled or removed from support; warn before disabling referenced models and unpublish affected loops; retire models only with tested compatible successor upgrades for future executions.
+- #335 is post-1.0 allowance recovery with the same provider/model/session. Current usage exhaustion fails explicitly; retry only positively identified transient failures that are safe to repeat, otherwise fail. No runtime substitution.
+- Loop guardrails are visible, disableable execution controls, not cost/token/subscription budgets. Preserve physical/provider failure truth without silently truncating results.
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+## Approved review refinements
+
+Keep provider selection/UI fixes and standalone high-priority #206 small. #262 lifecycle/validation is post-1.0 and excluded from this intent completion. #335 is post-1.0 same-model usage-exhaustion recovery. Current quota failures are explicit failures, not model unavailability or fallback. Built-in guardrails concern loop execution only. The three context modes and optional explicit reset policy are within one execution, with per-node isolation and truthful prompt/session recovery.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #243 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L265), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/errors.ts#L14), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L204), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/05-execution-engine.md#L128)
+
+### Source #244 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/sessions.ts#L40), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L241)
+
+### Source #262 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/model-issues.ts#L149), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/07-api-and-streaming.md#L273)
+
+### Source #265 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/adapter-codex/src/harness.ts#L168), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261)
+
+### Source #270 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L426), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L464), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L425), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/primitive-evaluator.ts#L319), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/common.ts#L220)
+
+### Source #271 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/settings.ts#L242), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1246), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L217)
+
+
+## Comments (0)
+SOURCE: issues/33.md
+# #33 [I06/U18/B48] Add per-node own-session continuity
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:architecture, area:engine, area:harness, backlog, kind:bolt, status:approved-held
+parent: #307 [I06/U18] Preserve deliberate session continuity
+sub-issues: -
+created: 2026-10-04T01:38:54Z updated: 2026-10-18T23:36:47Z
+
+## Body
+
+Part of #307
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B48 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Add per-node own-session continuity
+
+## Acceptance criteria
+
+- [ ] The three context behaviors above are explicit and testable, using existing controls where suitable. Own-session continuity is opt-in and isolated to the node/run/harness.
+- [ ] A worker/reviewer/worker cycle resumes only the worker's own conversation. Other runs, replay forks and children cannot inherit that private handle accidentally; restart retains a usable reference.
+- [ ] Optional authored reset-after-N-visits resets only the selected provider conversation at the stated boundary; main-loop context and other nodes' conversations remain intact. No unconfigured reset is introduced.
+- [ ] New explicit context/reset behavior does not silently change existing authored session policies. Missing and uncertain sessions follow #244/#265.
+
+## Verification
+
+Deterministic contract scenarios and bounded real start/resume turns for supported harnesses.
+
+## Dependencies
+
+- #244 â€” B47
+- #247 â€” B17
+- #282 â€” X-PROVIDER
+- #279 â€” implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.
+
+The owner approved this bounded architecture/cutover plan. A materially different design, or a diagnostic result requiring broader scope, returns for explicit review before implementation.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#33
+
+## Specific owner feedback
+
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+
+
+## Comments (6)
+
+### Jacob-J-Thomas at 2026-10-07T02:31:47Z
+
+## Proposed implementation plan â€” owner approval required
+
+This revised proposal addresses Opus Phase-0 findings B1/B2/M1/M2/R2 against `79a0afb`. Under `docs/15-issue-workflow.md`, implementation waits for owner approval and `plan-approved`; retain `human-in-the-loop`. Sol/Luna implementation follows the owner's preference, with independent Opus review tied to the implemented SHA and named QA. Running editor/inspector review remains required before merge.
+
+**Policy.** Add `{ "policy": "resume-own", "maxVisitsPerSession": 10 }` to `SessionPolicySchema` (`packages/contracts/src/nodes.ts`). Cap: integer 1â€“100, default 10. A new entry resumes only this node's immediately preceding finished session in this run and harness. First entry, missing/failed/cancelled history or cap exhaustion starts fresh. Entries 1â€“10 share a context; entry 11 starts another. Retries, recovery and repair do not increment this count. This bounds cycles, not exact tokens. Existing `maxIterations` remains the total entry bound. Keep the other three policies' normal selection behavior.
+
+**Identity.** Add one shared pure logical-entry derivation in `packages/domain`, using ordered `node.started`/`node.finished` and attempt values; engine and inspector consume it. Name the row field `logicalEntry` to distinguish it from `counters.nodeVisits`, which counts retries. Store one session row per `(runId,nodeId,logicalEntry)` with latest attempt and sessionVisitCount. Change `HarnessSessionRepository` (`engine/src/ports.ts`), SQLite sessions/schema and fakes; recovery queries the exact entry. Do not add required visit fields to existing events or rewrite historical event logs merely to annotate entries.
+
+**Delivery evidence and recovery.** An inherited session ID, including Codex's pre-CLI `harness.session` announcement, does **not** prove this entry's prompt was delivered (`adapter-codex/src/harness.ts`). In `engine/src/handlers/inference.ts`, persist the pending task/repair prompt and turn identity before invoking it; a new pending turn starts with delivery unproven. Persist proof only from progress/items or usage produced during that turn, never from session ID announcements. A retry retains that turn's proof and prompt.
+
+For a post-cutover unfinished entry with a saved prompt and known ID, send continuation only when such delivery is durably proven. Otherwise resend the saved pending prompt on that same ID. This preserves new review findings after a crash before CLI startup. A crash after delivery but before durable proof may resend the prompt; duplicate delivery/side effects remain possible and are documented. Missing fresh IDs require a fresh attempt of the task. Durable `node.finished` determines entry completion; a locally finished session row alone must not skip unfinished work. Repairs retain their own pending prompt/proof and bounded repair count within the entry; they do not consume continuity capacity.
+
+Normalize an explicitly missing/invalid resume session as `HARNESS_SESSION_UNAVAILABLE`, non-resumable, with replay guidance. Do not silently start fresh or offer a resume loop with the same invalid ID. Other transient provider failures retain their existing classification. Cancellation records cancelled state; replay forks and separate subloop runs do not inherit session rows.
+
+**Upgrade and product.** Use the shared offline v2 converter/boot-refusal boundary: stop service, snapshot, inventory/manifest, ordered structural migrations/conversion, validate, then start recovery/triggers. Conversion refuses **all nonterminal runs** (queued, running, waiting, paused). It inventories every failed run with an unfinished inference entry and known session ID; the owner individually approves marking each nonresumable with replay guidance, recorded in the manifest. No fresh-session resume API. Backfilled rows preserve historical IDs/logical entries but never receive continuation or resend a nonexistent saved prompt; existing terminal event history remains. New-turn recovery rules above apply to post-cutover rows with their saved prompts/proof. No boot semantic conversion or runtime legacy parser. Synchronous device conversion retains ambiguous raw set-aside/export drafts; no new resolution UI. Keep the converter through the cutover release; retire no earlier than the next incompatible release, with notice.
+
+SchemaForm offers the labelled policy/cap. Inspector derives logical entry and shows attempt/session/mode; transcripts include entry/attempt. Update docs/03â€“06, references, CHANGELOG and ADR.
+
+**QA.** Verify A/B separation, parallel runs, cap boundaries, inherited-ID crash before startup versus after progress, proof-write crash ambiguity, interrupted repair, invalid-session replay guidance, cancellation, replay, subloops, existing-policy regression, minimal migration, refusal of every nonterminal status, and per-failed-entry replay disposition. Run required gates, Edge E2E, Codex fixtures and one bounded read-only `LIVE=1` continuity check after approval. Session-delivery uncertainty is resolved by the explicit resend policy above, not left to implementation discretion.
+
+### Jacob-J-Thomas at 2026-10-07T16:20:06Z
+
+This issue seems like a misappropriation of problems with our AIDLC flow being applied to the product roadmap. Yes, I would like the loops to support this functionality, however I believe there are already open issues discussing a need to further review how context is passed between nodes, and that is where this work belongs as far as I can tell, not here. Correct me if I'm wrong on any of these points, otherwise close the issue and designate where the work should be done accordingly.
+
+### Jacob-J-Thomas at 2026-10-07T16:34:43Z
+
+### Owner review: context decisions precede continuity implementation
+
+The owner approved #98, #26 and #29 on 2026-10-07, but did not approve this plan. The concern in https://github.com/Jacob-J-Thomas/GraphGoblin/issues/33#issuecomment-6042046748 is valid: the proposed continuity policy, cap and recovery behavior must not get ahead of #38's product evaluation.
+
+The issues address related but distinct state. #38 decides the graph context contract: what nodes receive, share, retain and expose. This issue would implement the resulting harness-session policy: which model conversation a revisited node resumes, and how that is isolated across nodes and runs. Current source still resolves resume-previous through latestWithSession(runId), and resume-named through byScopeKey(loopId:key) (packages/engine/src/handlers/inference.ts, lines 219-224); it does not provide isolated per-node/run continuity today. That is a general product capability, although the review/fix workflow exposed its need.
+
+Retain #33 as a blocked candidate implementation follow-up to #38, rather than treating the posted plan as settled. #38 explicitly excludes implementing behavior changes and calls for separately gated follow-ups, so closing #33 as a duplicate now would erase that distinction. The human session may supersede or close it if a different design is chosen. No resume-own policy, visit cap, prompt persistence/recovery semantics or session-history migration is authorized by the three other approvals. Revise this plan from #38's recorded outcome before seeking approval again.
+
+### Jacob-J-Thomas at 2026-10-07T23:49:39Z
+
+# #33 proposed architecture plan â€” awaiting owner approval
+
+**Not implemented or approved.** Consumes the recorded #38 continuity intent and #26 harness-family portability; retain needs-plan-approval plus human-in-the-loop. Replace the old cap/saved-prompt/proof/resend proposal with this bounded scope only after approval. Shared question/context contract: [#38 approval refinement](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/38#issuecomment-6049166114). The full common cutover gates below also apply.
+
+## Change
+
+Add explicit `session.policy: resume-own`: first normal entry starts fresh; later normal entries resume this node's immediately preceding durably completed entry in the same run and harness. Default implementing-worker scenes use it across fix cycles. Separate reviewer nodes use separate handles and fresh sessions for independent phases. Feedback is explicit graph data rendered into the next worker prompt; no repository-role field or shared reviewer memory. Existing explicitly authored fresh/previous/named policies and the generic new-node fresh default remain unchanged.
+
+Derive one logical-entry identity from ordered node.started/node.finished events; retry attempts and inference schema-repair turns remain inside that entry. Keep per-entry/per-attempt session rows instead of overwriting on revisits; engine and inspector use the same derivation. Selection requires durable node.finished, not merely a finished session row. A/B alternation and simultaneous runs cannot cross handles; replay forks and subloop children have distinct run identities. Resolve/validate model and effort through the existing harness defaults service. Refuse incompatible saved harness/model selection or invalid/missing native session; do not silently start a substitute fresh session.
+
+Continuity lasts this run under existing loop/visit/time bounds. Add no arbitrary ten-visit reset, token cap or automatic compaction. Native retention/recall and provider compaction remain provider behavior, not a product guarantee. Preserve current inference repair and typed cancellation/termination-unconfirmed priority.
+
+## Essential architecture choice: interrupted turn
+
+**Recommended:** if a new-policy entry/repair was interrupted and current prompt delivery is unknown, fail nonresumably with typed delivery-unknown reason and replay guidance. Do not send generic continuation, blindly resend feedback, or use init/session/progress as invented acknowledgment. A locally finished session row without durable node.finished is still an unfinished entry and takes the SAME approved interruption disposition before any fallback/session selection. Never fall through to the prior completed handle with a freshly rendered prompt. Normal completed-entry continuity remains supported.
+
+Owner must explicitly approve this and the corresponding change to #33's existing crash-continuation acceptance criterion. Alternative automatic recovery requires a separate at-least-once saved-prompt design and explicit duplicate-action acceptance; it is outside this plan. Existing-policy recovery is regression-tested, not silently redesigned.
+
+## Clean conversion
+
+Join the shared next offline cutover. Derive surviving historical row entries only where recorded events prove the association; preserve original rows in audit, never recreate overwritten/lost visits or invent delivery facts. Ambiguity requires a reviewed resolution. Refuse every nonterminal run. Affected failed runs need individually approved nonresumable/replay dispositions; historical terminal events remain factual. No runtime compatibility branch or live instance change follows from approval.
+
+## Common cutover and delivery gates
+
+Coordinate one offline format-3 definition/export cutover from format 2 after the admitted children; no intermediate owner-instance upgrade. Runtime/import accept only current format, with no legacy executor or tolerant parser. Replace the boot format guard and fresh-empty-database stamp together; Thread schema remains 1. Existing v1 one-off conversion can be a frozen preliminary stage. Back up the complete stopped store and test rollback; inventory all definitions/versions, initial threads, snapshots, events/patches, session rows, drafts and exports, including hidden/deleted histories. Refuse ALL queued/running/waiting/paused runs. Preserve raw audit and factual terminal history/nullable unknowns; never invent lost visits, probabilities, reasoning or prompt acknowledgment. Explicit manifest resolutions cover ambiguous authored sources/selections/side criteria and each affected failed-run nonresumable/replay disposition. Architecture approval never approves a particular live manifest or data mutation. Pure device/export conversion shares these rules; ambiguous device drafts use the existing raw set-aside/export flow. Retain staged converters through this cutover and retire no earlier than the next incompatible release with upgrade notice. [Existing cutover baseline](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/docs/decisions/ADR-0022-explicit-decision-evaluation.md#L21).
+
+Sol/Luna implement bounded owned slices; each child receives Codex Review plus independent installed Opus technical QA at the required phases. Keep all four coverage metrics above 90% per changed package and pass type/lint/layer/Node22 dependency/license/generated-doc/format gates plus relevant Edge/WCAG checks. Use pnpm.cmd in PowerShell. Separately authorized native verification must report unavailable evidence honestly. Owner checks the final integrated worker-feedback/session/primitive/ordered-stop workflow once admitted work completes. Final feature-to-main PR never merges. Whole-plan approval and final product acceptance are separate gates.
+
+## Acceptance
+
+- W â†’ reviewer â†’ QA â†’ W resumes W's completed handle; actual next prompt contains the explicit reviewed revision/findings. Parallel runs, both harness families, replay forks and child runs remain isolated.
+- First entry starts fresh; durable completion beats local row status; missing/invalid/incompatible handle fails explicitly. Entry/attempt/repair distinctions are preserved and visible in inspector events/transcripts.
+- Simulate interruption before CLI start, after init, during partial work/repair, and after native completion with a finished row but before durable node.finished. Unknown delivery produces the approved disposition, never fabricated proof. Confirm cancellation and unconfirmed termination remain distinct.
+- Session row migration and ambiguous/failed-run refusals preserve raw history; all three old policies retain their existing selection behavior after #26 family filtering.
+- Labelled keyboard-operable editor control and inspector pass focused Edge/WCAG tests; core/session/storage/adapter tests and shared repository/coverage gates pass. Bounded native resume verification remains required evidence, separately authorized; unavailable smoke is not success.
+
+Non-goals: decisions/exits, cross-run memory, global inference-default changes, new cap/token policies, prompt persistence/acknowledgment protocol, retry/resend automation, templates/gallery content, #100 API providers. Final owner check is part of the integrated workflow after admitted work completes.
+
+Evidence: [current family-filtered recovery/selection](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3349212ae9e6ea22d68c75d237b3bc7d4eec06b4/packages/engine/src/handlers/inference.ts#L260), [local finished-row ordering](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3349212ae9e6ea22d68c75d237b3bc7d4eec06b4/packages/engine/src/handlers/inference.ts#L423), [durable node completion](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/engine/src/run-manager.ts#L1251), [entry versus attempt](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/engine/src/run-manager.ts#L222), [unsupported Claude prompt proof](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3349212ae9e6ea22d68c75d237b3bc7d4eec06b4/packages/infrastructure/src/claude/protocol.ts#L308). Replay creates a new run ID ([fork](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/engine/src/run-manager.ts#L639)); child start allocates a new run ID ([child call](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/engine/src/run-manager.ts#L1599), [allocation](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/engine/src/run-manager.ts#L346)). New-policy rows select only their own run/node/harness/entry; no inherited native handle follows graph thread seeding.
+
+
+<!-- aidlc-foundations-context-plan-20261007-r2 -->
+
+
+
+### Jacob-J-Thomas at 2026-10-08T02:24:10Z
+
+The owner has deferred #33 from the current delivery: it should be implemented after more basic features are established. No #33 implementation has been started, and its proposed architecture is not approved.
+
+Per docs/15, the issue is parked with `backlog` and its active gate labels removed; routing, QA and area metadata are retained. Existing session behavior remains unchanged. The #38/#97/#99 plans are being revised to remove #33 as a prerequisite. Templates requiring isolated same-node continuity will not claim that guarantee before this follow-up is implemented and verified.
+
+### Jacob-J-Thomas at 2026-10-09T23:19:05Z
+
+### Status after owner QA of PR #151 (2026-10-09)
+
+This issue remains deferred with `backlog`, no gate label, and milestone `Later`. It owns runtime per-node session continuity for loops that revisit inference nodes: keeping each node's own session separate across cycles, runs and harnesses.
+
+The owner's 2026-10-09 request to declutter inference/decision dialogs and move context settings to their own tab is the node-form work in #170, not this issue. #38 remains the context-passing research session within #166.
+
+Revisit #33 after #38's decisions and the basic loop experience have been exercised. No session-continuity implementation is authorized by the form request or this status update.
+
+SOURCE: issues/251.md
+# #251 [I04/U10/B28] Apply ordinary failure and recovery semantics
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:architecture, area:web, area:engine, backlog, kind:bolt, status:approved-held
+parent: #248 [I04/U10] Use consistent awaited subloops
+sub-issues: -
+created: 2026-10-17T00:01:41Z updated: 2026-10-18T23:35:43Z
+
+## Body
+
+Part of #248
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B28 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Apply ordinary failure and recovery semantics
+
+## Acceptance criteria
+
+- [ ] Equivalent failures inline and inside a child produce consistent parent handling/resumability; valid negative business results remain data and deterministic failures are not advertised as resumable without cause.
+
+- [ ] A child runtime failure or cancellation follows the same rules as the equivalent inline parent-node failure. An intentionally authored failure outcome can remain ordinary returned data; do not confuse it with an execution error.
+
+## Verification
+
+Inline-versus-child scenarios, transient/deterministic/provider failures and repeat/recovery attempts.
+
+Equivalent inline/child scenarios and recovery prove parity without converting an execution error into apparent parent success.
+
+## Dependencies
+
+- #242 â€” B27
+- #279 â€” implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+The owner approved this bounded architecture/cutover plan. A materially different design, or a diagnostic result requiring broader scope, returns for explicit review before implementation.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#248, #251
+
+## Specific owner feedback
+
+- A child execution failure is handled consistently with the equivalent failing node in its containing parent. Nesting must not introduce special silent-success/error-consumption behavior. Valid negative business results are ordinary data.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #248 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/subloop.ts#L217), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L667), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L212)
+
+### Source #251 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/domain/src/errors.ts#L1), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1707), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L228), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/domain/src/answers.ts#L63)
+
+
+## Comments (0)

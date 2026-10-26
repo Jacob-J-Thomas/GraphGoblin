@@ -1,0 +1,39 @@
+// Isolated controls for pending Settings results and the saved-choice sentence.
+// Run after suites have stopped. Copy to the disposable root and pass that root as argv[2].
+import {spawn,execFileSync} from 'node:child_process';
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+const root=process.cwd(),temp=resolve(process.argv[2]),out=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_')&&!['JEV_API_KEY','NODE_OPTIONS'].includes(k)));
+mkdirSync(join(temp,'probes'),{recursive:true});Object.assign(env,{TEMP:join(temp,'probes'),TMP:join(temp,'probes'),TMPDIR:join(temp,'probes')});
+Object.assign(env,{GG_DATA_DIR:join(temp,'store-controls'),GG_HOST:'127.0.0.1',GG_PORT:'5810',GG_REQUIRE_API_KEY:'true',GG_LOG_LEVEL:'silent',GG_WEB_DIST:resolve('apps/web/dist'),GG_CLAUDE_BINARY:join(temp,'claude/claude-r3.exe'),GG_CODEX_BINARY:join(temp,'codex/codex-r3.exe'),GG_JEV_API_KEY:'',LIVE:'0'});
+for(const h of ['claude','codex'])writeFileSync(join(temp,h,'scenario.txt'),'ready');mkdirSync(env.GG_DATA_DIR,{recursive:true});
+const token=/\bgg_[A-Za-z0-9_-]+/.exec(execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','qa-controls'],{cwd:root,env,encoding:'utf8',windowsHide:true}))[0];
+const api=spawn(process.execPath,['apps/api/dist/main.js'],{cwd:root,env,stdio:'ignore',windowsHide:true});writeFileSync(join(temp,'api-pid.txt'),String(api.pid));
+const delay=ms=>new Promise(r=>setTimeout(r,ms));let browser;
+const results=[];const save=()=>writeFileSync(join(out,'browser-controls.json'),JSON.stringify(results,null,2));
+const record=(name,steps,expected,actual,pass)=>{results.push({system:'Edge',case:name,steps,expected,actual,pass});save();console.log((pass?'PASS ':'FAIL ')+name);};
+try{
+ for(let n=0;n<200;n++){try{if((await fetch('http://127.0.0.1:5810/healthz')).ok)break;}catch{}await delay(100);}
+ const require=createRequire(resolve('apps/web/package.json'));const {chromium,expect}=require('@playwright/test');browser=await chromium.launch({channel:'msedge',headless:true});
+ const ctx=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});await ctx.addInitScript(k=>localStorage.setItem('graphgoblin-api-key',k),token);const page=await ctx.newPage();
+ await page.goto('http://127.0.0.1:5810/app/settings');const region=page.getByRole('region',{name:'Harness preflight',exact:true});await expect(region.locator('[data-state="ready"]')).toHaveCount(2,{timeout:30000});await page.waitForLoadState('networkidle');
+ let release,entered;const held=new Promise(r=>release=r),started=new Promise(r=>entered=r);await page.route('**/harness/preflight',async route=>{entered();await held;await route.continue();});
+ const previous=await region.locator('[data-state]').allTextContents();await region.getByRole('button',{name:'Retry preflight'}).click();await started;
+ await expect(region.getByRole('button',{name:'Retry preflight'})).toBeDisabled();await expect(region.getByRole('status')).toHaveText('Rechecking\u2026');const current=await region.locator('[data-state]').allTextContents();
+ await region.screenshot({path:join(out,'settings-rechecking.png')});record('Stable pending Retry','Wait for native ready response and network idle; hold next HTTP request; Retry','Two unchanged Ready badges; Retry disabled; Rechecking live region',{previous,current,text:await region.innerText(),screenshot:'settings-rechecking.png'},JSON.stringify(previous)===JSON.stringify(current)&&await region.locator('[data-state="checking"]').count()===0);
+ const loaded=page.waitForResponse('**/harness/preflight');release();await loaded;await page.unrouteAll({behavior:'wait'});await expect(region.getByRole('button',{name:'Retry preflight'})).toBeEnabled();
+ // Explicit saved model absent from a controlled stale loop response. No harness switch or write.
+ const {minimalLoop}=await import(pathToFileURL(resolve('packages/contracts/dist/testing/index.js')));const d=minimalLoop();d.name='Saved-choice sentence control';d.nodes.splice(1,0,{id:'infer',kind:'inference',label:'Infer',ui:{x:260,y:80},config:{harness:'codex',model:'gpt-6-luna',effort:'high',prompt:{template:'No turn'}}});d.edges=[{id:'e1',from:{node:'start',port:'out'},to:{node:'infer'}},{id:'e2',from:{node:'infer',port:'out'},to:{node:'done'}}];
+ const response=await fetch('http://127.0.0.1:5810/loops',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({definition:d})});const body=await response.json(),id=body.loop.id;
+ await page.route('**/loops/'+id,async route=>{if(route.request().method()!=='GET')return route.continue();const response=await route.fetch();const body=await response.json();for(const version of [body.current,body.draft]){const node=version?.definition.nodes.find(n=>n.id==='infer');if(node)node.config.model='qa-removed-model';}await route.fulfill({response,json:body});});
+ await page.goto('http://127.0.0.1:5810/app/loops/'+id+'/edit');await page.getByTestId('node-infer').click({position:{x:60,y:12}});const dialog=page.getByRole('dialog');const advanced=dialog.getByRole('button',{name:/^Advanced/});if(await advanced.getAttribute('aria-expanded')!=='true')await advanced.click();await expect(dialog.getByText('This model is not in the catalog. The saved choice stays until you change it.',{exact:true})).toBeVisible();
+ await dialog.screenshot({path:join(out,'editor-saved-not-in-catalog.png')});record('Saved-choice sentence','Load a stale Codex saved model absent from catalog; no provider switch','Saved value stays selected with exact replacement sentence',{text:await dialog.innerText(),value:await dialog.getByLabel('Model',{exact:true}).inputValue(),screenshot:'editor-saved-not-in-catalog.png'},await dialog.getByLabel('Model',{exact:true}).inputValue()==='qa-removed-model');
+ // Adjudicate earlier overly broad read-only/sentence expectations using their retained actual UI.
+ const {readFileSync}=await import('node:fs');const earlier=JSON.parse(readFileSync(join(out,'browser-followup.json'),'utf8'));
+ for(const h of ['claude','codex']){const r=earlier.find(r=>r.case===h+' editor known failure');const text=r.actual.text;record(h+' known failure adjudication','Read the retained live editor snapshot against harness-specific edit rules','Claude read-only, Codex editable; retained value; named Retry and capitalised problem',{source:'browser-followup.json',readonly:r.actual.readonly,text},text.includes('Retry '+(h==='claude'?'Claude':'Codex')+' preflight')&&(h==='claude'?r.actual.readonly==='true':r.actual.readonly!=='true'));}
+ record('Browser environment','Launch installed msedge in headless mode','Edge with desktop and retained 390px phone evidence',{version:browser.version(),desktop:{width:1440,height:1000}},true);
+}catch(error){record('Control failure','Run collector','All controls complete',{message:error.message},false);process.exitCode=1;}
+finally{if(browser)await browser.close();api.kill();await Promise.race([new Promise(r=>api.once('exit',r)),delay(12000)]);}

@@ -275,7 +275,7 @@ it('applies 0012 during atomic fresh initialization', async () => {
   expect(
     (await handle.client.execute('SELECT count(*) AS count FROM __drizzle_migrations')).rows[0]
       ?.count,
-  ).toBe(15);
+  ).toBe(migrations.length);
   expect(
     (await handle.client.execute('SELECT format_version,status FROM gg_upgrade_state')).rows,
   ).toMatchObject([{ format_version: 4, status: 'complete' }]);

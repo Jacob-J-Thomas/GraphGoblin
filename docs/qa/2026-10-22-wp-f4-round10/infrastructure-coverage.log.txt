@@ -1,0 +1,169 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:9 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWork ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/process/scripts.test.ts (39 tests | 3 failed) 44074ms
+   ❯ ProcessScripts (36)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8037ms
+     × kills the process tree on timeout 15002ms
+     × kills the process when the signal aborts, including when already aborted 15015ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 32355ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30061ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 26389ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 15261ms
+     × does not spawn for an already aborted signal and cancels a running process 5076ms
+     × kills the descendant that a long-lived child started 5920ms
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 13044ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 6244ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir 
+'<USERPROFILE>\AppData\Local\Temp\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\fixtures\gg-claude-process-dkU80W'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir 
+'<USERPROFILE>\AppData\Local\Temp\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\fixtures\gg-claude-process-02DwYW'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir 
+'<USERPROFILE>\AppData\Local\Temp\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\fixtures\gg-claude-process-G3jLUv'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/process/scripts.test.ts:194:7
+
+ Test Files  4 failed | 46 passed (50)
+      Tests  8 failed | 740 passed (748)
+   Start at  21:37:20
+   Duration  271.92s (tests 77%, import 21%, transform 2%, worker 1%)
+
+    Isolate  50 workers spawned · ~250ms startup each (spawn + environment, per file)
+             at least ~12.25s faster with isolate: false — reuses workers across files instead of one per file
+
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle…
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\infrastructure
+

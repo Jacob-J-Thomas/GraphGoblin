@@ -1,0 +1,90 @@
+{
+  "attempts": [
+    {
+      "attempt": "custom-command",
+      "outcome": "Not launched",
+      "cause": "PowerShell legacy native argument quoting split the custom command argument. See commands.jsonl; no product check executed."
+    },
+    {
+      "attempt": "first focused launch",
+      "outcome": "Setup failed",
+      "cause": "QA fixture relocation could not resolve infrastructure from the web dependency boundary.",
+      "evidence": "edge-setup-import-failure.log.txt"
+    },
+    {
+      "attempt": "second focused launch",
+      "outcome": "Collection failed; zero cases",
+      "cause": "Playwright did not remap file-URL .js imports to the tracked .ts fixtures.",
+      "evidence": "edge-setup-ts-resolution.log.txt"
+    },
+    {
+      "attempt": "exploratory browser attempt",
+      "outcome": "Interrupted; invalid QA harness; no final result claimed",
+      "cause": "Legacy cmd argument quoting selected the entire suite instead of the focus group; broad QA temp-prefix replacement also changed gg-pulse in one assertion. Narrowed to mkdtemp calls and used verbatim cmd arguments. Assertion audit now passes for all 52 specs / 5718 expressions.",
+      "evidence": [
+        "invalid-harness-assertion-audit.json",
+        "invalid-harness-adaptations.diff.txt",
+        "harness-assertion-audit.json"
+      ],
+      "outputFolder": "apps/web/.tmp/qa5/edge-targeted-results",
+      "stop": "Terminal interrupt; assigned listener range was empty before the corrected harness was prepared."
+    },
+    {
+      "attempt": "manual initial fetch",
+      "outcome": "Setup failure; zero observations",
+      "cause": "QA script used Playwright response ok() on a native Fetch Response; corrected to the ok boolean.",
+      "evidence": [
+        "manual-fetch-setup.log.txt",
+        "manual-fetch-setup.json"
+      ]
+    },
+    {
+      "attempt": "manual unbounded snapshot wait",
+      "outcome": "Interrupted; no product verdict",
+      "cause": "QA snapshot requested a main element not present in the app shell; standalone locator default had no timeout.",
+      "evidence": "manual-stalled-attempt.log.txt"
+    },
+    {
+      "attempt": "manual bounded diagnostic",
+      "outcome": "Interrupted after identifying the QA snapshot error",
+      "cause": "Bounded timeout exposed locator(main) as the only failed step; corrected snapshot scope to body. Live pulse, accessibility and sequence checks preceding it had succeeded.",
+      "evidence": "manual-snapshot-setup.log.txt"
+    },
+    {
+      "attempt": "corrected manual matrix",
+      "outcome": "16 passed / 0 failed",
+      "cause": null,
+      "evidence": "manual-ui-results.json"
+    },
+    {
+      "attempt": "complete-suite golden path",
+      "severity": "minor QA harness",
+      "outcome": "Original failure retained; corrected input path passes exactly once alone",
+      "evidence": [
+        "edge-full.log.txt",
+        "edge-full-golden-path-error-context.md.txt",
+        "isolated-golden.log.txt"
+      ]
+    },
+    {
+      "attempt": "root lint scratch contamination",
+      "severity": "minor QA harness",
+      "outcome": "66 QA-only parser errors; exact root lint passes after byte-preserving retirement",
+      "evidence": [
+        "lint.log.txt",
+        "retired-harness.json",
+        "lint-after-retirement.log.txt"
+      ]
+    },
+    {
+      "attempt": "exploratory responsive wait",
+      "severity": "minor intermittent observation",
+      "outcome": "Original 10 s timeout retained; complete run and exactly one isolated diagnostic pass; API list changes from 171 items with seed to 10 without; underlying cause unresolved",
+      "evidence": [
+        "exploratory-responsive-error-context.md.txt",
+        "exploratory-responsive-network.json",
+        "isolated-responsive.log.txt"
+      ]
+    }
+  ]
+}

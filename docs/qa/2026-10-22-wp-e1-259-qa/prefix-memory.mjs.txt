@@ -1,0 +1,10 @@
+// Compile the unmodified exported utility with TypeScript, then measure only prefix calls.
+import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';import {createRequire} from 'node:module';import {readFile,writeFile} from 'node:fs/promises';
+const parent=pathToFileURL(resolve('apps/web/package.json')).href,req=createRequire(parent),ts=req('typescript');
+const src=await readFile('apps/web/src/lib/utils.ts','utf8');const emitted=ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const js=emitted.replace(/from (['"])(.*?)\1/g,(_,q,n)=>'from '+JSON.stringify(import.meta.resolve(n,parent)));
+const {prettyJsonPrefix}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const thread=JSON.parse(await readFile('docs/qa/2026-10-22-wp-e1-259-qa/mutate-thread-before.json','utf8'));
+const out=[];for(const limit of [1024,4096]){global.gc();const before=process.memoryUsage().heapUsed,t=performance.now();const result=prettyJsonPrefix(thread.vars,limit);const elapsedMs=performance.now()-t,allocatedHeapBytes=process.memoryUsage().heapUsed-before;out.push({limit,elapsedMs,allocatedHeapBytes,prefixChars:result.text.length,truncated:result.truncated});}
+const full=JSON.stringify(thread.vars,null,2);for(const x of out)x.exact=prettyJsonPrefix(thread.vars,x.limit).text===full.slice(0,x.limit);
+const result={valuePrettyChars:full.length,node:process.version,measurements:out};await writeFile('docs/qa/2026-10-22-wp-e1-259-qa/prefix-memory.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

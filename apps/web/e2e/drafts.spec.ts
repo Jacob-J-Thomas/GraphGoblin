@@ -198,8 +198,9 @@ test('an older version’s open connection blocks device drafts: the editor says
     ),
   ).toBeVisible();
 
-  // The older tab closes its connection: the upgrade completes, and the edit is on the device.
-  await older.evaluate(() => (window as unknown as { olderTab: IDBDatabase }).olderTab.close());
+  // Closing the old tab releases its real connection without evaluating in an inactive renderer.
+  // Wait for that public browser operation, then observe the completed upgrade in the editor.
+  await older.close();
   await expect(page.getByText('Changes are not kept on this device')).toBeHidden();
   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
   await page.reload();

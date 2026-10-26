@@ -84,7 +84,7 @@ afterEach(async () => {
 });
 
 /**
- * Open the API over the file store in `dataDir`: a fresh process each time, with recovery. With
+ * Open the API over the file store in `dataDir`: a fresh container each time, with recovery. With
  * `realClassifiers` the container composes its own catalog-backed classifier registry.
  */
 async function open(
@@ -114,6 +114,7 @@ async function open(
 
 async function close(): Promise<void> {
   await app?.close();
+  // Physical store handoff; managed normal stop deliberately waits for these parked runs.
   await container?.stop();
   app = undefined;
   container = undefined;

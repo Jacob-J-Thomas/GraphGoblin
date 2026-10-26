@@ -1,0 +1,510 @@
+{
+  "loopId": "01M5JAKXTJEK2MJPZN1T39DXE7",
+  "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+  "path": "http://127.0.0.1:5649/refused",
+  "run": {
+    "id": "01M5JAKXZPNR96T5943JFNAHTQ",
+    "ownerId": "local",
+    "loopId": "01M5JAKXTJEK2MJPZN1T39DXE7",
+    "versionId": "01M5JAKXTJD9WJYW45JB492GZ3",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit refused",
+      "label": "Audit refused v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKXZPSBT4G1NF7WNTJMAN",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:23.094Z",
+    "startedAt": "2026-10-22T17:30:23.115Z",
+    "finishedAt": "2026-10-22T17:30:23.181Z",
+    "lastEventSeq": 19
+  },
+  "events": [
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:23.094Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKXTJD9WJYW45JB492GZ3",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit refused",
+        "label": "Audit refused v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKXZPNR96T5943JFNAHTQ",
+          "loopId": "01M5JAKXTJEK2MJPZN1T39DXE7",
+          "versionId": "01M5JAKXTJD9WJYW45JB492GZ3",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKXZPSBT4G1NF7WNTJMAN",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit refused",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:23.094Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:23.120Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:23.136Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:23.140Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit refused",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.140Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit refused",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.140Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:23.167Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "e2096792b3bbf9fc"
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:23.172Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:23.172Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:23.172Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:23.172Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:23.203Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:35.199Z"
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:23.232Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:25.230Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:25.238Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:40.236Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:25.245Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:30.243Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 14,
+      "ts": "2026-10-22T17:30:30.255Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:50.253Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 15,
+      "ts": "2026-10-22T17:30:30.261Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:40.260Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 16,
+      "ts": "2026-10-22T17:30:40.278Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:31:10.276Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 17,
+      "ts": "2026-10-22T17:30:40.285Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:31:00.283Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 18,
+      "ts": "2026-10-22T17:31:00.287Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:31:10.285Z",
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXZPNR96T5943JFNAHTQ",
+      "seq": 19,
+      "ts": "2026-10-22T17:31:00.295Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:31:00.302Z",
+      "last_event_seq": 19,
+      "status": "succeeded"
+    }
+  ],
+  "requests": []
+}

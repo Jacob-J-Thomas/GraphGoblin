@@ -1,0 +1,151 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/infrastructure
+
+ ❯ src/sqlite/delivery-runs.test.ts (30 tests | 7 failed | 23 skipped) 1001ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run 304ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run 111ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run 102ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run 130ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run 127ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run 58ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run 167ms
+pnpm.cmd :
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults
+({"defaults":["corrupt"]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"})
+alongside a healthy run
+LibsqlError: SQLITE_ERROR: malformed JSON
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute
+../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+Caused by: SqliteError: malformed JSON
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Statement.run ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:335:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:549:34
+ ❯ Sqlite3Client.execute
+../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":17})
+alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[null]})
+alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[17]})
+alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[true]})
+alongside a healthy run
+AssertionError: expected [ { …(13) }, { …(13) }, { …(13) } ] to deeply equal [ { …(13) }, { …(13) } ]
+
+- Expected
++ Received
+
+@@ -1,7 +1,15 @@
+  [
+    {
++     "node_id": null,
++     "payload": "{\"delivery\":{\"id\":\"VNK7XKB3Z8DQP90FC0Y4C4MKV4:webhook:1\",\"channel\":{\"kind\":\"webhook\",\"ur
+l\":\"https://example.test\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgem
+ent\":\"unknown\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"interrupted\",\"message\":\"Pre-upgrade
+return has no acknowledgement record; the effect may have
+happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}",
++     "run_id": "VNK7XKB3Z8DQP90FC0Y4C4MKV4",
++     "seq": 3,
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "delivery.attempt_finished",
++   },
++   {
+      "node_id": "done",
+      "payload": "{\"outcome\":\"success\"}",
+      "run_id": "VNK7XKB3Z8DQP90FC0Y4C4MKV4",
+      "seq": 1,
+      "ts": "2026-10-02T12:00:00.000Z",
+
+ ❯ src/sqlite/delivery-runs.test.ts:121:116
+    119|     for (const statement of migration.split('--> statement-breakpoint'…
+    120|     expect((await handle.client.execute({ sql: 'SELECT initial_thread …
+    121|     expect((await handle.client.execute({ sql: 'SELECT * FROM run_even…
+       |
+     ^
+    122|     expect((await repo.get(healthyId))?.deliveries).toMatchObject([{ s…
+    123|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults
+({"defaults":[{"kind":"webhook"}]}) alongside a healthy run
+AssertionError: expected [ { …(13) }, { …(13) }, …(2) ] to deeply equal [ { …(13) }, { …(13) } ]
+
+- Expected
++ Received
+
+@@ -1,7 +1,23 @@
+  [
+    {
++     "node_id": null,
++     "payload": "{\"delivery\":{\"id\":\"VNK7XKB3Z8DQP90FC0Y4C4MKV4:webhook:1\",\"channel\":{\"kind\":\"webhook\",\"ur
+l\":\"https://example.test\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgem
+ent\":\"unknown\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"interrupted\",\"message\":\"Pre-upgrade
+return has no acknowledgement record; the effect may have
+happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}",
++     "run_id": "VNK7XKB3Z8DQP90FC0Y4C4MKV4",
++     "seq": 3,
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "delivery.attempt_finished",
++   },
++   {
++     "node_id": null,
++     "payload": "{\"delivery\":{\"id\":\"VNK7XKB3Z8DQP90FC0Y4C4MKV4:webhook:2\",\"channel\":{\"kind\":\"webhook\"},\"s
+tatus\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHave
+Happened\":true,\"lastError\":{\"code\":\"interrupted\",\"message\":\"Pre-upgrade return has no acknowledgement
+record; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}",
++     "run_id": "VNK7XKB3Z8DQP90FC0Y4C4MKV4",
++     "seq": 4,
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "delivery.attempt_finished",
++   },
++   {
+      "node_id": "done",
+      "payload": "{\"outcome\":\"success\"}",
+      "run_id": "VNK7XKB3Z8DQP90FC0Y4C4MKV4",
+      "seq": 1,
+      "ts": "2026-10-02T12:00:00.000Z",
+
+ ❯ src/sqlite/delivery-runs.test.ts:121:116
+    119|     for (const statement of migration.split('--> statement-breakpoint'…
+    120|     expect((await handle.client.execute({ sql: 'SELECT initial_thread …
+    121|     expect((await handle.client.execute({ sql: 'SELECT * FROM run_even…
+       |
+     ^
+    122|     expect((await repo.get(healthyId))?.deliveries).toMatchObject([{ s…
+    123|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 23 skipped (30)
+   Start at  12:19:38
+   Duration  13.83s (transform 50%, import 42%, tests 8%)
+
+  Transform  transforming modules took 6.55s · 50% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure

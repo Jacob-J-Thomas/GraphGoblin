@@ -1,0 +1,176 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWork ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/process/scripts.test.ts (39 tests | 1 failed) 118574ms
+   ❯ ProcessScripts (36)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 6906ms
+ ❯ src/sqlite/upgrade.test.ts (26 tests | 2 failed) 144819ms
+   ❯ definitions-only format-4 cutover (26)
+     × requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20169ms
+     × refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 20030ms
+ ❯ src/adversarial.test.ts (20 tests | 2 failed) 38286ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 14568ms
+   ❯ finalization on SQLite (review of WP-G, fourth round) (5)
+     × a resumed failed run is finalized again after a crash on its next terminal status 2063ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 17934ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 10407ms
+     × does not spawn for an already aborted signal and cancels a running process 559ms
+     × kills the descendant that a long-lived child started 4799ms
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 138685ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 6517ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-h4ixlq'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > a resumed failed run is 
+finalized again after a crash on its next terminal status
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/adversarial.test.ts:441:44
+    439|     });
+    440|     await manager.resume(r.id);
+    441|     await vi.waitFor(() => expect(blocked).toBe(true));
+       |                                            ^
+    442|     manager.stop();
+    443|     spy.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-yRvdO7'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-zgByjw'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 0 to be greater than 0
+ ❯ src/claude/process.test.ts:141:29
+    139|         before = await readFile(marker, 'utf8').catch(() => '');
+    140|       }
+    141|       expect(before.length).toBeGreaterThan(0);
+       |                             ^
+    142|       controller.abort();
+    143|       expect(await result).toMatchObject({ aborted: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-JGWkDZ'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:200:45
+    198|     if (pid === undefined) throw new Error('child did not start');
+    199|     const childPid = pid;
+    200|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    201|   });
+    202|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds 
+repeated nodes to their stored version, and rejects stale/unused resolutions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:230:3
+    228|     await refuses(handle, await request(handle), /admission intents/);
+    229|   });
+    230|   it('requires every hash-bound review, binds repeated nodes to their …
+       |   ^
+    231|     const handle = await fixture();
+    232|     const definition = frozenDefinition('llm', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, 
+malformed template identities and invalid definitions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:302:3
+    300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    301|   });
+    302|   it('refuses changed source, damaged SQL/ledger, malformed template i…
+       |   ^
+    303|     const handle = await fixture();
+    304|     const selected = await request(handle);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  5 failed | 49 passed (54)
+      Tests  9 failed | 783 passed (792)
+   Start at  23:35:41
+   Duration  514.66s (tests 73%, import 23%, transform 3%, worker 1%)
+
+    Isolate  54 workers spawned · ~1.53s startup each (spawn + environment, per file)
+             at least ~39.83s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.61% ( 2535/2597 )
+Branches     : 95.17% ( 1856/1950 )
+Functions    : 98.01% ( 542/553 )
+Lines        : 98.42% ( 2252/2288 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\packages\infrastructure
+
+EXIT_CODE=1

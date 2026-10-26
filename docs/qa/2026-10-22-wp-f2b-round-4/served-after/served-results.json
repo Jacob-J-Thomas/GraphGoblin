@@ -1,0 +1,1009 @@
+[
+  {
+    "id": "environment",
+    "actual": {
+      "node": "v22.14.0",
+      "edge": "155.0.4283.62",
+      "port": 5672,
+      "preflight": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B2-loop-sibling",
+    "steps": "Settings Opus/xhigh, loop Fable/low, switch Astra/minimal; publish/reopen/run with inherited sibling.",
+    "expected": "Both requests Fable/low; read-only/never; same saved/reopened values.",
+    "actual": {
+      "config": {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "claude-fable-5-1",
+        "effort": "low"
+      },
+      "requests": [
+        {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        },
+        {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B1-no-wait",
+    "steps": "Hold all three first responses; fully inheriting node switches both directions; release and publish/reopen/run.",
+    "expected": "No wait or extra lookup; absent overrides persisted; Settings resolved at execution.",
+    "actual": {
+      "before": {
+        "catalog": 1,
+        "settings": 1,
+        "preflight": 1
+      },
+      "config": {
+        "harness": "claude",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "",
+        "effort": ""
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-high",
+    "steps": "Switch effort-only Codex high to Claude; persist/reopen/run.",
+    "expected": "Model stays inherited; effort high",
+    "actual": {
+      "config": {
+        "harness": "claude",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "",
+        "effort": "high"
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "high"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-minimal",
+    "steps": "Switch effort-only Codex minimal to Claude; persist/reopen/run.",
+    "expected": "Model stays inherited; effort xhigh",
+    "actual": {
+      "config": {
+        "harness": "claude",
+        "effort": "xhigh",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "",
+        "effort": "xhigh"
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B3-first-load",
+    "steps": "Hold all initial queries; request switch during mount; release and save.",
+    "expected": "Waiting then automatic Fable/low, one load each, draft saves.",
+    "actual": {
+      "mountResponseToSwitchMs": 395,
+      "before": {
+        "catalog": 1,
+        "settings": 1,
+        "preflight": 1
+      },
+      "config": {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "claude-fable-5-1",
+        "effort": "low"
+      },
+      "requests": [
+        {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "failure-catalog",
+    "steps": "Inject catalog failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Retry model catalog",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": true,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "failure-settings",
+    "steps": "Inject settings failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "The harness changed, but model and effort are unchanged until Settings defaults can be checked. Reload the editor, then choose a model or switch harness again.",
+        "Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "This effort is not supported by the selected model. The saved choice stays until you change it.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": false,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "failure-readiness",
+    "steps": "Inject readiness failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "Claude readiness: Sign-in needed. Model and effort are unchanged. Retry Claude preflight, then choose a model or switch harness again.",
+        "Claude readiness: Sign-in needed. The saved policy is unchanged.",
+        "QA Claude sign-in needed Model choices are read-only until Claude is ready. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Retry Claude preflight",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": false,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B3-known-failure",
+    "steps": "Fail catalog while first Settings is held, switch, release.",
+    "expected": "Immediate harness switch and retained authored fields; no wait or later rewrite.",
+    "actual": {
+      "counts": {
+        "catalog": 2,
+        "settings": 1,
+        "preflight": 1
+      },
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B3-retry-not-first",
+    "steps": "Fail catalog; hold explicit retry; switch; release and explicitly correct/save.",
+    "expected": "No first-load queue or later rewrite; corrected draft saves.",
+    "actual": {
+      "attempt": 3,
+      "config": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "no-extra-lookups",
+    "steps": "After shared loads, open Start and Done, then Infer and switch.",
+    "expected": "Request counts remain exactly one each.",
+    "actual": {
+      "before": {
+        "catalog": 1,
+        "settings": 1,
+        "preflight": 1
+      },
+      "after": {
+        "catalog": 1,
+        "settings": 1,
+        "preflight": 1
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "undo-switch",
+    "steps": "Switch to Claude then one Undo/Redo. Disable both Claude entries, switch and Undo warning.",
+    "expected": "Harness/model/effort/policy are one history step, Undo clears notice and disabled flags stay off.",
+    "actual": {
+      "notice": [
+        "No enabled compatible configured or ecosystem default is available for the new harness. Model and effort are unchanged; choose an enabled model explicitly or correct the default.",
+        "No enabled Claude model is listed by the adapter. Enable one in Settings or keep the inherited default. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "This effort is not supported by the selected model. The saved choice stays until you change it.",
+        "",
+        ""
+      ],
+      "catalog": [
+        {
+          "model": "claude-fable-5-1",
+          "enabled": false
+        },
+        {
+          "model": "claude-opus-5-5",
+          "enabled": false
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "restart",
+    "steps": "Save/publish Fable/low; stop owned API and start new process on same disposable store; reopen/run.",
+    "expected": "Values survive real process restart and request remains Fable/low.",
+    "actual": {
+      "newProcess": true,
+      "requests": [
+        {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "recipe-ui",
+    "steps": "Follow configured-default recipe in Settings, both editor switch directions, save/reopen/reload, publish, Open in Runs and Start run.",
+    "expected": "Settings Sol/high and Opus/xhigh; loop Astra/low and Fable/low override them; actual CLI requests agree.",
+    "actual": {
+      "settings": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          },
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "xhigh"
+          }
+        }
+      },
+      "saved": {
+        "config": {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "effort": "low",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Synthetic QA only"
+          },
+          "input": [],
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "transforms": []
+          }
+        },
+        "reopened": {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        },
+        "requests": [
+          {
+            "model": "claude-fable-5-1",
+            "effort": "low"
+          }
+        ]
+      },
+      "claudeRun": [
+        {
+          "model": "claude-fable-5-1",
+          "effort": "low"
+        }
+      ],
+      "codexRun": [
+        {
+          "model": "gpt-6-astra",
+          "effort": "low"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "recipe-absent-disabled",
+    "steps": "Clear Settings efforts then models in UI; verify ecosystem choices; configure Fable/xhigh, disable it in Settings catalog, switch; disable Opus and inspect blocked state; restore without rewrite.",
+    "expected": "Opus/high and Luna/high with absent defaults; disabled defaults not re-enabled; no enabled default retains authored values.",
+    "actual": {
+      "preference": false,
+      "notice": [
+        "No enabled compatible configured or ecosystem default is available for the new harness. Model and effort are unchanged; choose an enabled model explicitly or correct the default.",
+        "No enabled Claude model is listed by the adapter. Enable one in Settings or keep the inherited default. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "This effort is not supported by the selected model. The saved choice stays until you change it.",
+        "",
+        ""
+      ],
+      "recovered": {
+        "model": "claude-fable-5-1",
+        "effort": "xhigh"
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-cleared",
+    "steps": "No configured effort; controlled catalog suggests unsupported minimal for Claude; switch effort-only Codex minimal.",
+    "expected": "Model remains absent and effort clears to inheritance; saved/reopened config has neither property; effort inherits high from the process configuration.",
+    "actual": {
+      "controlledCatalog": true,
+      "processDefaults": "{\"byHarness\":{\"claude\":{\"model\":\"claude-opus-5-5\",\"effort\":\"high\"}}}",
+      "config": {
+        "harness": "claude",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "",
+        "effort": ""
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "high"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "ecosystem-flag",
+    "steps": "Controlled successful catalog swaps Claude ecosystemDefault flags and Settings has an incompatible model.",
+    "expected": "Explicit switch uses the flagged supported Fable, proving no hard-coded web default.",
+    "actual": {
+      "controlledResponses": true,
+      "model": "claude-fable-5-1",
+      "effort": "high"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "cached-catalog-failure",
+    "steps": "Cache Codex Astra/minimal, wait 2.1s, fail visibility-triggered catalog refetch, switch Claude, retry catalog.",
+    "expected": "Unavailable status and disabled Publish have catalog tooltip; values/notice retained; switch adds no lookup; retry restores saved-draft readiness; API refuses incompatible values.",
+    "actual": {
+      "before": {
+        "catalog": 3,
+        "settings": 2,
+        "preflight": 2
+      },
+      "during": {
+        "counts": {
+          "catalog": 3,
+          "settings": 2,
+          "preflight": 2
+        },
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "notice": "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "status": "Validation unavailable",
+        "publishDisabled": true,
+        "publishTitle": "A model catalog could not be loaded. Retry its lookup before publishing."
+      },
+      "recovery": {
+        "counts": {
+          "catalog": 4,
+          "settings": 2,
+          "preflight": 2
+        },
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "notice": "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "ready": true,
+        "publishEnabled": true
+      },
+      "apiValidation": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "message": "The selected model belongs to another harness",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      },
+      "savedDraftHarness": "codex"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "server-check-only-failure",
+    "steps": "Block only POST /validate on valid saved draft; inspect tooltips; close unchanged dialog and publish.",
+    "expected": "Default unavailable tooltip; Publish enabled; POST /publish retries real server validation and succeeds.",
+    "actual": {
+      "title": "The server\u2019s checks (cron expressions, subloops) could not run; Publish runs them again.",
+      "publishEnabled": true,
+      "before": {
+        "checks": 1,
+        "publishes": 0,
+        "counts": {
+          "catalog": 1,
+          "settings": 1,
+          "preflight": 1
+        }
+      },
+      "after": {
+        "checks": 2,
+        "publishes": 1,
+        "counts": {
+          "catalog": 1,
+          "settings": 1,
+          "preflight": 1
+        }
+      },
+      "published": 1,
+      "note": "POST /publish runs real server validation again; background /validate remains deliberately blocked."
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "classifier-catalog-failure",
+    "steps": "Cache classifier catalog, fail only its stale visibility refetch; unblock and reload.",
+    "expected": "Cached classifier error uses catalog tooltip and disables Publish; recovery restores readiness.",
+    "actual": {
+      "title": "A model catalog could not be loaded. Retry its lookup before publishing.",
+      "publishDisabledDuringFailure": true,
+      "recovery": "Unblock and reload restores readiness"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "api-publication-defense",
+    "steps": "Validate/save invalid Claude/Astra/minimal; seed exact normalized rejected definition only into owned disposable draft; POST /publish; restore.",
+    "expected": "Validate false; save 400; final publication 422 MODEL_HARNESS_MISMATCH with no published version.",
+    "actual": {
+      "fixture": "API rejects admission; direct normalized row seed only in owned disposable store.",
+      "validation": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "message": "The selected model belongs to another harness",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "save": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      },
+      "publish": {
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      },
+      "publishedVersionCreated": false
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B1-all-failed",
+    "steps": "Return failures for all shared lookups, then switch fully inheriting node both directions.",
+    "expected": "No wait or extra request; no explicit fields appear despite failed checks.",
+    "actual": {
+      "initiallySettled": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      },
+      "before": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      },
+      "after": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-failed",
+    "steps": "Fail catalog and switch effort-only Codex minimal to Claude.",
+    "expected": "Inherited model stays absent and authored minimal effort stays; API rejects incompatible draft.",
+    "actual": {
+      "model": "",
+      "effort": "minimal",
+      "rejected": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "EFFORT_UNSUPPORTED",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.effort",
+              "message": "The selected reasoning effort is not supported by this model"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "pending-dismiss",
+    "steps": "Hold first Settings, request explicit switch, dismiss dialog, release response and reopen.",
+    "expected": "Pending action cancels; original harness/model/effort remain; later explicit switch succeeds.",
+    "actual": {
+      "cancelled": true,
+      "config": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "pending-prompt-edit",
+    "steps": "Hold initial Settings, request Claude, edit the prompt, then release Settings.",
+    "expected": "Cancelled action clears its waiting notice; Codex/Astra/minimal and the edited prompt save and reopen.",
+    "actual": {
+      "cancelled": true,
+      "waitingNoticeCleared": true,
+      "config": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Edited while the harness switch was pending"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "undo-persistence",
+    "steps": "Switch to Claude, save; one Undo and save; one Redo and save. Read public draft after each.",
+    "expected": "Harness, model, effort and sandbox/approval policy restore together in one history step.",
+    "actual": {
+      "undone": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "harnessOptions": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        }
+      },
+      "redone": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B2-disabled-loop-and-settings",
+    "steps": "Start with loop Fable/low and Settings Fable/xhigh, disable Fable after loop creation, reload catalog, then switch an explicit Codex node.",
+    "expected": "Neither disabled configured model is chosen; flagged Opus is chosen; supported loop low effort wins; disabled preference stays off.",
+    "actual": {
+      "model": "claude-opus-5-5",
+      "effort": "low",
+      "disabledPreferencePreserved": true,
+      "note": "Existing disabled loop default itself still requires correction before saving/publishing; this check does not claim that invalid loop is publishable."
+    },
+    "verdict": "PASS"
+  }
+]

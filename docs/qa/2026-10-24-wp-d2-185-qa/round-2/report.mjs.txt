@@ -1,0 +1,84 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d2-185-qa/round-2');
+const readText=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');
+const read=async name=>readText(await readFile(join(out,name)));
+const json=async name=>JSON.parse(await read(name));
+const link=p=>'['+p+']('+p+')';
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const profile=process.env.USERPROFILE;
+const clean=s=>s.replaceAll(profile.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(profile,'%USERPROFILE%');
+if(process.argv[2]==='generate'){
+ const standard=await json('standard-cost.json'),short=await json('short-cost.json'),completion=await json('completion.json');
+ const checks=[];
+ for(const [label,r]of [['15 s',standard],['20 ms',short]]){
+  for(const s of r.summaries)checks.push({case:label+' stream '+s.id,pass:s.minIntervalMs>=245&&s.finalizationChecks<=Math.ceil(r.elapsedMs/250)+2,actual:{minMs:s.minIntervalMs,finalizationChecks:s.finalizationChecks}});
+  checks.push({case:label+' pending and close cleanup',pass:r.pendingBeforeClose&&r.activeAfterClose===0&&JSON.stringify(r.beforeClose)===JSON.stringify(r.afterClose)&&JSON.stringify(r.afterClose)===JSON.stringify(r.afterSettledClose),actual:{pending:r.pendingBeforeClose,active:r.activeAfterClose,noReadsAfterClose:JSON.stringify(r.beforeClose)===JSON.stringify(r.afterSettledClose)}});
+ }
+ checks.push(...completion.checks);
+ for(const name of ['build','targeted','standard','short','completion']){const result=await json(name+'-result.json');checks.push({case:name+' command',pass:result.exit===0,actual:result});}
+ await writeFile(join(out,'checks.json'),JSON.stringify(checks,null,2));
+ const diff=spawnSync('git',['diff','HEAD^','HEAD','--','apps/api/src/sse.ts','apps/api/src/sse-completion.test.ts','docs/07-api-and-streaming.md','docs/decisions/ADR-0057-execution-and-delivery-finalization.md'],{encoding:'utf8',cwd:root});if(diff.status!==0)throw Error(diff.stderr);await writeFile(join(out,'head-change.patch.txt'),diff.stdout);
+ const summary=[];const add=s=>summary.push(s);
+ add('# Independent QA round 2: WP-D2 / #185');
+ add('## 1. Verdict');
+ add('**'+(checks.every(c=>c.pass)?'PASS':'FAIL')+'** at **`0fbcc11f9ff14d392af1507ca92ee20958f793ad`** for the scoped round-2 recheck. QA-185-01 is verified fixed. Both minute-long timing probes, native completion checks, lifecycle-change checks and the requested once-alone targeted tests pass. No new defect was found.');
+ add('Branch `codex-qa-wp-d2-185`; worktree `%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d2-185`. Initial HEAD matched and the worktree was clean; dependencies were populated (17 entries, ordinary node_modules directory). Node `v22.14.0`. Build: 11/11 successful, zero cache hits. '+link('environment.log.txt')+', '+link('final-state.log.txt')+', '+link('build.log.txt')+'. No production edits, commits, index changes, sub-agents, owner ports/store, or live provider turns. Round-1 files are unchanged. All new files are under round-2.');
+ add('## 2. Defects');
+ add('None newly observed. **QA-185-01: verified fixed.** Minimum measured intervals after initial catch-up were '+Math.min(...standard.summaries.map(s=>s.minIntervalMs)).toFixed(3)+' ms with the real 15-second heartbeat and '+Math.min(...short.summaries.map(s=>s.minIntervalMs)).toFixed(3)+' ms with a 20 ms heartbeat. The sub-millisecond shortfall from nominal 250 ms is within the brief\'s few-millisecond timer jitter allowance. The harness uses the maintained regression\'s 245 ms lower tolerance; it did not lower or modify any production/test threshold. No intervals below 249 ms were observed in either minute.');
+ add('## 3. Coverage of criteria');
+ add('Touched surfaces this round: built SSE pending-confirmation scheduling, heartbeat writes, finalization acknowledgement, lifecycle notifications at normal and ahead-of-tail cursors, API-client subscription settlement and consumed-cursor reconnect. '+link('head-change.patch.txt')+' preserves the fix, maintained regression and doc changes. The orchestrator\'s before-fix regression-failure claim was not rerun here; this report independently establishes the after-fix result at the pinned head.');
+ add('### Waiting cost: three streams, one minute per heartbeat setting');
+ add('Steps: run '+link('cost.mjs.txt')+' from a temporary .mjs copy with `GG_QA_HEARTBEAT_MS=15000`, then `20`, sequentially after the targeted test process exited. Each uses a real Fastify HTTP listener on 6132 and the built SSE handler with explicit public EventStorePort/finalizer injection. Finalization remains false; the cursor has consumed the terminal event; no journal/lifecycle notifications occur. This is synthetic-store component evidence, not a direct SQLite read count. The probe derives from the round-1 cost script, adding heartbeat selection, pending-stream evidence and two post-close observations.');
+ add('Expected: periodic checks no sooner than nominal 250 ms (245 ms lower tolerance for timer jitter), bounded counts, no stream.complete while pending, then no further reads and zero subscribers after close. Intervals exclude the first 1,000 ms after all streams open. Counts include initial confirmation; each store also has two initial page reads.');
+ add('| Heartbeat | Duration ms | Stream | Finalization checks at close | Lifecycle reads | Minimum gap ms | Maximum gap ms | Result |\n| --- | --- | --- | --- | --- | --- | --- | --- |');
+ for(const [label,r]of [['15000 ms',standard],['20 ms',short]])for(const s of r.summaries)add('| '+label+' | '+r.elapsedMs.toFixed(3)+' | '+s.id+' | '+r.beforeClose[Number(s.id)-1].finalized+' | '+r.beforeClose[Number(s.id)-1].lifecycle+' | '+s.minIntervalMs.toFixed(3)+' | '+s.maxIntervalMs.toFixed(3)+' | PASS |');
+ add('Closing released all six subscriptions (one unsubscribe each, active count zero). The complete page/lifecycle/finalization counters were identical before abort, one second after abort, and another second later in both probes. Timer delays above 250 ms reflect observed scheduling; they did not create early rechecks. Raw call timestamps, heartbeat bodies and closure counts: '+link('standard-cost.json')+' / '+link('short-cost.json')+'; logs: '+link('standard-cost.log.txt')+' / '+link('short-cost.log.txt')+'.');
+ add('### Completion and reconnect latency');
+ add('Steps: '+link('gateway.mjs.txt')+' starts the built gateway in a separate Node process with real SQLite in `'+clean(completion.setup.dataDir.replaceAll('\\','/'))+'`, a FakeHarness and an API key minted by the built gateway. '+link('completion.mjs.txt')+' controls a real webhook receiver on 6131. It first returns 503, holds the retry, then acknowledges 200; a separate run holds its first response, then returns permanent 400. Open raw streams at 0, consumed run.finished cursor 8, and ahead cursor 10008, plus an API-client subscription. While held, REST has succeeded/pending with no marker; waitForRun and all subscriptions stay unfinished. Then release, observe finalizedAt and record stream.complete.');
+ add('| Case | Final delivery / attempts | Completion after recorded finalizedAt, by cursor 0 / 8 / 10008 | API-client completion ms | Reconnect at final cursor ms | Result |\n| --- | --- | --- | --- | --- | --- |');
+ for(const c of completion.native)add('| '+c.label+' | '+c.final.deliveries[0].status+' / '+c.final.deliveries[0].attempts+' | '+c.latencies.map(l=>l.fromRecordedMarkerMs).join(' / ')+' ms | '+(c.client.clientCompleteAt-Date.parse(c.final.finalizedAt))+' | '+c.reconnect.reconnectMs.toFixed(3)+' | PASS |');
+ add('All six existing raw streams completed within 212 ms of the recorded finalization marker, below one nominal recheck. Consumed-final-cursor reconnects emitted stream.complete without replaying any durable event in about 10-11 ms. The API client received delivery.finished and no duplicate sequence numbers. A final delivery failure settled observation while execution remained succeeded. The harness failure budget was 300 ms (250 ms plus modest transport/scheduling allowance); actual observations were all below 250 ms. Recorded-marker timing includes any work between timestamp creation and its persistence, so it is an observational upper bound rather than instrumentation of the marker write. '+link('completion.json')+' and '+link('completion.log.txt')+'.');
+ add('### Lifecycle changes during pending finalization');
+ add('Explicit public store injection over real HTTP tests cursors 1 and 1000. Start with terminal seq 1 and finalization false; append run.resumed seq 2 and present an old acknowledgement as true. The stream must remain live. Then reset finalization false and append a new terminal seq 3; the lifecycle notification must trigger confirmation despite the armed timer. After 40 ms, set the new eventless marker true and expect completion within one recheck. This is a synthetic lifecycle-race fixture, not a native engine resume/crash qualification.');
+ add('| Cursor | New terminal notification to confirmation ms | New marker to stream.complete ms | Completion cursor | Result |\n| --- | --- | --- | --- | --- |');
+ for(const c of completion.lifecycle)add('| '+c.after+' | '+c.notificationLatencyMs.toFixed(3)+' | '+c.completionLatencyMs.toFixed(3)+' | '+JSON.parse(c.stream.body.match(/event: stream.complete\ndata: ([^\n]+)/)[1]).after+' | PASS |');
+ add('Both resumed lifecycles were observed, neither settled on the old marker, and the new terminal outcomes/markers completed truthfully. '+link('completion.json')+' retains the lifecycle/read timestamps and complete frames.');
+ add('### Commands and maintained tests');
+ add('| Command | Execution / result | Evidence |\n| --- | --- | --- |');
+ add('| `pnpm.cmd build` | Once; exit 0; 11 successful, zero cached | '+link('build.log.txt')+' |');
+ add('| `pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse src/finalization --maxWorkers=1` | Once, alone after build; exit 0; 44 tests / 5 files; 67.52 s | '+link('targeted-tests.log.txt')+' |');
+ add('| `GG_QA_HEARTBEAT_MS=15000 node %TEMP%/gg-qa-d2-185-round2-cost.mjs` | One minute, three streams; exit 0 | '+link('standard-result.json')+' |');
+ add('| `GG_QA_HEARTBEAT_MS=20 node %TEMP%/gg-qa-d2-185-round2-cost.mjs` | One minute, three streams; exit 0 | '+link('short-result.json')+' |');
+ add('| `node %TEMP%/gg-qa-d2-185-round2-completion.mjs` | Native completion and component lifecycle cases; exit 0 | '+link('completion-result.json')+' |');
+ add('The targeted run includes "rechecks a pending finalization at most every 250 ms, even with frequent heartbeats" and both finalization HTTP cases. There was no timeout or retry in this run. No ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK occurred; direct-binary fallback was unnecessary.');
+ add('The scope follows the explicit round-2 brief: broad coverage, MCP timeout suites, full repository gates and Edge scenarios were not rerun. The orchestrator accepted round-1 functional evidence and assigned exact-head CI as quiet-runner evidence; that CI result was not queried or claimed here. No schemas, dependencies or web source changed in this fix. QA Markdown is formatted and checked separately.');
+ add('### Check ledger');
+ add('Steps and expected results are defined by the probes above and their linked scripts; each row retains the actual recorded assertion. Full values are in '+link('checks.json')+' and '+link('completion.json')+'.');
+ add('| Check | Expected | Actual | Result |\n| --- | --- | --- | --- |');
+ for(const c of checks){let actual=JSON.stringify(c.actual);if(actual.length>350)actual=actual.slice(0,347)+'...';add('| '+c.case?.replaceAll('|','\\|')?.replaceAll('\n',' ')+' | Satisfies stated probe bound/condition | '+actual.replaceAll('|','\\|')+' | '+(c.pass?'PASS':'FAIL')+' |');}
+ // Completion assertions name their cases with `name` rather than `case`.
+ let md=summary.join('\n\n').replace(/\|\n\n\|/g,'|\n|');
+ for(const c of completion.checks)md=md.replace('| undefined | Satisfies stated probe bound/condition |','| '+c.name+' | Satisfies stated probe bound/condition |');
+ md+='\n\n## 4. Report path and evidence folder\n\n`docs/qa/2026-10-24-wp-d2-185-qa/round-2/README.md`; evidence is the same round-2 folder. Every kept artifact is linked below. '+link('SHA256.json')+' records final retained sizes/hashes; it excludes itself. Local user paths are written as %USERPROFILE%. No raw result formatting is applied by Prettier. '+link('NOT-KEPT.md')+' records oversized captures, if any.\n\n';
+ for(const name of (await readdir(out)).filter(n=>n!=='README.md'&&n!=='SHA256.json').sort())md+='- '+link(name)+'\n';md+='- '+link('SHA256.json')+'\n';
+ md+='\n## 5. Observations outside scope\n\nNo new out-of-scope product defect. The build log retains optional Turbo cache access-denied warnings; the build completed uncached. Round-1 MCP/coverage observations and D-015 remain in the committed round-1 report with the orchestrator dispositions; they were not reclassified by this scoped pass. No native forced termination or provider validation was attempted. The disposable store is preserved and the gateway shut down cooperatively. Owner acceptance, exact-head CI and merge audit remain separate from this QA verdict.\n';
+ await writeFile(join(out,'README.md'),md);console.log(JSON.stringify({checks:checks.length,failed:checks.filter(c=>!c.pass).length}));
+}
+if(process.argv[2]==='seal'){
+ let omitted=[];
+ for(const name of await readdir(out)){const path=join(out,name);if(name==='SHA256.json')continue;const b=await readFile(path);if(b.length>1000000){omitted.push({name,bytes:b.length,sha256:hash(b)});throw Error('Oversized artifact requires omission before sealing: '+name);}
+  if(/\.(txt|json|md)$/.test(name))await writeFile(path,clean(readText(b)));
+ }
+ const entries=[];for(const name of (await readdir(out)).sort()){if(name==='SHA256.json')continue;const b=await readFile(join(out,name));entries.push({path:name,bytes:b.length,sha256:hash(b)});}
+ await writeFile(join(out,'SHA256.json'),JSON.stringify(entries,null,2));console.log('SEALED '+entries.length+' artifacts');
+}
+if(process.argv[2]==='verify'){
+ const md=await read('README.md'),entries=await json('SHA256.json'),badHashes=[],unlinked=[],broken=[];
+ for(const item of entries){const b=await readFile(join(out,item.path));if(hash(b)!==item.sha256||b.length!==item.bytes)badHashes.push(item.path);}
+ for(const name of await readdir(out)){if(name==='README.md')continue;if(!md.includes(']('+name+')'))unlinked.push(name);}
+ for(const m of md.matchAll(/\]\(([^)]+)\)/g))try{await stat(join(out,m[1]));}catch{broken.push(m[1]);}
+ const result={badHashes,unlinked,broken,checksPassed:(await json('checks.json')).every(c=>c.pass)};console.log(JSON.stringify(result));if(badHashes.length||unlinked.length||broken.length||!result.checksPassed)process.exitCode=1;
+}

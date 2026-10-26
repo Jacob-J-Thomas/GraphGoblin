@@ -4,7 +4,7 @@ Scope: approved format-2 decision/defaults cutover, API admission and one-off of
 
 ## Commands and results
 
-From `C:\Users\98jak\.codex\worktrees\decision-kinds-98\GraphGoblin`:
+From `<local>\.codex\worktrees\decision-kinds-98\GraphGoblin`:
 
 - `pnpm.cmd --filter @graphgoblin/api exec vitest run --coverage --reporter=dot`: 353 passed, 2 intentional LIVE skips; statements 97.15%, branches 92.21%, functions 95.35%, lines 98.54%. Focused tests include old-env rejection before SQLite, strict old setting/import refusal, invalid process defaults without file/row writes, authoritative disabled/manual catalog entries, uniform decision/inference admission (root separately verified exit admission afterward), and runtime unavailable selections with no fallback.
 - `pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run --coverage --reporter=dot`: 181 passed in the recorded overall run; statements 98.44%, branches 91.35%, functions 98.04%, lines 99.35%. The subsequent focused `pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --reporter=dot` passed 14/14, including the added failed-subloop-parent disposition case. Root's final overall run will refresh the total.

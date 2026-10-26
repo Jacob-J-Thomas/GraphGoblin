@@ -1,0 +1,286 @@
+[
+  {
+    "id": "import-gate",
+    "steps": "POST owner JSON fixture; publish with JSON {}.",
+    "expected": "201 created, 200 published.",
+    "actual": {
+      "loop": "01M5GDMR5FAX0H2889W6Z1M8Y1",
+      "run": "01M5GDN6PB1YJCHCTHCJE05KXD"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "import-suppressed",
+    "steps": "POST owner JSON fixture; publish with JSON {}.",
+    "expected": "201 created, 200 published.",
+    "actual": {
+      "loop": "01M5GDMRBE8VCB3KNSNF589QKE",
+      "run": "01M5GDN9SK1FJNCEPP0D79EXDN"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "import-quiet",
+    "steps": "POST owner JSON fixture; publish with JSON {}.",
+    "expected": "201 created, 200 published.",
+    "actual": {
+      "loop": "01M5GDMRJE1EN2S858T8CWXT00",
+      "run": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "gate-editor",
+    "steps": "Open Gate; check exact help; duplicate second route label as Again; restore Done; inspect at 768px.",
+    "expected": "Exact Routes/Id/Label help, inline unique-label error clears on restoration, dialog fits viewport.",
+    "actual": {
+      "duplicate": "Edit decision\ngate\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nLimit reached is taken when a limit stops the chosen repeat route. Connect it to an Exhausted exit. Evaluation happens first: a non-repeat choice wins on the last pass.\n\nDecision kind\n*\nexpression\nReturn one declared route ID from a JSONata expression.\nllm\nGive Codex Liquid instructions and readable routes. Confidence is informational.\nclassifier\nAsk a configured classifier for Choice, Noul or Score.\nJsonata\n*\nJSONata\n1\n\"again\"\nPreview (sample thread): \"again\"\nEarlier node outputs (2)\n\nJSONata source; return a declared route id for decisions.\n\nEdit as JSON\nRoutes *\n\nAt least 2 items.\n\nTwo to sixty-four routes with unique ids and unique labels; the expression returns one id.\n\nRoutes 1\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas and in Connections.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 2\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas and in Connections.\n\nroute labels must be unique\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nAdd routes\nMaximum passes\n*\n\nRequired. Passes start at 1; a non-repeat choice wins on the last pass.\n\nMaximum run time (seconds)\n\nOptional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat.\n\nValidation details\n1 config issue\nConnections\nAgain (again) → work\nAgain (done) → finished\nLimit reached (limit-reached) → gave-up\nDelete node\nDone",
+      "restored": "Edit decision\ngate\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nLimit reached is taken when a limit stops the chosen repeat route. Connect it to an Exhausted exit. Evaluation happens first: a non-repeat choice wins on the last pass.\n\nDecision kind\n*\nexpression\nReturn one declared route ID from a JSONata expression.\nllm\nGive Codex Liquid instructions and readable routes. Confidence is informational.\nclassifier\nAsk a configured classifier for Choice, Noul or Score.\nJsonata\n*\nJSONata\n1\n\"again\"\nPreview (sample thread): \"again\"\nEarlier node outputs (2)\n\nJSONata source; return a declared route id for decisions.\n\nEdit as JSON\nRoutes *\n\nAt least 2 items.\n\nTwo to sixty-four routes with unique ids and unique labels; the expression returns one id.\n\nRoutes 1\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas and in Connections.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 2\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas and in Connections.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nAdd routes\nMaximum passes\n*\n\nRequired. Passes start at 1; a non-repeat choice wins on the last pass.\n\nMaximum run time (seconds)\n\nOptional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat.\n\nConnections\nAgain (again) → work\nDone (done) → finished\nLimit reached (limit-reached) → gave-up\nDelete node\nDone",
+      "viewport": 768,
+      "box": {
+        "x": 64,
+        "y": 32,
+        "width": 640,
+        "height": 836
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "suppressed-editor",
+    "steps": "Open Done in the suppressed fixture.",
+    "expected": "Returns None and both exact help sentences.",
+    "actual": "Edit exit\ndone\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nExits finish the run with Success, Failure or Exhausted. Returns is a JSONata expression, or none. Destinations receive the returned value.\n\nOutcome\nSuccess\nFailure\nExhausted\nReturns\nNone\nJSONata expression\n\nNo returned value. The run finishes without a result, and destinations receive nothing.\n\nDestinations\n\nReturns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.\n\nDestinations 1\nKind\n*\ncaller\nwebhook\nfile\nlog\nDestinations 2\nKind\n*\ncaller\nwebhook\nfile\nlog\nAdd destinations\nConnections\n\nNo outgoing edges.\n\nDelete node\nDone",
+    "verdict": "PASS"
+  },
+  {
+    "id": "quiet-editor",
+    "steps": "Open Quiet, then Kept; add an Exit from palette and inspect default caller; undo addition.",
+    "expected": "Exact quiet help, ordinary destinations help for expression, singular suppressed-destination help for new Exit.",
+    "actual": {
+      "quiet": "Edit exit\nquiet\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nExits finish the run with Success, Failure or Exhausted. Returns is a JSONata expression, or none. Destinations receive the returned value.\n\nOutcome\nSuccess\nFailure\nExhausted\nReturns\nNone\nJSONata expression\n\nNo returned value. The run finishes without a result, and destinations receive nothing.\n\nDestinations\n\nQuiet exit: nothing is returned or delivered. The run still finishes with its outcome.\n\nAdd destinations\nConnections\n\nNo outgoing edges.\n\nDelete node\nDone",
+      "kept": "Edit exit\nkept\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nExits finish the run with Success, Failure or Exhausted. Returns is a JSONata expression, or none. Destinations receive the returned value.\n\nOutcome\nSuccess\nFailure\nExhausted\nReturns\nNone\nJSONata expression\nReturn expression\n*\nJSONata\n1\n\"kept\"\nPreview (sample thread): \"kept\"\nEarlier node outputs (2)\n\nIts value becomes the run result and goes to every destination. Gate decisions replace lastOutput; prefer outputs.<workNode>.value.\n\nDestinations\n\nReturn destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.\n\nDestinations 1\nKind\n*\ncaller\nwebhook\nfile\nlog\nAdd destinations\nConnections\n\nNo outgoing edges.\n\nDelete node\nDone",
+      "newExit": "Edit exit\nexit\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nExits finish the run with Success, Failure or Exhausted. Returns is a JSONata expression, or none. Destinations receive the returned value.\n\nOutcome\nSuccess\nFailure\nExhausted\nReturns\nNone\nJSONata expression\n\nNo returned value. The run finishes without a result, and destinations receive nothing.\n\nDestinations\n\nReturns is None, so this destination receives nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.\n\nDefault: [{\"kind\":\"caller\"}]\n\nCustomize destinations\nConnections\n\nNo outgoing edges.\n\nDelete node\nDone"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "gate-run",
+    "steps": "Runs → New run; choose imported published fixture; Start run; inspect top and timeline.",
+    "expected": "exhausted, Result 3, route again, port limit-reached, passes 3/3, Maximum passes.",
+    "actual": "expect(locator).toBeVisible() failed\n\nLocator: getByText('Exited: exhausted', { exact: true })\nExpected: visible\nError: strict mode violation: getByText('Exited: exhausted', { exact: true }) resolved to 2 elements:\n    1) <p>Exited: exhausted</p> aka getByRole('paragraph').filter({ hasText: 'Exited: exhausted' })\n    2) <span class=\"min-w-0 break-words text-muted\">Exited: exhausted</span> aka getByRole('button', { name: '#21 exit.evaluated Exited:' })\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Exited: exhausted', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Exited: exhausted', { exact: true })\n",
+    "verdict": "FAIL"
+  },
+  {
+    "id": "suppressed-run",
+    "steps": "Runs → New run; choose imported published fixture; Start run; inspect top and timeline.",
+    "expected": "succeeded; no Result or return events; exact distinct explanation in top and exit detail.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDN9SK1FJNCEPP0D79EXDN\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.\n\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 0 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. No value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.",
+      "run": {
+        "id": "01M5GDN9SK1FJNCEPP0D79EXDN",
+        "ownerId": "local",
+        "loopId": "01M5GDMRBE8VCB3KNSNF589QKE",
+        "versionId": "01M5GDMRBEP57VCKRXRJK024WE",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 returns none with destinations",
+          "label": "QA 129 returns none with destinations v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDN9SKM9H06WE5559H6MW6",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:45:04.819Z",
+        "startedAt": "2026-10-21T23:45:04.886Z",
+        "finishedAt": "2026-10-21T23:45:04.940Z",
+        "lastEventSeq": 8
+      },
+      "events": [
+        {
+          "runId": "01M5GDN9SK1FJNCEPP0D79EXDN",
+          "seq": 6,
+          "ts": "2026-10-21T23:45:04.936Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDN9SK1FJNCEPP0D79EXDN",
+          "seq": 8,
+          "ts": "2026-10-21T23:45:04.936Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "quiet-run",
+    "steps": "Runs → New run; choose imported published fixture; Start run; inspect top and timeline.",
+    "expected": "succeeded; no Result or return events; exact distinct explanation in top and exit detail.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDNBZSCM0Z5T6Y3ZQV7XWJ\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nQuiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.\n\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ncheck (decision) attempt 1\n#6\ndecision.made\nChose ignore with expression\n#7\nnode.finished\ncheck → ignore, 2 changes, 0 ms\n#8\nnode.started\nquiet (exit) attempt 1\n#9\nexit.evaluated\nExited: success\n#10\nnode.finished\nquiet, 0 changes, 0 ms\n#11\nrun.finished\nsucceeded (success)\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.",
+      "run": {
+        "id": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+        "ownerId": "local",
+        "loopId": "01M5GDMRJE1EN2S858T8CWXT00",
+        "versionId": "01M5GDMRJEDJZYTKNBM3767TFJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 quiet exit",
+          "label": "QA 129 quiet exit v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDNBZSPT9P80N6MZ6MSG65",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:45:07.065Z",
+        "startedAt": "2026-10-21T23:45:07.128Z",
+        "finishedAt": "2026-10-21T23:45:07.280Z",
+        "lastEventSeq": 11
+      },
+      "events": [
+        {
+          "runId": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+          "seq": 9,
+          "ts": "2026-10-21T23:45:07.263Z",
+          "type": "exit.evaluated",
+          "nodeId": "quiet",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+          "seq": 11,
+          "ts": "2026-10-21T23:45:07.263Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "kept-before",
+    "steps": "Change only disposable quiet draft Check expression to \"keep\" via API; publish v2; run.",
+    "expected": "API result kept; Result card \"kept\"; no exit-returns sentence.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDNE3VMTCEBHMGMADXJGRP\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nResult\n\"kept\"\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ncheck (decision) attempt 1\n#6\ndecision.made\nChose keep with expression\n#7\nnode.finished\ncheck → keep, 2 changes, 1 ms\n#8\nnode.started\nkept (exit) attempt 1\n#9\nexit.evaluated\nExited: success\n#10\nnode.finished\nkept, 0 changes, 0 ms\n#11\nrun.finished\nsucceeded (success)\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. See the run result for the returned value.",
+      "run": {
+        "id": "01M5GDNE3VMTCEBHMGMADXJGRP",
+        "ownerId": "local",
+        "loopId": "01M5GDMRJE1EN2S858T8CWXT00",
+        "versionId": "01M5GDN3EAZJ0CXT6J3TZVRJPK",
+        "pinned": {
+          "source": "published",
+          "version": 2,
+          "name": "QA 129 quiet exit",
+          "label": "QA 129 quiet exit v2",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDNE3VGR466HGW1XZXPRM2",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "kept",
+        "createdAt": "2026-10-21T23:45:09.243Z",
+        "startedAt": "2026-10-21T23:45:09.339Z",
+        "finishedAt": "2026-10-21T23:45:10.052Z",
+        "lastEventSeq": 12
+      },
+      "events": [
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 9,
+          "ts": "2026-10-21T23:45:10.048Z",
+          "type": "exit.evaluated",
+          "nodeId": "kept",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 11,
+          "ts": "2026-10-21T23:45:10.048Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "kept"
+        },
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 12,
+          "ts": "2026-10-21T23:45:10.120Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "null-before",
+    "steps": "Publish trigger→exit returns:\"null\", destinations:[caller]; run twice; preserve one unamended control.",
+    "expected": "API has result:null; Result card null; no exit-returns sentence.",
+    "actual": "POST /loops 400 {\"type\":\"https://graphgoblin.dev/problems/validation-failed\",\"title\":\"validation failed\",\"status\":400,\"code\":\"VALIDATION_FAILED\",\"detail\":\"the request did not match the schema\",\"errors\":[{\"path\":\"/definition/nodes/0/label\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"/definition/nodes/1/label\",\"message\":\"Invalid input: expected string, received undefined\"}]}",
+    "verdict": "FAIL"
+  },
+  {
+    "id": "unfinished",
+    "steps": "Publish trigger→input-wait→exit None/caller; run; inspect waiting; cancel through API.",
+    "expected": "No exit-returns sentence while unfinished or cancelled.",
+    "actual": "POST /loops 400 {\"type\":\"https://graphgoblin.dev/problems/validation-failed\",\"title\":\"validation failed\",\"status\":400,\"code\":\"VALIDATION_FAILED\",\"detail\":\"the request did not match the schema\",\"errors\":[{\"path\":\"/definition/nodes/0/label\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"/definition/nodes/1/label\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"/definition/nodes/2/label\",\"message\":\"Invalid input: expected string, received undefined\"}]}",
+    "verdict": "FAIL"
+  }
+]

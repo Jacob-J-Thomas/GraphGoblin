@@ -1,0 +1,60 @@
+// Node 22, repository root: Get-Content -Raw this-file | node --input-type=module -
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { copyFile, readFile, stat, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+if (process.versions.node.split('.')[0] !== '22') throw new Error('Select Node 22 first');
+const root = process.cwd();
+const evidence = join(root, 'docs/qa/2026-10-24-wp-a2-241');
+const expectedHead = '24d7be41da50944cae25e9093c0591f4a7fdf5c0';
+const expectedPatch = '4a187b1e537650260742dda91e17ea6b4550858158be20d15ccd7411c838b887';
+const validate = (result) => {
+  if (result.exitCode !== 0 || !result.inputsUnchanged || result.head !== expectedHead ||
+      result.applicationPatchSha256 !== expectedPatch || result.applicationPatchSha256After !== expectedPatch)
+    throw new Error('Command failed or candidate changed: ' + result.label);
+};
+// Browser/product code is unchanged since this five-case focused pass; only the unit pool changes.
+const focused = JSON.parse(await readFile(join(evidence, 'focused-absolute.json'), 'utf8'));
+if (focused.exitCode !== 0 || !focused.inputsUnchanged || focused.head !== expectedHead) throw new Error('Focused prerequisite failed');
+
+async function helper(file, args) {
+  const source = await readFile(join(evidence, file), 'utf8');
+  const child = spawn(process.execPath, ['--input-type=module', '-', ...args], {
+    cwd: root, windowsHide: true, stdio: ['pipe', 'inherit', 'inherit'],
+  });
+  child.stdin.end(source);
+  return await new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', resolve);
+  });
+}
+for (const gate of ['coverage', 'typecheck', 'lint', 'layers', 'tokens', 'deps', 'docs', 'build']) {
+  const label = gate + '-qualified';
+  if (await helper('run.mjs.txt', [label, gate]) !== 0) throw new Error('Gate failed: ' + gate);
+  validate(JSON.parse(await readFile(join(evidence, label + '.json'), 'utf8')));
+}
+const coveragePath = join(root, 'apps/web/coverage/coverage-summary.json');
+const coverageBytes = await readFile(coveragePath);
+const coverage = JSON.parse(coverageBytes.toString('utf8'));
+const aboveNinety = (metric) => metric.total > 0 && metric.covered * 100 > metric.total * 90;
+if (!(aboveNinety(coverage.total.lines) && aboveNinety(coverage.total.branches)))
+  throw new Error('Web line/branch coverage must remain above 90%');
+await copyFile(join(evidence, 'web-coverage-summary.json'), join(evidence, 'web-coverage-summary-before-qualified.json'));
+await writeFile(join(evidence, 'web-coverage-summary.json'), JSON.stringify({
+  source: 'apps/web/coverage/coverage-summary.json',
+  sourceBytes: coverageBytes.length,
+  sourceSha256: createHash('sha256').update(coverageBytes).digest('hex'),
+  sourceModified: (await stat(coveragePath)).mtime.toISOString(),
+  head: expectedHead,
+  applicationPatchSha256: expectedPatch,
+  total: coverage.total,
+}, null, 2) + '\n');
+
+for (let number = 1; number <= 3; number += 1) {
+  const label = 'qualified-' + number;
+  const result = await helper('run.mjs.txt', [label, 'browser']);
+  const captured = await helper('capture.mjs.txt', [label]);
+  if (captured !== 0 || result !== 0) throw new Error('Full suite failed: ' + label);
+  validate(JSON.parse(await readFile(join(evidence, label + '.json'), 'utf8')));
+}

@@ -1,0 +1,96 @@
+CHANGES REQUIRED: PR #397 at d9abfac73bdb7cd907212ff9aac7fea3cee3a574 must not merge.
+
+## Blocking findings
+
+1. **B1 — A completion event does not prove that the checkpoint has no open visit.** [run-manager.ts:1079](%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-g1-116/packages/engine/src/run-manager.ts:1079) supplies `{ strict: true }` for every `node.finished` checkpoint. A delayed duplicate completion for A can occur while B remains open; full replay ignores A's duplicate and retains B. The bounded reader forgets B and silently skips its subsequent durable completion patch.
+
+   Persisted reproduction: `run.queued → started(A) → finished(A, items=["a"]) → started(B) → duplicate finished(A) [checkpoint] → finished(B, append "b")`. The checkpoint is an honest full replay through sequence 5. At sequence 6, full replay and the actual Edge inspector return `items=["a","b"]`; REST `GET /runs/{id}/thread` and MCP `get_run_thread` return `items=["a"]`. Both read only sequences 5–6. Run/event bytes remain unchanged. A second reproduction lets actual recovery write the `node.finished` checkpoint after a durable failure and delayed prior-node completion; the reader subsequently omits `completed:true`.
+
+   This violates both #116 acceptance criteria and ADR-0053's equivalence to full replay. Delayed duplicate completions are explicitly supported by the existing domain replay tests. These are controlled durable-history fault cases through public storage ports, not a claim that an ordinary single executor creates the ordering.
+
+   **Smallest correction:** use the existing full-history replay-state fallback wherever the open visit cannot be proved; retain the bounded path only with adequate proof or explicitly persisted replay state. Add the delayed duplicate / different open node / recovery-checkpoint regression and correct the proof in ADR-0053 and docs/07.
+
+   **Reproduction:** with Node 22 on PATH, set `AUDIT_ROOT` to this worktree and run `node duplicate-browser-corrected.mjs` from this report directory. [Driver](duplicate-browser-corrected.mjs), [complete REST/MCP/browser evidence](duplicate-browser-corrected.json), [screenshot](duplicate-browser-corrected.png), [recovery driver](supplement.mjs), [recovery evidence](recovery-duplicate.json). The six-event case also reproduced through `RunManager.getThread` using public engine test ports.
+
+## Non-blocking findings
+
+1. **N1 — Fixed test port.** [apps/mcp/src/thread-history.test.ts:11](%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-g1-116/apps/mcp/src/thread-history.test.ts:11) binds port 5932. Simultaneous checkouts can collide on that port, which is also outside this audit's assigned fixed-port range. Use `port: 0` and the returned URL, as the shared browser harness does. Evidence is the test's `listen` call; no collision was induced, and the full MCP command was not launched on 5932. The remaining MCP coverage suite and equivalent REST/MCP behavior on 5910 passed.
+
+2. **N2 — Untouched web tests failed in the full suite and passed in isolation.** [EditorPage.restore.test.tsx:129](%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-g1-116/apps/web/src/editor/EditorPage.restore.test.tsx:129) could not find the “legacy device copy” heading; [routing-review.test.ts:662](%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-g1-116/apps/web/src/editor/routing-review.test.ts:662) exceeded 60 seconds in “seeded sparse graphs preserve geometry and keep detours below twelve bends.” The full run ended with 1,645 passed / 2 failed. Each file was rerun exactly once alone: 20/20 and 23/23 passed. The cause was not established; preserve both observations and defer investigation to their owning work. The isolated results do not turn the original coverage gate green. [Full log](web-coverage.log.txt), [restore rerun](EditorPage.restore.test.tsx-isolated.log.txt), [routing rerun](routing-review.test.ts-isolated.log.txt).
+
+3. **N3 — The browser outage step assumes a poll occurred after a sleep.** [thread-history.spec.ts:82](%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-g1-116/apps/web/e2e/thread-history.spec.ts:82) uses `waitForTimeout(2500)` while offline without observing a failed polling request. On a loaded machine, this need not exercise transport backoff. Wait for the relevant failed request or another observable outage signal before restoring connectivity. This is a test-quality gap, not a reproduced product failure: the follower's explicit transport-backoff tests passed, and the independent native restart/browser scenario converged.
+
+## Requirement matrix
+
+| Bolt / criterion | Status | Evidence |
+| --- | --- | --- |
+| #116 AC1: consistent failure/resume/success in current-thread reads, API snapshots, existing/reconnected tabs; no unfinished patch or state mutation | **Partially satisfied** | Ordinary persisted failure, native restart, held resume, reload and success agree across REST, MCP and Edge at 1440/390 px. Held/cancelled work excludes its returned patch and preserves visit counts; row/event hashes are stable during reads. **B1 fails agreement with durable replay.** |
+| #116 AC2: existing/reloaded/reconnected tabs, API and MCP agree despite delayed snapshots; reads cannot mutate execution state or apply unfinished patches | **Partially satisfied** | Default `e2e/thread-history.spec.ts` passed; independent strict status/cursor/thread comparisons passed at five lifecycle stages. The corrected duplicate fixture directly demonstrates inspector versus REST/MCP disagreement. |
+| #116 bounded-read claim | **Partially satisfied** | On 10,001 persisted events, current and 200-event-lagging checkpoints decoded exactly 1 and 201 rows per REST/MCP read and matched full replay. Ordinary started/waiting/finished/run-finished boundaries passed. The completion-boundary proof fails B1. |
+
+Production ownership is in domain `reconcileThread`, engine `getThread/loadThread`, the existing REST/MCP delegation and web `threadAt/createThreadCache/followRunAttempts`. The new tests assert completed values, unfinished visit counts and read immutability; they would catch the original snapshot-only/current-terminal cutoff behavior. They do not cover B1's delayed duplicate for a different currently open node. Broader #308/#289 completion is not established by this audit.
+
+## Verification you ran beyond the gates
+
+All manual API processes used Node 22.14.0, port 5910 and physical stores beneath this `gg-audit-g1-116-` report directory. Script execution was injected through the supported public ScriptPort; API processes, SQLite, HTTP, MCP transport and Edge were real. No live provider turn was made.
+
+| Scenario | Result |
+| --- | --- |
+| Persisted failure → held resume → success with delayed snapshots | PASS: expected vars, work visits 1 → 2, no unfinished patch; REST/MCP/desktop/narrow inspector agree. |
+| Replace native API process on the same store while tabs stay open | PASS: tabs reconnect and subsequently follow resume/success. |
+| Reload narrow tab during held resumed work | PASS: status, event cursor and complete thread converge with the original desktop tab. |
+| Read-only inspection at each stable stage | PASS: exact run-row and ordered event-row hashes unchanged. |
+| Cancellation during unfinished resumed script | PASS: returned script patch excluded, visit retained. |
+| Actual replay fork and subloop child | PASS: fork uses inherited pre-work seed, one new work visit, unchanged source; child retains own identity/vars, parent receives mapped result. |
+| Ordinary checkpoint types: node.started, run.waiting, node.finished, run.finished | PASS: complete thread equals full replay; boundary-only/tail reads. |
+| Waiting checkpoint followed by input/completion | PASS: later input patch included. |
+| Recovery-written run.failed checkpoint followed by resume | PASS: full-history fallback includes resumed completion. |
+| Immediate duplicate completion straddling checkpoint | PASS: patch applied once. |
+| Delayed other-node duplicate at checkpoint; recovery-written completion checkpoint | **FAIL B1**: completed patch omitted by REST/MCP. |
+| Checkpoint event deleted from the middle of a log; beyond-tail and unsequenced snapshots | PASS: full-history fallback; no read-side repair. |
+| 10,001-event current/lagging checkpoint experiment | PASS: 1 / 201 rows per read. This reproduces structural cost, not the implementer's timing ratio. |
+| Six concurrent readers during 100 start/finish pairs and moving checkpoints | PASS: 742 polling responses; no per-reader regression or invalid unfinished counter; final thread equals replay. |
+| Invalid and missing run IDs | PASS: 400 / 404. |
+| Evidence/commit/source hygiene | 172 README links resolve; 90 implementation + 124 QA artifact hashes match; no oversized committed captures in these folders. No commit attribution. The sole `git grep <user name>` match is an unchanged older QA regex, also present at the target base. Source diff check passes. Whole-diff whitespace warnings are confined to retained QA artifacts. |
+
+The first fork probe used the wrong request field (`fromNodeId`) and correctly received 400; the corrected `nodeId` experiment is retained separately. Two auxiliary browser probes omitted stopping the synthetic-history executor and reached the completed-run terminal fence; their deadlines are retained as invalid audit-fixture observations, not product failures. The corrected stopped-executor fixture produced the captured B1 disagreement. See [scenario results](scenarios.json), [supplement](supplement.json), [corrected browser evidence](duplicate-browser-corrected.json) and [default browser log](default-browser.log.txt).
+
+## Gates
+
+Target: `main` at `9240c3c6ec0994af27d644ba199be38aa479df5a`. Node `v22.14.0`; exact assigned HEAD verified before and during the audit. No thresholds, coverage exclusions, maintained tests, source files, dependencies, Git index or commits changed.
+
+| Command | Result |
+| --- | --- |
+| `pnpm.cmd build` | PASS |
+| `pnpm.cmd typecheck` | PASS |
+| `pnpm.cmd lint` | PASS; existing ThreadViewer.tsx:106 warning only |
+| `pnpm.cmd format:check` | PASS |
+| `pnpm.cmd check:layers` | PASS |
+| `pnpm.cmd check:deps` | PASS |
+| `pnpm.cmd check:tokens` | PASS |
+| `pnpm.cmd --filter @graphgoblin/domain test:coverage` | PASS: 595 tests; **98.48% lines / 95.80% branches** |
+| `pnpm.cmd --filter @graphgoblin/engine test:coverage` | PASS: 1,587 tests; **98.06% lines / 93.09% branches** |
+| `pnpm.cmd --filter @graphgoblin/web test:coverage` | FAIL: 1,645 passed / 2 failed; no fresh coverage summary emitted |
+| `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.restore.test.tsx --maxWorkers=1` | PASS on the one isolated rerun: 20 tests |
+| `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/routing-review.test.ts --maxWorkers=1` | PASS on the one isolated rerun: 23 tests |
+| `pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1` | PASS: 1,324 passed / 8 existing conditional skips; **97.99% lines / 92.93% branches**; 65 passed / 2 skipped files, 2,481.23 seconds. |
+| `pnpm.cmd --filter @graphgoblin/mcp test:coverage --exclude src/thread-history.test.ts --maxWorkers=1` | PASS for selected suite: 49 tests; **96.66% lines / 95.39% branches**. Full unmodified suite not run because of N1. |
+| `pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/thread-history.spec.ts --output <report>/default-browser-output` | PASS: 1 test, Edge, default repository harness/configuration, after build. Harness-assigned ephemeral ports follow COMMON.md's automated-harness allowance. |
+| `pnpm.cmd check:docs` / `check:licenses` | Not required: no node schema/route contract/dependency change. |
+
+Every freshly produced coverage summary listed above exceeds 90% for lines and branches. Web coverage is unqualified by this run. The API skips are the existing opt-in live-provider/performance cases and the Linux/POSIX cases excluded on Windows; the PR introduces no skips. Root gates used normal Turbo behavior; package coverage commands bypassed Turbo caching. [Gate records](gates.json), [coverage records](coverage-results.jsonl), [final gate record](final-gate-record.json), [MCP coverage](mcp-coverage.log.txt), [API coverage](api-coverage.log.txt). The brief's CI pass at `d7371f25` is historical supplied evidence, not a fresh CI observation at this audit head.
+
+## Dispositions checked
+
+- **Round-1 history-sized reads:** agree that the ordinary current/lagging reads are bounded; **disagree that the boundary proof is complete**, because B1 violates full replay equivalence.
+- **Round-1 private browser server/fixed browser ports:** fixed. The scenario uses the shared `/apps` / `/thread-history` controls and passes under the default Playwright harness.
+- **Round-1 scattered evidence:** fixed at the folder level. The implementation record and separate independent-QA record are consolidated and their cited files resolve; 214 manifest entries match retained bytes. D-028/D-030/D-034 preservation rules are satisfied for the checks performed.
+- **Independent QA's PASS:** reproduced its ordinary lifecycle, checkpoint, fallback, fork/child and bounded-row claims; its checked checkpoint matrix omitted B1's delayed duplicate / different open visit case, so PASS does not establish the required universal agreement.
+- **#255 patch-diff browsing and #185 delivery finalization:** retain their separate scope. The known array-append diff shows absent values while the full thread remains available; no repair requested here. WP-E1/#391 integration is judged separately from this branch.
+- **D-015:** no failure was classified as native-process termination denial without a failing termination assertion. D-035: this is audit round 1, with no sub-agents or additional code-scan round.
+
+## Residual risks
+
+B1 prevents sign-off: current-thread readers can omit a durable completion while the inspector displays it. Full web coverage did not pass in this run, and the unmodified MCP suite remains unexecuted because of its fixed port. API coverage passed with its existing conditional skips; the Linux/POSIX-only cases remain unverified on this Windows host.
+
+Native-process evidence covers API replacement and real persistence with controlled script behavior; it does not establish provider behavior or indefinite endurance. No integrated I07 acceptance or future merge-conflict resolution with #391 is claimed. The repository remains unchanged; only this audit report and its disposable evidence were created.

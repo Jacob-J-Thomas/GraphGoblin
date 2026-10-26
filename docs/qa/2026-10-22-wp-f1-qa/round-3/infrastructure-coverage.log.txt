@@ -1,0 +1,210 @@
+Command: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 321420
+
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/process/scripts.test.ts (39 tests | 3 failed) 42103ms
+   ❯ ProcessScripts (36)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8019ms
+     × kills the process tree on timeout 15010ms
+     × kills the process when the signal aborts, including when already aborted 15006ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 32027ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30052ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 26148ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 15256ms
+     × does not spawn for an already aborted signal and cancels a running process 5080ms
+     × kills the descendant that a long-lived child started 5727ms
+ ❯ src/claude/readiness.test.ts (19 tests | 1 failed | 2 skipped) 9985ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 6198ms
+ ❯ src/fs/fs.test.ts (11 tests | 1 failed) 24514ms
+   ❯ FsArtifactStore (9)
+     × accepts verified bytes published by another writer while a read handle blocks replacement 24099ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-krfiVW'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-F6g2Zh'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-Kgf5YD'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/fs/fs.test.ts > FsArtifactStore > accepts verified bytes published by another writer while a read handle blocks replacement
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/fs/fs.test.ts:65:42
+     63| describe('FsArtifactStore', () => {
+     64|   // POSIX permits replacement while the destination is open; this exe…
+     65|   it.skipIf(process.platform !== 'win32')(
+       |                                          ^
+     66|     'accepts verified bytes published by another writer while a read h…
+     67|     async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle…
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  5 failed | 40 passed (45)
+      Tests  9 failed | 641 passed | 2 skipped (652)
+   Start at  14:19:01
+   Duration  320.19s (tests 82%, import 17%, transform 1%, worker 1%)
+
+    Isolate  45 workers spawned · ~314ms startup each (spawn + environment, per file)
+             at least ~13.83s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   97.88 |    94.63 |   98.23 |   98.62 |
+ src/claude        |   99.09 |    97.26 |     100 |   99.79 |
+  harness.ts       |   98.25 |    93.33 |     100 |   99.35 | 288
+  process.ts       |   98.46 |    95.55 |     100 |     100 | 88-91
+  protocol.ts      |   99.59 |    99.34 |     100 |     100 | 158,292
+ src/fs            |   98.55 |     93.1 |     100 |   98.38 |
+  artifacts.ts     |   98.07 |     90.9 |     100 |   97.82 | 29
+ src/http          |     100 |    99.03 |     100 |     100 |
+  delivery.ts      |     100 |     92.3 |     100 |     100 | 62
+ src/process       |   97.43 |    91.66 |   94.73 |     100 |
+  scripts.ts       |   96.36 |    88.63 |   92.85 |     100 | 70-73,85,102-116
+ src/scheduler     |   99.47 |    94.68 |   97.77 |     100 |
+  ...-scheduler.ts |     100 |    95.91 |     100 |     100 | 33,141
+  timer-service.ts |   98.52 |    91.42 |   94.11 |     100 | 51,111,133
+ src/sqlite        |   96.88 |     92.4 |   97.77 |   97.78 |
+  admission.ts     |   91.11 |     90.1 |     100 |      95 | 118,124,148,302
+  classifiers.ts   |     100 |    93.75 |     100 |     100 | 54
+  db.ts            |   95.61 |    98.14 |   88.88 |   96.73 | 35-41
+  events.ts        |     100 |       96 |     100 |     100 | 75
+  loops.ts         |    97.4 |    93.75 |     100 |     100 | 122,194,211
+  readiness.ts     |   98.27 |    94.73 |     100 |     100 | 32
+  run-row.ts       |     100 |       95 |     100 |     100 | 23
+  runs.ts          |   95.14 |    93.47 |   97.05 |   96.51 | 208,250-252
+  secrets.ts       |     100 |       90 |     100 |     100 | 70
+  sessions.ts      |     100 |    86.36 |     100 |     100 | 15-18
+  settings.ts      |     100 |    94.73 |     100 |     100 | 135
+  triggers.ts      |      99 |    98.71 |     100 |     100 | 390
+  upgrade-scan.ts  |   98.47 |    91.93 |     100 |   98.26 | 109,167
+  upgrade.ts       |   95.31 |    88.57 |   96.22 |   95.62 | ...31,585,726,755
+ ...sqlite/testing |   96.15 |    96.42 |     100 |   95.91 |
+  ...migrations.ts |   84.61 |       80 |     100 |   81.81 | 27-28
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 97.88% ( 2266/2315 )
+Branches     : 94.63% ( 1624/1716 )
+Functions    : 98.23% ( 502/511 )
+Lines        : 98.62% ( 2014/2042 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\packages\infrastructure

@@ -1,0 +1,2 @@
+import{readFile,writeFile}from'node:fs/promises';import{resolve}from'node:path';import{pathToFileURL}from'node:url';
+let s=await readFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2/native-slow-reader.mjs.txt','utf8');s=s.replaceAll('../../packages/',pathToFileURL(resolve('packages')).href+'/').replaceAll('qa/2026-10-24-wp-e1-186-r2-qa/round-2','qa/2026-10-24-wp-e1-186-r2-qa/round-3').replaceAll('.tmp/qa186r2/','.tmp/qa3/');await writeFile('.tmp/qa3/native-slow-reader.mjs',s);

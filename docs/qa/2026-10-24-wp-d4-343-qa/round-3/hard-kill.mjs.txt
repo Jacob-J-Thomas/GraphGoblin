@@ -1,0 +1,104 @@
+// Independent acceptance checks. No production source modification or private access.
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const root = process.cwd();
+const evidence = join(root, 'docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const runtime = await mkdtemp(join(tmpdir(), 'gg-qa-d4-343-3-'));
+await copyFile(join(evidence,'server.mjs.txt'),join(runtime,'server.mjs'));
+const clean = v => JSON.stringify(v, (_k,x) => typeof x === 'bigint' ? String(x) : x).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+const results = { revision:'94523682d084f7a566242602762a3b04d87a8e55', node:process.version, runtime, checks:[], http:[], processes:[] };
+const save = () => writeFile(join(evidence,'hard-kill-results.json'), clean(results));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function test(id, expected, job) {
+  const entry={id,expected,started:new Date().toISOString()};
+  try { entry.actual=await job(); entry.status='PASS'; }
+  catch(e) { entry.status='FAIL'; entry.error=e.stack; }
+  results.checks.push(entry); await save(); console.log(id+' '+entry.status+(entry.error?' '+entry.error.split('\n')[0]:''));
+}
+async function eventually(fn,ms=20000) { const end=Date.now()+ms; while(true) { const v=await fn(); if(v) return v; if(Date.now()>end) throw Error('Timed out waiting for observable state'); await sleep(50); } }
+const inherited=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_') && k!=='JEV_API_KEY'));
+function launch(file,args,env,label) {
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...inherited,...env},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr=''; child.stdout.on('data',d=>stdout+=d); child.stderr.on('data',d=>stderr+=d);
+  const done=new Promise(r=>{child.once('error',e=>r({error:String(e)}));child.once('exit',(code,signal)=>r({code,signal}));});
+  const record={label,pid:child.pid}; results.processes.push(record);
+  return {child,done,record,get stdout(){return stdout},get stderr(){return stderr},async log(){await writeFile(join(evidence,label+'.log.txt'),(stdout+'\nSTDERR\n'+stderr).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]'));}};
+}
+async function instance(name,port) {
+  const data=join(runtime,name); await mkdir(data);
+  const env={QA_ROOT:root,GG_DATA_DIR:data,GG_PORT:String(port),GG_HOST:'127.0.0.1',GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,11).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist'),GG_MAX_CONCURRENT_RUNS:'2',GG_JEV_API_KEY:'',GG_LOG_LEVEL:'warn'};
+  const cli=launch(join(root,'apps/api/dist/main.js'),['--create-api-key','Independent QA'],env,name+'-key-cli');
+  const exit=await cli.done; await cli.log(); assert.equal(exit.code,0,cli.stderr);
+  const key=/\bgg_[A-Za-z0-9_-]+/.exec(cli.stdout)?.[0]; assert.ok(key,'CLI key missing');
+  let proc;
+  const s={name,port,data,env,key,url:'http://127.0.0.1:'+port};
+  s.start=async()=>{ proc=launch(join(runtime,'server.mjs'),[],env,name+'-server-'+results.processes.length); s.proc=proc; await eventually(()=>{if(proc.stderr.includes('Error'))throw Error(proc.stderr);return proc.stdout.includes('QA_READY');},60000); };
+  s.call=async(method,path,body,token=key)=>{
+    const t=performance.now(); const r=await fetch(s.url+path,{method,headers:{authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});
+    const raw=await r.text(); let value;try{value=JSON.parse(raw)}catch{value=raw}
+    const result={status:r.status,body:value,ms:Math.round(performance.now()-t)};
+    if(path!='/__qa') results.http.push({instance:name,method,path,...result}); return result;
+  };
+  s.qa=async(body)=>{const r=await s.call('POST','/__qa',body);assert.equal(r.status,200,JSON.stringify(r));return r.body};
+  s.sql=(sql,args=[])=>s.qa({op:'sql',sql,args});
+  s.settle=()=>s.qa({op:'settle'});
+  s.sweep=async(ms=300001)=>{await s.qa({op:'sweep',ms});await s.settle()};
+  s.stop=async()=>{await s.qa({op:'stop'});const exit=await proc.done;await proc.log();return exit};
+  s.events=async()=>{const r=await s.call('GET','/events?limit=100');assert.equal(r.status,200,JSON.stringify(r));return r.body.items};
+  s.item=async(id)=>(await s.events()).find(x=>x.id===id);
+  s.runs=async(loopId)=>(await s.call('GET','/runs'+(loopId?'?loopId='+loopId:''))).body.items;
+  await s.start(); return s;
+}
+function definition(name,config={type:'event',eventType:'ready'},extra=false,work=false) {
+  const nodes=[{id:'start',kind:'trigger',label:'Start',config},{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload'}}];
+  const edges=[{id:'a',from:{node:'start',port:'out'},to:{node:work?'work':'done'}}];
+  if(extra){nodes.push({id:'second',kind:'trigger',label:'Second',config:{type:'event',eventType:'ready'}});edges.push({id:'c',from:{node:'second',port:'out'},to:{node:'done'}})}
+  if(work){nodes.splice(1,0,{id:'work',kind:'inference',label:'Work',config:{harness:'codex',prompt:{template:'QA delayed work'}}});edges.push({id:'b',from:{node:'work',port:'out'},to:{node:'done'}})}
+  return {schemaVersion:4,name,nodes,edges};
+}
+async function loop(s,d,publish=true,token=s.key){const c=await s.call('POST','/loops',{definition:d},token);assert.equal(c.status,201,JSON.stringify(c));const id=c.body.loop.id;if(publish){const p=await s.call('POST','/loops/'+id+'/publish',undefined,token);assert.equal(p.status,200,JSON.stringify(p));}return id;}
+const ev=(s,id,extra={})=>s.call('POST','/events',{loopId:id,type:'ready',...extra});
+const counts=async s=>(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM event_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'))[0];
+const fault=async(s,name,on,when='')=>s.sql(`CREATE TRIGGER ${name} BEFORE ${on} ${when} BEGIN SELECT RAISE(ABORT,'QA storage fault'); END`);
+const drop=(s,name)=>s.sql('DROP TRIGGER '+name);
+const depth=n=>'['.repeat(n+1)+'0'+']'.repeat(n+1); // deepest container depth n, root zero
+let s;
+const { pathToFileURL } = await import('node:url');
+const { openDatabase } = await import(pathToFileURL(join(root,'packages/infrastructure/dist/sqlite/index.js')).href);
+async function offline(instance,job){const h=openDatabase({url:'file:'+join(instance.data,'graphgoblin.db').replaceAll('\\','/')});try{return await job(h.client)}finally{h.close()}}
+for(const [index,phase] of ['before-receipt','pending-before-run','after-run-start'].entries()) {
+ await test('native-'+phase,'hard kill and restart; accepted identity has exactly one stable run; refused save leaves zero rows',async()=>{
+  s=await instance('hard-kill-'+phase,5851+index);
+  const id=await loop(s,definition('Crash '+phase));
+  if(phase!=='after-run-start')await fault(s,'qa_crash',phase==='before-receipt'?'INSERT ON event_receipts':'INSERT ON runs');
+  const request={dedupeKey:'restart-key',payload:{original:'stable'}};
+  const ack=await ev(s,id,request); assert.equal(ack.status,phase==='before-receipt'?503:202);
+  await s.settle();
+  const before=await counts(s);
+  const receipt=await s.sql("SELECT id,status,attempts,json_extract(intent,'$.run.id') AS runId,json_extract(intent,'$.run.versionId') AS versionId FROM event_receipts");
+  if(phase==='before-receipt')assert.deepEqual(before,{inbound:0,receipts:0,runs:0});
+  if(phase==='pending-before-run'){assert.equal(before.runs,0);assert.equal(receipt[0].status,'pending')}
+  if(phase==='after-run-start'){assert.equal(before.runs,1);assert.equal(receipt[0].status,'admitted')}
+  const statesBefore=await s.events();
+  let hardKill,termination;
+  try {hardKill=s.proc.child.kill('SIGKILL');if(hardKill){termination=await s.proc.done;await s.proc.log();}else termination={class:'D-015',reason:'kill returned false'};}
+  catch(e){hardKill=false;termination={class:'D-015',code:e.code,message:e.message};}
+  if(!hardKill)await s.stop();
+  await offline(s,async c=>{if(phase!=='after-run-start')await c.execute('DROP TRIGGER qa_crash');await c.execute("UPDATE event_receipts SET next_attempt_at='2000-01-01'");});
+  await s.start();
+  const retry=await ev(s,id,{...request,payload:{changed:true}});assert.equal(retry.status,202);await s.settle();
+  const rows=await s.events();const item=rows[0];assert.equal(rows.length,1);assert.equal(item.runIds.length,1);
+  if(receipt.length){assert.equal(item.id,ack.body.id);assert.equal(item.admissionId,receipt[0].id);assert.equal(item.runIds[0],receipt[0].runId);assert.equal(retry.body.duplicate,true);assert.deepEqual(item.payload,{original:'stable'});}
+  const queued=await s.sql("SELECT run_id,count(*) AS n FROM run_events WHERE type='run.queued' GROUP BY run_id");assert.equal(queued.length,1);assert.equal(queued[0].n,1);
+  const runs=await s.runs(id);assert.equal(runs.length,1);
+  const stopped=await s.stop();
+  const result={phase,ack,before,receipt,statesBefore,hardKill,termination,restartItem:item,queued,runs,stopped,nativeVerdict:hardKill?'PASS':'NOT TESTABLE - D-015; cooperative restart supplemental only'};
+  // A denied kill is a limit on this criterion, not a product failure.
+  return result;
+ });
+}
+
+await save();console.log("HARD_KILL_DONE");

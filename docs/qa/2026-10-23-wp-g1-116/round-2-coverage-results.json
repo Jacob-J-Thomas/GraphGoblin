@@ -1,0 +1,42 @@
+﻿[
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/domain test:coverage",
+        "exit":  0,
+        "isolated":  [
+
+                     ]
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/engine test:coverage",
+        "exit":  0,
+        "isolated":  [
+
+                     ]
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/api test:coverage",
+        "exit":  0,
+        "isolated":  [
+
+                     ]
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/mcp test:coverage",
+        "exit":  0,
+        "isolated":  [
+
+                     ]
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1",
+        "exit":  1,
+        "isolated":  [
+                         {
+                             "file":  "src/editor/EditorPage.restore.test.tsx",
+                             "command":  "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.restore.test.tsx --maxWorkers=1",
+                             "exit":  0,
+                             "log":  "round-2-web-isolated-src-editor-EditorPage-restore-test-tsx.log.txt"
+                         }
+                     ]
+    }
+]

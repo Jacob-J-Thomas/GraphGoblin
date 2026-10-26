@@ -1,0 +1,393 @@
+{
+  "variant": "after",
+  "evidence": "public engine components, fake-only",
+  "checks": [
+    {
+      "name": "calibrate event count through RunManager",
+      "status": "pass",
+      "actual": {
+        "terminalSeqWithoutItems": 14
+      }
+    },
+    {
+      "name": "finalization history 255",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 255,
+        "reads": [
+          {
+            "after": 0,
+            "limit": 256,
+            "count": 255,
+            "timer": false
+          }
+        ],
+        "events": 257,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 256",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 256,
+        "reads": [
+          {
+            "after": 0,
+            "limit": 256,
+            "count": 256,
+            "timer": false
+          },
+          {
+            "after": 256,
+            "limit": 256,
+            "count": 0,
+            "timer": true
+          }
+        ],
+        "events": 258,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 257",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 257,
+        "reads": [
+          {
+            "after": 0,
+            "limit": 256,
+            "count": 256,
+            "timer": false
+          },
+          {
+            "after": 256,
+            "limit": 256,
+            "count": 1,
+            "timer": true
+          }
+        ],
+        "events": 259,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 512",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 512,
+        "reads": [
+          {
+            "after": 0,
+            "limit": 256,
+            "count": 256,
+            "timer": false
+          },
+          {
+            "after": 256,
+            "limit": 256,
+            "count": 256,
+            "timer": true
+          },
+          {
+            "after": 512,
+            "limit": 256,
+            "count": 0,
+            "timer": true
+          }
+        ],
+        "events": 514,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 513",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 513,
+        "reads": [
+          {
+            "after": 0,
+            "limit": 256,
+            "count": 256,
+            "timer": false
+          },
+          {
+            "after": 256,
+            "limit": 256,
+            "count": 256,
+            "timer": true
+          },
+          {
+            "after": 512,
+            "limit": 256,
+            "count": 1,
+            "timer": true
+          }
+        ],
+        "events": 515,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "between pages late-progress",
+      "status": "pass",
+      "actual": {
+        "injected": true,
+        "reads": [
+          {
+            "after": 0,
+            "count": 256
+          },
+          {
+            "after": 256,
+            "count": 256
+          },
+          {
+            "after": 512,
+            "count": 2
+          }
+        ],
+        "events": 516,
+        "callerAudits": 1
+      }
+    },
+    {
+      "name": "between pages late-delivery",
+      "status": "pass",
+      "actual": {
+        "injected": true,
+        "reads": [
+          {
+            "after": 0,
+            "count": 256
+          },
+          {
+            "after": 256,
+            "count": 256
+          },
+          {
+            "after": 512,
+            "count": 2
+          }
+        ],
+        "events": 515,
+        "callerAudits": 1
+      }
+    },
+    {
+      "name": "webhook success and recovered delivery journal",
+      "status": "pass",
+      "actual": {
+        "events": 619,
+        "types": [
+          "delivery.queued",
+          "return.delivered",
+          "return.delivered",
+          "delivery.attempted",
+          "delivery.finished"
+        ],
+        "webhookCalls": 1
+      }
+    },
+    {
+      "name": "webhook nonretryable failure remains exact across recovery",
+      "status": "pass",
+      "actual": {
+        "types": [
+          "delivery.queued",
+          "delivery.attempted",
+          "delivery.finished"
+        ],
+        "webhookCalls": 1
+      }
+    },
+    {
+      "name": "visit cap 2 for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "failed",
+        "failure": {
+          "code": "MAX_NODE_VISITS",
+          "message": "node \"work\" would start for visit 3, above the loop's maxNodeVisits of 2",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "maxNodeVisits": 2
+          }
+        },
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 2,
+            "gate": 2
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "visit cap 3 for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "succeeded",
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 3,
+            "gate": 3,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "visit cap null for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "succeeded",
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 3,
+            "gate": 3,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "wake retry restart cap 2",
+      "status": "pass",
+      "actual": {
+        "status": "failed",
+        "attempts": [
+          1,
+          2,
+          1,
+          2
+        ],
+        "display": 4
+      }
+    },
+    {
+      "name": "wake retry restart cap null",
+      "status": "pass",
+      "actual": {
+        "status": "waiting",
+        "attempts": [
+          1,
+          2,
+          1,
+          2,
+          1
+        ],
+        "display": 5
+      }
+    },
+    {
+      "name": "append refusal before commit",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2,
+          1,
+          2
+        ],
+        "fresh": 2,
+        "restart": true
+      }
+    },
+    {
+      "name": "append refusal after commit",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2,
+          1,
+          2,
+          3
+        ],
+        "fresh": 2,
+        "restart": true
+      }
+    },
+    {
+      "name": "resumable script attempt 2 at cap 1",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2
+        ],
+        "display": 2
+      }
+    },
+    {
+      "name": "failed finalization racing failed-run resume",
+      "status": "pass",
+      "actual": {
+        "held": true,
+        "resumeWaited": true,
+        "finalStatus": "succeeded",
+        "attempts": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "name": "replay inherits display counters but fresh allowance is run-local",
+      "status": "pass",
+      "actual": {
+        "firstFork": {
+          "start": 1,
+          "work": 3,
+          "gate": 3,
+          "done": 1
+        },
+        "inherited": {
+          "start": 1,
+          "work": 3,
+          "gate": 3
+        },
+        "final": {
+          "start": 1,
+          "work": 3,
+          "gate": 3,
+          "done": 1
+        }
+      }
+    },
+    {
+      "name": "subloop visit allowance and returns isolated from parent",
+      "status": "fail",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   childRunId: '00000000000000000000000009',\n+   outcome: 'success',\n+   result: {\n+     child: 7\n+   },\n+   status: 'succeeded'\n-   child: 7\n  }\n\n    at %USERPROFILE%/AppData/Local/Temp/gg-qa-e1-268-independent.mjs:66:832\n    at async check (%USERPROFILE%/AppData/Local/Temp/gg-qa-e1-268-independent.mjs:13:51)\n    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-e1-268-independent.mjs:66:1"
+    }
+  ]
+}

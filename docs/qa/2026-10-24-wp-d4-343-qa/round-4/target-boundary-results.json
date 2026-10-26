@@ -1,0 +1,282 @@
+{
+  "revision": "ad9d9f15f0ab65f19504863f39c759fdbe1e6527",
+  "evidenceTier": "built public NodeSchema in process; not an HTTP/native-process check",
+  "checks": [
+    {
+      "id": "entry-id-ASCII",
+      "expected": "ASCII slug contract: success=true",
+      "actual": {
+        "value": "Start_1",
+        "success": true
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-high",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\ud800after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-low",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\udc00after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-reversed",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\udc00\ud800after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-astral",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before😀after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-replacement",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before�after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "entry-id-NUL",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\u0000after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "id"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-ASCII",
+      "expected": "ASCII slug contract: success=true",
+      "actual": {
+        "value": "Start_1",
+        "success": true
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-high",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\ud800after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-low",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\udc00after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-reversed",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\udc00\ud800after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-astral",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before😀after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-replacement",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before�after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "event-type-NUL",
+      "expected": "ASCII slug contract: success=false",
+      "actual": {
+        "value": "before\u0000after",
+        "success": false,
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^[A-Za-z][A-Za-z0-9_-]{0,63}$/",
+            "path": [
+              "config",
+              "eventType"
+            ],
+            "message": "must start with a letter and use letters, digits, _ or -"
+          }
+        ]
+      },
+      "status": "PASS"
+    }
+  ]
+}

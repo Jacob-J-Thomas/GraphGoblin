@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/web
+
+ ❯ src/runs/follow-run-attempts.test.ts (10 tests | 1 failed | 9 skipped) 29ms
+   × settles completion that overtakes the captured run snapshot and refreshes the lagging snapshot 26ms
+pnpm.cmd : 
+At line:46 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/follow-ru ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/follow-run-attempts.test.ts > settles completion that overtakes the captured run snapshot and 
+refreshes the lagging snapshot
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ src/runs/follow-run-attempts.test.ts:211:24
+    209|   try {
+    210|     await vi.advanceTimersByTimeAsync(0);
+    211|     expect(o.finished).toHaveBeenCalledOnce();
+       |                        ^
+    212|     expect(o.running).not.toHaveBeenCalled();
+    213|     await vi.advanceTimersByTimeAsync(2_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  23:42:51
+   Duration  25.88s (environment 42%, transform 30%, setup 16%, import 12%)
+
+  Transform  transforming modules took 7.31s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\web
+

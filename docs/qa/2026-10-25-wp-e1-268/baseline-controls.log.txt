@@ -1,0 +1,134 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-268/packages/engine
+
+ ❯ src/hot-paths.test.ts (6 tests | 6 failed) 111ms
+   × finalization reads bounded pages and yields, preserving the entire return-producing log 99ms
+   × rebuilds fresh visits across wakes, paused resume and restart at cap 2 4ms
+   × rebuilds fresh visits across wakes, paused resume and restart at cap null 1ms
+   × a fresh-start append rejected before commit retains the durable visit count 2ms
+   × a fresh-start append rejected after commit retains the durable visit count 1ms
+   × counts each committed fresh entry within one executor at the exact finite cap 2ms
+pnpm.cmd : 
+At line:2 char:239
++ ... econds 5 }; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hot-paths.test.ts > finalization reads bounded pages and yields, preserving the entire return-producing log
+AssertionError: expected 1 to be greater than 2
+ ❯ src/hot-paths.test.ts:56:24
+     54|   const run = await f.manager.startRun({ ownerId: 'local', loopId: f.l…
+     55|   await f.manager.waitForIdle();
+     56|   expect(reads.length).toBeGreaterThan(2);
+       |                        ^
+     57|   expect(reads.every((limit) => limit !== undefined && limit <= 256)).…
+     58|   expect(timerRan).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/hot-paths.test.ts > rebuilds fresh visits across wakes, paused resume and restart at cap 2
+ FAIL  src/hot-paths.test.ts > rebuilds fresh visits across wakes, paused resume and restart at cap null
+ZodError: [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 2,
+    "inclusive": true,
+    "path": [
+      "nodes",
+      2,
+      "config",
+      "routes"
+    ],
+    "message": "Too small: expected array to have >=2 items"
+  }
+]
+ ❯ fixture src/hot-paths.test.ts:23:152
+     21|   ports.admission = new InMemoryTriggerAdmission(ports.runs, ports.eve…
+     22|   const loopId = fakeUlid('hot-path-loop');
+     23|   ports.loops.add({ id: fakeUlid('hot-path-version'), loopId, version:…
+       |                                                                                                               
+                                         ^
+     24|   const restart = async () => {
+     25|     const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+ ❯ src/hot-paths.test.ts:90:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/hot-paths.test.ts > a fresh-start append rejected before commit retains the durable visit count
+ FAIL  src/hot-paths.test.ts > a fresh-start append rejected after commit retains the durable visit count
+ZodError: [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 2,
+    "inclusive": true,
+    "path": [
+      "nodes",
+      2,
+      "config",
+      "routes"
+    ],
+    "message": "Too small: expected array to have >=2 items"
+  }
+]
+ ❯ fixture src/hot-paths.test.ts:23:152
+     21|   ports.admission = new InMemoryTriggerAdmission(ports.runs, ports.eve…
+     22|   const loopId = fakeUlid('hot-path-loop');
+     23|   ports.loops.add({ id: fakeUlid('hot-path-version'), loopId, version:…
+       |                                                                                                               
+                                         ^
+     24|   const restart = async () => {
+     25|     const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+ ❯ src/hot-paths.test.ts:113:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/hot-paths.test.ts > counts each committed fresh entry within one executor at the exact finite cap
+ZodError: [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 2,
+    "inclusive": true,
+    "path": [
+      "nodes",
+      2,
+      "config",
+      "routes"
+    ],
+    "message": "Too small: expected array to have >=2 items"
+  }
+]
+ ❯ fixture src/hot-paths.test.ts:23:152
+     21|   ports.admission = new InMemoryTriggerAdmission(ports.runs, ports.eve…
+     22|   const loopId = fakeUlid('hot-path-loop');
+     23|   ports.loops.add({ id: fakeUlid('hot-path-version'), loopId, version:…
+       |                                                                                                               
+                                         ^
+     24|   const restart = async () => {
+     25|     const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+ ❯ src/hot-paths.test.ts:144:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  03:59:40
+   Duration  5.24s (transform 55%, import 43%, tests 2%)
+
+  Transform  transforming modules took 2.71s · 55% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 268\packages\engine
+

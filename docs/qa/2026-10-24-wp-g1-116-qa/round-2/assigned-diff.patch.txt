@@ -1,0 +1,4291 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d642a383..062edd75 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Reconcile current-thread reads from verified checkpoints and durable event tails; keep open and reloaded inspectors following resumed failed runs without applying unfinished patches or writing execution state. Persist each checkpoint's open-visit replay state so a delayed duplicate completion cannot hide another node's durable patch. **Upgrade:** SQL 0018 adds nullable `thread_snapshot_replay_state`; existing snapshots use full replay until the next checkpoint write. Implementations of `RunRepository.saveThread` must supply `(runId, thread, seq, replayState)`. (#116)
++
+ - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
+ 
+ - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
+diff --git a/apps/api/scripts/thread-read-measure.ts b/apps/api/scripts/thread-read-measure.ts
+new file mode 100644
+index 00000000..f0c79e4a
+--- /dev/null
++++ b/apps/api/scripts/thread-read-measure.ts
+@@ -0,0 +1,153 @@
++/** Controlled persisted ~10k-event HTTP measurement; no execution or provider work. */
++import { mkdtemp, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import {
++  ContextThreadSchema,
++  RunRecordSchema,
++  CURRENT_DEFINITION_FORMAT,
++} from '@graphgoblin/contracts';
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { RunManager, type EventDraft, type EventStorePort } from '@graphgoblin/engine';
++import { buildApp } from '../src/app.js';
++import { createContainer } from '../src/container.js';
++import { loadConfig } from '../src/config.js';
++
++const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-measure-'));
++const container = await createContainer(
++  loadConfig({
++    GG_DATA_DIR: dataDir,
++    GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++    GG_SWAGGER_UI: 'false',
++  }),
++  { startTimers: false },
++);
++await container.start();
++container.manager.stop();
++const reads: { afterSeq: number; rows: number }[] = [];
++const events: EventStorePort = {
++  append: (...args) => container.ports.events.append(...args),
++  subscribe: (...args) => container.ports.events.subscribe(...args),
++  async read(runId, afterSeq = 0, limit) {
++    const result = await container.ports.events.read(runId, afterSeq, limit);
++    reads.push({ afterSeq, rows: result.length });
++    return result;
++  },
++};
++const manager = new RunManager({ ...container.ports, events }, container.settings);
++const app = await buildApp({ ...container, manager }, { logger: false });
++try {
++  const created = await app.inject({
++    method: 'POST',
++    url: '/loops',
++    payload: {
++      definition: {
++        schemaVersion: CURRENT_DEFINITION_FORMAT,
++        name: 'Thread read measurement',
++        nodes: [
++          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++          { id: 'done', kind: 'exit', label: 'Done', config: {} },
++        ],
++        edges: [{ id: 'edge', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
++      },
++    },
++  });
++  if (created.statusCode !== 201) throw new Error(created.body);
++  const loopId = created.json<{ loop: { id: string } }>().loop.id;
++  const published = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/publish' });
++  if (published.statusCode !== 200) throw new Error(published.body);
++  const started = await app.inject({
++    method: 'POST',
++    url: '/loops/' + loopId + '/runs',
++    payload: {},
++  });
++  const run = RunRecordSchema.parse(started.json<{ run: unknown }>().run);
++  const initial = await container.repos.runs.getInitialThread(run.id);
++  if (!initial) throw new Error('Missing admitted seed');
++  const drafts: EventDraft[] = [];
++  for (let i = 0; i < 5000; i++)
++    drafts.push(
++      {
++        type: 'node.started',
++        nodeId: 'measure',
++        kind: 'mutate',
++        attempt: i + 1,
++        configHash: '0'.repeat(64),
++      },
++      {
++        type: 'node.finished',
++        nodeId: 'measure',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/measured', value: i }],
++      },
++    );
++  for (let offset = 0; offset < drafts.length; offset += 200)
++    await events.append(run.id, drafts.slice(offset, offset + 200));
++  const history = await events.read(run.id);
++  const finalSeq = history.at(-1)?.seq;
++  if (!finalSeq) throw new Error('Empty history');
++  const expected = reconcileThread(initial, history);
++  const url = await app.listen({ host: '127.0.0.1', port: 5933 });
++  const samples = [];
++  for (const [name, seq] of [
++    ['current', finalSeq],
++    ['lagging-200-events', finalSeq - 200],
++  ] as const) {
++    await container.repos.runs.saveThread(
++      run.id,
++      reconcileThread(initial, history, undefined, seq),
++      seq,
++      replayStateAt(history, seq),
++    );
++    const ms: number[] = [];
++    const counts: typeof reads = [];
++    for (let i = 0; i < 6; i++) {
++      reads.length = 0;
++      const begin = performance.now();
++      const response = await fetch(url + '/runs/' + run.id + '/thread');
++      if (!response.ok) throw new Error('Thread HTTP ' + response.status);
++      const thread = ContextThreadSchema.parse(await response.json());
++      const elapsed = performance.now() - begin;
++      if (JSON.stringify(thread) !== JSON.stringify(expected))
++        throw new Error('Thread disagreement');
++      if (i > 0) {
++        ms.push(elapsed);
++        counts.push(...reads);
++      }
++    }
++    const sorted = [...ms].sort((a, b) => a - b);
++    samples.push({
++      name,
++      checkpointSeq: seq,
++      ms,
++      medianMs: sorted[2],
++      minMs: sorted[0],
++      maxMs: sorted[4],
++      reads: counts,
++    });
++  }
++  const output =
++    JSON.stringify(
++      {
++        label: process.env['GG_THREAD_MEASURE_LABEL'],
++        runtime: process.version,
++        events: history.length,
++        finalSeq,
++        warmupPerCase: 1,
++        samplesPerCase: 5,
++        transport: 'loopback HTTP, physical SQLite, controlled appended node pairs',
++        samples,
++      },
++      null,
++      2,
++    ) + '\n';
++  const target = process.env['GG_THREAD_MEASURE_OUTPUT'];
++  if (!target) throw new Error('GG_THREAD_MEASURE_OUTPUT is required');
++  await writeFile(target, output);
++  process.stdout.write('Measurement saved\n');
++} finally {
++  manager.stop();
++  await manager.waitForIdle();
++  await app.close();
++  await container.stop();
++}
+diff --git a/apps/api/src/testing/test-app.ts b/apps/api/src/testing/test-app.ts
+index 758811b5..05ebc8ad 100644
+--- a/apps/api/src/testing/test-app.ts
++++ b/apps/api/src/testing/test-app.ts
+@@ -107,3 +107,5 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
+     },
+   };
+ }
++
++export { createThreadHistoryFixture } from './thread-history.js';
+diff --git a/apps/api/src/testing/thread-history.ts b/apps/api/src/testing/thread-history.ts
+new file mode 100644
+index 00000000..beee0bba
+--- /dev/null
++++ b/apps/api/src/testing/thread-history.ts
+@@ -0,0 +1,152 @@
++import { mkdtemp } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import {
++  CURRENT_DEFINITION_FORMAT,
++  type ContextThread,
++  type LoopDefinitionInput,
++} from '@graphgoblin/contracts';
++import type { ReplayState } from '@graphgoblin/domain';
++import { RunManager, type ScriptPort } from '@graphgoblin/engine';
++import { SqliteRunRepository } from '@graphgoblin/infrastructure/sqlite';
++import { buildApp } from '../app.js';
++import { createContainer } from '../container.js';
++import { loadConfig } from '../config.js';
++
++/** Delayed writes injected at the public repository port. Events still commit to real SQLite. */
++class DelayedSnapshots extends SqliteRunRepository {
++  pending: { runId: string; thread: ContextThread; seq: number; replayState: ReplayState }[] = [];
++  override saveThread(
++    runId: string,
++    thread: ContextThread,
++    seq: number,
++    replayState: ReplayState,
++  ): Promise<void> {
++    this.pending.push({ runId, thread, seq, replayState });
++    return Promise.resolve();
++  }
++  async flush(): Promise<void> {
++    for (const item of this.pending.splice(0))
++      await super.saveThread(item.runId, item.thread, item.seq, item.replayState);
++  }
++}
++export const threadHistoryLoop: LoopDefinitionInput = {
++  schemaVersion: CURRENT_DEFINITION_FORMAT,
++  name: 'Thread history reconciliation',
++  nodes: [
++    { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++    {
++      id: 'prepare',
++      kind: 'mutate',
++      label: 'Prepare',
++      config: {
++        operations: [
++          { op: 'set', path: '/vars/prepared', value: { kind: 'literal', value: true } },
++        ],
++      },
++    },
++    {
++      id: 'work',
++      kind: 'script',
++      label: 'Work',
++      config: { command: 'controlled-script', stdout: 'patch' },
++    },
++    { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'vars' } },
++  ],
++  edges: [
++    { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'prepare' } },
++    { id: 'b', from: { node: 'prepare', port: 'out' }, to: { node: 'work' } },
++    { id: 'c', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
++  ],
++};
++/** Physical disposable store, retained for orchestrator inspection. No provider calls. */
++export async function createThreadHistoryFixture(webDist?: string) {
++  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-'));
++  let calls = 0;
++  let release!: () => void;
++  let entered!: () => void;
++  const working = new Promise<void>((resolve) => {
++    entered = resolve;
++  });
++  const blocked = new Promise<void>((resolve) => {
++    release = resolve;
++  });
++  const scripts: ScriptPort = {
++    async run() {
++      calls++;
++      if (calls > 1) {
++        entered();
++        await blocked;
++      }
++      const stdout = JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
++      return {
++        exitCode: calls === 1 ? 1 : 0,
++        stdout,
++        stderr: '',
++        stdoutBytes: stdout.length,
++        stderrBytes: 0,
++        stdoutOverflow: false,
++        stderrOverflow: false,
++        timedOut: false,
++      };
++    },
++  };
++  const base = await createContainer(
++    loadConfig({
++      GG_DATA_DIR: dataDir,
++      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++      GG_SWAGGER_UI: 'false',
++      ...(webDist ? { GG_WEB_DIST: webDist } : {}),
++    }),
++    { scripts, startTimers: false },
++  );
++  await base.start();
++  base.manager.stop();
++  const snapshots = new DelayedSnapshots(base.handle.db);
++  const manager = new RunManager({ ...base.ports, runs: snapshots }, base.settings);
++  await manager.start();
++  const app = await buildApp({ ...base, manager }, { logger: false });
++  await app.ready();
++  const created = await app.inject({
++    method: 'POST',
++    url: '/loops',
++    payload: { definition: threadHistoryLoop },
++  });
++  if (created.statusCode !== 201) throw new Error(created.body);
++  const loopId = created.json<{ loop: { id: string } }>().loop.id;
++  const published = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/publish' });
++  if (published.statusCode !== 200) throw new Error(published.body);
++  return {
++    app,
++    manager,
++    snapshots,
++    dataDir,
++    loopId,
++    working,
++    release,
++    repos: base.repos,
++    async bytes(runId: string) {
++      return JSON.stringify({
++        run: (
++          await base.handle.client.execute({
++            sql: 'SELECT * FROM runs WHERE id = ?',
++            args: [runId],
++          })
++        ).rows,
++        events: (
++          await base.handle.client.execute({
++            sql: 'SELECT * FROM run_events WHERE run_id = ? ORDER BY seq',
++            args: [runId],
++          })
++        ).rows,
++      });
++    },
++    async close() {
++      release();
++      manager.stop();
++      await manager.waitForIdle();
++      await app.close();
++      await base.stop();
++    },
++  };
++}
+diff --git a/apps/api/src/thread-history.test.ts b/apps/api/src/thread-history.test.ts
+new file mode 100644
+index 00000000..a4e07ca2
+--- /dev/null
++++ b/apps/api/src/thread-history.test.ts
+@@ -0,0 +1,164 @@
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { buildApp } from './app.js';
++import { createContainer } from './container.js';
++import { loadConfig } from './config.js';
++import { expect, it } from 'vitest';
++import type { ContextThread, RunRecord } from '@graphgoblin/contracts';
++import { createThreadHistoryFixture } from './testing/thread-history.js';
++
++it('reconciles persisted failure, unfinished resume and success without writing on reads', async () => {
++  const t = await createThreadHistoryFixture();
++  try {
++    const started = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    const { run } = started.json<{ run: RunRecord }>();
++    await t.manager.waitForIdle();
++    const check = async (status: string, visits: number, complete: boolean) => {
++      const before = await t.bytes(run.id);
++      expect((await t.app.inject('/runs/' + run.id)).json<RunRecord>().status).toBe(status);
++      const thread = (await t.app.inject('/runs/' + run.id + '/thread')).json<ContextThread>();
++      expect(thread.vars).toEqual({ prepared: true, ...(complete ? { completed: true } : {}) });
++      expect(thread.counters.nodeVisits.work).toBe(visits);
++      expect(await t.bytes(run.id)).toBe(before);
++      expect(await t.repos.runs.getThread(run.id)).not.toEqual(thread);
++    };
++    await check('failed', 1, false);
++    expect(
++      (await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' })).statusCode,
++    ).toBe(200);
++    await t.working;
++    await check('running', 2, false);
++    t.release();
++    await t.manager.waitForIdle();
++    await check('succeeded', 2, true);
++    await t.snapshots.flush();
++    expect((await t.app.inject('/runs/' + run.id + '/thread')).json()).toEqual(
++      await t.repos.runs.getThread(run.id),
++    );
++  } finally {
++    await t.close();
++  }
++});
++
++it('does not apply the resumed script patch when that attempt is cancelled', async () => {
++  const t = await createThreadHistoryFixture();
++  try {
++    const response = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    const { run } = response.json<{ run: RunRecord }>();
++    await t.manager.waitForIdle();
++    await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' });
++    await t.working;
++    await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/cancel' });
++    t.release();
++    await t.manager.waitForIdle();
++    const before = await t.bytes(run.id);
++    expect((await t.app.inject('/runs/' + run.id)).json<RunRecord>().status).toBe('cancelled');
++    const thread = (await t.app.inject('/runs/' + run.id + '/thread')).json<ContextThread>();
++    expect(thread.vars).toEqual({ prepared: true });
++    expect(thread.counters.nodeVisits.work).toBe(2);
++    expect(await t.bytes(run.id)).toBe(before);
++  } finally {
++    await t.close();
++  }
++});
++
++it('reopens the persisted failed history and reconciles reads without writing its stale snapshot', async () => {
++  const t = await createThreadHistoryFixture();
++  let runId: string;
++  try {
++    const response = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    runId = response.json<{ run: RunRecord }>().run.id;
++    await t.manager.waitForIdle();
++  } finally {
++    await t.close();
++  }
++  const reopened = await createContainer(
++    loadConfig({
++      GG_DATA_DIR: t.dataDir,
++      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++      GG_SWAGGER_UI: 'false',
++    }),
++    { startTimers: false },
++  );
++  await reopened.start();
++  const app = await buildApp(reopened, { logger: false });
++  try {
++    const before = await reopened.repos.runs.getThreadCheckpoint(runId);
++    const thread = (await app.inject('/runs/' + runId + '/thread')).json<ContextThread>();
++    expect(thread.vars).toEqual({ prepared: true });
++    expect(thread.counters.nodeVisits.work).toBe(1);
++    expect(await reopened.repos.runs.getThreadCheckpoint(runId)).toEqual(before);
++    expect((await app.inject('/runs/' + runId)).json<RunRecord>().status).toBe('failed');
++  } finally {
++    await app.close();
++    await reopened.stop();
++  }
++});
++
++it('REST preserves a different open visit at a persisted delayed-duplicate checkpoint', async () => {
++  const t = await createThreadHistoryFixture();
++  t.manager.stop();
++  let runId: string | undefined;
++  try {
++    const response = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    const { run } = response.json<{ run: RunRecord }>();
++    runId = run.id;
++    const initial = (await t.repos.runs.getInitialThread(run.id))!;
++    await t.repos.events.append(run.id, [
++      { type: 'node.started', nodeId: 'a', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
++      },
++      { type: 'node.started', nodeId: 'b', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++      },
++    ]);
++    const prefix = await t.repos.events.read(run.id);
++    const seq = prefix.at(-1)!.seq;
++    await t.repos.runs.saveThread(
++      run.id,
++      reconcileThread(initial, prefix),
++      seq,
++      replayStateAt(prefix, seq),
++    );
++    await t.repos.events.append(run.id, [
++      {
++        type: 'node.finished',
++        nodeId: 'b',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
++      },
++    ]);
++    const before = await t.bytes(run.id);
++    const result = await t.app.inject('/runs/' + run.id + '/thread');
++    expect(result.statusCode).toBe(200);
++    expect(result.json<ContextThread>().vars.items).toEqual(['a', 'b']);
++    expect(result.json()).toEqual(reconcileThread(initial, await t.repos.events.read(run.id)));
++    expect(await t.bytes(run.id)).toBe(before);
++  } finally {
++    if (runId) await t.manager.cancel(runId);
++    await t.close();
++  }
++});
+diff --git a/apps/api/src/wait-identity.test.ts b/apps/api/src/wait-identity.test.ts
+index bcc62d6b..5ab920cb 100644
+--- a/apps/api/src/wait-identity.test.ts
++++ b/apps/api/src/wait-identity.test.ts
+@@ -436,7 +436,7 @@ describe('wait rejection and acknowledgement boundaries', () => {
+     await first.container.timers.cancel(r.id);
+     const initial = await first.container.ports.runs.getInitialThread(r.id);
+     if (!initial) throw Error('initial thread');
+-    await first.container.ports.runs.saveThread(r.id, initial, 0);
++    await first.container.ports.runs.saveThread(r.id, initial, 0, { strict: false });
+     await first.container.ports.runs.update(r.id, {
+       status: 'paused',
+       pausedAt: first.clock.now().toISOString(),
+diff --git a/apps/mcp/src/thread-history.test.ts b/apps/mcp/src/thread-history.test.ts
+new file mode 100644
+index 00000000..11eab27e
+--- /dev/null
++++ b/apps/mcp/src/thread-history.test.ts
+@@ -0,0 +1,129 @@
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { expect, it } from 'vitest';
++import { createThreadHistoryFixture } from '@graphgoblin/api/testing';
++import { ContextThreadSchema, RunRecordSchema } from '@graphgoblin/contracts';
++import { Client } from '@modelcontextprotocol/sdk/client/index.js';
++import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
++import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
++import { createMcpServer } from './server.js';
++
++it('MCP reads agree through persisted failure and resume with stale snapshots', async () => {
++  const t = await createThreadHistoryFixture();
++  const apiUrl = await t.app.listen({ port: 0, host: '127.0.0.1' });
++  const server = createMcpServer({ apiUrl });
++  const client = new Client({ name: 'thread-history-test', version: '1' });
++  const [ct, st] = InMemoryTransport.createLinkedPair();
++  await server.connect(st);
++  await client.connect(ct);
++  async function call(name: string, runId: string) {
++    const result = CallToolResultSchema.parse(
++      await client.callTool({ name, arguments: { runId } }),
++    );
++    expect(result.isError).toBeFalsy();
++    const text = result.content[0];
++    if (text?.type !== 'text') throw new Error('Missing tool result');
++    return JSON.parse(text.text) as unknown;
++  }
++  try {
++    const response = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    const run = RunRecordSchema.parse(response.json<{ run: unknown }>().run);
++    await t.manager.waitForIdle();
++    for (const status of ['failed', 'running', 'succeeded']) {
++      if (status === 'running') {
++        await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' });
++        await t.working;
++      }
++      if (status === 'succeeded') {
++        t.release();
++        await t.manager.waitForIdle();
++      }
++      const before = await t.bytes(run.id);
++      expect(RunRecordSchema.parse(await call('get_run', run.id)).status).toBe(status);
++      const thread = ContextThreadSchema.parse(await call('get_run_thread', run.id));
++      expect(thread.vars).toEqual({
++        prepared: true,
++        ...(status === 'succeeded' ? { completed: true } : {}),
++      });
++      expect(thread.counters.nodeVisits.work).toBe(status === 'failed' ? 1 : 2);
++      expect(await t.bytes(run.id)).toBe(before);
++    }
++  } finally {
++    await client.close();
++    await server.close();
++    await t.close();
++  }
++});
++
++it('MCP preserves a different open visit at a persisted delayed-duplicate checkpoint', async () => {
++  const t = await createThreadHistoryFixture();
++  t.manager.stop();
++  let runId: string | undefined;
++  const apiUrl = await t.app.listen({ port: 0, host: '127.0.0.1' });
++  const server = createMcpServer({ apiUrl });
++  const client = new Client({ name: 'checkpoint-state-test', version: '1' });
++  const [ct, st] = InMemoryTransport.createLinkedPair();
++  await server.connect(st);
++  await client.connect(ct);
++  try {
++    const response = await t.app.inject({
++      method: 'POST',
++      url: '/loops/' + t.loopId + '/runs',
++      payload: {},
++    });
++    const run = RunRecordSchema.parse(response.json<{ run: unknown }>().run);
++    runId = run.id;
++    const initial = (await t.repos.runs.getInitialThread(run.id))!;
++    await t.repos.events.append(run.id, [
++      { type: 'node.started', nodeId: 'a', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
++      },
++      { type: 'node.started', nodeId: 'b', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++      },
++    ]);
++    const prefix = await t.repos.events.read(run.id);
++    const seq = prefix.at(-1)!.seq;
++    await t.repos.runs.saveThread(
++      run.id,
++      reconcileThread(initial, prefix),
++      seq,
++      replayStateAt(prefix, seq),
++    );
++    await t.repos.events.append(run.id, [
++      {
++        type: 'node.finished',
++        nodeId: 'b',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
++      },
++    ]);
++    const before = await t.bytes(run.id);
++    const result = CallToolResultSchema.parse(
++      await client.callTool({ name: 'get_run_thread', arguments: { runId: run.id } }),
++    );
++    expect(result.isError).toBeFalsy();
++    const text = result.content[0];
++    if (text?.type !== 'text') throw new Error('Missing tool result');
++    const thread = ContextThreadSchema.parse(JSON.parse(text.text));
++    expect(thread.vars.items).toEqual(['a', 'b']);
++    expect(thread).toEqual(reconcileThread(initial, await t.repos.events.read(run.id)));
++    expect(await t.bytes(run.id)).toBe(before);
++  } finally {
++    await client.close();
++    await server.close();
++    if (runId) await t.manager.cancel(runId);
++    await t.close();
++  }
++});
+diff --git a/apps/mcp/src/tools.ts b/apps/mcp/src/tools.ts
+index 5f3879cd..3bd9e323 100644
+--- a/apps/mcp/src/tools.ts
++++ b/apps/mcp/src/tools.ts
+@@ -257,7 +257,7 @@ export function registerTools(
+     {
+       title: 'Get a run thread',
+       description:
+-        "Get a run's context thread: the messages, variables, artifacts, per-node outputs, last output, and usage counters the loop has accumulated. Use it to explain what a run did or to find an intermediate value. It can be large; prefer get_run when you only need the status or result.",
++        "Get a run's context thread reconciled through its durable event log: the messages, variables, artifacts, per-node outputs, last output, and usage counters the loop has accumulated. Use it to explain what a run did or to find an intermediate value. It can be large; prefer get_run when you only need the status or result.",
+       inputSchema: { runId },
+       annotations: { readOnlyHint: true, openWorldHint: false },
+     },
+diff --git a/apps/web/e2e/server.ts b/apps/web/e2e/server.ts
+index 9aa0bb99..e80253be 100644
+--- a/apps/web/e2e/server.ts
++++ b/apps/web/e2e/server.ts
+@@ -17,7 +17,12 @@ import { dirname, join, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
+ import { readinessMessage } from '@graphgoblin/domain';
+-import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
++import {
++  createTestApp,
++  createThreadHistoryFixture,
++  startFakeClassifierEndpoint,
++  type TestApp,
++} from '@graphgoblin/api/testing';
+ import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
+ import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
+ import {
+@@ -48,6 +53,7 @@ class E2eControlError extends Error {
+ 
+ const apps: TestApp[] = [];
+ const instances = new Map<string, E2eInstance>();
++const threadHistories = new Map<string, Awaited<ReturnType<typeof createThreadHistoryFixture>>>();
+ const closers: (() => Promise<void>)[] = [];
+ let nextInstanceId = 1;
+ /** Loopback primitive endpoints started for classifier specs, by their API root. */
+@@ -481,7 +487,47 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       });
+       return { configured: true };
+     }
++    case '/thread-history': {
++      const id = z.string().parse(body['instanceId']);
++      const history = threadHistories.get(id);
++      if (!history) throw new E2eControlError('unknown thread-history instance');
++      switch (body['action']) {
++        case 'start':
++          await history.manager.start();
++          await history.manager.waitForIdle();
++          break;
++        case 'working':
++          await history.working;
++          break;
++        case 'release':
++          history.release();
++          await history.manager.waitForIdle();
++          break;
++        case 'flush':
++          await history.snapshots.flush();
++          break;
++        case 'snapshot': {
++          const runId = z.string().parse(body['runId']);
++          return {
++            snapshot: await history.repos.runs.getThread(runId),
++            bytes: await history.bytes(runId),
++          };
++        }
++        default:
++          throw new E2eControlError('unknown thread-history action');
++      }
++      return { ok: true };
++    }
+     case '/apps': {
++      if (body['threadHistory'] === true) {
++        const history = await createThreadHistoryFixture(dist);
++        history.manager.stop();
++        const instanceId = 'thread-history-' + nextInstanceId++;
++        const url = await history.app.listen({ host: '127.0.0.1', port: 0 });
++        threadHistories.set(instanceId, history);
++        closers.push(() => history.close());
++        return { instanceId, url, loopId: history.loopId };
++      }
+       const extra = await startApp(
+         (body['env'] as Record<string, string> | undefined) ?? {},
+         body['requireApiKey'] === true,
+diff --git a/apps/web/e2e/thread-history.spec.ts b/apps/web/e2e/thread-history.spec.ts
+new file mode 100644
+index 00000000..ee830c02
+--- /dev/null
++++ b/apps/web/e2e/thread-history.spec.ts
+@@ -0,0 +1,116 @@
++import { writeFile } from 'node:fs/promises';
++import { ContextThreadSchema, RunRecordSchema, type ContextThread } from '@graphgoblin/contracts';
++import type { Page } from '@playwright/test';
++import { test, expect, control } from './fixtures.js';
++
++test('open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots', async ({
++  browser,
++  request,
++}) => {
++  test.setTimeout(180_000);
++  const instance = await control(request, '/apps', { threadHistory: true });
++  const ready = { url: String(instance['url']), loopId: String(instance['loopId']) };
++  const action = (name: string, runId?: string) =>
++    control(request, '/thread-history', {
++      instanceId: instance['instanceId'],
++      action: name,
++      runId,
++    });
++  const context = await browser.newContext();
++  try {
++    const open = await context.newPage();
++    const reloaded = await context.newPage();
++    const observations: {
++      step: string;
++      api: ContextThread;
++      existing: ContextThread;
++      reload: ContextThread;
++      snapshot: ContextThread;
++      readsUnchanged: boolean;
++      status: string;
++    }[] = [];
++    const response = await request.post(ready.url + '/loops/' + ready.loopId + '/runs', {
++      data: {},
++    });
++    expect(response.status()).toBe(202);
++    const run = RunRecordSchema.parse((await response.json()).run);
++    for (const page of [open, reloaded]) {
++      await page.bringToFront();
++      await page.goto(ready.url + '/app/runs/' + run.id);
++      await page.getByRole('button', { name: 'Full thread JSON' }).click();
++    }
++    await action('start');
++    async function browserThread(page: Page) {
++      await page.bringToFront();
++      return ContextThreadSchema.parse(
++        JSON.parse(await page.getByTestId('thread-json').innerText()),
++      );
++    }
++    async function snapshot() {
++      const value = await action('snapshot', run.id);
++      if (typeof value['bytes'] !== 'string') throw new Error('Missing stored bytes');
++      return { snapshot: ContextThreadSchema.parse(value['snapshot']), bytes: value['bytes'] };
++    }
++    async function check(step: string) {
++      const before = await snapshot();
++      const api = ContextThreadSchema.parse(
++        await (await request.get(ready.url + '/runs/' + run.id + '/thread')).json(),
++      );
++      const record = RunRecordSchema.parse(
++        await (await request.get(ready.url + '/runs/' + run.id)).json(),
++      );
++      await expect.poll(() => browserThread(open)).toEqual(api);
++      const existing = await browserThread(open);
++      await reloaded.reload();
++      await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
++      await expect.poll(() => browserThread(reloaded)).toEqual(api);
++      const reload = await browserThread(reloaded);
++      const after = await snapshot();
++      observations.push({
++        step,
++        status: record.status,
++        api,
++        existing,
++        reload,
++        snapshot: after.snapshot,
++        readsUnchanged: before.bytes === after.bytes,
++      });
++    }
++    await check('failed');
++    // Lose the transport while both tabs hold a terminal event, then resume from another client.
++    const failedPoll = context.waitForEvent('requestfailed', {
++      predicate: (request) => request.url().startsWith(ready.url + '/runs/' + run.id),
++    });
++    await context.setOffline(true);
++    const outage = await failedPoll;
++    expect(outage.failure()?.errorText).toBeTruthy();
++    expect((await request.post(ready.url + '/runs/' + run.id + '/resume')).ok()).toBe(true);
++    await action('working');
++    await context.setOffline(false);
++    await check('resumed-unfinished');
++    await action('release');
++    await check('succeeded');
++    await action('flush');
++    if (process.env['GG_THREAD_EVIDENCE'])
++      await writeFile(
++        process.env['GG_THREAD_EVIDENCE'],
++        JSON.stringify(
++          { outage: { url: outage.url(), error: outage.failure()?.errorText }, observations },
++          null,
++          2,
++        ),
++      );
++    for (const item of observations) {
++      const expected = {
++        prepared: true,
++        ...(item.step === 'succeeded' ? { completed: true } : {}),
++      };
++      expect(item.api.vars, item.step).toEqual(expected);
++      expect(item.existing, item.step).toEqual(item.api);
++      expect(item.reload, item.step).toEqual(item.api);
++      expect(item.readsUnchanged, item.step).toBe(true);
++    }
++  } finally {
++    await context.close();
++  }
++});
+diff --git a/apps/web/src/runs/attempt-history.test.tsx b/apps/web/src/runs/attempt-history.test.tsx
+new file mode 100644
+index 00000000..9896ba01
+--- /dev/null
++++ b/apps/web/src/runs/attempt-history.test.tsx
+@@ -0,0 +1,99 @@
++import { act, fireEvent, screen, waitFor } from '@testing-library/react';
++import { expect, it } from 'vitest';
++import { sampleThread } from '@graphgoblin/contracts/testing';
++import { ContextThreadSchema } from '@graphgoblin/contracts';
++import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++import { useRunEventStore } from './event-store.js';
++
++it.each([false, true])(
++  'an inspector with cached failure=%s follows a remote resume and success',
++  async (cached) => {
++    const api = new FakeApi();
++    const run = api.addRun({
++      status: 'failed',
++      lastEventSeq: 5,
++      failure: { code: 'SCRIPT_EXIT_CODE', message: 'controlled', resumable: true, nodeId: 'work' },
++    });
++    const seed = sampleThread({
++      vars: {},
++      counters: {
++        nodeVisits: {},
++        usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningOutputTokens: 0 },
++      },
++    });
++    api.threads.set(run.id, seed);
++    const failed = [
++      event(run.id, 1, 'run.queued', { ...queuedFields(), initialThread: seed }),
++      event(run.id, 2, 'node.started', {
++        nodeId: 'prepare',
++        kind: 'mutate',
++        attempt: 1,
++        configHash: 'h',
++      }),
++      event(run.id, 3, 'node.finished', {
++        nodeId: 'prepare',
++        patch: [{ op: 'add', path: '/vars/prepared', value: true }],
++        durationMs: 1,
++      }),
++      event(run.id, 4, 'node.started', {
++        nodeId: 'work',
++        kind: 'script',
++        attempt: 1,
++        configHash: 'h',
++      }),
++      event(run.id, 5, 'run.failed', { failure: run.failure! }),
++    ];
++    for (const e of failed) api.pushEvent(run.id, e);
++    if (cached) useRunEventStore.getState().append(run.id, ...failed);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      await screen.findByRole('button', { name: 'Full thread JSON' });
++      fireEvent.click(screen.getByRole('button', { name: 'Full thread JSON' }));
++      const thread = () =>
++        ContextThreadSchema.parse(JSON.parse(screen.getByTestId('thread-json').textContent ?? ''));
++      await waitFor(() => expect(thread().vars).toEqual({ prepared: true }));
++      act(() => {
++        api.runs.set(run.id, { ...run, status: 'running', failure: undefined, lastEventSeq: 7 });
++        api.pushEvent(
++          run.id,
++          event(run.id, 6, 'run.resumed', { actor: { kind: 'user', id: 'test' } }),
++        );
++        api.pushEvent(
++          run.id,
++          event(run.id, 7, 'node.started', {
++            nodeId: 'work',
++            kind: 'script',
++            attempt: 2,
++            configHash: 'h',
++          }),
++        );
++      });
++      await waitFor(() => expect(thread().counters.nodeVisits.work).toBe(2), { timeout: 6000 });
++      expect(thread().vars).toEqual({ prepared: true });
++      act(() => {
++        api.runs.set(run.id, { ...run, status: 'succeeded', failure: undefined, lastEventSeq: 9 });
++        api.pushEvent(
++          run.id,
++          event(run.id, 8, 'node.finished', {
++            nodeId: 'work',
++            durationMs: 1,
++            patch: [{ op: 'add', path: '/vars/completed', value: true }],
++          }),
++        );
++        api.pushEvent(
++          run.id,
++          event(run.id, 9, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++        );
++      });
++      await waitFor(() => expect(thread().vars).toEqual({ prepared: true, completed: true }), {
++        timeout: 6000,
++      });
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++      useRunEventStore.getState().clear(run.id);
++    }
++  },
++  20_000,
++);
+diff --git a/apps/web/src/runs/follow-run-attempts.test.ts b/apps/web/src/runs/follow-run-attempts.test.ts
+new file mode 100644
+index 00000000..02c0289a
+--- /dev/null
++++ b/apps/web/src/runs/follow-run-attempts.test.ts
+@@ -0,0 +1,246 @@
++import type { RunFailure } from '@graphgoblin/contracts';
++import { afterEach, expect, it, vi } from 'vitest';
++import { createAppClient } from '../api/context.js';
++import { event, runRecord } from '../__fixtures__/fake-api.js';
++import { followRunAttempts } from './follow-run-attempts.js';
++
++afterEach(() => vi.useRealTimers());
++const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
++const failure: RunFailure = { code: 'SCRIPT_EXIT_CODE', message: 'failure', resumable: true };
++const resumed = (seq: number) =>
++  event(id, seq, 'run.resumed', { actor: { kind: 'user', id: 'test' } });
++function observer(start = 0) {
++  let cursor = start;
++  const recorded: ReturnType<typeof resumed>[] = [];
++  return {
++    events: () => recorded,
++    changed: vi.fn(),
++    cursor: () => cursor,
++    append: vi.fn((events: ReturnType<typeof resumed>[]) => {
++      recorded.push(...events);
++      cursor = events.at(-1)?.seq ?? cursor;
++    }),
++    running: vi.fn(),
++    finished: vi.fn(),
++    error: vi.fn(),
++  };
++}
++it('catches up across historical terminals in pages and stops at the captured boundary', async () => {
++  vi.useFakeTimers();
++  const read = vi.fn((request: Request) => {
++    const url = new URL(request.url);
++    if (!url.pathname.endsWith('/events'))
++      return Promise.resolve(
++        Response.json(runRecord({ id, status: 'succeeded', lastEventSeq: 4 })),
++      );
++    const after = Number(url.searchParams.get('after'));
++    const item =
++      after === 1
++        ? event(id, 2, 'run.failed', { failure })
++        : after === 2
++          ? resumed(3)
++          : event(id, 4, 'run.finished', { status: 'succeeded', outcome: 'success' });
++    return Promise.resolve(Response.json({ items: [item], nextAfter: after + 1, hasMore: true }));
++  });
++  const o = observer(1);
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  await vi.advanceTimersByTimeAsync(0);
++  expect(o.cursor()).toBe(4);
++  expect(read).toHaveBeenCalledTimes(4);
++  expect(o.finished).toHaveBeenCalledOnce();
++  expect(o.error).not.toHaveBeenCalled();
++  stop();
++});
++it('checks a resumable failure, catches up, then opens a new live tail', async () => {
++  vi.useFakeTimers();
++  let running = false;
++  const read = vi.fn((request: Request) =>
++    Promise.resolve(
++      Response.json(
++        request.url.includes('/events')
++          ? { items: [resumed(2)], nextAfter: 2, hasMore: false }
++          : runRecord({
++              id,
++              status: running ? 'running' : 'failed',
++              failure,
++              lastEventSeq: running ? 2 : 1,
++            }),
++      ),
++    ),
++  );
++  const o = observer(1);
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  await vi.advanceTimersByTimeAsync(0);
++  expect(o.finished).toHaveBeenCalledOnce();
++  running = true;
++  await vi.advanceTimersByTimeAsync(2_000);
++  expect(o.running).toHaveBeenCalledOnce();
++  expect(o.cursor()).toBe(2);
++  stop();
++  await vi.advanceTimersByTimeAsync(2_000 * 2);
++  expect(read).toHaveBeenCalledTimes(3);
++});
++it.each(['failed', 'cancelled'] as const)('does not poll non-resumable %s', async (status) => {
++  vi.useFakeTimers();
++  const read = vi.fn(() =>
++    Promise.resolve(Response.json(runRecord({ id, status, lastEventSeq: 0 }))),
++  );
++  const o = observer();
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  await vi.advanceTimersByTimeAsync(2_000 * 2);
++  expect(read).toHaveBeenCalledOnce();
++  expect(o.finished).toHaveBeenCalledOnce();
++  stop();
++});
++it('reports read errors and a non-advancing page', async () => {
++  vi.useFakeTimers();
++  for (const network of [true, false]) {
++    const read = (request: Request) => {
++      if (network) return Promise.reject(new Error('offline'));
++      return Promise.resolve(
++        Response.json(
++          request.url.includes('/events')
++            ? { items: [], hasMore: true, nextAfter: 0 }
++            : runRecord({ id, lastEventSeq: 2 }),
++        ),
++      );
++    };
++    const o = observer();
++    const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++    await vi.advanceTimersByTimeAsync(0);
++    expect(o.error).toHaveBeenCalledOnce();
++    expect(o.running).not.toHaveBeenCalled();
++    stop();
++  }
++});
++it.each([false, true])(
++  'cancels an in-flight read (page=%s) without publishing or reporting an error',
++  async (page) => {
++    vi.useFakeTimers();
++    let resolveRead!: (response: Response) => void;
++    const pending = new Promise<Response>((resolve) => {
++      resolveRead = resolve;
++    });
++    const read = (request: Request) =>
++      page && !request.url.includes('/events')
++        ? Promise.resolve(Response.json(runRecord({ id, lastEventSeq: 1 })))
++        : pending;
++    const o = observer();
++    const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++    await vi.advanceTimersByTimeAsync(0);
++    stop();
++    resolveRead(
++      Response.json(
++        page ? { items: [resumed(1)], hasMore: false, nextAfter: 1 } : runRecord({ id }),
++      ),
++    );
++    await vi.advanceTimersByTimeAsync(0);
++    expect(o.append).not.toHaveBeenCalled();
++    expect(o.running).not.toHaveBeenCalled();
++    expect(o.error).not.toHaveBeenCalled();
++  },
++);
++
++it('recovers observation after a transport loss with bounded backoff, preserving the cursor', async () => {
++  vi.useFakeTimers();
++  let offline = true;
++  const read = vi.fn(() =>
++    offline
++      ? Promise.reject(new TypeError('offline'))
++      : Promise.resolve(Response.json(runRecord({ id, status: 'running', lastEventSeq: 7 }))),
++  );
++  const o = observer(7);
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  await vi.advanceTimersByTimeAsync(120_000);
++  expect(read.mock.calls.length).toBeLessThan(10);
++  expect(o.error).toHaveBeenCalled();
++  offline = false;
++  await vi.advanceTimersByTimeAsync(30_000);
++  expect(o.running).toHaveBeenCalledOnce();
++  expect(o.cursor()).toBe(7);
++  stop();
++});
++
++it('exposes a permanent HTTP refusal without retrying it', async () => {
++  vi.useFakeTimers();
++  const read = vi.fn(() =>
++    Promise.resolve(
++      Response.json(
++        {
++          type: 'about:blank',
++          title: 'RUN_NOT_FOUND',
++          status: 404,
++          code: 'RUN_NOT_FOUND',
++        },
++        { status: 404 },
++      ),
++    ),
++  );
++  const o = observer();
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  await vi.advanceTimersByTimeAsync(60_000);
++  expect(read).toHaveBeenCalledOnce();
++  expect(o.error).toHaveBeenCalledOnce();
++  stop();
++});
++
++it('settles completion that overtakes the captured run snapshot and refreshes the lagging snapshot', async () => {
++  vi.useFakeTimers();
++  const active = runRecord({ id, status: 'running', currentNodeId: 'done', lastEventSeq: 2 });
++  let current = active;
++  const tail = [
++    event(id, 2, 'run.started', { attempt: 1 }),
++    event(id, 3, 'node.started', {
++      nodeId: 'done',
++      kind: 'exit',
++      attempt: 1,
++      configHash: '0'.repeat(64),
++    }),
++    event(id, 4, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
++    event(id, 5, 'node.finished', { nodeId: 'done', patch: [], durationMs: 1 }),
++    event(id, 6, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++  ];
++  const read = vi.fn((request: Request) => {
++    if (request.url.includes('/events')) {
++      current = { ...active, status: 'succeeded', lastEventSeq: 6 };
++      return Promise.resolve(Response.json({ items: tail, nextAfter: 6, hasMore: false }));
++    }
++    return Promise.resolve(Response.json(current));
++  });
++  const o = observer();
++  o.append([event(id, 1, 'run.queued', { versionId: active.versionId, pinned: active.pinned })]);
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  try {
++    await vi.advanceTimersByTimeAsync(0);
++    expect(o.finished).toHaveBeenCalledOnce();
++    expect(o.running).not.toHaveBeenCalled();
++    await vi.advanceTimersByTimeAsync(2_000);
++    expect(o.changed).toHaveBeenCalledOnce();
++    await vi.advanceTimersByTimeAsync(10_000);
++    expect(read).toHaveBeenCalledTimes(3);
++  } finally {
++    stop();
++  }
++});
++
++it('reports a final page that cannot reach the observed run cursor', async () => {
++  vi.useFakeTimers();
++  const read = (request: Request) =>
++    Promise.resolve(
++      Response.json(
++        request.url.includes('/events')
++          ? { items: [], nextAfter: 0, hasMore: false }
++          : runRecord({ id, lastEventSeq: 3 }),
++      ),
++    );
++  const o = observer();
++  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
++  try {
++    await vi.advanceTimersByTimeAsync(0);
++    expect(o.error).toHaveBeenCalledOnce();
++    expect(o.running).not.toHaveBeenCalled();
++    expect(o.finished).not.toHaveBeenCalled();
++  } finally {
++    stop();
++  }
++});
+diff --git a/apps/web/src/runs/follow-run-attempts.ts b/apps/web/src/runs/follow-run-attempts.ts
+new file mode 100644
+index 00000000..a2b28185
+--- /dev/null
++++ b/apps/web/src/runs/follow-run-attempts.ts
+@@ -0,0 +1,101 @@
++import {
++  GraphGoblinApiError,
++  runs,
++  TERMINAL_RUN_EVENT_TYPES,
++  type GraphGoblinClient,
++} from '@graphgoblin/api-client';
++import type { RunEvent, RunStatus } from '@graphgoblin/contracts';
++import { isTerminal, summarizeRun } from '@graphgoblin/domain';
++
++/** Two seconds keeps remote resumes visible while limiting idle checks to one per interval. */
++const RUN_OBSERVATION_POLL_MS = 2000;
++
++/**
++ * Catch up past historical terminals in finite JSON pages, then follow an active SSE tail.
++ * Durable lifecycle evidence can overtake the captured row; observe that outcome and recheck
++ * the row until it catches up. Only resumable failures otherwise need continued checks.
++ */
++export function followRunAttempts(
++  client: GraphGoblinClient,
++  runId: string,
++  observer: {
++    cursor(): number;
++    events(): readonly RunEvent[];
++    append(events: RunEvent[]): void;
++    changed(): void;
++    running(): void;
++    finished(): void;
++    error(error: unknown): void;
++  },
++): () => void {
++  const controller = new AbortController();
++  let failures = 0;
++  let previous: { status: RunStatus; seq: number } | undefined;
++  let timer: ReturnType<typeof setTimeout> | undefined;
++  const refresh = async () => {
++    try {
++      // A continuously growing log cannot keep this read looping beyond its captured boundary.
++      const run = await runs.get(client, runId, { signal: controller.signal });
++      const changed =
++        previous === undefined ||
++        previous.status !== run.status ||
++        previous.seq !== run.lastEventSeq;
++      previous = { status: run.status, seq: run.lastEventSeq };
++      let appended = false;
++      while (!controller.signal.aborted && observer.cursor() < run.lastEventSeq) {
++        const after = observer.cursor();
++        const page = await runs.events(client, runId, { after, limit: 500 });
++        if (controller.signal.aborted) return;
++        observer.append(page.items);
++        appended ||= page.items.length > 0;
++        if (!page.hasMore) {
++          if (observer.cursor() < run.lastEventSeq) throw new Error('Run history is incomplete');
++          break;
++        }
++        if (observer.cursor() <= after)
++          throw new Error('Run history page did not advance its cursor');
++      }
++      if (controller.signal.aborted) return;
++      // Appends already notify the inspector. Metadata can also catch up without another event.
++      if (changed && !appended) observer.changed();
++      if (controller.signal.aborted) return;
++      const events = observer.events();
++      const status = events.length ? summarizeRun(events).status : run.status;
++      if (!isTerminal(status)) {
++        observer.running();
++        return;
++      }
++      failures = 0;
++      observer.finished();
++      if (controller.signal.aborted) return;
++      const terminal = events.findLast((event) => TERMINAL_RUN_EVENT_TYPES.has(event.type));
++      const failure = terminal
++        ? terminal.type === 'run.failed'
++          ? terminal.failure
++          : undefined
++        : run.failure;
++      if (status !== run.status || (status === 'failed' && failure?.resumable))
++        timer = setTimeout(() => {
++          void refresh();
++        }, RUN_OBSERVATION_POLL_MS);
++    } catch (error) {
++      if (controller.signal.aborted) return;
++      observer.error(error);
++      if (
++        error instanceof TypeError ||
++        (error instanceof GraphGoblinApiError && error.status === 0)
++      ) {
++        // Retry read-only observation after transport loss with bounded exponential backoff.
++        const delay = Math.min(30_000, RUN_OBSERVATION_POLL_MS * 2 ** failures++);
++        timer = setTimeout(() => {
++          void refresh();
++        }, delay);
++      }
++    }
++  };
++  void refresh();
++  return () => {
++    controller.abort();
++    clearTimeout(timer);
++  };
++}
+diff --git a/apps/web/src/runs/projections.ts b/apps/web/src/runs/projections.ts
+index 2e12167f..30b17463 100644
+--- a/apps/web/src/runs/projections.ts
++++ b/apps/web/src/runs/projections.ts
+@@ -11,7 +11,7 @@ import type {
+   LoopDefinition,
+   ReturnChannel,
+ } from '@graphgoblin/contracts';
+-import { getAtPointer, replayStateAt, replayThread } from '@graphgoblin/domain';
++import { getAtPointer, reconcileThread } from '@graphgoblin/domain';
+ 
+ /**
+  * The thread as the run started. The engine records it on the first event (`run.queued`),
+@@ -54,7 +54,7 @@ export function threadAt(
+   events: readonly RunEvent[],
+   seq: number,
+ ): ContextThread {
+-  return replayThread(initial, events, seq);
++  return reconcileThread(initial, events, undefined, seq);
+ }
+ 
+ /**
+@@ -131,17 +131,10 @@ export function createThreadCache(limit = 32): ThreadCache {
+       let result: ReplayResult;
+       if (base === undefined) result = tryThreadAt(init, events, seq);
+       else {
+-        const baseSeq = base.seq;
+-        const from = events.findIndex((e) => e.seq > baseSeq);
+         try {
+           result = {
+             ok: true,
+-            thread: replayThread(
+-              base.thread,
+-              from === -1 ? [] : events.slice(from),
+-              seq,
+-              replayStateAt(events, base.seq),
+-            ),
++            thread: reconcileThread(init, events, base, seq),
+           };
+         } catch (error) {
+           result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+diff --git a/apps/web/src/runs/useRunEvents.ts b/apps/web/src/runs/useRunEvents.ts
+index 72bce5ab..0b14220c 100644
+--- a/apps/web/src/runs/useRunEvents.ts
++++ b/apps/web/src/runs/useRunEvents.ts
+@@ -12,6 +12,7 @@ import { markApiReachable, markApiUnreachable, subscribeApiRecovery } from '../l
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { useApi } from '../api/context.js';
+ import { errorMessage } from '../lib/utils.js';
++import { followRunAttempts } from './follow-run-attempts.js';
+ import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
+ 
+ export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
+@@ -46,10 +47,6 @@ export function useRunEvents(
+   useEffect(() => {
+     const { runs, append } = useRunEventStore.getState();
+     const known = runs[runId];
+-    if (known?.events.some((e) => TERMINAL_RUN_EVENT_TYPES.has(e.type))) {
+-      setStatus('finished');
+-      return;
+-    }
+     let active = true;
+     let buffer: RunEvent[] = [];
+     let timer: ReturnType<typeof setTimeout> | undefined;
+@@ -69,6 +66,36 @@ export function useRunEvents(
+     let inTransportBackoff = false;
+     let reportedOutage = false;
+     let lastSeq = known?.lastSeq ?? 0;
++    let stopHistory: (() => void) | undefined;
++    const followAttempts = () => {
++      stopHistory?.();
++      stopHistory = followRunAttempts(client, runId, {
++        cursor: () => useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
++        events: () => useRunEventStore.getState().runs[runId]?.events ?? [],
++        changed: () => {
++          if (active) onEvents?.();
++        },
++        append: (events) => {
++          buffer.push(...events);
++          flush();
++        },
++        running: () => {
++          if (active) connect();
++        },
++        finished: () => {
++          if (active) {
++            setError(undefined);
++            setStatus('finished');
++          }
++        },
++        error: (err) => {
++          if (active) {
++            setError(errorMessage(err));
++            setStatus('error');
++          }
++        },
++      });
++    };
+     const connect = () => {
+       const currentConnection = ++connection;
+       const current = () => active && connection === currentConnection;
+@@ -124,6 +151,7 @@ export function useRunEvents(
+           if (!current()) return;
+           flush();
+           setStatus('finished');
++          followAttempts();
+         },
+         (err: unknown) => {
+           if (!current()) return;
+@@ -136,10 +164,12 @@ export function useRunEvents(
+     const unsubscribe = subscribeApiRecovery(() => {
+       if (active && inTransportBackoff) connect();
+     });
+-    connect();
++    if (known?.events.some((e) => TERMINAL_RUN_EVENT_TYPES.has(e.type))) followAttempts();
++    else connect();
+     return () => {
+       active = false;
+       unsubscribe();
++      stopHistory?.();
+       flush();
+       subscription?.close();
+     };
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index b05cee59..c0086faf 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -128,6 +128,25 @@ outcome is not a resumable node failure. A run paused while parked (or while par
+ to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
+ keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
+ 
++## Thread reads and delayed snapshots (#116, ADR-0053)
++
++The durable event log determines the thread for both execution and observation. Domain
++`reconcileThread` is the shared owner: start from the actual admitted initial thread, or a
++checkpoint whose sequence exists in the observed history, then replay later durable events.
++Writers persist the open-visit replay state with the snapshot and sequence (ADR-0053); a
++completion event alone cannot prove that a different visit is closed. Current-thread reads
++without stored state replay the full prefix; reads never backfill it.
++An unsequenced checkpoint, one beyond that history, or one beyond a requested historical event
++is ignored. A `node.started` contributes its visit counter; a patch is applied only from a
++durable `node.finished`, once for its open visit. A failed or resumed unfinished node therefore
++exposes its start without exposing an uncommitted patch.
++
++`RunManager.getThread` uses this same rule as execution and the inspector, including during
++failure, resume and success. It never saves a repaired snapshot, advances the cursor, finalizes
++a run or changes execution state. Snapshots remain an optimization maintained by execution.
++Reads racing appends describe the event prefix they observed; a later read can observe more
++events. No cross-request transaction or global synchronization is implied.
++
+ ## Which definition a run executes (Decided, ADR-0041)
+ 
+ A run executes one immutable definition record for its whole life: the record its `versionId` names. Every executor start (the first, a wake after a wait, a resume, crash recovery) and every replay fork loads that record, never the loop's live draft. A published start pins the published version. A draft start (`allowDraft`, a test run) freezes the draft it read and validated into a `snapshot` record with its own id and the draft's number; the admission port commits the snapshot, the run, its initial thread and its `run.queued` event in one transaction. Editing, saving or publishing the draft afterwards never reaches the run. A snapshot cannot be started directly (`VERSION_NOT_PUBLISHED`), is not part of the version history, and storage triggers refuse its change, or its deletion while a run pins it.
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 4c1859b4..3e118df7 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -123,6 +123,69 @@ Responses and exports use format 4. The server-store cutover remains separate:
+ unconverted stores still stop before ordinary migrations or recovery. No tolerant
+ runtime reader is added. See the CHANGELOG upgrade notes.
+ 
++## Current thread and resumed history (#116)
++
++`GET /runs/{id}/thread` and MCP `get_run_thread` reconstruct the current thread through
++the observed durable event tail, using verified snapshots only as a cache. A delayed snapshot
++cannot hide completed patches or an unfinished node's visit count. These reads do not write
++snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-record
++projection (status, position, result and failure); the record contains no context-thread
++snapshot. Separate reads can observe different event prefixes while execution advances.
++
++A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
++Observers following all attempts first catch up with JSON event pages after their stored
++cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
++Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
++whether to follow a live tail when a page overtakes the captured run record. Terminal observation
++checks a lagging run record until its status agrees and refreshes metadata without needing another
++event. A resumable failure continues checks because another client may resume it; other terminal
++outcomes stop once the run record agrees. This leaves return-delivery finalization separate.
++
++### Bounded current-thread reads (#116)
++
++Each checkpoint writer records the thread, its sequence and the domain `ReplayState`
++(`{ openNodeId?: string; strict: boolean }`) together. Executor parking records that visit open;
++its own matching completion records no open visit. Recovery computes `replayStateAt(events, seq)`
++from the full durable history. A `node.finished` boundary alone cannot prove a closed visit:
++a delayed duplicate for A can leave B open. Readers never infer state from event types.
++
++When stored state is present, current-thread reads request only the checkpoint boundary and its
++tail using `events.read(runId, checkpoint.seq - 1)` and require the first returned sequence to be
++the checkpoint's. Domain `reconcileThread` carries the recorded state through the tail. Missing
++boundaries, unsequenced snapshots and snapshots without stored state use the full admitted
++seed/history. Execution's `loadThread` retains its full history for its other recovery needs.
++No read writes or repairs a checkpoint.
++
++SQL migration `0018_thread_checkpoint_replay_state` adds nullable JSON text
++`runs.thread_snapshot_replay_state`. Existing snapshots retain NULL and use full-prefix replay
++until a writer saves the next checkpoint; no state is guessed or backfilled. Snapshot, sequence
++and state are replaced in one repository update. The required `RunRepository.saveThread` port
++arguments are `(runId, thread, seq, replayState)`.
++
++A fresh round-3 Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite
++with 10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
++Each case had one warm-up and five measured reads, comparing the complete returned thread with
++full replay. The lagging checkpoint omitted 200 events. The machine was loaded, including other
++validation work; these elapsed samples describe this fixture, not an SLA or a speedup caused by
++persisting state.
++
++| Checkpoint         | Decoded rows per read | Round-3 median (ms) | Observed range (ms) |
++| ------------------ | --------------------: | ------------------: | ------------------: |
++| current            |                     1 |              11.357 |        5.206-86.185 |
++| lagging-200-events |                   201 |              11.291 |        9.350-26.730 |
++
++The structural result remains one decoded boundary row for a current checkpoint and boundary
++plus 200 tail rows for the lagging case. The earlier round-2 full-history measurements decoded
++10,008 rows per read (medians 311.421/222.919 ms); its bounded implementation decoded 1/201 rows
++(medians 25.814/21.827 ms), but its event-type proof failed the delayed-duplicate case. The
++persisted-state correction restores replay equivalence while keeping that bound. Timing samples
++from different loaded runs are observations, not a controlled comparison of the state fix.
++
++Fresh samples and counted port reads: `docs/qa/2026-10-23-wp-g1-116/round-3-measure.json`.
++Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
++`docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
++`apps/api/scripts/thread-read-measure.ts`.
++
+ ## SSE protocol (Decided)
+ 
+ - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index d07af1ba..5b5a3f43 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -237,7 +237,7 @@ Consequences include removal of a loop's versions and triggers and unavailable s
+ - **Client.** One `@graphgoblin/api-client` instance created with `client: 'ui'`, so runs started here are `manual.ui`. TanStack Query holds server state; Zustand holds the editor draft (`src/editor/store.ts`), per-run event logs (`src/runs/event-store.ts`), and the PWA update state. Browser code imports only `contracts`, `domain`, and `api-client`; lint (`no-restricted-imports`) and dependency-cruiser (`web-is-browser-only`) refuse `engine` and `infrastructure`.
+ - **Editor.** Palette of the nine kinds (drag onto the canvas, or press a palette button to add below the graph). Custom node cards with an input handle (none on triggers) and one labelled output handle per port: decision routes, script exit-code routes, and Limit reached on marked decision gates; exits have no output. Connections into triggers, from unknown ports, or from an already connected port are refused. Validation runs `LoopDefinitionSchema` then `validateLoop` from `domain` on every change; schema issues are listed first with their node and path, and clicking an issue selects its node (since #13 it opens the node's editor; since #15 the issues are listed in each node's badge and beside Publish, and choosing one opens the node's editor at the issue's field). Autosave is debounced (600 ms): every edit is mirrored to IndexedDB first, then a schema-valid draft goes to `PUT /loops/{id}/draft`; a schema-invalid draft stays on the device with a notice (or in the window only while device storage refuses it, see "Device storage and the save states"), an offline save retries on the browser's `online` event or confirmed API reachability recovery, and an unsynced local draft wins over the server copy on reload. Publish saves first, then shows the 422 issue list if the server refuses. A Run tab started the published version from any manual trigger, with an input form generated from the trigger's `inputSchema` (since #46 runs start from Runs �! New run). A subloop picker lists published loops and shows their trigger input schemas and return mappings.
+ - **Schema-driven forms** (`src/forms`). `SchemaForm` takes a node kind's config schema from `contracts` and renders it with react-hook-form and the Zod resolver; the same component renders loop settings and declared variables. Introspection reads Zod 4's `_zod.def`: strings (plain, `TemplateSchema` as a Liquid CodeMirror editor, `ExpressionSchema` as a JSONata editor, both with a live preview against `sampleThread()`), numbers (integer, bounds), booleans (a switch when the boolean has a default or is required; a segmented **Not set** / **Yes** / **No** when it is optional without a default, so it can stay or go back to unset), enums and multi-value literals (a segmented control for two to four options, a select for one or for five and more; an optional enum without a default keeps **Not set**; arrays of enums become checkbox groups), single literals (read-only), objects (a fieldset with the object's name as its legend; optional ones get Add and Remove), arrays (add and remove items, respecting min and max), records (stacked key and full-width value rows that remain usable in narrow panels, captioned **Key** and **Value**; each value is a field of its own at `<record>.<key>`, drawn by the same renderers over the value the record hands it: a string as an input, a template or expression as its editor with the preview, anything else as JSON, with its marker, help, and error), discriminated and plain unions (a fieldset with a variant picker that seeds the chosen variant), defaults and prefaults (shown as placeholders or initial selections, and as a JSON field's placeholder), and `unknown`, `z.json()`, and `JsonSchemaSchema` as JSON editors tagged JSON. Collection rows sit on a left rail with Remove as an icon button keeping its name ("Remove args 2") beside the row's control (at the foot of a row that holds a group of fields), so Tab reaches it after the row's controls as it reads; Add is a secondary button with a plus. A field is required when its schema is neither optional nor defaulted (`unwrap`): its label shows the marker and its control `aria-required` (value controls, record values, and union variant pickers); a required collection shows the marker after its legend and its minimum as describing text, and a nested object is not marked, and the host form's first line explains the marker (the node dialog, the loop panel). A schema's `.describe()` text (`descriptionOf`, the outermost along its wrapper chain, so a description under `.default()` or `.optional()` counts) shows as help under the field. `Row` in `forms/fields/shared.tsx` keeps its props (`label`, `htmlFor`, `aside`, `children`, `name`) and adds `required`, `help`, and `caption` (a shorter visible label, while `label` stays the accessible name); `children` may be a function of the control's props (`id`, `aria-describedby`, `aria-invalid`, `aria-required`), so help and the field's error (`FieldError`, now with an id) describe the control and an error marks it invalid. `focusField` focuses a segmented control's chosen segment and treats a switch as a value control. Since #14 the contracts' field metadata orders and groups the fields, with the advanced ones under a collapsed Advanced disclosure (see "Basic and advanced fields" below). Array Add and Remove actions use the latest child edits, so the displayed values and autosaved draft agree. Rows have stable identities: removing a row drops its unparsed JSON and blocking issue, shifts surviving array error paths, and keeps surviving text with its own value; renaming a record key moves its text and issue to the new path. A duplicate record key is refused with an inline error while the key input retains the typed text and both committed values survive. The error reflects the current committed keys. Entering a collision announces the conflicting key once through the collection's polite status region; continued typing while invalid does not repeat the announcement. Leaving a still-refused input restores its committed key and announces both the revert and its reason. Add focuses the new row's first control after its editor has mounted, including in StrictMode; Remove focuses the collection's Add button. A polite live region announces each addition and removal. Empty or whitespace-only optional JSONata expressions are absent and omit the preview. Required blank expressions show the schema message (Required only as a fallback), omit the preview, and retain the typed whitespace in the editor. Fallback help is quiet on mount and becomes an alert after editing. Liquid templates retain exactly what is typed, including whitespace and required empty strings; only exactly empty optional template input is absent. Malformed supplied source retains its error. Optional JSON fields clear without a parse error and have no expression preview. Refinements are not introspected; their messages appear in the form's issue summary. Clearing a field stores an internal "unset" marker that is stripped before validation, because react-hook-form otherwise restores a field's initial value when it becomes `undefined`.
+-- **Run inspector.** The timeline comes from `subscribeRunEvents`; events are kept per run in session storage, so a reload resumes after the stored cursor and a finished run does not reopen the stream. Selecting an event reconstructs the thread at that point with `replayThread` from `domain` (starting from the initial thread recorded on `run.queued`, and counting `node.started` for node visits, which the engine keeps outside patches); a `node.finished` event also shows its patch with the value before and after each path; reconstruction results are cached per sequence while the log grows (`createThreadCache`, #259), and every shown value is bounded on screen with the whole text and an exact download on request (`BoundedValue`). A progress drawer groups `node.progress`, harness session, usage, decision, and heartbeat events per node. Waiting runs show an input form generated from the wait node's `inputSchema` (or a signal form); cancel, pause, and resume are buttons.
++- **Run inspector.** The timeline comes from `subscribeRunEvents`; events are kept per run in session storage, so a reload resumes after the stored cursor. A cached terminal event triggers JSON history reconciliation rather than permanently suppressing the stream. After a terminal subscription, finite JSON pages catch up through an observed run cursor; active execution opens a new SSE tail, while resumable failures are checked every two seconds for a resume from another client. Durable lifecycle events choose the tail state if a page overtakes the captured run record; two-second checks then refresh metadata until the record agrees. Success, cancellation and non-resumable failures stop polling once that status agrees. Unmounting cancels observation and discards late responses. Selecting an event reconstructs the thread at that point with `reconcileThread` from `domain` (starting from the initial thread recorded on `run.queued`, and counting `node.started` for node visits, which the engine keeps outside patches); a `node.finished` event also shows its patch with the value before and after each path; reconstruction results are cached per sequence while the log grows (`createThreadCache`, #259), and every shown value is bounded on screen with the whole text and an exact download on request (`BoundedValue`). A progress drawer groups `node.progress`, harness session, usage, decision, and heartbeat events per node. Waiting runs show an input form generated from the wait node's `inputSchema` (or a signal form); cancel, pause, and resume are buttons.
+ - **Settings.** The model catalog enables/disables every entry through PATCH using #8's Switch, named "Enable <display name>". The reusable Settings EnableSwitch marks its switch aria-disabled and aria-busy, ignores activation, and shows an hourglass with Enabling/Disabling while saving; a polite status announces Enabled/Disabled. Keyboard focus stays on the pending switch, including concurrent requests on different rows; a deliberate move to another control is preserved. A refusal restores the previous state and announces a plain sentence through MutationError with section-specific messages for MODEL_MANAGED_BY_HARNESS, LITELLM_NOT_CONFIGURED, or MODEL_NOT_FOUND. A 404 refreshes the catalog, preserves its reason in a section-level live region until the next toggle clears it, and focuses the heading when the switch had focus as it was activated and its row has since disappeared. The switch is recorded at activation (`ToggleFailure.opener`), so this also holds when another refresh removed the row while the PATCH was pending and focus had already fallen to the page body (`restoreVanishedToggleFocus` in `settings/shared.tsx`). Successful updates refresh the catalog so the Default model select removes disabled entries from new choices and restores enabled ones. A saved default remains selected as "<name> (disabled)" or "<id> (not in catalog)", with a diagnostic that the invalid or unavailable selection must be corrected before publication or execution. Harness rows have no Edit/Delete actions in the DOM. Add is hidden until a LiteLLM row exists. Row presence is a temporary proxy until #25 supplies a provider-configured signal. When Add is hidden, a short note explains that local models will appear once the LiteLLM adapter is configured and names the Settings guide section Choose a model and effort without a network link. The note waits until the catalog loads. With local entries, only LiteLLM rows offer Edit/Delete; editing metadata omits enabled so it cannot revert a concurrent toggle. Regression coverage is in SettingsPage.test.tsx, settings/shared.test.tsx, and Edge e2e/actions.spec.ts; both-theme screenshots are in docs/qa/2026-10-04-issue-24-catalog/. Settings also manages default model and effort (stored under owner `defaults.byHarness`, which the engine reads at run start ahead of the harness-keyed process `GG_DEFAULTS`), write-only secrets, API keys (the token is shown once), harness preflight, and an install hint.
+ - **PWA.** `vite-plugin-pwa` generates the worker (`registerType: 'prompt'`, `injectRegister: false`, scope `/app/`); the app registers it with `workbox-window` and checks for updates as described under "PWA behaviour". A waiting worker raises the "A new version is available" toast; only Update sends `SKIP_WAITING`, and the page reloads when the new worker takes control. Only the app shell is precached, there is no runtime caching, and navigation fallback is limited to `/app/`. Browser update tests and screenshots publish byte-different service-worker builds through the disposable E2E server and wait for a real waiting worker. They verify that confirmation sends `SKIP_WAITING` and reloads once, with no activation before confirmation. The manifest has 192 and 512 px icons (generated by `scripts/generate-icons.mjs`). Screens that need the API show an explicit offline notice, and the banner distinguishes browser connectivity from API unreachability. Regression tests include `src/lib/reachability.test.ts`, `src/api/queries.reconnect.test.tsx`, `src/pwa/register.test.ts`, and Edge `e2e/pwa.spec.ts` (same-port listener restart and a byte-different worker).
+ 
+@@ -251,7 +251,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Validation agrees with the API.** The editor lists the local `domain` issues (now including Liquid and JSONata syntax), the issues only the API can find (cron syntax, subloop references) from `POST /loops/{id}/validate` after each save, and `FIELD_INPUT_INVALID` for held input: unparsed JSON, an incomplete schedule, or valid section JSON awaiting Apply. Invalid input keeps its existing message; valid pending JSON says it is JSON not applied yet. Publish asks the user to complete/discard invalid input or apply/cancel pending JSON first. The held text and its issue stay in the editor state when the field is left (coming back shows the text again) until the text parses (and section JSON is applied), the user discards it (in the field or from its issue's row: since #15 in the node's badge popover, or beside Publish for loop settings and variables), its row is removed, or an undo takes back the typing that produced it (redo brings it back; see "Undo and redo"). Renames and removals update these stored paths through the form's parse-error channel. Removing an optional object or switching a union variant also clears errors for the fields it removes. Shared domain validation rejects supplied blank JSONata expressions, including whitespace-only input from imports or API clients; the form omits optional blank expressions instead. Empty and whitespace-only Liquid templates remain valid. Contracts parsing is unchanged. Publishing an unchanged loop says there is nothing to publish; the outcome message clears on the next edit.
+ - **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+-- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
++- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `reconcileThread` delegates replay to `replayThread`, which adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+ - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+   The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+diff --git a/docs/decisions/ADR-0053-thread-event-tail-reconciliation.md b/docs/decisions/ADR-0053-thread-event-tail-reconciliation.md
+new file mode 100644
+index 00000000..227645af
+--- /dev/null
++++ b/docs/decisions/ADR-0053-thread-event-tail-reconciliation.md
+@@ -0,0 +1,92 @@
++# ADR-0053: Reconcile observed threads from durable event tails
++
++- Status: Accepted for implementation; independent review pending
++- Date: 2026-10-23
++- Issue: #116
++
++## Context
++
++Execution already verified checkpoint sequences and replayed later events. Public thread reads
++returned any available snapshot immediately. Inspectors stopped at a cached terminal event,
++even when the same run was later resumed. Persisted fault injection reproduced disagreement
++through failure, resume and success.
++
++## Decision
++
++Domain owns pure `reconcileThread`: the admitted seed and durable event prefix are authoritative.
++A snapshot is an optimization only when its sequence occurs in that prefix at or before the
++requested boundary. Replay carries the open visit across a checkpoint so duplicate completions
++are not applied twice; starts contribute visits but cannot invent patches. Engine execution,
++public current-thread reads (REST and MCP) and inspector reconstruction use this owner.
++
++Reads never persist reconciliation, advance execution, finalize a run or repair storage.
++Concurrent reads describe the prefix each observed. This decision does not make separate REST
++requests atomic or replace the run-record lifecycle projection.
++
++SSE remains a terminal-bounded subscription. The inspector reconciles JSON pages beyond old
++terminal events before following a new active tail. Each catch-up captures a finite run cursor;
++500-event pages match the API default. Lifecycle events choose the tail state even when a page
++overtakes the captured run record. A two-second check watches resumable failures and a terminal
++event whose status has not yet reached the run record. A changed run record refreshes inspector
++metadata even without another event; terminal observation stops once that record agrees, except
++for resumable failures. This allows another client to resume them without keeping terminal SSE
++connections open. The interval is an engineering refresh parameter, not an owner-approved latency
++SLA. Cancellation and unmount discard late reads. Transport failures retry observation with
++exponential delays from two to thirty seconds; other read failures remain visible without an
++automatic retry.
++
++## Bounded current-thread reads (round 3 correction)
++
++Each checkpoint writer records the thread, its sequence and the domain `ReplayState`
++(`{ openNodeId?: string; strict: boolean }`) together. Executor parking records that visit open;
++its own matching completion records no open visit. Recovery computes `replayStateAt(events, seq)`
++from the full durable history. A `node.finished` boundary alone cannot prove a closed visit:
++a delayed duplicate for A can leave B open. Readers never infer state from event types.
++
++When stored state is present, current-thread reads request only the checkpoint boundary and its
++tail using `events.read(runId, checkpoint.seq - 1)` and require the first returned sequence to be
++the checkpoint's. Domain `reconcileThread` carries the recorded state through the tail. Missing
++boundaries, unsequenced snapshots and snapshots without stored state use the full admitted
++seed/history. Execution's `loadThread` retains its full history for its other recovery needs.
++No read writes or repairs a checkpoint.
++
++SQL migration `0018_thread_checkpoint_replay_state` adds nullable JSON text
++`runs.thread_snapshot_replay_state`. Existing snapshots retain NULL and use full-prefix replay
++until a writer saves the next checkpoint; no state is guessed or backfilled. Snapshot, sequence
++and state are replaced in one repository update. The required `RunRepository.saveThread` port
++arguments are `(runId, thread, seq, replayState)`. A stored state that is not exactly
++`{ strict: boolean, openNodeId?: string }` is damaged history: reading the checkpoint raises
++`UnreadableRunHistoryError`, as a damaged snapshot does, rather than trusting or ignoring it.
++
++A fresh round-3 Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite
++with 10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
++Each case had one warm-up and five measured reads, comparing the complete returned thread with
++full replay. The lagging checkpoint omitted 200 events. The machine was loaded, including other
++validation work; these elapsed samples describe this fixture, not an SLA or a speedup caused by
++persisting state.
++
++| Checkpoint         | Decoded rows per read | Round-3 median (ms) | Observed range (ms) |
++| ------------------ | --------------------: | ------------------: | ------------------: |
++| current            |                     1 |              11.357 |        5.206-86.185 |
++| lagging-200-events |                   201 |              11.291 |        9.350-26.730 |
++
++The structural result remains one decoded boundary row for a current checkpoint and boundary
++plus 200 tail rows for the lagging case. The earlier round-2 full-history measurements decoded
++10,008 rows per read (medians 311.421/222.919 ms); its bounded implementation decoded 1/201 rows
++(medians 25.814/21.827 ms), but its event-type proof failed the delayed-duplicate case. The
++persisted-state correction restores replay equivalence while keeping that bound. Timing samples
++from different loaded runs are observations, not a controlled comparison of the state fix.
++
++Fresh samples and counted port reads: `docs/qa/2026-10-23-wp-g1-116/round-3-measure.json`.
++Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
++`docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
++`apps/api/scripts/thread-read-measure.ts`.
++
++## Consequences
++
++Migration 0018 adds the writer-recorded state without rewriting existing snapshots. Unsequenced
++or unproven snapshots cannot accelerate current-thread reads.
++The actual replay seed remains authoritative (#245). Historical event selection and raw values
++remain available for #255 without changing patch-diff presentation in this bolt. Execution
++outcome remains separate from delivery finalization. Public reads cost the verified checkpoint boundary plus its tail when writer-recorded state is
++present, with full-history fallback when that proof is absent. Bounded streaming optimization remains owned by #186.
+diff --git a/packages/domain/src/index.ts b/packages/domain/src/index.ts
+index b00f6474..55f7c125 100644
+--- a/packages/domain/src/index.ts
++++ b/packages/domain/src/index.ts
+@@ -34,3 +34,4 @@ export * from './convert-v3-v4/index.js';
+ export * from './poll-items.js';
+ export * from './json-value.js';
+ export * from './retired-destinations.js';
++export * from './reconcile-thread.js';
+diff --git a/packages/domain/src/reconcile-thread.test.ts b/packages/domain/src/reconcile-thread.test.ts
+new file mode 100644
+index 00000000..bc6efb15
+--- /dev/null
++++ b/packages/domain/src/reconcile-thread.test.ts
+@@ -0,0 +1,123 @@
++import { expect, it } from 'vitest';
++import { sampleThread } from '@graphgoblin/contracts/testing';
++import { reconcileThread } from './reconcile-thread.js';
++import { replayStateAt, type ThreadReplayEvent } from './replay.js';
++
++it('reconciles only durable completions and carries visits across every verified checkpoint', () => {
++  const initial = sampleThread({ vars: {} });
++  const events: ThreadReplayEvent[] = [
++    { seq: 1, type: 'node.started', nodeId: 'a' },
++    {
++      seq: 2,
++      type: 'node.finished',
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/items', value: [] }],
++    },
++    { seq: 3, type: 'node.started', nodeId: 'b' },
++    { seq: 4, type: 'run.failed' },
++    { seq: 5, type: 'run.resumed' },
++    { seq: 6, type: 'node.started', nodeId: 'b' },
++    {
++      seq: 7,
++      type: 'node.finished',
++      nodeId: 'b',
++      patch: [{ op: 'add', path: '/vars/items/-', value: 'once' }],
++    },
++    {
++      seq: 8,
++      type: 'node.finished',
++      nodeId: 'b',
++      patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++    },
++    { seq: 9, type: 'run.finished' },
++  ];
++  const before = JSON.stringify({ initial, events });
++  for (const boundary of events) {
++    const expected = reconcileThread(initial, events, undefined, boundary.seq);
++    for (const checkpointEvent of events) {
++      const checkpoint = {
++        seq: checkpointEvent.seq,
++        thread: reconcileThread(initial, events, undefined, checkpointEvent.seq),
++      };
++      expect(reconcileThread(initial, events, checkpoint, boundary.seq)).toEqual(expected);
++    }
++  }
++  expect(reconcileThread(initial, events).vars).toEqual({ items: ['once'] });
++  expect(reconcileThread(initial, events, undefined, 6).vars).toEqual({ items: [] });
++  expect(reconcileThread(initial, events, undefined, 6).counters.nodeVisits.b).toBe(2);
++  expect(JSON.stringify({ initial, events })).toBe(before);
++  expect(reconcileThread(initial, events, { seq: 99, thread: sampleThread() })).toEqual(
++    reconcileThread(initial, events),
++  );
++  expect(reconcileThread(initial, [], { seq: 1, thread: sampleThread() })).toBe(initial);
++});
++
++it('uses a proven checkpoint state with only its boundary event and tail', () => {
++  const initial = sampleThread({ vars: {} });
++  const history: ThreadReplayEvent[] = [
++    { seq: 1, type: 'node.started', nodeId: 'a' },
++    {
++      seq: 2,
++      type: 'node.finished',
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/items', value: [] }],
++    },
++    {
++      seq: 3,
++      type: 'node.finished',
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++    },
++    { seq: 4, type: 'node.started', nodeId: 'b' },
++  ];
++  const checkpoint = {
++    seq: 2,
++    thread: reconcileThread(initial, history, undefined, 2),
++    replayState: { strict: true },
++  };
++  expect(reconcileThread(checkpoint.thread, history.slice(1), checkpoint)).toEqual(
++    reconcileThread(initial, history),
++  );
++  expect(reconcileThread(initial, history, checkpoint, 1)).toEqual(
++    reconcileThread(initial, history, undefined, 1),
++  );
++});
++
++it('carries a different open visit past a delayed duplicate completion at the checkpoint', () => {
++  const initial = sampleThread({ vars: {} });
++  const events: ThreadReplayEvent[] = [
++    { seq: 1, type: 'node.started', nodeId: 'a' },
++    {
++      seq: 2,
++      type: 'node.finished',
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
++    },
++    { seq: 3, type: 'node.started', nodeId: 'b' },
++    {
++      seq: 4,
++      type: 'node.finished',
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++    },
++    {
++      seq: 5,
++      type: 'node.finished',
++      nodeId: 'b',
++      patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
++    },
++  ];
++  const checkpoint = {
++    seq: 4,
++    thread: reconcileThread(initial, events, undefined, 4),
++    replayState: replayStateAt(events, 4),
++  };
++  expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: true });
++  expect(reconcileThread(checkpoint.thread, events.slice(3), checkpoint)).toEqual(
++    reconcileThread(initial, events),
++  );
++  expect(reconcileThread(checkpoint.thread, events.slice(3), checkpoint).vars.items).toEqual([
++    'a',
++    'b',
++  ]);
++});
+diff --git a/packages/domain/src/reconcile-thread.ts b/packages/domain/src/reconcile-thread.ts
+new file mode 100644
+index 00000000..467d5b4b
+--- /dev/null
++++ b/packages/domain/src/reconcile-thread.ts
+@@ -0,0 +1,35 @@
++import type { ContextThread } from '@graphgoblin/contracts';
++import { replayStateAt, replayThread, type ThreadReplayEvent, type ReplayState } from './replay.js';
++
++export interface ThreadCheckpoint {
++  thread: ContextThread;
++  seq: number;
++  /** State recorded by the checkpoint writer; absent snapshots require the full prefix. */
++  replayState?: ReplayState;
++}
++
++/**
++ * The read-only thread at a durable event boundary. A checkpoint is only a cache: it must name
++ * an event in this history at or before the requested boundary. An unfinished start contributes
++ * its visit counter, never a patch; only durable completions carry patches (replayThread).
++ */
++export function reconcileThread(
++  initial: ContextThread,
++  events: readonly ThreadReplayEvent[],
++  checkpoint?: ThreadCheckpoint,
++  uptoSeq?: number,
++): ContextThread {
++  if (
++    checkpoint &&
++    (uptoSeq === undefined || checkpoint.seq <= uptoSeq) &&
++    events.some((event) => event.seq === checkpoint.seq)
++  ) {
++    return replayThread(
++      checkpoint.thread,
++      events.filter((event) => event.seq > checkpoint.seq),
++      uptoSeq,
++      checkpoint.replayState ?? replayStateAt(events, checkpoint.seq),
++    );
++  }
++  return replayThread(initial, events, uptoSeq);
++}
+diff --git a/packages/domain/src/replay.ts b/packages/domain/src/replay.ts
+index 06e7d470..dcccfe6b 100644
+--- a/packages/domain/src/replay.ts
++++ b/packages/domain/src/replay.ts
+@@ -19,14 +19,15 @@ export type ThreadReplayEvent =
+  * Which completions a replay applies. Once the log has shown a `node.started` (every log the
+  * engine writes does), a `node.finished` is applied only when it completes the open visit: the
+  * node most recently started and not yet finished (one token, so at most one is open). A second
+- * record of the same completion, immediate or delayed, finds no open visit and is applied once.
++ * record of the same completion, immediate or delayed, cannot complete a different open visit
++ * or apply its patch twice.
+  * A log without any `node.started` (hand-built fixtures) applies every completion.
+  */
+ export interface ReplayState {
+   /** The visit open at the start of the replayed events. */
+   openNodeId?: string | undefined;
+   /** Whether a `node.started` was seen before the replayed events. */
+-  strict?: boolean;
++  strict: boolean;
+ }
+ 
+ /**
+@@ -43,11 +44,11 @@ export function replayThread<T extends ReplayableThread>(
+   initial: T,
+   events: readonly ThreadReplayEvent[],
+   uptoSeq?: number,
+-  state: ReplayState = {},
++  state: ReplayState = { strict: false },
+ ): T {
+   let thread = initial;
+   let { openNodeId } = state;
+-  let strict = state.strict ?? false;
++  let { strict } = state;
+   for (const event of events) {
+     if (uptoSeq !== undefined && event.seq > uptoSeq) break;
+     if (event.type === 'node.started') {
+diff --git a/packages/engine/src/adversarial.test.ts b/packages/engine/src/adversarial.test.ts
+index 869f60f7..e9f0ad74 100644
+--- a/packages/engine/src/adversarial.test.ts
++++ b/packages/engine/src/adversarial.test.ts
+@@ -1,7 +1,7 @@
+ import { describe, expect, it, vi } from 'vitest';
+ import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+-import { replayThread } from '@graphgoblin/domain';
++import { replayStateAt, replayThread } from '@graphgoblin/domain';
+ import { RunManager } from './run-manager.js';
+ import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+ import { FakeStructured } from './testing/fakes.js';
+@@ -236,13 +236,18 @@ describe('adversarial engine invariants', () => {
+     const replayed: unknown[] = [];
+     // Every checkpoint equals a replay of the log up to the seq it names.
+     const save = e.ports.runs.saveThread.bind(e.ports.runs);
+-    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
+-      if (seq !== undefined) {
+-        snapshots.push(thread);
+-        replayed.push(replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq));
+-      }
+-      return save(id, thread, seq);
+-    });
++    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(
++      async (id, thread, seq, replayState) => {
++        if (seq !== undefined) {
++          expect(replayState).toEqual(replayStateAt(e.events(id), seq));
++          snapshots.push(thread);
++          replayed.push(
++            replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq),
++          );
++        }
++        return save(id, thread, seq, replayState);
++      },
++    );
+     const r = await e.runToIdle(v.loopId);
+     expect(r.status).toBe('succeeded');
+     expect(e.events(r.id).map((x) => x.seq)).toEqual(e.events(r.id).map((_, i) => i + 1));
+diff --git a/packages/engine/src/checkpoint-state.test.ts b/packages/engine/src/checkpoint-state.test.ts
+new file mode 100644
+index 00000000..b143f25f
+--- /dev/null
++++ b/packages/engine/src/checkpoint-state.test.ts
+@@ -0,0 +1,87 @@
++import { expect, it } from 'vitest';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { RunManager } from './run-manager.js';
++import type { EventDraft } from './ports.js';
++import { createTestEngine } from './testing/scenario.js';
++
++const start = (nodeId: string): EventDraft => ({
++  type: 'node.started',
++  nodeId,
++  kind: 'mutate',
++  attempt: 1,
++  configHash: '0'.repeat(64),
++});
++const finish = (nodeId: string, duplicate = false): EventDraft => ({
++  type: 'node.finished',
++  nodeId,
++  durationMs: 1,
++  patch: [
++    {
++      op: 'add',
++      path: duplicate || nodeId === 'b' ? '/vars/items/-' : '/vars/items',
++      value: duplicate ? 'duplicate' : nodeId === 'b' ? 'b' : ['a'],
++    },
++  ],
++});
++
++it('preserves a different open visit across a delayed duplicate completion checkpoint', async () => {
++  const e = await createTestEngine();
++  e.manager.stop();
++  const run = await e.start(e.publish(minimalLoop()).loopId);
++  await e.ports.events.append(run.id, [start('a'), finish('a'), start('b'), finish('a', true)]);
++  const initial = (await e.ports.runs.getInitialThread(run.id))!;
++  const events = e.events(run.id);
++  const seq = events.at(-1)!.seq;
++  await e.ports.runs.saveThread(
++    run.id,
++    reconcileThread(initial, events),
++    seq,
++    replayStateAt(events, seq),
++  );
++  await e.ports.events.append(run.id, [finish('b')]);
++  const before = await e.ports.runs.getThreadCheckpoint(run.id);
++  const result = await e.manager.getThread(run.id);
++  expect(result?.vars.items).toEqual(['a', 'b']);
++  expect(result).toEqual(reconcileThread(initial, e.events(run.id)));
++  expect(await e.ports.runs.getThreadCheckpoint(run.id)).toEqual(before);
++});
++
++it('recovery checkpoints retain the open failed visit through a delayed earlier completion', async () => {
++  const e = await createTestEngine();
++  e.manager.stop();
++  const run = await e.start(e.publish(minimalLoop()).loopId);
++  await e.ports.events.append(run.id, [
++    start('a'),
++    finish('a'),
++    start('b'),
++    {
++      type: 'run.failed',
++      failure: {
++        code: 'SCRIPT_EXIT_CODE',
++        message: 'durable failure before status',
++        nodeId: 'b',
++        resumable: true,
++      },
++    },
++    finish('a', true),
++  ]);
++  const recovery = new RunManager(e.ports, e.settings);
++  try {
++    await recovery.start();
++    await recovery.waitForIdle();
++    expect((await recovery.getRun(run.id))?.status).toBe('failed');
++    const checkpoint = (await e.ports.runs.getThreadCheckpoint(run.id))!;
++    expect(checkpoint.seq).toBe(e.events(run.id).at(-1)!.seq);
++    await e.ports.events.append(run.id, [finish('b')]);
++    const result = await recovery.getThread(run.id);
++    expect(result?.vars.items).toEqual(['a', 'b']);
++    expect(result).toEqual(
++      reconcileThread((await e.ports.runs.getInitialThread(run.id))!, e.events(run.id)),
++    );
++    expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: true });
++    expect(await e.ports.runs.getThreadCheckpoint(run.id)).toEqual(checkpoint);
++  } finally {
++    recovery.stop();
++  }
++});
+diff --git a/packages/engine/src/handlers/gates.test.ts b/packages/engine/src/handlers/gates.test.ts
+index 0f8ee2c1..bf41a970 100644
+--- a/packages/engine/src/handlers/gates.test.ts
++++ b/packages/engine/src/handlers/gates.test.ts
+@@ -403,18 +403,20 @@ describe('decision gates', () => {
+       }
+       return out;
+     });
+-    const s = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
+-      const repeat = thread.gates.gate?.passes === 2;
+-      if (repeat && boundary === 'before-snapshot') {
+-        blocked = true;
+-        return hang();
+-      }
+-      await save(id, thread, seq);
+-      if (repeat && boundary === 'after-snapshot') {
+-        blocked = true;
+-        return hang();
+-      }
+-    });
++    const s = vi
++      .spyOn(e.ports.runs, 'saveThread')
++      .mockImplementation(async (id, thread, seq, replayState) => {
++        const repeat = thread.gates.gate?.passes === 2;
++        if (repeat && boundary === 'before-snapshot') {
++          blocked = true;
++          return hang();
++        }
++        await save(id, thread, seq, replayState);
++        if (repeat && boundary === 'after-snapshot') {
++          blocked = true;
++          return hang();
++        }
++      });
+     const u = vi.spyOn(e.ports.runs, 'update').mockImplementation(async (id, changes) => {
+       const repeat =
+         changes.currentNodeId === 'work' && decisions(e, id).at(-1)?.gate?.passes === 2;
+diff --git a/packages/engine/src/ports.ts b/packages/engine/src/ports.ts
+index 697b8c7d..bd191f9a 100644
+--- a/packages/engine/src/ports.ts
++++ b/packages/engine/src/ports.ts
+@@ -1,3 +1,4 @@
++import type { ReplayState, ThreadCheckpoint } from '@graphgoblin/domain';
+ import type { TriggerAdmissionPort } from './admission.js';
+ import type {
+   PromptSubmission,
+@@ -120,13 +121,15 @@ export interface RunRepository {
+   listChildren(parentRunId: string): Promise<RunRecord[]>;
+   getInitialThread(runId: string): Promise<ContextThread | undefined>;
+   getThread(runId: string): Promise<ContextThread | undefined>;
+-  /**
+-   * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
+-   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
+-   */
+-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
+-  /** The snapshot with the `seq` it reflects, when it was saved with one. */
+-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined>;
++  /** Save the thread and replay state after `seq` together, after that event is durable. */
++  saveThread(
++    runId: string,
++    thread: ContextThread,
++    seq: number,
++    replayState: ReplayState,
++  ): Promise<void>;
++  /** A snapshot and sequence; absent replay state means its prefix must still be read. */
++  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined>;
+ }
+ 
+ export interface LoopRepository {
+diff --git a/packages/engine/src/recovery.test.ts b/packages/engine/src/recovery.test.ts
+index 49d46599..bfdfcfef 100644
+--- a/packages/engine/src/recovery.test.ts
++++ b/packages/engine/src/recovery.test.ts
+@@ -6,7 +6,7 @@
+  */
+ import { describe, expect, it, vi } from 'vitest';
+ import { minimalLoop } from '@graphgoblin/contracts/testing';
+-import { replayThread } from '@graphgoblin/domain';
++import { replayThread, replayStateAt } from '@graphgoblin/domain';
+ import { AppendConflictError } from './errors.js';
+ import { RunManager } from './run-manager.js';
+ import {
+@@ -536,6 +536,7 @@ describe('thread checkpoints (review finding 9)', () => {
+       r.id,
+       { ...checkpoint.thread, vars: { ...checkpoint.thread.vars, marker: true } },
+       checkpoint.seq,
++      checkpoint.replayState!,
+     );
+     await e.manager.provideInput(
+       r.id,
+@@ -546,19 +547,22 @@ describe('thread checkpoints (review finding 9)', () => {
+     expect((await e.ports.runs.getThread(r.id))?.vars['marker']).toBe(true);
+   });
+ 
+-  it.each(['ahead of the log', 'without a seq'] as const)(
++  it.each(['ahead of the log', 'without a snapshot'] as const)(
+     'ignores a checkpoint %s and replays from the initial thread',
+     async (kind) => {
+       const e = await createTestEngine();
+       const r = await waitingRun(e);
+       const checkpoint = (await e.ports.runs.getThreadCheckpoint(r.id))!;
+-      await e.ports.runs.saveThread(
+-        r.id,
+-        { ...checkpoint.thread, vars: { marker: true } },
+-        kind === 'without a seq' ? undefined : checkpoint.seq + 100,
+-      );
++      if (kind === 'without a snapshot') e.ports.runs.dropThreadSnapshot(r.id);
++      else
++        await e.ports.runs.saveThread(
++          r.id,
++          { ...checkpoint.thread, vars: { marker: true } },
++          checkpoint.seq + 100,
++          checkpoint.replayState!,
++        );
+       expect(await e.ports.runs.getThreadCheckpoint(r.id)).toEqual(
+-        kind === 'without a seq' ? undefined : expect.anything(),
++        kind === 'without a snapshot' ? undefined : expect.anything(),
+       );
+       await e.manager.provideInput(
+         r.id,
+@@ -592,14 +596,16 @@ describe('thread checkpoints (review finding 9)', () => {
+     let blocked = false;
+     let runId = '';
+     // Crash right after the checkpoint for the mutate completion is written.
+-    const spy = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
+-      await save(id, thread, seq);
+-      if (thread.messages.length === 1 && !blocked) {
+-        runId = id;
+-        blocked = true;
+-        return hang();
+-      }
+-    });
++    const spy = vi
++      .spyOn(e.ports.runs, 'saveThread')
++      .mockImplementation(async (id, thread, seq, replayState) => {
++        await save(id, thread, seq, replayState);
++        if (thread.messages.length === 1 && !blocked) {
++          runId = id;
++          blocked = true;
++          return hang();
++        }
++      });
+     await e.start(e.publish(def).loopId);
+     await vi.waitFor(() => expect(blocked).toBe(true));
+     e.manager.stop();
+@@ -651,7 +657,12 @@ describe('thread checkpoints (review finding 9)', () => {
+       { type: 'run.waiting', nodeId: 'wait', wait: r.waiting! },
+     ]);
+     const thread = replayThread((await e.ports.runs.getInitialThread(r.id))!, e.events(r.id));
+-    await e.ports.runs.saveThread(r.id, thread, stored.at(-1)!.seq);
++    await e.ports.runs.saveThread(
++      r.id,
++      thread,
++      stored.at(-1)!.seq,
++      replayStateAt(e.events(r.id), stored.at(-1)!.seq),
++    );
+     const started = performance.now();
+     await e.manager.provideInput(
+       r.id,
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index e88227d6..51e64a2f 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -42,8 +42,9 @@ import {
+   outcomeStatus,
+   outgoingEdge,
+   renderTemplate,
+-  replayStateAt,
++  reconcileThread,
+   replayThread,
++  replayStateAt,
+   stableHash,
+   stableStringify,
+   threadView,
+@@ -1060,13 +1061,19 @@ export class RunManager {
+     return this.ports.runs.get(runId);
+   }
+ 
+-  /** Current thread: the snapshot when present, otherwise a replay of the log. */
++  /** Read-only thread through the durable event tail; snapshots are verified caches. */
+   async getThread(runId: string): Promise<ContextThread | undefined> {
+-    const snapshot = await this.ports.runs.getThread(runId);
+-    if (snapshot) return snapshot;
++    const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
++    if (checkpoint?.replayState) {
++      const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
++      // Only the writer can establish which visit was open at this sequence. A completion
++      // may be a delayed duplicate of another node and cannot prove that the visit closed.
++      if (tail[0]?.seq === checkpoint.seq)
++        return reconcileThread(checkpoint.thread, tail, checkpoint);
++    }
+     const initial = await this.ports.runs.getInitialThread(runId);
+     if (!initial) return undefined;
+-    return replayThread(initial, await this.ports.events.read(runId));
++    return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
+   }
+ 
+   // ---------------------------------------------------------------------------
+@@ -1730,7 +1737,7 @@ export class RunManager {
+         // relying on in-memory allocation. Each heartbeat park gets a fresh token.
+         const wait: WaitSpec = { ...result.wait, startedSeq, waitId: runId + ':' + startedSeq };
+         const seq = await appendAll([{ type: 'run.waiting', nodeId, wait }]);
+-        await this.ports.runs.saveThread(runId, thread, seq);
++        await this.ports.runs.saveThread(runId, thread, seq, { strict: true, openNodeId: nodeId });
+         const parked = await this.ports.runs.transition(runId, ['running'], {
+           status: 'waiting',
+           waiting: wait,
+@@ -1789,7 +1796,7 @@ export class RunManager {
+           },
+           ...queuedWebhooks(result, thread, this.ports.ids),
+         ]);
+-        await this.ports.runs.saveThread(runId, thread, seq);
++        await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
+         await this.finish(run, def, thread, result);
+         return;
+       }
+@@ -1808,7 +1815,7 @@ export class RunManager {
+         ...(result.kind === 'done' ? (result.records ?? []) : []),
+         finishedDraft,
+       ]);
+-      await this.ports.runs.saveThread(runId, thread, seq);
++      await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
+       const edge = outgoingEdge(def, nodeId, result.route);
+       if (!edge) {
+         await this.failRun(runId, {
+@@ -1845,7 +1852,8 @@ export class RunManager {
+     if (isTerminal(run.status)) return true;
+     // The snapshot may predate the terminal append: bring it up to the end of the log.
+     const thread = await this.loadThread(run, events);
+-    await this.ports.runs.saveThread(run.id, thread, (events.at(-1) as RunEvent).seq);
++    const seq = (events.at(-1) as RunEvent).seq;
++    await this.ports.runs.saveThread(run.id, thread, seq, replayStateAt(events, seq));
+     const changes: RunRecordChanges =
+       terminal.type === 'run.cancelled'
+         ? { status: 'cancelled', waiting: undefined }
+@@ -2301,29 +2309,12 @@ export class RunManager {
+     return dir;
+   }
+ 
+-  /**
+-   * The executor always starts from the log, never the snapshot: a crash (or a failure) can leave
+-   * the snapshot behind the last `node.started` or `node.finished`, and the log is the source of
+-   * truth (docs/05). The snapshot only serves reads.
+-   */
++  /** Execution and public reads share the same verified-checkpoint reconstruction. */
+   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
+-    // A verified checkpoint: the snapshot names the seq it reflects, and that event is in the log,
+-    // so only the events after it are replayed. A checkpoint is always written after its event,
+-    // so one the log does not reach (or a snapshot without a seq) is ignored.
+     const checkpoint = await this.ports.runs.getThreadCheckpoint(run.id);
+-    if (checkpoint && events.some((e) => e.seq === checkpoint.seq)) {
+-      // The visit open at the checkpoint carries over, so a duplicate completion straddling it
+-      // is applied once, exactly as a full replay would.
+-      return replayThread(
+-        checkpoint.thread,
+-        events.filter((e) => e.seq > checkpoint.seq),
+-        undefined,
+-        replayStateAt(events, checkpoint.seq),
+-      );
+-    }
+     const initial = await this.ports.runs.getInitialThread(run.id);
+     if (!initial) throw new Error(`run ${run.id} has no initial thread`);
+-    return replayThread(initial, events);
++    return reconcileThread(initial, events, checkpoint);
+   }
+ 
+   private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {
+diff --git a/packages/engine/src/testing/fakes.ts b/packages/engine/src/testing/fakes.ts
+index 46fdf792..6b130f11 100644
+--- a/packages/engine/src/testing/fakes.ts
++++ b/packages/engine/src/testing/fakes.ts
+@@ -19,7 +19,12 @@ import type {
+   WorkingDirectorySpec,
+   WebhookAttemptResult,
+ } from '@graphgoblin/contracts';
+-import { isTerminal, stableStringify } from '@graphgoblin/domain';
++import {
++  isTerminal,
++  stableStringify,
++  type ReplayState,
++  type ThreadCheckpoint,
++} from '@graphgoblin/domain';
+ import type {
+   ArtifactStorePort,
+   ChoiceRequest,
+@@ -215,7 +220,7 @@ export class InMemoryRunRepository implements RunRepository {
+   readonly runs = new Map<string, RunRecord>();
+   private readonly initial = new Map<string, ContextThread>();
+   private readonly threads = new Map<string, ContextThread>();
+-  private readonly checkpoints = new Map<string, number>();
++  private readonly checkpoints = new Map<string, { seq: number; replayState: ReplayState }>();
+   private readonly finalized = new Set<string>();
+ 
+   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
+@@ -317,16 +322,20 @@ export class InMemoryRunRepository implements RunRepository {
+   getThread(runId: string): Promise<ContextThread | undefined> {
+     return Promise.resolve(this.threads.get(runId));
+   }
+-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
++  saveThread(
++    runId: string,
++    thread: ContextThread,
++    seq: number,
++    replayState: ReplayState,
++  ): Promise<void> {
+     this.threads.set(runId, thread);
+-    if (seq === undefined) this.checkpoints.delete(runId);
+-    else this.checkpoints.set(runId, seq);
++    this.checkpoints.set(runId, { seq, replayState });
+     return Promise.resolve();
+   }
+-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
++  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
+     const thread = this.threads.get(runId);
+-    const seq = this.checkpoints.get(runId);
+-    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
++    const checkpoint = this.checkpoints.get(runId);
++    return Promise.resolve(thread && checkpoint ? { thread, ...checkpoint } : undefined);
+   }
+   /** Test helper: drop the thread snapshot to force replay. */
+   dropThreadSnapshot(runId: string): void {
+diff --git a/packages/engine/src/thread-read.test.ts b/packages/engine/src/thread-read.test.ts
+new file mode 100644
+index 00000000..999b73ee
+--- /dev/null
++++ b/packages/engine/src/thread-read.test.ts
+@@ -0,0 +1,133 @@
++import { expect, it } from 'vitest';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { RunManager } from './run-manager.js';
++import type { EventStorePort } from './ports.js';
++import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
++
++async function setup(waiting = false) {
++  const engine = await createTestEngine();
++  const version = engine.publish(
++    waiting
++      ? singleNodeLoop('parked checkpoint', {
++          id: 'wait',
++          kind: 'wait',
++          label: 'Wait',
++          config: { mode: 'input', prompt: 'Approve?' },
++        })
++      : minimalLoop(),
++  );
++  const run = await engine.runToIdle(version.loopId);
++  engine.manager.stop();
++  const reads: { after: number; seqs: number[] }[] = [];
++  const events: EventStorePort = {
++    append: (...args) => engine.ports.events.append(...args),
++    subscribe: (...args) => engine.ports.events.subscribe(...args),
++    async read(runId, after = 0, limit) {
++      const result = await engine.ports.events.read(runId, after, limit);
++      reads.push({ after, seqs: result.map((e) => e.seq) });
++      return result;
++    },
++  };
++  const reader = new RunManager({ ...engine.ports, events }, engine.settings);
++  const initial = await engine.ports.runs.getInitialThread(run.id);
++  if (!initial) throw new Error('No seed');
++  const history = engine.events(run.id);
++  return { engine, run, reader, reads, initial, history };
++}
++
++it('reads only the checkpoint event for a current terminal snapshot', async () => {
++  const t = await setup();
++  const checkpoint = await t.engine.ports.runs.getThreadCheckpoint(t.run.id);
++  if (!checkpoint) throw new Error('No checkpoint');
++  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
++  expect(t.reads).toEqual([{ after: checkpoint.seq - 1, seqs: [checkpoint.seq] }]);
++  expect(await t.engine.ports.runs.getThreadCheckpoint(t.run.id)).toEqual(checkpoint);
++});
++it('catches up a completed checkpoint without replaying a duplicate completion patch', async () => {
++  const t = await setup();
++  const finished = t.history.findLast((e) => e.type === 'node.finished');
++  if (!finished) throw new Error('No finish');
++  await t.engine.ports.runs.saveThread(
++    t.run.id,
++    reconcileThread(t.initial, t.history, undefined, finished.seq),
++    finished.seq,
++    replayStateAt(t.history, finished.seq),
++  );
++  await t.engine.ports.events.append(t.run.id, [
++    {
++      type: 'node.finished',
++      nodeId: finished.nodeId,
++      durationMs: 0,
++      patch: [{ op: 'add', path: '/vars/duplicate', value: true }],
++    },
++  ]);
++  expect(await t.reader.getThread(t.run.id)).toEqual(
++    reconcileThread(t.initial, t.engine.events(t.run.id)),
++  );
++  expect(t.reads).toEqual([
++    {
++      after: finished.seq - 1,
++      seqs: t.engine
++        .events(t.run.id)
++        .filter((e) => e.seq >= finished.seq)
++        .map((e) => e.seq),
++    },
++  ]);
++});
++it('uses the recorded open visit at a parked checkpoint without reading its prefix', async () => {
++  const t = await setup(true);
++  const checkpoint = await t.engine.ports.runs.getThreadCheckpoint(t.run.id);
++  if (!checkpoint) throw new Error('No park');
++  await t.engine.ports.events.append(t.run.id, [
++    {
++      type: 'node.finished',
++      nodeId: 'wait',
++      durationMs: 0,
++      patch: [{ op: 'add', path: '/vars/answered', value: true }],
++    },
++  ]);
++  expect(await t.reader.getThread(t.run.id)).toEqual(
++    reconcileThread(t.initial, t.engine.events(t.run.id)),
++  );
++  expect(t.reads[0]?.after).toBe(checkpoint.seq - 1);
++  expect(t.reads).toHaveLength(1);
++});
++it('falls back to the full seed/history when the checkpoint event is missing', async () => {
++  const t = await setup();
++  await t.engine.ports.runs.saveThread(t.run.id, t.initial, 999, { strict: false });
++  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
++  expect(t.reads.map((r) => r.after)).toEqual([998, 0]);
++});
++it('uses writer-recorded state even when the event type does not identify an open visit', async () => {
++  const t = await setup();
++  const seq = t.history.find((e) => e.type === 'exit.evaluated')!.seq;
++  await t.engine.ports.runs.saveThread(
++    t.run.id,
++    reconcileThread(t.initial, t.history, undefined, seq),
++    seq,
++    replayStateAt(t.history, seq),
++  );
++  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
++  expect(t.reads.map((r) => r.after)).toEqual([seq - 1]);
++});
++it('replays the full history when no checkpoint exists', async () => {
++  const t = await setup();
++  t.engine.ports.runs.dropThreadSnapshot(t.run.id);
++  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
++  expect(t.reads.map((r) => r.after)).toEqual([0]);
++});
++
++it('uses a recorded unfinished started checkpoint without applying a patch early', async () => {
++  const t = await setup();
++  const start = t.history.findLast((e) => e.type === 'node.started');
++  if (!start) throw new Error('No start');
++  await t.engine.ports.runs.saveThread(
++    t.run.id,
++    reconcileThread(t.initial, t.history, undefined, start.seq),
++    start.seq,
++    replayStateAt(t.history, start.seq),
++  );
++  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
++  expect(t.reads.map((r) => r.after)).toEqual([start.seq - 1]);
++});
+diff --git a/packages/infrastructure/drizzle/0018_thread_checkpoint_replay_state.sql b/packages/infrastructure/drizzle/0018_thread_checkpoint_replay_state.sql
+new file mode 100644
+index 00000000..8c2dbf3a
+--- /dev/null
++++ b/packages/infrastructure/drizzle/0018_thread_checkpoint_replay_state.sql
+@@ -0,0 +1,2 @@
++-- ADR-0053: only a checkpoint writer can prove the open visit. Existing caches remain unproven.
++ALTER TABLE `runs` ADD `thread_snapshot_replay_state` text;
+diff --git a/packages/infrastructure/drizzle/meta/0018_snapshot.json b/packages/infrastructure/drizzle/meta/0018_snapshot.json
+new file mode 100644
+index 00000000..70fcb9fe
+--- /dev/null
++++ b/packages/infrastructure/drizzle/meta/0018_snapshot.json
+@@ -0,0 +1,1317 @@
++{
++  "version": "6",
++  "dialect": "sqlite",
++  "id": "499a365d-5940-470c-8777-ccde6586e04a",
++  "prevId": "3620a69d-d7e9-44d9-badb-64a098680fe4",
++  "tables": {
++    "api_keys": {
++      "name": "api_keys",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "label": {
++          "name": "label",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "hash": {
++          "name": "hash",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "scopes": {
++          "name": "scopes",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "last_used_at": {
++          "name": "last_used_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "revoked_at": {
++          "name": "revoked_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "api_keys_hash_idx": {
++          "name": "api_keys_hash_idx",
++          "columns": ["hash"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "classifier_models": {
++      "name": "classifier_models",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "display_name": {
++          "name": "display_name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "provider": {
++          "name": "provider",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "provider_model": {
++          "name": "provider_model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "primitives": {
++          "name": "primitives",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "endpoint": {
++          "name": "endpoint",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "secret_ref": {
++          "name": "secret_ref",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "classifier_models_owner_id_id_pk": {
++          "columns": ["owner_id", "id"],
++          "name": "classifier_models_owner_id_id_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "harness_sessions": {
++      "name": "harness_sessions",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "node_id": {
++          "name": "node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "attempt": {
++          "name": "attempt",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "harness": {
++          "name": "harness",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "session_id": {
++          "name": "session_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "model": {
++          "name": "model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "effort": {
++          "name": "effort",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "scope_key": {
++          "name": "scope_key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "harness_sessions_scope_idx": {
++          "name": "harness_sessions_scope_idx",
++          "columns": ["scope_key"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "harness_sessions_run_id_node_id_attempt_pk": {
++          "columns": ["run_id", "node_id", "attempt"],
++          "name": "harness_sessions_run_id_node_id_attempt_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "inbound_events": {
++      "name": "inbound_events",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "type": {
++          "name": "type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "payload": {
++          "name": "payload",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "dedupe_key": {
++          "name": "dedupe_key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "received_at": {
++          "name": "received_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "run_ids": {
++          "name": "run_ids",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "inbound_events_owner_idx": {
++          "name": "inbound_events_owner_idx",
++          "columns": ["owner_id", "received_at"],
++          "isUnique": false
++        },
++        "inbound_events_type_dedupe_idx": {
++          "name": "inbound_events_type_dedupe_idx",
++          "columns": ["owner_id", "type", "dedupe_key"],
++          "isUnique": false
++        },
++        "inbound_events_source_dedupe_idx": {
++          "name": "inbound_events_source_dedupe_idx",
++          "columns": ["owner_id", "source", "dedupe_key"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "loop_versions": {
++      "name": "loop_versions",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version": {
++          "name": "version",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "definition": {
++          "name": "definition",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "published_at": {
++          "name": "published_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "loop_versions_loop_idx": {
++          "name": "loop_versions_loop_idx",
++          "columns": ["loop_id", "version"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "loops": {
++      "name": "loops",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "name": {
++          "name": "name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "description": {
++          "name": "description",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "current_version_id": {
++          "name": "current_version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "draft_version_id": {
++          "name": "draft_version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "loops_owner_idx": {
++          "name": "loops_owner_idx",
++          "columns": ["owner_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "model_catalog": {
++      "name": "model_catalog",
++      "columns": {
++        "harness": {
++          "name": "harness",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "model": {
++          "name": "model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": "'harness'"
++        },
++        "display_name": {
++          "name": "display_name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "efforts": {
++          "name": "efforts",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "default_effort": {
++          "name": "default_effort",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": true
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "model_catalog_harness_model_pk": {
++          "columns": ["harness", "model"],
++          "name": "model_catalog_harness_model_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "run_events": {
++      "name": "run_events",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "seq": {
++          "name": "seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "ts": {
++          "name": "ts",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "type": {
++          "name": "type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "node_id": {
++          "name": "node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "payload": {
++          "name": "payload",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "run_events_delivery_idx": {
++          "name": "run_events_delivery_idx",
++          "columns": ["run_id", "type", "seq"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "run_events_run_id_seq_pk": {
++          "columns": ["run_id", "seq"],
++          "name": "run_events_run_id_seq_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "runs": {
++      "name": "runs",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "parent_run_id": {
++          "name": "parent_run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "invocation_id": {
++          "name": "invocation_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "current_node_id": {
++          "name": "current_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "iteration": {
++          "name": "iteration",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "waiting": {
++          "name": "waiting",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "cancel_requested_at": {
++          "name": "cancel_requested_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "paused_at": {
++          "name": "paused_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "failure": {
++          "name": "failure",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "outcome": {
++          "name": "outcome",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "result": {
++          "name": "result",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "started_at": {
++          "name": "started_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "finished_at": {
++          "name": "finished_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "last_event_seq": {
++          "name": "last_event_seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": 0
++        },
++        "initial_thread": {
++          "name": "initial_thread",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "thread_snapshot": {
++          "name": "thread_snapshot",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "thread_snapshot_seq": {
++          "name": "thread_snapshot_seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "finalized_at": {
++          "name": "finalized_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "pinned": {
++          "name": "pinned",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "thread_snapshot_replay_state": {
++          "name": "thread_snapshot_replay_state",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "runs_owner_status_idx": {
++          "name": "runs_owner_status_idx",
++          "columns": ["owner_id", "status"],
++          "isUnique": false
++        },
++        "runs_loop_idx": {
++          "name": "runs_loop_idx",
++          "columns": ["loop_id", "created_at"],
++          "isUnique": false
++        },
++        "runs_loop_owner_history_idx": {
++          "name": "runs_loop_owner_history_idx",
++          "columns": ["loop_id", "owner_id", "created_at", "id"],
++          "isUnique": false
++        },
++        "runs_trigger_dedupe_idx": {
++          "name": "runs_trigger_dedupe_idx",
++          "columns": [
++            "loop_id",
++            "json_extract(\"initial_thread\", '$.invocation.trigger.nodeId')",
++            "json_extract(\"initial_thread\", '$.invocation.trigger.dedupeKey')"
++          ],
++          "isUnique": false
++        },
++        "runs_parent_idx": {
++          "name": "runs_parent_idx",
++          "columns": ["parent_run_id"],
++          "isUnique": false
++        },
++        "runs_version_idx": {
++          "name": "runs_version_idx",
++          "columns": ["version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "schedules": {
++      "name": "schedules",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "expression": {
++          "name": "expression",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "timezone": {
++          "name": "timezone",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "missed_fire_policy": {
++          "name": "missed_fire_policy",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "next_fire_at": {
++          "name": "next_fire_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "last_fired_at": {
++          "name": "last_fired_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "schedules_due_idx": {
++          "name": "schedules_due_idx",
++          "columns": ["enabled", "next_fire_at"],
++          "isUnique": false
++        },
++        "schedules_loop_idx": {
++          "name": "schedules_loop_idx",
++          "columns": ["loop_id", "version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "secrets": {
++      "name": "secrets",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "name": {
++          "name": "name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "ciphertext": {
++          "name": "ciphertext",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "secrets_owner_id_name_pk": {
++          "columns": ["owner_id", "name"],
++          "name": "secrets_owner_id_name_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "settings": {
++      "name": "settings",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "key": {
++          "name": "key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "value": {
++          "name": "value",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "settings_owner_id_key_pk": {
++          "columns": ["owner_id", "key"],
++          "name": "settings_owner_id_key_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "timers": {
++      "name": "timers",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "key": {
++          "name": "key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "at": {
++          "name": "at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "timers_at_idx": {
++          "name": "timers_at_idx",
++          "columns": ["at"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "timers_run_id_key_pk": {
++          "columns": ["run_id", "key"],
++          "name": "timers_run_id_key_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "webhook_endpoints": {
++      "name": "webhook_endpoints",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "token": {
++          "name": "token",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "auth_type": {
++          "name": "auth_type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "signature_message": {
++          "name": "signature_message",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "signature_header": {
++          "name": "signature_header",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "secret_ref": {
++          "name": "secret_ref",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "window_seconds": {
++          "name": "window_seconds",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "webhook_endpoints_token_idx": {
++          "name": "webhook_endpoints_token_idx",
++          "columns": ["token"],
++          "isUnique": false
++        },
++        "webhook_endpoints_loop_idx": {
++          "name": "webhook_endpoints_loop_idx",
++          "columns": ["loop_id", "version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {
++        "webhook_endpoint_signing_check": {
++          "name": "webhook_endpoint_signing_check",
++          "value": "(\"webhook_endpoints\".\"auth_type\" = 'none' AND \"webhook_endpoints\".\"signature_message\" IS NULL AND \"webhook_endpoints\".\"signature_header\" IS NULL AND \"webhook_endpoints\".\"secret_ref\" IS NULL AND \"webhook_endpoints\".\"window_seconds\" IS NULL) OR (\"webhook_endpoints\".\"auth_type\" = 'hmac-sha256' AND \"webhook_endpoints\".\"signature_header\" IS NOT NULL AND \"webhook_endpoints\".\"secret_ref\" IS NOT NULL AND ((\"webhook_endpoints\".\"signature_message\" IS NOT NULL AND \"webhook_endpoints\".\"signature_message\" = 'body' AND \"webhook_endpoints\".\"window_seconds\" IS NULL) OR (\"webhook_endpoints\".\"signature_message\" IS NOT NULL AND \"webhook_endpoints\".\"signature_message\" = 'timestamp-body' AND \"webhook_endpoints\".\"window_seconds\" IS NOT NULL AND typeof(\"webhook_endpoints\".\"window_seconds\") = 'integer' AND \"webhook_endpoints\".\"window_seconds\" BETWEEN 1 AND 86400)))"
++        }
++      }
++    },
++    "webhook_receipts": {
++      "name": "webhook_receipts",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "content_hash": {
++          "name": "content_hash",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "inbound_id": {
++          "name": "inbound_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "intent": {
++          "name": "intent",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "attempts": {
++          "name": "attempts",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": 0
++        },
++        "next_attempt_at": {
++          "name": "next_attempt_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "failure_code": {
++          "name": "failure_code",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "webhook_receipts_content_idx": {
++          "name": "webhook_receipts_content_idx",
++          "columns": ["owner_id", "loop_id", "trigger_node_id", "content_hash"],
++          "isUnique": false
++        },
++        "webhook_receipts_inbound_idx": {
++          "name": "webhook_receipts_inbound_idx",
++          "columns": ["inbound_id"],
++          "isUnique": true
++        },
++        "webhook_receipts_due_idx": {
++          "name": "webhook_receipts_due_idx",
++          "columns": ["status", "next_attempt_at"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {
++        "webhook_receipt_status_check": {
++          "name": "webhook_receipt_status_check",
++          "value": "\"webhook_receipts\".\"status\" IN ('filtered','deduplicated','pending','admitted','failed')"
++        },
++        "webhook_receipt_intent_check": {
++          "name": "webhook_receipt_intent_check",
++          "value": "(\"webhook_receipts\".\"status\" IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NULL) OR (\"webhook_receipts\".\"status\" NOT IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NOT NULL)"
++        }
++      }
++    }
++  },
++  "views": {},
++  "enums": {},
++  "_meta": {
++    "schemas": {},
++    "tables": {},
++    "columns": {}
++  },
++  "internal": {
++    "indexes": {
++      "runs_trigger_dedupe_idx": {
++        "columns": {
++          "json_extract(\"initial_thread\", '$.invocation.trigger.nodeId')": {
++            "isExpression": true
++          },
++          "json_extract(\"initial_thread\", '$.invocation.trigger.dedupeKey')": {
++            "isExpression": true
++          }
++        }
++      }
++    }
++  }
++}
+diff --git a/packages/infrastructure/drizzle/meta/_journal.json b/packages/infrastructure/drizzle/meta/_journal.json
+index 8efc9520..94443214 100644
+--- a/packages/infrastructure/drizzle/meta/_journal.json
++++ b/packages/infrastructure/drizzle/meta/_journal.json
+@@ -127,6 +127,13 @@
+       "when": 1792600000000,
+       "tag": "0017_run_execution_limits",
+       "breakpoints": true
++    },
++    {
++      "idx": 18,
++      "version": "6",
++      "when": 1792800000000,
++      "tag": "0018_thread_checkpoint_replay_state",
++      "breakpoints": true
+     }
+   ]
+ }
+diff --git a/packages/infrastructure/src/sqlite/catalog.test.ts b/packages/infrastructure/src/sqlite/catalog.test.ts
+index 361ed11a..82904a9f 100644
+--- a/packages/infrastructure/src/sqlite/catalog.test.ts
++++ b/packages/infrastructure/src/sqlite/catalog.test.ts
+@@ -312,13 +312,14 @@ describe('model catalog source migration and repository', () => {
+         'CREATE TABLE webhook_endpoints(id text PRIMARY KEY,owner_id text NOT NULL,loop_id text NOT NULL,version_id text NOT NULL,trigger_node_id text NOT NULL,token text NOT NULL,secret_ref text NOT NULL,signature_header text NOT NULL,replay_window_seconds integer NOT NULL,enabled integer NOT NULL,created_at text NOT NULL)',
+       );
+       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
+-      // Roll back 0016 and 0014 too, so replaying them re-adds the owner/history index and the run pins.
++      // Roll back the later schema too before replaying its shipped structural migrations.
+       for (const statement of [
+         'DROP INDEX runs_loop_owner_history_idx',
+         'DROP TRIGGER loop_versions_snapshot_immutable',
+         'DROP TRIGGER loop_versions_snapshot_pinned',
+         'DROP INDEX runs_version_idx',
+         'ALTER TABLE runs DROP COLUMN pinned',
++        'ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state',
+       ])
+         await handle.client.execute(statement);
+       await handle.client.execute(
+diff --git a/packages/infrastructure/src/sqlite/checkpoint-state.test.ts b/packages/infrastructure/src/sqlite/checkpoint-state.test.ts
+new file mode 100644
+index 00000000..925ac23b
+--- /dev/null
++++ b/packages/infrastructure/src/sqlite/checkpoint-state.test.ts
+@@ -0,0 +1,155 @@
++import { copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { expect, it } from 'vitest';
++import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { FIXTURE_TS, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
++import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
++import { RunManager, type EventStorePort } from '@graphgoblin/engine';
++import { createFakePorts, DEFAULT_TEST_SETTINGS } from '@graphgoblin/engine/testing';
++import { openDatabase } from './db.js';
++import { SqliteEventStore } from './events.js';
++import { SqliteRunRepository } from './runs.js';
++
++it('migrates shipped snapshots without inventing state, then persists checkpoint proof across reopen', async () => {
++  const dir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-migration-'));
++  const folder = join(dir, 'migrations');
++  await mkdir(join(folder, 'meta'), { recursive: true });
++  const shipped = fileURLToPath(new URL('../../drizzle/', import.meta.url));
++  const journal = JSON.parse(await readFile(join(shipped, 'meta/_journal.json'), 'utf8')) as {
++    entries: { idx: number; tag: string }[];
++  };
++  journal.entries = journal.entries.filter((entry) => entry.idx < 18);
++  await writeFile(join(folder, 'meta/_journal.json'), JSON.stringify(journal));
++  for (const entry of journal.entries)
++    await copyFile(join(shipped, entry.tag + '.sql'), join(folder, entry.tag + '.sql'));
++  const url = 'file:' + join(dir, 'store.db').replaceAll('\\', '/');
++  const old = openDatabase({ url, migrationsFolder: folder });
++  const initial = sampleThread({ vars: {} });
++  const id = initial.run.id;
++  await old.migrate();
++  try {
++    await old.client.execute({
++      sql: "INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at) VALUES (?, ?, 1, 'published', ?, ?)",
++      args: [
++        initial.run.versionId,
++        initial.run.loopId,
++        JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),
++        FIXTURE_TS,
++      ],
++    });
++    await old.client.execute({
++      sql: "INSERT INTO runs (id, owner_id, loop_id, version_id, invocation_id, status, iteration, created_at, initial_thread, pinned) VALUES (?, 'local', ?, ?, ?, 'queued', 1, ?, ?, ?)",
++      args: [
++        id,
++        initial.run.loopId,
++        initial.run.versionId,
++        initial.invocation.id,
++        FIXTURE_TS,
++        JSON.stringify(initial),
++        JSON.stringify(samplePin()),
++      ],
++    });
++    const store = new SqliteEventStore(old.db, createFakePorts().clock);
++    await store.append(id, [
++      { type: 'node.started', nodeId: 'a', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
++      },
++      { type: 'node.started', nodeId: 'b', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
++      {
++        type: 'node.finished',
++        nodeId: 'a',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
++      },
++    ]);
++    const prefix = await store.read(id);
++    const seq = prefix.at(-1)!.seq;
++    const snapshot = reconcileThread(initial, prefix);
++    await old.client.execute({
++      sql: 'UPDATE runs SET thread_snapshot = ?, thread_snapshot_seq = ? WHERE id = ?',
++      args: [JSON.stringify(snapshot), seq, id],
++    });
++    await store.append(id, [
++      {
++        type: 'node.finished',
++        nodeId: 'b',
++        durationMs: 1,
++        patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
++      },
++    ]);
++  } finally {
++    old.close();
++  }
++  const current = openDatabase({ url });
++  try {
++    expect(await current.pendingMigrations()).toBe(1);
++    const before = (
++      await current.client.execute(
++        'SELECT initial_thread, thread_snapshot, thread_snapshot_seq FROM runs',
++      )
++    ).rows;
++    await current.migrate();
++    await current.migrate();
++    expect(await current.pendingMigrations()).toBe(0);
++    expect(
++      (
++        await current.client.execute(
++          'SELECT initial_thread, thread_snapshot, thread_snapshot_seq FROM runs',
++        )
++      ).rows,
++    ).toEqual(before);
++    expect(
++      (await current.client.execute('SELECT thread_snapshot_replay_state FROM runs')).rows[0]?.[
++        'thread_snapshot_replay_state'
++      ],
++    ).toBeNull();
++    const runs = new SqliteRunRepository(current.db);
++    const fake = createFakePorts();
++    const store = new SqliteEventStore(current.db, fake.clock);
++    const reads: { after: number; rows: number }[] = [];
++    const events: EventStorePort = {
++      append: (...args) => store.append(...args),
++      subscribe: (...args) => store.subscribe(...args),
++      async read(runId, after = 0, limit) {
++        const result = await store.read(runId, after, limit);
++        reads.push({ after, rows: result.length });
++        return result;
++      },
++    };
++    const reader = new RunManager({ ...fake, runs, events }, DEFAULT_TEST_SETTINGS);
++    const history = await store.read(id);
++    const expected = reconcileThread(initial, history);
++    const checkpoint = (await runs.getThreadCheckpoint(id))!;
++    expect(checkpoint.replayState).toBeUndefined();
++    const bytes = async () =>
++      JSON.stringify((await current.client.execute('SELECT * FROM runs')).rows);
++    const previous = await bytes();
++    expect((await reader.getThread(id))?.vars.items).toEqual(['a', 'b']);
++    expect(reads).toEqual([{ after: 0, rows: history.length }]);
++    expect(await bytes()).toBe(previous);
++    await runs.saveThread(
++      id,
++      checkpoint.thread,
++      checkpoint.seq,
++      replayStateAt(history, checkpoint.seq),
++    );
++    reads.length = 0;
++    expect(await reader.getThread(id)).toEqual(expected);
++    expect(reads).toEqual([{ after: checkpoint.seq - 1, rows: 2 }]);
++  } finally {
++    current.close();
++  }
++  const reopened = openDatabase({ url });
++  try {
++    const proof = (await new SqliteRunRepository(reopened.db).getThreadCheckpoint(id))?.replayState;
++    expect(proof).toEqual({ openNodeId: 'b', strict: true });
++  } finally {
++    reopened.close();
++  }
++});
+diff --git a/packages/infrastructure/src/sqlite/delivery-runs.test.ts b/packages/infrastructure/src/sqlite/delivery-runs.test.ts
+index 3b05b136..8bdf57a3 100644
+--- a/packages/infrastructure/src/sqlite/delivery-runs.test.ts
++++ b/packages/infrastructure/src/sqlite/delivery-runs.test.ts
+@@ -48,6 +48,7 @@ afterEach(() => handle.close());
+ async function migrateHistoricalReturns() {
+   // Restore a pre-0015 ledger prefix and remove the later index before replaying it.
+   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
++  await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
+   await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1792454400000');
+   await handle.migrate();
+ }
+diff --git a/packages/infrastructure/src/sqlite/history-summaries.test.ts b/packages/infrastructure/src/sqlite/history-summaries.test.ts
+index 1a8f744a..3811d79d 100644
+--- a/packages/infrastructure/src/sqlite/history-summaries.test.ts
++++ b/packages/infrastructure/src/sqlite/history-summaries.test.ts
+@@ -25,6 +25,7 @@ describe('SQLite history queries', () => {
+   afterEach(() => handle.close());
+   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
+     await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
++    await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
+     const historyMigration = readMigrationFiles({
+       migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
+     }).find((migration) =>
+diff --git a/packages/infrastructure/src/sqlite/json-values.test.ts b/packages/infrastructure/src/sqlite/json-values.test.ts
+index d9b95f5f..c39f265d 100644
+--- a/packages/infrastructure/src/sqlite/json-values.test.ts
++++ b/packages/infrastructure/src/sqlite/json-values.test.ts
+@@ -132,12 +132,16 @@ describe('JSON values in real SQLite', () => {
+     thread.invocation.trigger.payload = null;
+     await repo.create(run, thread);
+     const snapshot = { ...thread, vars: { ...thread.vars, changed: null } };
+-    await repo.saveThread(run.id, snapshot, 0);
++    await repo.saveThread(run.id, snapshot, 0, { strict: false });
+     expect(await repo.get(run.id)).toEqual(run);
+     const reader = new SqliteRunRepository((await reopen()).db);
+     expect(await reader.get(run.id)).toEqual(run);
+     expect(await reader.getInitialThread(run.id)).toEqual(thread);
+-    expect(await reader.getThreadCheckpoint(run.id)).toEqual({ thread: snapshot, seq: 0 });
++    expect(await reader.getThreadCheckpoint(run.id)).toEqual({
++      thread: snapshot,
++      seq: 0,
++      replayState: { strict: false },
++    });
+     await reader.update(run.id, { waiting: undefined, failure: undefined });
+     const cleared = await reader.get(run.id);
+     expect(Object.hasOwn(cleared!, 'waiting')).toBe(false);
+diff --git a/packages/infrastructure/src/sqlite/loop-deletion.test.ts b/packages/infrastructure/src/sqlite/loop-deletion.test.ts
+index 9aa122d0..fc9cf12a 100644
+--- a/packages/infrastructure/src/sqlite/loop-deletion.test.ts
++++ b/packages/infrastructure/src/sqlite/loop-deletion.test.ts
+@@ -68,7 +68,7 @@ async function storedRun(
+     ref: 'artifact:text/' + 'a'.repeat(64),
+   });
+   await repo.create(run, thread);
+-  await repo.saveThread(run.id, thread, 1);
++  await repo.saveThread(run.id, thread, 1, { strict: false });
+   await handle.db.insert(runEvents).values({
+     runId: run.id,
+     seq: 1,
+diff --git a/packages/infrastructure/src/sqlite/run-decoding.ts b/packages/infrastructure/src/sqlite/run-decoding.ts
+index 3a696cb7..214db93a 100644
+--- a/packages/infrastructure/src/sqlite/run-decoding.ts
++++ b/packages/infrastructure/src/sqlite/run-decoding.ts
+@@ -4,6 +4,7 @@ import {
+   type ContextThread,
+   type RunRecord,
+ } from '@graphgoblin/contracts';
++import type { ReplayState } from '@graphgoblin/domain';
+ import { UnreadableRunHistoryError } from '@graphgoblin/engine';
+ import { sql } from 'drizzle-orm';
+ import { runs } from './schema.js';
+@@ -73,6 +74,24 @@ export function decodeRunRecord(row: RawRun): RunRecord {
+   return parsed.data;
+ }
+ 
++/** The writer-recorded replay state is the bounded read's proof: damaged state is damaged history. */
++export function decodeStoredReplayState(runId: string, text: string): ReplayState {
++  const value = decode(runId, 'thread_snapshot_replay_state', text);
++  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
++    const { strict, openNodeId, ...rest } = value as Record<string, unknown>;
++    if (
++      typeof strict === 'boolean' &&
++      (openNodeId === undefined || typeof openNodeId === 'string') &&
++      Object.keys(rest).length === 0
++    )
++      return openNodeId === undefined ? { strict } : { strict, openNodeId };
++  }
++  throw new UnreadableRunHistoryError(
++    runId,
++    `Stored run ${runId} has an invalid thread_snapshot_replay_state`,
++  );
++}
++
+ export function decodeStoredThread(runId: string, field: string, text: string): ContextThread {
+   const parsed = ContextThreadSchema.safeParse(decode(runId, field, text));
+   if (!parsed.success)
+diff --git a/packages/infrastructure/src/sqlite/run-row.ts b/packages/infrastructure/src/sqlite/run-row.ts
+index 9b2908f4..d9513fa7 100644
+--- a/packages/infrastructure/src/sqlite/run-row.ts
++++ b/packages/infrastructure/src/sqlite/run-row.ts
+@@ -3,7 +3,13 @@ import type { runs } from './schema.js';
+ /** A decoded run row. Its definition pin is present: the decoder refuses rows without one. */
+ export type RunRecordRow = Omit<
+   typeof runs.$inferSelect,
+-  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt' | 'result' | 'pinned'
++  | 'initialThread'
++  | 'threadSnapshot'
++  | 'threadSnapshotSeq'
++  | 'threadSnapshotReplayState'
++  | 'finalizedAt'
++  | 'result'
++  | 'pinned'
+ > & { result: JsonValue | undefined; pinned: RunPin };
+ 
+ export function runRecordFromRow(row: RunRecordRow): RunRecord {
+diff --git a/packages/infrastructure/src/sqlite/runs.ts b/packages/infrastructure/src/sqlite/runs.ts
+index ae22e0f7..e70108ed 100644
+--- a/packages/infrastructure/src/sqlite/runs.ts
++++ b/packages/infrastructure/src/sqlite/runs.ts
+@@ -1,3 +1,4 @@
++import type { ReplayState, ThreadCheckpoint } from '@graphgoblin/domain';
+ import { RunRecordSchema, TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
+ import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
+ import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
+@@ -7,7 +8,12 @@ import type { Database } from './db.js';
+ import { loopVersions, loops, runs } from './schema.js';
+ import { deleteRuns } from './delete-runs.js';
+ 
+-import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
++import {
++  rawRunColumns,
++  decodeRunRecord,
++  decodeStoredReplayState,
++  decodeStoredThread,
++} from './run-decoding.js';
+ export { runRecordFromRow } from './run-row.js';
+ 
+ /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
+@@ -311,27 +317,43 @@ export class SqliteRunRepository implements RunRepository {
+       : undefined;
+   }
+ 
+-  async saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
++  async saveThread(
++    runId: string,
++    thread: ContextThread,
++    seq: number,
++    replayState: ReplayState,
++  ): Promise<void> {
+     await this.db
+       .update(runs)
+-      .set({ threadSnapshot: thread, threadSnapshotSeq: seq ?? null })
++      .set({
++        threadSnapshot: thread,
++        threadSnapshotSeq: seq,
++        threadSnapshotReplayState: replayState,
++      })
+       .where(eq(runs.id, runId));
+   }
+ 
+-  async getThreadCheckpoint(
+-    runId: string,
+-  ): Promise<{ thread: ContextThread; seq: number } | undefined> {
++  async getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
+     const [row] = await this.db
+       .select({
+         thread: sql<string | null>`${runs.threadSnapshot}`,
+         seq: runs.threadSnapshotSeq,
++        replayState: sql<string | null>`${runs.threadSnapshotReplayState}`,
+       })
+       .from(runs)
+       .where(eq(runs.id, runId))
+       .limit(1);
+     if (row?.thread === null || row?.thread === undefined) return undefined;
+     const thread = decodeStoredThread(runId, 'thread_snapshot', row.thread);
+-    return row.seq === null ? undefined : { thread, seq: row.seq };
++    return row.seq === null
++      ? undefined
++      : {
++          thread,
++          seq: row.seq,
++          ...(row.replayState === null
++            ? {}
++            : { replayState: decodeStoredReplayState(runId, row.replayState) }),
++        };
+   }
+ 
+   /**
+@@ -381,7 +403,7 @@ export class SqliteRunRepository implements RunRepository {
+   async clearThreadSnapshot(runId: string): Promise<void> {
+     await this.db
+       .update(runs)
+-      .set({ threadSnapshot: null, threadSnapshotSeq: null })
++      .set({ threadSnapshot: null, threadSnapshotSeq: null, threadSnapshotReplayState: null })
+       .where(eq(runs.id, runId));
+   }
+ }
+diff --git a/packages/infrastructure/src/sqlite/schema.ts b/packages/infrastructure/src/sqlite/schema.ts
+index 55d17290..26e42cb8 100644
+--- a/packages/infrastructure/src/sqlite/schema.ts
++++ b/packages/infrastructure/src/sqlite/schema.ts
+@@ -1,3 +1,4 @@
++import type { ReplayState } from '@graphgoblin/domain';
+ import { sql } from 'drizzle-orm';
+ import type { RunAdmission, WebhookFailureCode } from '@graphgoblin/engine';
+ import type {
+@@ -85,6 +86,10 @@ export const runs = sqliteTable(
+     threadSnapshot: text('thread_snapshot', { mode: 'json' }).$type<ContextThread>(),
+     /** The last event seq the snapshot reflects, when it is a verified checkpoint. */
+     threadSnapshotSeq: integer('thread_snapshot_seq'),
++    /** Writer-recorded replay state at the snapshot seq; NULL checkpoints need their prefix. */
++    threadSnapshotReplayState: text('thread_snapshot_replay_state', {
++      mode: 'json',
++    }).$type<ReplayState>(),
+     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
+     finalizedAt: text('finalized_at'),
+     /**
+diff --git a/packages/infrastructure/src/sqlite/storage.test.ts b/packages/infrastructure/src/sqlite/storage.test.ts
+index 49ca46cd..79303891 100644
+--- a/packages/infrastructure/src/sqlite/storage.test.ts
++++ b/packages/infrastructure/src/sqlite/storage.test.ts
+@@ -174,11 +174,38 @@ describe('SqliteRunRepository', () => {
+     expect(updated.outcome).toBe('success');
+ 
+     const next = { ...thread, vars: { changed: true } };
+-    await repo.saveThread(run.id, next);
++    // A pre-state snapshot is unsequenced storage, never a new port write.
++    await handle.client.execute({
++      sql: 'UPDATE runs SET thread_snapshot = ? WHERE id = ?',
++      args: [JSON.stringify(next), run.id],
++    });
+     expect((await repo.getThread(run.id))?.vars).toEqual({ changed: true });
+     expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
+-    await repo.saveThread(run.id, next, 7);
+-    expect(await repo.getThreadCheckpoint(run.id)).toEqual({ thread: next, seq: 7 });
++    await repo.saveThread(run.id, next, 7, { strict: true, openNodeId: 'work' });
++    expect(await repo.getThreadCheckpoint(run.id)).toEqual({
++      thread: next,
++      seq: 7,
++      replayState: { strict: true, openNodeId: 'work' },
++    });
++    await repo.saveThread(run.id, next, 7, { strict: true });
++    expect((await repo.getThreadCheckpoint(run.id))?.replayState).toEqual({ strict: true });
++    // The stored state is the bounded read's proof, so damage is refused, never trusted.
++    for (const damaged of [
++      '{',
++      'null',
++      '[]',
++      '{"strict":"yes"}',
++      '{"strict":true,"openNodeId":3}',
++      '{"strict":true,"extra":1}',
++    ]) {
++      await handle.client.execute({
++        sql: 'UPDATE runs SET thread_snapshot_replay_state = ? WHERE id = ?',
++        args: [damaged, run.id],
++      });
++      await expect(repo.getThreadCheckpoint(run.id)).rejects.toThrow(
++        /thread_snapshot_replay_state/,
++      );
++    }
+     await repo.clearThreadSnapshot(run.id);
+     expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
+     expect(await repo.getThread(run.id)).toBeUndefined();
+diff --git a/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts b/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts
+index e175a0bf..2eeb4116 100644
+--- a/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts
++++ b/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts
+@@ -48,6 +48,7 @@ beforeEach(async () => {
+   handle = await openMemoryDatabase();
+   // Restore a pre-0015 ledger prefix; remove the later index before both migrations replay.
+   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
++  await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
+   await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1792454400000');
+ });
+ afterEach(() => handle.close());

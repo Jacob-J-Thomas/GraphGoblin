@@ -1,0 +1,118 @@
+{"case":"retry pending","execution":"succeeded","delivery":[{"status":"pending","attempts":2,"id":"01M5R933CX9H4MR45WC48HSSSS"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted"]},"SSE after 112":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R933CX9H4MR45WC48HSSSS","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/retry"},"status":"pending","attempts":2,"maxAttempts":5,"inFlight":true,"acknowledgement":"unknown","effectMayHaveHappened":true,"acknowledgementUncertain":true,"nextAttemptAt":"2026-10-25T00:59:26.685Z","lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}]},"inspector":{"timeline":"Timeline (12 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Pending (2/5 attempts)"]}}
+{"case":"retry final","execution":"succeeded","delivery":[{"status":"delivered","attempts":2,"id":"01M5R933CX9H4MR45WC48HSSSS"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted","delivery.finished"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted","delivery.finished"]},"SSE after 113":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R933CX9H4MR45WC48HSSSS","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/retry"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}]},"inspector":{"timeline":"Timeline (13 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Delivered after 2 attempts"]}}
+{"case":"failure pending","execution":"succeeded","delivery":[{"status":"pending","attempts":1,"id":"01M5R939A1JEZRDFBFXKN6NZTG"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted"]},"SSE after 110":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R939A1JEZRDFBFXKN6NZTG","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/failure"},"status":"pending","attempts":1,"maxAttempts":5,"inFlight":true,"acknowledgement":"unknown","effectMayHaveHappened":true,"acknowledgementUncertain":false,"nextAttemptAt":"2026-10-25T00:59:27.662Z"}]},"inspector":{"timeline":"Timeline (10 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Pending (1/5 attempts)"]}}
+{"case":"failure final","execution":"succeeded","delivery":[{"status":"failed","attempts":1,"id":"01M5R939A1JEZRDFBFXKN6NZTG"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted","delivery.finished"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted","delivery.finished"]},"SSE after 111":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R939A1JEZRDFBFXKN6NZTG","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/failure"},"status":"failed","attempts":1,"maxAttempts":5,"inFlight":false,"acknowledgement":"rejected","effectMayHaveHappened":false,"acknowledgementUncertain":false,"lastError":{"code":"http","message":"Webhook returned HTTP 400.","retryable":false,"acknowledgement":"rejected","httpStatus":400}}]},"inspector":{"timeline":"Timeline (11 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Failed after 1 attempt"]}}
+{"case":"restart pending","execution":"succeeded","delivery":[{"status":"pending","attempts":1,"id":"01M5R93D4TKZPXKXVXYVD4W6PV"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted"]},"SSE after 110":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R93D4TKZPXKXVXYVD4W6PV","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/restart"},"status":"pending","attempts":1,"maxAttempts":5,"inFlight":true,"acknowledgement":"unknown","effectMayHaveHappened":true,"acknowledgementUncertain":false,"nextAttemptAt":"2026-10-25T00:59:31.592Z"}]},"inspector":{"timeline":"Timeline (10 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Pending (1/5 attempts)"]}}
+{"case":"restart recovered pending","execution":"succeeded","delivery":[{"status":"pending","attempts":2,"id":"01M5R93D4TKZPXKXVXYVD4W6PV"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted"]},"SSE after 112":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R93D4TKZPXKXVXYVD4W6PV","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/restart"},"status":"pending","attempts":2,"maxAttempts":5,"inFlight":true,"acknowledgement":"unknown","effectMayHaveHappened":true,"acknowledgementUncertain":true,"nextAttemptAt":"2026-10-25T00:59:51.270Z","lastError":{"code":"interrupted","message":"Process stopped before acknowledgement was recorded; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}]},"inspector":{"timeline":"Timeline (12 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Pending (2/5 attempts)"]}}
+{"case":"restart final","execution":"succeeded","delivery":[{"status":"delivered","attempts":2,"id":"01M5R93D4TKZPXKXVXYVD4W6PV"}],"finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished","delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted","delivery.finished"]},"SSE after 8":{"settled":true,"seen":["delivery.queued","delivery.attempted","delivery.attempt_finished","delivery.attempted","delivery.finished"]},"SSE after 113":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded","deliveries":[{"id":"01M5R93D4TKZPXKXVXYVD4W6PV","channel":{"kind":"webhook","url":"http://127.0.0.1:5801/restart"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"interrupted","message":"Process stopped before acknowledgement was recorded; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}]},"inspector":{"timeline":"Timeline (13 events, complete)","text":["Execution: succeeded. Delivery is tracked separately.","Delivered after 2 attempts"]}}
+{"case":"none pending","execution":"succeeded","finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished"]},"SSE after 8":{"settled":true,"seen":[]},"SSE after 108":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded"},"inspector":{"timeline":"Timeline (8 events, complete)","text":null}}
+{"case":"none final","execution":"succeeded","finalized":false,"SSE after 0":{"settled":true,"seen":["run.queued","run.started","node.started","node.finished","node.started","exit.evaluated","node.finished","run.finished"]},"SSE after 8":{"settled":true,"seen":[]},"SSE after 108":{"settled":true,"seen":[]},"clientWait":{"finished":true,"status":"succeeded","finalized":false},"mcpWait":{"finished":true,"status":"succeeded"},"inspector":{"timeline":"Timeline (8 events, complete)","text":null}}
+node : file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/reproduce.mjs:105
+At line:29 char:1
++ node reproduce.mjs --verify > docs/qa/2026-10-24-wp-d2-185/assertions ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...produce.mjs:105:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  if (failures.length) throw Error(failures.join('\n'));
+                             ^
+
+Error: retry pending: SSE after 0
+
+true !== false
+
+retry pending: SSE after 8
+
+true !== false
+
+retry pending: SSE after 112
+
+true !== false
+
+retry pending: clientWait
+
+true !== false
+
+retry pending: mcpWait
+
+true !== false
+
+retry pending: inspector
+
+true !== false
+
+failure pending: SSE after 0
+
+true !== false
+
+failure pending: SSE after 8
+
+true !== false
+
+failure pending: SSE after 110
+
+true !== false
+
+failure pending: clientWait
+
+true !== false
+
+failure pending: mcpWait
+
+true !== false
+
+failure pending: inspector
+
+true !== false
+
+restart pending: SSE after 0
+
+true !== false
+
+restart pending: SSE after 8
+
+true !== false
+
+restart pending: SSE after 110
+
+true !== false
+
+restart pending: clientWait
+
+true !== false
+
+restart pending: mcpWait
+
+true !== false
+
+restart pending: inspector
+
+true !== false
+
+restart recovered pending: SSE after 0
+
+true !== false
+
+restart recovered pending: SSE after 8
+
+true !== false
+
+restart recovered pending: SSE after 112
+
+true !== false
+
+restart recovered pending: clientWait
+
+true !== false
+
+restart recovered pending: mcpWait
+
+true !== false
+
+restart recovered pending: inspector
+
+true !== false
+
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/reproduce.mjs:105:30
+
+Node.js v22.14.0

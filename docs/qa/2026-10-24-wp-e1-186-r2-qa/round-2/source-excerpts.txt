@@ -1,0 +1,92 @@
+apps/web/src/runs/RunInspectorPage.tsx
+199:               </Card>
+200:             ) : null}
+201:             <RunLimits run={run} />
+202:             <ExecutionContext
+203:               run={run}
+204:               events={log.events}
+205:               definition={definition}
+206:               definitionLoading={versionQuery.isPending}
+207:             />
+208:             <WaitPanel run={run} definition={definition} />
+209:             <DeliveryPanel run={run} />
+
+apps/web/src/runs/inspector/ExecutionEvidence.tsx
+30:             : 'Pinned definition unavailable. Authored node and route labels are not recorded in the available history.'}
+31:         </p>
+32:       ) : null}
+33:       {run.status === 'cancelled' ? (
+34:         <p className="text-sm wrap-anywhere">
+35:           {cancellationSummary(events) ??
+36:             ((events.at(-1)?.seq ?? 0) < run.lastEventSeq
+37:               ? 'Cancelled. Cancellation history is incomplete; actor not available yet.'
+38:               : 'Cancelled; terminal cancellation event not recorded, so its actor cannot be established.')}
+39:           {run.currentNodeId
+40:             ? ` Recorded node position: ${nodeName(definition, run.currentNodeId)}.`
+41:             : ' Node position not recorded.'}
+42:         </p>
+43:       ) : null}
+44:       <Disclosure label="Exact run record" variant="row" open={showRun} onOpenChange={setShowRun}>
+45:         {showRun ? (
+
+packages/infrastructure/src/sqlite/events.ts
+192:           .where(
+193:             and(
+194:               eq(runEvents.runId, runId),
+195:               side === 'older' ? lt(runEvents.seq, bound) : gt(runEvents.seq, bound),
+196:             ),
+197:           )
+198:           .limit(1)
+199:       ).length > 0;
+200:     return {
+201:       items,
+202:       hasOlder: await exists(olderThan, 'older'),
+203:       hasNewer: await exists(newerThan, 'newer'),
+204:       olderThan,
+205:       newerThan,
+206:     };
+207:   }
+208: 
+209:   /** Latest matching evidence, independent of the browser window; indexed by run/type/seq. */
+210:   async latestGate(runId: string): Promise<RunEvent | undefined> {
+211:     // One indexed type scan, not one SQL round trip per ungated decision. Malformed JSON is
+212:     // selected too, so decoding reports corruption instead of silently treating it as no gate.
+213:     const [row] = await this.db
+214:       .select({
+215:         runId: runEvents.runId,
+216:         seq: runEvents.seq,
+217:         ts: runEvents.ts,
+218:         type: runEvents.type,
+219:         nodeId: runEvents.nodeId,
+220:         payload: sql<string>`${runEvents.payload}`,
+221:       })
+
+apps/api/src/run-history.ts
+1: import type { ContextThread } from '@graphgoblin/contracts';
+2: import { replayThread, replayStateAt, type ReplayState } from '@graphgoblin/domain';
+3: import { z } from 'zod';
+4: import type { Container } from './container.js';
+5: 
+6: const Cursor = z.strictObject({
+7:   runId: z.string(),
+8:   seq: z.number().int().nonnegative().safe(),
+9:   direction: z.enum(['older', 'newer']),
+10: });
+11: type Cursor = z.infer<typeof Cursor>;
+12: 
+13: export function historyCursor(value: Cursor): string {
+14:   return Buffer.from(JSON.stringify(value)).toString('base64url');
+15: }
+16: 
+17: export function readHistoryCursor(cursor: string, runId: string): Cursor {
+18:   try {
+19:     if (cursor.length > 256 || !/^[A-Za-z0-9_-]+$/.test(cursor)) throw new Error('invalid');
+20:     const value = Cursor.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')));
+21:     if (value.runId !== runId || historyCursor(value) !== cursor) throw new Error('invalid');
+22:     return value;
+23:   } catch {
+24:     throw Object.assign(new Error('Choose a cursor returned by this run history.'), {
+25:       code: 'INVALID_CURSOR',
+26:       statusCode: 400,
+27:     });
+

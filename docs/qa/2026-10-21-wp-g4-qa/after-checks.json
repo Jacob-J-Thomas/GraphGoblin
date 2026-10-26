@@ -1,0 +1,417 @@
+[
+  {
+    "id": "kept-amended",
+    "steps": "Stop built process; remove result from run.finished and set runs.result=NULL; restart; inspect top and exit detail.",
+    "expected": "Exact ambiguous expression sentence; no Result card.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDNE3VMTCEBHMGMADXJGRP\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.\n\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ncheck (decision) attempt 1\n#6\ndecision.made\nChose keep with expression\n#7\nnode.finished\ncheck → keep, 2 changes, 1 ms\n#8\nnode.started\nkept (exit) attempt 1\n#9\nexit.evaluated\nExited: success\n#10\nnode.finished\nkept, 0 changes, 0 ms\n#11\nrun.finished\nsucceeded (success)\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.",
+      "run": {
+        "id": "01M5GDNE3VMTCEBHMGMADXJGRP",
+        "ownerId": "local",
+        "loopId": "01M5GDMRJE1EN2S858T8CWXT00",
+        "versionId": "01M5GDN3EAZJ0CXT6J3TZVRJPK",
+        "pinned": {
+          "source": "published",
+          "version": 2,
+          "name": "QA 129 quiet exit",
+          "label": "QA 129 quiet exit v2",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDNE3VGR466HGW1XZXPRM2",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:45:09.243Z",
+        "startedAt": "2026-10-21T23:45:09.339Z",
+        "finishedAt": "2026-10-21T23:45:10.052Z",
+        "lastEventSeq": 12
+      },
+      "events": [
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 9,
+          "ts": "2026-10-21T23:45:10.048Z",
+          "type": "exit.evaluated",
+          "nodeId": "kept",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 11,
+          "ts": "2026-10-21T23:45:10.048Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+          "seq": 12,
+          "ts": "2026-10-21T23:45:10.120Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "null-amended",
+    "steps": "Stop built process; remove result from run.finished and set runs.result=NULL; restart; inspect top and exit detail.",
+    "expected": "Exact ambiguous expression sentence; no Result card.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDV7CPZFT60XHNFM2TV2D6\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.\n\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.",
+      "run": {
+        "id": "01M5GDV7CPZFT60XHNFM2TV2D6",
+        "ownerId": "local",
+        "loopId": "01M5GDV6X7H25NQ67C5TE45TD2",
+        "versionId": "01M5GDV6X7N1YHYS1JQN2XTXJT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 audit null",
+          "label": "QA 129 audit null v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDV7CPJDA15G49F8MT0WM3",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:48:18.966Z",
+        "startedAt": "2026-10-21T23:48:19.297Z",
+        "finishedAt": "2026-10-21T23:48:20.052Z",
+        "lastEventSeq": 9
+      },
+      "events": [
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 6,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 8,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 9,
+          "ts": "2026-10-21T23:48:20.132Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "quiet-restart",
+    "steps": "Reopen original v1 run after restart and publication of quiet v2.",
+    "expected": "Exact original None/quiet explanation; no Result.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDNBZSCM0Z5T6Y3ZQV7XWJ\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nQuiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.\n\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ncheck (decision) attempt 1\n#6\ndecision.made\nChose ignore with expression\n#7\nnode.finished\ncheck → ignore, 2 changes, 0 ms\n#8\nnode.started\nquiet (exit) attempt 1\n#9\nexit.evaluated\nExited: success\n#10\nnode.finished\nquiet, 0 changes, 0 ms\n#11\nrun.finished\nsucceeded (success)\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.",
+      "run": {
+        "id": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+        "ownerId": "local",
+        "loopId": "01M5GDMRJE1EN2S858T8CWXT00",
+        "versionId": "01M5GDMRJEDJZYTKNBM3767TFJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 quiet exit",
+          "label": "QA 129 quiet exit v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDNBZSPT9P80N6MZ6MSG65",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:45:07.065Z",
+        "startedAt": "2026-10-21T23:45:07.128Z",
+        "finishedAt": "2026-10-21T23:45:07.280Z",
+        "lastEventSeq": 11
+      },
+      "events": [
+        {
+          "runId": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+          "seq": 9,
+          "ts": "2026-10-21T23:45:07.263Z",
+          "type": "exit.evaluated",
+          "nodeId": "quiet",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDNBZSCM0Z5T6Y3ZQV7XWJ",
+          "seq": 11,
+          "ts": "2026-10-21T23:45:07.263Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "suppressed-restart",
+    "steps": "Reopen original v1 run after restart and publication of quiet v2.",
+    "expected": "Exact original None/quiet explanation; no Result.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDN9SK1FJNCEPP0D79EXDN\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.\n\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 0 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. No value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.",
+      "run": {
+        "id": "01M5GDN9SK1FJNCEPP0D79EXDN",
+        "ownerId": "local",
+        "loopId": "01M5GDMRBE8VCB3KNSNF589QKE",
+        "versionId": "01M5GDMRBEP57VCKRXRJK024WE",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 returns none with destinations",
+          "label": "QA 129 returns none with destinations v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDN9SKM9H06WE5559H6MW6",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:45:04.819Z",
+        "startedAt": "2026-10-21T23:45:04.886Z",
+        "finishedAt": "2026-10-21T23:45:04.940Z",
+        "lastEventSeq": 8
+      },
+      "events": [
+        {
+          "runId": "01M5GDN9SK1FJNCEPP0D79EXDN",
+          "seq": 6,
+          "ts": "2026-10-21T23:45:04.936Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDN9SK1FJNCEPP0D79EXDN",
+          "seq": 8,
+          "ts": "2026-10-21T23:45:04.936Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "present-null-restart",
+    "steps": "Open unamended null control after restart.",
+    "expected": "Result null, API result:null; no exit-returns.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDV8TXBPBXAXB4831D50P4\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nResult\nnull\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 0 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. See the run result for the returned value.",
+      "run": {
+        "id": "01M5GDV8TXBPBXAXB4831D50P4",
+        "ownerId": "local",
+        "loopId": "01M5GDV6X7H25NQ67C5TE45TD2",
+        "versionId": "01M5GDV6X7N1YHYS1JQN2XTXJT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 audit null",
+          "label": "QA 129 audit null v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDV8TX7FBP3CC15MHVVH1A",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": null,
+        "createdAt": "2026-10-21T23:48:20.445Z",
+        "startedAt": "2026-10-21T23:48:20.640Z",
+        "finishedAt": "2026-10-21T23:48:20.942Z",
+        "lastEventSeq": 9
+      },
+      "events": [
+        {
+          "runId": "01M5GDV8TXBPBXAXB4831D50P4",
+          "seq": 6,
+          "ts": "2026-10-21T23:48:20.889Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV8TXBPBXAXB4831D50P4",
+          "seq": 8,
+          "ts": "2026-10-21T23:48:20.889Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": null
+        },
+        {
+          "runId": "01M5GDV8TXBPBXAXB4831D50P4",
+          "seq": 9,
+          "ts": "2026-10-21T23:48:21.040Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "missing-definition",
+    "steps": "Block pinned version request with controlled 404 in a fresh context; open amended null run.",
+    "expected": "Exact pinned-definition-unavailable sentence; no asserted None or quiet configuration; no Result.",
+    "actual": {
+      "blocked": ["/loops/01M5GDV6X7H25NQ67C5TE45TD2/versions/01M5GDV6X7N1YHYS1JQN2XTXJT"],
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDV7CPZFT60XHNFM2TV2D6\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so whether the exit’s Returns is None cannot be shown.\n\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. No value was recorded for this run. The pinned definition is not available, so whether the exit’s Returns is None cannot be shown.",
+      "run": {
+        "id": "01M5GDV7CPZFT60XHNFM2TV2D6",
+        "ownerId": "local",
+        "loopId": "01M5GDV6X7H25NQ67C5TE45TD2",
+        "versionId": "01M5GDV6X7N1YHYS1JQN2XTXJT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 audit null",
+          "label": "QA 129 audit null v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDV7CPJDA15G49F8MT0WM3",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-21T23:48:18.966Z",
+        "startedAt": "2026-10-21T23:48:19.297Z",
+        "finishedAt": "2026-10-21T23:48:20.052Z",
+        "lastEventSeq": 9
+      },
+      "events": [
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 6,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 8,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 9,
+          "ts": "2026-10-21T23:48:20.132Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  }
+]

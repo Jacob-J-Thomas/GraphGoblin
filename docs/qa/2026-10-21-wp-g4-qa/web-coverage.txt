@@ -1,0 +1,40 @@
+Command: pnpm.cmd --filter @graphgoblin/web test:coverage
+Node: v22.14.0. Exit code: 1. Single full run; no retry.
+Source: console output captured from tool session 54921 and the FAIL-header extraction performed before log compaction. These are transcribed excerpts, not the complete raw log. Verbose DOM output is omitted. The first compaction mishandled PowerShell UTF-16 and discarded the raw coverage text; the counts and failure names below were already captured in the tool transcript.
+
+Test Files  12 failed | 69 passed (81)
+Tests       20 failed | 1251 passed (1271)
+Errors      35 errors
+Start at    18:32:01
+Duration    1196.59s
+No coverage summary was emitted. The required 90% line/branch thresholds were not established by this failed run.
+
+Failed test excerpts:
+1. src/api/api-key.test.tsx: asks for a key on a 401, sends the stored key, and lets Settings forget it -- test timeout 20000ms.
+2. src/editor/DecisionAuthoring.test.tsx: leaves new source unsaved, focuses its validation issue, then saves and reloads with edges -- expected 'saving' to be 'saved'.
+3. src/editor/DecisionAuthoring.test.tsx: keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit -- test timeout 20000ms.
+4. src/editor/DecisionAuthoring.test.tsx: refuses a many-route Noul conversion, then preserves ids in an incomplete Score form -- test timeout 20000ms.
+5. src/editor/EditorPage.device.test.tsx: says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes -- hook timeout 20000ms (shared hook failure).
+6. src/editor/EditorPage.device.test.tsx: shows a valid edit saved to the server, with the device notice apart, until the old tab closes -- hook timeout 20000ms (shared hook failure).
+7. src/editor/EditorPage.restore.test.tsx: converts a v1 draft, archives the exact original and requires explicit first-save overwrite -- failed; exact assertion not retained in this excerpt.
+8. src/editor/EditorPage.test.tsx: blocks publishing on JSON that does not parse, and discards it from the badges -- test timeout 20000ms.
+9. src/editor/EditorPage.test.tsx: opens a node at an issue's field from its badge, by pointer or keyboard -- test timeout 20000ms.
+10. src/editor/EditorPage.test.tsx: edits loop settings, variables, node ids, and edges -- test timeout 20000ms.
+11. src/editor/NodeEditorDialog.test.tsx: authors and saves a new classifier decision from the default editor fields -- test timeout 20000ms.
+12. src/editor/NodeEditorDialog.test.tsx: selects each kind with only its applicable fields and keeps source issue focus -- test timeout 20000ms.
+13. src/editor/NodeEditorDialog.test.tsx: keeps Advanced open through an undo and a redo of a basic picker, with focus restored -- test timeout 20000ms.
+14. src/editor/NodeEditorDialog.test.tsx: keeps opened and added list items open through an undo and a redo -- test timeout 20000ms.
+15. src/editor/routing-review.test.ts: seeded sparse graphs preserve geometry and keep detours below twelve bends -- test timeout 60000ms.
+16. src/editor/TriggerEditor.test.tsx: edits authentication, body and extraction by keyboard with one-step undo and field validation -- test timeout 20000ms.
+17. src/forms/json-sections.test.tsx: retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step -- test timeout 20000ms.
+18. src/settings/SettingsPage.test.tsx: recovers heading focus when Delete secret jev-api-key refreshes before React commits its row removal -- expect(element).toHaveFocus().
+19. src/settings/sections/ApiKeysSection.test.tsx: marks A and revokes B without the browser warning or losing access -- failed; exact assertion not retained in this excerpt.
+20. src/settings/sections/ClassifierModelsSection.test.tsx: adds a custom classifier that starts disabled, after the contract checks pass -- test timeout 20000ms.
+
+Worker-error excerpts:
+Error: [vitest-pool]: Failed to start forks worker for test files <worktree>/apps/web/src/pwa/register.test.ts.
+Error: [vitest-pool]: Failed to start forks worker for test files <worktree>/apps/web/src/editor/EditorPage.conflict.test.tsx.
+Error: [vitest-pool]: Failed to start forks worker for test files <worktree>/apps/web/src/components/ErrorBoundary.test.tsx.
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond.
+
+The root cause of the test failures was not established. Worker timeouts are observed; they do not disprove any product defect. No retries or product fixes were attempted.

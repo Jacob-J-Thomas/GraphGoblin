@@ -138,7 +138,7 @@ classDiagram
 - **Runs**: eight statuses, four terminal (`packages/contracts/src/run.ts:11`); a wait spec requires `waitId` (the opaque observed park identity) and `startedSeq` (the durable node-start sequence). Both are recorded in `run.waiting` and the snapshot (`packages/contracts/src/run.ts`). Timer keys are `<kind>@<waitId>`.
 - **Events**: 25 run event types in one discriminated union (`packages/contracts/src/events.ts:240`): run lifecycle, `iteration.incremented`, node start/finish/progress, harness session/usage, `decision.made`, `exit.evaluated`, signals, inputs, heartbeats and return delivery.
 - **Templates**: catalogue and ordinary-draft DTOs in `packages/contracts/src/template-manifest.ts`; configured settings, bundle, instance, prerequisite and instantiate DTOs/exports are removed (#165 step 09).
-- **Frozen v2 and v3 schemas** for offline conversion are re-exported from the root entry (`packages/contracts/src/upgrade-v2.ts:1` and `packages/contracts/src/upgrade-v3.ts:1`, generated under `packages/contracts/src/generated/upgrade-v2` and `upgrade-v3`). The v3 capture was added after this snapshot, from `12e5b87`, in preparation for format 4; runtime admission still uses current contracts.
+- **Historical frozen v2 and v3 schemas** for offline conversion were re-exported from the root entry. The v3 capture was added after this snapshot, from `12e5b87`, in preparation for format 4. Both captures and their exports were retired by [ADR-0042](../decisions/ADR-0042-explicit-resets-replace-conversion.md); runtime admission uses current contracts.
 
 ## 3. SQLite schema and migration history
 

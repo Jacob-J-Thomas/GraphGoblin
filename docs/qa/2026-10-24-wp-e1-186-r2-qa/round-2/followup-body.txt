@@ -1,0 +1,40 @@
+const fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8'));
+const all=await ctl('/oracle',{runId:fixture.runId,full:true});
+const page=await open(fixture.runId);await until(async()=>(await cache(page,fixture.runId))?.lastSeq===all.last,'tail not loaded');
+await check('corrected frozen-window setup: evicted labels/exact download, authoritative summaries and bounded live suffix',async()=>{
+ const before=await cache(page,fixture.runId);assert.equal(before.mode,'live');assert.ok(before.events[0].seq>fixture.finished.seq);
+ await page.getByText('Done (done): Exited: success',{exact:true}).waitFor();await page.getByText(/Last gate decision: Pinned Gate \(gate\) chose Pinned Again \(again\)/).waitFor();
+ await seek(page,fixture.finished.seq);await page.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();
+ assert.ok((await page.getByRole('list',{name:'Timeline',exact:true}).innerText()).includes('Pinned Worker (work)'));
+ const download=await exactDownload(page,fixture.finished,'outside-window');
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache(page,fixture.runId)).mode==='live','not live');const log=await cache(page,fixture.runId);assert.deepEqual(log.events,all.events.slice(-log.events.length));assert.ok(log.events.length<=512);assert.equal(log.events.at(-1).seq,all.last);
+ return {runId:fixture.runId,retainedBefore:before.events[0].seq,download,liveSuffix:{count:log.events.length,first:log.events[0].seq,last:log.events.at(-1).seq,sha256:hash(log.events)}};
+});
+const huge=all.events.find(e=>e.seq===fixture.oversizedSeq);
+await check('corrected setup: oversized history row, exact disclosure/download outside then inside its browsed window',async()=>{
+ const before=await cache(page,fixture.runId);assert.ok(before.events[0].seq>huge.seq);
+ await seek(page,huge.seq);const log=await cache(page,fixture.runId);const marker=log.uncached.find(e=>e.seq===huge.seq);assert.ok(marker);assert.ok(marker.description.includes('work'));assert.ok(!marker.description.includes('Pinned Worker'));assert.ok(!log.events.some(e=>e.seq===huge.seq));
+ const outside=await exactDownload(page,huge,'oversized-outside');await seek(page,huge.seq-1);await seek(page,huge.seq);const inside=await exactDownload(page,huge,'oversized-inside');
+ assert.equal(outside.sha256,inside.sha256);const after=await cache(page,fixture.runId);assert.ok(after.bytes<=1048576);assert.ok(!after.events.some(e=>e.seq===huge.seq));await page.screenshot({path:out+'/oversized.png'});
+ return {runId:fixture.runId,marker,outside,inside,retainedRows:after.events.length+after.uncached.length,retainedBytes:after.bytes};
+});
+const cancel=await ctl('/start',{passes:150,delay:20,items:1});await until(async()=>{const x=await ctl('/oracle',{runId:cancel.id});return x.last>700&&x.record.status==='running';},'run did not reach 700 while running');
+await api('/runs/'+cancel.id+'/cancel',{});await ctl('/idle');const cancelled=await ctl('/oracle',{runId:cancel.id,full:true});await writeFile(out+'/long-cancel-events.json',JSON.stringify(cancelled.events.filter(e=>e.type.startsWith('run.cancel')),null,2));
+const cp=await open(cancel.id);await until(async()=>(await cache(cp,cancel.id))?.lastSeq===cancelled.last,'cancel tail not loaded');
+const actor=cancelled.events.find(e=>e.type==='run.cancel_requested')?.actor;assert.ok(actor);
+await check('long actual cancelled run: actor visible inside retained window',async()=>{const text=await cp.getByRole('region',{name:'Execution context',exact:true}).innerText();assert.ok(text.includes(actor.id));return {runId:cancel.id,total:cancelled.total,actor,text};});
+await seek(cp,50);
+await check('long actual cancelled run: browsing event 50 preserves recorded cancellation actor',async()=>{
+ const text=await cp.getByRole('region',{name:'Execution context',exact:true}).innerText();const log=await cache(cp,cancel.id);await writeFile(out+'/long-cancel-browsed.aria.txt',await cp.locator('body').ariaSnapshot());await cp.getByRole('region',{name:'Execution context',exact:true}).scrollIntoViewIfNeeded();await cp.screenshot({path:out+'/long-cancel-browsed.png'});
+ await writeFile(out+'/cancellation-defect.json',JSON.stringify({runId:cancel.id,total:cancelled.total,actor,recordedCancellationEvents:cancelled.events.filter(e=>e.type.startsWith('run.cancel')),window:[log.events[0].seq,log.events.at(-1).seq],mode:log.mode,text},null,2));
+ assert.ok(text.includes(actor.id),text);return {text,actor};
+});
+await page.close();const labels=await open(fixture.runId);
+for(const width of [1440,390])for(const theme of ['dark','light'])await check(`cancellation and labels visual ${width} ${theme}`,async()=>{
+ for(const p of [cp,labels]){await p.setViewportSize({width,height:width===390?844:900});await p.evaluate(t=>{localStorage.setItem('graphgoblin-theme',t);document.documentElement.dataset.theme=t;},theme);}
+ await seek(labels,fixture.finished.seq);await labels.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();await labels.getByRole('list',{name:'Timeline',exact:true}).scrollIntoViewIfNeeded();
+ await labels.screenshot({path:out+'/verified-labels-'+width+'-'+theme+'.png',fullPage:true});
+ await cp.getByRole('region',{name:'Execution context',exact:true}).scrollIntoViewIfNeeded();await cp.screenshot({path:out+'/verified-cancel-'+width+'-'+theme+'.png'});
+ const widths=await Promise.all([cp,labels].map(p=>p.evaluate(()=>({innerWidth,documentWidth:document.documentElement.scrollWidth}))));assert.ok(widths.every(x=>x.documentWidth<=width));return {width,theme,widths};
+});
+await context.close();await browser.close();console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failures:checks.filter(x=>!x.pass),errors}));

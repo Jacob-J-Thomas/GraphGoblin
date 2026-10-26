@@ -1,0 +1,226 @@
+// Independent QA. Run a copy named .mjs from TEMP with the worktree as cwd.
+import { createRequire } from 'node:module';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { mkdtemp, writeFile, appendFile } from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
+import { fork } from 'node:child_process';
+import { createServer } from 'node:http';
+const root = process.cwd();
+const out = join(root, 'docs/qa/2026-10-24-wp-d2-185-qa');
+const load = p => import(pathToFileURL(join(root, p)));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clean = s => String(s).replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+const emit = async (file, value) => writeFile(join(out, file), clean(JSON.stringify(value, null, 2)));
+if (process.argv[2] === 'gateway') {
+  const { buildApp, createContainer, loadConfig } = await load('apps/api/dist/index.js');
+  const { FakeHarness } = await load('packages/engine/dist/testing/index.js');
+  const fake = new FakeHarness([], 'codex');
+  const c = await createContainer(loadConfig({ GG_PORT:'6130', GG_DATA_DIR:process.argv[3], GG_WEB_DIST:join(root,'apps/web/dist'), GG_LOG_LEVEL:'silent', GG_SWAGGER_UI:'false' }), {harnesses:{codex:fake}, startTimers:false});
+  await c.start();
+  const {token} = await c.repos.apiKeys.create('local','independent-qa',['*']);
+  const app = await buildApp(c, {logger:false});
+  await app.listen({host:'127.0.0.1',port:6130});
+  process.send({ready:true,pid:process.pid,token});
+  process.on('message', async m => {
+    try {
+      let value;
+      if (m.op === 'script') { fake.script(m.turns); value = true; }
+      if (m.op === 'cpu') value = {cpu:process.cpuUsage(),uptime:process.uptime(),rss:process.memoryUsage().rss};
+      if (m.op === 'stop') {
+        app.server.closeAllConnections();
+        await app.close(); await c.stop(); process.send({reply:m.id,value:true}); process.disconnect(); process.exit(0);
+      }
+      process.send({reply:m.id,value});
+    } catch(e) { process.send({reply:m.id,error:clean(e.stack)}); }
+  });
+} else {
+  const {createGraphGoblinClient,waitForRun,subscribeRunEvents} = await load('packages/api-client/dist/index.js');
+  const {createMcpServer} = await load('apps/mcp/dist/server.js');
+  const req = createRequire(join(root,'apps/mcp/package.json'));
+  const {Client} = req('@modelcontextprotocol/sdk/client/index.js');
+  const {InMemoryTransport} = req('@modelcontextprotocol/sdk/inMemory.js');
+  const webReq = createRequire(join(root,'apps/web/package.json'));
+  const {chromium} = webReq('@playwright/test');
+  let gateway, token, serial=0, browser, mcp, mcpServer;
+  const dataDir = await mkdtemp(join(tmpdir(),'gg-qa-d2-185-native-'));
+  const checks=[], observations={}, responses=new Map(), attempts=[], subscriptions=[];
+  const check = (name,actual,expected=true) => {
+    const pass=JSON.stringify(actual)===JSON.stringify(expected);
+    checks.push({name,pass,expected,actual}); console.log(`${pass?'PASS':'FAIL'} ${name}: ${JSON.stringify(actual)}`);
+    return pass;
+  };
+  const until = async (fn, timeout=25000) => { const end=Date.now()+timeout; let v; do { v=await fn(); if(v)return v; await sleep(80); }while(Date.now()<end); throw Error('condition timeout'); };
+  const rpc = (op, extra={}) => new Promise((ok,no) => {
+    const id=++serial;
+    const handler = m => {if(m.reply===id){gateway.off('message',handler);m.error?no(Error(m.error)):ok(m.value);}};
+    gateway.on('message',handler); gateway.send({id,op,...extra});
+  });
+  async function start() {
+    gateway = fork(fileURLToPath(import.meta.url),['gateway',dataDir],{cwd:root,stdio:['pipe','pipe','pipe','ipc']});
+    const log = createWriteStream(join(out,`gateway-${gateway.pid}.log.txt`));
+    gateway.stdout.pipe(log); gateway.stderr.pipe(log);
+    const ready = await new Promise((ok,no) => {gateway.once('error',no);gateway.once('exit',code=>no(Error('gateway exited '+code))); gateway.once('message',ok);});
+    token=ready.token;
+    observations.processes??=[]; observations.processes.push({pid:ready.pid,startedAt:new Date().toISOString()});
+    return ready;
+  }
+  const http = async (path,method='GET',body) => {
+    const res=await fetch('http://127.0.0.1:6130'+path,{method,headers:{authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});
+    const text=await res.text(); let value;try{value=JSON.parse(text);}catch{value=text;}
+    if(!res.ok)throw Object.assign(Error(`${method} ${path}: ${res.status} ${text}`),{status:res.status,value});
+    return value;
+  };
+  const snapshot = id => http('/runs/'+id);
+  const history = async id => (await http('/runs/'+id+'/events')).items;
+  const client = createGraphGoblinClient({baseUrl:'http://127.0.0.1:6130'});
+  const plans=new Map();
+  const receiver=createServer((r,s)=>{
+    r.resume(); r.on('end',()=>{
+      const plan=plans.get(r.url); const count=(plan.count??0)+1;plan.count=count;
+      attempts.push({path:r.url,count,key:r.headers['idempotency-key'],at:new Date().toISOString()});
+      if(plan.mode==='retry'&&count===1)s.writeHead(503).end('retry');
+      else if(plan.mode==='exhaust')s.writeHead(503).end('exhaust');
+      else if(plan.mode==='ack')s.writeHead(plan.status??200).end('ack');
+      else {const held=responses.get(r.url)??[];held.push(s);responses.set(r.url,held);}
+    });
+  });
+  await new Promise((ok,no)=>{receiver.once('error',no);receiver.listen(6131,'127.0.0.1',ok);});
+  const release=(path,status=200)=>{ plans.get(path).mode='ack'; plans.get(path).status=status; for(const r of responses.get(path)??[])if(!r.destroyed)r.writeHead(status).end('ack'); };
+  const definition=(name,destinations=[],middle=[])=>({schemaVersion:4,name,nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...middle,{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload',destinations}}],edges:['start',...middle.map(n=>n.id),'done'].slice(1).map((id,i,a)=>({id:'e'+i,from:{node:i===0?'start':a[i-1],port:'out'},to:{node:id}}))});
+  async function publish(def){const made=await http('/loops','POST',{definition:def});await http('/loops/'+made.loop.id+'/publish','POST');return made.loop.id;}
+  const run = async (name,path,mode='hold',extra={})=>{if(path)plans.set(path,{mode,count:0});const destinations=path?[{kind:'webhook',url:'http://127.0.0.1:6131'+path}]:[];if(extra.caller)destinations.unshift({kind:'caller'});const loopId=await publish(definition(name,destinations,extra.middle??[]));const {run}=await http('/loops/'+loopId+'/runs','POST',{input:{answer:42}});return run.id;};
+  const tool=async(id)=>{const r=await mcp.callTool({name:'wait_for_run',arguments:{runId:id,timeoutSeconds:1}});if(r.isError)throw Error(JSON.stringify(r));return JSON.parse(r.content[0].text);};
+  async function streams(id,label){
+    const events=await history(id);const terminal=events.findLast(e=>['run.finished','run.failed','run.cancelled'].includes(e.type));
+    const group=[];
+    for(const after of [0,terminal.seq,terminal.seq+10000]){
+      const ctrl=new AbortController(); const state={after,settled:false,text:'',completeAt:undefined};
+      const res=await fetch(`http://127.0.0.1:6130/runs/${id}/events?after=${after}`,{headers:{accept:'text/event-stream'},signal:ctrl.signal});
+      state.promise=(async()=>{try{for await(const b of res.body){state.text+=new TextDecoder().decode(b);if(state.text.includes('event: stream.complete'))state.completeAt=new Date().toISOString();}}catch(e){state.error=String(e);}finally{state.settled=true;}})();state.close=()=>ctrl.abort();group.push(state);
+    }
+    const eventsSeen=[],errors=[];let done=false;
+    const sub=subscribeRunEvents({client,runId:id,after:terminal.seq,onEvent:e=>eventsSeen.push(e),onError:(e,n)=>errors.push({message:String(e),attempt:n}),backoff:{initialMs:100,maxMs:500}});
+    sub.done.then(()=>done=true,e=>{errors.push({fatal:String(e)});done=true;}); subscriptions.push(sub);
+    return {group,sub,eventsSeen,errors,done:()=>done,label};
+  }
+  async function pending(id,label,s){
+    const [rest,wait,mcpWait]=await Promise.all([snapshot(id),waitForRun(client,id,{timeoutMs:400,pollMs:50}),tool(id)]);
+    observations[label+'-pending']={rest,wait,mcp:mcpWait};
+    check(label+' pending execution terminal',['succeeded','failed','cancelled','exhausted'].includes(rest.status));
+    check(label+' no marker',rest.finalizedAt===undefined);
+    check(label+' pending delivery',rest.deliveries.some(d=>d.status==='pending'));
+    check(label+' wait unfinished',wait.finished,false);check(label+' MCP unfinished',mcpWait.finished,false);
+    check(label+' MCP truthful next',/finalization.*pending/i.test(mcpWait.next??''));
+    check(label+' streams stay live',s.group.every(x=>!x.settled&&!x.text.includes('event: stream.complete')));
+    check(label+' subscription stays live',s.done(),false);
+  }
+  async function finalized(id,label,s,delivery){
+    const rest=await until(async()=>{const v=await snapshot(id);return v.finalizedAt?v:false;},100000);
+    const [wait,mcpWait]=await Promise.all([waitForRun(client,id,{timeoutMs:2000,pollMs:50}),tool(id)]);
+    observations[label+'-final']={rest,wait,mcp:mcpWait,events:await history(id)};
+    check(label+' finalized marker',typeof rest.finalizedAt==='string');
+    check(label+' wait finished',wait.finished);check(label+' MCP finished',mcpWait.finished);
+    if(delivery)check(label+' delivery outcome',rest.deliveries[0].status,delivery);
+    if(s){await until(()=>s.group.every(x=>x.settled)&&s.done());
+      check(label+' completion controls',s.group.every(x=>x.text.includes('event: stream.complete')));
+      check(label+' no duplicate client events',new Set(s.eventsSeen.map(e=>e.seq)).size,s.eventsSeen.length);
+      check(label+' client received delivery end',s.eventsSeen.some(e=>e.type==='delivery.finished'));
+      await emit(label+'-streams.json',s.group.map(({after,text,completeAt,error})=>({after,text,completeAt,error})));
+      observations[label+'-subscription']={events:s.eventsSeen,errors:s.errors};
+    }
+    const res=await fetch(`http://127.0.0.1:6130/runs/${id}/events?after=${rest.lastEventSeq}`,{headers:{accept:'text/event-stream'}});
+    const text=await res.text();check(label+' consumed final cursor settles',text.includes('event: stream.complete'));check(label+' consumed cursor replays no durable events',!text.includes('\nid:'));
+    return rest;
+  }
+  const pages=[];
+  async function capture(id,label,pendingState){
+    for(const {page,width,theme} of pages){
+      if(!page.url().endsWith(id))await page.goto('http://127.0.0.1:6130/app/runs/'+id,{waitUntil:'domcontentloaded'});
+      await until(async()=>{const text=await page.locator('body').innerText();return pendingState?text.includes('finalization pending.'):text.includes('Fully finalized.');},25000);
+      await page.keyboard.press('Home'); const focus=[];
+      for(let i=0;i<8;i++){await page.keyboard.press('Tab');focus.push(await page.evaluate(()=>({tag:document.activeElement?.tagName,text:document.activeElement?.textContent?.slice(0,90)})));}
+      const text=await page.locator('body').innerText();
+      const heads=await page.getByRole('heading').allTextContents();
+      const layout=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme}));
+      check(label+` ${width}/${theme} theme`,layout.theme,theme);
+      check(label+` ${width}/${theme} no horizontal overflow`,layout.scrollWidth<=width);
+      check(label+` ${width}/${theme} execution separate`,/Execution: (succeeded|failed|cancelled|exhausted)/.test(text));
+      check(label+` ${width}/${theme} timeline truthful`,heads.some(h=>pendingState?/Timeline.*live\)/.test(h):/Timeline.*complete\)/.test(h)));
+      const stem=`${label}-${width}-${theme}`;await emit(stem+'.json',{text,headings:heads,layout,focus});
+      await page.screenshot({path:join(out,stem+'.png'),fullPage:true});
+    }
+  }
+  try {
+    await start();
+    await emit('setup.json',{head:'921634762aee45683f1c9aa57e70d564a5bfa8b1',node:process.version,dataDir:clean(dataDir),port:6130,receiverPort:6131,nativeTermination:'D-015: native process-tree termination denied; cooperative IPC shutdown only'});
+    mcpServer=createMcpServer({apiUrl:'http://127.0.0.1:6130',apiKey:token});
+    const [ct,st]=InMemoryTransport.createLinkedPair();await mcpServer.connect(st);mcp=new Client({name:'independent-qa',version:'1'});await mcp.connect(ct);
+    browser=await chromium.launch({channel:'msedge',headless:true});
+    observations.browserVersion=browser.version();
+    for(const width of [1440,390])for(const theme of ['dark','light']){const ctx=await browser.newContext({viewport:{width,height:960},colorScheme:theme});await ctx.addInitScript(theme=>localStorage.setItem('graphgoblin-theme',theme),theme);const page=await ctx.newPage();pages.push({page,width,theme});}
+    for(const [label,path,mode,status,delivery] of [['retry','/retry','retry',200,'delivered'],['permanent','/permanent','hold',400,'failed'],['mixed','/mixed','hold',200,'delivered'],['exhaust','/exhaust','exhaust',503,'failed']]){
+      try {
+        const id=await run('Independent '+label,path,mode,{caller:label==='mixed'});observations[label+'Id']=id;
+        await until(async()=>{const s=await snapshot(id);return s.status==='succeeded'&&s.deliveries?.length;});
+        const s=await streams(id,label);await pending(id,label,s);
+        if(label==='retry'||label==='exhaust')await capture(id,label+'-pending',true);
+        if(label!=='exhaust')release(path,status);
+        const final=await finalized(id,label,s,delivery);
+        check(label+' execution unchanged',final.status,'succeeded');
+        if(label==='retry')check('retry at least two attempts',final.deliveries[0].attempts>=2);
+        if(label==='exhaust')check('exhaust exactly five attempts',final.deliveries[0].attempts,5);
+        if(label==='mixed')check('mixed caller receipt',(await history(id)).some(e=>e.type==='return.delivered'&&e.payload.channel.kind==='caller'));
+        check(label+' stable delivery key',new Set(attempts.filter(a=>a.path===path).map(a=>a.key)).size,1);
+        await capture(id,label+'-final',false);
+      }catch(e){check(label+' scenario error',clean(e.stack),'no error');}
+    }
+    try {
+      const id=await run('Independent no webhook');observations.noWebhookId=id;
+      const final=await finalized(id,'no-webhook');check('no webhook no deliveries',(final.deliveries??[]).length,0);await capture(id,'no-webhook-final',false);
+    }catch(e){check('no webhook scenario error',clean(e.stack),'no error');}
+    try {
+      const id=await run('Cancel pending','/cancel');observations.cancelId=id;await until(()=>responses.has('/cancel'));const s=await streams(id,'cancel');await pending(id,'cancel',s);
+      let cancel;try{cancel={status:200,body:await http('/runs/'+id+'/cancel','POST',{})};}catch(e){cancel={status:e.status,body:e.value};}observations.cancelResponse=cancel;
+      const after=await snapshot(id);check('cancel pending does not rewrite execution',after.status,'succeeded');check('cancel pending remains unfinalized',after.finalizedAt===undefined);
+      release('/cancel');await finalized(id,'cancel',s,'delivered');
+    }catch(e){check('cancel scenario error',clean(e.stack),'no error');}
+    try {
+      await rpc('script',{turns:[{error:{code:'QA_CONTROLLED_FAILURE',message:'Independent fake failure',retriable:false}},{finalText:'recovered'}]});
+      const id=await run('Resume finalized failure','/resume','hold',{middle:[{id:'work',kind:'inference',label:'Work',config:{prompt:{template:'independent QA'}}}]});observations.resumeId=id;
+      const before=await finalized(id,'resume-old');check('resume initially failed',before.status,'failed');await capture(id,'resume-old-final',false);
+      const s=await streams(id,'resume-new'); // consumed old finalized streams are expected to close; use fresh subscription after resume below.
+      await http('/runs/'+id+'/resume','POST',{});await until(()=>responses.has('/resume'));
+      const fresh=await streams(id,'resume-new');await pending(id,'resume-new',fresh);check('resume marker cleared',(await snapshot(id)).finalizedAt===undefined);
+      await capture(id,'resume-new-pending',true);release('/resume');const final=await finalized(id,'resume-new',fresh,'delivered');check('resume new marker',final.finalizedAt!==before.finalizedAt);check('resume new success',final.status,'succeeded');await capture(id,'resume-new-final',false);
+    }catch(e){check('resume scenario error',clean(e.stack),'no error');}
+    try {
+      plans.set('/child',{mode:'hold',count:0});const childLoop=await publish(definition('Child webhook',[{kind:'webhook',url:'http://127.0.0.1:6131/child'}]));
+      const parentLoop=await publish(definition('Parent awaits',[{kind:'caller'}],[{id:'child',kind:'subloop',label:'Child',config:{loopRef:{loopId:childLoop,version:'latest'}}}]));
+      const {run:p}=await http('/loops/'+parentLoop+'/runs','POST',{input:{answer:42}});observations.parentId=p.id;
+      await until(()=>responses.has('/child'));const children=await http('/runs/'+p.id+'/children');observations.children=children;
+      const child=(Array.isArray(children)?children:children.items)[0];const before=await snapshot(child.id);observations.childPending=before;
+      check('child execution succeeded pending delivery',before.status==='succeeded'&&!before.finalizedAt&&before.deliveries[0].status==='pending');
+      const parent=await finalized(p.id,'parent');check('parent observes child execution before webhook ends',parent.status,'succeeded');check('parent output available',parent.result!==undefined);
+      const s=await streams(child.id,'child');await pending(child.id,'child',s);release('/child');await finalized(child.id,'child',s,'delivered');
+    }catch(e){check('subloop scenario error',clean(e.stack),'no error');}
+    try {
+      const id=await run('Restart pending','/restart','retry');observations.restartId=id;
+      await until(async()=>{const v=await snapshot(id);return v.deliveries?.[0]?.nextAttemptAt&&!v.deliveries[0].inFlight;});
+      const before=await snapshot(id),s=await streams(id,'restart');observations.restartBefore=before;
+      const oldPid=gateway.pid;await rpc('stop');await sleep(700);check('EOF during restart never settles',s.done(),false);
+      await start();check('restart new real PID',gateway.pid!==oldPid);
+      await until(()=>responses.has('/restart'));const recoveredStreams=await streams(id,'restart-recovered');await pending(id,'restart-recovered',recoveredStreams);const recovered=await snapshot(id);check('restart preserves identity',recovered.deliveries[0].id,before.deliveries[0].id);release('/restart');await finalized(id,'restart',recoveredStreams,'delivered');await until(()=>s.done());check('restart subscriber no duplicates',new Set(s.eventsSeen.map(e=>e.seq)).size,s.eventsSeen.length);check('restart subscriber delivery finished once',s.eventsSeen.filter(e=>e.type==='delivery.finished').length,1);observations.restartSubscription={events:s.eventsSeen,errors:s.errors};
+    }catch(e){check('restart scenario error',clean(e.stack),'no error');}
+    await emit('observations.json',observations);await emit('receiver.json',attempts);
+  }catch(e){check('driver fatal',clean(e.stack),'no error');}
+  finally {
+    await emit('checks.json',checks);await emit('observations.json',observations);await emit('receiver.json',attempts);
+    for(const sub of subscriptions)sub.close();for(const path of plans.keys())release(path);
+    await browser?.close();await mcp?.close();await mcpServer?.close();receiver.closeAllConnections();await new Promise(ok=>receiver.close(ok));
+    if(gateway?.connected)await rpc('stop').catch(e=>console.log(String(e)));
+  }
+}
+
+

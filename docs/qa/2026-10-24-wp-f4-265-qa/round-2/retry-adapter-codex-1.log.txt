@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/packages/adapter-codex
+
+ ❯ src/probe-directory.test.ts (4 tests | 1 failed) 8039ms
+   ❯ Codex readiness probe directory (4)
+     × preserves 1 existing collision directories and bounds retries 5049ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  18:16:32
+   Duration  22.56s (transform 49%, tests 38%, import 13%)
+
+  Transform  transforming modules took 10.42s · 49% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%
+  │ \source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 265\packages\adapter-codex
+

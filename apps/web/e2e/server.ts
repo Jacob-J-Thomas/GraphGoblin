@@ -16,7 +16,13 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
-import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
+import { readinessMessage } from '@graphgoblin/domain';
+import {
+  createTestApp,
+  createThreadHistoryFixture,
+  startFakeClassifierEndpoint,
+  type TestApp,
+} from '@graphgoblin/api/testing';
 import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
 import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
 import {
@@ -26,7 +32,10 @@ import {
 } from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
-const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+// A disposable build copy allows regression seeding without changing the normal build.
+const dist = resolve(
+  process.env['GG_E2E_WEB_DIST'] ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist'),
+);
 if (!existsSync(join(dist, 'index.html'))) {
   console.error(
     `No web build at ${dist}. Run \`pnpm build\` (or \`pnpm --filter @graphgoblin/web build\`) first.`,
@@ -47,6 +56,7 @@ class E2eControlError extends Error {
 
 const apps: TestApp[] = [];
 const instances = new Map<string, E2eInstance>();
+const threadHistories = new Map<string, Awaited<ReturnType<typeof createThreadHistoryFixture>>>();
 const closers: (() => Promise<void>)[] = [];
 let nextInstanceId = 1;
 /** Loopback primitive endpoints started for classifier specs, by their API root. */
@@ -66,6 +76,7 @@ const ClassifierReplySchema = z.discriminatedUnion('type', [
 const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
 const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 const readyClaudePreflight = HarnessPreflightSchema.parse({
+  state: 'ready',
   ok: true,
   version: '2.1.285 (E2E fake)',
   authenticated: true,
@@ -100,13 +111,22 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
       model: 'claude-fable-5-1',
       efforts: claudeEfforts,
     },
+    {
+      model: 'claude-sonnet-5-5',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-haiku-5-5',
+      efforts: claudeEfforts,
+    },
   ],
 });
 const notReadyClaudePreflight: HarnessPreflight = {
   ...readyClaudePreflight,
+  state: 'auth',
   ok: false,
   authenticated: false,
-  problems: ['Claude CLI is not signed in.'],
+  problems: [readinessMessage('claude', 'auth', 'Claude is not signed in.')],
   supportedPolicies: [],
 };
 
@@ -141,6 +161,7 @@ class E2eClaudeHarness extends FakeHarness {
         code: error.code,
         message: error.message,
         retriable: false,
+        submission: 'delivery-uncertain',
       };
     };
     return {
@@ -169,26 +190,28 @@ async function startApp(
     harnesses,
   });
   apps.push(app);
-  const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
+  const url = await app.app.listen({
+    host: '127.0.0.1',
+    port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,
+  });
   const instance: E2eInstance = { id, app, url, harnesses };
   instances.set(id, instance);
   return instance;
 }
 
 const main = await startApp({}, false, false, { id: 'main' });
-const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
 const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
 let workerBuild = 0;
 
 /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
-async function setApiListening(listening: boolean): Promise<void> {
-  const server = main.app.app.server;
+async function setApiListening(instance: E2eInstance, listening: boolean): Promise<void> {
+  const server = instance.app.app.server;
   if (listening === server.listening) return;
   if (listening) {
     await new Promise<void>((done, reject) => {
       server.once('error', reject);
-      server.listen(mainPort, '127.0.0.1', () => {
+      server.listen(Number(new URL(instance.url).port), '127.0.0.1', () => {
         server.removeListener('error', reject);
         done();
       });
@@ -265,8 +288,13 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/clock/advance':
+      selectedInstance(body).app.clock.advance(
+        z.number().int().positive().parse(body['milliseconds']),
+      );
+      return { ok: true };
     case '/api/listener':
-      await setApiListening(body['listening'] !== false);
+      await setApiListening(selectedInstance(body), body['listening'] !== false);
       return { ok: true };
     case '/worker/build':
       workerBuild += 1;
@@ -297,7 +325,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       const { harness, fake } = selectedHarness(instance, body);
       if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
         throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
-      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      if (body['state'] === 'ready')
+        fake.preflightResult = HarnessPreflightSchema.parse({
+          ...readyClaudePreflight,
+          ...(body['models'] !== undefined ? { models: body['models'] } : {}),
+        });
       else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
       else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
       return { ok: true };
@@ -318,6 +350,8 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
       return { ok: true };
+    case '/deciders/requests':
+      return { routes: selectedInstance(body).app.codex.routes };
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
@@ -339,7 +373,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { ok: true };
     }
     case '/catalog/upsert':
-      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      await selectedInstance(body).app.container.repos.catalog.upsert(
+        ModelCatalogEntrySchema.parse(
+          Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'instanceId')),
+        ),
+      );
       return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();
@@ -464,7 +502,47 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       });
       return { configured: true };
     }
+    case '/thread-history': {
+      const id = z.string().parse(body['instanceId']);
+      const history = threadHistories.get(id);
+      if (!history) throw new E2eControlError('unknown thread-history instance');
+      switch (body['action']) {
+        case 'start':
+          await history.manager.start();
+          await history.manager.waitForIdle();
+          break;
+        case 'working':
+          await history.working;
+          break;
+        case 'release':
+          history.release();
+          await history.manager.waitForIdle();
+          break;
+        case 'flush':
+          await history.snapshots.flush();
+          break;
+        case 'snapshot': {
+          const runId = z.string().parse(body['runId']);
+          return {
+            snapshot: await history.repos.runs.getThread(runId),
+            bytes: await history.bytes(runId),
+          };
+        }
+        default:
+          throw new E2eControlError('unknown thread-history action');
+      }
+      return { ok: true };
+    }
     case '/apps': {
+      if (body['threadHistory'] === true) {
+        const history = await createThreadHistoryFixture(dist);
+        history.manager.stop();
+        const instanceId = 'thread-history-' + nextInstanceId++;
+        const url = await history.app.listen({ host: '127.0.0.1', port: 0 });
+        threadHistories.set(instanceId, history);
+        closers.push(() => history.close());
+        return { instanceId, url, loopId: history.loopId };
+      }
       const extra = await startApp(
         (body['env'] as Record<string, string> | undefined) ?? {},
         body['requireApiKey'] === true,
@@ -494,7 +572,9 @@ const controlServer = createServer((request, response) => {
     },
   );
 });
-await new Promise<void>((done) => controlServer.listen(0, '127.0.0.1', done));
+await new Promise<void>((done) =>
+  controlServer.listen(Number(process.env['GG_E2E_CONTROL_PORT'] ?? 0), '127.0.0.1', done),
+);
 const controlAddress = controlServer.address();
 const controlPort = typeof controlAddress === 'object' && controlAddress ? controlAddress.port : 0;
 
@@ -506,7 +586,7 @@ async function stop(): Promise<void> {
   if (stopping) return;
   stopping = true;
   controlServer.close();
-  await setApiListening(true);
+  for (const instance of instances.values()) await setApiListening(instance, true);
   await writeFile(workerPath, originalWorker);
   for (const app of apps) await app.close();
   for (const close of closers) await close();

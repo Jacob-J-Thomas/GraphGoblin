@@ -1,0 +1,416 @@
+infra (before)
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/sqlite/history-summaries.test.ts (11 tests | 7 failed) 2325ms
+   ❯ SQLite history queries (11)
+     × isolates damaged latest pinned without substituting an older run 94ms
+     × isolates damaged latest pinned without substituting an older run 109ms
+     × isolates damaged latest pinned without substituting an older run 78ms
+     × isolates damaged latest waiting without substituting an older run 183ms
+     × isolates damaged latest failure without substituting an older run 158ms
+     × isolates damaged latest result without substituting an older run 103ms
+     × isolates damaged latest iteration without substituting an older run 188ms
+pnpm.cmd :
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest pinned without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest pinned without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest pinned without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest waiting without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest failure without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest result without
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest iteration without
+substituting an older run
+AssertionError: expected { …(8) } to match object { runCount: 2, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "8N7RTNK3108F6R0YWVC9X2EJZT",
++     "status": "succeeded",
++   },
+    "runCount": 2,
+  }
+
+ ❯ src/sqlite/history-summaries.test.ts:134:67
+    132|     });
+    133|     const summaries = await loops.listWithRunSummaries('local');
+    134|     expect(summaries.find((loop) => loop.id === damaged.loop.id)).toMa…
+       |                                                                   ^
+    135|       runCount: 2,
+    136|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 4 passed (11)
+   Start at  12:56:21
+   Duration  15.45s (import 45%, transform 39%, tests 16%)
+
+  Transform  transforming modules took 5.84s · 39% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+pnpm command failed in <worktree>.
+
+
+api (before)
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ❯ src/routes/loop-summaries.test.ts (6 tests | 4 failed) 3548ms
+   ❯ loop-specific run summaries over real SQLite (6)
+     × isolates damaged latest-run pinned and identifies it through diagnostics 394ms
+     × isolates damaged latest-run pinned and identifies it through diagnostics 399ms
+     × isolates damaged latest-run waiting and identifies it through diagnostics 304ms
+     × isolates damaged latest-run result and identifies it through diagnostics 433ms
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/loop-su ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run
+pinned and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG0977B3GMJGKEHD533",
++     "status": "succeeded",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:50:55
+     48|       items: { id: string; latestRun: { id: string } | null; runCount:…
+     49|     }>();
+     50|     expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                       ^
+     51|       runCount: 1,
+     52|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run
+pinned and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG08ZWDRGNMHXGF15EW",
++     "status": "succeeded",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:50:55
+     48|       items: { id: string; latestRun: { id: string } | null; runCount:…
+     49|     }>();
+     50|     expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                       ^
+     51|       runCount: 1,
+     52|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run
+waiting and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG042Q41192NJFMZAG2",
++     "status": "succeeded",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:50:55
+     48|       items: { id: string; latestRun: { id: string } | null; runCount:…
+     49|     }>();
+     50|     expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                       ^
+     51|       runCount: 1,
+     52|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run
+result and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG0WJ1V3W4J6QV4M37Y",
++     "status": "succeeded",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:50:55
+     48|       items: { id: string; latestRun: { id: string } | null; runCount:…
+     49|     }>();
+     50|     expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                       ^
+     51|       runCount: 1,
+     52|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  12:56:39
+   Duration  21.01s (transform 43%, import 39%, tests 18%)
+
+  Transform  transforming modules took 8.73s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+pnpm command failed in <worktree>.
+
+
+web (before)
+
+ RUN  v5.0.3 <worktree>/apps/web
+
+ ❯ src/loops/LoopsPage.test.tsx (18 tests | 1 failed | 17 skipped) 661ms
+   ❯ LoopsPage (18)
+     × distinguishes an unavailable latest summary from a loop with no history 658ms
+pnpm.cmd :
+At line:8 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/loops/LoopsPag ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/loops/LoopsPage.test.tsx > LoopsPage > distinguishes an unavailable latest summary from a loop with no
+history
+TestingLibraryElementError: Unable to find an element with the text: Check run history diagnostics.. This could be
+because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to
+make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<tr>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"border-b border-default px-4 py-3.5 align-middle min-w-56 wrap-anywhere"[39m
+  [36m>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"touch-target text-[15px] font-semibold text-default no-underline hover:underline"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/loops/34YX7E2NBXT65AN03A0CWG8C8B/edit"[39m
+    [36m>[39m
+      [0mdamaged history[0m
+    [36m</a>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"mt-1 text-xs text-subtle"[39m
+    [36m>[39m
+      [0mUpdated[0m
+      [0m [0m
+      [36m<time[39m
+        [33mdatetime[39m=[32m"2026-10-02T12:00:00.000Z"[39m
+      [36m>[39m
+        [0m10/2/2026, 7:00:00 AM[0m
+      [36m</time>[39m
+    [36m</p>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"border-b border-default px-4 py-3.5 align-middle"[39m
+    [33mdata-label[39m=[32m"State"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border
+border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-6
+gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+      [36m>[39m
+        [0mdraft only[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"border-b border-default px-4 py-3.5 align-middle"[39m
+    [33mdata-label[39m=[32m"Last run"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"text-sm text-muted"[39m
+    [36m>[39m
+      [0mlatest run unavailable[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"border-b border-default px-4 py-3.5 align-middle"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative flex flex-col items-end gap-2 max-lg:items-start max-lg:pt-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center justify-end gap-2 max-lg:flex-wrap max-lg:justify-start"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33maria-label[39m=[32m"Edit damaged history"[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm
+pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mhref[39m=[32m"/loops/34YX7E2NBXT65AN03A0CWG8C8B/edit"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"edit"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-5L4 14Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mEdit[0m
+        [36m</a>[39m
+        [36m<button[39m
+          [33maria-busy[39m=[32m"false"[39m
+          [33maria-disabled[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Export damaged history"[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm
+pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"export"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 4v11M7 10.5l5 5 5-5M5 20h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0mExport[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-haspopup[39m=[32m"dialog"[39m
+          [33maria-label[39m=[32m"Delete damaged history"[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none
+border-danger-on-subtle bg-danger-subtle text-danger-on-subtle shadow-ledge-danger hover:bg-danger
+hover:text-on-danger active:bg-danger-hover active:text-on-danger active:translate-y-px h-8 gap-1.5 px-[11px] text-sm
+pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hi...
+ ❯ Object.getElementError
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/loops/LoopsPage.test.tsx:84:31
+     82|     const damagedRow = (await screen.findByRole('link', { name: damage…
+     83|     expect(within(damagedRow).getByText('latest run unavailable')).toB…
+     84|     expect(within(damagedRow).getByText('Check run history diagnostics…
+       |                               ^
+     85|     expect(within(damagedRow).queryByRole('link', { name: 'running' })…
+     86|     expect(within(damagedRow).queryByText('never run')).not.toBeInTheD…
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 skipped (18)
+   Start at  12:57:03
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+   Duration  22.73s (transform 31%, import 31%, environment 26%, setup 8%, tests 3%)
+
+  Transform  transforming modules took 6.91s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+pnpm command failed in <worktree>.

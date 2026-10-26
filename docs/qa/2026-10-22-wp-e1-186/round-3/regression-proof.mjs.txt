@@ -1,0 +1,49 @@
+﻿import { readFile, writeFile, copyFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { openSync, closeSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const file = 'apps/api/src/sse.ts',
+  dir = 'docs/qa/2026-10-22-wp-e1-186/round-3';
+const saved = await readFile(file),
+  sha = (b) => createHash('sha256').update(b).digest('hex');
+let result;
+try {
+  await writeFile(file, await readFile(`${dir}/baseline-sse.ts.txt`));
+  const fd = openSync('.tmp/r3-final-red.log.txt', 'w');
+  try {
+    result = spawnSync(
+      'pnpm.cmd',
+      [
+        '--filter',
+        '@graphgoblin/api',
+        'exec',
+        'vitest',
+        'run',
+        'src/sse-catchup.test.ts',
+        '--maxWorkers=1',
+        '--reporter=verbose',
+        '-t',
+        '"bounds.*confirmation|keeps defensive grace"',
+      ],
+      { shell: true, windowsHide: true, stdio: ['ignore', fd, fd], timeout: 600000 },
+    );
+  } finally {
+    closeSync(fd);
+  }
+} finally {
+  await writeFile(file, saved);
+  if (sha(await readFile(file)) !== sha(saved)) throw new Error('Restoration mismatch');
+  const p = `${dir}/baseline-proof.json`,
+    proof = JSON.parse(await readFile(p, 'utf8'));
+  proof.finalRegression = {
+    exitCode: result?.status,
+    error: result?.error?.message,
+    restoredSha256: sha(saved),
+    command:
+      'pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-catchup.test.ts --maxWorkers=1 --reporter=verbose -t "bounds.*confirmation|keeps defensive grace"',
+  };
+  await writeFile(p, JSON.stringify(proof, null, 2) + '\n');
+  await copyFile('apps/api/src/sse-catchup.test.ts', `${dir}/terminal-regression.test.ts.txt`);
+}
+console.log(`Final regression against 8b760b6b exit ${result.status}; restored ${sha(saved)}`);
+if (result.status !== 1 || result.error) process.exitCode = 1;

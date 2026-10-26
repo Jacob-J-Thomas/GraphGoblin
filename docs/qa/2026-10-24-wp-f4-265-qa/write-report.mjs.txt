@@ -1,0 +1,179 @@
+import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createHash} from 'node:crypto';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa');
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const read=async name=>{
+  try{return JSON.parse((await readFile(join(out,name),'utf8')).replace(/^\uFEFF/,''))}
+  catch(error){
+    if(error.code!=='ENOENT'||!name.endsWith('.json'))throw error;
+    const prefix=name.replace(/\.json$/,'-part-');
+    const parts=(await readdir(out)).filter(n=>n.startsWith(prefix)&&n.endsWith('.json')).sort();
+    if(!parts.length)throw error;
+    const values=[];for(const part of parts)values.push(...JSON.parse(await readFile(join(out,part),'utf8')));return values;
+  }
+};
+const api=await read('api-results.json'),extra=await read('extra-results.json'),focused=await read('focused-results.json'),browser=await read('browser-results.json'),gates=await read('gates.json');
+const isolated=await read('isolated-result.json');
+const routeScope=await read('route-scope-result.json');
+const setupResults=await read('api-results-setup-attempt.json');
+const setupBrowser=await read('browser-results-setup-attempt.json');
+let notKept='';try{notKept=await readFile(join(out,'NOT-KEPT.md'),'utf8')}catch{}
+for(const name of await readdir(out)){
+  if(!/\.(json|txt)$/.test(name))continue;
+  const file=join(out,name);const data=await readFile(file,'utf8');const normalized=clean(data);if(data!==normalized)await writeFile(file,normalized);
+  const bytes=await readFile(file);if(bytes.length<=1000000)continue;
+  const hash=createHash('sha256').update(bytes).digest('hex');
+  const description=`- ${name}: ${bytes.length} bytes; SHA-256 ${hash}. Original capture not kept. `;
+  if(name.endsWith('.json')){
+    const value=JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/,''));
+    if(!Array.isArray(value))throw Error('Oversized non-array capture '+name);
+    let part=[],size=2,n=1;const names=[];
+    async function flush(){if(!part.length)return;const dest=name.replace(/\.json$/,`-part-${String(n++).padStart(2,'0')}.json`);await writeFile(join(out,dest),JSON.stringify(part,null,2));names.push(dest);part=[];size=2}
+    for(const entry of value){const length=Buffer.byteLength(JSON.stringify(entry,null,2));if(size+length>600000)await flush();part.push(entry);size+=length}await flush();
+    notKept+=description+'Same records retained in '+names.map(x=>`[${x}](${x})`).join(', ')+'.\n';
+  }else{
+    const text=bytes.toString('utf8');let part='',n=1;const names=[];
+    async function flush(){if(!part)return;const dest=name.replace(/\.txt$/,`-part-${String(n++).padStart(2,'0')}.txt`);await writeFile(join(out,dest),part);names.push(dest);part=''}
+    for(const line of text.match(/[^\n]*\n|[^\n]+$/g)??[]){if(Buffer.byteLength(part)+Buffer.byteLength(line)>600000)await flush();part+=line}await flush();
+    notKept+=description+'Same text retained in '+names.map(x=>`[${x}](${x})`).join(', ')+'.\n';
+  }
+  await unlink(file); // Explicitly omit oversized captures, never a directory or production file.
+}
+if(!notKept)notKept='# Captures not kept\n\nNo retained QA capture exceeded 1,000,000 bytes. Generated build/coverage products are not included as QA captures.\n';
+else if(!notKept.startsWith('#'))notKept='# Captures not kept\n\n'+notKept;
+await writeFile(join(out,'NOT-KEPT.md'),notKept);
+const available=new Set(await readdir(out));
+const link=n=>available.has(n)?`[${n}](${n})`:`[${n} (retained parts)](NOT-KEPT.md)`;
+const cell=v=>String(v??'').replaceAll('|','\\|').replaceAll('\n',' ');
+function actual(c){if(c.status==='FAIL')return String(c.actual).replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g,'<QA script>').split('\n').slice(0,6).join(' ').slice(0,300);const a=c.actual;if(a?.runId)return `run ${a.runId}; ${a.terminal??a.status??'assertions passed'}`;return JSON.stringify(a).slice(0,210)}
+function table(checks,file){return '| Case | Steps | Expected | Actual | Result | Evidence |\n| --- | --- | --- | --- | --- | --- |\n'+checks.map(c=>`| ${cell(c.id)} | ${cell(c.steps??'See preserved browser script and accessibility snapshot.')} | ${cell(c.expected??'Usable explanation/action and truthful durable state.')} | ${cell(actual(c))} | ${c.status} | ${link(file)} |`).join('\n')+'\n'}
+const failedGates=gates.filter(x=>x.exitCode!==0);
+let format='Not yet run; final report formatting follows generation.';try{const f=await read('format-result.json');format=`Exit ${f.exitCode}; ${link('format.log.txt')}.`}catch{}
+let coverage='| Package | Tests / coverage evidence |\n| --- | --- |\n';
+for(const pkg of ['contracts','engine','adapter-codex','api-client','api','web']){
+  let s='';try{s=await readFile(join(out,'coverage-'+pkg+'.log.txt'),'utf8')}catch{}
+  const lines=s.split('\n').filter(x=>/Test Files|Tests\s+[0-9]|All files|Coverage summary|Lines\s*:|Branches\s*:/.test(x));
+  let metrics='Coverage not emitted because the package gate failed.';try{const total=(await read('coverage-summary-'+pkg+'.json')).total;metrics=`Lines ${total.lines.pct}% (${total.lines.covered}/${total.lines.total}); branches ${total.branches.pct}% (${total.branches.covered}/${total.branches.total}); ${link('coverage-summary-'+pkg+'.json')}.`}catch{}
+  coverage+=`| ${pkg} | ${cell(lines.join('; '))}; ${metrics} ${link('coverage-'+pkg+'.log.txt')} |\n`;
+}
+const files=(await readdir(out)).filter(n=>n!=='README.md').sort();
+const index=files.map(n=>`- ${link(n)}`).join('\n');
+const md=`# Independent QA round 1: WP-F4 bolt #265
+
+Tested revision: \`08acef6cebd40e7f6acbb896d950c7de2d62e9d6\`, branch \`codex-qa-wp-f4-265\`, PR #401. Comparison base: \`c63db24590d23263a3f7253eda13249f9252ec16\`. Worktree: \`%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265\`. No production code changes, index changes, commits, sub-agents, provider turns, or GitHub mutations. Only this QA folder is added. The implementer's report was read as claims and is not used as acceptance evidence.
+
+Node 22.14.0 was placed first on PATH. Dependencies were present. \`pnpm.cmd build\` passed (11 tasks, 9 cached); see ${link('build.log.txt')}. Custom API processes used ports 6040–6045 and physical SQLite stores under \`%USERPROFILE%/AppData/Local/Temp/gg-qa-f4-265-*\`. Edge ${JSON.parse(await readFile(join(out,'browser-environment.json'),'utf8')).browser} ran headlessly at 1440 × 900 and 390 × 844. Production container, routes, storage, engine and built web app were used; only provider ports were fake. Fake provider handles were independent disk files that the QA runner removed during real input waits. No fake result establishes live-provider recall, retention, fallback or side-effect rollback.
+
+## Requirements and touched systems
+
+The complete binding briefs and issue snapshots are retained in ${link('requirements.log.txt')}. #265 requires a clear stop and deliberate fresh-session choice without false reuse. #307/#288 require deliberate context, no model substitution and truthful prompt delivery. #33/ADR-0052, #251/ADR-0045 and ADR-0055 define the continuity/recovery boundaries.
+
+Touched systems tested: contracts and generated clients; inference selection, authored/repair/continuation provenance and session recording; the Codex adapter's confirmation boundary and both harness families through the engine; RunManager locking, finalization and child composition; REST authorization, strict request validation and drain admission; SQLite events, run/session records and startup recovery; inspector alert/action/history, errors, keyboard and concurrent tabs; documentation and upgrade guidance. Coverage/unit gates supply component evidence for contract/client and adjacent engine cases; the independent checks below supply real API/process/SQLite/Edge evidence.
+
+## Independent checks
+
+All provider evidence in these tables is **fake-only**. Steps, assertions and complete responses are preserved in ${link('api-qa.mjs.txt')}, ${link('gateway.mjs.txt')}, ${link('extra-qa.mjs.txt')}, ${link('focused-qa.mjs.txt')} and the linked JSON. Before/after snapshots retain complete event, session and thread records. Each missing inherited/own failure named the handle and origin and refused plain Resume. Explicit recovery recorded one API-key actor, timestamp, node, observed failure sequence, prior handle/origin, retained model/effort, original authored task and \`priorContextCarried: false\`. Concurrent choices returned [200,409]; post-success repeats returned 409. Provider calls were [fresh,resume,fresh], using a different final handle and the exact original authored prompt/model/effort. Session announcements after recovery were [fresh,fresh], without a false resumed announcement for the refused turn.
+
+${table(api,'api-results.json')}
+
+Session rows retained the requested handle as failed-attempt provenance; their presence was not counted as successful reuse. The durable \`harness.session\` event carried no resumed claim for the missing turn, and the recovered finished row carried the new handle. The shared thread before/after remains available in each snapshot. The refusal probe's summary counter says 12, but its enumerated body/scope/missing-run checks total 11; use the retained responses rather than that counter.
+
+The \`ordinary-failure-resume\` probe above had an incorrect fixture expectation: its positively safe pre-send failure automatically retried and succeeded, so waiting for a failed state timed out. This is a QA probe failure, not a product defect. Its calls retain the same authored prompt. ${link('focused-results.json')} separately verifies explicit Resume after a recoverable accepted turn. Do not treat the failed probe as a passing test or retry-to-green evidence.
+
+${table(extra,'extra-results.json')}
+
+The first \`own-policy-after-choice\` probe sent a nonexistent top-level \`limits\` field and correctly received 400. The corrected focused probe uses the current public definition shape and passed. The two fresh/current-visit cases and the repair case passed on their first execution.
+
+${table(focused,'focused-results.json')}
+
+The later own visit used calls [fresh,resume,fresh,resume]; its fourth call reused the third call's new handle. The pinned definition still said resume-own. The repair scenario's final fresh prompt was the authored task, not the lost repair prompt. Fresh/current-visit recovery preserved the original task after ordinary Resume discovered its missing accepted conversation.
+
+### Inspector in Edge
+
+${table(browser,'browser-results.json')}
+
+The desktop and narrow screenshots were visually inspected. Alert, complete handle/origin explanation and choice were readable; the 390 px document had scroll width 390. Tab traversal and Enter activated the desktop action (see the recorded tab count). A delayed outgoing request made the button disabled. A deliberately stale sequence was forwarded to the real API, which returned 409; the UI displayed the refusal and retained the failed run. Both mobile tabs submitted while their requests were held, then produced exactly [200,409], one choice and one completion. Reload showed the choice and removed the action. ${link('browser-network.json')} preserves response excerpts; accessibility snapshots preserve visible wording. Request interception altered/delayed the external network boundary and did not patch the tested application.
+
+### Initial probe corrections
+
+${link('api-results-setup-attempt.json')} and ${link('api-qa-setup-attempt.mjs.txt')} retain the initial pass, including its incorrect \`run.succeeded\` assertion (the public event is \`run.finished\`), nonexistent children route, non-retriable ordinary failure and terminal cancellation expectation. The final API probes use \`GET /runs?parent=…\`, count \`run.finished\` and cancel an active recovered turn. ${link('browser-results-setup-attempt.json')} retains the first browser locator timeout: exact error text did not include the API client's displayed \`(INVALID_STATE)\` suffix. The final regex locator passed against another fresh fixture, preserving the real 409 response. These are recorded QA setup corrections, not hidden product retries. No production file changed between probes.
+
+The initial checks are listed individually so their failures remain visible:
+
+${table(setupResults,'api-results-setup-attempt.json')}
+
+${table(setupBrowser,'browser-results-setup-attempt.json')}
+
+## Gates
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+| pnpm.cmd build | PASS | ${link('build.log.txt')} |
+${gates.map(g=>`| ${g.cmd} | ${g.exitCode===0?'PASS':'FAIL'} (exit ${g.exitCode}, ${(g.ms/1000).toFixed(2)} s) | ${link(g.log)} |`).join('\n')}
+| pnpm.cmd format:check | ${format} | Final report-only formatting recorded below. |
+
+${coverage}
+
+The isolated unchanged-file rerun was exactly \`${isolated.cmd}\`: exit ${isolated.exitCode}, ${(isolated.ms/1000).toFixed(2)} s. See ${link('probe-directory-isolated.log.txt')} and ${link('isolated-result.json')}. It ran once after this QA's test jobs finished; this shared PC's other activity was not controlled. The first coverage result remains failed. No full suite was rerun to obtain green. No pnpm store-lock error occurred, so no direct-tool runtime bypass was used.
+
+The changed route-scope check was separately run once as \`${routeScope.cmd}\`: exit ${routeScope.exitCode}, ${(routeScope.ms/1000).toFixed(2)} s; ${link('route-scope-isolated.log.txt')}. The original API coverage failure remains failed regardless of this narrower result.
+
+The maintained browser spec's ephemeral server was not launched separately; the independent Edge script exercises its missing-session flow and additional required narrow, pending, refusal and two-tab cases on the assigned ports. Dependency manifests and SQL schema did not change; license/migration gates were not required. Generated API docs and design-token gates passed. This QA adds no production tests, lowers no threshold and adds no coverage exclusion.
+
+## Limits and cleanup
+
+Live installed-CLI/provider turns are explicitly excluded by the brief. Controlled SDK/unit evidence and fake-provider success do not qualify unknown native-session fallback or provider retention. OS process-tree termination is unavailable (D-015). Restart evidence uses actual fixture process exits and subsequent new processes on the same store: before choice, immediately after committed choice and before node execution, and after accepted recovered work. Each recovered run completed once; the mid-node case continued its new accepted session rather than resending authored work. This does not establish OS signal/tree shutdown behavior.
+
+Two initial gateways could not receive their runner's stdin shutdown message because that stdin had closed. Native termination was not attempted. Their disposable PIDs/stores are listed in ${link('stores-setup-attempt.json')}; orchestrator cleanup is required for PIDs 40128 and 54692 on ports 6040/6041 and their original runner (tool session 46616). Subsequent fixtures have an explicit self-stop mechanism and were closed via IPC; see ${link('cleanup.json')}. Temporary stores and generated dist/coverage/.turbo products are left for the orchestrator; no directories were deleted. No owner app/store/checkout was used.
+
+Maintained coverage suites use their own native fixture conventions rather than the custom QA fixture port/prefix parameters: the API log names PID 16876, port 5686 and \`%USERPROFILE%/AppData/Local/Temp/gg-api-process-WpF8ZX\`. Its final process cleanup is unverified after the suite's native timeout/cleanup failures. No manual request was sent to that port. Authentication checks used real API keys created by the built public SQLite key repository in the gateway fixture; independent CLI key-creation qualification is limited by the failed native API gate.
+
+Older failures without the new missing-session provenance were not rewritten or granted recovery; live legacy-binary interoperability was not tested. ADR-0055 and CHANGELOG require coordinated gateway/web/client upgrades and deliberate replay/new run for older failures, with no SQL migration. Real provider behavior and owner product acceptance remain separate from this QA.
+
+## Retained artifacts
+
+All textual captures normalize local user paths to \`%USERPROFILE%\`; provider payloads, event numbers and response values are otherwise retained. Captures over 1,000,000 bytes are omitted by exact size/SHA-256 in ${link('NOT-KEPT.md')}; array captures, when needed, are split into smaller kept parts. Every kept artifact is linked here:
+
+${index}
+
+## QA-COMMON report
+
+### 1. Verdict
+
+**FAIL** at \`08acef6cebd40e7f6acbb896d950c7de2d62e9d6\`: independent functional recovery/API/process/Edge checks passed after the disclosed QA probe corrections, but required package coverage was not green. This is not a claim that #265 has a demonstrated functional defect or that the broader intent has been accepted.
+
+### 2. Defects
+
+**QA-001 — major verification blocker, outside the #265 diff:** \`pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage\` failed two unchanged \`src/probe-directory.test.ts\` tests at the 5000 ms timeout: the 226-character TEMP/TMP/TMPDIR-root case and preservation of one collision directory. Expected: package test/coverage gate exits 0 above the required thresholds. Actual: 2 failed, 494 passed, 5 skipped; coverage gate exits 1. Reproduction: use the exact tested head, Node 22 first on PATH and that command. Both the original coverage result and the single isolated rerun are retained; isolated exit ${isolated.exitCode}. A later pass does not clear the original gate failure. Evidence: ${link('coverage-adapter-codex.log.txt')}, ${link('probe-directory-isolated.log.txt')}. ${failedGates.filter(x=>x.name!=='coverage-adapter-codex').map(x=>`Additional failed gate: ${x.cmd}; ${link(x.log)}.`).join(' ')}
+
+**QA-002 — major API verification blocker:** \`pnpm.cmd --filter @graphgoblin/api test:coverage\` exited 1 with 10 failed, 1354 passed and 11 skipped tests. Seven files failed: \`adversarial.test.ts\` (changed; ADV-008 route/scope matrix, 20 s), \`nested-readiness.test.ts\` (two executable fixtures, 20 s), \`routes/templates.test.ts\` (20 s), \`triggers/github-recipe.test.ts\` (20 s), \`main.test.ts\` (two 60 s cases), \`subloop-restart.test.ts\` (180 s test and 60 s cleanup hook) and \`readiness-evidence.test.ts\` (60 s). Expected: all required package tests pass and coverage exceeds thresholds. Actual: the above timeouts prevent a qualifying coverage result. Reproduction: exact tested head, Node 22, the command shown. Evidence: ${link('coverage-api.log.txt')}. The changed ADV-008 targeted check exited ${routeScope.exitCode}; both results are retained. The other native/timing cases were not repeatedly rerun; the requested once-alone unchanged-file check is the Codex probe file. This evidence does not establish whether every timeout is due to host load, D-015 or a product defect.
+
+**QA-003 — major web verification blocker, failures in unchanged files:** \`pnpm.cmd --filter @graphgoblin/web test:coverage\` exited 1: 12 failed, 1693 passed; 10 failed and 128 passed files. Expected: the required web test/coverage gate passes above thresholds. Actual: 10 timing failures plus two assertion failures. The timing failures were \`EventsPage.recovery.test.tsx\`, \`EventsPage.refresh.test.tsx\`, \`EditorPage.test.tsx\`, \`NodeEditorDialog.test.tsx\`, three \`TriggerEditor.test.tsx\` cases, \`forms/context.test.tsx\`, \`forms/json-sections.test.tsx\` (20 s) and \`routing-review.test.ts\` (60 s). The assertions were \`EditorPage.restore.test.tsx:129\`, unable to find heading \`legacy device copy\`, and \`EditorPage.undo.test.tsx:128\`, expected the original settings object with \`maxNodeVisits: 10\` but received a different object without that field. Reproduction: exact tested head, Node 22, the command shown; ${link('coverage-web.log.txt')}. These files are outside the #265 comparison diff. They were not fixed or repeatedly rerun, and no unchanged-main baseline was executed to attribute their cause.
+
+No independent #265 functional defect was confirmed. The setup/expectation/locator failures are listed separately above rather than attributed to production.
+
+### 3. Coverage of criteria
+
+| Criterion | Status and evidence |
+| --- | --- |
+| #265 clear missing-session stop and explicit fresh choice | Tested and passed through real API, SQLite and Edge with fake providers, both harnesses and every requested policy; ${link('api-results.json')}, ${link('browser-results.json')}. |
+| No false reuse / unchanged task, model, effort and configured mode | Tested and passed; failure/choice/session/thread snapshots, init-then-missing guard, current-visit and repair probes, later own visit; ${link('extra-results.json')}, ${link('focused-results.json')}. |
+| Wrong/stale/repeated/concurrent, authorization and drain refusals | Tested and passed; strict malformed bodies, wrong inference/non-inference node, missing run/scope, successful/cancelled states, real two-tab [200,409] and 503 drain; ${link('api-results.json')}, ${link('browser-network.json')}. |
+| Decline and three restart checkpoints | Tested and passed with real fixture processes and physical SQLite; no choice while declined, one choice/one completion after recovery; ${link('api-results.json')}. OS process-tree kill behavior not testable under D-015. |
+| Child recovery / parent Resume | Tested and passed; parent 409 before child's explicit recovery, parent 200 afterwards and one child retained; subloop snapshots in the artifact index. |
+| 1440/390 px inspector, keyboard, pending, refusal and reload | Tested and passed; ${link('browser-results.json')}, screenshots and accessibility snapshots in the artifact index. |
+| #33, #251 and #244 adjacent behavior | Tested at the bounded depth described: own/reset/third visit, inherited/named selection, child, accepted continuation, pre-send auto-retry and authored repair restart; engine/API gates and independent snapshots. |
+| Bounded real adapter / native provider behavior | Not testable here: fake providers only were authorized; installed-provider turns remain a separate orchestrator check. |
+| Required quality gates | Failed: adapter, API and web coverage; all gate results and the isolated checks are reported above. No acceptance or closure claim. |
+
+### 4. Report path and evidence folder
+
+Report: \`docs/qa/2026-10-24-wp-f4-265-qa/README.md\`. Evidence: this folder, with every retained file linked above. Changes remain uncommitted in the designated worktree; nothing was staged or committed.
+
+### 5. Observations outside scope
+
+The unchanged Codex readiness-probe timing failures, API native/timing failures and unchanged-file web failures need gate disposition. D-015 prevents native process-tree termination; the two initial QA fixture processes need orchestrator cleanup and the maintained API suite's native-process cleanup is unverified. The Playwright CLI attempt could not write npm's cache under the sandbox; the repository's installed Playwright successfully drove Edge instead. Read-only CIM process enumeration was also denied and was not used as evidence for a native lifecycle claim. The recorded excerpts are in ${link('tooling-notes.log.txt')}. No provider-turn, owner-store or broad intent-acceptance claim is made.
+`;
+await writeFile(join(out,'README.md'),clean(md));
+console.log('Report written; '+files.length+' linked artifacts; failed gates='+failedGates.map(x=>x.name).join(','));

@@ -1,0 +1,156 @@
+// Independent acceptance checks. No production source modification or private access.
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const root = process.cwd();
+const evidence = join(root, 'docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const runtime = await mkdtemp(join(tmpdir(), 'gg-qa-d4-343-3-'));
+await copyFile(join(evidence,'server.mjs.txt'),join(runtime,'server.mjs'));
+const clean = v => JSON.stringify(v, (_k,x) => typeof x === 'bigint' ? String(x) : x).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+const results = { revision:'94523682d084f7a566242602762a3b04d87a8e55', node:process.version, runtime, checks:[], http:[], processes:[] };
+const save = () => writeFile(join(evidence,'api-results.json'), clean(results));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function test(id, expected, job) {
+  const entry={id,expected,started:new Date().toISOString()};
+  try { entry.actual=await job(); entry.status='PASS'; }
+  catch(e) { entry.status='FAIL'; entry.error=e.stack; }
+  results.checks.push(entry); await save(); console.log(id+' '+entry.status+(entry.error?' '+entry.error.split('\n')[0]:''));
+}
+async function eventually(fn,ms=20000) { const end=Date.now()+ms; while(true) { const v=await fn(); if(v) return v; if(Date.now()>end) throw Error('Timed out waiting for observable state'); await sleep(50); } }
+const inherited=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_') && k!=='JEV_API_KEY'));
+function launch(file,args,env,label) {
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...inherited,...env},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr=''; child.stdout.on('data',d=>stdout+=d); child.stderr.on('data',d=>stderr+=d);
+  const done=new Promise(r=>{child.once('error',e=>r({error:String(e)}));child.once('exit',(code,signal)=>r({code,signal}));});
+  const record={label,pid:child.pid}; results.processes.push(record);
+  return {child,done,record,get stdout(){return stdout},get stderr(){return stderr},async log(){await writeFile(join(evidence,label+'.log.txt'),(stdout+'\nSTDERR\n'+stderr).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]'));}};
+}
+async function instance(name,port) {
+  const data=join(runtime,name); await mkdir(data);
+  const env={QA_ROOT:root,GG_DATA_DIR:data,GG_PORT:String(port),GG_HOST:'127.0.0.1',GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,11).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist'),GG_MAX_CONCURRENT_RUNS:'2',GG_JEV_API_KEY:'',GG_LOG_LEVEL:'warn'};
+  const cli=launch(join(root,'apps/api/dist/main.js'),['--create-api-key','Independent QA'],env,name+'-key-cli');
+  const exit=await cli.done; await cli.log(); assert.equal(exit.code,0,cli.stderr);
+  const key=/\bgg_[A-Za-z0-9_-]+/.exec(cli.stdout)?.[0]; assert.ok(key,'CLI key missing');
+  let proc;
+  const s={name,port,data,env,key,url:'http://127.0.0.1:'+port};
+  s.start=async()=>{ proc=launch(join(runtime,'server.mjs'),[],env,name+'-server-'+results.processes.length); s.proc=proc; await eventually(()=>{if(proc.stderr.includes('Error'))throw Error(proc.stderr);return proc.stdout.includes('QA_READY');},60000); };
+  s.call=async(method,path,body,token=key)=>{
+    const t=performance.now(); const r=await fetch(s.url+path,{method,headers:{authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});
+    const raw=await r.text(); let value;try{value=JSON.parse(raw)}catch{value=raw}
+    const result={status:r.status,body:value,ms:Math.round(performance.now()-t)};
+    if(path!='/__qa') results.http.push({instance:name,method,path,...result}); return result;
+  };
+  s.qa=async(body)=>{const r=await s.call('POST','/__qa',body);assert.equal(r.status,200,JSON.stringify(r));return r.body};
+  s.sql=(sql,args=[])=>s.qa({op:'sql',sql,args});
+  s.settle=()=>s.qa({op:'settle'});
+  s.sweep=async(ms=300001)=>{await s.qa({op:'sweep',ms});await s.settle()};
+  s.stop=async()=>{await s.qa({op:'stop'});const exit=await proc.done;await proc.log();return exit};
+  s.events=async()=>{const r=await s.call('GET','/events?limit=100');assert.equal(r.status,200,JSON.stringify(r));return r.body.items};
+  s.item=async(id)=>(await s.events()).find(x=>x.id===id);
+  s.runs=async(loopId)=>(await s.call('GET','/runs'+(loopId?'?loopId='+loopId:''))).body.items;
+  await s.start(); return s;
+}
+function definition(name,config={type:'event',eventType:'ready'},extra=false,work=false) {
+  const nodes=[{id:'start',kind:'trigger',label:'Start',config},{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload'}}];
+  const edges=[{id:'a',from:{node:'start',port:'out'},to:{node:work?'work':'done'}}];
+  if(extra){nodes.push({id:'second',kind:'trigger',label:'Second',config:{type:'event',eventType:'ready'}});edges.push({id:'c',from:{node:'second',port:'out'},to:{node:'done'}})}
+  if(work){nodes.splice(1,0,{id:'work',kind:'inference',label:'Work',config:{harness:'codex',prompt:{template:'QA delayed work'}}});edges.push({id:'b',from:{node:'work',port:'out'},to:{node:'done'}})}
+  return {schemaVersion:4,name,nodes,edges};
+}
+async function loop(s,d,publish=true,token=s.key){const c=await s.call('POST','/loops',{definition:d},token);assert.equal(c.status,201,JSON.stringify(c));const id=c.body.loop.id;if(publish){const p=await s.call('POST','/loops/'+id+'/publish',undefined,token);assert.equal(p.status,200,JSON.stringify(p));}return id;}
+const ev=(s,id,extra={})=>s.call('POST','/events',{loopId:id,type:'ready',...extra});
+const counts=async s=>(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM event_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'))[0];
+const fault=async(s,name,on,when='')=>s.sql(`CREATE TRIGGER ${name} BEFORE ${on} ${when} BEGIN SELECT RAISE(ABORT,'QA storage fault'); END`);
+const drop=(s,name)=>s.sql('DROP TRIGGER '+name);
+const depth=n=>'['.repeat(n+1)+'0'+']'.repeat(n+1); // deepest container depth n, root zero
+let s;
+try {
+ s=await instance('main',5850);
+ const a=await loop(s,definition('Target A')),b=await loop(s,definition('Target B'));
+ const unpublished=await loop(s,definition('Unpublished'),false);
+ const ambiguous=await loop(s,definition('Two entries',undefined,true));
+ const fk=await s.qa({op:'key',owner:'foreign',scopes:['*']});
+ const foreign=await loop(s,definition('Foreign'),true,fk.token);
+ const scoped=await s.qa({op:'key',scopes:['events:read']});
+ const badexpr=await loop(s,definition('Expression failure',{type:'event',eventType:'ready',dedupeKey:'$error("QA expression error")'}));
+ const badunicode=await loop(s,definition('Unicode node key',{type:'event',eventType:'ready',dedupeKey:'key'}));
+ const refusals=[
+ ['no-target',{type:'ready'},400,'VALIDATION_FAILED'],
+ ['invalid-loop',{loopId:'invalid',type:'ready'},400,'VALIDATION_FAILED'],
+ ['unknown-loop',{loopId:'00000000000000000000000000',type:'ready'},404,'LOOP_NOT_FOUND'],
+ ['foreign-loop',{loopId:foreign,type:'ready'},404,'LOOP_NOT_FOUND'],
+ ['unpublished',{loopId:unpublished,type:'ready'},409,'VERSION_NOT_PUBLISHED'],
+ ['wrong-type',{loopId:a,type:'other'},422,'EVENT_TRIGGER_NOT_FOUND'],
+ ['wrong-trigger',{loopId:a,type:'ready',triggerNodeId:'done'},422,'EVENT_TRIGGER_NOT_FOUND'],
+ ['ambiguous-trigger',{loopId:ambiguous,type:'ready'},422,'EVENT_TRIGGER_AMBIGUOUS'],
+ ['scope',{loopId:a,type:'ready'},403,'FORBIDDEN',scoped.token],
+ ['key-expression',{loopId:badexpr,type:'ready',payload:{}},422,'EVENT_KEY_EXPRESSION_FAILED'],
+ ['key-unicode',{loopId:a,type:'ready',dedupeKey:'\ud800'},400,'VALIDATION_FAILED'],
+ ['node-key-unicode',{loopId:badunicode,type:'ready',payload:{key:'\ud800'}},422,'EVENT_KEY_INVALID'],
+ ['depth995','{"loopId":"'+a+'","type":"ready","payload":'+depth(995)+'}',422,'EVENT_PAYLOAD_TOO_DEEP']
+ ];
+ for(const [name,body,status,code,token] of refusals) await test('refusal-'+name,`${status} ${code}; zero stored rows`,async()=>{const before=await counts(s);const r=await s.call('POST','/events',body,token??s.key);const after=await counts(s);assert.equal(r.status,status);assert.equal(r.body.code,code);assert.deepEqual(after,before);return {response:r,before,after};});
+ await test('targeted-one-loop','one admission/run on A, none on B',async()=>{const r=await ev(s,a,{payload:{hello:'original'},dedupeKey:'target-one'});assert.equal(r.status,202);assert.equal(r.body.target.loopId,a);assert.equal(r.body.delivery.state,'pending');await s.settle();const item=await s.item(r.body.id);assert.equal(item.delivery.state,'admitted');assert.equal(item.runIds.length,1);assert.equal((await s.runs(b)).length,0);return {ack:r,item};});
+ await test('depth994','202, admission completes and loop can delete',async()=>{const id=await loop(s,definition('Boundary994'));const r=await s.call('POST','/events','{"loopId":"'+id+'","type":"ready","payload":'+depth(994)+'}');assert.equal(r.status,202);await s.settle();const meta=await s.sql('SELECT status,attempts FROM event_receipts WHERE inbound_id=?',[r.body.id]);const del=await s.call('DELETE','/loops/'+id);assert.equal(meta[0].status,'admitted');assert.equal(del.status,204);return {ackId:r.body.id,delivery:meta,deleted:del};});
+ await test('request-key-concurrent','20 simultaneous requests resolve one receipt and one run',async()=>{const rs=await Promise.all(Array.from({length:20},()=>ev(s,b,{dedupeKey:'concurrent',payload:{original:true}})));assert.ok(rs.every(r=>r.status===202));assert.equal(new Set(rs.map(r=>r.body.id)).size,1);await s.settle();const item=await s.item(rs[0].body.id);assert.equal(item.runIds.length,1);const changed=await ev(s,b,{dedupeKey:'concurrent',payload:{changed:true}});assert.equal(changed.body.id,item.id);assert.deepEqual(changed.body.payload,{original:true});return {ids:rs.map(r=>r.body.id),duplicates:rs.filter(r=>r.body.duplicate).length,item,changed};});
+ await test('recipient-key-scope','same request key admits on two loops and two triggers',async()=>{const rs=await Promise.all([ev(s,a,{dedupeKey:'recipient'}),ev(s,b,{dedupeKey:'recipient'}),ev(s,ambiguous,{dedupeKey:'recipient',triggerNodeId:'start'}),ev(s,ambiguous,{dedupeKey:'recipient',triggerNodeId:'second'})]);assert.ok(rs.every(r=>r.status===202));assert.equal(new Set(rs.map(r=>r.body.id)).size,4);await s.settle();const items=await Promise.all(rs.map(r=>s.item(r.body.id)));assert.ok(items.every(i=>i.runIds.length===1));const amb=await ev(s,ambiguous,{dedupeKey:'recipient'});assert.equal(amb.body.code,'EVENT_TRIGGER_AMBIGUOUS');return {items,retryAmbiguity:amb};});
+ await test('unkeyed-repeat','two identical unkeyed requests start two runs',async()=>{const rs=await Promise.all([ev(s,a,{payload:{repeat:true}}),ev(s,a,{payload:{repeat:true}})]);await s.settle();assert.equal(new Set(rs.map(r=>r.body.id)).size,2);const items=await Promise.all(rs.map(r=>s.item(r.body.id)));assert.ok(items.every(i=>i.runIds.length===1));return items;});
+ const keyed=await loop(s,definition('Authored key',{type:'event',eventType:'ready',dedupeKey:'business'}));
+ await test('authored-key-pending-admitted','pending and admitted reserve node key; no extra runs',async()=>{await fault(s,'qa_key_fault','INSERT ON runs',`WHEN NEW.loop_id='${keyed}'`);const first=await ev(s,keyed,{payload:{business:'K'}});await s.settle();const pending=await s.item(first.body.id);assert.equal(pending.delivery.state,'pending');assert.equal(pending.delivery.attempts,1);const blockedDelete=await s.call('DELETE','/loops/'+keyed);assert.equal(blockedDelete.status,409);const dup=await ev(s,keyed,{payload:{business:'K'}});assert.equal(dup.body.delivery.state,'deduplicated');await drop(s,'qa_key_fault');await s.sweep();const admitted=await s.item(first.body.id);assert.equal(admitted.delivery.state,'admitted');const dup2=await ev(s,keyed,{payload:{business:'K'}});assert.equal(dup2.body.delivery.state,'deduplicated');return {pending,blockedDelete,dup:dup.body,admitted,dup2:dup2.body};});
+ await test('authored-key-exhaustion-release','eight failures terminal; original request key remains original; authored reservation released',async()=>{await fault(s,'qa_exhaust','INSERT ON runs',`WHEN NEW.loop_id='${keyed}'`);const first=await ev(s,keyed,{payload:{business:'EX'},dedupeKey:'exhaust-original'});await s.settle();const states=[(await s.item(first.body.id)).delivery];for(let i=0;i<7;i++){await s.sweep();states.push((await s.item(first.body.id)).delivery)}const failed=await s.item(first.body.id);assert.equal(failed.delivery.state,'failed');assert.equal(failed.delivery.attempts,8);assert.equal(failed.delivery.failureCode,'EVENT_ADMISSION_EXHAUSTED');await drop(s,'qa_exhaust');const retry=await ev(s,keyed,{payload:{business:'changed'},dedupeKey:'exhaust-original'});assert.equal(retry.body.id,first.body.id);const fresh=await ev(s,keyed,{payload:{business:'EX'}});await s.settle();assert.equal((await s.item(fresh.body.id)).delivery.state,'admitted');return {states,failed,retry:retry.body,fresh:await s.item(fresh.body.id)};});
+ await test('authored-key-conflict-release','malformed external saved intent fails safe; authored key released',async()=>{await fault(s,'qa_conflict','INSERT ON runs',`WHEN NEW.loop_id='${keyed}'`);const first=await ev(s,keyed,{payload:{business:'CONFLICT'}});await s.settle();await drop(s,'qa_conflict');await s.sql("UPDATE event_receipts SET intent='{}' WHERE inbound_id=?",[first.body.id]);await s.sweep();const failed=await s.item(first.body.id);assert.equal(failed.delivery.failureCode,'EVENT_INTENT_CONFLICT');const fresh=await ev(s,keyed,{payload:{business:'CONFLICT'}});await s.settle();const item=await s.item(fresh.body.id);assert.equal(item.delivery.state,'admitted');return {failed,fresh:item};});
+ await test('immutable-definition','pending receipt and keyed retry retain accepted version after republish',async()=>{const id=await loop(s,definition('Frozen'));await fault(s,'qa_frozen','INSERT ON runs',`WHEN NEW.loop_id='${id}'`);const r=await ev(s,id,{dedupeKey:'frozen',payload:{original:true}});await s.settle();const detail=await s.call('GET','/loops/'+id);const d=definition('Frozen');d.nodes.find(n=>n.id==='done').config.returns='"new-version"';const put=await fetch(s.url+'/loops/'+id+'/draft',{method:'PUT',headers:{authorization:'Bearer '+s.key,'content-type':'application/json','if-match':detail.body.draftToken},body:JSON.stringify({definition:d})});assert.equal(put.status,200,await put.text());assert.equal((await s.call('POST','/loops/'+id+'/publish')).status,200);const retry=await ev(s,id,{dedupeKey:'frozen',payload:{changed:true}});assert.equal(retry.body.target.versionId,r.body.target.versionId);await drop(s,'qa_frozen');await s.sweep();const item=await s.item(r.body.id);const run=await s.call('GET','/runs/'+item.runIds[0]);assert.equal(run.body.versionId??run.body.run?.versionId,r.body.target.versionId);return {accepted:r.body.target,retry:retry.body,item,run:run.body};});
+ await test('independent-concurrency-cancellation','two loops execute simultaneously within capacity=2; admission returns while work remains active',async()=>{const x=await loop(s,definition('Concurrent X',undefined,false,true)),y=await loop(s,definition('Concurrent Y',undefined,false,true));await s.qa({op:'script',turns:[{delayMs:60000},{delayMs:60000}]});const start=Date.now();const rs=await Promise.all([ev(s,x),ev(s,y)]);assert.ok(rs.every(r=>r.status===202));const running=await eventually(async()=>{const runs=[...(await s.runs(x)),...(await s.runs(y))];return runs.length===2&&runs.every(r=>r.status==='running')?runs:false});const elapsed=Date.now()-start;const requests=await s.qa({op:'harness'});await eventually(async()=>(await s.qa({op:'harness'})).started.length===2); const confirmedHarness=await s.qa({op:'harness'}); assert.equal(confirmedHarness.started.length,2);const cancel=await Promise.all(running.map(r=>s.call('POST','/runs/'+r.id+'/cancel')));assert.ok(cancel.every(r=>r.status===200));await s.settle();return {ackTimesMs:rs.map(r=>r.ms),bothRunningAfterMs:elapsed,running,harnessRequests:requests,cancel,cancelled:[...(await s.runs(x)),...(await s.runs(y))]};});
+ const hook=await loop(s,definition('Webhook',{type:'webhook'}));const hookpath=(await s.call('GET','/loops/'+hook+'/triggers')).body.webhooks[0].path;
+ await test('webhook-unchanged','exact accepted:true ack and two identical unkeyed bodies yield two runs',async()=>{const rs=await Promise.all([s.call('POST',hookpath,{hello:'webhook'}),s.call('POST',hookpath,{hello:'webhook'})]);assert.ok(rs.every(r=>r.status===202));for(const r of rs)assert.deepEqual(r.body,{accepted:true});await s.settle();const runs=await s.runs(hook);assert.equal(runs.length,2);return {rs,runs};});
+ await test('webhook-depth','depth995 and depth996 return422 without storage; depth994 succeeds',async()=>{const before=await counts(s);const rs=[];for(const n of [995,996]){const r=await s.call('POST',hookpath,depth(n));assert.equal(r.status,422);assert.equal(r.body.code,'WEBHOOK_PAYLOAD_TOO_DEEP');rs.push({depth:n,...r})}assert.deepEqual(await counts(s),before);const bound=await s.call('POST',hookpath,depth(994));assert.equal(bound.status,202);await s.settle();return {refused:rs,boundary:bound,countsBefore:before,countsAfter:await counts(s)};});
+ await test('recovery-sweep-isolation','event retry-metadata fault does not block webhook redelivery',async()=>{await fault(s,'qa_all_runs','INSERT ON runs');const event=await ev(s,a,{dedupeKey:'sweep-failure'});await s.call('POST',hookpath,{sweep:'retry'});await s.settle();await drop(s,'qa_all_runs');await s.sql("UPDATE event_receipts SET next_attempt_at='2000-01-01' WHERE inbound_id=?",[event.body.id]);await s.sql("UPDATE webhook_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'");await fault(s,'qa_event_run','INSERT ON runs',`WHEN NEW.loop_id='${a}'`);await fault(s,'qa_event_metadata','UPDATE ON event_receipts');const before=await s.sql("SELECT status,attempts FROM webhook_receipts WHERE status='pending'");await s.sweep();const after=await s.sql("SELECT status,attempts FROM webhook_receipts");assert.ok(before.length>0);assert.ok(after.every(r=>r.status==='admitted'));const eventState=await s.item(event.body.id);assert.equal(eventState.delivery.state,'pending');await drop(s,'qa_event_run');await drop(s,'qa_event_metadata');return {before,after,event:eventState};});
+ // Round-2 independent probes for the reported fixes.
+ for (const [label,key] of [['empty',''],['513','x'.repeat(513)],['lone-high','\ud800'],['lone-low','\udfff']]) {
+  await test('request-key-refuse-'+label,'400 VALIDATION_FAILED at /dedupeKey; two attempts create no inbound, receipt or run',async()=>{
+   await s.settle();const before=await counts(s);const rs=[];
+   for(let i=0;i<2;i++)rs.push(await ev(s,a,{dedupeKey:key,payload:{i}}));
+   for(const r of rs){assert.equal(r.status,400);assert.equal(r.body.code,'VALIDATION_FAILED');assert.ok(r.body.errors.some(e=>e.path==='/dedupeKey'));}
+   const after=await counts(s);assert.deepEqual(after,before);return {rs,before,after};
+  });
+ }
+ for(const [label,key] of [['space',' '],['one','x'],['512','z'.repeat(512)],['tab','left\tright'],['newline','left\nright'],['astral','a????b'],['combining','e\u0301'],['replacement','\ufffd'],['DEL','left\u007fright']]) {
+  await test('request-key-preserved-'+label,'one delivery/admission/run; exact request key survives changed-payload retry and run envelope',async()=>{
+   const first=await ev(s,a,{dedupeKey:key,payload:{label,original:true}});assert.equal(first.status,202);assert.equal(first.body.dedupeKey,key);assert.equal(first.body.duplicate,false);
+   await s.settle();const retry=await ev(s,a,{dedupeKey:key,payload:{label,changed:true}});assert.equal(retry.status,202);assert.equal(retry.body.duplicate,true);assert.equal(retry.body.id,first.body.id);assert.equal(retry.body.admissionId,first.body.admissionId);assert.equal(retry.body.dedupeKey,key);assert.deepEqual(retry.body.payload,first.body.payload);
+   const item=await s.item(first.body.id);assert.equal(item.runIds.length,1);
+   const rows=await s.sql('SELECT id,initial_thread FROM runs WHERE id=?',[item.runIds[0]]);const envelope=JSON.parse(rows[0].initial_thread).invocation.trigger;assert.equal(envelope.dedupeKey,key);
+   const receipts=await s.sql('SELECT id,status,json_extract(intent,'$.run.id') AS run_id FROM event_receipts WHERE inbound_id=?',[item.id]);assert.equal(receipts.length,1);assert.equal(receipts[0].run_id,item.runIds[0]);
+   return {first,retry,item,envelope,receipts};
+  });
+ }
+ await test('webhook-expression-keys','empty expression result 422 KEY_INVALID without rows; nonempty key exact ack and one run after retry',async()=>{
+  const id=await loop(s,definition('Webhook keys',{type:'webhook',dedupeKey:'key'}));const path=(await s.call('GET','/loops/'+id+'/triggers')).body.webhooks[0].path;
+  const before=await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM webhook_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs');
+  const empty=await s.call('POST',path,{key:''});assert.equal(empty.status,422);assert.equal(empty.body.code,'KEY_INVALID');
+  assert.deepEqual(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM webhook_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'),before);
+  const rs=[];for(let i=0;i<2;i++)rs.push(await s.call('POST',path,{key:'stable-webhook',i}));for(const r of rs){assert.equal(r.status,202);assert.deepEqual(r.body,{accepted:true});}await s.settle();const runs=await s.runs(id);assert.equal(runs.length,1);return {empty,before,rs,runs};
+ });
+ await test('recovery-past-failing-event','retry metadata failure on first Event does not prevent next due Event receipt admission',async()=>{
+  const x=await loop(s,definition('Failing sweep receipt')),y=await loop(s,definition('Healthy sweep receipt'));
+  await fault(s,'qa_pair','INSERT ON runs',`WHEN NEW.loop_id IN ('${x}','${y}')`);
+  const rx=await ev(s,x,{dedupeKey:'pair-x'}),ry=await ev(s,y,{dedupeKey:'pair-y'});await s.settle();await drop(s,'qa_pair');
+  await fault(s,'qa_pair_x','INSERT ON runs',`WHEN NEW.loop_id='${x}'`);
+  await fault(s,'qa_pair_meta','UPDATE ON event_receipts',`WHEN OLD.inbound_id='${rx.body.id}'`);
+  await s.sweep();const bad=await s.item(rx.body.id),good=await s.item(ry.body.id);assert.equal(bad.delivery.state,'pending');assert.equal(good.delivery.state,'admitted');assert.equal(good.runIds.length,1);
+  await drop(s,'qa_pair_x');await drop(s,'qa_pair_meta');return {bad,good};
+ });
+
+ // Leave an isolated representative set of all four Event states for browser checks.
+ const ui=await loop(s,definition('UI pending',{type:'event',eventType:'ui-pending'}));await fault(s,'qa_ui_pending','INSERT ON runs',`WHEN NEW.loop_id='${ui}'`);const pendingUI=await s.call('POST','/events',{loopId:ui,type:'ui-pending',payload:{qa:'pending'},dedupeKey:'ui-pending'});await s.settle();
+ await s.sql("INSERT INTO inbound_events (id,owner_id,type,payload,source,received_at,run_ids) VALUES ('00000000000000000000000001','local','qa-legacy','{}','api',?,'[]')",[new Date().toISOString()]);
+ await writeFile(join(runtime,'browser-auth.json'),JSON.stringify({url:s.url,key:s.key}));
+ await writeFile(join(evidence,'browser-ready.json'),clean({url:s.url,authFile:join(runtime,'browser-auth.json'),pendingId:pendingUI.body.id,targets:[a,b,keyed,ui]}));
+ await test('boot-recovery-isolation','failing Event receipt does not prevent startup or eligible webhook recovery',async()=>{await fault(s,'qa_boot_runs','INSERT ON runs');const wh=await s.call('POST',hookpath,{boot:'recover'});assert.equal(wh.status,202);await s.settle();await drop(s,'qa_boot_runs');await s.sql("UPDATE webhook_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'");await s.sql("UPDATE event_receipts SET next_attempt_at='2000-01-01' WHERE inbound_id=?",[pendingUI.body.id]);await fault(s,'qa_boot_metadata','UPDATE ON event_receipts');const stopped=await s.stop();await s.start();const health=await s.call('GET','/healthz');assert.equal(health.status,200);const whs=await s.sql("SELECT status FROM webhook_receipts");assert.ok(whs.every(r=>r.status==='admitted'));await drop(s,'qa_boot_metadata');return {stopped,health,webhooks:whs,pending:await s.item(pendingUI.body.id)};});
+ await save();console.log('BROWSER_READY '+runtime);
+ // Commands from a separately launched browser script can use the still running disposable server.
+ await writeFile(join(evidence,'api-finished.json'),clean({checks:results.checks.length,failed:results.checks.filter(c=>c.status==='FAIL').map(c=>c.id),runtime,port:s.port}));
+} catch(e) {results.fatal=e.stack;console.error(e);await save();if(s)await s.stop().catch(()=>{});process.exitCode=1;}
+

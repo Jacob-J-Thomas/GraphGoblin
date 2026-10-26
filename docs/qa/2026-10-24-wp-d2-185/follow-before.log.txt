@@ -1,0 +1,71 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/web
+
+ ❯ src/runs/follow-run-attempts.test.ts (11 tests | 2 failed) 88ms
+   × catches up across historical terminals in pages and reconnects for authoritative completion 34ms
+   × delegates completion that overtakes the captured run snapshot to SSE 3ms
+pnpm.cmd : 
+At line:15 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/follow-ru ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/follow-run-attempts.test.ts > catches up across historical terminals in pages and reconnects for 
+authoritative completion
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/runs/follow-run-attempts.test.ts:50:26
+     48|   expect(o.cursor()).toBe(4);
+     49|   expect(read).toHaveBeenCalledTimes(4);
+     50|   expect(o.finished).not.toHaveBeenCalled();
+       |                          ^
+     51|   expect(o.running).toHaveBeenCalledOnce();
+     52|   expect(o.error).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/runs/follow-run-attempts.test.ts > delegates completion that overtakes the captured run snapshot to SSE
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/runs/follow-run-attempts.test.ts:216:28
+    214|   try {
+    215|     await vi.advanceTimersByTimeAsync(0);
+    216|     expect(o.finished).not.toHaveBeenCalled();
+       |                            ^
+    217|     expect(o.running).toHaveBeenCalledOnce();
+    218|     await vi.advanceTimersByTimeAsync(2_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  20:53:20
+   Duration  17.92s (environment 52%, transform 22%, import 16%, setup 9%, tests 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\apps\web
+

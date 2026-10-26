@@ -164,6 +164,31 @@ for (const width of [360, 1440]) {
     await expect(
       dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
     ).toHaveCount(0);
+    const savedConfig = async () => {
+      const exported = await request.get(`/loops/${id}/export?draft=true`);
+      expect(exported.ok()).toBe(true);
+      const value = (await exported.json()) as {
+        loop: { nodes: { id: string; config: unknown }[] };
+      };
+      return value.loop.nodes.find((node) => node.id === 'start')?.config;
+    };
+    const implicitDefault = {
+      type: 'webhook',
+      authentication: { type: 'none' },
+      body: { type: 'json' },
+      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+    };
+    // An omitted default may be drawn as a placeholder in the device copy. Check its
+    // durable meaning, then author a distinct value whose exact persistence is observable.
+    await expect.poll(savedConfig).toMatchObject(implicitDefault);
+    const fallback = dialog.getByLabel('Fallback event type');
+    await expect(fallback).toHaveAttribute('placeholder', 'webhook');
+    await fallback.fill('fixture-webhook-type');
+    const explicitFallback = {
+      ...implicitDefault,
+      eventType: { ...implicitDefault.eventType, fallback: 'fixture-webhook-type' },
+    };
+    await expect.poll(savedConfig).toMatchObject(explicitFallback);
     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
     await page.reload();
     const reopened = await openNode(page, 'start');
@@ -171,15 +196,7 @@ for (const width of [360, 1440]) {
       'None',
     );
     await expect(reopened.getByLabel('JSON pointer')).toHaveValue('/event~1type/0');
-    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('webhook');
-    const exported = await request.get(`/loops/${id}/export?draft=true`);
-    expect(exported.ok()).toBe(true);
-    const value = (await exported.json()) as { loop: { nodes: { id: string; config: unknown }[] } };
-    expect(value.loop.nodes.find((node) => node.id === 'start')?.config).toMatchObject({
-      type: 'webhook',
-      authentication: { type: 'none' },
-      body: { type: 'json' },
-      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
-    });
+    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('fixture-webhook-type');
+    expect(await savedConfig()).toMatchObject(explicitFallback);
   });
 }

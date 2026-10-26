@@ -1,4 +1,5 @@
 import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
+import type { EventDraft } from './ports.js';
 
 /** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
 export class ArtifactStoreError extends Error {
@@ -35,7 +36,15 @@ export class RunFailureError extends Error {
   constructor(
     readonly code: RunErrorCode,
     message: string,
-    readonly options: { resumable?: boolean; details?: unknown; nodeId?: string } = {},
+    readonly options: {
+      resumable?: boolean;
+      details?: unknown;
+      nodeId?: string;
+      inference?: RunFailure['inference'];
+      missingSession?: RunFailure['missingSession'];
+      /** Facts the failing visit learned, appended in the same write as `run.failed` (#398). */
+      records?: EventDraft[];
+    } = {},
   ) {
     super(message);
     this.name = 'RunFailureError';
@@ -48,6 +57,8 @@ export class RunFailureError extends Error {
       message: this.message,
       resumable: this.options.resumable ?? true,
       ...(id ? { nodeId: id } : {}),
+      ...(this.options.inference ? { inference: this.options.inference } : {}),
+      ...(this.options.missingSession ? { missingSession: this.options.missingSession } : {}),
       ...(this.options.details !== undefined
         ? { details: toJsonDetails(this.options.details) }
         : {}),
@@ -90,7 +101,11 @@ export class RunCancelledError extends Error {
  * turn, at the child's request, as cancelling inline work cancels the run that does it (#251).
  */
 export class ChildCancelledError extends Error {
-  constructor(readonly childRunId: string) {
+  /** `records` are appended in the same write as the cancellation request (#398). */
+  constructor(
+    readonly childRunId: string,
+    readonly records: EventDraft[] = [],
+  ) {
     super(`subloop child ${childRunId} was cancelled`);
     this.name = 'ChildCancelledError';
   }
@@ -143,5 +158,13 @@ export class UnreadableRunHistoryError extends Error {
   ) {
     super(reason);
     this.name = 'UnreadableRunHistoryError';
+  }
+}
+
+/** Only native cleanup caused by this shutdown's own interruption can veto store release. */
+export class ShutdownCleanupError extends Error {
+  constructor() {
+    super('Native process termination unconfirmed during explicit stop; ownership retained');
+    this.name = 'ShutdownCleanupError';
   }
 }

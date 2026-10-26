@@ -1,0 +1,6 @@
+import {resolve} from 'node:path';import {pathToFileURL} from 'node:url';import {readFile,writeFile} from 'node:fs/promises';
+const parent=pathToFileURL(resolve('apps/api/package.json')).href,{NodeProgressSchema,PROGRESS_SUMMARY_MAX}=await import(import.meta.resolve('@graphgoblin/contracts',parent));
+const stored=JSON.parse(await readFile('docs/qa/2026-10-22-wp-e1-259-qa/inference-events-before.json','utf8'));
+const projected=(stored.items??stored).filter(e=>e.type==='node.progress').map(e=>({seq:e.seq,itemId:e.progress.item?.id,summaryChars:e.progress.item?.summary?.length}));
+const boundaries=[2000,2001,16384].map(size=>{const p=NodeProgressSchema.safeParse({item:{type:'message',id:'boundary',summary:'P'.repeat(size)}});return {inputChars:size,accepted:p.success,issues:p.success?[]:p.error.issues.map(e=>({code:e.code,path:e.path,maximum:e.maximum}))};});
+const result={contractMaximum:PROGRESS_SUMMARY_MAX,scriptedHarnessSummaryChars:[16384,20000],storedProgress:projected,boundaries};await writeFile('docs/qa/2026-10-22-wp-e1-259-qa/progress-contract.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

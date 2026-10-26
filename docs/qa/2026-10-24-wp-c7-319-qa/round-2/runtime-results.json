@@ -1,0 +1,959 @@
+[
+  {
+    "name": "R2-01 REST phase-cycle-proof rejects recurring-phase stale force and accepted waits supersede choices",
+    "status": "PASS",
+    "ms": 40771,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-phase-cycle-c7YDqn",
+      "work": {
+        "id": "01M5R7WNC21AK8JHHWKCFY2AGQ",
+        "runId": "01M5R7WNEB1MDMNA58D5AZBSV7"
+      },
+      "running": {
+        "phase": "running",
+        "graceMs": 1200,
+        "activeRunIds": [
+          "01M5R7WNEB1MDMNA58D5AZBSV7"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:0:running"
+      },
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 1200,
+        "startedAt": "2026-10-25T00:38:11.088Z",
+        "choiceAt": "2026-10-25T00:38:12.288Z",
+        "activeRunIds": [
+          "01M5R7WNEB1MDMNA58D5AZBSV7"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:1:draining"
+      },
+      "expired": {
+        "phase": "awaiting-choice",
+        "graceMs": 1200,
+        "startedAt": "2026-10-25T00:38:11.088Z",
+        "choiceAt": "2026-10-25T00:38:12.288Z",
+        "activeRunIds": [
+          "01M5R7WNEB1MDMNA58D5AZBSV7"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:2:awaiting-choice"
+      },
+      "waited": {
+        "at": "2026-10-25T00:38:12.433Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:2:awaiting-choice",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 1200,
+          "startedAt": "2026-10-25T00:38:11.088Z",
+          "choiceAt": "2026-10-25T00:38:12.288Z",
+          "activeRunIds": [
+            "01M5R7WNEB1MDMNA58D5AZBSV7"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:3:draining"
+        }
+      },
+      "rejected": {
+        "at": "2026-10-25T00:38:12.438Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:1:draining",
+        "status": 409,
+        "body": {
+          "phase": "draining",
+          "graceMs": 1200,
+          "startedAt": "2026-10-25T00:38:11.088Z",
+          "choiceAt": "2026-10-25T00:38:12.288Z",
+          "activeRunIds": [
+            "01M5R7WNEB1MDMNA58D5AZBSV7"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:3:draining"
+        }
+      },
+      "within": {
+        "at": "2026-10-25T00:38:12.452Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:3:draining",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 1200,
+          "startedAt": "2026-10-25T00:38:11.088Z",
+          "choiceAt": "2026-10-25T00:38:12.288Z",
+          "activeRunIds": [
+            "01M5R7WNEB1MDMNA58D5AZBSV7"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:4:draining"
+        }
+      },
+      "rejectedWithin": {
+        "at": "2026-10-25T00:38:12.457Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:3:draining",
+        "status": 409,
+        "body": {
+          "phase": "draining",
+          "graceMs": 1200,
+          "startedAt": "2026-10-25T00:38:11.088Z",
+          "choiceAt": "2026-10-25T00:38:12.288Z",
+          "activeRunIds": [
+            "01M5R7WNEB1MDMNA58D5AZBSV7"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:4:draining"
+        }
+      },
+      "fresh": {
+        "at": "2026-10-25T00:38:12.465Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:4:draining",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 1200,
+          "startedAt": "2026-10-25T00:38:11.088Z",
+          "choiceAt": "2026-10-25T00:38:12.288Z",
+          "activeRunIds": [
+            "01M5R7WNEB1MDMNA58D5AZBSV7"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:5:draining"
+        }
+      },
+      "after": {
+        "phase": "draining",
+        "graceMs": 1200,
+        "startedAt": "2026-10-25T00:38:11.088Z",
+        "choiceAt": "2026-10-25T00:38:12.288Z",
+        "activeRunIds": [
+          "01M5R7WNEB1MDMNA58D5AZBSV7"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:5:draining"
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "restarted": {
+        "phase": "running",
+        "graceMs": 800,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "controlToken": "9310d071-280e-42b6-9f14-7c017a136d40:0:running"
+      },
+      "oldIncarnation": {
+        "at": "2026-10-25T00:38:27.611Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "533ee8c2-34a9-461b-88c5-88a8cbb6960c:0:running",
+        "status": 409,
+        "body": {
+          "phase": "running",
+          "graceMs": 800,
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "controlToken": "9310d071-280e-42b6-9f14-7c017a136d40:0:running"
+        }
+      },
+      "recovered": {
+        "id": "01M5R7WNEB1MDMNA58D5AZBSV7",
+        "ownerId": "local",
+        "loopId": "01M5R7WNC21AK8JHHWKCFY2AGQ",
+        "versionId": "01M5R7WNC21AK8JHHWKCFY2AGR",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held QA work",
+          "label": "Held QA work v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R7WNEB1MDMNA58D5AZBSV8",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-25T00:38:10.123Z",
+        "startedAt": "2026-10-25T00:38:10.153Z",
+        "finishedAt": "2026-10-25T00:38:15.555Z",
+        "lastEventSeq": 11
+      }
+    }
+  },
+  {
+    "name": "R2-02 observe Edge phase cycle with delayed GETs",
+    "status": "PASS",
+    "ms": 37623,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-browser-cycle-observe-rTVvie",
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 15000,
+        "startedAt": "2026-10-25T00:38:49.767Z",
+        "choiceAt": "2026-10-25T00:39:04.767Z",
+        "activeRunIds": [
+          "01M5R7XVCGR7F6KYRCG9CY31YX"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:1:draining"
+      },
+      "expired": {
+        "phase": "awaiting-choice",
+        "graceMs": 15000,
+        "startedAt": "2026-10-25T00:38:49.767Z",
+        "choiceAt": "2026-10-25T00:39:04.767Z",
+        "activeRunIds": [
+          "01M5R7XVCGR7F6KYRCG9CY31YX"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:2:awaiting-choice"
+      },
+      "waited": {
+        "at": "2026-10-25T00:39:04.875Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:2:awaiting-choice",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 15000,
+          "startedAt": "2026-10-25T00:38:49.767Z",
+          "choiceAt": "2026-10-25T00:39:04.767Z",
+          "activeRunIds": [
+            "01M5R7XVCGR7F6KYRCG9CY31YX"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:3:draining"
+        }
+      },
+      "response": {
+        "at": "2026-10-25T00:39:05.147Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:1:draining",
+        "status": 409,
+        "body": {
+          "phase": "draining",
+          "graceMs": 15000,
+          "startedAt": "2026-10-25T00:38:49.767Z",
+          "choiceAt": "2026-10-25T00:39:04.767Z",
+          "activeRunIds": [
+            "01M5R7XVCGR7F6KYRCG9CY31YX"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "3d0c5ba1-2811-4745-8427-3408648eef72:3:draining"
+        }
+      },
+      "delayedGets": 1,
+      "confirmationVisible": false,
+      "stillRunning": {
+        "id": "01M5R7XVCGR7F6KYRCG9CY31YX",
+        "ownerId": "local",
+        "loopId": "01M5R7XVAYVRGAYKKSS2ENNEVH",
+        "versionId": "01M5R7XVAYVRGAYKKSS2ENNEVJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Browser phase recurrence observe",
+          "label": "Browser phase recurrence observe v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R7XVCGR7F6KYRCG9CY31YY",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "createdAt": "2026-10-25T00:38:48.976Z",
+        "startedAt": "2026-10-25T00:38:49.021Z",
+        "lastEventSeq": 5
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  {
+    "name": "R2-02 confirm-held Edge phase cycle with delayed GETs",
+    "status": "PASS",
+    "ms": 36873,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A",
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 15000,
+        "startedAt": "2026-10-25T00:39:26.052Z",
+        "choiceAt": "2026-10-25T00:39:41.052Z",
+        "activeRunIds": [
+          "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+      },
+      "expired": {
+        "phase": "awaiting-choice",
+        "graceMs": 15000,
+        "startedAt": "2026-10-25T00:39:26.052Z",
+        "choiceAt": "2026-10-25T00:39:41.052Z",
+        "activeRunIds": [
+          "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:2:awaiting-choice"
+      },
+      "waited": {
+        "at": "2026-10-25T00:39:41.092Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:2:awaiting-choice",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 15000,
+          "startedAt": "2026-10-25T00:39:26.052Z",
+          "choiceAt": "2026-10-25T00:39:41.052Z",
+          "activeRunIds": [
+            "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:3:draining"
+        }
+      },
+      "response": {
+        "status": 409,
+        "body": {
+          "phase": "draining",
+          "graceMs": 15000,
+          "startedAt": "2026-10-25T00:39:26.052Z",
+          "choiceAt": "2026-10-25T00:39:41.052Z",
+          "activeRunIds": [
+            "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:3:draining"
+        },
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+      },
+      "delayedGets": 1,
+      "confirmationVisible": false,
+      "stillRunning": {
+        "id": "01M5R7YZ0KXAN509FJ0XPD6ZRV",
+        "ownerId": "local",
+        "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+        "versionId": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Browser phase recurrence confirm-held",
+          "label": "Browser phase recurrence confirm-held v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R7YZ0KXAN509FJ0XPD6ZRW",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "createdAt": "2026-10-25T00:39:25.459Z",
+        "startedAt": "2026-10-25T00:39:25.488Z",
+        "lastEventSeq": 5
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  {
+    "name": "R2-03 Edge wait within draining rejects old dialog, accepts fresh force, rejects stale force-failed acknowledgement",
+    "status": "PASS",
+    "ms": 52260,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-within-draining-RwWkzO",
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 120000,
+        "startedAt": "2026-10-25T00:40:14.739Z",
+        "choiceAt": "2026-10-25T00:42:14.739Z",
+        "activeRunIds": [
+          "01M5R80E8FFMA3VWENGJ2P2J50"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:1:draining"
+      },
+      "waited": {
+        "at": "2026-10-25T00:40:19.862Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:1:draining",
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 120000,
+          "startedAt": "2026-10-25T00:40:14.739Z",
+          "choiceAt": "2026-10-25T00:42:14.739Z",
+          "activeRunIds": [
+            "01M5R80E8FFMA3VWENGJ2P2J50"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:2:draining"
+        }
+      },
+      "rejected": {
+        "status": 409,
+        "body": {
+          "phase": "draining",
+          "graceMs": 120000,
+          "startedAt": "2026-10-25T00:40:14.739Z",
+          "choiceAt": "2026-10-25T00:42:14.739Z",
+          "activeRunIds": [
+            "01M5R80E8FFMA3VWENGJ2P2J50"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:2:draining"
+        },
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:1:draining"
+      },
+      "fresh": {
+        "status": 202,
+        "body": {
+          "phase": "forcing",
+          "graceMs": 120000,
+          "startedAt": "2026-10-25T00:40:14.739Z",
+          "choiceAt": "2026-10-25T00:42:14.739Z",
+          "activeRunIds": [
+            "01M5R80E8FFMA3VWENGJ2P2J50"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:3:forcing"
+        },
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:2:draining"
+      },
+      "failed": {
+        "phase": "force-failed",
+        "graceMs": 120000,
+        "startedAt": "2026-10-25T00:40:14.739Z",
+        "choiceAt": "2026-10-25T00:42:14.739Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [
+          "01M5R80E8FFMA3VWENGJ2P2J50"
+        ],
+        "choices": [
+          "force"
+        ],
+        "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:4:force-failed"
+      },
+      "staleAck": {
+        "at": "2026-10-25T00:40:20.371Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:2:draining",
+        "status": 409,
+        "body": {
+          "phase": "force-failed",
+          "graceMs": 120000,
+          "startedAt": "2026-10-25T00:40:14.739Z",
+          "choiceAt": "2026-10-25T00:42:14.739Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [
+            "01M5R80E8FFMA3VWENGJ2P2J50"
+          ],
+          "choices": [
+            "force"
+          ],
+          "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+          "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:4:force-failed"
+        }
+      },
+      "ack": {
+        "at": "2026-10-25T00:40:22.319Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:4:force-failed",
+        "status": 202,
+        "body": {
+          "phase": "exiting",
+          "graceMs": 120000,
+          "startedAt": "2026-10-25T00:40:14.739Z",
+          "choiceAt": "2026-10-25T00:42:14.739Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [
+            "01M5R80E8FFMA3VWENGJ2P2J50"
+          ],
+          "choices": [],
+          "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+          "controlToken": "6db76dec-15ab-46fc-a054-8869b714c4b5:5:exiting"
+        }
+      },
+      "lockHeld": true,
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "recovery": {
+        "id": "01M5R80E8FFMA3VWENGJ2P2J50",
+        "ownerId": "local",
+        "loopId": "01M5R80E5PQWFVMS4H176VFYE9",
+        "versionId": "01M5R80E5PQWFVMS4H176VFYEA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Wait within draining",
+          "label": "Wait within draining v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R80E8FFMA3VWENGJ2P2J51",
+        "status": "failed",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+          "message": "Script process tree termination was not confirmed; stop the process before restarting",
+          "nodeId": "hold",
+          "resumable": false,
+          "details": {
+            "interruptedByStop": true
+          }
+        },
+        "createdAt": "2026-10-25T00:40:13.839Z",
+        "startedAt": "2026-10-25T00:40:13.919Z",
+        "finishedAt": "2026-10-25T00:40:20.334Z",
+        "lastEventSeq": 6
+      },
+      "starts": 1,
+      "nativeLimit": "D-015: Windows script-tree termination unconfirmed; no native success claim"
+    }
+  },
+  {
+    "name": "R2-04 two Edge tabs concurrently choose wait at awaiting-choice",
+    "status": "PASS",
+    "ms": 45794,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-concurrent-wait-iQvgoU",
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 800,
+        "startedAt": "2026-10-25T00:41:05.962Z",
+        "choiceAt": "2026-10-25T00:41:06.762Z",
+        "activeRunIds": [
+          "01M5R820G0PT85TMEKMFFVB356"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:1:draining"
+      },
+      "current": {
+        "phase": "awaiting-choice",
+        "graceMs": 800,
+        "startedAt": "2026-10-25T00:41:05.962Z",
+        "choiceAt": "2026-10-25T00:41:06.762Z",
+        "activeRunIds": [
+          "01M5R820G0PT85TMEKMFFVB356"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:2:awaiting-choice"
+      },
+      "priorPhase": {
+        "at": "2026-10-25T00:41:06.837Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:1:draining",
+        "status": 409,
+        "body": {
+          "phase": "awaiting-choice",
+          "graceMs": 800,
+          "startedAt": "2026-10-25T00:41:05.962Z",
+          "choiceAt": "2026-10-25T00:41:06.762Z",
+          "activeRunIds": [
+            "01M5R820G0PT85TMEKMFFVB356"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:2:awaiting-choice"
+        }
+      },
+      "requests": [
+        {
+          "body": {
+            "action": "wait"
+          },
+          "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:2:awaiting-choice"
+        },
+        {
+          "body": {
+            "action": "wait"
+          },
+          "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:2:awaiting-choice"
+        }
+      ],
+      "results": [
+        {
+          "status": 409,
+          "body": {
+            "phase": "draining",
+            "graceMs": 800,
+            "startedAt": "2026-10-25T00:41:05.962Z",
+            "choiceAt": "2026-10-25T00:41:06.762Z",
+            "activeRunIds": [
+              "01M5R820G0PT85TMEKMFFVB356"
+            ],
+            "unconfirmedRunIds": [],
+            "choices": [
+              "wait",
+              "force"
+            ],
+            "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:3:draining"
+          }
+        },
+        {
+          "status": 202,
+          "body": {
+            "phase": "draining",
+            "graceMs": 800,
+            "startedAt": "2026-10-25T00:41:05.962Z",
+            "choiceAt": "2026-10-25T00:41:06.762Z",
+            "activeRunIds": [
+              "01M5R820G0PT85TMEKMFFVB356"
+            ],
+            "unconfirmedRunIds": [],
+            "choices": [
+              "wait",
+              "force"
+            ],
+            "controlToken": "98671ece-0176-45b7-ade9-8e0b25c0e962:3:draining"
+          }
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  {
+    "name": "R2-04 two Edge tabs concurrently choose force at awaiting-choice",
+    "status": "PASS",
+    "ms": 60811,
+    "evidence": {
+      "directory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-319-r2-concurrent-force-mk9hyl",
+      "prepared": {
+        "phase": "draining",
+        "graceMs": 800,
+        "startedAt": "2026-10-25T00:41:54.458Z",
+        "choiceAt": "2026-10-25T00:41:55.258Z",
+        "activeRunIds": [
+          "01M5R83G7PRMJHNEV2Y1NG98TS"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+      },
+      "current": {
+        "phase": "awaiting-choice",
+        "graceMs": 800,
+        "startedAt": "2026-10-25T00:41:54.458Z",
+        "choiceAt": "2026-10-25T00:41:55.258Z",
+        "activeRunIds": [
+          "01M5R83G7PRMJHNEV2Y1NG98TS"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+      },
+      "priorPhase": {
+        "at": "2026-10-25T00:41:55.332Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "force"
+        },
+        "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining",
+        "status": 409,
+        "body": {
+          "phase": "awaiting-choice",
+          "graceMs": 800,
+          "startedAt": "2026-10-25T00:41:54.458Z",
+          "choiceAt": "2026-10-25T00:41:55.258Z",
+          "activeRunIds": [
+            "01M5R83G7PRMJHNEV2Y1NG98TS"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+        }
+      },
+      "requests": [
+        {
+          "body": {
+            "action": "force"
+          },
+          "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+        },
+        {
+          "body": {
+            "action": "force"
+          },
+          "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+        }
+      ],
+      "results": [
+        {
+          "status": 409,
+          "body": {
+            "phase": "forcing",
+            "graceMs": 800,
+            "startedAt": "2026-10-25T00:41:54.458Z",
+            "choiceAt": "2026-10-25T00:41:55.258Z",
+            "activeRunIds": [
+              "01M5R83G7PRMJHNEV2Y1NG98TS"
+            ],
+            "unconfirmedRunIds": [],
+            "choices": [],
+            "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:3:forcing"
+          }
+        },
+        {
+          "status": 202,
+          "body": {
+            "phase": "forcing",
+            "graceMs": 800,
+            "startedAt": "2026-10-25T00:41:54.458Z",
+            "choiceAt": "2026-10-25T00:41:55.258Z",
+            "activeRunIds": [
+              "01M5R83G7PRMJHNEV2Y1NG98TS"
+            ],
+            "unconfirmedRunIds": [],
+            "choices": [],
+            "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:3:forcing"
+          }
+        }
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      }
+    }
+  }
+]

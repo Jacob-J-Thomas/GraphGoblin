@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     init: true
     # Allow active Codex turns to settle and release the volume lock before Docker sends SIGKILL.
-    stop_grace_period: 90s
+    stop_grace_period: 1h
     ports:
       # Published on the host's loopback only. Widen it only together with GG_REQUIRE_API_KEY.
       - '127.0.0.1:4747:4747'

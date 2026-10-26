@@ -1,0 +1,37 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:9 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWork ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+node:internal/modules/cjs/loader:1228
+  throw err;
+  ^
+
+Error: Cannot find module 'C:Users<user>sourcereposGraphGoblin.claudeworktreescodex-wp-f4-prompt-provenancedocsqa2026-10
+-22-wp-f4-round10port-scope.cjs'
+Require stack:
+- internal/preload
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at node:internal/modules/cjs/loader:1856:12
+    at loadPreloadModules (node:internal/process/pre_execution:734:5)
+    at setupUserModules (node:internal/process/pre_execution:206:5)
+    at prepareExecution (node:internal/process/pre_execution:159:5)
+    at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'internal/preload' ]
+}
+
+Node.js v22.14.0
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\infrastructure
+

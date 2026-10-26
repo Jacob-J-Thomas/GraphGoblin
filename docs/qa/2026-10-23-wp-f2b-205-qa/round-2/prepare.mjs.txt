@@ -1,0 +1,23 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const old=path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa'),out=path.join(old,'round-2');
+let fixture=await readFile(path.join(old,'fixture-server.mjs.txt'),'utf8');
+fixture=fixture.replace("const harnesses={codex:new FakeHarness([],'codex'),claude:new FakeHarness([],'claude')};",`class CountingHarness extends FakeHarness { probes=0; async preflight(){this.probes++;return super.preflight();} }
+const harnesses={codex:new CountingHarness([],'codex'),claude:new CountingHarness([],'claude')};`);
+fixture=fixture.replace("deciders:recorded,logs:logger.lines","deciders:recorded,probes:Object.fromEntries(Object.entries(harnesses).map(([id,h])=>[id,h.probes])),logs:logger.lines");
+fixture=fixture.replace("for(const h of Object.values(harnesses))h.started.length=0;","for(const h of Object.values(harnesses)){h.started.length=0;h.probes=0;}");
+fixture=fixture.replace("else if(req.url==='/catalog')", "else if(req.url==='/direct'){result=await container.manager.startRun(body);}\n else if(req.url==='/catalog')");
+await writeFile(path.join(out,'fixture-server.mjs.txt'),fixture);
+const prior=await readFile(path.join(old,'browser-api.mjs.txt'),'utf8');
+let header=(await readFile(path.join(old,'adjacent.mjs.txt'),'utf8')).split('try{\n await start();')[0];
+header=header.replace("qa');","qa/round-2');").replace("'gg-qa-f2b-205-'","'gg-qa-f2b-205-2-'");
+header=header.replace("await shot('keyboard-llm-390')","await shot('keyboard-llm-390')");
+header=header.replace("catch(()=>child.kill())","catch(()=>{})");
+const open=prior.slice(prior.indexOf('try{\n await start();'),prior.indexOf(" await check('API process"));
+let placement=prior.slice(prior.indexOf(" for(const kind of ['inference','llm','classifier'])"),prior.indexOf(' const specs='));
+let matrix=prior.slice(prior.indexOf(' const specs='),prior.indexOf(" await check('Owner Settings"));
+matrix=matrix.replaceAll("for(const harness of ['codex','claude'])for(const kind of ['inference','llm'])","for(const [harness,kind] of [['codex','inference'],['codex','llm'],['claude','inference']])");
+const ending=`}catch(e){results.push({name:'HARNESS ERROR',status:'fail',error:clean(e.stack)});await persist();console.error(clean(e.stack));}
+finally{await browser?.close();if(child?.exitCode===null)await ctl('/stop').catch(()=>{});await persist();console.log('COMPLETE '+JSON.stringify({pass:results.filter(r=>r.status==='pass').length,fail:results.filter(r=>r.status==='fail').length}));}\n`;
+await writeFile(path.join(out,'browser-api.mjs.txt'),header+open+placement+matrix+await readFile(path.join(out,'cases.mjs.txt'),'utf8')+ending);
+console.log('Prepared fixture and browser/API runner.');

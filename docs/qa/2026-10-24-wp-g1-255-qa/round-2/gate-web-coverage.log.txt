@@ -1,0 +1,59 @@
+$ vitest run --coverage --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-g1-255/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/EditorPage.device.test.tsx (2 tests | 1 failed) 35983ms
+   ❯ device storage blocked by an older tab (2)
+     × says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 20740ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.device.test.tsx > device storage blocked by an older tab > says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/editor/EditorPage.device.test.tsx:26:1
+     24| let oldDatabase: IDBDatabase;
+     25|
+     26| beforeEach(async () => {
+       | ^
+     27|   vi.resetModules();
+     28|   vi.stubGlobal('indexedDB', new IDBFactory());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-g1-255/apps/web/src/editor/store.test.ts.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 137 passed (138)
+      Tests  1 failed | 1683 passed (1684)
+     Errors  1 error
+   Start at  20:48:21
+   Duration  4476.04s (tests 39%, environment 33%, setup 13%, import 12%, transform 2%, worker 1%)
+
+Environment  jsdom was created 138 times · 1384.45s total, 33% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-g1-
+  │ 255\apps\web
+

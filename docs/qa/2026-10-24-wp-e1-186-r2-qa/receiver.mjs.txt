@@ -1,0 +1,5 @@
+import {createServer}from'node:http';
+import{writeFile}from'node:fs/promises';
+const seen=[];
+const server=createServer(async(req,res)=>{if(req.url==='/stop'){res.end('stopping');server.close();return;}let body='';for await(const c of req)body+=c;seen.push({url:req.url,body:JSON.parse(body)});await writeFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/webhook-receiver.json',JSON.stringify(seen,null,2));res.setHeader('content-type','application/json');res.end('{"ok":true}');});
+server.listen(6154,'127.0.0.1',()=>console.log('QA receiver 6154'));

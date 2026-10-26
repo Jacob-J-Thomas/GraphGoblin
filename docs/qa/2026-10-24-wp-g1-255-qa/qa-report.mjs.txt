@@ -1,0 +1,163 @@
+// Evidence normalization, size policy and exhaustive report index. No production changes.
+import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createHash} from 'node:crypto';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-g1-255-qa');
+const profile=process.env.USERPROFILE;
+const norm=s=>s.replaceAll(JSON.stringify(profile).slice(1,-1),'%USERPROFILE%').replaceAll(profile,'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%');
+function decode(b){return b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');}
+const json=async name=>JSON.parse(decode(await readFile(join(out,name))));
+const exists=async name=>stat(join(out,name)).then(()=>true).catch(()=>false);
+// Normalize user paths in text artifacts, preserving JSON number spelling and payload content.
+for(const name of await readdir(out)){if(/\.(txt|json|md)$/.test(name)&&name!=='README.md'){const b=await readFile(join(out,name));const text=decode(b),normalized=norm(text);if(normalized!==text||b[0]===255||b[0]===239){try{await writeFile(join(out,name),normalized);}catch(e){if(e.code!=='EBUSY')throw e;console.log('Deferred normalization of active capture '+name);}}}}
+const omitted=[];
+for(const name of ['omitted-api.json','browser-omitted.json'])if(await exists(name))omitted.push(...await json(name));
+if(await exists('NOT-KEPT.md')){const old=decode(await readFile(join(out,'NOT-KEPT.md')));for(const m of old.matchAll(/^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*`([a-f0-9]{64})`\s*\|/gm)){if(m[1].trim()!=='initial-large-exact-event.json')omitted.push({name:m[1].trim(),size:Number(m[2]),sha256:m[3]});}}
+for(const name of await readdir(out)){const path=join(out,name),s=await stat(path);if(s.isFile()&&s.size>1000000){const bytes=await readFile(path);omitted.push({name,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});await unlink(path);}}
+const seenOmissions=new Set();for(let i=omitted.length-1;i>=0;i--){const key=omitted[i].name+':'+omitted[i].sha256;if(seenOmissions.has(key))omitted.splice(i,1);else seenOmissions.add(key);}
+await writeFile(join(out,'NOT-KEPT.md'),'# Captures not kept\n\nCaptures over 1,000,000 bytes are omitted. The scripts retain the deterministic generation and equality checks; the size and SHA-256 below identify the actual captured bytes. No omitted capture is cited as retained evidence.\n\n| Capture | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+omitted.map(o=>`| ${o.name} | ${o.size} | \`${o.sha256}\` |`).join('\n')+'\n');
+const api=await json('api-checks.json'),browser=await json('browser-results.json'),supp=await json('supplement-results.json'),env=await json('environment.json');
+const gates=await exists('gate-results.json')?await json('gate-results.json'):[];
+const coverage=await exists('coverage-gate-result.json')?await json('coverage-gate-result.json'):null;
+const format=await exists('format-gate-result.json')?await json('format-gate-result.json'):null;
+const candidateFormat=await exists('format-candidate-result.json')?await json('format-candidate-result.json'):null;
+const finalMarkdown=await exists('final-markdown-format-result.json')?await json('final-markdown-format-result.json'):null;
+const isolated=await exists('isolated-result.json')?await json('isolated-result.json'):null;
+const initial=await json('browser-initial-results.json');
+const lifecycle=await json('lifecycle-results.json'),restart=await json('restart-after.json');
+const pinReadback=await exists('renamed-current-definitions.json')?await json('renamed-current-definitions.json'):[];
+const panelChecks=await exists('final-panel-results.json')?await json('final-panel-results.json'):[];
+const escape=s=>String(s).replaceAll('|','\\|').replaceAll('\n',' ');
+const compact=v=>{const s=typeof v==='string'?v:JSON.stringify(v);return escape(s.length>450?s.slice(0,450)+'... (complete actual in linked JSON)':s);};
+const rows=(checks,file)=>checks.map(c=>`| ${c.id} | ${escape(c.steps)} | ${escape(c.expected)} | ${compact(c.actual)} | ${c.result} | [${file}](${file}) |`).join('\n');
+const gateRows=gates.map(g=>`| \`${g.command}\` | ${g.exit===0?'PASS':'FAIL'} (exit ${g.exit}) | [log](${g.log.split('/').at(-1)}) |`);
+if(coverage)gateRows.push(`| \`${coverage.command}\` | ${coverage.exit===0?'PASS':'FAIL'} (exit ${coverage.exit}) | [log](${coverage.log}) |`);
+else gateRows.push('| Web coverage, bounded concurrency | IN PROGRESS / result not yet available | [log](gate-web-coverage-bounded.log.txt) |');
+if(format)gateRows.push(`| \`${format.command}\` | ${format.status??(format.exit===0?'PASS':'FAIL')} (exit ${format.exit}) | [log](${format.log}) |`);
+if(candidateFormat)gateRows.push(`| \`${candidateFormat.command}\` | ${candidateFormat.exit===0?'PASS':'FAIL'} (exit ${candidateFormat.exit}) | [log](${candidateFormat.log}), [paths](format-candidate-paths.log.txt) |`);
+if(finalMarkdown)gateRows.push(`| \`${finalMarkdown.command}\` | ${finalMarkdown.exit===0?'PASS':'PENDING/FAIL'} (exit ${finalMarkdown.exit}) | [log](${finalMarkdown.log}) |`);
+if(isolated)gateRows.push(`| \`${isolated.command}\` | ${isolated.exit===0?'PASS':'FAIL'} (exit ${isolated.exit}); single-file timing rerun | [log](${isolated.log}) |`);
+const covSummary=await exists('web-coverage-summary.json')?(await json('web-coverage-summary.json')).total:null;
+const artifacts=[];for(const name of (await readdir(out)).sort()){if(name==='README.md')continue;const s=await stat(join(out,name));if(s.isFile())artifacts.push(`| [${name}](${name}) | ${s.size} |`);}
+let report=`# Independent QA round 1: WP-G1 bolt #255
+
+## Verdict
+
+**Fail** at revision \`373470f236bb1b7695c4ff0435968b2eb86d5516\`: one minor product defect (the visible probability-label requirement in #123) and an incomplete, failing web-coverage gate. The exact-value, pinning, cancellation and history functionality passed the independent checks below. The product-only outcome is pass with minor defects; the work package is not fully qualified because coverage did not complete successfully.
+
+Branch \`codex-qa-wp-g1-255\`; worktree \`%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-g1-255\`; comparison base \`c63db24590d23263a3f7253eda13249f9252ec16\`. [Admission](admission.log.txt) confirms the exact head and nonempty local node_modules. [Candidate diff](candidate.diff.txt) is the requested diff excluding docs/qa. No production code, index changes, commits or sub-agents. The implementer's report and orchestrator review were orientation claims only; none of their captures is used as evidence here.
+
+## Environment and evidence boundary
+
+- Node ${env.node}, Node 22 first on PATH for every gate. [Build](build.log.txt) exited 0 (11 tasks successful; 10 cached). Turbo printed a nonfatal access-denied warning after the successful build.
+- Built gateway on port 6080, isolated QA control on 6081. Physical SQLite in \`${env.dataDir}\`. Other disposable directories used during fixture debugging are inventoried separately. No owner app/store or ports 4747/4748 were used.
+- Headless Microsoft Edge through Playwright. Both 1440 and 390 px, dark and light themes, real downloads, keyboard Enter/Tab. The tests block service workers to keep these inspector checks deterministic; PWA/service-worker update behavior is outside scope.
+- **Fake-only provider evidence:** harness, LLM decider, classifier primitives and clock use public dependency injection. API, built web bundle, network, physical SQLite, browser, and the gateway process restart are real. No live provider behavior is claimed. A disposable API key was created by the built binary; the token was not retained. Gateway calls use the local trusted actor so user-cancel attribution is exercised.
+- Binding orientation and accepted requirements are retained in [binding instructions](binding-instructions.md) and [requirements](requirements.md). Runtime claims are backed by the independent JSON, logs and screenshots below.
+
+## Systems touched and criteria coverage
+
+| System / criterion | Positive cases | Negative / boundary cases | Result and evidence |
+| --- | --- | --- | --- |
+| #255 / #121 array and object patch evidence | Several appends in one node, nested arrays, null, arrays-as-elements, object add, replacement and removal, later node changing an appended element; thread, patch diff and exact event | Add rows compared with each original operation rather than the final array; raw operations downloaded and parsed | Passed: patch-api, patch-browser; [API](api-patch.json), [browser results](browser-results.json), [patch screenshot](patch-multiple-dark-1440.png) |
+| #255 / #123 decisions and exact probabilities | Expression, LLM, Choice, Noul and Score; pinned labels beside IDs; informational LLM confidence; exact JSON downloads | 0, 1, 1e-12, 0.999999999999, 0.5, 0.5000000000000001, 0.12345678901234566; false Noul route; older null facts | Functionality passed, visible list label failed (D1): [API checks](api-checks.json), [browser checks](browser-results.json), [supplement](supplement-results.json) |
+| #255 / #128 cancellation and causes | User cancel, parent cancelling child, resumed then cancelled attempt; recorded request actor and sequences; provider diagnostic; run deadline | Duplicate cancel is 409; cancelled run has no current failure alert despite earlier failed attempt; deadline remains the recorded engine failure | Passed: [API checks](api-checks.json), cause-browser cases in [browser results](browser-results.json) |
+| #255 pinned-definition context | Rename and republish loop/node/route names; old inspector, timeline, progress, wait and run-list retain their pins; exact definition and run-record downloads | Version-read 404 injected at browser transport; no current-version fallback; long pinned wait renamed while parked | Passed: pinned-browser, unavailable-definition, exact-run-record, wait-pinning-layout; [current/pinned readback](renamed-current-definitions.json) |
+| #255 unknown accepted history | Optional initial seed, provenance, confidence and probabilities removed from isolated persisted fixtures accepted by current contracts | Cancellation request absent; Noul holds/trueProbability null; no invented actor or boolean answer | Passed: [historical Choice](api-historical.json), [cancel](historical-cancel.json), [Noul](historical-noul.json) |
+| #255 responsive and keyboard | 1440/390, dark/light; long 120-character node/route/wait labels, 9000-character prompt, patch/evaluation/progress/raw panels | Document scrollWidth checked against clientWidth; keyboard opens disclosures and large-value reconstruction/expansion; stale wait input rejected | Passed: layout cases in [browser results](browser-results.json), [wait context](wait-context.json) |
+| #116 adjacent stream/thread reconstruction | Two existing tabs, actual failure/resume/success, offline/reconnect and reload; deliberately stale thread responses | Pending output not applied; browser/API threads agree at all three stages; repeated reads leave run record unchanged; historical failure alert gone after success | Passed: [lifecycle results](lifecycle-results.json), [script](qa-lifecycle.mjs.txt). This checks observable state, not a byte-for-byte assertion on stored snapshot-cache rows. |
+| #245 replay seed | Public replay at later mutation node; original seed prefix independently reconstructed; inherited vars/counters and final values compared | Original run/events/thread/version unchanged; invalid replay node rejected with 4xx | Passed: replay-api, replay-browser, negative-replay; [replay](api-replay.json) |
+| #259 large values | 2.05 MB string and 55 messages in real SQLite; on-request reconstruction, bounded preview, Show all/less, exact downloadable event, width check | Exact event equality verified before recording download size/SHA-256; oversized captures omitted per size policy | Passed: large-api and large-browser; [results](browser-results.json), [omissions](NOT-KEPT.md) |
+| Native restart / adjacent durability | Stop gateway process, start a new PID on the same SQLite directory, recover waiting run, compare threads in two new Edge tabs and complete by input | Immutable waiting state is unchanged across actual process boundary; ${restart.oldPid} → ${restart.newPid} | Passed: [before](restart-before.json), [after](restart-after.json), [restart log](restart.log.txt) |
+
+The [panel-scoped follow-up](final-panel-results.json) verifies the inference message inside the progress disclosure's own aria-controls target and checks existing replace/remove Before/After values in a separate two-node mutation run. Mutate nodes do not generate harness-progress rows; their recorded patch operations are inspected in the thread viewer and exact event disclosure.
+
+## Defects
+
+### D1 — minor: Choice and Score probabilities have no visible probability heading
+
+Consolidated #123 specifically preserves the owner's request for a clear probability label/heading. Both lists have an accessible aria-label, but no visible text identifying the percentages as probabilities.
+
+1. Open the Choice run \`${JSON.parse(await readFile(join(out,'fixture-index.json'),'utf8'))['choice-0.12345678901234566'].runId}\` or the Score equivalent in the disposable instance.
+2. Select its decision.made event in the timeline.
+3. Read the alternative percentage rows below Confidence (and Score rubric anchors).
+
+Expected: a visible probability heading/label, with the existing pinned IDs/labels and exact numbers preserved. Actual: Choice shows labelled options with percentages; Score shows rows such as \`0: 12.35%\` and \`1: 87.65%\`, without a visible Probability heading. Accessible list labels are present. This is presentation-only; the percentage formatting and exact raw values work.
+
+Evidence: [Choice visible text/label](visible-probability-choice.json), [Choice screenshot](visible-probability-choice.png), [Score visible text/label](visible-probability-score.json), [Score screenshot](visible-probability-score.png), the two failed checks in [supplement-results.json](supplement-results.json). No fix made.
+
+## Every independent check
+
+The full actual values remain in the linked JSON; long actual cells below are shortened only for readability. Each ID is stable within that evidence file.
+
+### API and persisted fixtures (${api.length} checks)
+
+| Case | Steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${rows(api,'api-checks.json')}
+
+### Edge inspector (${browser.length} checks)
+
+| Case | Steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${rows(browser,'browser-results.json')}
+
+### Supplemental checks (${supp.length} checks)
+
+| Case | Steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${rows(supp,'supplement-results.json')}
+
+### Stream and process checks
+
+| Case | Steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${lifecycle.observations.map(o=>`| #116 ${o.stage} | Read API, existing tab and reloaded/reconnected tab with stale snapshot transport | Exact current thread agreement; no unfinished output | All three threads equal; vars ${escape(JSON.stringify(o.api.vars))} | PASS | [lifecycle-results.json](lifecycle-results.json) |`).join('\n')}
+| #116 repeated reads | Read current thread five times; compare run record before and after | No execution-state mutation | Unchanged run record | PASS | [lifecycle-results.json](lifecycle-results.json) |
+| Gateway restart | Stop old process; restart same directory with new PID; answer durable wait | Same pinned state before input; both tabs/API agree on completion | PID changed; waiting thread identical, then succeeded | PASS | [restart-after.json](restart-after.json) |
+${pinReadback.map(r=>`| Publication readback ${r.key} | GET current published definition and old pinned version after process reopen | ${escape(r.expected)} | ${escape(JSON.stringify(r.actual))} | ${r.result} | [renamed-current-definitions.json](renamed-current-definitions.json) |`).join('\n')}
+${rows(panelChecks,'final-panel-results.json')}
+
+## Commands and gates
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+| \`pnpm.cmd build\` | PASS, exit 0 | [build log](build.log.txt) |
+${gateRows.join('\n')}
+| \`pnpm.cmd check:docs\` | Not applicable: this candidate changes no node schema or route | [candidate diff](candidate.diff.txt) |
+| \`pnpm.cmd check:licenses\` | Not applicable: no dependency change | [candidate diff](candidate.diff.txt) |
+| \`node <qa-audit execution copy>\` | Head/dependencies admitted; production diff clean; artifact links/size/path policy and stopped ports checked | [final audit](final-check.json), [admission](admission.log.txt) |
+
+${covSummary?'Coverage: '+Object.entries(covSummary).filter(([k,v])=>v&&typeof v==='object'&&'pct'in v).map(([k,v])=>`${k} ${v.pct}%`).join(', ')+'. [Retained summary](web-coverage-summary.json).':'Full-package coverage is incomplete. No coverage percentage or successful coverage gate is claimed.'}
+
+The first unrestricted web-coverage invocation was interrupted after producing its Vitest banner but no completed-file results. The bounded invocation added \`--maxWorkers=2\` to reduce contention on the shared machine. It reported two failures in the unchanged \`src/settings/sections/ClassifierModelsSection.test.tsx\` at 20,885 and 20,464 ms (31 tests in that file, 166,297 ms total), then was stopped after the known failure rather than continuing a long broad run. [Unrestricted output](gate-web-coverage-unbounded.log.txt) and [bounded output](gate-web-coverage-bounded.log.txt) are both retained. Neither is a successful package-coverage result. No thresholds/exclusions were changed. No pnpm-store lock error was observed, so no direct-binary fallback was used.
+
+The timing-sensitive unchanged file was rerun once, alone, as the user required, with \`--maxWorkers=1\` and no coverage collection. ${isolated?'The isolated command exited '+isolated.exit+'; all 31 tests passed in 121.55 seconds. See [its full output](classifier-models-isolated.log.txt) and [result](isolated-result.json). Both outcomes remain recorded; the isolated result does not repair or replace the failed/incomplete package gate.':'That isolated result is still pending and no rerun pass is claimed.'}
+
+The root formatting invocation was also stopped without a complete result after its Checking formatting banner while package qualification was already failing. Formatting of every candidate-changed file and the QA Markdown was checked separately; that result is explicitly scoped by [the retained path list](format-candidate-paths.log.txt). Final QA Markdown is formatted after the last report update. No root-format pass is claimed.
+
+Independent commands (all with Node 22 first on PATH): copy each retained .mjs.txt script to its \`%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-255-*.mjs\` execution copy; run \`node --experimental-import-meta-resolve <seed-copy>\`, \`node <browser-copy>\`, \`node <lifecycle-copy>\`, stop/restart the gateway on the same directory, \`node <lifecycle-copy> after\`, and \`node <supplement-copy>\`. The seed script keeps its gateway child alive for later checks. The server binds only 6080/6081. No maintained tests or production files were edited.
+
+## Fixture/debugging history and limits
+
+- The earlier attempt was blocked before admission by the overloaded host; this resumed run reverified admission from the beginning.
+- Initial script setup errors are retained rather than counted as product failures: ESM resolution through a require-only resolver; a duplicate-cancel 409 incorrectly treated as success; a string supplied to FakeClock's numeric constructor (causing Invalid time value after advance); and attempting to resume a deliberately nonresumable transport failure. The final fixture uses ESM import resolution, asserts the duplicate 409, supplies a numeric clock, and uses a separately recorded resumable quota failure for resume/cancel. The intermediate clock-sequencing attempt did not fix the clock type and is retained too.
+- Initial browser script: ${initial.filter(c=>c.result==='PASS').length} passed and ${initial.filter(c=>c.result==='FAIL').length} failed due to test errors (assuming the true Noul route, and querying a nonexistent main element). [Initial script](qa-browser-initial.mjs.txt), [initial results](browser-initial-results.json) and [log](browser-initial.log.txt) are kept. The [corrected executed script](qa-browser-executed.mjs.txt) has ${browser.filter(c=>c.result==='PASS').length} passed and ${browser.filter(c=>c.result==='FAIL').length} failed. These corrections changed no product code. The intended failing-case filter expanded to the complete ID list in PowerShell, so that corrected invocation repeated the 45-case script; it is not represented as an independent second QA round. A later artifact audit corrected the large-case summary's hash field: taking the last omission after screenshot capture had selected the screenshot hash instead of the already-recorded event hash. [The pre-correction summary](browser-before-hash-correction-results.json) is retained; the final summary uses the exact-event entry in [browser-omitted.json](browser-omitted.json). Both captured sizes and hashes remain in NOT-KEPT under their correct logical names. The final raw-equality assertion was unaffected. Initial-run omission metadata was overwritten by the corrected invocation; the current retained omission metadata covers the final invocation, not an independently archived initial capture.
+- The final publication readback initially reached the port before gateway startup; its [startup error](pin-readback-startup.log.txt) is retained. The readback script now synchronizes on gateway readiness. The public reads then verify the renamed current versions alongside the original historical pins, and shut down the disposable instance again.
+- This is independent touched-system QA, not owner acceptance, an exact-head audit sign-off, CI qualification or integrated I07 acceptance. Live providers, the owner's installation, legacy-store migration, general editor/settings/MCP regression, broad PWA behavior and screen-reader testing were not part of this web-only brief. All seven requested product areas were exercised; no requested product case remains untestable. The visible probability-heading criterion remains failed, not waived.
+- No cleanup directories were deleted. Disposable stores, build outputs, coverage outputs and temporary execution copies are left for the orchestrator. The runtime SQLite directories are inventoried in [disposable stores](disposable-stores.log.txt); they were not copied into the retained evidence packet. Oversized captures are listed in [NOT-KEPT.md](NOT-KEPT.md); individual oversized capture files are omitted, never entire directories. Local user paths are normalized to %USERPROFILE% in text artifacts; raw JSON values/numbers are otherwise preserved.
+
+## Observations outside scope
+
+No additional product defect established outside #255. The unchanged ClassifierModelsSection test failures are outside the web change's touched source and are recorded as timing-related gate observations with the paired isolated run, not attributed to #255. Their locations are \`apps/web/src/settings/sections/ClassifierModelsSection.test.tsx:143\` and \`:211\` ([retained locations](timing-test-locations.log.txt)); this file has no candidate diff. The host/tool latency and incomplete unrestricted coverage/root-format invocations are environment/qualification observations. The successful lifecycle/restart evidence is regression coverage, not a new claim that every #116/#245 acceptance scenario or MCP path was requalified.
+
+## Artifact inventory
+
+Every artifact retained in this QA folder is linked below. Scripts are .mjs.txt, logs are .log.txt. README is this index. Generated repository build/coverage directories are not separate retained QA captures; only copied evidence below is cited.
+
+| Artifact | Bytes at inventory time |
+| --- | ---: |
+${artifacts.join('\n')}
+`;
+await writeFile(join(out,'README.md'),report);
+console.log('REPORT_WRITTEN '+api.length+' API; '+browser.length+' Edge; '+supp.length+' supplemental checks');

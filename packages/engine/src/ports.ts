@@ -1,5 +1,7 @@
+import type { ReplayState, ThreadCheckpoint } from '@graphgoblin/domain';
 import type { TriggerAdmissionPort } from './admission.js';
 import type {
+  PromptSubmission,
   ChoiceAnswer,
   ChoiceOption,
   ClassifierBinding,
@@ -23,6 +25,7 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 
 /**
@@ -59,11 +62,12 @@ export interface EventStorePort {
    * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
    * Implementations must validate every complete event against RunEventSchema before persisting
    * any part of the batch. Invalid generated records throw RunFailureError(EVENT_INVALID).
+   * `requireRun` checks run existence in the same transaction; a deleted run returns no events.
    */
   append(
     runId: string,
     drafts: readonly EventDraft[],
-    options?: { expectedLastSeq?: number },
+    options?: { expectedLastSeq?: number; requireRun?: boolean },
   ): Promise<RunEvent[]>;
   /** Events after `afterSeq` (default 0), oldest first, at most `limit` of them when given. */
   read(runId: string, afterSeq?: number, limit?: number): Promise<RunEvent[]>;
@@ -71,7 +75,9 @@ export interface EventStorePort {
 }
 
 /** Field-level changes to a run record; `undefined` clears a field. */
-export type RunRecordChanges = { [K in keyof RunRecord]?: RunRecord[K] | undefined };
+export type RunRecordChanges = {
+  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt'>]?: RunRecord[K] | undefined;
+};
 
 export interface RunRepository {
   create(run: RunRecord, initialThread: ContextThread): Promise<void>;
@@ -115,13 +121,19 @@ export interface RunRepository {
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;
+  /** Save the thread and replay state after `seq` together, after that event is durable. */
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void>;
   /**
-   * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
-   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
+   * A snapshot and sequence; absent replay state means its prefix must still be read. With
+   * `atOrBefore`, a checkpoint after that sequence is not decoded and reads as absent, so damage
+   * to it never blocks an earlier historical read (D-016).
    */
-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
-  /** The snapshot with the `seq` it reflects, when it was saved with one. */
-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined>;
+  getThreadCheckpoint(runId: string, atOrBefore?: number): Promise<ThreadCheckpoint | undefined>;
 }
 
 export interface LoopRepository {
@@ -147,6 +159,16 @@ export interface HarnessSessionRecord {
 export interface HarnessSessionRepository {
   upsert(row: HarnessSessionRecord): Promise<void>;
   forNode(runId: string, nodeId: string): Promise<HarnessSessionRecord | undefined>;
+  /** Exact row for the last durably completed visit, whose final attempt comes from its log.
+   * Attempts restart on each visit: the highest attempt can belong to an older visit.
+   * Harness is part of selection even though the current immutable node pins its harness.
+   */
+  forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined>;
   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
   byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
 }
@@ -176,7 +198,17 @@ export type HarnessEvent =
   | { type: 'item'; item: HarnessItem }
   | { type: 'usage'; usage: Usage }
   | { type: 'turn-complete' }
-  | { type: 'error'; code: string; message: string; retriable: boolean };
+  | {
+      type: 'submitted';
+      marker: 'claude.assistant' | 'claude.result' | 'codex.turn.started' | 'fake.accepted';
+    }
+  | {
+      type: 'error';
+      code: string;
+      message: string;
+      retriable: boolean;
+      submission: PromptSubmission;
+    };
 
 export interface HarnessTurnRequest {
   prompt: string;
@@ -316,7 +348,9 @@ export interface ClassifierRegistryPort {
   ): Promise<ClassifierResolution>;
 }
 
-/** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */
+/** A single structured completion. Honour abort by cancelling provider work and cleaning resources.
+ * The engine owns the deadline; adapters must not add a hidden completion cutoff.
+ */
 export interface StructuredPort {
   complete(
     request: {
@@ -350,6 +384,8 @@ export interface ScriptRunRequest {
 }
 
 export interface ScriptRunResult {
+  /** Tree termination failed or close was not observed by the native cleanup deadline. */
+  terminationUnconfirmed?: true;
   exitCode: number | null;
   stdout: string;
   stderr: string;
@@ -420,7 +456,12 @@ export interface HttpProbePort {
 }
 
 export interface ReturnDeliveryPort {
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult>;
   log(runId: string, payload: JsonValue): void;
 }
 
@@ -444,8 +485,6 @@ export interface EngineSettings {
    */
   ownerDefaults?: (ownerId: string) => Promise<HarnessDefaults>;
   maxConcurrentRuns: number;
-  /** Max wall-clock for a single structured completion used in decisions and repair. */
-  structuredTimeoutMs: number;
 }
 
 export interface EnginePorts {

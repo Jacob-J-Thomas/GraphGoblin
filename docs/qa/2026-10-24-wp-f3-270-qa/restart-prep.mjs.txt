@@ -1,0 +1,12 @@
+﻿import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-f3-270-qa'),base='http://127.0.0.1:5880';
+async function api(p,b){const r=await fetch(base+p,{method:b===undefined?'GET':'POST',headers:{'content-type':'application/json'},...(b===undefined?{}:{body:JSON.stringify(b)})});if(!r.ok)throw Error(await r.text());return r.json();}
+const original=JSON.parse(await readFile(resolve(out,'instance.json'),'utf8'));
+await writeFile(resolve(out,'original-instance.json'),JSON.stringify(original,null,2));
+const def={schemaVersion:4,name:'QA physical pre-field fixture',nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'done'}}]};
+const old=(await api('/loops?limit=100')).items.find(x=>x.name===def.name);const legacy=old?await api('/loops/'+old.id):await api('/loops',{definition:def});
+const loops=await api('/loops?limit=100');const pin=loops.items.find(l=>l.name==='QA supplemental 500ms deadline');
+const runId=pin.latestRun.id;const run=await api('/runs/'+runId);const events=await api('/runs/'+runId+'/events?limit=1000');const thread=await api('/runs/'+runId+'/thread');
+await writeFile(resolve(out,'restart-before.json'),JSON.stringify({legacy,run,events,thread,original},null,2));
+console.log(JSON.stringify({legacyId:legacy.loop.id,versionId:legacy.draft.id,runId,originalPid:original.pid}));
+console.log(await api('/qa/stop',{}));

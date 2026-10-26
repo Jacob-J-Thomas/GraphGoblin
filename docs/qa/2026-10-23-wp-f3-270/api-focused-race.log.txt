@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+
+ ❯ src/structured-deadline.test.ts (7 tests | 1 failed) 11890ms
+   × API reports a stalled structured node as timed out and releases its run slot 3665ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/structured-deadline.test.ts > API reports a stalled structured node as timed out and releases its run slot
+EngineRequestError: run 01M3Y7RKG0NECDZDFVY90QC8HP is already cancelled
+ ❯ RunManager.cancel ../../packages/engine/src/run-manager.ts:700:13
+    698|     const run = await this.mustGet(runId);
+    699|     if (isTerminal(run.status)) {
+    700|       throw new EngineRequestError('INVALID_STATE', `run ${runId} is a…
+       |             ^
+    701|     }
+    702|     // Compare-and-set on the request itself: only the first of concur…
+ ❯ src/structured-deadline.test.ts:27:9
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  19:41:44
+   Duration  64.56s (transform 50%, import 30%, tests 20%)
+
+  Transform  transforming modules took 30.00s · 50% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+System.Management.Automation.RemoteException

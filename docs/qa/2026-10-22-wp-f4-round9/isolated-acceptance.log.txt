@@ -1,0 +1,61 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/prompt-recovery.test.ts (11 tests | 2 failed | 9 skipped) 208ms
+   ❯ D-022 inherited-session recovery (11)
+     × does not authorize inherited resume-previous continuation when persisting acceptance fails 142ms
+     × does not authorize inherited resume-named continuation when persisting acceptance fails 64ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-recovery.test.ts > D-022 inherited-session recovery > does not authorize inherited resume-previous 
+continuation when persisting acceptance fails
+ FAIL  src/prompt-recovery.test.ts > D-022 inherited-session recovery > does not authorize inherited resume-named 
+continuation when persisting acceptance fails
+AssertionError: expected undefined to match object { code: 'INTERNAL_ERROR', …(3) }
+
+- Expected:
+{
+  "code": "INTERNAL_ERROR",
+  "details": {
+    "name": "Error",
+    "stack": StringContaining "acceptance record not durable",
+  },
+  "inference": {
+    "sessionId": "fake-session-1",
+    "submission": "delivery-uncertain",
+  },
+  "resumable": false,
+}
+
++ Received:
+undefined
+
+ ❯ src/prompt-recovery.test.ts:162:57
+    160|       });
+    161|       await manager.waitForIdle();
+    162|       expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+       |                                                         ^
+    163|         code: 'INTERNAL_ERROR',
+    164|         resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 skipped (11)
+   Start at  20:00:51
+   Duration  3.67s (import 49%, transform 45%, tests 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

@@ -1,0 +1,1668 @@
+[
+  {
+    "key": "choice-0.12345678901234566",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG08JMHRYYN75EY7M6W",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED choice-0.12345678901234566",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJR",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJR",
+        "loopId": "01M5PWGDG08JMHRYYN75EY7M6W",
+        "version": 3,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED choice-0.12345678901234566",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent choice",
+                "answer": {
+                  "type": "choice",
+                  "options": [
+                    {
+                      "id": "accept",
+                      "label": "ROUND2 RENAMED accept",
+                      "criteria": "accept criterion"
+                    },
+                    {
+                      "id": "reject",
+                      "label": "ROUND2 RENAMED reject",
+                      "criteria": "reject criterion"
+                    }
+                  ]
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "461b615079e6a8e5"
+    },
+    "pinned": {
+      "id": "01M5PWGDG08JMHRYYN75EY7M6X",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M6W",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pinned choice-0.12345678901234566",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent choice",
+              "answer": {
+                "type": "choice",
+                "options": [
+                  {
+                    "id": "accept",
+                    "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "criteria": "accept criterion"
+                  },
+                  {
+                    "id": "reject",
+                    "label": "Pinned reject",
+                    "criteria": "reject criterion"
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "score-0.12345678901234566",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG08JMHRYYN75EY7M8M",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED score-0.12345678901234566",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJS",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJS",
+        "loopId": "01M5PWGDG08JMHRYYN75EY7M8M",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED score-0.12345678901234566",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent score",
+                "answer": {
+                  "type": "score",
+                  "anchors": [
+                    "Low anchor",
+                    "High anchor"
+                  ],
+                  "bands": [
+                    {
+                      "id": "accept",
+                      "label": "ROUND2 RENAMED accept",
+                      "min": 0,
+                      "max": 0.8
+                    },
+                    {
+                      "id": "reject",
+                      "label": "ROUND2 RENAMED reject",
+                      "min": 0.8,
+                      "max": 1
+                    }
+                  ]
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "7ba9368706a88fda"
+    },
+    "pinned": {
+      "id": "01M5PWGDG08JMHRYYN75EY7M8N",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M8M",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pinned score-0.12345678901234566",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent score",
+              "answer": {
+                "type": "score",
+                "anchors": [
+                  "Low anchor",
+                  "High anchor"
+                ],
+                "bands": [
+                  {
+                    "id": "accept",
+                    "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "min": 0,
+                    "max": 0.8
+                  },
+                  {
+                    "id": "reject",
+                    "label": "Pinned reject",
+                    "min": 0.8,
+                    "max": 1
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "noul-0.12345678901234566",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG08JMHRYYN75EY7M7R",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED noul-0.12345678901234566",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJT",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJT",
+        "loopId": "01M5PWGDG08JMHRYYN75EY7M7R",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED noul-0.12345678901234566",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent noul",
+                "answer": {
+                  "type": "noul",
+                  "true": {
+                    "id": "accept",
+                    "label": "ROUND2 RENAMED accept",
+                    "criteria": "holds"
+                  },
+                  "false": {
+                    "id": "reject",
+                    "label": "ROUND2 RENAMED reject",
+                    "criteria": "does not hold"
+                  }
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "69d2ee61cd19edc3"
+    },
+    "pinned": {
+      "id": "01M5PWGDG08JMHRYYN75EY7M7S",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M7R",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pinned noul-0.12345678901234566",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent noul",
+              "answer": {
+                "type": "noul",
+                "true": {
+                  "id": "accept",
+                  "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                  "criteria": "holds"
+                },
+                "false": {
+                  "id": "reject",
+                  "label": "Pinned reject",
+                  "criteria": "does not hold"
+                }
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "rejected-choice",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJC",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED rejected-choice",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJV",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJV",
+        "loopId": "01M5PWGDG09QBE5Z39YAQDMYJC",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED rejected-choice",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent choice",
+                "minConfidence": 0.9,
+                "answer": {
+                  "type": "choice",
+                  "options": [
+                    {
+                      "id": "accept",
+                      "label": "ROUND2 RENAMED accept",
+                      "criteria": "accept criterion"
+                    },
+                    {
+                      "id": "reject",
+                      "label": "ROUND2 RENAMED reject",
+                      "criteria": "reject criterion"
+                    }
+                  ]
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "0060bf9c026982a0"
+    },
+    "pinned": {
+      "id": "01M5PWGDG09QBE5Z39YAQDMYJD",
+      "loopId": "01M5PWGDG09QBE5Z39YAQDMYJC",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Round 2 rejected choice",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent choice",
+              "minConfidence": 0.9,
+              "answer": {
+                "type": "choice",
+                "options": [
+                  {
+                    "id": "accept",
+                    "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "criteria": "accept criterion"
+                  },
+                  {
+                    "id": "reject",
+                    "label": "Pinned reject",
+                    "criteria": "reject criterion"
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "rejected-score",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJG",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED rejected-score",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJW",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJW",
+        "loopId": "01M5PWGDG09QBE5Z39YAQDMYJG",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED rejected-score",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent score",
+                "minConfidence": 0.9,
+                "answer": {
+                  "type": "score",
+                  "anchors": [
+                    "Low anchor",
+                    "High anchor"
+                  ],
+                  "bands": [
+                    {
+                      "id": "accept",
+                      "label": "ROUND2 RENAMED accept",
+                      "min": 0,
+                      "max": 0.8
+                    },
+                    {
+                      "id": "reject",
+                      "label": "ROUND2 RENAMED reject",
+                      "min": 0.8,
+                      "max": 1
+                    }
+                  ]
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "447c614d5f58ea3f"
+    },
+    "pinned": {
+      "id": "01M5PWGDG09QBE5Z39YAQDMYJH",
+      "loopId": "01M5PWGDG09QBE5Z39YAQDMYJG",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Round 2 rejected score",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent score",
+              "minConfidence": 0.9,
+              "answer": {
+                "type": "score",
+                "anchors": [
+                  "Low anchor",
+                  "High anchor"
+                ],
+                "bands": [
+                  {
+                    "id": "accept",
+                    "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "min": 0,
+                    "max": 0.8
+                  },
+                  {
+                    "id": "reject",
+                    "label": "Pinned reject",
+                    "min": 0.8,
+                    "max": 1
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "rejected-noul",
+    "current": {
+      "loop": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJM",
+        "ownerId": "local",
+        "name": "ROUND2 RENAMED rejected-noul",
+        "currentVersionId": "01M5PWGDG09QBE5Z39YAQDMYJX",
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "current": {
+        "id": "01M5PWGDG09QBE5Z39YAQDMYJX",
+        "loopId": "01M5PWGDG09QBE5Z39YAQDMYJM",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "ROUND2 RENAMED rejected-noul",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "ROUND2 RENAMED start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "decide",
+              "label": "ROUND2 RENAMED decide",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "Independent noul",
+                "minConfidence": 0.9,
+                "answer": {
+                  "type": "noul",
+                  "true": {
+                    "id": "accept",
+                    "label": "ROUND2 RENAMED accept",
+                    "criteria": "holds"
+                  },
+                  "false": {
+                    "id": "reject",
+                    "label": "ROUND2 RENAMED reject",
+                    "criteria": "does not hold"
+                  }
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "ROUND2 RENAMED done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-out",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "decide",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-accept",
+              "from": {
+                "node": "decide",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "decide-reject",
+              "from": {
+                "node": "decide",
+                "port": "reject"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "publishedAt": "2026-10-24T12:00:00.000Z"
+      },
+      "draftToken": "860039e5e2839c8a"
+    },
+    "pinned": {
+      "id": "01M5PWGDG09QBE5Z39YAQDMYJN",
+      "loopId": "01M5PWGDG09QBE5Z39YAQDMYJM",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Round 2 rejected noul",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent noul",
+              "minConfidence": 0.9,
+              "answer": {
+                "type": "noul",
+                "true": {
+                  "id": "accept",
+                  "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                  "criteria": "holds"
+                },
+                "false": {
+                  "id": "reject",
+                  "label": "Pinned reject",
+                  "criteria": "does not hold"
+                }
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  }
+]

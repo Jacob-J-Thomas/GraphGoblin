@@ -1,6 +1,5 @@
-import type { Client } from '@libsql/client';
+import type { Client, Transaction } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
-import { setImmediate as yieldToEventLoop } from 'node:timers/promises';
 import {
   CURRENT_DEFINITION_FORMAT,
   HarnessDefaultsSchema,
@@ -11,13 +10,17 @@ import { retiredEventDestinations, withoutRetiredEventDestinations } from '@grap
 import {
   currentStoreReadiness,
   normalizeStoreSql,
-  quote,
   rows,
   SHIPPED_MIGRATIONS,
   storeStructure,
+  tableBatches,
   type StoreReader,
-  type StoreRow,
 } from './readiness.js';
+
+import {
+  convertHistoricalWebhookReceipts,
+  WEBHOOK_JOURNAL_MIGRATION_TIME,
+} from './webhook-receipt-upgrade.js';
 
 /**
  * The current-format store contract (ADR-0042): an empty store is initialised in one transaction;
@@ -30,32 +33,6 @@ async function tableNames(client: StoreReader): Promise<string[]> {
   return (await rows(client, "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"))
     .map((row) => String(row.name))
     .filter((name) => !name.startsWith('sqlite_'));
-}
-
-/** Rows per keyset batch when the guard parses every stored definition. */
-const STORE_BATCH_SIZE = 500;
-
-/** Keyset batches by rowid, yielding to the event loop between batches. */
-async function* tableBatches(client: StoreReader, table: string): AsyncGenerator<StoreRow[]> {
-  let after: number | undefined;
-  for (;;) {
-    const batch = await rows(
-      client,
-      'SELECT rowid AS __gg_rowid,* FROM ' +
-        quote(table) +
-        ' WHERE ' +
-        (after === undefined ? '1' : 'rowid>?') +
-        ' ORDER BY rowid LIMIT ?',
-      after === undefined ? [STORE_BATCH_SIZE] : [after, STORE_BATCH_SIZE],
-    );
-    if (!batch.length) return;
-    after = Number(batch.at(-1)!.__gg_rowid);
-    for (const row of batch) delete row.__gg_rowid;
-    yield batch;
-    // Local libsql promises can settle without returning to the event loop. Give native
-    // statement finalizers and other work a turn between batches.
-    await yieldToEventLoop();
-  }
 }
 
 /**
@@ -310,22 +287,17 @@ export async function initializeFreshStore(
     if (state === 'fresh') {
       // Drizzle's libsql migrator commits its own batch; run the SQL here so neither the schema
       // nor its ledger can survive without the complete marker.
-      await tx.execute(
-        'CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
-      );
-      for (const migration of readMigrationFiles({ migrationsFolder })) {
-        for (const statement of migration.sql) await tx.execute(statement);
-        await tx.execute({
-          sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES (?,?)',
-          args: [migration.hash, migration.folderMillis],
-        });
-      }
+      await structuralMigrations(tx, migrationsFolder);
       await tx.execute(MARKER_SQL);
       await tx.execute({
         sql: "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete','fresh','fresh')",
         args: [CURRENT_DEFINITION_FORMAT],
       });
+    } else {
+      // Another initializer won the write lock; finish its ordinary migrations under this lock.
+      await structuralMigrations(tx, migrationsFolder);
     }
+    await verifyStoreHead(tx, migrationsFolder);
     await tx.commit();
     return state;
   } catch (error) {
@@ -333,6 +305,46 @@ export async function initializeFreshStore(
       await tx.rollback();
     } catch {
       // A lost connection must not replace the failure that interrupted initialisation.
+    }
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
+async function structuralMigrations(tx: Transaction, folder: string): Promise<void> {
+  await tx.execute(
+    'CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
+  );
+  const last = (
+    await rows(tx, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1')
+  )[0];
+  const lastTime = Number(last?.created_at ?? 0);
+  for (const migration of readMigrationFiles({ migrationsFolder: folder })) {
+    if (migration.folderMillis <= lastTime) continue;
+    // Convert completed receipts before 0015 allocates identities for unfinished returns.
+    if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+      await convertHistoricalWebhookReceipts(tx);
+    for (const statement of migration.sql) await tx.execute(statement);
+    await tx.execute({
+      sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES (?,?)',
+      args: [migration.hash, migration.folderMillis],
+    });
+  }
+}
+
+/** Apply ordinary SQL and one-off data rewrites with one atomic migration ledger. */
+export async function migrateCurrentStore(client: Client, folder: string): Promise<void> {
+  const tx = await client.transaction('write');
+  try {
+    await structuralMigrations(tx, folder);
+    await verifyStoreHead(tx, folder);
+    await tx.commit();
+  } catch (error) {
+    try {
+      await tx.rollback();
+    } catch {
+      // Preserve the migration failure if its connection was lost.
     }
     throw error;
   } finally {

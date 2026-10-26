@@ -1,0 +1,31 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true 
+'--coverage.reportsDirectory=<temp>\gg-qa-204-r3-webcov-f4233acb'
+At <repo>\docs\qa\2026-10-22-wp-f2b-qa\round-3\repla
+y.ps1:51 char:7
++       & pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers ...
++       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ebcov-f4233acb':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <repo>/apps/web
+      Coverage enabled with v8
+
+
+ Test Files  120 passed (120)
+      Tests  1542 passed (1542)
+   Start at  01:04:49
+   Duration  553.88s (tests 50%, environment 28%, import 11%, setup 9%, transform 1%, worker 1%)
+
+Environment  jsdom was created 120 times · 293.64s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.04% ( 8132/8294 )
+Branches     : 95.02% ( 7281/7662 )
+Functions    : 98.55% ( 2190/2222 )
+Lines        : 98.95% ( 7088/7163 )
+================================================================================

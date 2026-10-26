@@ -1,14 +1,18 @@
 import { z } from 'zod';
+import { ExecutionLimitsSchema } from './loop.js';
 import {
   JsonSchemaSchema,
   JsonValueSchema,
+  HarnessIdSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
+  EffortSchema,
 } from './common.js';
 import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
+import { WebhookDeliverySchema } from './delivery.js';
 
 export const RunStatusSchema = z.enum([
   'queued',
@@ -38,6 +42,14 @@ export const RunErrorCodeSchema = z.enum([
   'HARNESS_NOT_AUTHENTICATED',
   'HARNESS_QUOTA_EXHAUSTED',
   'HARNESS_TURN_FAILED',
+  'HARNESS_TRANSPORT_FAILED',
+  'HARNESS_OUTPUT_LIMIT',
+  'RUN_DEADLINE_EXCEEDED',
+  'STRUCTURED_COMPLETION_TIMEOUT',
+  'RUN_INTERRUPTED_BY_STOP',
+  'SCRIPT_TERMINATION_UNCONFIRMED',
+  'HARNESS_DELIVERY_UNCERTAIN',
+  'HARNESS_SESSION_MISSING',
   'HARNESS_TERMINATION_UNCONFIRMED',
   'WORKING_DIRECTORY_MISSING',
   'SCRIPT_EXIT_CODE',
@@ -76,12 +88,59 @@ export const RunErrorCodeSchema = z.enum([
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
 
+export const PromptSubmissionSchema = z.enum([
+  'definitely-not-submitted',
+  'delivery-uncertain',
+  'session-missing',
+]);
+export type PromptSubmission = z.infer<typeof PromptSubmissionSchema>;
+/** Current turn evidence, including positively observed submission before an outcome is known. */
+export const TurnSubmissionSchema = z.enum([...PromptSubmissionSchema.options, 'submitted']);
+export type TurnSubmission = z.infer<typeof TurnSubmissionSchema>;
+export const PromptProvenanceSchema = z.strictObject({
+  visitId: z.string().min(1).max(64),
+  turnId: UlidSchema,
+  submission: PromptSubmissionSchema,
+  promptKind: z.enum(['authored', 'repair', 'continuation']),
+  sessionId: z.string().min(1).max(256).optional(),
+  /** Exact uninvoked intent when its separate log append could not be reconciled. */
+  retry: z
+    .strictObject({
+      harness: HarnessIdSchema,
+      prompt: z.string(),
+      resumeSessionId: z.string().min(1).max(256).optional(),
+    })
+    .optional(),
+});
+export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
+
+/** A missing conversation's identity and the exact selection that must be retained. */
+export const MissingSessionSchema = z.strictObject({
+  visitId: z.string().min(1).max(64),
+  harness: HarnessIdSchema,
+  sessionId: z.string().min(1).max(256).optional(),
+  origin: z.enum(['resume-previous', 'resume-named', 'resume-own', 'current-visit']),
+  model: z.string().min(1),
+  effort: EffortSchema,
+});
+export type MissingSession = z.infer<typeof MissingSessionSchema>;
+
+export const FreshSessionChoiceSchema = MissingSessionSchema.extend({
+  nodeId: SlugSchema,
+  failureSeq: z.number().int().positive(),
+  priorContextCarried: z.literal(false),
+  /** Original authored task, when this visit had already recorded one. */
+  prompt: z.string().optional(),
+});
+
 export const RunFailureSchema = z.strictObject({
   code: RunErrorCodeSchema,
   message: z.string().max(10_000),
   nodeId: SlugSchema.optional(),
   resumable: z.boolean(),
   details: JsonValueSchema.optional(),
+  inference: PromptProvenanceSchema.optional(),
+  missingSession: MissingSessionSchema.optional(),
 });
 export type RunFailure = z.infer<typeof RunFailureSchema>;
 
@@ -135,6 +194,7 @@ export const RunPinSchema = z.strictObject({
   /** Readable label: `<name> v<version>`, or `<name> draft v<version>` for a draft snapshot. */
   label: z.string().min(1).max(160),
   defaults: PinnedDefaultsSchema,
+  limits: ExecutionLimitsSchema,
   /**
    * The execution binding of every classifier the pinned definition references, by catalog id,
    * taken at start (a child inherits its parent's for the ids they share). A classifier missing at
@@ -165,9 +225,16 @@ export const RunRecordSchema = z.strictObject({
   failure: RunFailureSchema.optional(),
   outcome: OutcomeSchema.optional(),
   result: JsonValueSchema.optional(),
+  /** Webhook delivery is independent of execution status; absent when no webhook is queued. */
+  deliveries: z.array(WebhookDeliverySchema).optional(),
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),
+  /** Existing durable finalization marker: absent until returns and terminal cleanup finish.
+   * A failed delivery is final too; inspect deliveries and return.failed for its outcome.
+   * Exposing the existing marker avoids a second stored completion state (ADR-0057).
+   */
+  finalizedAt: TimestampSchema.optional(),
   lastEventSeq: z.number().int().nonnegative(),
 });
 export type RunRecord = z.infer<typeof RunRecordSchema>;

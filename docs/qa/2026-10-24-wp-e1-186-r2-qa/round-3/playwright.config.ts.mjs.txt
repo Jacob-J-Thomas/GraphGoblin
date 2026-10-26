@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./specs',testMatch:'**/*.spec.ts',globalSetup:'./global-setup.ts',fullyParallel:false,workers:1,retries:0,timeout:60000,expect:{timeout:10000},reporter:[['list']],outputDir:'../../../../.tmp/qa3/pw-results',use:{channel:'msedge',headless:true,trace:'off',serviceWorkers:'block',viewport:{width:1440,height:900}}});

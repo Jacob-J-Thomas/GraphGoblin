@@ -1,3 +1,4 @@
+import { setImmediate as yieldToEventLoop } from 'node:timers/promises';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createClient, type Client, type InValue } from '@libsql/client';
 import { readFileSync } from 'node:fs';
@@ -135,4 +136,35 @@ let shippedDescriptor: ReturnType<typeof describe> | undefined;
 export function currentStoreReadiness(migrationsFolder = SHIPPED_MIGRATIONS) {
   if (migrationsFolder !== SHIPPED_MIGRATIONS) return describe(migrationsFolder);
   return (shippedDescriptor ??= describe(migrationsFolder));
+}
+
+/** Rows per keyset batch when the guard parses every stored definition. */
+const STORE_BATCH_SIZE = 500;
+
+/** Keyset batches by rowid, yielding to the event loop between batches. */
+export async function* tableBatches(
+  client: StoreReader,
+  table: string,
+  selection: { where?: string } = {},
+): AsyncGenerator<StoreRow[]> {
+  let after: number | undefined;
+  for (;;) {
+    const batch = await rows(
+      client,
+      'SELECT rowid AS __gg_rowid,* FROM ' +
+        quote(table) +
+        ' WHERE ' +
+        (selection.where ? '(' + selection.where + ') AND ' : '') +
+        (after === undefined ? '1' : 'rowid>?') +
+        ' ORDER BY rowid LIMIT ?',
+      after === undefined ? [STORE_BATCH_SIZE] : [after, STORE_BATCH_SIZE],
+    );
+    if (!batch.length) return;
+    after = Number(batch.at(-1)!.__gg_rowid);
+    for (const row of batch) delete row.__gg_rowid;
+    yield batch;
+    // Local libsql promises can settle without returning to the event loop. Give native
+    // statement finalizers and other work a turn between batches.
+    await yieldToEventLoop();
+  }
 }

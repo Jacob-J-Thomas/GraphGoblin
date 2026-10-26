@@ -1,0 +1,17 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {readFile,writeFile,appendFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa/round-2'),results=[];
+const strip=s=>s.replace(/\x1b\[[0-9;]*m/g,'').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%');
+const commands=[
+ ['typecheck','pnpm.cmd typecheck'],['lint','pnpm.cmd lint'],['format-check','pnpm.cmd format:check'],['layers','pnpm.cmd check:layers'],['deps','pnpm.cmd check:deps'],['docs','pnpm.cmd check:docs'],['tokens','pnpm.cmd check:tokens'],['migrations','pnpm.cmd check:migrations'],
+ ...['contracts','domain','engine','adapter-codex','infrastructure','api-client','web'].map(p=>[p+'-coverage','pnpm.cmd --filter @graphgoblin/'+p+' test:coverage',p]),
+ ['api-focused','pnpm.cmd --filter @graphgoblin/api exec vitest run src/stored-loop-defaults.test.ts src/structured-deadline.test.ts','api'],
+];
+async function run(name,command,pkg){const at=Date.now(),file=join(out,name+'.log.txt');await writeFile(file,command+'\nNode '+process.version+'\n');const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe']});let raw='';const pending=[];for(const stream of[child.stdout,child.stderr])stream.on('data',b=>{const s=strip(b.toString());raw+=s;pending.push(appendFile(file,s))});const exitCode=await new Promise((res,rej)=>{child.once('error',rej);child.once('exit',res)});await Promise.all(pending);const r={name,command,pkg,exitCode,elapsedMs:Date.now()-at};results.push(r);await writeFile(join(out,'gates.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(r));return{...r,raw}}
+const failed=[];
+for(const [name,command,pkg]of commands){const r=await run(name,command,pkg);if(r.exitCode&&pkg)failed.push(r)}
+// Each unchanged failing file receives exactly one isolated recheck, after all broad work.
+const changed=new Set(execFileSync('git',['diff','--name-only','0a1ff340dc8e0eb0ad6621b4020d100dcdc3be71','HEAD','--','.',':!docs/qa'],{encoding:'utf8',windowsHide:true}).trim().split(/\r?\n/));
+const rerun=new Set();for(const r of failed){for(const match of r.raw.matchAll(/(?:FAIL|❯)\s+(src\/[^\s>]+\.test\.[jt]sx?)/g)){const file=match[1],folder=r.pkg==='api'||r.pkg==='web'?'apps/':'packages/';if(changed.has(folder+r.pkg+'/'+file))continue;const key=r.pkg+':'+file;if(rerun.has(key))continue;rerun.add(key);await run(r.pkg+'-isolated-'+file.replaceAll(/[^a-z0-9]/gi,'-'),'pnpm.cmd --filter @graphgoblin/'+r.pkg+' exec vitest run '+file,r.pkg)}}
+console.log('All scheduled gates and required isolated rechecks complete');

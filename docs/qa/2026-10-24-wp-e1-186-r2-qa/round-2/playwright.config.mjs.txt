@@ -1,0 +1,5 @@
+import {defineConfig}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+export default defineConfig({
+ testDir:'../../apps/web/e2e',testMatch:'bounded-history.spec.ts',workers:1,retries:0,timeout:180000,expect:{timeout:15000},reporter:'list',outputDir:'pw-evidence',
+ use:{baseURL:process.env.GG_E2E_BASE_URL,channel:'msedge',headless:true,serviceWorkers:'block',viewport:{width:1440,height:900},trace:'off',extraHTTPHeaders:{authorization:'Bearer '+process.env.GG_QA_API_KEY},storageState:{cookies:[],origins:[{origin:process.env.GG_E2E_BASE_URL,localStorage:[{name:'graphgoblin-api-key',value:process.env.GG_QA_API_KEY}]}]}},
+});

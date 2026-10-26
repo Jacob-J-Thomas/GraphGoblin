@@ -1,0 +1,55 @@
+"""Run only once all capture writers stop. Preserve original hashes for normalized captures."""
+from pathlib import Path
+import hashlib
+import json
+import re
+
+root = Path('docs/qa/wp-d4-343/round-5').resolve()
+profile = str(Path.home())
+registry = root / 'NORMALIZATION.json'
+previous = json.loads(registry.read_text(encoding='utf-8')) if registry.exists() else []
+records = {entry['file']: entry for entry in previous}
+# Only this round's completed baseline trace archives; never remove directories.
+for path in sorted((root / 'before-test-results').rglob('trace.zip')):
+    assert root in path.resolve().parents
+    raw = path.read_bytes()
+    label = path.relative_to(root).as_posix()
+    records[label] = dict(file=label, original_bytes=len(raw), original_sha256=hashlib.sha256(raw).hexdigest(), kept=False, reason='Raw trace archive with embedded local paths; the normalized failure log and error context are retained.')
+    path.unlink()
+for path in sorted(root.rglob('*')):
+    label = path.relative_to(root).as_posix()
+    if not path.is_file() or path == registry or label in ('MANIFEST.json', 'VALIDATION.json'):
+        continue
+    if not (label.endswith(('.log.txt', '.patch.txt', '/error-context.md')) or path.suffix == '.json'):
+        continue
+    raw = path.read_bytes()
+    raw_hash = hashlib.sha256(raw).hexdigest()
+    if records.get(label, {}).get('kept_sha256') == raw_hash:
+        continue
+    record = {'file': label, 'original_bytes': len(raw), 'original_sha256': raw_hash}
+    if len(raw) > 1_000_000:
+        record['kept'] = False
+        # Only this helper's explicitly enumerated captures in the round-5 directory are eligible.
+        assert root in path.resolve().parents
+        path.unlink()
+    else:
+        text = raw.decode('utf-16') if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else raw.decode('utf-8-sig')
+        for prefix in (profile.replace('\\', '\\\\'), profile, profile.replace('\\', '/')):
+            text = text.replace(prefix, '%USERPROFILE%')
+        text = re.sub(r'C:[/\\]*\s*(?:[\u2502|]\s*)?[/\\]*Users[/\\]+' + re.escape(Path.home().name), '%USERPROFILE%', text, flags=re.I)
+        data = text.replace('\r\n', '\n').replace('\r', '\n').encode('utf-8')
+        path.write_bytes(data)
+        record.update(kept=True, kept_bytes=len(data), kept_sha256=hashlib.sha256(data).hexdigest(), original_not_kept='Raw encoding/path spelling replaced by UTF-8 LF with profile paths normalized; original size and hash retained here.')
+    records[label] = record
+entries = list(records.values())
+registry.write_bytes((json.dumps(entries, indent=2) + '\n').encode('utf-8'))
+omitted = [r for r in entries if not r['kept']]
+if omitted:
+    body = '# Captures not kept\n\nCaptures above 1,000,000 bytes and raw trace archives with embedded local paths are not retained. Sizes and SHA-256 hashes identify the omitted bytes.\n\n'
+    body += '\n'.join(f"- `{r['file']}`: {r['original_bytes']} bytes; SHA-256 `{r['original_sha256']}`." for r in omitted) + '\n'
+    note = root / 'NOT-KEPT.md'
+    existing = note.read_text(encoding='utf-8') if note.exists() else ''
+    # Preserve already-formatted Markdown when the omission records are unchanged.
+    if not all(r['file'] in existing and str(r['original_bytes']) in existing and r['original_sha256'] in existing for r in omitted):
+        note.write_bytes(body.encode('utf-8'))
+print(json.dumps({'normalized_captures': len(entries), 'not_kept_captures': len(omitted), 'largest_original_bytes': max(r['original_bytes'] for r in entries)}))

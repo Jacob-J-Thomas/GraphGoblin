@@ -1,0 +1,132 @@
+import { spawn } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5');
+const { chromium, expect } = await import(pathToFileURL(resolve('apps/web/node_modules/@playwright/test/index.mjs')));
+const env = { ...process.env, LIVE: '0', GG_E2E_MAIN_PORT: '6150', GG_E2E_CONTROL_PORT: '6151', GG_E2E_WEB_DIST: resolve('apps/web/.tmp/qa5/dist') };
+let logs = '';
+const server = spawn(process.execPath, ['--conditions=development', '--import', 'tsx', '.tmp/qa5/e2e/server.ts'], { cwd: resolve('apps/web'), env, windowsHide: true, stdio: ['pipe','pipe','pipe'] });
+let exited = false;
+const serverExit = new Promise((done) => server.once('exit', (code, signal) => { exited = true; done({code,signal}); }));
+const ready = await new Promise((done, reject) => {
+  const timer = setTimeout(() => reject(new Error('Server readiness timeout: ' + logs)), 60000);
+  for (const stream of [server.stdout,server.stderr]) stream.on('data', (b) => {
+    logs += b;
+    const base = /GG_E2E_READY (\S+)/.exec(logs)?.[1];
+    const control = /GG_E2E_CONTROL (\S+)/.exec(logs)?.[1];
+    if (base && control) {clearTimeout(timer); done({base,control});}
+  });
+  server.once('exit', (code) => {clearTimeout(timer); reject(new Error('Server exited ' + code + ': ' + logs));});
+});
+const json = async (base, path, body) => {
+  const r = await fetch(base + path, body === undefined ? {} : {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
+  const data = await r.json(); assert(r.ok, JSON.stringify({path,status:r.status,data})); return data;
+};
+const observations = [];
+const browser = await chromium.launch({channel:'msedge', headless:true});
+const browserVersion = browser.version();
+let runId;
+try {
+  await json(ready.control, '/harness/script', {turns:[{matchPrompt:'QA pulse lifetime',delayMs:2**31-1}]});
+  const definition = {schemaVersion:4,name:'Round 5 pulse and sequence',nodes:[
+    {id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},
+    {id:'ask',kind:'inference',label:'Ask',config:{prompt:{template:'QA pulse lifetime'}}},
+    {id:'done',kind:'exit',label:'Done',config:{}}
+  ],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'ask'}},{id:'b',from:{node:'ask',port:'out'},to:{node:'done'}}]};
+  const {loop} = await json(ready.base,'/loops',{definition});
+  await json(ready.base,`/loops/${loop.id}/publish`,{});
+  runId = (await json(ready.base,`/loops/${loop.id}/runs`,{})).run.id;
+  const cases = [];
+  for (const width of [1440,390]) for (const theme of ['dark','light']) for (const coarse of [false,true]) cases.push({width,theme,coarse});
+  for (const item of cases) {
+    const name = `${item.width}-${item.theme}-${item.coarse?'coarse':'fine'}`;
+    const context = await browser.newContext({viewport:{width:item.width,height:item.width===390?844:900},hasTouch:item.coarse,isMobile:item.coarse,serviceWorkers:'block',reducedMotion:'no-preference'});
+    await context.addInitScript((theme) => localStorage.setItem('graphgoblin-theme',theme),item.theme);
+    const page = await context.newPage();
+    page.setDefaultTimeout(10000);
+    page.setDefaultNavigationTimeout(15000);
+    console.log('CASE '+name);
+    const errors = []; page.on('pageerror',(e)=>errors.push(String(e)));
+    try {
+      await page.goto(ready.base+'/app/runs/'+runId);
+      const heading = page.getByRole('heading',{name:/^Timeline \(\d+ events, live\)$/});
+      await expect(heading).toBeVisible();
+      console.log(name+' live heading');
+      const pulse = heading.locator('..').locator('.glow-live');
+      await expect(pulse).toHaveCount(1);
+      await expect(pulse).toHaveAttribute('aria-hidden','true');
+      await expect(pulse).toHaveCSS('animation-name','gg-pulse');
+      const cdp = await context.newCDPSession(page);
+      const boundedCdp = (method,params) => Promise.race([cdp.send(method,params),new Promise((_,reject)=>setTimeout(()=>reject(new Error('CDP timeout '+method)),10000))]);
+      const document = await boundedCdp('DOM.getDocument');
+      const headingId = await heading.getAttribute('id');
+      const node = await boundedCdp('DOM.querySelector',{nodeId:document.root.nodeId,selector:`section[aria-labelledby="${headingId}"] header .glow-live`});
+      const accessibility = await boundedCdp('Accessibility.getPartialAXTree',{nodeId:node.nodeId,fetchRelatives:false});
+      assert.equal(accessibility.nodes[0].ignored,true);
+      await cdp.detach();
+      console.log(name+' accessibility');
+      const motion = await pulse.evaluate((el)=>({animation:getComputedStyle(el).animationName,animations:el.getAnimations().map((a)=>({state:a.playState,keyframes:a.effect.getKeyframes()}))}));
+      assert(motion.animations.some((a)=>a.state==='running'));
+      const input = page.getByRole('spinbutton',{name:'Event sequence',exact:true});
+      await input.scrollIntoViewIfNeeded();
+      const layout = await input.evaluate((el)=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height,x:r.x,right:r.right,viewport:innerWidth,coarse:matchMedia('(pointer: coarse)').matches,document:document.documentElement.scrollWidth,min:el.min,step:el.step};});
+      assert.equal(layout.coarse,item.coarse);
+      assert(layout.x>=0 && layout.right<=layout.viewport);
+      assert(layout.document<=layout.viewport);
+      if(item.coarse) {assert(layout.width>=44);assert(layout.height>=44);}
+      assert.equal(layout.min,'1'); assert.equal(layout.step,'1');
+      await input.fill('0'); await input.press('Enter');
+      console.log(name+' invalid sequence');
+      const invalid = await input.evaluate((el)=>({valid:el.validity.valid,underflow:el.validity.rangeUnderflow}));
+      assert.equal(invalid.valid,false); assert.equal(invalid.underflow,true);
+      await input.fill('1'); await input.press('Enter');
+      await expect(page.getByRole('heading',{name:'Thread at event 1',exact:true})).toBeVisible();
+      console.log(name+' selected event 1');
+      await input.focus(); await input.press('Tab');
+      await expect(page.getByRole('button',{name:'Go to event'})).toBeFocused();
+      await writeFile(join(out,`timeline-${name}.aria.txt`),await page.locator('body').ariaSnapshot());
+      await heading.locator('../..').screenshot({path:join(out,`timeline-${name}.png`)});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      await expect(pulse).toHaveCSS('animation-name','none'); await expect(pulse).toHaveCSS('opacity','1');
+      const reduced = await pulse.evaluate((el)=>({animation:getComputedStyle(el).animationName,opacity:getComputedStyle(el).opacity,animations:el.getAnimations().length}));
+      assert.equal(reduced.animations,0);
+      await page.reload();
+      await expect(page.getByRole('heading',{name:/^Timeline \(\d+ events, live\)$/})).toBeVisible();
+      await expect(pulse).toHaveCSS('animation-name','none');
+      assert.equal(errors.length,0);
+      observations.push({case:name,result:'PASS',phase:'live',layout,motion,reduced,invalid,accessibility,errors});
+    } catch(e) {observations.push({case:name,result:'FAIL',phase:'live',error:String(e),stack:e.stack,errors});console.log(name+' FAIL '+String(e));await page.screenshot({path:join(out,'manual-failure-'+name+'.png')}).catch(()=>{});}
+    finally {await context.close();}
+  }
+  await json(ready.base,`/runs/${runId}/cancel`,{});
+  for (const item of cases) {
+    const name=`${item.width}-${item.theme}-${item.coarse?'coarse':'fine'}`;
+    const context=await browser.newContext({viewport:{width:item.width,height:item.width===390?844:900},hasTouch:item.coarse,isMobile:item.coarse,serviceWorkers:'block'});
+    await context.addInitScript((theme)=>localStorage.setItem('graphgoblin-theme',theme),item.theme);
+    const page=await context.newPage();
+    try {
+      await page.goto(ready.base+'/app/runs/'+runId);
+      const heading=page.getByRole('heading',{name:/^Timeline \(\d+ events, complete\)$/});
+      await expect(heading).toBeVisible();
+      const count=await heading.locator('..').locator('.glow-live').count(); assert.equal(count,0);
+      const aria=await heading.locator('..').ariaSnapshot();
+      observations.push({case:name,result:'PASS',phase:'complete',liveDotCount:count,aria});
+      if(name==='390-dark-coarse'||name==='1440-light-fine') await heading.locator('../..').screenshot({path:join(out,`complete-${name}.png`)});
+    } catch(e) {observations.push({case:name,result:'FAIL',phase:'complete',error:String(e),stack:e.stack});}
+    finally {await context.close();}
+  }
+} finally {
+  if(runId) await json(ready.base,`/runs/${runId}/cancel`,{}).catch(()=>{});
+  await browser.close();
+  if(!exited) server.stdin.end('stop\n');
+  const exit=await Promise.race([serverExit,new Promise((done)=>setTimeout(()=>done({error:'Graceful exit timeout; process retained'}),15000))]);
+  const clean=(s)=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+  await writeFile(join(out,'manual-server.log.txt'),clean(logs));
+  await writeFile(join(out,'manual-ui-results.json'),JSON.stringify({browserVersion,ready,runId,exit,observations},null,2));
+}
+console.log(JSON.stringify({passed:observations.filter((x)=>x.result==='PASS').length,failed:observations.filter((x)=>x.result==='FAIL').length}));
+process.exitCode=observations.some((x)=>x.result==='FAIL')?1:0;

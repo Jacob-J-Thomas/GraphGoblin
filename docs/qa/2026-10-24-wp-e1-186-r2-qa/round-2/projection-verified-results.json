@@ -1,0 +1,132 @@
+[
+  {
+    "name": "evicted durable failure retains exact code, message, status and thread",
+    "pass": true,
+    "evidence": {
+      "runId": "01M5S36XWA3D546AWTN578KAZN",
+      "total": 711,
+      "retainedFirst": 200,
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Independent QA failure",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "adapterCode": "QA_FAILURE"
+        },
+        "inference": {
+          "visitId": "01M5S36XWA3D546AWTN578KAZN:5",
+          "turnId": "01M5S36XY776YB39DEV4Z7HGGG",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-414"
+        }
+      },
+      "lifecycle": {
+        "runId": "01M5S36XWA3D546AWTN578KAZN",
+        "seq": 11,
+        "ts": "2026-10-25T08:35:38.072Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: Independent QA failure",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "adapterCode": "QA_FAILURE"
+          },
+          "inference": {
+            "visitId": "01M5S36XWA3D546AWTN578KAZN:5",
+            "turnId": "01M5S36XY776YB39DEV4Z7HGGG",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-414"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "evicted webhook delivery, result and finish agree with full server history",
+    "pass": true,
+    "evidence": {
+      "runId": "01M5S36Z3P36D6BXKZFYEQQBSE",
+      "total": 741,
+      "retainedFirst": 230,
+      "result": "OK",
+      "delivery": {
+        "id": "01M5S36Z9CG07MBT0R74P6D91Q",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:6154/return"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      },
+      "observation": {
+        "lifecycle": {
+          "runId": "01M5S36Z3P36D6BXKZFYEQQBSE",
+          "seq": 38,
+          "ts": "2026-10-25T08:35:39.436Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "OK"
+        },
+        "exit": {
+          "runId": "01M5S36Z3P36D6BXKZFYEQQBSE",
+          "seq": 36,
+          "ts": "2026-10-25T08:35:39.436Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        "gate": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.157,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5S36Z3P36D6BXKZFYEQQBSE",
+          "seq": 33,
+          "ts": "2026-10-25T08:35:39.421Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        "finished": {
+          "runId": "01M5S36Z3P36D6BXKZFYEQQBSE",
+          "seq": 38,
+          "ts": "2026-10-25T08:35:39.436Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "OK"
+        }
+      },
+      "receiverRequests": 1
+    }
+  }
+]

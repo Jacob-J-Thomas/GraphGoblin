@@ -4,14 +4,32 @@ import {
   type JsonValue,
 } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
-import { and, asc, desc, eq, gte, inArray, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  getTableColumns,
+  inArray,
+  lt,
+  lte,
+  ne,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type {
   ScheduleAdvance,
   ScheduleRecord,
   ScheduleStore,
 } from '../scheduler/schedule-store.js';
 import type { Database } from './db.js';
-import { inboundEvents, schedules, webhookEndpoints, webhookReceipts } from './schema.js';
+import {
+  inboundEvents,
+  eventReceipts,
+  schedules,
+  webhookEndpoints,
+  webhookReceipts,
+} from './schema.js';
 
 // -----------------------------------------------------------------------------
 // Schedules
@@ -302,21 +320,14 @@ export interface InboundEventRecord {
   receivedAt: string;
   /** Runs this event started; empty when it was filtered out or matched nothing. */
   runIds: string[];
+  target?: { loopId: string; versionId: string; triggerNodeId: string };
+  admissionId?: string;
   delivery?: {
     state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
     attempts: number;
     nextAttemptAt?: string;
     failureCode?: string;
   };
-}
-
-export interface InboundEventDedupeQuery {
-  ownerId: string;
-  dedupeKey: string;
-  type?: string;
-  source?: string;
-  /** Only events received at or after this instant count. */
-  since?: string;
 }
 
 type EventRow = typeof inboundEvents.$inferSelect;
@@ -356,52 +367,122 @@ export class SqliteInboundEvents {
     return event;
   }
 
-  async setRunIds(id: string, runIds: readonly string[]): Promise<void> {
-    await this.db
-      .update(inboundEvents)
-      .set({ runIds: [...runIds] })
-      .where(eq(inboundEvents.id, id));
-  }
-
   async get(id: string): Promise<InboundEventRecord | undefined> {
     const row = await this.db.query.inboundEvents.findFirst({ where: eq(inboundEvents.id, id) });
     if (!row) return undefined;
     return (await this.withDelivery([toInboundEvent(row)]))[0];
   }
 
-  /** Newest first, owner-scoped. `before` pages by `receivedAt`. */
-  async list(
+  async page(
     ownerId: string,
-    options: { limit?: number; type?: string; before?: string } = {},
-  ): Promise<InboundEventRecord[]> {
+    options: {
+      limit?: number;
+      type?: string;
+      before?: string;
+      cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
+      /** Inclusive page head for re-reading a loaded snapshot. */
+      anchor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
+    } = {},
+  ): Promise<{
+    items: InboundEventRecord[];
+    next: Pick<InboundEventRecord, 'receivedAt' | 'id'> | null;
+  }> {
+    const limit = Math.max(1, Math.min(options.limit ?? 100, 500));
+    const rows = await this.rawPageRows(
+      ownerId,
+      options,
+      limit + 1,
+      options.anchor ?? options.cursor,
+      options.anchor !== undefined,
+    );
+    // Both JSON columns stay raw until after trimming, including Drizzle's eager runIds decoder.
+    const items = await this.withDelivery(
+      rows
+        .slice(0, limit)
+        .map((row) => toInboundEvent({ ...row, runIds: JSON.parse(row.runIds) as string[] })),
+    );
+    const last = items.at(-1)!;
+    return {
+      items,
+      next: rows.length > limit ? { receivedAt: last.receivedAt, id: last.id } : null,
+    };
+  }
+
+  private async rawPageRows(
+    ownerId: string,
+    options: { type?: string; before?: string },
+    limit: number,
+    cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>,
+    inclusive = false,
+  ): Promise<(Omit<EventRow, 'runIds'> & { runIds: string })[]> {
     const filters: SQL[] = [eq(inboundEvents.ownerId, ownerId)];
     if (options.type) filters.push(eq(inboundEvents.type, options.type));
     if (options.before) filters.push(lt(inboundEvents.receivedAt, options.before));
-    const rows = await this.db
-      .select()
+    if (cursor)
+      filters.push(
+        inclusive
+          ? sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) <= (${cursor.receivedAt}, ${cursor.id})`
+          : sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
+      );
+    return this.db
+      .select({ ...getTableColumns(inboundEvents), runIds: sql<string>`${inboundEvents.runIds}` })
       .from(inboundEvents)
       .where(and(...filters))
-      .orderBy(desc(inboundEvents.receivedAt), desc(sql`rowid`))
-      .limit(options.limit ?? 100);
-    return this.withDelivery(rows.map(toInboundEvent));
+      .orderBy(desc(inboundEvents.receivedAt), desc(inboundEvents.id))
+      .limit(limit);
   }
 
   private async withDelivery(records: InboundEventRecord[]): Promise<InboundEventRecord[]> {
     if (!records.length) return records;
     const receipts = await this.db
-      .select()
+      .select({ ...getTableColumns(webhookReceipts), runIds: inboundEvents.runIds })
       .from(webhookReceipts)
+      .innerJoin(inboundEvents, eq(inboundEvents.id, webhookReceipts.inboundId))
       .where(
         inArray(
           webhookReceipts.inboundId,
           records.map((r) => r.id),
         ),
       );
+    const targeted = await this.db
+      .select({
+        runIds: inboundEvents.runIds,
+        id: eventReceipts.id,
+        inboundId: eventReceipts.inboundId,
+        loopId: eventReceipts.loopId,
+        versionId: eventReceipts.versionId,
+        triggerNodeId: eventReceipts.triggerNodeId,
+        status: eventReceipts.status,
+        attempts: eventReceipts.attempts,
+        nextAttemptAt: eventReceipts.nextAttemptAt,
+        failureCode: eventReceipts.failureCode,
+      })
+      .from(eventReceipts)
+      .innerJoin(inboundEvents, eq(inboundEvents.id, eventReceipts.inboundId))
+      .where(
+        inArray(
+          eventReceipts.inboundId,
+          records.map((r) => r.id),
+        ),
+      );
     return records.map((record) => {
-      const receipt = receipts.find((r) => r.inboundId === record.id);
+      const target = targeted.find((r) => r.inboundId === record.id);
+      const receipt = target ?? receipts.find((r) => r.inboundId === record.id);
       return receipt
         ? {
             ...record,
+            // Receipt state and run links come from the same SQLite read snapshot.
+            runIds: receipt.runIds,
+            ...(target
+              ? {
+                  admissionId: target.id,
+                  target: {
+                    loopId: target.loopId,
+                    versionId: target.versionId,
+                    triggerNodeId: target.triggerNodeId,
+                  },
+                }
+              : {}),
             delivery: {
               state: receipt.status,
               attempts: receipt.attempts,
@@ -412,49 +493,4 @@ export class SqliteInboundEvents {
         : record;
     });
   }
-
-  /** The most recent event with the same dedupe key in the given scope. */
-  async findDuplicate(query: InboundEventDedupeQuery): Promise<InboundEventRecord | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(inboundEvents)
-      .where(dedupeFilter(query))
-      .orderBy(desc(inboundEvents.receivedAt))
-      .limit(1);
-    return row ? toInboundEvent(row) : undefined;
-  }
-
-  /**
-   * Insert `event` unless an event matching `dedupe` already exists, atomically. Returns the
-   * existing event as `duplicate` when there is one.
-   */
-  async insertUnlessDuplicate(
-    event: InboundEventRecord,
-    dedupe: InboundEventDedupeQuery | undefined,
-  ): Promise<{ event: InboundEventRecord; duplicate?: InboundEventRecord }> {
-    return this.db.transaction(async (tx) => {
-      if (dedupe) {
-        const [row] = await tx
-          .select()
-          .from(inboundEvents)
-          .where(dedupeFilter(dedupe))
-          .orderBy(desc(inboundEvents.receivedAt))
-          .limit(1);
-        if (row) return { event, duplicate: toInboundEvent(row) };
-      }
-      await tx.insert(inboundEvents).values(toRow(event));
-      return { event };
-    });
-  }
-}
-
-function dedupeFilter(query: InboundEventDedupeQuery): SQL | undefined {
-  const filters: SQL[] = [
-    eq(inboundEvents.ownerId, query.ownerId),
-    eq(inboundEvents.dedupeKey, query.dedupeKey),
-  ];
-  if (query.type !== undefined) filters.push(eq(inboundEvents.type, query.type));
-  if (query.source !== undefined) filters.push(eq(inboundEvents.source, query.source));
-  if (query.since !== undefined) filters.push(gte(inboundEvents.receivedAt, query.since));
-  return and(...filters);
 }

@@ -1,0 +1,243 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: forms.spec.ts >> #14: inference shows its basic fields, the rest under Advanced, which says what it hides and opens for an issue
+- Location: e2e\forms.spec.ts:453:1
+
+# Error details
+
+```
+Error: expect(locator).toBeHidden() failed
+
+Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+Expected: hidden
+Received: visible
+Timeout:  10000ms
+
+Call log:
+  - Expect "toBeHidden" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+    23 × locator resolved to <select id="_r_q_" aria-describedby="_r_q_-help _r_q_-default" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 …>…</select>
+       - unexpected value "visible"
+
+```
+
+```yaml
+- combobox "Model":
+  - option "(loop default) (gpt-6-luna)" [selected]
+  - option "GPT-5.5 (gpt-5.5)"
+  - option "GPT-5.6 Luna (gpt-5.6-luna)"
+  - option "GPT-5.6 Sol (gpt-5.6-sol)"
+  - option "GPT-5.6 Terra (gpt-5.6-terra)"
+  - option "GPT-6 Astra (gpt-6-astra)"
+  - option "GPT-6 Luna (gpt-6-luna)"
+  - option "GPT-6 Sol (gpt-6-sol)"
+  - option "GPT-6.1 Sol (gpt-6.1-sol)"
+```
+
+# Test source
+
+```ts
+  368 |       document.documentElement.dataset['theme'] = theme;
+  369 |     }, theme);
+  370 |     await showLoopPanel(page);
+  371 |     const variables = page.getByRole('group', { name: 'Variables', exact: true });
+  372 |     await variables.getByRole('button', { name: 'Add entry', exact: true }).click();
+  373 |     await page.getByLabel('Variables key 1').fill('value');
+  374 |     const value = page.getByLabel('Variables value 1');
+  375 |     await screenshot(variables, `record-${theme}`);
+  376 |     const bounds = await value.boundingBox();
+  377 |     expect(bounds?.width).toBeGreaterThan(200);
+  378 |     await code(page, 'Variables value 1', '{"type":"string"}');
+  379 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  380 |     await expect
+  381 |       .poll(async () => (await draft(request, id)).draft.definition.variables)
+  382 |       .toEqual({ value: { type: 'string' } });
+  383 |     // Follow the visual order: key and Remove on the first row, then the value below.
+  384 |     await page.getByLabel('Variables key 1').focus();
+  385 |     await page.keyboard.press('Tab');
+  386 |     await expect(
+  387 |       page.getByRole('button', { name: 'Remove variables value', exact: true }),
+  388 |     ).toBeFocused();
+  389 |     await page.keyboard.press('Tab');
+  390 |     await expect(value).toBeFocused();
+  391 |     await page.keyboard.press('ControlOrMeta+A');
+  392 |     await page.keyboard.insertText('{"type":"number"}');
+  393 |     await expect
+  394 |       .poll(async () => (await draft(request, id)).draft.definition.variables)
+  395 |       .toEqual({ value: { type: 'number' } });
+  396 |     // Exercise a narrower containing panel without changing the shared editor layout.
+  397 |     await page
+  398 |       .locator('aside')
+  399 |       .last()
+  400 |       .evaluate((aside) => {
+  401 |         aside.style.width = '280px';
+  402 |       });
+  403 |     await expect(value).toBeVisible();
+  404 |     const narrowBounds = await value.boundingBox();
+  405 |     expect(narrowBounds?.width).toBeGreaterThan(150);
+  406 |     console.log(
+  407 |       `${theme}: record content width ${bounds?.width}px at 380px, ${narrowBounds?.width}px at 280px`,
+  408 |     );
+  409 |     const clipped = await variables.evaluate((el) => el.scrollWidth > el.clientWidth);
+  410 |     expect(clipped).toBe(false);
+  411 |     await screenshot(variables, `record-narrow-${theme}`);
+  412 |     await code(page, 'Variables value 1', '{"type":"boolean"}');
+  413 |     await expect
+  414 |       .poll(async () => (await draft(request, id)).draft.definition.variables)
+  415 |       .toEqual({ value: { type: 'boolean' } });
+  416 |     // String record sibling in the node properties uses the same row layout.
+  417 |     await page.getByTestId('node-approve').click();
+  418 |     await openAdvanced(page.getByRole('dialog'));
+  419 |     await page.getByLabel('Env key 1').fill('RENAMED');
+  420 |     await page.getByLabel('Env value 1').fill('edited');
+  421 |     await page
+  422 |       .getByRole('group', { name: 'Env', exact: true })
+  423 |       .getByRole('button', { name: 'Add entry' })
+  424 |       .click();
+  425 |     await expect(page.getByLabel('Env value 1')).toHaveValue('edited');
+  426 |   });
+  427 | 
+  428 |   test(`empty optional heartbeat preview is absent and malformed preview remains (${theme})`, async ({
+  429 |     page,
+  430 |     request,
+  431 |   }) => {
+  432 |     const id = await createLoop(request, { intervalSeconds: 5, maxBeats: 2 }, 'heartbeat');
+  433 |     await page.setViewportSize({ width: 1280, height: 900 });
+  434 |     await page.goto(`/app/loops/${id}/edit`);
+  435 |     await page.evaluate((theme) => {
+  436 |       document.documentElement.dataset['theme'] = theme;
+  437 |     }, theme);
+  438 |     await page.getByTestId('node-approve').click();
+  439 |     const until = page.locator('[data-field="until"]');
+  440 |     // Wait for the original asynchronous failure preview before capturing the baseline.
+  441 |     if (process.env['GG_FORMS_QA_PHASE'] === 'before') {
+  442 |       await expect(until.getByTestId('preview')).toContainText('failed to compile');
+  443 |     }
+  444 |     await screenshot(until, `heartbeat-${theme}`);
+  445 |     await expect(until.getByTestId('preview')).toHaveCount(0);
+  446 |     await code(page, 'Until', 'vars.');
+  447 |     await expect(until.getByTestId('preview')).toContainText('failed to compile');
+  448 |     await code(page, 'Until', '');
+  449 |     await expect(until.getByTestId('preview')).toHaveCount(0);
+  450 |   });
+  451 | }
+  452 | 
+  453 | test('#14: inference shows its basic fields, the rest under Advanced, which says what it hides and opens for an issue', async ({
+  454 |   page,
+  455 |   request,
+  456 | }) => {
+  457 |   const id = await createLoop(request, { prompt: { template: 'Hi' } }, 'inference');
+  458 |   await page.goto(`/app/loops/${id}/edit`);
+  459 |   const dialog = await openNode(page, 'approve');
+  460 |   const timeoutOf = async () =>
+  461 |     (
+  462 |       (await draft(request, id)).draft.definition.nodes.find((n) => n.id === 'approve')?.config as
+  463 |         { timeoutSeconds?: number } | undefined
+  464 |     )?.timeoutSeconds;
+  465 | 
+  466 |   // The basic set keeps session policy and sandbox visible; model overrides are Advanced.
+  467 |   await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
+> 468 |   await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
+      |                                                             ^ Error: expect(locator).toBeHidden() failed
+  469 |   await expect(dialog.getByLabel('Effort', { exact: true })).toBeHidden();
+  470 |   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+  471 |   await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
+  472 |   const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
+  473 |   await expect(sandbox).toBeVisible();
+  474 |   // Help from the schema's description sits under a field.
+  475 |   await expect(sandbox).toHaveAccessibleDescription(/Sandbox or tool policy/);
+  476 |   // The rest is under Advanced, collapsed.
+  477 |   const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  478 |   await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+  479 |   await expect(dialog.getByRole('radiogroup', { name: 'Approval', exact: true })).toBeHidden();
+  480 |   await expect(dialog.getByLabel('Timeout seconds', { exact: true })).toBeHidden();
+  481 | 
+  482 |   // By keyboard: Tab from the last basic field reaches the toggle, with the focus ring; Enter opens.
+  483 |   await sandbox.getByRole('radio', { name: 'workspace-write' }).focus();
+  484 |   await page.keyboard.press('Tab');
+  485 |   await expect(advanced).toBeFocused();
+  486 |   await expect(advanced).toHaveCSS('outline-style', 'solid');
+  487 |   await expect(advanced).toHaveCSS('outline-width', '2px');
+  488 |   await page.keyboard.press('Enter');
+  489 |   await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  490 |   const panel = page.locator(`[id="${await advanced.getAttribute('aria-controls')}"]`);
+  491 |   for (const group of ['Model', 'Harness options', 'Output', 'Limits']) {
+  492 |     await expect(panel.getByRole('group', { name: group, exact: true })).toBeVisible();
+  493 |   }
+  494 | 
+  495 |   // A value set inside, then collapsed: the toggle says so.
+  496 |   await dialog.getByLabel('Timeout seconds', { exact: true }).fill('120');
+  497 |   await expect.poll(timeoutOf).toBe(120);
+  498 |   await advanced.click();
+  499 |   await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+  500 |   await expect(advanced).toContainText('1 set');
+  501 |   await expect(advanced).toHaveAccessibleName('Advanced 1 set');
+  502 | 
+  503 |   // An issue inside, collapsed: flagged, and following it from the node's badge opens the group.
+  504 |   await advanced.click();
+  505 |   await dialog.getByLabel('Timeout seconds', { exact: true }).fill('0');
+  506 |   await advanced.click();
+  507 |   await expect(advanced).toContainText('1 error');
+  508 |   await closeNode(page);
+  509 |   const badge = page
+  510 |     .locator('.react-flow__node[data-id="approve"]')
+  511 |     .getByRole('button', { name: /issues? on approve$/ });
+  512 |   await badge.click();
+  513 |   await page
+  514 |     .getByRole('dialog', { name: 'Issues on approve' })
+  515 |     .getByRole('button', { name: /FIELD_INPUT_INVALID.*timeoutSeconds/ })
+  516 |     .click();
+  517 |   const editor = page.getByRole('dialog', { name: 'Edit inference approve' });
+  518 |   await expect(editor.getByRole('button', { name: /^Advanced\b/ })).toHaveAttribute(
+  519 |     'aria-expanded',
+  520 |     'true',
+  521 |   );
+  522 |   await expect(editor.getByLabel('Timeout seconds', { exact: true })).toBeFocused();
+  523 | });
+  524 | 
+  525 | test('#14: a collapsed group or operation flags an expression that does not compile, and its issue opens both', async ({
+  526 |   page,
+  527 |   request,
+  528 | }) => {
+  529 |   const id = await createLoop(
+  530 |     request,
+  531 |     {
+  532 |       prompt: { template: 'Hi' },
+  533 |       input: [{ op: 'drop', target: 'messages', where: 'vars.' }],
+  534 |       output: { schema: { jsonSchema: {} } },
+  535 |     },
+  536 |     'inference',
+  537 |   );
+  538 |   await page.goto(`/app/loops/${id}/edit`);
+  539 |   const dialog = await openNode(page, 'approve');
+  540 |   // The domain's syntax check, not the schema, finds it; the empty JSON Schema counts as set.
+  541 |   await expect(dialog.getByRole('button', { name: /^Advanced\b/ })).toHaveAccessibleName(
+  542 |     'Advanced 1 set',
+  543 |   );
+  544 |   await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toBeVisible();
+  545 |   await dialog.getByRole('tab', { name: /^Context.*1 error$/ }).click();
+  546 |   const operation = dialog.getByRole('button', { name: /^Input 1 drop messages/ });
+  547 |   await expect(operation).toHaveAttribute('aria-expanded', 'false');
+  548 |   await expect(operation).toHaveAccessibleName('Input 1 drop messages 1 error');
+  549 |   // Collapse again, then follow the issue from the editor's badge: both open at the field.
+  550 |   await dialog.getByRole('tab', { name: /^Settings/ }).click();
+  551 |   await dialog.getByRole('button', { name: /issues? on approve$/ }).click();
+  552 |   await page
+  553 |     .getByRole('dialog', { name: 'Issues on approve' })
+  554 |     .getByRole('button', { name: /EXPRESSION_INVALID/ })
+  555 |     .click();
+  556 |   await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toHaveAttribute(
+  557 |     'aria-selected',
+  558 |     'true',
+  559 |   );
+  560 |   await expect(operation).toHaveAttribute('aria-expanded', 'true');
+  561 |   await expect(dialog.locator('[data-field="input.0.where"] .cm-content')).toBeFocused();
+  562 | });
+  563 | 
+```

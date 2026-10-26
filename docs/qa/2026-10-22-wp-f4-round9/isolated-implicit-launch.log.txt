@@ -1,0 +1,54 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts (872 tests | 1 failed | 871 skipped) 156ms
+   × folds codex HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=ok 145ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > folds codex HARNESS_QUOTA_EXHAUSTED at launch retry=false 
+storage=ok
+AssertionError: expected { …(5) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_QUOTA_EXHAUSTED",
+    "inference": {
+      "promptKind": "repair",
+-     "submission": "delivery-uncertain",
++     "submission": "definitely-not-submitted",
+    },
+    "resumable": true,
+  }
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts:84:29
+     82|       expect(run.status).toBe(expected.cancelled ? 'cancelled' : 'fail…
+     83|       if (!expected.cancelled) {
+     84|         expect(run.failure).toMatchObject({
+       |                             ^
+     85|           code: expected.code,
+     86|           resumable: expected.resumable,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 871 skipped (872)
+   Start at  20:15:39
+   Duration  3.75s (import 50%, transform 45%, tests 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

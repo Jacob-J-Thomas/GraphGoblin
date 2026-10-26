@@ -1,0 +1,139 @@
+{
+  "gates": [
+    {
+      "command": "pnpm.cmd build",
+      "result": "PASS (exit 0)",
+      "evidence": "build.log.txt"
+    },
+    {
+      "command": "pnpm.cmd typecheck",
+      "result": "PASS (exit 0)",
+      "evidence": "typecheck.log.txt"
+    },
+    {
+      "command": "pnpm.cmd lint",
+      "result": "PASS (exit 0)",
+      "evidence": "lint.log.txt"
+    },
+    {
+      "command": "pnpm.cmd check:layers",
+      "result": "PASS (exit 0)",
+      "evidence": "layers.log.txt"
+    },
+    {
+      "command": "pnpm.cmd check:deps",
+      "result": "PASS (exit 0)",
+      "evidence": "deps.log.txt"
+    },
+    {
+      "command": "pnpm.cmd check:docs",
+      "result": "PASS (exit 0)",
+      "evidence": "docs.log.txt"
+    },
+    {
+      "command": "pnpm.cmd check:tokens",
+      "result": "PASS (exit 0)",
+      "evidence": "tokens.log.txt"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/contracts test:coverage",
+      "result": "PASS",
+      "evidence": "coverage-contracts.log.txt",
+      "lines": "99.74% ( 385/386 )",
+      "branches": "95% ( 190/200 )",
+      "tests": "280 passed (280)"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage",
+      "result": "PASS",
+      "evidence": "coverage-engine.log.txt",
+      "lines": "98.03% ( 2543/2594 )",
+      "branches": "93.04% ( 2153/2314 )",
+      "tests": "1607 passed (1607)"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage",
+      "result": "FAIL",
+      "evidence": "coverage-infrastructure.log.txt",
+      "lines": "unavailable",
+      "branches": "unavailable",
+      "tests": "12 failed | 762 passed (774)"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage",
+      "result": "PASS",
+      "evidence": "coverage-adapter-codex.log.txt",
+      "lines": "98.82% ( 337/341 )",
+      "branches": "94.63% ( 335/354 )",
+      "tests": "495 passed | 5 skipped (500)"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage",
+      "result": "PASS",
+      "evidence": "coverage-api-client.log.txt",
+      "lines": "100% ( 246/246 )",
+      "branches": "99.37% ( 160/161 )",
+      "tests": "72 passed (72)"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage",
+      "result": "FAIL / interrupted; no completed coverage summary",
+      "evidence": "coverage-api.log.txt",
+      "lines": "unavailable",
+      "branches": "unavailable",
+      "tests": "incomplete"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/web test:coverage",
+      "result": "FAIL",
+      "evidence": "coverage-web.log.txt",
+      "lines": "unavailable",
+      "branches": "unavailable",
+      "tests": "incomplete"
+    },
+    {
+      "command": "pnpm.cmd format:check",
+      "result": "INCOMPLETE: interrupted without a completion summary",
+      "evidence": "format-check.log.txt"
+    }
+  ],
+  "isolatedReruns": [
+    {
+      "evidence": "isolated-infrastructure-src-adversarial.log.txt",
+      "result": "FAIL",
+      "tests": "1 failed | 19 passed (20)",
+      "duration": "76.77s (tests 48%, transform 45%, import 7%)"
+    },
+    {
+      "evidence": "isolated-infrastructure-src-claude-process.log.txt",
+      "result": "FAIL",
+      "tests": "3 failed | 2 passed (5)",
+      "duration": "50.16s (tests 71%, transform 22%, import 6%)"
+    },
+    {
+      "evidence": "isolated-infrastructure-src-claude-readiness.log.txt",
+      "result": "FAIL",
+      "tests": "1 failed | 20 passed (21)",
+      "duration": "35.45s (tests 85%, transform 9%, import 7%)"
+    },
+    {
+      "evidence": "isolated-infrastructure-src-process-scripts.log.txt",
+      "result": "FAIL",
+      "tests": "3 failed | 36 passed (39)",
+      "duration": "69.19s (tests 100%)"
+    },
+    {
+      "evidence": "isolated-infrastructure-src-sqlite-upgrade.log.txt",
+      "result": "FAIL",
+      "tests": "2 failed | 24 passed (26)",
+      "duration": "141.47s (tests 90%, transform 5%, import 5%)"
+    },
+    {
+      "evidence": "isolated-web-routing-review.log.txt",
+      "result": "PASS",
+      "tests": "23 passed (23)",
+      "duration": "52.43s (tests 61%, environment 16%, transform 11%, setup 7%, import 5%)"
+    }
+  ],
+  "finalVerdict": "FAIL: required validation is not clean; requested feature scenarios passed"
+}

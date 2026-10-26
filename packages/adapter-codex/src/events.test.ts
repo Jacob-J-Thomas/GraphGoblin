@@ -154,6 +154,25 @@ describe('mapUsage', () => {
 });
 
 describe('classifyCodexError', () => {
+  it('uses native-message fallback for unknown metadata and defaults a missing retry hint to false', () => {
+    expect(
+      classifyCodexError({
+        code: 'UNKNOWN',
+        message: 'No rollout found with id abc',
+        retriable: true,
+      }),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING', retriable: false });
+    expect(
+      classifyCodexError({
+        code: 'HARNESS_SESSION_MISSING',
+        message: 'Recorded conversation refused',
+      }),
+    ).toEqual({
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'Recorded conversation refused',
+      retriable: false,
+    });
+  });
   it('unwraps the JSON API error Codex reports', () => {
     const raw = loadFixture('failed-invalid-model').events.find((e) => e.type === 'turn.failed');
     const message = (raw as { error: { message: string } }).error.message;
@@ -186,7 +205,7 @@ describe('classifyCodexError', () => {
       code: 'HARNESS_NOT_INSTALLED',
     });
     expect(classifyCodexError(JSON.stringify({ status: 503 }))).toMatchObject({
-      code: 'HARNESS_TURN_FAILED',
+      code: 'HARNESS_TRANSPORT_FAILED',
       retriable: true,
     });
     expect(classifyCodexError('stream disconnected before completion')).toMatchObject({
@@ -202,10 +221,31 @@ describe('classifyCodexError', () => {
 });
 
 describe('TurnAccumulator', () => {
+  it('retains authoritative typed evidence over later generic and missing-session wrappers', () => {
+    const acc = new TurnAccumulator('resumed');
+    acc.push({ type: 'turn.failed', error: { message: 'Not logged in' } });
+    acc.fail({
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'Recorded conversation refused',
+      retriable: true,
+    });
+    expect(acc.finish().failure?.code).toBe('HARNESS_SESSION_MISSING');
+    acc.fail({ code: 'HARNESS_TERMINATION_UNCONFIRMED', message: 'Process still alive' });
+    acc.fail({ code: 'HARNESS_SESSION_MISSING', message: 'Recorded conversation refused' });
+    acc.fail('Generic wrapper');
+    expect(acc.finish().failure?.code).toBe('HARNESS_TERMINATION_UNCONFIRMED');
+  });
   it('replays the plain message fixture', () => {
     const acc = new TurnAccumulator('fresh');
     const out = loadFixture('message').events.flatMap((e) => acc.push(e));
-    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'usage', 'turn-complete']);
+    expect(out.map((e) => e.type)).toEqual([
+      'session',
+      'item',
+      'submitted',
+      'item',
+      'usage',
+      'turn-complete',
+    ]);
     expect(out[0]).toEqual({ type: 'session', sessionId: acc.sessionId, mode: 'fresh' });
     // The configuration deprecation warning is an ordinary error item, not a failure.
     expect(out[1]).toMatchObject({ type: 'item', item: { type: 'error' } });
@@ -231,7 +271,7 @@ describe('TurnAccumulator', () => {
   it('turns turn.failed into a classified failure and ignores the preceding stream error', () => {
     const acc = new TurnAccumulator('fresh');
     const out = loadFixture('failed-invalid-model').events.flatMap((e) => acc.push(e));
-    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item']);
+    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted']);
     const outcome = acc.finish();
     expect(outcome.completed).toBe(false);
     expect(outcome.failure?.code).toBe('HARNESS_TURN_FAILED');

@@ -1,0 +1,367 @@
+{
+  "loopId": "01M5J9FA65P99VJ6BBVAAZMHV2",
+  "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+  "path": "/slow",
+  "run": {
+    "id": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+    "ownerId": "local",
+    "loopId": "01M5J9FA65P99VJ6BBVAAZMHV2",
+    "versionId": "01M5J9FA65N8BN5F0GNQMCNWVF",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /slow",
+      "label": "Audit /slow v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5J9FA7GX72T0N7JC6ZRM2P4",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:10:23.216Z",
+    "startedAt": "2026-10-22T17:10:23.257Z",
+    "finishedAt": "2026-10-22T17:10:23.335Z",
+    "lastEventSeq": 13
+  },
+  "events": [
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 1,
+      "ts": "2026-10-22T17:10:23.216Z",
+      "type": "run.queued",
+      "versionId": "01M5J9FA65N8BN5F0GNQMCNWVF",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /slow",
+        "label": "Audit /slow v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+          "loopId": "01M5J9FA65P99VJ6BBVAAZMHV2",
+          "versionId": "01M5J9FA65N8BN5F0GNQMCNWVF",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5J9FA7GX72T0N7JC6ZRM2P4",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /slow",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:10:23.216Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 2,
+      "ts": "2026-10-22T17:10:23.266Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 3,
+      "ts": "2026-10-22T17:10:23.281Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 4,
+      "ts": "2026-10-22T17:10:23.292Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /slow",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.291Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /slow",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.291Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 5,
+      "ts": "2026-10-22T17:10:23.321Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "05367a2dea340429"
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 6,
+      "ts": "2026-10-22T17:10:23.329Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 7,
+      "ts": "2026-10-22T17:10:23.329Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 8,
+      "ts": "2026-10-22T17:10:23.329Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 9,
+      "ts": "2026-10-22T17:10:23.329Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 10,
+      "ts": "2026-10-22T17:10:23.361Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:35.358Z"
+      }
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 11,
+      "ts": "2026-10-22T17:10:33.380Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:35.378Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 12,
+      "ts": "2026-10-22T17:10:35.396Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:50.393Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+      "seq": 13,
+      "ts": "2026-10-22T17:10:35.413Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:10:35.419Z",
+      "last_event_seq": 13,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/slow",
+      "n": 1,
+      "ms": 1792689023371,
+      "key": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+      "body": {
+        "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+        "loopId": "01M5J9FA65P99VJ6BBVAAZMHV2",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/slow",
+      "n": 2,
+      "ms": 1792689035401,
+      "key": "01M5J9FAB17WMW9MEA4KF9Q2D2",
+      "body": {
+        "runId": "01M5J9FA7GDSDT9Y96K3K4RE0B",
+        "loopId": "01M5J9FA65P99VJ6BBVAAZMHV2",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

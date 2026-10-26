@@ -43,6 +43,8 @@ export const decisionHandler: NodeHandler<'decision'> = {
       ports: ctx.ports,
       resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
         ctx.services.resolveModel(...args),
+      structuredTimeoutMs: ctx.run.pinned.limits.structuredTimeoutMs,
+      runId: ctx.run.id,
     };
     let payload: DecisionPayload;
     switch (config.kind) {
@@ -112,7 +114,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
       const limit =
         payload.portId !== repeat.id
           ? null
-          : previousPasses >= maxPasses
+          : maxPasses !== null && previousPasses >= maxPasses
             ? 'max-passes'
             : config.maxRunTimeSeconds !== undefined && elapsedSeconds >= config.maxRunTimeSeconds
               ? 'max-run-time'

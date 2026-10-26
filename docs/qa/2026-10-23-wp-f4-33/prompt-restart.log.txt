@@ -1,0 +1,59 @@
+pnpm.cmd : $ node --test apps/api/scripts/prompt-restart.integration.mjs
+At line:2 char:180
++ ... P_DATA='1'; pnpm.cmd test:prompt-restart *> docs/qa/2026-10-23-wp-f4- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node --test a...integration.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+TAP version 13
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-33-Thbxsp","port":5940,"runId":"01M5P1DF6N07NEGW4S3AGVXAJJ","visitId":"01M5P1DF6N07NEGW4S3AGVXAJJ:5","recovered":"same session, continuation only"}
+# {"retainedStore":"gg-wp-f4-33-Thbxsp"}
+# Subtest: a real kill of the built API continues accepted work from durable visit evidence
+ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+  ---
+  duration_ms: 45706.9985
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-33-byTgh2","port":5940,"runId":"01M5P1ERKTX2KBPWW4A3QRGMTA","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+# {"retainedStore":"gg-wp-f4-33-byTgh2"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+  ---
+  duration_ms: 39335.2504
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-33-0pnSJH","port":5940,"runId":"01M5P1FFXS4CGB2KSK9WAHQ519","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+# {"retainedStore":"gg-wp-f4-33-0pnSJH"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+  ---
+  duration_ms: 25334.0383
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-33-AvzwRl","port":5940,"runId":"01M5P1GHSK1Y5QBKS50KGMAR4A","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# {"retainedStore":"gg-wp-f4-33-AvzwRl"}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+  ---
+  duration_ms: 61807.2218
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-33-zXdYk5","port":5940,"runId":"01M5P1J9NBV56PM6E9Q68A9789","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# {"retainedStore":"gg-wp-f4-33-zXdYk5"}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+  ---
+  duration_ms: 37438.7628
+  ...
+# {"runId":"01M5P1K7J3XM42WJ7DZZSPNWD3","recovered":"own worker/reviewer handles, new process, authored feedback preserved"}
+# {"retainedStore":"gg-wp-f4-33-MCBn5N"}
+# Subtest: a real restart preserves separate own handles across completed visits
+ok 6 - a real restart preserves separate own handles across completed visits
+  ---
+  duration_ms: 20474.2915
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 240869.0609

@@ -1,0 +1,19 @@
+
+import {loadConfig} from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/apps/api/dist/config.js";
+import {createContainer} from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/apps/api/dist/container.js";
+import {buildApp} from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/apps/api/dist/app.js";
+import {runCreateApiKeyCli} from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/apps/api/dist/create-api-key.js";
+import {FakeHarness} from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/packages/engine/dist/testing/index.js";
+if (process.argv.includes('--create-api-key')) process.exit(await runCreateApiKeyCli());
+const config = loadConfig();
+const harness = new FakeHarness([{delayMs:60000,finalText:'must not appear'}]);
+const container = await createContainer(config,{harnesses:{codex:harness}});
+await container.start();
+const app = await buildApp(container,{logger:false});
+await app.listen({host:config.host,port:config.port});
+console.log('QA built API fake-harness process listening '+process.pid);
+void container.waitForShutdown().then(async()=>{
+  console.log('QA cleanup ready '+JSON.stringify({state:container.shutdown.state(),cancelled:harness.cancelled}));
+  await app.close(); await container.dispose(); process.exit(0);
+});
+void container.shutdown.abandoned.then(()=>setTimeout(()=>process.exit(1),100));

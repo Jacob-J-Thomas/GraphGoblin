@@ -1,0 +1,33 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > ready reports ready without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > old reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-model reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-effort reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > auth reports auth without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > quota reports quota without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > transport reports transport without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > unknown reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stdout preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stderr preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-auth-stderr preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-quota-stderr preserves quota evidence through the executable boundary
+ ✓ src/claude/readiness.test.ts > probes the actual installed native Claude without a model turn 2371ms
+ ↓ src/claude/readiness.test.ts > reports a missing Claude executable as cli-missing
+ ↓ src/claude/readiness.test.ts > classifies a real installed signed-out Claude in a disposable home as auth
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 20 skipped (21)
+   Start at  18:05:28
+   Duration  9.87s (transform 47%, tests 27%, import 26%, worker 1%)
+
+  Transform  transforming modules took 4.14s · 47% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

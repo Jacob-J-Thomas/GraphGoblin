@@ -1,0 +1,22 @@
+import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
+import {resolve,relative,join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const base=resolve('docs/qa/2026-10-22-wp-e1-259-qa'),dir=resolve(base,'round-6');
+await mkdir(dir,{recursive:true});
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const tracked=new Set(execFileSync('git',['ls-files'],{encoding:'utf8'}).split(/\r?\n/));
+const records=[],manifests=[];
+for(const round of ['', 'round-2','round-3','round-4','round-5']){
+ const folder=resolve(base,round),report=await readFile(resolve(folder,'README.md'),'utf8');
+ const refs=[...new Set([...report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(x=>x[1]).filter(x=>!/^https?:|^#/.test(x)))];
+ let manifest='';try{manifest=await readFile(resolve(folder,'NOT-KEPT.md'),'utf8');}catch{}
+ for(const ref of refs){const file=resolve(folder,ref);try{const bytes=await readFile(file);records.push({round:round||'round-1',ref,exists:true,tracked:tracked.has(relative(process.cwd(),file).replaceAll('\\','/')),bytes:bytes.length,sha256:sha(bytes),manifested:manifest.includes(ref)});}catch{records.push({round:round||'round-1',ref,exists:false,manifested:manifest.includes(ref)});}}
+ if(manifest){for(const line of manifest.split('\n')){const match=line.match(/\|\s*`?([^|`]+)`?\s*\|\s*([\d,]+)\s*\|\s*`?([a-f\d]{64})`?\s*\|/);if(!match)continue;const name=match[1].trim(),bytes=Number(match[2].replaceAll(',','')),hash=match[3];let actual;try{const b=await readFile(resolve(folder,name));actual={bytes:b.length,sha256:sha(b),matches:b.length===bytes&&sha(b)===hash};}catch{actual={absent:true};}manifests.push({round,name,bytes,sha256:hash,actual});}}
+}
+await writeFile(resolve(dir,'prior-evidence-audit.json'),JSON.stringify({references:records.length,missingUnmanifested:records.filter(x=>!x.exists&&!x.manifested).length,untracked:records.filter(x=>x.exists&&!x.tracked).length,manifestEntries:manifests.length,manifests,records},null,2));
+await writeFile(resolve(dir,'environment.json'),JSON.stringify({head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),node:process.version,status:execFileSync('git',['status','--short'],{encoding:'utf8'}).trim(),apiPort:5720,controlPort:5721},null,2));
+await writeFile(resolve(dir,'change.diff.txt'),execFileSync('git',['diff','314bbcb18e56a0180653d710979913d6afeeb15e','HEAD','--','apps/web','docs/09-frontend-and-pwa.md','CHANGELOG.md']));
+for(const name of ['run-command.mjs.txt','server.mjs.txt','playwright.config.mjs.txt']){const raw=(await readFile(resolve(base,'round-5',name),'utf8')).replaceAll('round-5','round-6').replaceAll('r5-playwright','r6-playwright');await writeFile(resolve(dir,name),raw);await writeFile(join(tmpdir(),'gg-qa-e1-r6-'+name.replace('.txt','')),raw);}
+console.log(JSON.stringify({node:process.version,priorReferences:records.length,missingUnmanifested:records.filter(x=>!x.exists&&!x.manifested).length,manifestEntries:manifests.length,manifestMismatch:manifests.filter(x=>x.actual.matches===false).length}));

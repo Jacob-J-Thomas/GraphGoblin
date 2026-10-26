@@ -17,12 +17,17 @@ import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
+import { readinessOperation } from '../readiness-operation.js';
+import { assertRunReadiness, RunReadinessError } from '../run-readiness.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
 import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
+import { historicalThread, historyCursor, readHistoryCursor } from '../run-history.js';
 
 const IdParams = z.object({ id: UlidSchema });
+/** Fresh-session choices the observation read returns; earlier ones stay in the history. */
+const FRESH_SESSION_NOTES = 20;
 
 const SessionSchema = z.object({
   runId: z.string(),
@@ -78,19 +83,30 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       if (!loop || loop.ownerId !== request.auth.ownerId)
         throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);
       const body = request.body;
-      const run = await manager.startRun({
-        ownerId: request.auth.ownerId,
-        loopId: loop.id,
-        source: sourceFor(request),
-        caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
-        ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
-        ...(body.input !== undefined ? { payload: body.input } : {}),
-        ...(body.return ? { returnDefaults: body.return } : {}),
-        ...(body.versionId ? { versionId: body.versionId } : {}),
-        ...(body.allowDraft ? { allowDraft: true } : {}),
-      });
-      reply.status(202);
-      return { run };
+      const versionId = body.versionId || loop.currentVersionId;
+      const readiness = readinessOperation(ports.harnesses);
+      try {
+        const run = await manager.startRun(
+          {
+            ownerId: request.auth.ownerId,
+            loopId: loop.id,
+            source: sourceFor(request),
+            caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
+            ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
+            ...(body.input !== undefined ? { payload: body.input } : {}),
+            ...(body.return ? { returnDefaults: body.return } : {}),
+            ...(versionId ? { versionId } : {}),
+            ...(body.allowDraft ? { allowDraft: true } : {}),
+          },
+          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
+        );
+        reply.status(202);
+        return { run };
+      } catch (error) {
+        if (error instanceof RunReadinessError)
+          return problem(reply, 422, 'HARNESS_NOT_READY', error.message, error.issues);
+        throw error;
+      }
     },
   );
 
@@ -100,30 +116,24 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'List runs with filters and stable newest-first paging',
-        querystring: z
-          .strictObject({
-            loopId: UlidSchema.optional(),
-            status: z
-              .string()
-              .refine(
-                (value) =>
-                  value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
-                'Use comma-separated run statuses.',
-              )
-              .optional(),
-            parent: z.union([UlidSchema, z.literal('none')]).optional(),
-            before: TimestampSchema.optional(),
-            cursor: z.string().optional().register(openApiRegistry, {
-              description: 'Opaque run cursor, at most 256 base64url characters.',
-              // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
-              maxLength: 256,
-            }),
-            limit: z.coerce.number().int().min(1).max(500).optional(),
-          })
-          .superRefine((query, ctx) => {
-            if (query.cursor !== undefined && query.before !== undefined)
-              ctx.addIssue({ code: 'custom', message: 'Use either cursor or before.' });
+        querystring: z.strictObject({
+          loopId: UlidSchema.optional(),
+          status: z
+            .string()
+            .refine(
+              (value) => value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
+              'Use comma-separated run statuses.',
+            )
+            .optional(),
+          parent: z.union([UlidSchema, z.literal('none')]).optional(),
+          before: TimestampSchema.optional(),
+          cursor: z.string().optional().register(openApiRegistry, {
+            description: 'Opaque run cursor, at most 256 base64url characters.',
+            // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
+            maxLength: 256,
           }),
+          limit: z.coerce.number().int().min(1).max(500).optional(),
+        }),
         response: {
           200: z.object({ items: z.array(RunRecordSchema), nextCursor: z.string().nullable() }),
         },
@@ -176,12 +186,18 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'The current context thread',
         params: IdParams,
+        querystring: z.strictObject({
+          at: z.coerce.number().int().nonnegative().safe().optional(),
+        }),
         response: { 200: ContextThreadSchema },
       },
     },
     async (request, reply) => {
       await ownedRun(request, request.params.id);
-      const thread = await manager.getThread(request.params.id);
+      const thread =
+        request.query.at === undefined
+          ? await manager.getThread(request.params.id)
+          : await historicalThread(container, request.params.id, request.query.at);
       if (!thread) return problem(reply, 404, 'THREAD_NOT_FOUND', 'the run has no thread');
       return thread;
     },
@@ -194,12 +210,32 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'A page of events; with Accept: text/event-stream, a live SSE tail',
         params: IdParams,
-        querystring: z.object({
-          after: z.coerce.number().int().min(0).optional(),
-          limit: z.coerce.number().int().min(1).max(1000).optional(),
-        }),
+        querystring: z
+          .object({
+            after: z.coerce.number().int().min(0).optional(),
+            limit: z.coerce.number().int().min(1).max(1000).optional(),
+            cursor: z.string().optional(),
+            around: z.coerce
+              .number()
+              .int()
+              .nonnegative()
+              .max(Number.MAX_SAFE_INTEGER - 1)
+              .optional(),
+          })
+          .refine(
+            (query) =>
+              [query.after, query.around, query.cursor].filter((value) => value !== undefined)
+                .length <= 1,
+            { message: 'Choose one of after, around or cursor.' },
+          ),
         response: {
-          200: z.object({ items: z.array(RunEventSchema), nextAfter: z.number().int() }),
+          200: z.object({
+            items: z.array(RunEventSchema),
+            nextAfter: z.number().int(),
+            hasMore: z.boolean(),
+            olderCursor: z.string().nullable().optional(),
+            newerCursor: z.string().nullable().optional(),
+          }),
         },
       },
     },
@@ -209,15 +245,94 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const after = request.query.after ?? (Number.isFinite(lastEventId) ? lastEventId : 0);
       if ((request.headers.accept ?? '').includes('text/event-stream')) {
         await streamRunEvents(request, reply, repos.events, request.params.id, after, {
+          closeSignal: container.shutdown.closing.signal,
           isTerminal: async () => {
             const run = await repos.runs.get(request.params.id);
             return run !== undefined && isTerminal(run.status);
           },
+          isFinalized: async () => {
+            const run = await repos.runs.get(request.params.id);
+            return (
+              run?.finalizedAt !== undefined &&
+              !run.deliveries?.some((delivery) => delivery.status === 'pending')
+            );
+          },
+          lastLifecycleEvent: () => repos.events.lastLifecycleEvent(request.params.id),
         });
         return reply;
       }
-      const items = await repos.events.read(request.params.id, after, request.query.limit ?? 500);
-      return { items, nextAfter: items.length ? (items[items.length - 1]?.seq ?? after) : after };
+      const limit = request.query.limit ?? 500;
+      if (request.query.cursor !== undefined || request.query.around !== undefined) {
+        const position =
+          request.query.cursor !== undefined
+            ? readHistoryCursor(request.query.cursor, request.params.id)
+            : { seq: request.query.around! + 1, direction: 'older' as const };
+        const page = await repos.events.window(
+          request.params.id,
+          position.seq,
+          position.direction,
+          limit,
+        );
+        return {
+          items: page.items,
+          nextAfter: page.newerThan,
+          hasMore: page.hasNewer,
+          olderCursor: page.hasOlder
+            ? historyCursor({ runId: request.params.id, seq: page.olderThan, direction: 'older' })
+            : null,
+          newerCursor: page.hasNewer
+            ? historyCursor({ runId: request.params.id, seq: page.newerThan, direction: 'newer' })
+            : null,
+        };
+      }
+      return repos.events.page(request.params.id, after, limit);
+    },
+  );
+
+  app.get(
+    '/runs/:id/observation',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Latest durable inspector evidence, independent of the retained history window',
+        params: IdParams,
+        response: {
+          200: z.object({
+            lifecycle: RunEventSchema.optional(),
+            exit: RunEventSchema.optional(),
+            gate: RunEventSchema.optional(),
+            finished: RunEventSchema.optional(),
+            cancelled: RunEventSchema.optional(),
+            cancelRequested: RunEventSchema.optional(),
+            freshSessionChoices: z.array(RunEventSchema),
+          }),
+        },
+      },
+    },
+    async (request) => {
+      const runId = request.params.id;
+      await ownedRun(request, runId);
+      const gate = await repos.events.latestGate(runId);
+      const cancelled = await repos.events.latest(runId, 'run.cancelled');
+      // The request that led to the latest cancellation: one a later resume answered does not.
+      const requested = cancelled
+        ? await repos.events.latest(runId, 'run.cancel_requested', cancelled.seq)
+        : undefined;
+      const resumed = requested
+        ? await repos.events.latest(runId, 'run.resumed', cancelled!.seq)
+        : undefined;
+      return {
+        lifecycle: await repos.events.lastLifecycleEvent(runId),
+        exit: await repos.events.latest(runId, 'exit.evaluated'),
+        gate,
+        finished: await repos.events.latest(runId, 'run.finished'),
+        cancelled,
+        cancelRequested:
+          requested && (resumed === undefined || requested.seq > resumed.seq)
+            ? requested
+            : undefined,
+        freshSessionChoices: await repos.events.freshSessionChoices(runId, FRESH_SESSION_NOTES),
+      };
     },
   );
 
@@ -239,6 +354,27 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     );
   }
 
+  app.post(
+    '/runs/:id/recover-session',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Explicitly start a fresh session for the observed missing-session failure',
+        params: IdParams,
+        body: z.strictObject({ nodeId: SlugSchema, failureSeq: z.number().int().positive() }),
+        response: { 200: RunRecordSchema },
+      },
+    },
+    async (request) => {
+      await ownedRun(request, request.params.id);
+      return manager.recoverSession(
+        request.params.id,
+        request.body.nodeId,
+        request.body.failureSeq,
+        request.auth.actor,
+      );
+    },
+  );
   app.post(
     '/runs/:id/input',
     {

@@ -1,0 +1,44 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {once} from 'node:events';
+import {readFile,writeFile,copyFile,stat,unlink} from 'node:fs/promises';
+import {appendFileSync,writeFileSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(head,'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');assert.match(process.version,/^v22\./);
+const previous=JSON.parse(await readFile(join(out,'coverage-complete.json'),'utf8'));assert.equal(previous.gateCount,3);
+const original=JSON.parse(await readFile(join(out,'gates.json'),'utf8'));assert.ok(!original.some(r=>r.name==='coverage-api-corrected'),'Corrected API gate already attempted');
+await copyFile(join(out,'gates.json'),join(out,'gates-setup-attempt.json'));await copyFile(join(out,'coverage-complete.json'),join(out,'coverage-complete-setup-attempt.json'));
+const results=original.map(r=>r.package==='api'?{...r,kind:'QA allocation setup failure',reason:'Suffix-only allocation alias retained relative path prefix; native test modules could not load. See allocation-alias-check.json.'}:r);
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const save=(name,value)=>writeFile(join(out,name),clean(JSON.stringify(value,null,2)));
+async function command(name,cmd){
+  const path=join(out,name+'.log.txt'),start=Date.now();writeFileSync(path,'');console.log('START '+cmd);
+  const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',cmd],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+  child.stdout.on('data',x=>appendFileSync(path,x));child.stderr.on('data',x=>appendFileSync(path,x));
+  const [exitCode,signal]=await once(child,'close'),raw=await readFile(path,'utf8');await writeFile(path,clean(raw));
+  const result={name,cmd,exitCode,signal,startedAt:new Date(start).toISOString(),finishedAt:new Date().toISOString(),ms:Date.now()-start,log:name+'.log.txt'};console.log('END '+name+' exit='+exitCode+' seconds='+(result.ms/1000).toFixed(2));return {result,raw,start};
+}
+const config=' --config ../../docs/qa/2026-10-24-wp-f4-265-qa/round-2/api-allocation.vitest.mjs';
+for(const stem of ['api-allocation.vitest','api-allocation.fixture'])await copyFile(join(out,stem+'.mjs.txt'),join(out,stem+'.mjs'));
+try{
+  const collection=await command('api-allocation-collection','pnpm.cmd --filter @graphgoblin/api exec vitest list src/main.test.ts --json --maxWorkers=1'+config);
+  await save('api-allocation-collection-result.json',{...collection.result,kind:'setup collection check; no test bodies executed'});assert.equal(collection.result.exitCode,0,'Corrected API allocation config did not collect main.test.ts');assert.ok(collection.raw.includes('main.test.ts'),'No main test entries were listed');
+  let run=await command('coverage-api-corrected','pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1'+config);
+  if(run.raw.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){results.push({...run.result,kind:'pnpm store-lock failure'});await save('gates.json',results);run=await command('coverage-api-corrected-store-lock-fallback','cd /d "'+resolve('apps/api')+'" && node_modules\\.bin\\vitest.cmd run --coverage --maxWorkers=1'+config)}
+  let summary;try{const path=resolve('apps/api/coverage/coverage-summary.json');if((await stat(path)).mtimeMs>=run.start){summary=JSON.parse(await readFile(path,'utf8')).total;await copyFile(path,join(out,'coverage-summary-api.json'))}}catch{}
+  const text=run.raw.replace(/\x1b\[[0-9;]*m/g,''),failedFiles=[...new Set([...text.matchAll(/^\s*FAIL\s+(\S+\.(?:test|spec)\.[cm]?[jt]sx?)(?:\s|$)/gm)].map(m=>m[1]))];
+  const entry={...run.result,package:'api',kind:'coverage gate',coverage:summary??null,failedFiles,retries:[],setupCorrection:'whole-import alias; initial setup attempt retained separately'};results.push(entry);await save('gates.json',results);
+  if(entry.exitCode!==0)for(const [i,file]of failedFiles.entries()){
+    const prior=original.find(r=>r.package==='api').retries.find(r=>r.file===file);
+    if(prior){
+      const priorText=(await readFile(join(out,prior.log),'utf8')).replace(/\x1b\[[0-9;]*m/g,'');
+      if(/^\s*Tests\s+.*\d+\s+(?:failed|passed)/m.test(priorText)){
+        entry.retries.push({...prior,reusedValidIsolation:true,reason:'This file collected and executed real tests during its once-alone rerun; the allocation alias error did not prevent collection. Retained without another isolated retry.'});await save('gates.json',results);continue;
+      }
+    }
+    const retry=await command('retry-api-corrected-'+(i+1),'pnpm.cmd --filter @graphgoblin/api exec vitest run '+file+' --maxWorkers=1'+config);entry.retries.push({...retry.result,file,kind:'one isolated file rerun'});await save('gates.json',results);
+  }
+}finally{for(const stem of ['api-allocation.vitest','api-allocation.fixture'])await unlink(join(out,stem+'.mjs'))}
+const gates=results.filter(r=>r.kind==='coverage gate');await save('coverage-complete.json',{head,node:process.version,gateCount:gates.length,allPassed:gates.every(r=>r.exitCode===0),finishedAt:new Date().toISOString(),gateOrder:results.map(r=>r.name),allocationSetupFailureRetained:true,qualification:'All jobs sequential with one worker. Initial API allocation setup attempt retained; corrected API package run is the qualifying API attempt. Other shared-PC activity was not controlled.'});
+await save('api-recheck-complete.json',{head,finishedAt:new Date().toISOString(),exitCode:gates.find(g=>g.package==='api').exitCode,correctedAllocation:true});

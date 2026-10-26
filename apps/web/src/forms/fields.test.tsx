@@ -316,7 +316,7 @@ describe('form controls in the schema-driven form', () => {
     const options = screen.getByRole('group', { name: 'Routes' });
     expect(options.querySelector(':scope > legend span[aria-hidden="true"]')).not.toBeNull();
     expect(options).toHaveAccessibleDescription(
-      'At least 2 items. Declared stable route ids and readable labels.',
+      'At least 2 items. Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.',
     );
     await user.click(within(options).getByRole('button', { name: 'Remove routes 1' }));
     await waitFor(() => expect(within(options).getByRole('alert')).toHaveTextContent(/>=2 items/));

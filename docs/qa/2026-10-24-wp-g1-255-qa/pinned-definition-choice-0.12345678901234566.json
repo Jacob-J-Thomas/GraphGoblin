@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 4,
+  "name": "Pinned choice-0.12345678901234566",
+  "settings": {
+    "workingDirectory": {
+      "kind": "temp"
+    },
+    "defaults": {
+      "byHarness": {}
+    },
+    "maxNodeVisits": 10,
+    "runDeadlineSeconds": null,
+    "subloopDepthLimit": 8
+  },
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "label": "Pinned initial trigger",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "type": "manual",
+        "exposeTo": [
+          "ui",
+          "api",
+          "mcp"
+        ]
+      }
+    },
+    {
+      "id": "decide",
+      "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "classifier",
+        "model": "jev",
+        "question": "Independent choice",
+        "answer": {
+          "type": "choice",
+          "options": [
+            {
+              "id": "accept",
+              "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "criteria": "accept criterion"
+            },
+            {
+              "id": "reject",
+              "label": "Pinned reject",
+              "criteria": "reject criterion"
+            }
+          ]
+        },
+        "context": {
+          "messages": "last",
+          "includeLastOutput": true
+        },
+        "recordAlternatives": true
+      }
+    },
+    {
+      "id": "done",
+      "label": "Pinned completion",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "exit",
+      "config": {
+        "outcome": "success",
+        "returns": "none",
+        "destinations": [
+          {
+            "kind": "caller"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-out",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "decide",
+        "port": "in"
+      }
+    },
+    {
+      "id": "decide-accept",
+      "from": {
+        "node": "decide",
+        "port": "accept"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    },
+    {
+      "id": "decide-reject",
+      "from": {
+        "node": "decide",
+        "port": "reject"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    }
+  ]
+}

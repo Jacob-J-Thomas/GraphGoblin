@@ -85,7 +85,7 @@ Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` es
 
 ### Acknowledgement, repeats and recovery
 
-Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After. A target loop whose stored definition still has an exit publishing an Event (ADR-0044) refuses the delivery deterministically with 409 `LOOP_UPGRADE_REQUIRED` and saves nothing; the sender gets no loop details, and the API log names the loop, version and destination paths (cron, event and poll triggers log the same diagnostic).
+Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure or `WEBHOOK_PAYLOAD_TOO_DEEP` (payload nesting above 994) and 429 with Retry-After. A target loop whose stored definition still has an exit publishing an Event (ADR-0044) refuses the delivery deterministically with 409 `LOOP_UPGRADE_REQUIRED` and saves nothing; the sender gets no loop details, and the API log names the loop, version and destination paths (cron and poll triggers log the same diagnostic; targeted Event intake returns `LOOP_UPGRADE_REQUIRED` to its authenticated caller).
 
 **Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. Payload checks run downstream after admission; current configs reject `filter`. The `filtered` receipt state is historical only.
 
@@ -97,7 +97,7 @@ Endpoint summaries expose `authentication`, pinned `body`, `eventType`, optional
 
 An absent `dedupeKey` creates no business identity or automatic key, including no signature-hash key. A configured expression sees the decoded payload and the current bounded `$headers` binding, excluding the configured signature header case-insensitively. Expression failures remain 422 `EXPRESSION_FAILED`.
 
-For every authentication recipe, a null, undefined or empty-string expression result returns 422 `KEY_INVALID` before claim. Other results use the current string-or-JSON form: strings stay exact and other values use JSON serialization. Reject above 512 characters; never truncate. Whitespace-only strings are literal keys, so `" "` and `"  "` differ. Invalid keys save no receipt or inbound row and start no run. Event and Poll key rules are unchanged.
+For every authentication recipe, a null, undefined, empty-string, NUL-containing or ill-formed Unicode (lone surrogate) expression result returns 422 `KEY_INVALID` before claim; storage would otherwise turn a lone surrogate into U+FFFD and merge it with a different key. Other results use the current string-or-JSON form: strings stay exact and other values use JSON serialization. Reject above 512 characters; never truncate. Whitespace-only strings are literal keys, so `" "` and `"  "` differ. Invalid keys save no receipt or inbound row and start no run. Event keys follow the separate Inbound Events rules below; Poll keys follow the polling section.
 
 Explicit keys remain consumed permanently in owner/loop/trigger-node scope across versions and authentication recipes. Atomic claim checks preserved receipt/inbound keys, saved intent reservations and committed run-envelope keys from every trigger kind. Inbound-only historical claims use their preserved endpoint's owner/loop/node provenance, including disabled old versions. Receipt states, elapsed time, endpoint freshness windows and republishing cannot reopen a webhook key; there is no expiry refresh or signature-hash ledger. A concurrent repeat receives a new `deduplicated` receipt without a new executable intent. Lost-acknowledgement recovery reuses the saved identity; an external repeat with the key is acknowledged without another run. A stopped-store restart preserves the claims. Deleting the loop deletes that scope and its history.
 
@@ -137,12 +137,27 @@ a warning that it may ignore poll results.
 
 Current Webhook/Event contracts reject `filter`, with no dual reader. Decisions, classifiers and scripts own payload policy. The format-4 cutover converted stored filters once into reviewed downstream graphs (an expression decision, a restore of the trigger output and a quiet Success exit for ignored input; [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md)). That converter is retired: a definition that still carries a filter is in an older format and is refused, not converted ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 
-## Inbound Events (Decided, shipped in M6; exit chaining retired by ADR-0044)
+## Inbound Events (Decided; targeted durable admission, ADR-0048)
 
-- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`. The runs it starts record `caller: { kind: 'system', id: 'event:<eventId>' }`.
-- Dedupe: an event whose `(type, dedupeKey)` was seen before fires nothing and returns `duplicate: true` with the earlier event's run ids. A trigger node's own `dedupeKey` expression additionally skips the event when that node has already started a run with the same key (looked up in the runs' stored trigger envelopes, so it survives restarts).
-- Events come only from outside the engine. Exits do not publish Events and there is no in-process event bus: a loop that needs another loop's work calls it as an awaited subloop, which returns the child's configured output to the parent ([ADR-0044](decisions/ADR-0044-awaited-subloops.md), docs/05). The former `event` return channel, its `source: 'run:<runId>'` Events and the run-chain guard (`MAX_EVENT_CHAIN`) are removed. Inputs and signals for a waiting run go to that run's observed wait by identity (07).
-- `GET /events` lists stored events newest first (`limit`, `type`, `before`).
+`POST /events` accepts `{ loopId, triggerNodeId?, type, payload?, dedupeKey? }` from a client with `events:write`. `loopId` is a stable loop ULID owned by that caller. Only the current published version is eligible for a new delivery. The selected entry must be an `event` trigger whose `eventType` equals `type`. Omit `triggerNodeId` only when exactly one entry matches; no request broadcasts. Runs retain `caller: { kind: 'system', id: 'event:<eventId>' }` and `source: 'event'`.
+
+Missing or malformed fields return 400 `VALIDATION_FAILED`; unknown or foreign loops return 404 `LOOP_NOT_FOUND` without disclosing ownership. Unpublished loops return 409 `VERSION_NOT_PUBLISHED`. A mismatched entry returns 422 `EVENT_TRIGGER_NOT_FOUND`; multiple matches return 422 `EVENT_TRIGGER_AMBIGUOUS`. A failing authored dedupe expression returns 422 `EVENT_KEY_EXPRESSION_FAILED` before saving. Stored retired Event exits retain 409 `LOOP_UPGRADE_REQUIRED`. A keyed retry with unreadable stored delivery data returns 500 `STORED_EVENT_INVALID`, without rewriting history.
+
+Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL) (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key containing NUL or invalid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization or NUL truncation from changing an accepted identity.
+
+A transaction saves the inbound delivery, exact loop/version/trigger, complete frozen run intent (including referenced subloop pins), allocated run identity and receipt identity **before 202**. The response includes `admissionId`, `target`, `delivery`, `runIds` and `duplicate`. A new executable delivery initially reports `pending` with no started-run links. Execution is asynchronous; independent requests enter the ordinary `GG_MAX_CONCURRENT_RUNS` scheduler without waiting for another run to finish. Atomic run admission commits the run/thread, first queued event, receipt state and inbound run link together. Only after that commit does `runIds` name a started run. A later publish cannot change the accepted version or pinned subloops.
+
+An explicit request key identifies one delivery in owner/loop/trigger/type scope across versions. Retries return the **original Event and admission identity**, including its current pending, admitted, deduplicated or failed state. An omitted trigger ID on a retry can resolve that saved destination even after republishing, including when two identical requests race a publication that replaces the entry: the check is repeated inside the claim, so only one delivery is saved. If two saved entries match the key, supply `triggerNodeId`. The same key for another loop or trigger is independent. Request keys remain exact (whitespace is literal; an empty request key is refused before anything is stored). Unkeyed repeats are independent deliveries; there is no body-hash suppression. Historical broadcast rows do not acquire a destination or reserve a new targeted request key.
+
+The existing node `dedupeKey` expression remains a separate payload-key rule: its nonempty string-or-JSON result (limited to 512 characters by the existing rule) reserves the selected trigger across pending/admitted receipts and committed run envelopes. Failed receipts release this payload key: a new request key can attempt new work with the same payload key. A newly received request suppressed by that rule is saved as `deduplicated` with no executable intent. Repeating its request key returns that saved delivery. All accepted request keys, including failed receipts, stay consumed until explicit loop deletion; restarting or publishing does not reopen them. This is admission reliability, **not exactly-once external side effects**.
+
+Boot and the existing nonoverlapping 15-second admission sweep recover up to five due Event identities per sweep, separately from the five webhook identities. Retry delays are 5, 10, 20, 40, 80, 160 and 300 seconds; the eighth failed admission ends as `EVENT_ADMISSION_EXHAUSTED`. Timer polling may delay an eligible retry. Identity conflicts (`EVENT_INTENT_CONFLICT`) and removed targets (`EVENT_TARGET_REMOVED`) fail immediately. These are engineering bounds to avoid endless failed admission attempts, not owner-approved settings. A failed retry-metadata write leaves the original pending intent recoverable at restart. Each Event receipt dispatch catches and logs its own failure, so a retry-metadata write fault cannot starve later due Events in the same sweep. Sweeps take due Event identities in id order round robin within a finite round: every page of a round uses the time the round started as its due cutoff, a full page of five continues the round in the next sweep, and a short page ends it so the next round starts from the beginning. Receipts whose retry metadata cannot be written are revisited once per round without filling every sweep, and Events arriving later cannot keep older due ones waiting while the clock advances. After the clock is set back, a round's cutoff can stay ahead of the current time and newer due Events can prolong that round until time passes it; recovery is delayed, never lost or repeated. Each sweep half also logs its own failure and continues independently, so an Event-ledger failure cannot block webhook recovery or startup, and vice versa. Unsaved/unconfirmed receipts return 503 `EVENT_ADMISSION_FAILED`; senders should retry using the same explicit key.
+
+Payloads use iterative JSON validation and the shared poll nesting budget, reserving two extra container levels for `intent.queued.initialThread`: maximum payload container depth 994, counting the payload root as zero. Deeper Events return 422 `EVENT_PAYLOAD_TOO_DEEP`, and deeper URL webhooks return 422 `WEBHOOK_PAYLOAD_TOO_DEEP`, before any receipt. Both log a bounded diagnostic without payload data and never enter recovery. Other webhook URL, authentication, Allow, permanent key and fixed acknowledgement contracts remain unchanged.
+
+`GET /events` and the Events page expose pending/admitted/failed/deduplicated delivery states, attempts, retry time and safe failure codes. Migration `0020_targeted_event_admission` adds a separate `event_receipts` ledger; it does not reinterpret or rewrite historical inbound/webhook rows. Old Events continue to show their original run links and "not tracked" admission state, with no fabricated target. Invalid stored history remains untouched.
+
+Events come only from outside the engine. Exit-to-Event chaining remains retired (ADR-0044); use an awaited Subloop for loop composition.
 
 ## Polling trigger (Shipped in M6 as the stretch)
 
@@ -192,6 +207,30 @@ The most secure default for a single-user laptop is to accept nothing inbound an
 - Choose the required signing recipe and timestamp freshness check deliberately. The tunnel is not a substitute.
 - Never expose the whole API through the tunnel. Bind the API to localhost and route only the hooks prefix.
 - For real distribution, the hosted version terminates TLS itself and sits behind the auth provider; webhook endpoints remain signature-gated and unauthenticated by design.
+
+## Outbound webhook returns
+
+An exit webhook destination sends a JSON POST containing `runId`, `loopId`, `outcome` and
+`result`. `Idempotency-Key` carries one durable delivery identity across all attempts. Receivers
+must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin
+does not assume they do. Signing still covers each attempt's timestamp and body.
+
+Five attempts have 10-second acknowledgement deadlines, separated by 2/5/10/20 seconds.
+Connection refusal, timeout, HTTP 408/429/5xx and unknown acknowledgement are eligible;
+other 4xx, redirects and invalid destinations stop once. Redirects are never followed.
+An out-of-range or invalid HTTP status is retryable `transport` / unknown, without a typed
+`httpStatus`. `acknowledgementUncertain` retains prior unknown attempts independently of the
+latest error and response. The inspector keeps its possible-duplicate warning after eventual
+success following an unknown acknowledgement; rejection-only retries do not produce it.
+The complete 2xx acknowledgement is bounded to 64 KiB. Timeouts and truncated/lost responses
+mean the effect may have happened. `run.deliveries` and durable `delivery.*` events expose
+pending, delivered or failed after N attempts and the last typed error, separately from
+execution. Restart retains identity and consumed attempts. See
+[ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md). These engineering values are
+reviewed implementation parameters. On orderly stop, an in-flight request finishes within
+its existing 10-second deadline, no new attempt starts, and pending delivery resumes on the
+next start with the same budget. Loop deletion stops that loop's pending deliveries.
+This outbound journal does not implement targeted Event intake.
 
 ## Concurrency (Decided)
 

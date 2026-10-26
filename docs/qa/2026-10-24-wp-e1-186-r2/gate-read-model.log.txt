@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/packages/infrastructure
+
+ ❯ src/sqlite/event-validation.test.ts (10 tests | 1 failed) 1051ms
+   × finds the latest gate past ungated decisions in one read model and reports malformed history 239ms
+pnpm.cmd : 
+At line:9 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/event-validation.test.ts > finds the latest gate past ungated decisions in one read model and 
+reports malformed history
+AssertionError: expected InvalidStoredRunEventError: Stored run ev… { …(4) } to match object { Object (code, seq) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "STORED_EVENT_INVALID",
++ InvalidStoredRunEventError {
++   "code": "HISTORY_UNREADABLE",
+    "seq": 3,
+  }
+
+ ❯ src/sqlite/event-validation.test.ts:47:40
+     45|     args: ['{invalid', runId, 3],
+     46|   });
+     47|   await expect(store.latestGate(runId)).rejects.toMatchObject({
+       |                                        ^
+     48|     code: 'STORED_EVENT_INVALID',
+     49|     seq: 3,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  22:49:08
+   Duration  16.51s (transform 50%, import 41%, tests 7%, worker 1%)
+
+  Transform  transforming modules took 7.27s · 50% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\packages\infrastructure
+

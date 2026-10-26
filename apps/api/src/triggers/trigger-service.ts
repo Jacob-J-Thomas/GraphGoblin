@@ -10,12 +10,26 @@ import type {
 } from '@graphgoblin/contracts';
 import {
   stableStringify,
+  exceedsStoredJsonDepth,
+  POLL_ITEM_MAX_NESTING_DEPTH,
   evaluateExpression,
   nodesOfKind,
   type ValidationIssue,
 } from '@graphgoblin/domain';
-import type { ClockPort, IdPort, Logger, RunManager, SecretsPort } from '@graphgoblin/engine';
-import { LoopUpgradeRequiredError } from '@graphgoblin/engine';
+import type {
+  ClockPort,
+  IdPort,
+  Logger,
+  RunManager,
+  SecretsPort,
+  EventAdmissionPort,
+  EventReceipt,
+} from '@graphgoblin/engine';
+import {
+  AdmissionConflictError,
+  EngineRequestError,
+  LoopUpgradeRequiredError,
+} from '@graphgoblin/engine';
 import {
   CronScheduler,
   type CronFire,
@@ -41,6 +55,8 @@ type Config<S extends TriggerNode['config']['type']> = Extract<TriggerNode['conf
 
 /** Webhook bodies above this size are rejected with 413 before any work is done. */
 export const WEBHOOK_BODY_LIMIT = 1024 * 1024;
+// Frozen receipts also contain queued.initialThread, two containers deeper than the run index.
+export const EVENT_PAYLOAD_MAX_DEPTH = POLL_ITEM_MAX_NESTING_DEPTH - 2;
 
 export interface TriggerServiceDeps {
   loops: SqliteLoopRepository;
@@ -48,7 +64,8 @@ export interface TriggerServiceDeps {
   schedules: SqliteScheduleStore;
   endpoints: SqliteWebhookEndpoints;
   inbound: SqliteInboundEvents;
-  manager: Pick<RunManager, 'startRun' | 'receiveWebhook'>;
+  manager: Pick<RunManager, 'startRun' | 'receiveWebhook' | 'receiveEvent'>;
+  eventAdmission: EventAdmissionPort;
   cron: CronScheduler;
   secretsFor(ownerId: string): Pick<SecretsPort, 'resolve'>;
   clock: ClockPort;
@@ -69,6 +86,8 @@ export type WebhookOutcome =
     };
 
 export interface EventIngest {
+  loopId: string;
+  triggerNodeId?: string;
   ownerId: string;
   type: string;
   payload: JsonValue;
@@ -111,7 +130,12 @@ function stringKey(value: unknown): string | undefined {
 function webhookKey(value: unknown): string | undefined {
   if (value === undefined || value === null || value === '') return undefined;
   const key = typeof value === 'string' ? value : JSON.stringify(value);
-  return key !== undefined && key.length <= 512 ? key : undefined;
+  return key !== undefined &&
+    key.length <= 512 &&
+    !key.includes('\u0000') &&
+    eventKeyIsWellFormed(key)
+    ? key
+    : undefined;
 }
 
 function lookupOnce<T>(
@@ -417,6 +441,17 @@ export class TriggerService {
       return fail(verified.status, verified.code, verified.detail);
     }
     const payload = verified.payload;
+    if (exceedsStoredJsonDepth(payload, EVENT_PAYLOAD_MAX_DEPTH)) {
+      this.deps.logger.warn(
+        { code: 'WEBHOOK_PAYLOAD_TOO_DEEP', endpointId: endpoint.id },
+        'webhook payload refused',
+      );
+      return fail(
+        422,
+        'WEBHOOK_PAYLOAD_TOO_DEEP',
+        'payload exceeds the stored JSON nesting bound (994)',
+      );
+    }
     const extracted = extractWebhookEventType(node.eventType, payload, headers, rawHeaders);
     if (!extracted.ok) return fail(extracted.status, extracted.code, extracted.detail);
     const bindings = {
@@ -433,7 +468,7 @@ export class TriggerService {
           return fail(
             422,
             'KEY_INVALID',
-            'the webhook key must be nonempty and at most 512 characters',
+            'the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters',
           );
       }
     } catch {
@@ -446,7 +481,7 @@ export class TriggerService {
       ownerId: endpoint.ownerId,
       type: 'webhook',
       payload,
-      ...(dedupeKey ? { dedupeKey } : {}),
+      ...(dedupeKey !== undefined ? { dedupeKey } : {}),
       source,
       receivedAt: now.toISOString(),
       runIds: [],
@@ -461,7 +496,7 @@ export class TriggerService {
       eventType: extracted.eventType,
       caller: { kind: 'system' as const, id: source },
       payload,
-      ...(dedupeKey ? { dedupeKey } : {}),
+      ...(dedupeKey !== undefined ? { dedupeKey } : {}),
     };
     try {
       const outcome = await this.deps.manager.receiveWebhook(
@@ -513,79 +548,160 @@ export class TriggerService {
   // Events
   // ---------------------------------------------------------------------------
 
-  /**
-   * Record an event and fire every matching event trigger of the owner's published loops.
-   * An event whose `(type, dedupeKey)` was seen before is a duplicate and fires nothing.
-   */
+  /** Resolve exactly one owned published entry; a retry uses its original saved destination. */
   async ingestEvent(input: EventIngest): Promise<EventIngestResult> {
+    const fail = (code: string, detail: string): never => {
+      throw new EventIntakeError(code, detail);
+    };
+    if (exceedsStoredJsonDepth(input.payload, EVENT_PAYLOAD_MAX_DEPTH)) {
+      this.deps.logger.warn(
+        { code: 'EVENT_PAYLOAD_TOO_DEEP', loopId: input.loopId },
+        'event payload refused',
+      );
+      return fail('EVENT_PAYLOAD_TOO_DEEP', 'payload exceeds the stored JSON nesting bound (994)');
+    }
+    const loop = await this.deps.loops.getLoop(input.loopId);
+    if (!loop || loop.ownerId !== input.ownerId)
+      throw new EngineRequestError('LOOP_NOT_FOUND', 'target loop not found');
+    if (input.dedupeKey !== undefined) {
+      try {
+        const saved = await this.deps.eventAdmission.find(
+          input.ownerId,
+          loop.id,
+          input.type,
+          input.dedupeKey,
+          input.triggerNodeId,
+        );
+        if (saved.length > 1)
+          return fail(
+            'EVENT_TRIGGER_AMBIGUOUS',
+            'specify triggerNodeId to identify the accepted delivery',
+          );
+        if (saved[0]) return this.eventResult(saved[0], true);
+      } catch (error) {
+        if (!(error instanceof AdmissionConflictError)) throw error;
+        this.deps.logger.error(
+          { code: 'STORED_EVENT_INVALID', loopId: loop.id },
+          'saved event delivery is unreadable',
+        );
+        throw new EventIntakeError(
+          'STORED_EVENT_INVALID',
+          'the saved Event delivery is unreadable; inspect stored history',
+          500,
+        );
+      }
+    }
+    if (!loop.currentVersionId)
+      throw new EngineRequestError('VERSION_NOT_PUBLISHED', 'target loop has no published version');
+    const version = await this.deps.loops.getVersion(loop.currentVersionId);
+    if (!version || version.loopId !== loop.id || version.status !== 'published')
+      throw new EngineRequestError('VERSION_NOT_PUBLISHED', 'target loop has no published version');
+    const eligible = nodesOfKind(version.definition, 'trigger').filter(
+      (node) => node.config.type === 'event' && node.config.eventType === input.type,
+    );
+    const node = input.triggerNodeId
+      ? eligible.find((n) => n.id === input.triggerNodeId)
+      : eligible.length === 1
+        ? eligible[0]
+        : undefined;
+    if (!node)
+      return fail(
+        !input.triggerNodeId && eligible.length > 1
+          ? 'EVENT_TRIGGER_AMBIGUOUS'
+          : 'EVENT_TRIGGER_NOT_FOUND',
+        !input.triggerNodeId && eligible.length > 1
+          ? 'multiple matching event triggers; specify triggerNodeId'
+          : 'no eligible event trigger matches this destination and type',
+      );
+    const config = node.config as Config<'event'>;
+    let nodeKey: string | undefined;
+    try {
+      nodeKey = config.dedupeKey
+        ? stringKey(await evaluateExpression(config.dedupeKey, input.payload))
+        : undefined;
+    } catch {
+      this.deps.logger.warn(
+        { code: 'EVENT_KEY_EXPRESSION_FAILED', loopId: loop.id, nodeId: node.id },
+        'event key expression failed',
+      );
+      return fail('EVENT_KEY_EXPRESSION_FAILED', 'the event trigger dedupe expression failed');
+    }
+    if (nodeKey !== undefined && (!eventKeyIsWellFormed(nodeKey) || nodeKey.includes('\u0000')))
+      return fail(
+        'EVENT_KEY_INVALID',
+        'the event trigger key must contain valid Unicode without U+0000',
+      );
     const record: InboundEventRecord = {
       id: this.deps.ids.next(),
       ownerId: input.ownerId,
       type: input.type,
       payload: input.payload,
-      ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+      ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),
       source: input.source,
       receivedAt: this.deps.clock.now().toISOString(),
       runIds: [],
     };
-    const inserted = await this.deps.inbound.insertUnlessDuplicate(
-      record,
-      input.dedupeKey
-        ? { ownerId: input.ownerId, type: input.type, dedupeKey: input.dedupeKey }
-        : undefined,
-    );
-    if (inserted.duplicate) {
-      return { event: inserted.duplicate, runIds: inserted.duplicate.runIds, duplicate: true };
-    }
-
-    const runIds: string[] = [];
-    for (const { loop, version, node } of await this.eventTriggers(input.ownerId, input.type)) {
-      const context = { loopId: loop.id, nodeId: node.id, eventId: record.id };
-      try {
-        const config = node.config as Config<'event'>;
-        const nodeKey = config.dedupeKey
-          ? stringKey(await evaluateExpression(config.dedupeKey, input.payload))
-          : undefined;
-        if (nodeKey && (await this.deps.runs.hasTriggerDedupe(loop.id, node.id, nodeKey))) {
-          continue;
-        }
-        const dedupeKey = nodeKey ?? input.dedupeKey;
-        const run = await this.deps.manager.startRun({
+    try {
+      const result = await this.deps.manager.receiveEvent(
+        {
+          id: this.deps.ids.next(),
+          ownerId: input.ownerId,
+          loopId: loop.id,
+          versionId: version.id,
+          triggerNodeId: node.id,
+          inbound: record,
+          ...(nodeKey ? { nodeDedupeKey: nodeKey } : {}),
+          // The keyed retry above ran before the claim; the claim repeats it in the same scope.
+          ...(input.triggerNodeId === undefined ? { implicitEntry: true as const } : {}),
+        },
+        {
           ownerId: input.ownerId,
           loopId: loop.id,
           versionId: version.id,
           triggerNodeId: node.id,
           triggerKind: 'event',
           source: 'event',
+          eventType: input.type,
           caller: { kind: 'system', id: `event:${record.id}` },
           payload: input.payload,
-          ...(dedupeKey ? { dedupeKey } : {}),
-        });
-        runIds.push(run.id);
-      } catch (error) {
-        this.deps.logger.error({ ...context, error: describe(error) }, 'event trigger failed');
-      }
+          ...((nodeKey ?? input.dedupeKey) !== undefined
+            ? { dedupeKey: nodeKey ?? input.dedupeKey }
+            : {}),
+        },
+      );
+      return this.eventResult(result.receipt, result.duplicate);
+    } catch (error) {
+      if (error instanceof EngineRequestError || error instanceof LoopUpgradeRequiredError)
+        throw error;
+      this.deps.logger.error(
+        { code: 'EVENT_ADMISSION_FAILED', loopId: loop.id },
+        'event receipt could not be confirmed',
+      );
+      throw new EventIntakeError(
+        'EVENT_ADMISSION_FAILED',
+        'the delivery could not be saved; retry with the same dedupeKey',
+        503,
+      );
     }
-    if (runIds.length > 0) await this.deps.inbound.setRunIds(record.id, runIds);
-    return { event: { ...record, runIds }, runIds, duplicate: false };
   }
 
-  private async eventTriggers(
-    ownerId: string,
-    type: string,
-  ): Promise<{ loop: LoopRecord; version: LoopVersionRecord; node: TriggerNode }[]> {
-    const matches: { loop: LoopRecord; version: LoopVersionRecord; node: TriggerNode }[] = [];
-    for (const loop of await this.deps.loops.listLoops(ownerId)) {
-      if (!loop.currentVersionId) continue;
-      const version = await this.deps.loops.getVersion(loop.currentVersionId);
-      if (!version) continue;
-      for (const node of nodesOfKind(version.definition, 'trigger')) {
-        if (node.config.type === 'event' && node.config.eventType === type) {
-          matches.push({ loop, version, node });
-        }
-      }
-    }
-    return matches;
+  private eventResult(receipt: EventReceipt, duplicate: boolean): EventIngestResult {
+    const event: InboundEventRecord = {
+      ...receipt.inbound,
+      admissionId: receipt.id,
+      target: {
+        loopId: receipt.loopId,
+        versionId: receipt.versionId,
+        triggerNodeId: receipt.triggerNodeId,
+      },
+      delivery: {
+        state: receipt.status,
+        attempts: receipt.attempts,
+        ...(receipt.nextAttemptAt ? { nextAttemptAt: receipt.nextAttemptAt } : {}),
+        ...(receipt.failureCode ? { failureCode: receipt.failureCode } : {}),
+      },
+    };
+    return { event, runIds: event.runIds, duplicate };
   }
 
   /** Endpoint rows own authentication; the exact pinned definition owns payload configuration. */
@@ -636,4 +752,19 @@ export class TriggerService {
     }
     return out;
   }
+}
+
+export class EventIntakeError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+    readonly status = 422,
+  ) {
+    super(message);
+  }
+}
+
+/** SQLite text binds normalize lone UTF-16 surrogates; accepted identities must survive that bind. */
+export function eventKeyIsWellFormed(key: string): boolean {
+  return Buffer.from(key, 'utf8').toString('utf8') === key;
 }

@@ -102,3 +102,28 @@ it('binds the displayed identity before an asynchronous mutation can see a newer
     input: { note: 'answer for A' },
   });
 });
+
+it('bounds a long prompt and offers the whole text (#259)', async () => {
+  const user = userEvent.setup();
+  const prompt = 'p'.repeat(10_000);
+  const run = runRecord({
+    id: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+    status: 'waiting',
+    lastEventSeq: 5,
+    waiting: {
+      waitId: '3',
+      nodeId: 'ask',
+      kind: 'input',
+      prompt,
+      inputSchema: noteSchema,
+      startedSeq: 3,
+    },
+  });
+  renderWith(<WaitPanel run={run} />, '/', new FakeApi());
+  const shown = screen.getByLabelText('Prompt');
+  expect(shown.textContent).toBe(`${prompt.slice(0, 4_096)}…`);
+  expect(shown).toHaveClass('wrap-anywhere', 'min-w-0');
+  expect(screen.getByText('Showing the first 4,096 of 10,000 characters.')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Show all of Prompt' }));
+  expect(screen.getByRole('region', { name: 'Prompt' }).textContent).toBe(prompt);
+});

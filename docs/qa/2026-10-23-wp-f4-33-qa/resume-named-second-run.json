@@ -1,0 +1,1608 @@
+{
+  "run": {
+    "id": "01M5PJ6BX4G440H5D6Y0N55WES",
+    "ownerId": "local",
+    "loopId": "01M5PJ6BEWPRHJK77KC01VR196",
+    "versionId": "01M5PJ6BEWPRHJK77KC01VR197",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Independent QA 11",
+      "label": "Independent QA 11 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": null,
+        "runDeadlineSeconds": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PJ6BX4G440H5D6Y0N55WET",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-24T08:59:44.932Z",
+    "startedAt": "2026-10-24T08:59:44.940Z",
+    "finishedAt": "2026-10-24T08:59:45.378Z",
+    "lastEventSeq": 61
+  },
+  "events": [
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 1,
+      "ts": "2026-10-24T08:59:44.932Z",
+      "type": "run.queued",
+      "versionId": "01M5PJ6BEWPRHJK77KC01VR197",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent QA 11",
+        "label": "Independent QA 11 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": null,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PJ6BX4G440H5D6Y0N55WES",
+          "loopId": "01M5PJ6BEWPRHJK77KC01VR196",
+          "versionId": "01M5PJ6BEWPRHJK77KC01VR197",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PJ6BX4G440H5D6Y0N55WET",
+          "source": "manual.api",
+          "caller": {
+            "kind": "api-key",
+            "id": "01M5PJ64H3NT7SNPVGTFY3H57C"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:59:44.932Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {
+          "gate": {
+            "passes": 1
+          }
+        },
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 2,
+      "ts": "2026-10-24T08:59:44.942Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 3,
+      "ts": "2026-10-24T08:59:44.949Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 4,
+      "ts": "2026-10-24T08:59:44.954Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:44.953Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:44.953Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 5,
+      "ts": "2026-10-24T08:59:44.977Z",
+      "type": "node.started",
+      "nodeId": "seed",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "ad95c3d8ae936a3e"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 6,
+      "ts": "2026-10-24T08:59:44.982Z",
+      "type": "node.finished",
+      "nodeId": "seed",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/sentinel",
+          "value": "never erase"
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6BYNEHQQ9107CD0JR4Z9",
+            "role": "note",
+            "content": "shared seed",
+            "nodeId": "seed",
+            "ts": "2026-10-24T08:59:44.981Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 2
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 7,
+      "ts": "2026-10-24T08:59:44.992Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d491a16d834d459a"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 8,
+      "ts": "2026-10-24T08:59:45.003Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:7",
+      "turnId": "01M5PJ6BZBDHRJH694JTWP891X",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / shared seed",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 9,
+      "ts": "2026-10-24T08:59:45.007Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 10,
+      "ts": "2026-10-24T08:59:45.009Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:7",
+      "turnId": "01M5PJ6BZBDHRJH694JTWP891X",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 11,
+      "ts": "2026-10-24T08:59:45.010Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 12,
+      "ts": "2026-10-24T08:59:45.012Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 13,
+      "ts": "2026-10-24T08:59:45.020Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6BZSZEJH79AW71Y0NZ5T",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6BZSZEJH79AW71Y0NZ5V",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:45.017Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.017Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.017Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 24
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 14,
+      "ts": "2026-10-24T08:59:45.039Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d3a47d47e9fbb827"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 15,
+      "ts": "2026-10-24T08:59:45.044Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:14",
+      "turnId": "01M5PJ6C0M5CRT4DXB77A5HMJY",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 16,
+      "ts": "2026-10-24T08:59:45.049Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 17,
+      "ts": "2026-10-24T08:59:45.051Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:14",
+      "turnId": "01M5PJ6C0M5CRT4DXB77A5HMJY",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 18,
+      "ts": "2026-10-24T08:59:45.054Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 19,
+      "ts": "2026-10-24T08:59:45.056Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 20,
+      "ts": "2026-10-24T08:59:45.063Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6C14TJREJNMHD90K77W3",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6C14TJREJNMHD90K77W4",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:45.060Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.061Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.061Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 20
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 21,
+      "ts": "2026-10-24T08:59:45.086Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "c34597221b668151"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "repeat",
+      "gate": {
+        "previousPasses": 1,
+        "passes": 2,
+        "repeatRouteId": "repeat",
+        "maxPasses": 3,
+        "elapsedSeconds": 0.15,
+        "limit": null
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 22,
+      "ts": "2026-10-24T08:59:45.092Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 23,
+      "ts": "2026-10-24T08:59:45.092Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.15,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:45.090Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.15,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:45.090Z"
+          }
+        }
+      ],
+      "route": "repeat",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 24,
+      "ts": "2026-10-24T08:59:45.102Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d491a16d834d459a"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 25,
+      "ts": "2026-10-24T08:59:45.107Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:24",
+      "turnId": "01M5PJ6C2KKKCZBJMHAAGX0JTS",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / OK",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 26,
+      "ts": "2026-10-24T08:59:45.114Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 27,
+      "ts": "2026-10-24T08:59:45.116Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:24",
+      "turnId": "01M5PJ6C2KKKCZBJMHAAGX0JTS",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 28,
+      "ts": "2026-10-24T08:59:45.118Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 29,
+      "ts": "2026-10-24T08:59:45.120Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 30,
+      "ts": "2026-10-24T08:59:45.185Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6C4YH9H31BHKDXJ42DM9",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6C4YH9H31BHKDXJ42DMA",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:45.182Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.182Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.182Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 79
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 31,
+      "ts": "2026-10-24T08:59:45.194Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d3a47d47e9fbb827"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 32,
+      "ts": "2026-10-24T08:59:45.199Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:31",
+      "turnId": "01M5PJ6C5FDGMCKND2PDGFEN72",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 33,
+      "ts": "2026-10-24T08:59:45.202Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 34,
+      "ts": "2026-10-24T08:59:45.204Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:31",
+      "turnId": "01M5PJ6C5FDGMCKND2PDGFEN72",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 35,
+      "ts": "2026-10-24T08:59:45.205Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 36,
+      "ts": "2026-10-24T08:59:45.207Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 37,
+      "ts": "2026-10-24T08:59:45.223Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6C64S72M99QCP1NEJFRX",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6C64S72M99QCP1NEJFRY",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:45.220Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.220Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.220Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 26
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 38,
+      "ts": "2026-10-24T08:59:45.241Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "c34597221b668151"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "repeat",
+      "gate": {
+        "previousPasses": 2,
+        "passes": 3,
+        "repeatRouteId": "repeat",
+        "maxPasses": 3,
+        "elapsedSeconds": 0.304,
+        "limit": null
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 39,
+      "ts": "2026-10-24T08:59:45.246Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 40,
+      "ts": "2026-10-24T08:59:45.246Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 2,
+                "passes": 3,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.304,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:45.244Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 2,
+                "passes": 3,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.304,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:45.244Z"
+          }
+        }
+      ],
+      "route": "repeat",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 41,
+      "ts": "2026-10-24T08:59:45.260Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d491a16d834d459a"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 42,
+      "ts": "2026-10-24T08:59:45.266Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:41",
+      "turnId": "01M5PJ6C7J0ZZFHN01M6CAXKYZ",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / OK",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 43,
+      "ts": "2026-10-24T08:59:45.270Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 44,
+      "ts": "2026-10-24T08:59:45.271Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:41",
+      "turnId": "01M5PJ6C7J0ZZFHN01M6CAXKYZ",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 45,
+      "ts": "2026-10-24T08:59:45.273Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 46,
+      "ts": "2026-10-24T08:59:45.274Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 47,
+      "ts": "2026-10-24T08:59:45.291Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6C87BJSF11B33ZMKY9JF",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6C87BJSF11B33ZMKY9JG",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:45.287Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.287Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.287Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 26
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 48,
+      "ts": "2026-10-24T08:59:45.299Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "d3a47d47e9fbb827"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 49,
+      "ts": "2026-10-24T08:59:45.304Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:48",
+      "turnId": "01M5PJ6C8RT4JQXHQRQQ034Z79",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase",
+      "resumeSessionId": "fake-session-27"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 50,
+      "ts": "2026-10-24T08:59:45.308Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-27",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 51,
+      "ts": "2026-10-24T08:59:45.309Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6BX4G440H5D6Y0N55WES:48",
+      "turnId": "01M5PJ6C8RT4JQXHQRQQ034Z79",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 52,
+      "ts": "2026-10-24T08:59:45.312Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 53,
+      "ts": "2026-10-24T08:59:45.314Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 54,
+      "ts": "2026-10-24T08:59:45.330Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6C9FZA7PGPGWCGS185PC",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6C9GG51WGJNYCB2TSNB1",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:45.328Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.328Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:45.328Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 28
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 55,
+      "ts": "2026-10-24T08:59:45.350Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "c34597221b668151"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "limit-reached",
+      "gate": {
+        "previousPasses": 3,
+        "passes": 3,
+        "repeatRouteId": "repeat",
+        "maxPasses": 3,
+        "elapsedSeconds": 0.413,
+        "limit": "max-passes"
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 56,
+      "ts": "2026-10-24T08:59:45.355Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 57,
+      "ts": "2026-10-24T08:59:45.355Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 3,
+                "passes": 3,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.413,
+                "limit": "max-passes"
+              }
+            },
+            "at": "2026-10-24T08:59:45.353Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 3,
+                "passes": 3,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.413,
+                "limit": "max-passes"
+              }
+            },
+            "at": "2026-10-24T08:59:45.353Z"
+          }
+        }
+      ],
+      "route": "limit-reached",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 58,
+      "ts": "2026-10-24T08:59:45.371Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 59,
+      "ts": "2026-10-24T08:59:45.375Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 60,
+      "ts": "2026-10-24T08:59:45.375Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "seq": 61,
+      "ts": "2026-10-24T08:59:45.375Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5PJ6BX4G440H5D6Y0N55WES",
+      "loopId": "01M5PJ6BEWPRHJK77KC01VR196",
+      "versionId": "01M5PJ6BEWPRHJK77KC01VR197",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5PJ6BX4G440H5D6Y0N55WET",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5PJ64H3NT7SNPVGTFY3H57C"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-24T08:59:44.932Z"
+      }
+    },
+    "messages": [
+      {
+        "id": "01M5PJ6BYNEHQQ9107CD0JR4Z9",
+        "role": "note",
+        "content": "shared seed",
+        "nodeId": "seed",
+        "ts": "2026-10-24T08:59:44.981Z"
+      },
+      {
+        "id": "01M5PJ6BZSZEJH79AW71Y0NZ5V",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "worker",
+        "ts": "2026-10-24T08:59:45.017Z"
+      },
+      {
+        "id": "01M5PJ6C14TJREJNMHD90K77W4",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "reviewer",
+        "ts": "2026-10-24T08:59:45.060Z"
+      },
+      {
+        "id": "01M5PJ6C4YH9H31BHKDXJ42DMA",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "worker",
+        "ts": "2026-10-24T08:59:45.182Z"
+      },
+      {
+        "id": "01M5PJ6C64S72M99QCP1NEJFRY",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "reviewer",
+        "ts": "2026-10-24T08:59:45.220Z"
+      },
+      {
+        "id": "01M5PJ6C87BJSF11B33ZMKY9JG",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "worker",
+        "ts": "2026-10-24T08:59:45.287Z"
+      },
+      {
+        "id": "01M5PJ6C9GG51WGJNYCB2TSNB1",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "reviewer",
+        "ts": "2026-10-24T08:59:45.328Z"
+      }
+    ],
+    "vars": {
+      "sentinel": "never erase"
+    },
+    "artifacts": [
+      {
+        "id": "01M5PJ6BZSZEJH79AW71Y0NZ5T",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6C14TJREJNMHD90K77W3",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "reviewer",
+        "label": "transcript reviewer",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6C4YH9H31BHKDXJ42DM9",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6C64S72M99QCP1NEJFRX",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "reviewer",
+        "label": "transcript reviewer",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6C87BJSF11B33ZMKY9JF",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6C9FZA7PGPGWCGS185PC",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "reviewer",
+        "label": "transcript reviewer",
+        "bytes": 45
+      }
+    ],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-24T08:59:44.953Z"
+      },
+      "worker": {
+        "nodeId": "worker",
+        "value": "OK",
+        "at": "2026-10-24T08:59:45.287Z"
+      },
+      "reviewer": {
+        "nodeId": "reviewer",
+        "value": "OK",
+        "at": "2026-10-24T08:59:45.328Z"
+      },
+      "gate": {
+        "nodeId": "gate",
+        "value": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "repeat",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "repeat",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.413,
+            "limit": "max-passes"
+          }
+        },
+        "at": "2026-10-24T08:59:45.353Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "gate",
+      "value": {
+        "provenance": {
+          "kind": "expression",
+          "provider": null,
+          "classifierId": null,
+          "model": null,
+          "effort": null
+        },
+        "observation": {
+          "kind": "route",
+          "routeId": "repeat",
+          "confidence": null,
+          "reasoning": null
+        },
+        "portId": "limit-reached",
+        "gate": {
+          "previousPasses": 3,
+          "passes": 3,
+          "repeatRouteId": "repeat",
+          "maxPasses": 3,
+          "elapsedSeconds": 0.413,
+          "limit": "max-passes"
+        }
+      },
+      "at": "2026-10-24T08:59:45.353Z"
+    },
+    "gates": {
+      "gate": {
+        "passes": 3
+      }
+    },
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "seed": 1,
+        "worker": 3,
+        "reviewer": 3,
+        "gate": 3,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

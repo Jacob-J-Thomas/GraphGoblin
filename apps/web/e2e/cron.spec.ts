@@ -217,7 +217,9 @@ test('cron presets, keyboard days, timezone and custom source round trip through
   await page.goto(`/app/loops/${id}/edit`);
   let dialog = await openNode(page, 'start');
   await expect(dialog.getByLabel('Repeat')).toHaveValue('custom');
-  await expect(dialog.getByText('Custom expression: */7 3-5 * * 1,3 · UTC')).toBeVisible();
+  await expect(
+    dialog.getByText('Custom expression: */7 3-5 * * 1,3 · UTC', { exact: true }),
+  ).toBeVisible();
   await expect(dialog.locator('time')).toHaveCount(5);
   await dialog.getByLabel('Timezone').fill('Europe/London');
   await closeNode(page);

@@ -82,7 +82,7 @@ As an engineering parameter, Windows publication uses six attempts with five del
 - Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
 - Smoke test before the data-directory lock (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` worked through `docker exec`. With the lock, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` before restarting it.
 
-The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 90s` to let active Codex turns settle before SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only that file after confirming all GraphGoblin processes using the volume have stopped.
+The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 1h` to leave time for drain and an explicit operator choice before Docker SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only that file after confirming all GraphGoblin processes using the volume have stopped.
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
@@ -124,3 +124,38 @@ Step 06 is complete with steps 07 and 08 folded into the same child. Configured 
 Step 09 removed configured contracts and the `container.templates.store` facade. Migration `0012_retire_template_instances` drops `template_instances`, `runs.template_subject` and the six template expression indexes; format-4 readiness requires it already applied. Step 10 reduced the catalogue to four manifests and ordinary drafts; the live loader opens no configured graphs or support files.
 
 The accepted end state is recorded in [ADR-0034](decisions/ADR-0034-retire-template-runtime-authority.md). The shared stopped-store format-4 cutover deletes configured instances, their loops and runs, with no archive or private-report exception. This child performs no installed data conversion, journal reconciliation, credential rotation or physical cleanup. Ordinary authored scripts retain the API account's filesystem access; templates provide no operating-system confinement.
+
+## Managed stop controls (#224)
+
+The first SIGINT or SIGTERM requests normal drain. Signals within 1,000 ms of the preceding accepted signal are ignored to coalesce foreground-group and pnpm
+forwarding of one Ctrl+C. A later SIGINT or SIGTERM explicitly forces interruption through the same container controller as
+`POST /system/shutdown` with `{ "action": "force" }`. Signal handlers remain installed
+through drain; repeated signals during startup are remembered until recovery settles.
+`{ "action": "drain" }` starts normal stop and `{ "action": "wait" }` acknowledges the
+choice without a new deadline. `GET /system/shutdown` exposes phase and active identities.
+Controls require `system:write` (`system:read` for status) in API-key mode.
+
+The engineering default `GG_SHUTDOWN_GRACE_MS=300000` gives five minutes before an operator
+warning offers wait or force; expiry has no kill action. Durable parks and paused runs recover on restart and do not hold drain. Drain checks
+active executors, queued family work and due wakes at
+50 ms; script termination has a five-second acknowledgement/close reporting deadline only
+after explicit interruption. Native kill failure, including a nonzero `taskkill /T /F`,
+during this stop's explicit interruption retains listener, SQLite and lock in `force-failed`.
+Earlier unconfirmed terminations are visible in `unconfirmedRunIds` but do not block normal
+stop. Inspect the recorded failure and native processes; a further force request or later
+signal explicitly exits with code 1, preserving that failure and leaving the lock for the
+next process to reclaim. A 100 ms response-flush delay precedes this emergency exit; it
+performs no cleanup. Drain observation failures use `drain-failed`; invalid controls return
+409 with current phase. Force interruption is
+recorded as a non-resumable failed run with node/attempt evidence and possible external effects.
+
+The supplied Compose example allows one hour (an engineering allowance for deliberation
+beyond the five-minute notice). Docker's subsequent SIGKILL is an external hard deadline
+and cannot record managed interruption. For indefinite normal waiting, request drain through
+the API while Compose remains running and stop the service after it exits; configure other
+supervisors accordingly. HTTP and SSE remain usable throughout drain. Streams close after
+executor/delivery cleanup; HTTP closes next, then SQLite, then the directory lock is released.
+
+On Windows, use the API controls when stopping from another process. Windows `taskkill`
+and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
+they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.

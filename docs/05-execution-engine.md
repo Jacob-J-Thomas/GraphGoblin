@@ -102,11 +102,20 @@ make this safe:
 - **Finalization is recorded.** After a terminal status the engine drops the run's timers,
   cancels its children (when it was cancelled), delivers its returns (when it finished), wakes
   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column
-  `finalized_at`). Each step is idempotent: returns are delivered per channel, skipping channels
-  whose `return.delivered` or `return.failed` is already in the log. At boot the run manager
+  `finalized_at`). Non-webhook returns skip channels whose `return.delivered` or `return.failed`
+  is already in the log. Webhooks use their durable delivery journal and finite attempt budget
+  ([ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md)). During recovery the finalizer
+  skips a retired Event return of an execution that already finished before upgrade, logging
+  `LOOP_UPGRADE_REQUIRED` with the run, loop and version identities. It neither publishes the
+  Event nor records a fictitious delivery receipt, and does not rewrite the historical outcome
+  or definition. Other returns finish normally, the parent receives the child's execution
+  outcome, and the run is finalized. This terminal bookkeeping exception does not admit or
+  execute a definition with a retired destination; those definitions still require repair.
+  At boot the run manager
   finalizes every terminal run not marked finalized (`listUnfinalized`), so a crash right after
   the status write loses no return and leaves no child running. A channel interrupted
-  mid-delivery is delivered again: returns are at least once. Migration `0002` marks runs that
+  mid-delivery has an unknown acknowledgement; webhook recovery consumes that attempt and
+  retries with the same identity and remaining budget. Migration `0002` marks runs that
   were already terminal as finalized. Finalization belongs to one terminal outcome: resuming a
   failed run clears the marker, so its next terminal outcome is finalized again; the resume waits
   for any finalizer of the failure still in flight (they share a per-run lock), so that finalizer
@@ -119,6 +128,41 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+Finalization reads history in 256-event pages and yields between full pages (#268). It gathers
+the complete log before interpreting terminal and return-delivery evidence, preserving the
+same validation and recovery rules. This bounds each read's event count, not individual event
+bytes or total retained history. Other recovery, resume and cancellation reads remain separate.
+
+## Observing finalization (#185, ADR-0057)
+
+RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
+Terminal status, finishedAt and run.finished describe execution; none proves that
+returns or terminal cleanup are finished. A current terminal lifecycle plus finalizedAt, with no pending webhook in the snapshot,
+means fully finalized, including when delivery failed. Webhook deliveries still
+report pending/delivered/failed independently; other sinks retain return.delivered
+and return.failed. The finalizer sets the marker only after its receipt reconciliation
+and cleanup, and clears it before a failed-run resume. No new stored state is added.
+Pending delivery survives restart with the same identity and remaining retry budget.
+
+## Thread reads and delayed snapshots (#116, ADR-0053)
+
+The durable event log determines the thread for both execution and observation. Domain
+`reconcileThread` is the shared owner: start from the actual admitted initial thread, or a
+checkpoint whose sequence exists in the observed history, then replay later durable events.
+Writers persist the open-visit replay state with the snapshot and sequence (ADR-0053); a
+completion event alone cannot prove that a different visit is closed. Current-thread reads
+without stored state replay the full prefix; reads never backfill it.
+An unsequenced checkpoint, one beyond that history, or one beyond a requested historical event
+is ignored. A `node.started` contributes its visit counter; a patch is applied only from a
+durable `node.finished`, once for its open visit. A failed or resumed unfinished node therefore
+exposes its start without exposing an uncommitted patch.
+
+`RunManager.getThread` uses this same rule as execution and the inspector, including during
+failure, resume and success. It never saves a repaired snapshot, advances the cursor, finalizes
+a run or changes execution state. Snapshots remain an optimization maintained by execution.
+Reads racing appends describe the event prefix they observed; a later read can observe more
+events. No cross-request transaction or global synchronization is implied.
+
 ## Which definition a run executes (Decided, ADR-0041)
 
 A run executes one immutable definition record for its whole life: the record its `versionId` names. Every executor start (the first, a wake after a wait, a resume, crash recovery) and every replay fork loads that record, never the loop's live draft. A published start pins the published version. A draft start (`allowDraft`, a test run) freezes the draft it read and validated into a `snapshot` record with its own id and the draft's number; the admission port commits the snapshot, the run, its initial thread and its `run.queued` event in one transaction. Editing, saving or publishing the draft afterwards never reaches the run. A snapshot cannot be started directly (`VERSION_NOT_PUBLISHED`), is not part of the version history, and storage triggers refuse its change, or its deletion while a run pins it.
@@ -129,7 +173,7 @@ A pinned definition stored before [ADR-0044](decisions/ADR-0044-awaited-subloops
 
 ## Decision gates, passes and terminal exits
 
-A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1 to 10,000 or null for Unlimited); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
 Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
@@ -143,15 +187,22 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 `exit.evaluated` records `{nodeId,outcome}` atomically with `node.finished` and `run.finished`. Return mapping failures follow normal node-failure handling. Fresh runs retain `run.iteration: 1`; factual old `iteration.incremented` events remain replayable but new gates do not emit them.
 
-`settings.maxNodeVisits` (default 10, maximum 10,000) independently caps fresh entries per node. A `node.started` with attempt 1 counts; a wake, recovery or resumable retry of the same visit does not. Exceeding the cap fails before starting the node with `MAX_NODE_VISITS`, `resumable: false`, its node ID and `details.maxNodeVisits`. This catches unmarked cycles; it does not turn them into gate exhaustion. Configure enough visits for intentional work and gates.
+`settings.maxNodeVisits` (default 10, maximum 10,000, `null` explicitly unlimited) independently caps fresh entries per node. A `node.started` with attempt 1 counts; a wake, recovery or resumable retry of the same visit does not. Exceeding the cap fails before starting the node with `MAX_NODE_VISITS`, `resumable: false`, its node ID and `details.maxNodeVisits`. This catches unmarked cycles; it does not turn them into gate exhaustion. Configure enough visits for intentional work and gates.
 
-Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
+The executor rebuilds fresh-entry counts once from the history it loaded, then updates them
+after committed starts (#268). A rejected append does not advance the in-memory count; a later
+resume/recovery rebuilds from what actually persisted, including an append whose acknowledgement
+was lost. This cache is local to one executor and separate from display counters, which also
+include wake/retry attempts and inherited replay-fork counters. `attemptFor` retains its reverse
+scan for the current visit; Unlimited does not impose a hidden cap.
+
+Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds a finite visit cap (including unlimited passes). The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 
 Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
 
 ### Explicit decision failures (#98)
 
-A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
+A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. A configured completion deadline fails with resumable `STRUCTURED_COMPLETION_TIMEOUT`; external provider timeouts retain their provider-failure classification. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
 
 ## Subloops as child runs (Decided)
 
@@ -201,6 +252,26 @@ explicit fresh start is `--reset` on the API binary (11, "Retention"; the
 
 ## Crash recovery (Decided)
 
+Webhook return delivery is independent of execution. `delivery.queued` is atomic with
+`run.finished`; `delivery.attempted` consumes an attempt before network I/O. A background
+worker records `delivery.attempt_finished` for a retry or `delivery.finished` for delivered /
+failed. `acknowledgementUncertain` retains any earlier unknown attempt separately from the
+latest error and acknowledgement, including after eventual success. An invalid HTTP response
+status becomes retryable `transport` / unknown, without an invalid `httpStatus` in the journal.
+Five attempts have 10-second deadlines and 2/5/10/20-second retry delays. Recovery
+turns an in-flight attempt into unknown and preserves its identity, deadline and remaining
+budget, including a final failure if the interrupted attempt was the last. Recovery does not
+wait for the network before serving the API. Delivery work does not occupy execution slots;
+`waitForIdle` drains it while running. After `stop()` (D-021), backoff waits wake immediately
+and no new request starts. In-flight requests finish or time out within their existing
+10-second deadline and journal their outcome; pending deliveries retain identity, attempts
+and retry deadline for recovery on the next start. Forced termination retains the same
+durable budget, with an unfinished acknowledgement recorded as unknown during recovery.
+Deleting a loop also stops its delivery workers: they re-read the run before each attempt
+and journal append; the append checks existence transactionally, preventing orphan events.
+The run remains succeeded when its execution succeeded. Finalization
+is marked only after every delivery finishes. See ADR-0043 for eligible failures and ambiguity.
+
 Recovery enumerates raw run identities and decodes each candidate separately. Candidates
 are active runs and terminal runs awaiting finalization; startup checks and logs damaged
 candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
@@ -244,24 +315,141 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
 - Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
-  - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
+  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues a usable session, or stops non-resumably. An inherited previous/named/own ID alone is unusable for unaccepted authored work. A missing session also stops. See below.
   - Script: re-executed. Scripts are documented as at-least-once.
   - Decision, mutation, exit: re-executed. They are deterministic given the thread, except Jev and Codex-backed decisions, which are simply asked again. (An exit whose `run.finished` is durable is completed from the log instead.)
-  - Subloop: if the visit already recorded `child_run.started`, the handler re-parks on that child, or handles its outcome if it has finished (maps it, or fails or cancels the parent with the child's runtime failure or cancellation); otherwise it creates the child. A crash between creating the child and recording `child_run.started` can still leave an orphan child and start a second one; closing that needs the child id allocated before the child is created.
+  - Subloop: if the visit already recorded `child_run.started`, the handler re-parks on that child, or handles its outcome if it has finished (maps it, or fails or cancels the parent with the child's runtime failure or cancellation); otherwise it creates the child. The parent's `child_run.finished` is written in the same append as the outcome the visit reaches with it (#398): the subloop node's `node.finished`, the parent's `run.failed` (the child's failure, a failed output mapping, or an output patch the executor cannot apply) or its cancellation request. A child's cancellation is journalled before the parent's cancel flag is claimed; recovery completes a cancellation whose request is the log's last event. A process that dies before that append stores neither, so the re-executed visit records the completion exactly once, and the parent never records a completion it did not durably act on. Each durable outcome carries the completion its attempt observed: a parent resumed after a failure records the child's completion again with its new outcome, which is the child's new terminal status when the child was resumed meanwhile. A crash between creating the child and recording `child_run.started` can still leave an orphan child and start a second one; closing that needs the child id allocated before the child is created.
 - A child that finished while the process was down is finalized first, which wakes its waiting parent; a parent whose child wake was durable but whose status write was lost is moved to running. Either way the parent continues exactly once, at any nesting depth (the built API is checked with real kills and restarts around child completion, `apps/api/src/subloop-restart.test.ts`).
 
 Recovery is automatic and silent apart from a `node.started` event with `attempt` incremented.
+
+## Per-node provider continuity (#33)
+
+`resume-own` starts fresh on the first visit and then resumes only this node's last
+completed conversation in the same run and harness. The handler derives completed
+visits and the last completed visit's final attempt from this run's event log, then
+queries the existing session row by run/node/attempt/harness. Attempt numbers restart
+on a new visit; selecting the largest historical attempt would resume stale work.
+A locally finished row without durable `node.finished` remains unfinished work under
+the submission/recovery rules below.
+
+The optional authored `resetAfterVisits` accepts positive safe integers (1 through
+9,007,199,254,740,991), without a default. N completed visits share one conversation;
+the next visit starts fresh. Retries and schema repairs do not consume visits.
+Reset selection runs only for a new visit: a pending definitely-unsubmitted task
+retains its original fresh/resume selection and exact prompt, and uncertain accepted
+work uses its usable session. The shared thread, feedback and other node sessions
+are never cleared. Existing loop guardrails still apply independently.
+
+A restart retains the reference in SQLite and reconstructs counts/provenance from
+the durable log. Forks and child runs have distinct run IDs and logs, so they start
+their own conversations and reset counts even when their initial graph thread carries
+messages, gates or counters from the source/parent. Native provider expiry still
+fails explicitly; #265 provides the explicit fresh-session recovery action below.
+
+Fresh provider sessions can deliberately receive current main-loop context via
+existing prompt/input/context-file controls. Own continuity adds provider history;
+it does not implicitly copy conversation transcripts into the shared thread or
+change configured output behavior. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
+## Inference submission and recovery
+
+One logical visit begins at the first `node.started` after that node last finished. Its identity
+is `<runId>:<first-start-seq>`, retained across retries and restarts until `node.finished`.
+Each initial, repair or continuation turn records `harness.turn` before adapter invocation,
+including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selected
+`resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
+announced a different ID. They do not rerender against a changed thread. Repair refusals retain
+the repair task, including a synchronous refusal before the repair invocation returns a session
+handle. Launch exceptions, streamed errors and rejected results share the same failure and
+submission mapping. A synchronous missing-session refusal is durably `session-missing` with
+`HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
+harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
+never downgraded to safe non-submission because no handle was returned. Pinned policy,
+configuration and argument refusals remain non-resumable. Every provider boundary uses one pure evidence fold, shared by the engine and Codex adapter:
+
+| Rank (highest first) | Evidence                                                                         |
+| -------------------- | -------------------------------------------------------------------------------- |
+| 1                    | Unconfirmed termination                                                          |
+| 2                    | Missing session (typed cause or explicit session-missing metadata)               |
+| 3                    | Pinned argument, configuration or policy refusal                                 |
+| 4                    | Valid explicit submission metadata                                               |
+| 5                    | Ordinary typed authentication, quota, transport, timeout or installation failure |
+| 6                    | Generic final wrappers                                                           |
+
+Higher-ranked evidence wins; within a rank the later observation wins. This applies to
+launch exceptions, streamed errors, rejected promises/results, iterator throws, Codex top-level
+errors and `turn.failed`, cleanup and cancellation. Unconfirmed termination overrides
+cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
+Acceptance cannot be downgraded to safe non-submission by later metadata.
+
+Classification is decided independently of persistence. A failed classification/status write
+adds `failure.details.recording` diagnostics without replacing the primary cause, submission,
+provenance or Resume eligibility. The terminal failure also records the selected submission,
+so recovery uses it if an earlier classification append was lost. Turn intents (initial tasks, exact retries and repairs) and their identities
+are established before their fallible appends. Reconciliation reads are guarded: if an ambiguous
+append cannot be reconciled, `failure.inference.retry` carries the exact uninvoked prompt,
+harness and selected resume ID. Recovery reconciles that same turn identity when storage is
+available, rather than sending a generic continuation or cancelling the completed invocation.
+This requires storage to recover sufficiently to record the terminal failure; a sustained outage
+that also prevents terminal persistence cannot establish a durable outcome.
+
+These authored prompts are part of private run
+history, with the same access
+and deletion boundary as its context thread. The entire prompt is stored inline with no schema
+size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
+
+| Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                                                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                                                                           |
+| `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
+| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Use the explicit fresh-session recovery action below (#265).                                                                                                                     |
+
+`failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
+known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
+one of the three failure classifications when a turn fails. Acceptance does not prove that
+the result was durably recorded; recovery of an accepted unfinished turn remains uncertain.
+The crash window between durable intent and adapter invocation is conservatively uncertain:
+absence of an acceptance marker, even init-only output, never proves non-submission. Adapters
+may assert definite refusal only with positive pre-send/startup/refusal evidence. Once accepted,
+a later authentication/refusal error cannot downgrade the turn to safe resubmission.
+
+Under previous/named/own policy, an authored or retried authored turn with no durable acceptance
+cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
+non-resumably on explicit failure and at visit-start recovery. A different newly announced
+session, an accepted turn, or a repair/continuation on the visit's own session can continue.
+For non-pinned generic failures, Codex permits Resume even when its adapter reports
+`retriable: false` for an exit or lost stream. Claude permits Resume only with the adapter's
+`retriable` evidence. Unsupported policy, invalid configuration and rejected arguments remain
+non-resumable for both harnesses because the definition is pinned. Continuation safety is
+checked separately: uncertain delivery must still have a usable session under D-022.
+Restorable login, installation and quota failures retain their specific eligibility. Resume
+is still unavailable if delivery is uncertain and no usable session exists.
+
+The continuation prompt is: "The previous turn was interrupted before GraphGoblin recorded its
+result. Continue the task from where you left off and finish it." A new continuation has its own
+turn ID within the same visit. Successful provider work followed by transcript storage failure
+uses this same continuation path. Engine persistence faults preserve their original failure
+cause; durable intent still governs subsequent recovery.
+
+Each repeated visit starts new provenance. Replay forks and child runs have their own logs and
+inherit no pending turn or submission state; an explicitly authored named-session policy keeps
+its existing lookup semantics. Own-session lookup is also limited to the new run; explicit fresh-session
+recovery is available through #265 below. Other turn failures stop the run; the existing #243 positively unsubmitted transient
+transport failure can retry once in-process without creating another visit. Explicit Resume and automatic startup recovery apply the saved provenance: resend
+proven refused tasks, continue accepted/otherwise usable unfinished sessions, and fail
+uncertain work without a usable session. Recovery can therefore invoke the provider again.
 
 ## Resiliency model (Decided)
 
 Resiliency is built into the engine. Users do not model it. Failures fall into four classes.
 
-| Class                    | Examples                                                                                                                                                                | Engine behaviour                                                                                                                                                                                    |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transient infrastructure | SQLite busy, Jev network blip, outbound webhook 503                                                                                                                     | Internal retry with backoff, bounded, logged. Invisible to the loop.                                                                                                                                |
-| Harness-internal         | Model errors, tool failures inside a Codex turn                                                                                                                         | Delegated entirely to Codex. GraphGoblin does not retry turns.                                                                                                                                      |
-| Unavoidable              | Subscription exhausted, login expired, harness not installed, working directory missing, script exits non-zero without a route, schema repair exhausted with `fail-run` | Run moves to `failed` with a typed, human-readable reason and `resumable: true`. The operator fixes the cause and resumes from the failed node.                                                     |
-| Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with `resumable: true`, full diagnostics in the event, and the error is surfaced prominently. This is a defect to fix in GraphGoblin, never a case for users to route around. |
+| Class                    | Examples                                                                                                                                                                | Engine behaviour                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transient infrastructure | SQLite busy, Jev network blip, outbound webhook 503                                                                                                                     | Internal retry with backoff, bounded, logged. Invisible to the loop.                                                                                                                     |
+| Harness-internal         | Model errors, tool failures inside a Codex turn                                                                                                                         | Handled inside the harness turn. GraphGoblin stops on a reported failure; explicit resume and startup recovery follow submission provenance above.                                       |
+| Unavoidable              | Subscription exhausted, login expired, harness not installed, working directory missing, script exits non-zero without a route, schema repair exhausted with `fail-run` | Run moves to `failed` with a typed, human-readable reason. Resume eligibility follows the cause and, for inference, the submission evidence above.                                       |
+| Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with full diagnostics. Resume is available when recovery is safe; inference without a usable session stops non-resumably. The defect must be fixed in GraphGoblin. |
 
 Provider exceptions from decision evaluation use a shared fixed summary instead of raw diagnostics. The catch-all also sanitizes errors carrying `DECIDER_*`: it stores a recognized code and the selected strategy when available, without provider messages or stacks. Engine provider warnings contain only safe name, code, numeric HTTP status, and run/node/strategy identifiers. Ordinary internal defects retain their full diagnostics.
 
@@ -284,7 +472,7 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - The thread projection replays `node.finished` patches (a `node.finished` is applied only when it completes the open visit, the node most recently started and not yet finished; a second record of the same completion, immediate or delayed, is applied once), `decision.made` absolute gate counts, historical `iteration.incremented`, and `node.started` visit counts. **Verified checkpoints:** the executor saves the thread snapshot together with the `seq` of the event it reflects, always after that event is durable (`RunRepository.saveThread(runId, thread, seq)`, column `thread_snapshot_seq`). At every executor start it loads the checkpoint and, when its `seq` is in the log, replays only the events after it, carrying over the visit open at the checkpoint so a duplicate completion straddling it is still applied once; a snapshot without a `seq`, or one the log does not reach, is ignored and the thread is replayed from the initial thread. A run resumed after 10,000 completions replays only what follows its last checkpoint.
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
-- Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+- Large output payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events. Pending `harness.turn.prompt` and `run.queued.initialThread` remain inline without a separate schema size limit; they are not automatically offloaded.
 - The filesystem artifact store publishes flushed temporary files by atomic same-directory rename and verifies content hashes on reads (11). Failed publication raises the resumable node failure `ARTIFACT_WRITE_FAILED`, carrying its reference and publishing no transcript/output patch. After repairing storage, explicitly resume: inference continues the recorded provider session with the continuation prompt instead of resending the authored prompt. Corrupt downloads return the API problem `ARTIFACT_CORRUPT` (07); it is not a run failure code.
 
 ### Durable event validation
@@ -334,8 +522,9 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **The source may be in any status**, including running or waiting; it is never modified. It must have a `node.started` event for `nodeId`, otherwise the request fails with `REPLAY_NODE_NOT_REACHED` (409). The node must exist in the source's pinned definition, otherwise `INVALID_STATE`; pins never change, so a node the source started is always there.
 - **The fork's thread** is the source's initial thread replayed (`replayThread`) up to the event just before the node's _first_ `node.started`: every earlier `node.finished` patch, gate count and historical `iteration.incremented`, with `counters.nodeVisits` counted from the earlier `node.started` events. `run.id` is the fork's id; `run.parentRunId` is dropped, so forking a child run gives a top-level run that never wakes the original parent.
 - **The invocation** keeps the trigger envelope (node, kind, payload, `receivedAt`, dedupe key) and gets a fresh id and `replayOf: { runId, nodeId }`. Source and caller are those of whoever asked for the replay (the API passes them; the engine keeps the source's when none are given). The source's `returnDefaults` are dropped: they belong to the source's caller. Return channels declared on exit nodes still deliver.
-- **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf`. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
-- **Harness sessions are not carried over.** A node that resumes "the previous session" of its run finds none in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
+- **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf` and `initialThread`, exactly the seed admitted to storage and used by the executor. `GET /runs/{id}/thread` returns that seed even before the fork starts. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
+- **Reconstruction continues from the seed**, including inherited messages, variables, outputs, counters, gate passes and iteration. Each fork `node.started` adds one visit to the inherited counter; decision events set absolute gate passes, and historical `iteration.incremented` events set iteration. The fresh-entry guardrail (`maxNodeVisits`) counts only this fork's own attempt-1 starts, independently of its inherited display counters. The inspector uses the same `replayThread` rule and never resets the recorded seed's counters.
+- **Harness sessions are not carried over.** A node using `resume-previous` or `resume-own` finds no conversation in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
 
 ## Implementation notes from M2 (Decided by implementation, 2026-10-02)
 
@@ -347,7 +536,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **Subloop results land in `lastOutput` as `{ status, outcome, result, childRunId }`**, so a following decision node can branch on the child's outcome, not only its payload. `resultTo.var` stores the bare result. A child without output leaves `result` out and removes `resultTo.var` (#242).
 - **Wait inputs become `user` messages tagged `input`; signals become `note` messages tagged `signal`.** Timeouts that continue set `lastOutput` to `{ timedOut: true }`.
 - **Heartbeat outputs** are `{ beat, probe, satisfied: true }` when the condition holds and `{ beat, probe, exhausted: true }` when it runs out and is configured to continue.
-- **Inference recovery resumes the recorded session** with a continuation prompt when a node is re-executed with `attempt > 1` and a session id is on file.
+- **Inference recovery follows visit submission provenance**, rather than attempt numbers or a session row alone. Proven refusal retains the authored task; uncertainty never blindly resends it.
 - **Return channels merge** the exit node's list with any `returnDefaults` the caller supplied on the invocation, de-duplicated.
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
@@ -373,3 +562,151 @@ An error port makes every loop author responsible for failure handling and sprea
 ## Definition conversion from format 3 (retired)
 
 The format-3-to-4 definition rule (`convertDefinitionV3ToV4`, #164 E2), composed with the frozen format-1 and format-2 stages and the offline store tool, converted the owner's store once on 2026-10-18 (#280). It was removed on 2026-10-18 under [ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md); its rules remain in [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md), [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md), [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md), [ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md) and the git history before that change.
+
+## Visible execution limits and unlimited mode (#243)
+
+The editor's Loop tab and Settings show the defaults before a run exists:
+`maxNodeVisits: 10`, no run deadline (`runDeadlineSeconds: null`) and no structured
+completion deadline (`structuredTimeoutMs: null`, described below). Omission means the
+contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
+with a warning. The run deadline's neutral No run deadline choice is the default; choose
+Limited and enter seconds to add one. Each new run pins the effective
+values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
+Definition changes and Settings edits cannot alter an existing run's pin.
+
+A run deadline starts on first execution, includes waits, pauses and restart downtime,
+and excludes queue time. A durable timer aborts active work or fails a parked run with
+`RUN_DEADLINE_EXCEEDED` (non-resumable). Late node results cannot overwrite this outcome;
+explicit Cancel remains `cancelled`. Null removes the run timer. Node `timeoutSeconds`
+and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+
+Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
+unlimited marked repetition; evidence records null and passes continue increasing.
+The gate's authored non-repeat routes and explicit time check still apply. Disable loop controls, completion deadlines,
+pass limits and any authored watchdogs to permit intentionally indefinite
+execution, ending through authored exits, Cancel or an external/resource failure.
+GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
+Authors may use script/decision nodes for their own usage-aware behavior.
+
+### Durable targeted Event admission (#343)
+
+`RunManager.receiveEvent` freezes one published version and eligible Event entry, including subloop pins, then claims a separate durable Event receipt before the API acknowledges 202. It shares the deletion/pinning lock and atomic run/thread/queued-event commit with `receiveWebhook`, but uses its own request-key ledger and delivery states (ADR-0048). The initial acceptance does not wait for run execution. Pending Event receipts participate in loop-in-use protection. Boot and the existing 15-second sweep dispatch up to five due Events; work then enters the normal capacity scheduler. The eight-failure budget and safe terminal codes are specified in 08. A later publish never changes the frozen intent. This admission guarantee does not establish exactly-once external effects, and it does not reintroduce exit-to-Event composition.
+
+## Structured completion deadlines (#270)
+
+`settings.structuredTimeoutMs` is a positive integer number of milliseconds per LLM
+decision evaluation or output-transform repair attempt through `StructuredPort`, or `null`
+for Unlimited. Omission
+means `null`: there is no default completion deadline. The editor's Loop tab exposes
+this control; Settings shows the default and the run inspector shows the effective
+value pinned in `run.pinned.limits`. Choosing Limited suggests 120,000 ms without
+imposing that value until saved. Changes affect new runs only, including after restart.
+
+One engine helper owns the deadline around both port paths, independent of the adapter.
+The clock starts at that port boundary, after admission and model/context preparation.
+It passes a combined abort signal, cancels overdue work and fails the node and run with
+`STRUCTURED_COMPLETION_TIMEOUT`, naming the duration in the message and
+`details.timeoutMs`; decisions and structured-port repairs also include the completion
+provider, resolved model and effort
+in `details.provenance`. This failure is resumable for a deliberate new attempt; no automatic
+retry occurs. The engine releases its run slot without waiting indefinitely for an
+uncooperative adapter. A late fulfillment or non-abort rejection is observed, discarded and logged
+once as `late structured completion discarded`, with run/node identity and no provider
+body. Acknowledging the forwarded abort reason or an AbortError is normal cleanup
+and does not produce this warning. A late result cannot validate a value, append a
+decision, or patch the thread.
+
+Cancel still produces `run.cancelled` and status `cancelled`, with no timeout failure.
+The first settled call outcome wins; the manager honours an observed run cancellation
+before persisting a failure. A run deadline remains `RUN_DEADLINE_EXCEEDED`. Both signals
+also settle stalled structured calls. Unlimited removes only the completion timer:
+explicit run deadlines, node watchdogs, authored gate limits and Cancel still apply.
+Classifiers keep their provider timeout semantics. Inference output-schema repairs run
+as turns on the node's own `HarnessPort` session, outside this structured-port deadline.
+They follow the node's explicit `timeoutSeconds` (failing with `INFERENCE_TIMEOUT`) and
+the run deadline, just like the initial inference turn. This is an elapsed completion deadline,
+never a cost, token, subscription or usage budget. See ADR-0051.
+
+## Deliberate shutdown (#224, ADR-0049)
+
+The container owns shutdown state. Normal stop closes independent admission and stops
+cron/poll sources and webhook retries. Started runs and descendants form the permitted
+family while drain is open; required children created during drain can still start.
+Independent queue entries remain durable and unstarted for the next process. New Events are
+refused with 503 before their inbound record or dedupe key is saved; cron leaves due slots
+untouched and refused poll candidates consume no durable dedupe key. Intake already accepted
+before drain holds a lease through its durable outcome. Its admitted independent runs can
+remain queued for restart; closing admission cannot strand a saved Event key without its work.
+`RunManager.withAdmission` reserves this boundary before a caller allocates receipts and
+provides a scoped `startRun`; the caller awaits all receipt, admission and linkage writes
+inside the callback. Manual, webhook, targeted Event (`receiveEvent`, #343), cron, poll and
+replay manager commands use the same lease accounting. The capability expires when the callback returns.
+
+D-038 defines completion as no active executor, no queued family member and no family wake
+already due. Future timers, input/signal waits, parents waiting on parked children and paused
+runs do not hold drain. Their status, waiting record and resumability survive normal stop
+and force unchanged. Input, signals, cancellation and timers work while drain is open: a
+wake holds drain until its continuation finishes or parks again. Due timer/timeout wakes
+are delivered before quiescence; after restart past wall-clock waits become eligible and
+paused runs remain paused.
+
+Quiescence is rechecked after every asynchronous cleanup observation, including delivery
+cleanup. Input, signal, timer and other mutating run commands acquire a work lease before
+their first await. Drain validates the lease generation, executor/queue state and nearest
+due wake, then seals further commands without an intervening await. A wake therefore either
+holds ownership through runnable completion or is refused with `SHUTTING_DOWN` before any
+write. A future timer stays durable when the seal wins. Required child continuations finish
+before SSE/HTTP close even when their parent woke during a held delivery response.
+
+`GG_SHUTDOWN_GRACE_MS` defaults to 300,000 ms (five minutes), an engineering choice to give
+interactive work time to finish. Expiry exposes `awaiting-choice` and logs wait/force controls;
+it never cancels work. `wait` has no hidden timer. Runnable quiescence is observed every
+50 ms to balance prompt completion and polling cost; ordinary timers retain `GG_TIMER_POLL_MS`.
+
+Explicit force aborts executors and queued family work, including queued children. An
+executor still committing a park when aborted is interrupted, unlike an existing durable
+park. Cleanup completes before release. `run.failed` with `RUN_INTERRUPTED_BY_STOP` retains
+node/attempt evidence, possible effects and a non-resumable outcome for interrupted work.
+Native cleanup errors retain `SCRIPT_TERMINATION_UNCONFIRMED` or
+`HARNESS_TERMINATION_UNCONFIRMED`. The five-second acknowledgement/close bound reports failed
+cleanup after force; it is never a normal-stop deadline. Only failures of this shutdown's
+own interruption block release in `force-failed`. Earlier failures are reported through
+`unconfirmedRunIds` without trapping a later stop. A further force explicitly acknowledges
+failed cleanup and exits code 1, retaining the failure and lock for next-start reclamation.
+A drain observation failure is separately `drain-failed`; incompatible controls return 409.
+
+D-021 still stops retry backoffs without cancelling the bounded in-flight delivery attempt;
+pending deliveries and webhook admissions recover on the next start. After runnable work
+and finalization settle, SSE closes, HTTP closes, timers/manager stop, SQLite closes and
+ownership is released. See [API controls](07-api-and-streaming.md) and
+[signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.
+
+## Explicit missing-session recovery (#265)
+
+A missing provider conversation fails with `HARNESS_SESSION_MISSING` and typed
+`failure.missingSession`: harness, native handle when known, selection origin,
+logical visit, model and effort. Plain Resume remains ineligible. An absent
+completed own-session row fails the same way without inventing a handle.
+
+`RunManager.recoverSession(runId, nodeId, failureSeq, actor)` validates the exact
+current failed event and inference node under the existing run/finalization lock.
+One `run.resumed` event atomically records the fresh-session choice and resume intent:
+actor, timestamp, node/visit, failed sequence, old handle/origin, original model/effort,
+`priorContextCarried: false` and the original authored prompt when available.
+Concurrent or repeated/stale choices reject. No choice means no status change or call.
+
+The next attempt starts fresh for that visit and reruns its authored task, rather
+than continuing or repairing work in a blank conversation. Selected graph context
+and files still apply. The configured policy, working directory, shared thread,
+other nodes and visit/reset counts remain intact. Future visits select normally.
+Earlier provider side effects are not undone. Both failed cause and choice are durable;
+startup completes a resume whose event committed before its status write. Later
+interruption still obeys #244; this choice does not authorize repeated fresh calls.
+The event schema changes but SQL storage does not; see ADR-0055 and the upgrade note.
+
+Nested recovery: open the failed-child link and make the fresh-session choice on
+the actual failed inference run. After that same child has a durable later resume
+and has no runtime failure, an explicit API Resume of its containing failed run is
+eligible. Before the child recovery it still refuses. Parent/child ownership and
+identity are checked; plain Resume never creates a fresh provider conversation.
+The recorded failure's original resumability remains factual history.

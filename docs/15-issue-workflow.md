@@ -31,6 +31,8 @@ Two labels take an issue out of the queue; neither is a gate, and an issue carry
 
 Name the QA agent in the issue body's Delivery section, not with a label.
 
+Retain QA evidence under `docs/qa/` with repository-relative citations and preserve raw JSON, YAML and JavaScript/TypeScript bytes so recorded hashes remain valid; `.prettierignore` excludes those artifacts while QA Markdown remains formatted.
+
 ## Model routing
 
 The triager sets one `impl:<model>` label and one `review:<model>` label. Use the following tiers, with xhigh reasoning:

@@ -1,0 +1,140 @@
+{
+  "mode": "after",
+  "sourceCommit": "52360d9",
+  "childId": "01M5GARR3YYMSETQ43C6P828QM",
+  "parentId": "01M5GARQYTCTPXF689F3Q8N41A",
+  "original": {
+    "childStatus": "succeeded",
+    "childFinalized": false,
+    "parentStatus": "waiting",
+    "heldWebhookRequests": 1
+  },
+  "child": {
+    "id": "01M5GARR3YYMSETQ43C6P828QM",
+    "ownerId": "local",
+    "loopId": "01M5GARQPWV60R62XV54520N95",
+    "versionId": "01M5GARQPWGK9R7SV62H88AZMJ",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Pre-upgrade Event-return child",
+      "label": "Pre-upgrade Event-return child v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "parentRunId": "01M5GARQYTCTPXF689F3Q8N41A",
+    "invocationId": "01M5GARR3YXXPR5W9SFP3NM557",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": "old-child-result",
+    "deliveries": [
+      {
+        "id": "01M5GARR3YYMSETQ43C6P828QM:webhook:1",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5800/hold-finalisation"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "interrupted",
+          "message": "Pre-upgrade return has no acknowledgement record; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-21T22:54:32.062Z",
+    "startedAt": "2026-10-21T22:54:32.092Z",
+    "finishedAt": "2026-10-21T22:54:32.577Z",
+    "lastEventSeq": 19
+  },
+  "parent": {
+    "id": "01M5GARQYTCTPXF689F3Q8N41A",
+    "ownerId": "local",
+    "loopId": "01M5GARQVTVW1377GXC6QDMXCT",
+    "versionId": "01M5GARQVTSWTQF9YHD5NWSK7Z",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Pre-upgrade awaiting parent",
+      "label": "Pre-upgrade awaiting parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GARQYTS4A7VK9EXWPCP8FX",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": {
+      "status": "succeeded",
+      "outcome": "success",
+      "result": "old-child-result",
+      "childRunId": "01M5GARR3YYMSETQ43C6P828QM"
+    },
+    "createdAt": "2026-10-21T22:54:31.898Z",
+    "startedAt": "2026-10-21T22:54:31.992Z",
+    "finishedAt": "2026-10-21T22:54:43.066Z",
+    "lastEventSeq": 17
+  },
+  "finalizedAt": "2026-10-21T22:54:42.268Z",
+  "childFinishedNotifications": 1,
+  "diagnostics": [
+    {
+      "level": 40,
+      "time": 1792623282061,
+      "pid": 49084,
+      "hostname": "DESKTOP-RQPA3QI",
+      "code": "LOOP_UPGRADE_REQUIRED",
+      "runId": "01M5GARR3YYMSETQ43C6P828QM",
+      "loopId": "01M5GARQPWV60R62XV54520N95",
+      "versionId": "01M5GARQPWGK9R7SV62H88AZMJ",
+      "channelKind": "event",
+      "msg": "retired Event return skipped; loop upgrade required"
+    },
+    {
+      "level": 40,
+      "time": 1792623282258,
+      "pid": 49084,
+      "hostname": "DESKTOP-RQPA3QI",
+      "code": "LOOP_UPGRADE_REQUIRED",
+      "runId": "01M5GARR3YYMSETQ43C6P828QM",
+      "loopId": "01M5GARQPWV60R62XV54520N95",
+      "versionId": "01M5GARQPWGK9R7SV62H88AZMJ",
+      "channelKind": "event",
+      "msg": "retired Event return skipped; loop upgrade required"
+    }
+  ],
+  "finalizeErrors": [],
+  "originalEventsAndDefinitionsUnchanged": true,
+  "secondStartupUnchanged": true
+}

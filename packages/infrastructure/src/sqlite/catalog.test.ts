@@ -1,4 +1,7 @@
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  shippedSqlMigrationCount,
+} from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -45,9 +48,8 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
-    // historical catalog migrations.
-    expect(await current.pendingMigrations()).toBe(12);
+    // All shipped SQL after the fixture's three historical catalog migrations.
+    expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 3);
     await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
@@ -83,7 +85,7 @@ describe('model catalog source migration and repository', () => {
     try {
       const catalog = new SqliteModelCatalog(current.db);
       const before = await catalog.list();
-      expect(await current.pendingMigrations()).toBe(4);
+      expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 11);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       // Exercise the historical SQL in isolation; format-4 startup cannot admit a pre-baseline store.
       await applyShippedSqlToHistoricalTestFixture(current);
@@ -103,6 +105,48 @@ describe('model catalog source migration and repository', () => {
       await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }).catch(
         () => undefined,
       );
+    }
+  });
+  it('adds Sonnet 5.5 and Haiku 5.5 enabled to an existing store and keeps every owner switch', async () => {
+    const handle = await openMemoryDatabase();
+    try {
+      const catalog = new SqliteModelCatalog(handle.db);
+      const added = ['claude-sonnet-5-5', 'claude-haiku-5-5'];
+      // A store seeded before #206 holds only the earlier Claude rows, with owner choices.
+      const earlier = DEFAULT_MODEL_CATALOG.filter((entry) => !added.includes(entry.model));
+      expect(await catalog.seed(earlier)).toBe(earlier.length);
+      await catalog.setEnabled('claude', 'claude-opus-5-5', false);
+      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+      const before = await catalog.list();
+
+      expect(await catalog.seed()).toBe(added.length);
+      const after = await catalog.list();
+      for (const model of added)
+        expect(after.find((entry) => entry.model === model)).toEqual({
+          harness: 'claude',
+          model,
+          source: 'harness',
+          displayName: model === 'claude-sonnet-5-5' ? 'Claude Sonnet 5.5' : 'Claude Haiku 5.5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          defaultEffort: 'high',
+          enabled: true,
+        });
+      expect(after.filter((entry) => !added.includes(entry.model))).toEqual(before);
+
+      // Later owner disablement of a new model survives the next startup seed.
+      await catalog.setEnabled('claude', 'claude-haiku-5-5', false);
+      expect(await catalog.seed()).toBe(0);
+      expect(await catalog.findOne('claude', 'claude-haiku-5-5')).toMatchObject({
+        enabled: false,
+      });
+      expect(await catalog.findOne('claude', 'claude-sonnet-5-5')).toMatchObject({
+        enabled: true,
+      });
+      expect(await catalog.findOne('claude', 'claude-opus-5-5')).toMatchObject({
+        enabled: false,
+      });
+    } finally {
+      handle.close();
     }
   });
   it('adds source on a fresh database and defaults direct legacy inserts to harness', async () => {
@@ -262,24 +306,27 @@ describe('model catalog source migration and repository', () => {
         (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
       ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
+      await handle.client.execute('DROP TABLE event_receipts');
       // Reconstruct this empty pre-0008 table before replaying historical SQL.
       await handle.client.execute('DROP TABLE webhook_endpoints');
       await handle.client.execute(
         'CREATE TABLE webhook_endpoints(id text PRIMARY KEY,owner_id text NOT NULL,loop_id text NOT NULL,version_id text NOT NULL,trigger_node_id text NOT NULL,token text NOT NULL,secret_ref text NOT NULL,signature_header text NOT NULL,replay_window_seconds integer NOT NULL,enabled integer NOT NULL,created_at text NOT NULL)',
       );
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-      // Roll back 0014 too, so replaying it re-adds the run pins.
+      // Roll back the later schema too before replaying its shipped structural migrations.
       for (const statement of [
+        'DROP INDEX runs_loop_owner_history_idx',
         'DROP TRIGGER loop_versions_snapshot_immutable',
         'DROP TRIGGER loop_versions_snapshot_pinned',
         'DROP INDEX runs_version_idx',
         'ALTER TABLE runs DROP COLUMN pinned',
+        'ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state',
       ])
         await handle.client.execute(statement);
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(11);
+      expect(await handle.pendingMigrations()).toBe(shippedSqlMigrationCount() - 4);
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));

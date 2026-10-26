@@ -1,0 +1,106 @@
+﻿import { readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+const dir='docs/qa/2026-10-22-wp-e1-186/round-3';
+async function json(p){try{return JSON.parse((await readFile(p,'utf8')).replace(/^\uFEFF/,''));}catch(e){if(e.code==='ENOENT')return undefined;throw e;}}
+async function log(name){try{return await readFile(`${dir}/${name}.log.txt`,'utf8');}catch{return '';}}
+const gates=await json(`${dir}/gates.json`)??[];
+const before=await json(`${dir}/terminal-before.json`),after=await json(`${dir}/terminal-after.json`);
+const count=s=>(/^\s*Tests\s+([^\r\n]+)/m.exec(s)?.[1]?.trim()??'Pending').replaceAll('|',';');
+const median=a=>{const v=[...a].sort((a,b)=>a-b);return v[Math.floor(v.length/2)];};
+const summary=(m,cursor)=>m?.observations.filter(r=>r.after===cursor);
+const measurements=[42102,42202].map(cursor=>{
+ const b=summary(before,cursor),a=summary(after,cursor);
+ const fmt=r=>r?`${median(r.map(o=>o.elapsedMs)).toFixed(2)} (${Math.min(...r.map(o=>o.elapsedMs)).toFixed(2)}–${Math.max(...r.map(o=>o.elapsedMs)).toFixed(2)})`:'Pending';
+ return `| ${cursor} | ${fmt(b)} | ${fmt(a)} | ${b?.[0].reads??'Pending'} / ${a?.[0].reads??'Pending'} | ${b?.[0].rows??'Pending'} / ${a?.[0].rows??'Pending'} | ${b?.[0].lifecycleLookups??'Pending'} / ${a?.[0].lifecycleLookups??'Pending'} |`;
+}).join('\n');
+const cov=[];for(const pkg of ['api','api-client','infrastructure']){
+ const t=(await json(`${dir}/coverage-${pkg}-summary.json`))?.total;
+ cov.push(`| ${pkg} | ${count(await log(`coverage-${pkg}`))} | ${t?`${t.lines.pct}% (${t.lines.covered}/${t.lines.total})`:'Pending'} | ${t?`${t.branches.pct}% (${t.branches.covered}/${t.branches.total})`:'Pending'} |`);
+}
+const diff=execFileSync('git',['diff','--unified=0'],{encoding:'utf8'}),hunks=new Map();let file;
+for(const line of diff.split('\n')){const f=/^diff --git a\/(.+) b\//.exec(line);if(f){file=f[1];hunks.set(file,[]);}const h=/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);if(h&&file){const start=+h[1],n=+(h[2]??1);hunks.get(file).push(n>1?`${start}–${start+n-1}`:`${start}`);}}
+const ranges=[...hunks].map(([p,h])=>`| \`${p}\` | ${h.join(', ')} |`).join('\n');
+const gateRows=gates.map(g=>`| \`${g.command.replaceAll('|','\\|')}\` | ${g.exitCode===0?'PASS':`**FAIL (${g.exitCode})**`} | [log](${g.log.replace('.tmp/r3-','')}) |`).join('\n');
+const alone=[];for(const g of gates.filter(g=>g.name.startsWith('alone-')))alone.push(`| \`${g.command.split(' run ')[1]?.split(' --')[0]}\` | ${count(await log(g.name))} | ${g.exitCode===0?'PASS':'FAIL'} |`);
+const protectedQa=await json(`${dir}/independent-qa-integrity.json`);
+const native=await json(`${dir}/native-disposition.json`);
+const nativeText=native?.text??'Native process-control tests are denied in this worker sandbox (D-015, per the brief). Package failures and their one isolated rerun are recorded separately; no external native restart is claimed. Final case-specific assertions are pending.';
+const text=`# #186 round 3: bounded terminal confirmation
+
+## 1. Branch and worktree
+
+Branch \`codex-wp-e1-186\`, worktree \`%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186\`, base/head \`3289c122cdaa985d90d1c48e7d10bb8b5c830d58\`. Uncommitted; ready for orchestrator commit after review. No staging, commit, push, merge, rebase, stash, branch switch or manual directory deletion. Owner ports/stores/checkout untouched. Manual built-API probes use port 5745; disposable stores use \`gg-wp-e1-186-\` under system temp. Existing automated tests use their ordinary ephemeral ports.
+
+The independent QA folder's Git-canonical content matches the committed record; an invalid formatter attempt was reverted exactly (see the setup incident below). Its untouched working-copy logs retain CRLF; all 87 entries match the original manifest after Git's LF normalization ([check](original-qa-manifest-integrity.json)). Its final integrity result: ${protectedQa?`${protectedQa.files} files checked; unchanged=${protectedQa.unchanged}`:'Pending'}. [Integrity record](independent-qa-integrity.json). This evidence folder's round 3 is an implementation review-fix round, separate from deferred history browsing.
+
+## 2. Per bolt
+
+**#186 / QA D1: reproduced and bounded.** Before corrective production edits, five count regressions failed on source byte-identical to QA head \`8b760b6b\`. Empty replies made 26 reads for 3,000 events and 49 for 6,000, against a maximum of two. Catch-up past a terminal event followed by 300 delivery audits made 30 reads against four. [Initial red log](red.log.txt), [baseline source](baseline-sse.ts.txt), [source identity/proof](baseline-proof.json).
+
+The final seven regressions were also run against the archived \`8b760b6b\` SSE source on the current dependency set, with the fixed source restored and SHA-256 checked in a finally block: 7 failed, 6 skipped. Quotes: \`expected 26 to be less than or equal to 2\`, \`expected 49 to be less than or equal to 2\`, \`expected 30 to be less than or equal to 4\`, and \`expected +0 to be 2\` for missing/resumed metadata not being consulted. [Final red log](final-red.log.txt), [proof runner](regression-proof.mjs.txt), [regression source as executed before final formatting](terminal-regression.test.ts.txt).
+
+Both terminal-confirmation sites now query the indexed lifecycle tail. Empty first-page confirmation stays before headers so a corrupt marker is still an HTTP problem; the post-catch-up confirmation uses the same bounded callback and existing control-error handling. No current terminal marker retains defensive grace and the live subscription. New focused API cases: ${count(await log('final-focused-api'))}; SQLite cases: ${count(await log('final-focused-infrastructure'))}. [API](final-focused-api.log.txt), [SQLite](final-focused-infrastructure.log.txt). The earlier three-file API focused run also passed: ${count(await log('focused-api'))}.
+
+Built API, real file-backed SQLite, real raw HTTP reader, 42,102 events, three rounds at each cursor on fresh stores per phase; Node 22.14.0. Medians and observed ranges in milliseconds:
+
+| Cursor | Before median (range) ms | After median (range) ms | Paged reads before / after | Replay rows before / after | Lifecycle lookups before / after |
+| --- | ---: | ---: | --- | --- | --- |
+${measurements}
+
+Every measured reply is HTTP 200, has zero event ids and zero error controls. Replay-row counts exclude the lifecycle lookup, which decodes at most one marker row after five fixed index seeks. Thus the after empty reply decodes one marker rather than the whole log. [Before results](terminal-before.json), [after results](terminal-after.json), [before log](terminal-before.log.txt), [after log](terminal-after.log.txt), [same probe source](terminal-probe.mjs.txt). Commands: \`node --experimental-import-meta-resolve .tmp/gg-wp-e1-186-r3-terminal-probe.mjs before\` and \`after\`, after their corresponding builds. The public-port fixture seeds/cancels a waiting run; it is transport evidence, not live-provider or whole-intent acceptance. Shared-host timings support only this case; no full-replay throughput claim or latency SLA is made.
+
+## 3. Files changed
+
+API: \`sse.ts\`, count/grace regressions in \`sse-catchup.test.ts\`, and the malformed-marker fixture in \`sse.test.ts\`. The only route edit is additive SSE callback wiring in \`routes/runs.ts\` (shared WP-G1 surface); JSON event paging and ownership checks stay intact. Infrastructure: one additional public SQLite query in \`events.ts\` and new \`lifecycle-tail.test.ts\`; no changes to the existing page/read/append methods, schema or index definitions. Docs and evidence are listed below.
+
+| Tracked file | Changed candidate line ranges |
+| --- | --- |
+${ranges}
+
+New files are the infrastructure test, implementation evidence README and round-3 artifacts. There are no proposed engine or protected recovery/reset implementation changes; incidental formatter edits were restored from HEAD. Source copies: [SSE](sse.ts.txt), [API regressions](sse-catchup.test.ts.txt), [route](routes-runs.ts.txt), [SQLite query](sqlite-events.ts.txt), [SQLite tests](lifecycle-tail.test.ts.txt), [SSE contract tests](sse.test.ts.txt). [Frozen tested-source hashes](source-frozen.json).
+
+## 4. Tests
+
+New/changed public-interface tests cover at/past terminal cursors at 3,000 and 6,000 events, post-terminal audit catch-up, missing/resumed marker grace, deep delivery bookkeeping, started/resumed invalidation followed by a newer outcome, run isolation, and corrupt current markers. No new timing assertion or private production access. The existing pre-header corruption test now corrupts \`run.finished\`, the marker actually read by bounded confirmation; an empty cursor no longer validates unrelated earlier history. Full replay still validates its requested pages normally.
+
+| Package | Full invocation counts | Lines | Branches |
+| --- | --- | ---: | ---: |
+${cov.join('\n')}
+
+| Untouched file rerun alone once | Counts | Result |
+| --- | --- | --- |
+${alone.join('\n')}
+
+Original and isolated outcomes are both kept; an isolated pass never relabels a failed full invocation. No thresholds, exclusions, assertions or test timeouts were relaxed. Initial SQLite fixture failure is retained in [focused-infrastructure.log.txt](focused-infrastructure.log.txt): \`HARNESS_FAILED\` was not a valid failure-code enum; corrected to \`HARNESS_TURN_FAILED\` before final focused/full gates.
+
+## 5. Gates
+
+Node 22 first on PATH, PowerShell \`pnpm.cmd\`. Baseline \`pnpm.cmd build\` passed: [log](before-build.log.txt). Coverage adds \`--coverage.reportOnFailure=true\` to preserve truthful denominators on failures. Infrastructure coverage is additional to the brief because its query changed.
+
+| Command | Result | Capture |
+| --- | --- | --- |
+${gateRows}
+
+The accepted formatting commands explicitly load .gitignore and .prettierignore plus a root-scoped temporary QA exclusion. The first attempt placed the extra ignore below the root and was invalid; its incidental tracked-file edits were restored from HEAD before the accepted run. See [restoration](format-restoration.json), [initial gate record](gates-attempt-1.json) and [initial formatter log](format-invalid-ignore.log.txt). The additional pre-test build refreshes generated outputs before package tests; the requested final build still runs. [Exact ignore copy](format-ignore.txt), [gate runner](run-gates.mjs.txt). No tracked formatting configuration changes. New text captures use UTF-8/LF; [copy provenance](source-copy-provenance.json) records original and retained code-copy hashes. Execution helpers under \`.tmp/\` are not kept as executables; code/log copies here are the retained artifacts. Final evidence Markdown formatting/checks are captured separately after the report is assembled. No web change: web coverage/browser gates are not required this round. No dependency change: license gate not required. No contract/OpenAPI shape change: generated references unchanged; the requested docs gate still runs.
+
+## 6. Docs
+
+Docs 07 describes bounded terminal confirmation and preserved grace. Docs 10 links this targeted measurement. ADR-0050 records why the terminal event is not always the final row, resume invalidation, and the fixed indexed query. The existing top Unreleased #186 bullet is extended, ending in \`(#186)\`; no new migration or dependency. The implementation README indexes all rounds and includes a round-3 subsection. Independent QA Git-canonical content matches HEAD; raw working-copy bytes are preserved throughout the accepted run.
+
+## 7. Decisions and parameters
+
+The engine's \`terminalEvent\` scans backward until the newest of \`run.finished\`, \`run.failed\`, \`run.cancelled\`, \`run.started\`, or \`run.resumed\`. Terminal append precedes status writes; \`completeFromLog\` uses the same rule for lost-status recovery. Finalization appends return-delivery audit events afterward, so neither the final row nor a fixed number of trailing events suffices. Source reasoning: [engine helper](../../../../packages/engine/src/run-manager.ts#L239), resume path around 762, lost-write completion around 1832, and finalization around 1938 (engine source unchanged).
+
+The new query selects the maximum seq across those five fixed types using existing \`run_events_delivery_idx (run_id, type, seq)\`, then reads/validates exactly that row through the primary key. One statement supplies a coherent snapshot. Only a terminal-type marker with seq at/before the written cursor confirms completion; a reset marker invalidates older failures. Bounded work is five indexed seeks plus at most one intrinsic event payload, independent of history/audit length. [SQL-shape EXPLAIN and bytecode](query-plan.json), [diagnostic source](query-plan.mjs.txt), [diagnostic log](query-plan.log.txt): five covering-index searches, no full scan. This diagnostic is not a timing benchmark.
+
+No new numeric transport policy: 128-event pages, existing buffer/writable bounds, 5-second drain timeout and 2-second forced-close/grace remain unchanged. Five is the count of existing lifecycle marker types, not a tuning parameter or owner-approved value.
+
+## 8. Caveats and open items
+
+${nativeText}
+
+History browsing, per-run browser history bounds and Timeline windowing remain later #186 work. Full #186/intent completion is not claimed. The orchestrator commits and runs the final audit on the resulting exact head; no independent audit sign-off or CI verification is supplied here. Large raw stores/captures are not proposed for commit; [NOT-KEPT.md](NOT-KEPT.md) records original bytes and SHA-256. Temp/build/coverage cleanup belongs to the orchestrator; no manual directory cleanup was performed.
+`;
+await writeFile(`${dir}/REPORT.md`,text);
+await writeFile('docs/qa/2026-10-22-wp-e1-186/README.md',`# #186 server/transport implementation evidence\n\nRound 1: [implementation report](../2026-10-22-wp-e1-186-report.md). Round 2: [review-fix report](round-2/REPORT.md).\n\n## Round 3: bounded terminal confirmation\n\nBase \`3289c122cdaa985d90d1c48e7d10bb8b5c830d58\`; uncommitted. QA defect D1 reproduced before the fix: each empty 42,102-event reply performed 331 repository reads and decoded the full history. The final implementation uses two empty replay reads plus one bounded lifecycle lookup (five existing indexed type seeks, at most one marker row). The terminal event precedes status but can precede delivery audits; started/resumed invalidate older outcomes. Both confirmation sites are bounded, and absent current terminal evidence retains defensive grace.\n\nSeven final regressions fail on archived \`8b760b6b\` SSE source; all 13 catch-up and five SQLite focused cases pass after the fix. Counts, exact before/after timings, source guarantees, coverage, gates and native sandbox limitations are in the [round-3 report](round-3/REPORT.md). [Before](round-3/terminal-before.json), [after](round-3/terminal-after.json), [baseline proof](round-3/baseline-proof.json), [SQL plan](round-3/query-plan.json), [capture manifest](round-3/NOT-KEPT.md). The independent QA record matches HEAD after Git's LF normalization; the report discloses the repaired formatter setup incident. History browsing follows in #186 round 2; this review-fix round does not implement it.\n`);
+console.log('Round-3 report and implementation README updated.');

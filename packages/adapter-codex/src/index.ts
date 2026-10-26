@@ -5,6 +5,7 @@
  * decider (`DeciderPort`) over `@openai/codex-sdk`. See docs/06-harness-integration.md.
  */
 export {
+  DEFAULT_MODEL as CODEX_DEFAULT_MODEL,
   CodexHarness,
   createCodexHarness,
   type CodexClientFactory,

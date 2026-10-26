@@ -1,4 +1,7 @@
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  shippedSqlMigrationCount,
+} from './testing/shipped-migrations.js';
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -148,8 +151,8 @@ describe('classifier repository', () => {
           .map((column) => `"${column.replaceAll('"', '""')}"`)
           .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        // The current catalog ends with 0014_run_definition_pins, its fifteenth entry.
-        expect(await handle.pendingMigrations()).toBe(15 - count);
+        // Count shipped entries, including the new owner/history index, after this fixture.
+        expect(await handle.pendingMigrations()).toBe(shippedSqlMigrationCount() - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);

@@ -1,0 +1,25 @@
+pnpm.cmd : [33m[PLUGIN_TIMINGS] [0mJavaScript callbacks ran for 3.1s of this 3.1s build (99%).
+At line:9 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/RunInspec ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33m[PLUGIN_TI...1s build (99%).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits 
+is included):
+  - plugin externalize-deps resolveId (99%, 3.1s, 4 calls)
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/web
+
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  21:54:52
+   Duration  129.88s (environment 35%, transform 29%, setup 18%, import 10%, tests 7%, worker 1%)
+
+Environment  jsdom was created 3 times · 80.27s total, 35% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

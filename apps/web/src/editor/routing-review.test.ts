@@ -659,6 +659,8 @@ describe('routing review regressions', () => {
     expect(workspace.costs).toBe(buffer);
   });
 
+  // The finite 300-graph correctness corpus took 105.6 s with V8 coverage on Node 22.
+  // Allow a three-minute execution watchdog; retain every seed and geometry/count assertion.
   it('seeded sparse graphs preserve geometry and keep detours below twelve bends', () => {
     let seed = 0x182026;
     const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
@@ -738,5 +740,5 @@ describe('routing review regressions', () => {
     expect(covered).toBeGreaterThan(0);
     expect(labels).toBe(checked + covered);
     expect(alternatives).toBeGreaterThan(100);
-  }, 60_000);
+  }, 180_000);
 });

@@ -1,0 +1,100 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/engine
+
+ ❯ src/structured-deadline.test.ts (14 tests | 3 failed) 2031ms
+   × does not warn about an adapter cancellation acknowledgement: AbortError 32ms
+   × does not warn about an adapter cancellation acknowledgement: forwarded reason 13ms
+   × applies the same deadline to LLM routing without replacing it with a generic provider failure 101ms
+ ❯ src/completion-deadline.test.ts (1 test | 1 failed) 28ms
+   × treats an undefined runtime completion limit as Unlimited 25ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/completion- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/completion-deadline.test.ts > treats an undefined runtime completion limit as Unlimited
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/completion-deadline.test.ts:23:29
+     21|   try {
+     22|     await vi.advanceTimersByTimeAsync(120_001);
+     23|     expect(signal?.aborted).toBe(false);
+       |                             ^
+     24|     finish();
+     25|     expect(await outcome).toEqual({ value: 7 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/structured-deadline.test.ts > does not warn about an adapter cancellation acknowledgement: AbortError
+ FAIL  src/structured-deadline.test.ts > does not warn about an adapter cancellation acknowledgement: forwarded reason
+AssertionError: expected [ { level: 'warn', …(2) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/structured-deadline.test.ts:252:104
+    250|     release!();
+    251|     await vi.advanceTimersByTimeAsync(0);
+    252|     expect(e.ports.logger.lines.filter((line) => line.msg === 'late st…
+       |                                                                                                        ^
+    253|   },
+    254| );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/structured-deadline.test.ts > applies the same deadline to LLM routing without replacing it with a generic 
+provider failure
+AssertionError: expected { timeoutMs: 50 } to match object { timeoutMs: 50, provenance: { …(4) } }
+
+- Expected
++ Received
+
+  {
+-   "provenance": {
+-     "effort": "low",
+-     "kind": "llm",
+-     "model": "gpt-6-luna",
+-     "provider": "codex",
+-   },
+    "timeoutMs": 50,
+  }
+
+ ❯ src/structured-deadline.test.ts:297:32
+    295|   const run = await e.runToIdle(e.publish(def).loopId);
+    296|   expect(run.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
+    297|   expect(run.failure?.details).toMatchObject({
+       |                                ^
+    298|     timeoutMs: 50,
+    299|     provenance: { kind: 'llm', provider: 'codex', model: 'gpt-6-luna',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 11 passed (15)
+   Start at  00:42:29
+   Duration  12.57s (import 45%, transform 37%, tests 18%, worker 1%)
+
+  Transform  transforming modules took 4.26s · 37% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\engine
+

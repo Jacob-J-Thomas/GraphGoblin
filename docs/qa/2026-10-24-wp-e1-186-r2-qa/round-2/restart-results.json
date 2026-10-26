@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "name": "real graceful process exit/restart on same file-backed store",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S3AMWXZF5VSTH1YTDHPB1S",
+        "total": 1608,
+        "beforePid": 54096,
+        "afterPid": 46152,
+        "historyHash": "6678244c4c790d857e35baf008db3828f13974cb4ecd9abd251f0b07797d2047",
+        "threadsHash": "0af307934d5f2ce741337b4d8af3026d4ba83ced27fe5e776794c01572247d7d",
+        "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-186r2-2-restart-2hsFUa"
+      }
+    },
+    {
+      "name": "binary-created API key after restart /events?around=0&limit=1",
+      "pass": true,
+      "evidence": {
+        "status": 200,
+        "sha256": "a136d7a4ab9b6f56cd4875ac17c3ce4b5b7d94209d846bdc7a3ec4d1c5e9e9d1"
+      }
+    },
+    {
+      "name": "binary-created API key after restart /events?around=100&limit=2",
+      "pass": true,
+      "evidence": {
+        "status": 200,
+        "sha256": "d102e499ddd183ea2297bef9b7d671fe41584072a70cee72518e9eb0f7e5ab95"
+      }
+    },
+    {
+      "name": "binary-created API key after restart /thread?at=128",
+      "pass": true,
+      "evidence": {
+        "status": 200,
+        "sha256": "7f88126b365daa2cda01c2191563a04a28a0ca99800a3bbe2d2d13df69d8d063"
+      }
+    },
+    {
+      "name": "binary-created API key after restart /observation",
+      "pass": true,
+      "evidence": {
+        "status": 200,
+        "sha256": "ba82b3955c348aa55711ba1d4686ada2e22e68e5e879b9b64e786e4b67f12c81"
+      }
+    },
+    {
+      "name": "Edge inspector reads old exact thread and whole-history exit with binary key after restart",
+      "pass": true,
+      "evidence": {
+        "at": 100,
+        "threadHash": "9be08b3db6f419608562fcde3a948194b6da34aa2c4a3fe49252a8d5836d12f3",
+        "rows": 80
+      }
+    }
+  ],
+  "logs": [
+    {
+      "command": "node apps/api/dist/main.js --create-api-key \"QA round 2 binary key\"",
+      "code": 0,
+      "stdout": "Created API key \"QA round 2 binary key\" (id 01M5S3AHH2RK0W0N2YZ4JFHTZN, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  <redacted disposable API key>\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "pid": 54096,
+      "startup": "{\"url\":\"http://127.0.0.1:6156\",\"control\":6157,\"dir\":\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-e1-186r2-2-restart-2hsFUa\",\"pid\":54096,\"node\":\"v22.14.0\"}\n"
+    },
+    {
+      "pid": 54096,
+      "result": {
+        "stopping": true
+      },
+      "state": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "pid": 46152,
+      "startup": "{\"url\":\"http://127.0.0.1:6156\",\"control\":6157,\"dir\":\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-e1-186r2-2-restart-2hsFUa\",\"pid\":46152,\"node\":\"v22.14.0\"}\n"
+    },
+    {
+      "pid": 46152,
+      "result": {
+        "stopping": true
+      },
+      "state": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ]
+}

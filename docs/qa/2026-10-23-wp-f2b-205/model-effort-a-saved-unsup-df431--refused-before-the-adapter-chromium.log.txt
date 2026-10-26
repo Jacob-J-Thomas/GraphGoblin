@@ -1,0 +1,146 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: model-effort.spec.ts >> a saved unsupported effort stays visible and is refused before the adapter
+- Location: e2e\model-effort.spec.ts:192:1
+
+# Error details
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 201
+Received: 400
+```
+
+# Test source
+
+```ts
+  134 |   const created = await request.post('/loops', {
+  135 |     data: {
+  136 |       definition: {
+  137 |         ...source,
+  138 |         name: '205 classifier order',
+  139 |         nodes: [
+  140 |           source.nodes[0],
+  141 |           {
+  142 |             id: 'pick',
+  143 |             kind: 'decision',
+  144 |             label: 'Pick',
+  145 |             ui: { x: 260, y: 80 },
+  146 |             config: {
+  147 |               kind: 'classifier',
+  148 |               model: 'jev',
+  149 |               question: 'Choose',
+  150 |               answer: {
+  151 |                 type: 'choice',
+  152 |                 options: [
+  153 |                   { id: 'yes', label: 'Yes', criteria: 'yes' },
+  154 |                   { id: 'no', label: 'No', criteria: 'no' },
+  155 |                 ],
+  156 |               },
+  157 |             },
+  158 |           },
+  159 |           source.nodes[1],
+  160 |         ],
+  161 |         edges: [
+  162 |           { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  163 |           ...['yes', 'no'].map((port) => ({
+  164 |             id: port,
+  165 |             from: { node: 'pick', port },
+  166 |             to: { node: 'done' },
+  167 |           })),
+  168 |         ],
+  169 |       },
+  170 |     },
+  171 |   });
+  172 |   expect(created.status()).toBe(201);
+  173 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  174 |   await page.goto(`/app/loops/${loop.id}/edit`);
+  175 |   const dialog = await openNode(page, 'pick');
+  176 |   const fields = dialog.locator('[data-field-scope="config"]');
+  177 |   for (const name of ['question', 'model', 'answer'])
+  178 |     await expect(fields.locator(`[data-field="${name}"]`).first()).toBeVisible();
+  179 |   expect(
+  180 |     await fields
+  181 |       .locator('[data-field]')
+  182 |       .evaluateAll((elements) =>
+  183 |         elements
+  184 |           .map((element) => element.getAttribute('data-field'))
+  185 |           .filter((name) => ['question', 'model', 'answer'].includes(name ?? '')),
+  186 |       ),
+  187 |   ).toEqual(['question', 'model', 'answer']);
+  188 |   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
+  189 |   await page.screenshot({ path: '../../docs/qa/2026-10-23-wp-f2b-205/after-classifier.png' });
+  190 | });
+  191 | 
+  192 | test('a saved unsupported effort stays visible and is refused before the adapter', async ({
+  193 |   page,
+  194 |   request,
+  195 | }) => {
+  196 |   const instance = await control(request, '/apps');
+  197 |   const url = String(instance['url']);
+  198 |   const instanceId = String(instance['instanceId']);
+  199 |   const entry = {
+  200 |     instanceId,
+  201 |     harness: 'codex',
+  202 |     model: 'effort-limited',
+  203 |     displayName: 'Limited',
+  204 |     efforts: ['low', 'high'],
+  205 |     defaultEffort: 'low',
+  206 |     enabled: true,
+  207 |     source: 'harness',
+  208 |   };
+  209 |   await control(request, '/catalog/upsert', entry);
+  210 |   const source = minimalLoop();
+  211 |   const created = await request.post(url + '/loops', {
+  212 |     data: {
+  213 |       definition: {
+  214 |         ...source,
+  215 |         name: '205 unsupported effort',
+  216 |         nodes: [
+  217 |           source.nodes[0],
+  218 |           {
+  219 |             id: 'work',
+  220 |             kind: 'inference',
+  221 |             label: 'Work',
+  222 |             config: { model: entry.model, effort: 'high', prompt: { template: 'q' } },
+  223 |             ui: { x: 260, y: 80 },
+  224 |           },
+  225 |           source.nodes[1],
+  226 |         ],
+  227 |         edges: [
+  228 |           { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+  229 |           { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+  230 |         ],
+  231 |       },
+  232 |     },
+  233 |   });
+> 234 |   expect(created.status()).toBe(201);
+      |                            ^ Error: expect(received).toBe(expected) // Object.is equality
+  235 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  236 |   expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+  237 |   await control(request, '/catalog/upsert', { ...entry, efforts: ['low'] });
+  238 |   await page.goto(url + `/app/loops/${loop.id}/edit`);
+  239 |   const dialog = await openNode(page, 'work');
+  240 |   const effort = dialog.getByLabel('Effort', { exact: true });
+  241 |   await expect(effort).toHaveValue('high');
+  242 |   await expect(effort).toHaveAccessibleDescription(/not supported/);
+  243 |   await expect(effort.locator('option:checked')).toHaveText('high (not supported by this model)');
+  244 |   await closeNode(page);
+  245 |   await page.reload();
+  246 |   await expect((await openNode(page, 'work')).getByLabel('Effort', { exact: true })).toHaveValue(
+  247 |     'high',
+  248 |   );
+  249 |   const refused = await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } });
+  250 |   expect(refused.status()).toBe(422);
+  251 |   expect(await refused.text()).toContain('EFFORT_UNSUPPORTED');
+  252 |   expect((await control(request, '/harness/requests', { instanceId }))['started']).toEqual([]);
+  253 | });
+  254 | 
+```

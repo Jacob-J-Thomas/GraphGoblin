@@ -1,0 +1,19 @@
+import { spawn } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { once } from 'node:events';
+const root=process.cwd(), out=resolve(root,'docs/qa/2026-10-24-wp-f4-265-qa');
+const checks=[['typecheck','pnpm.cmd typecheck'],['lint','pnpm.cmd lint'],['layers','pnpm.cmd check:layers'],['deps','pnpm.cmd check:deps'],['docs','pnpm.cmd check:docs'],['tokens','pnpm.cmd check:tokens']];
+for(const pkg of ['contracts','engine','adapter-codex','api-client','api','web']) checks.push(['coverage-'+pkg,'pnpm.cmd --filter @graphgoblin/'+pkg+' test:coverage']);
+const results=[];
+for(const [name,cmd] of checks){
+  console.log('START '+cmd);
+  let log='';const t=Date.now();
+  const p=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',cmd],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+  p.stdout.on('data',x=>{log+=x});p.stderr.on('data',x=>{log+=x});
+  const [exitCode,signal]=await once(p,'close');
+  await writeFile(join(out,name+'.log.txt'),log.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+  results.push({name,cmd,exitCode,signal,ms:Date.now()-t,log:name+'.log.txt'});
+  await writeFile(join(out,'gates.json'),JSON.stringify(results,null,2));
+  console.log('END '+name+' exit='+exitCode+' ms='+(Date.now()-t));
+}

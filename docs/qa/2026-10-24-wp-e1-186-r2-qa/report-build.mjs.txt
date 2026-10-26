@@ -1,0 +1,57 @@
+import{readFile,writeFile,readdir,copyFile}from'node:fs/promises';
+import{join}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const esc=x=>String(x??'').replaceAll('|','\\|').replace(/\s+/g,' ');
+const short=x=>esc(JSON.stringify(x)).slice(0,230);
+const json=async n=>JSON.parse((await readFile(join(out,n),'utf8')).replace(/^\uFEFF/,''));
+const groups=[
+ ['api-results.json','api.mjs.txt','Real HTTP, ordered pages, scope/owner boundaries and full-read reference','HTTP status or deep equality asserted by the retained script'],
+ ['browser-results.json','browser.mjs.txt','Completed long history, paging, selected threads, reload and four layout cases','Exact stored values, stable focus, ≤80 mounted rows and valid continuation'],
+ ['live-results.json','live.mjs.txt','Initial live harness; preserved preliminary samples and failures','See harness caveats: this attempt does not establish thousands-of-events acceptance'],
+ ['live-synchronized-results.json','live-synchronized.mjs.txt','Second harness attempt; ordinary progress summary was bounded by the engine','See preserved invalid byte-pressure assumption; dependent cases inconclusive'],
+ ['live-final-results.json','live-final.mjs.txt','Final synchronized active run with explicit 50,000-character payload events','Frozen history, monotonic ack/reload cursor, exact live suffix and count/byte bounds'],
+ ['recovery-results.json','recovery.mjs.txt','Controlled typed HTTP fault followed by real gateway reads; patch and two-tab checks','after=600, exact suffix, exact before/after patch and independent tab state'],
+ ['projection-results.json','projections.mjs.txt','Real restart and initial projection harness','Identical restart oracle; initial code/field assumptions retained as harness failures'],
+ ['projection-complete-results.json','projection-complete.mjs.txt','Persisted failure projection and initial native webhook setup','Exact displayed failure; first publish body setup failure retained'],
+ ['delivery-final-results.json','delivery-final.mjs.txt','Real local HTTP webhook delivery followed by 700 later events','Delivered identity/status, exact result/finish, retained evidence after eviction'],
+ ['additional-ui-results.json','additional-ui.mjs.txt','Additional keyboard boundary, visible Reading note and unavailable event','Stable focus/selection, visible note, explicit missing-event reason'],
+];
+let ledger='';
+for(const[file,script,steps,expectation]of groups){
+ const value=await json(file),checks=Array.isArray(value)?value:value.checks;
+ ledger+='\n#### '+file+'\n\nSteps: '+steps+'. Execute ['+script+']('+script+'); detailed values: ['+file+']('+file+').\n\n| Case | Expected | Actual / excerpt | Result |\n| --- | --- | --- | --- |\n';
+ for(const c of checks)ledger+='| '+esc(c.name??'harness execution')+' | '+esc(expectation)+' | '+short(c.pass?c.evidence:c.error)+' | '+(c.pass?'PASS':'FAIL; classify using caveats above')+' |\n';
+}
+for(const[file,script]of [['vars-progress-results.json','vars-progress.mjs.txt'],['native-slow-reader.json','native-slow-reader.mjs.txt'],['zero-boundary.json','zero-boundary.mjs.txt'],['shutdown-results.json','shutdown.mjs.txt']]){
+ const x=await json(file);ledger+='\n#### '+file+'\n\nSteps and assertions: ['+script+']('+script+'). Actual responses/numbers: ['+file+']('+file+').\n\n';
+ if(x.checks){ledger+='| Case | Expected | Actual | Result |\n| --- | --- | --- | --- |\n';for(const c of x.checks)ledger+='| '+esc(c.name)+' | Exact full-read reference or labelled window slice | '+short(c)+' | '+(c.pass?'PASS':'FAIL')+' |\n';}
+ else ledger+='Result: **'+(file==='zero-boundary.json'?'FAIL — QA-186R2-001':Array.isArray(x)?(x.filter(y=>'closed'in y).every(y=>y.closed)?'PASS — all five manual ports closed':'FAIL'):(x.pass?'PASS':'FAIL'))+'**. '+short(x)+'\n';
+}
+const gates=[];
+for(const name of ['gates.jsonl','coverage-gates.jsonl'])for(const line of(await readFile(join(out,name),'utf8')).replace(/^\uFEFF/,'').trim().split(/\r?\n/))if(line.trim())gates.push(JSON.parse(line));
+let gateTable='All gates used Node 22.14.0. No pnpm store-lock fallback was required. No coverage threshold or exclusion changed.\n\n| Command | Result | Evidence |\n| --- | --- | --- |\n| pnpm.cmd build | PASS; 11 tasks (9 cached, 2 built); gateway/UI launched only after completion | [build.log.txt](build.log.txt) |\n';
+for(const g of gates)gateTable+='| '+esc(g.command)+' | '+(g.exit===0?'PASS (0)':'FAIL ('+g.exit+')')+' | ['+g.log+']('+g.log+') |\n';
+const isolated=await json('upgrade-timing-isolated.json');
+gateTable+='| '+esc(isolated.command)+' | '+(isolated.exit===0?'PASS: 3 selected cases, 23 skipped; one isolated diagnostic':'FAIL')+' | [isolated log](upgrade-timing-isolated.log.txt), [command/state](upgrade-timing-isolated.json) |\n';
+gateTable+='| pnpm.cmd check:licenses | Not run: dependency manifests and lockfile unchanged against target main | [provenance](provenance.json) |\n| pnpm.cmd format:check --ignore-path .gitignore --ignore-path .prettierignore | PASS (0); extra ignore file excludes existing gitignored temporary/generated data | [format-check.log.txt](format-check.log.txt) |\n';
+gateTable+='\nThe isolated run occurred after the browser, benchmark and all coverage sweeps completed, with gateways idle. The original untouched upgrade case timed out at 20,000 ms in the full infrastructure sweep; the isolated filter selected all three parameterized owner-default cases and passed in 30.12 s total. This is a diagnostic observation, not a fix or retry-to-green gate.\n\n';
+const cov=await json('coverage-summary.json');
+gateTable+='| Package | Tests | Lines | Branches | Gate |\n| --- | --- | ---: | ---: | --- |\n';
+const counts={domain:'612 passed',apiClient:'93 passed',infrastructure:'790 passed / 7 failed',api:'1,402 passed / 11 skipped',web:'1,705 passed'};
+for(const[n,c]of Object.entries(cov))gateTable+='| '+n+' | '+counts[n]+' | '+c.lines.pct+'% ('+c.lines.covered+'/'+c.lines.total+') | '+c.branches.pct+'% ('+c.branches.covered+'/'+c.branches.total+') | '+(n==='infrastructure'?'FAIL':'PASS')+' |\n';
+gateTable+='\nPercentages are retained with truthful numerators/denominators in [coverage-summary.json](coverage-summary.json). The full failed infrastructure sweep is not replaced by the isolated diagnostic. Tooling tests exercise the changed performance observers; the tooling command does not produce coverage percentages. No new production or test source was written; retained acceptance scripts assert through supported component/HTTP/browser interfaces.\n';
+const perf=await json('before-after-results.json');
+let measurements='Both real built gateways used a 500-pass fake inference loop with three progress items per turn, 32 padding characters, 1 ms fake delay, no growing context and 6,008 durable events. New Edge contexts used 1440×900, no service worker, the same installed dependencies and Node 22.14.0. All API/inference execution remained fake-only; process/network/storage/browser paths were real.\n\n';
+measurements+='The target-main source was exported under the ignored .tmp/qa186/baseline directory; 316 TypeScript runtime files were transpiled and its web assets were built from that snapshot. A retained Node loader/alias bridge resolves its workspace packages to the snapshot and its unchanged external dependencies to this worktree. Two CSS dependency directories were physically copied with dereference=true; no symlink/junction or another checkout was used. The head used pnpm build. The baseline reused the unchanged head Vite configuration; the CSS scanner emitted extra unused classes in the nested snapshot. This is a source-equivalent runtime/browser comparison, not a separately installed pnpm checkout.\n\n';
+measurements+='| Metric | Target main | Head |\n| --- | ---: | ---: |\n';
+for(const[key,label]of [['total','Durable events'],['peakHeapUsed','Peak sampled JS heap, bytes'],['postGCHeapUsed','Heap after forced GC, bytes'],['peakCacheUTF16Bytes','Peak persisted UTF-16 bytes'],['peakRows','Peak mounted Timeline rows'],['peakTimelineDescendants','Peak Timeline descendant DOM nodes'],['durationMs','Observation duration, ms']])measurements+='| '+label+' | '+perf[0][key].toLocaleString('en-US')+' | '+perf[1][key].toLocaleString('en-US')+' |\n';
+measurements+='\nBoth succeeded without browser page errors. Host busy fractions were '+(perf[0].hostBusyFraction*100).toFixed(1)+'% and '+(perf[1].hostBusyFraction*100).toFixed(1)+'%. Target main stops persisting the run once it exceeds its existing 2,000,000-character large-history threshold; its final framed cache was 66 bytes (no run entry), while all 6,008 rows remained mounted. The head final cache was 347,716 bytes and retained 512 rows. Baseline sample count 240 versus head 184 reflects the baseline missing-ack sampling limitation described below. Do not compare observation durations as latency. The pair supports reduced heap/cache peaks and DOM size for this workload; quiet repeated timing and universal memory claims are not established.\n\nRaw samples and outcomes: [before-after-results.json](before-after-results.json), [benchmark script](benchmark.mjs.txt), [baseline builder](baseline-build.mjs.txt), [baseline loader](baseline-loader.mjs.txt), [completed baseline build](baseline-build-complete.log.txt), [before/after log](before-after.log.txt). Exact >1 MB full-history captures are inventoried in [NOT-KEPT.md](NOT-KEPT.md).\n';
+await writeFile(join(out,'report-build.mjs.txt'),await readFile('.tmp/qa186/report-build.mjs'));
+const names=(await readdir(out)).filter(n=>n!=='README.md').sort();
+let artifacts='| Artefact | Description |\n| --- | --- |\n';
+for(const n of names)artifacts+='| ['+n+']('+n+') | '+(n.endsWith('.mjs.txt')?'Executable QA script retained as text':n.endsWith('.png')?'Edge screenshot':n.endsWith('.aria.txt')?'Rendered accessibility snapshot':n.endsWith('.json')||n.endsWith('.jsonl')?'Structured result, capture or command record':n.endsWith('.log.txt')?'Command/runtime output':n==='source.diff.txt'?'Exact requested base-to-head diff, excluding docs/qa':'Evidence or retention note')+' |\n';
+let report=await readFile('.tmp/qa186/report-template.md','utf8');
+report=report.replace('<!-- CHECK_LEDGER -->',ledger).replace('<!-- GATE_LEDGER -->',gateTable).replace('<!-- MEASUREMENTS -->',measurements).replace('<!-- ARTIFACTS -->',artifacts);
+report=report.replace('The first live script used a 45-second event-count wait','The first live script’s eight preliminary samples reached only acknowledgement 88; its name alone is not thousands-of-events evidence. It then used a 45-second event-count wait');
+await writeFile(join(out,'README.md'),report);
+

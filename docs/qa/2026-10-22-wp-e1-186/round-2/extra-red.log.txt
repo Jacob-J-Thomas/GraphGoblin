@@ -1,0 +1,70 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ × src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 1243ms
+   → expected true to be false // Object.is equality
+ × src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 3663ms
+   → expected true to be false // Object.is equality
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id
+ × src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 481ms
+   → expected true to be false // Object.is equality
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > scans multiple terminal pages before closing an already consumed cursor
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/sse-catchup.test.ts:61:54
+     59|       try {
+     60|         const text = await (await fetch(base)).text();
+     61|         expect(text.includes('event: stream.error')).toBe(false);
+       |                                                      ^
+     62|         expect(appended).toBeGreaterThan(256);
+     63|         const stored = await events.read(runId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/sse-catchup.test.ts:131:65
+    129|         expect(response.statusCode).toBe(200);
+    130|         if (fault === 'gap') {
+    131|           expect(response.body.includes('event: stream.error')).toBe(f…
+       |                                                                 ^
+    132|           expect(ids(response.body)).toEqual((await events.read(runId)…
+    133|         } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 skipped (7)
+   Start at  04:09:08
+   Duration  22.53s (transform 41%, import 34%, tests 25%)
+
+  Transform  transforming modules took 8.64s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

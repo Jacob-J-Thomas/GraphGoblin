@@ -1,5 +1,6 @@
+import type { ReplayState } from '@graphgoblin/domain';
 import { sql } from 'drizzle-orm';
-import type { RunAdmission, WebhookFailureCode } from '@graphgoblin/engine';
+import type { RunAdmission, WebhookFailureCode, EventFailureCode } from '@graphgoblin/engine';
 import type {
   ClassifierModelEntry,
   ContextThread,
@@ -85,6 +86,10 @@ export const runs = sqliteTable(
     threadSnapshot: text('thread_snapshot', { mode: 'json' }).$type<ContextThread>(),
     /** The last event seq the snapshot reflects, when it is a verified checkpoint. */
     threadSnapshotSeq: integer('thread_snapshot_seq'),
+    /** Writer-recorded replay state at the snapshot seq; NULL checkpoints need their prefix. */
+    threadSnapshotReplayState: text('thread_snapshot_replay_state', {
+      mode: 'json',
+    }).$type<ReplayState>(),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
     /**
@@ -96,6 +101,7 @@ export const runs = sqliteTable(
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),
     index('runs_loop_idx').on(t.loopId, t.createdAt),
+    index('runs_loop_owner_history_idx').on(t.loopId, t.ownerId, t.createdAt, t.id),
     // Drizzle Kit 0.31 renders SQLite expression indexes incorrectly; 0008 supplies exact SQL.
     index('runs_trigger_dedupe_idx').on(
       t.loopId,
@@ -118,7 +124,10 @@ export const runEvents = sqliteTable(
     nodeId: text('node_id'),
     payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
   },
-  (t) => [primaryKey({ columns: [t.runId, t.seq] })],
+  (t) => [
+    primaryKey({ columns: [t.runId, t.seq] }),
+    index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+  ],
 );
 
 export const harnessSessions = sqliteTable(
@@ -331,8 +340,50 @@ export const webhookReceipts = sqliteTable(
   ],
 );
 
+/** Separate from URL webhook receipts: request keys resolve the original targeted delivery. */
+export const eventReceipts = sqliteTable(
+  'event_receipts',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    loopId: text('loop_id').notNull(),
+    versionId: text('version_id').notNull(),
+    triggerNodeId: text('trigger_node_id').notNull(),
+    inboundId: text('inbound_id').notNull(),
+    eventType: text('event_type').notNull(),
+    requestKey: text('request_key'),
+    nodeKey: text('node_key'),
+    status: text('status', { enum: ['deduplicated', 'pending', 'admitted', 'failed'] }).notNull(),
+    intent: text('intent', { mode: 'json' }).$type<RunAdmission>(),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: text('next_attempt_at'),
+    failureCode: text('failure_code').$type<EventFailureCode>(),
+  },
+  (t) => [
+    uniqueIndex('event_receipts_inbound_idx').on(t.inboundId),
+    uniqueIndex('event_receipts_request_idx').on(
+      t.ownerId,
+      t.loopId,
+      t.triggerNodeId,
+      t.eventType,
+      t.requestKey,
+    ),
+    index('event_receipts_due_idx').on(t.status, t.nextAttemptAt),
+    index('event_receipts_node_key_idx').on(t.ownerId, t.loopId, t.triggerNodeId, t.nodeKey),
+    check(
+      'event_receipt_status_check',
+      sql`${t.status} IN ('deduplicated','pending','admitted','failed')`,
+    ),
+    check(
+      'event_receipt_intent_check',
+      sql`(${t.status} = 'deduplicated' AND ${t.intent} IS NULL) OR (${t.status} <> 'deduplicated' AND ${t.intent} IS NOT NULL)`,
+    ),
+  ],
+);
+
 export const schema = {
   webhookReceipts,
+  eventReceipts,
   classifierModels,
   loops,
   loopVersions,

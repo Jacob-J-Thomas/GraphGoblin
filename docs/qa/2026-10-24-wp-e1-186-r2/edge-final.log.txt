@@ -1,0 +1,65 @@
+
+Running 9 tests using 1 worker
+
+pnpm.cmd : (node:46524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:813
++ ... n apps/web; pnpm.cmd exec playwright test e2e/bounded-history.spec.ts ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:46524) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\bounded-history.spec.ts:5:1 › bounded Timeline browses a long run with keyboard focus, exact threads and persisted resume (14.6s)
+  ok 2 [chromium] › e2e\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) (3.1s)
+  ok 3 [chromium] › e2e\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 1440 px (#259) (1.8s)
+  ok 4 [chromium] › e2e\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) (2.3s)
+  ok 5 [chromium] › e2e\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 390 px (#259) (1.9s)
+  ok 6 [chromium] › e2e\inspector-large-values.spec.ts:165:1 › the keyboard stays inside an expanded value that a live event replaces (#259) (2.0s)
+  x  7 [chromium] › e2e\inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) (22.6s)
+(node:27468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 8 [chromium] › e2e\replay-seed.spec.ts:11:1 › a replay inspector shows inherited counters and values at its first event (4.6s)
+  ok 9 [chromium] › e2e\thread-history.spec.ts:6:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots (13.3s)
+
+
+  1) [chromium] › e2e\inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('list', { name: 'Timeline' }).getByText('run.waiting')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('list', { name: 'Timeline' }).getByText('run.waiting') with timeout 10000ms
+      - waiting for getByRole('list', { name: 'Timeline' }).getByText('run.waiting')
+
+
+      257 |   expect(await cacheBytes()).toBeLessThan(1_100_000);
+      258 |   await page.reload();
+    > 259 |   await expect(timeline.getByText('run.waiting')).toBeVisible();
+          |                                                   ^
+      260 |   expect(await cacheBytes()).toBeLessThan(1_100_000);
+      261 | });
+      262 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-r2\apps\web\e2e\inspector-large-values.spec.ts:259:51
+
+    Error Context: ..\..\.tmp\gg-wp-e1-186r2-edge-final\inspector-large-values-ove-70e7c-alues-on-selection-186-259--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\.tmp\gg-wp-e1-186r2-edge-final\inspector-large-values-ove-70e7c-alues-on-selection-186-259--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\.tmp\gg-wp-e1-186r2-edge-final\inspector-large-values-ove-70e7c-alues-on-selection-186-259--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) 
+  8 passed (1.7m)
+EXIT_CODE=1

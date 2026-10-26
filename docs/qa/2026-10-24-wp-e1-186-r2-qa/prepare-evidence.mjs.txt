@@ -1,0 +1,13 @@
+import{readdir,readFile,writeFile,copyFile}from'node:fs/promises';
+import{join}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const all={};for(const[n,p]of Object.entries({domain:'packages/domain',apiClient:'packages/api-client',infrastructure:'packages/infrastructure',api:'apps/api',web:'apps/web'}))all[n]=JSON.parse(await readFile(p+'/coverage/coverage-summary.json','utf8')).total;
+await writeFile(out+'/coverage-summary.json',JSON.stringify(all,null,2));
+for(const n of await readdir('.tmp/qa186'))if(n.endsWith('.mjs'))await copyFile(join('.tmp/qa186',n),join(out,n+'.txt'));
+for(const n of await readdir(out)){
+ if(!/\.(txt|json|jsonl|md)$/.test(n))continue;
+ let text=await readFile(join(out,n),'utf8');
+ const p=process.env.USERPROFILE;
+ for(const profile of[p.replaceAll('\\','\\\\'),p,p.replaceAll('\\','/')])text=text.split(profile).join('%USERPROFILE%');
+ await writeFile(join(out,n),text);
+}

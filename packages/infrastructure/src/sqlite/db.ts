@@ -1,11 +1,10 @@
 import { createClient, type Client, type Transaction } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
-import { guardCurrentStore, initializeFreshStore, verifyStoreHead } from './store-format.js';
+import { guardCurrentStore, initializeFreshStore, migrateCurrentStore } from './store-format.js';
 
 export type Database = LibSQLDatabase<Schema>;
 export type SqliteTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
@@ -221,14 +220,13 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     async migrate(options = {}) {
       // Always repeat cheap checks before writes. Only a preflight protected by the database's
       // data-directory lock may save the strict definition parse.
-      let state = await guardCurrentStore(client, migrationsFolder, {
+      const state = await guardCurrentStore(client, migrationsFolder, {
         skipDefinitions: options.skipDefinitionValidation ?? false,
       });
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      if (state === 'fresh') state = await initializeFreshStore(client, migrationsFolder);
-      if (state === 'current') await migrate(db, { migrationsFolder });
-      await verifyStoreHead(client, migrationsFolder);
+      if (state === 'fresh') await initializeFreshStore(client, migrationsFolder);
+      else await migrateCurrentStore(client, migrationsFolder);
     },
     pendingMigrations() {
       return pendingMigrationCount(client, migrationsFolder);

@@ -1,0 +1,148 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa/round-2');
+const load=p=>import(pathToFileURL(resolve(root,p)).href);
+const {singleNodeLoop}=await load('packages/engine/dist/testing/index.js');
+const {minimalLoop,fakeUlid}=await load('packages/contracts/dist/testing/index.js');
+const {LoopDefinitionSchema}=await load('packages/contracts/dist/index.js');
+const {createInitialThread}=await load('packages/engine/dist/index.js');
+const {openDatabase}=await load('packages/infrastructure/dist/sqlite/index.js');
+const work=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-runtime-'));
+await copyFile(join(out,'server.mjs.txt'),join(work,'server.mjs'));
+const results=[],processes=[],base='http://127.0.0.1:5880';let child;
+const scrub=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%');
+async function save(name,value){await writeFile(join(out,name),scrub(typeof value==='string'?value:JSON.stringify(value,null,2)));}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function poll(fn,predicate,ms=15000){const until=Date.now()+ms;let v;do{v=await fn();if(predicate(v))return v;await sleep(35)}while(Date.now()<until);throw Error('poll expired '+JSON.stringify(v));}
+async function request(path,body,method=body===undefined?'GET':'POST',headers={}){const r=await fetch(base+path,{method,headers:{'content-type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(20000)});return{http:r.status,data:await r.json()};}
+async function api(...args){const r=await request(...args);assert(r.http<300,JSON.stringify(r));return r.data;}
+async function check(name,fn){const at=Date.now();try{const data=await fn();results.push({name,status:'PASS',elapsedMs:Date.now()-at,data})}catch(e){results.push({name,status:'FAIL',elapsedMs:Date.now()-at,error:String(e),stack:e.stack})}await save('results.json',results);console.log(JSON.stringify({name,status:results.at(-1).status,error:results.at(-1).error}));}
+async function start(dir,label){const log=[];child=spawn(process.execPath,[join(work,'server.mjs')],{cwd:root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,GG_DATA_DIR:dir,GG_DB_URL:'file:'+join(dir,'graphgoblin.db').replaceAll('\\','/'),GG_PORT:'5880'}});const owned=child;let ready;
+ owned.stdout.setEncoding('utf8');owned.stderr.setEncoding('utf8');for(const stream of [owned.stdout,owned.stderr])stream.on('data',s=>{log.push(s);save(label+'.log.txt',log.join(''));for(const line of s.split('\n'))try{const x=JSON.parse(line);if(x.ready)ready=x}catch{}});
+ await poll(async()=>{if(owned.exitCode!==null)throw Error('server exited '+owned.exitCode+' '+log.join(''));return ready},Boolean,90000);processes.push({...ready,label});await save('processes.json',processes);return ready;}
+async function stop(){if(!child||child.exitCode!==null)return;const owned=child,exited=once(owned,'exit');owned.stdin.end('stop\n');let timer;try{const [code]=await Promise.race([exited,new Promise((_,rej)=>{timer=setTimeout(()=>rej(Error('cooperative stop expired; no native kill attempted (D-015)')),30000)})]);assert.equal(code,0)}finally{clearTimeout(timer)}}
+const terminal=r=>['succeeded','failed','cancelled'].includes(r.status);
+const read=id=>api('/runs/'+id);
+async function snapshot(id){return{run:await read(id),thread:await api('/runs/'+id+'/thread'),events:await api('/runs/'+id+'/events?limit=1000')}}
+async function create(d,publish=true){const c=await api('/loops',{definition:d});if(publish)await api('/loops/'+c.loop.id+'/publish',{});return c}
+async function begin(c,body={}){return(await api('/loops/'+c.loop.id+'/runs',body)).run}
+const route={id:'work',kind:'decision',label:'Decision',config:{kind:'llm',harness:'codex',model:{mode:'inherit'},effort:{mode:'inherit'},instructions:'Choose',routes:[{id:'yes',label:'Yes'},{id:'no',label:'No'}]}};
+const quick={id:'work',kind:'mutate',label:'Quick',config:{operations:[{op:'delete',path:'/vars/missing'}]}};
+function definition(name,node=quick,limit=null){const d=singleNodeLoop(name,node);d.settings={structuredTimeoutMs:limit,runDeadlineSeconds:null};if(node.kind==='decision')for(const port of ['yes','no'])d.edges.push({id:port,from:{node:'work',port},to:{node:'done'}});return d}
+const obs=()=>api('/qa/observations');
+async function release(id,value,error){await api('/qa/release',{id,value,error});await sleep(100)}
+let fixture,oldDir;
+try{
+const sourceDir=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-source-'));await start(sourceDir,'source-api');
+await check('prepare-current-shape-source',async()=>{
+ const preDraft=await create(definition('Pre243 draft'),false),prePublished=await create(definition('Pre243 published'));
+ const postDraft=await create(definition('Post243 draft'),false),postFinite=await create({...definition('Post243 finite'),settings:{runDeadlineSeconds:9876}});
+ const authored=await create({...definition('Authored both',quick,765),settings:{structuredTimeoutMs:765,runDeadlineSeconds:456}});
+ const damaged=await create(definition('Damaged JSON'),false);
+ const snap=await create(definition('Snapshot old'),false),finished=await begin(snap,{allowDraft:true,versionId:snap.draft.id});await poll(()=>read(finished.id),r=>r.status==='succeeded');
+ const wait=await create(definition('Waiting old',{id:'work',kind:'wait',label:'Input',config:{mode:'input',prompt:'Continue'}}));const waiting=await begin(wait);await poll(()=>read(waiting.id),r=>r.status==='waiting');
+ const eventDef=definition('Queued Event old');eventDef.nodes[0].config={type:'event',eventType:'qa-ready'};const event=await create(eventDef);
+ await api('/qa/pause-admission',{});
+ const emitted=await api('/events',{type:'qa-ready',payload:{qa:true},source:'independent-qa'});
+ fixture={preDraft,prePublished,postDraft,postFinite,authored,damaged,snap,finished,wait,waiting,event,emitted};await save('fixture-identities.json',fixture);return fixture;
+});
+assert(fixture,'source fixture preparation failed');await stop();
+await check('construct-0017-store',async()=>{
+ oldDir=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-upgrade-'));const migrationDir=join(work,'migrations-0017');await mkdir(join(migrationDir,'meta'),{recursive:true});
+ const shipped=resolve(root,'packages/infrastructure/drizzle');const journal=JSON.parse(await readFile(join(shipped,'meta/_journal.json'),'utf8'));const entries=journal.entries.filter(e=>e.idx<=17);for(const e of entries)await copyFile(join(shipped,e.tag+'.sql'),join(migrationDir,e.tag+'.sql'));await writeFile(join(migrationDir,'meta/_journal.json'),JSON.stringify({...journal,entries}));
+ const old=openDatabase({url:'file:'+join(oldDir,'graphgoblin.db').replaceAll('\\','/'),migrationsFolder:migrationDir});await old.migrate();
+ const source=openDatabase({url:'file:'+join(sourceDir,'graphgoblin.db').replaceAll('\\','/')});
+ const tables=(await source.client.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'gg_upgrade_%' AND name != '__drizzle_migrations'")).rows.map(r=>String(r.name));
+ const preIds=new Set([fixture.preDraft.loop.id,fixture.prePublished.loop.id,fixture.snap.loop.id,fixture.wait.loop.id,fixture.event.loop.id]);
+ const copied=[];
+ for(const table of tables){const q='"'+table.replaceAll('"','""')+'"';const rows=(await source.client.execute('SELECT * FROM '+q)).rows;for(const original of rows){const row={...original};
+  if(table==='loop_versions'){
+   const d=JSON.parse(row.definition);if(row.loop_id!==fixture.authored.loop.id)delete d.settings.structuredTimeoutMs;if(preIds.has(row.loop_id))delete d.settings.runDeadlineSeconds;row.definition=row.loop_id===fixture.damaged.loop.id?'{broken':JSON.stringify(d);
+  }
+  if(table==='runs'&&row.pinned){const p=JSON.parse(row.pinned);delete p.limits.structuredTimeoutMs;if(preIds.has(row.loop_id))delete p.limits.runDeadlineSeconds;row.pinned=JSON.stringify(p);}
+  if(table==='run_events'&&row.type==='run.queued'){const p=JSON.parse(row.payload);delete p.pinned.limits.structuredTimeoutMs;delete p.pinned.limits.runDeadlineSeconds;row.payload=JSON.stringify(p);}
+  const columns=Object.keys(row);await old.client.execute({sql:'INSERT OR REPLACE INTO '+q+' ('+columns.map(c=>'"'+c+'"').join(',')+') VALUES ('+columns.map(()=>'?').join(',')+')',args:columns.map(c=>row[c])});
+ }copied.push({table,count:rows.length})}
+ const now=new Date().toISOString(),runId=fakeUlid('round2-webhook-run'),invocationId=fakeUlid('round2-webhook-invocation'),snapshotId=fakeUlid('round2-webhook-snapshot');
+ const pinned=structuredClone((await readFile(join(out,'fixture-identities.json'),'utf8').then(JSON.parse)).finished.pinned);delete pinned.limits.structuredTimeoutMs;delete pinned.limits.runDeadlineSeconds;
+ const thread=createInitialThread({runId,loopId:fixture.snap.loop.id,versionId:snapshotId,invocation:{id:invocationId,source:'webhook',trigger:{nodeId:'start',kind:'webhook',payload:{qa:'intent'},receivedAt:now}}});
+ const snapshot={...fixture.snap.draft,id:snapshotId,status:'snapshot',definition:LoopDefinitionSchema.parse({...fixture.snap.draft.definition,nodes:fixture.snap.draft.definition.nodes.map(n=>n.id==='start'?{...n,config:{type:'webhook',authentication:{type:'hmac-sha256',message:'body',secretRef:'qa-secret'}}}:n)})};delete snapshot.definition.settings.structuredTimeoutMs;delete snapshot.definition.settings.runDeadlineSeconds;
+ const run={id:runId,ownerId:'local',loopId:fixture.snap.loop.id,versionId:snapshotId,pinned,invocationId,status:'queued',iteration:1,createdAt:now,lastEventSeq:0};
+ const intent={run,initialThread:thread,pinnedLoopIds:[run.loopId],queued:{type:'run.queued',versionId:snapshotId,pinned,initialThread:thread},snapshot};
+ const receiptId=fakeUlid('round2-webhook-receipt');
+ await old.client.execute({sql:"INSERT INTO webhook_receipts (id,owner_id,loop_id,trigger_node_id,content_hash,inbound_id,status,intent,attempts) VALUES (?,'local',?,'start',?,?,'pending',?,0)",args:[receiptId,run.loopId,'b'.repeat(64),fakeUlid('round2-webhook-inbound'),JSON.stringify(intent)]});
+ fixture.receiptId=receiptId;fixture.webhookRunId=runId;fixture.webhookSnapshotId=snapshotId;await save('fixture-identities.json',fixture);
+ const before={copied,migrations:(await old.client.execute('SELECT * FROM __drizzle_migrations')).rows,versions:(await old.client.execute('SELECT * FROM loop_versions')).rows,runs:(await old.client.execute('SELECT id,status,pinned FROM runs')).rows,queued:(await old.client.execute("SELECT * FROM run_events WHERE type='run.queued'")).rows,receipt:(await old.client.execute('SELECT * FROM webhook_receipts')).rows};
+ assert.equal(before.migrations.length,18);assert.equal(Number(before.migrations.at(-1).created_at),entries.at(-1).when);await save('store-before.json',before);source.close();old.close();return{oldDir,journalHead:entries.at(-1),counts:copied};
+});
+assert(oldDir,'0017 construction failed');
+await check('damaged-json-startup-diagnostic-and-direct-migration-preservation',async()=>{
+ const mixedDir=oldDir;let diagnostic;try{await start(mixedDir,'damaged-cold-start')}catch(e){diagnostic=String(e)}assert.match(diagnostic,/DATA_UPGRADE_REQUIRED/);
+ const db=openDatabase({url:'file:'+join(mixedDir,'graphgoblin.db').replaceAll('\\','/')});
+ const healthyDir=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-healthy-'));
+ await db.client.execute({sql:'VACUUM INTO ?',args:[join(healthyDir,'graphgoblin.db')]});
+ await db.migrate({skipDefinitionValidation:true});const damaged=(await db.client.execute({sql:'SELECT definition FROM loop_versions WHERE id=?',args:[fixture.damaged.draft.id]})).rows[0].definition;assert.equal(damaged,'{broken');db.close();
+ const healthy=openDatabase({url:'file:'+join(healthyDir,'graphgoblin.db').replaceAll('\\','/')});await healthy.client.execute({sql:'DELETE FROM loop_versions WHERE loop_id=?',args:[fixture.damaged.loop.id]});await healthy.client.execute({sql:'DELETE FROM loops WHERE id=?',args:[fixture.damaged.loop.id]});healthy.close();oldDir=healthyDir;await save('damaged-row-evidence.json',{mixedDir,healthyDir,diagnostic,damagedAfterMigration:damaged,note:'Cold-start guard refuses malformed JSON before any migration. Healthy store is an independent physical SQLite copy; only its damaged loop was removed. Public migration skipDefinitionValidation validates damaged-byte preservation independently.'});return{diagnostic,damagedAfterMigration:damaged};
+});
+await check('cold-upgrade-and-public-reads',async()=>{
+ await start(oldDir,'upgraded-api');const reads=[];
+ for(const [name,c]of Object.entries(fixture).filter(([,c])=>c?.loop&&c?.draft)){
+  if(name==='damaged')continue;
+  const detail=await request('/loops/'+c.loop.id);assert.equal(detail.http,200);for(const v of [detail.data.draft,detail.data.current].filter(Boolean)){
+   assert(Object.hasOwn(v.definition.settings,'structuredTimeoutMs'));assert(Object.hasOwn(v.definition.settings,'runDeadlineSeconds'));
+   const version=await request('/loops/'+c.loop.id+'/versions/'+v.id);assert.equal(version.http,200);reads.push({name,versionId:v.id,detailHttp:detail.http,versionHttp:version.http,settings:v.definition.settings});
+  }
+  const exported=await request('/loops/'+c.loop.id+'/export'+(detail.data.current?'':'?draft=true'));assert.equal(exported.http,200);reads.push({name,exportHttp:exported.http,settings:exported.data.loop.settings});
+ }
+ const finite=await api('/loops/'+fixture.postFinite.loop.id);assert.equal(finite.current.definition.settings.runDeadlineSeconds,9876);
+ const authored=await api('/loops/'+fixture.authored.loop.id);assert.equal(authored.current.definition.settings.structuredTimeoutMs,765);assert.equal(authored.current.definition.settings.runDeadlineSeconds,456);
+ const finished=await read(fixture.finished.id);assert.equal(finished.status,'succeeded');assert.equal(finished.pinned.limits.structuredTimeoutMs,null);
+ const waiting=await read(fixture.waiting.id);assert.equal(waiting.status,'waiting');assert.equal(waiting.pinned.limits.structuredTimeoutMs,null);await api('/runs/'+waiting.id+'/input',{waitId:waiting.waiting.waitId,input:{qa:'resume'}});const resumed=await poll(()=>read(waiting.id),r=>r.status==='succeeded');
+ const eventId=fixture.emitted.runIds[0];const event=await poll(()=>read(eventId),r=>r.status==='succeeded');
+ const webhook=await poll(()=>read(fixture.webhookRunId),r=>r.status==='succeeded');
+ const snapshotRead=await request('/loops/'+fixture.snap.loop.id+'/versions/'+fixture.finished.versionId);assert.equal(snapshotRead.http,200);
+ await save('upgrade-public-reads.json',{reads,finished,resumed,event,webhook,snapshotRead});return{reads,waitingResumed:resumed.status,event:event.status,webhook:webhook.status};
+});
+await check('migration-preservation-guards-idempotence',async()=>{
+ const db=openDatabase({url:'file:'+join(oldDir,'graphgoblin.db').replaceAll('\\','/')});
+ const sqlRows=async()=>({versions:(await db.client.execute('SELECT id,definition,status FROM loop_versions ORDER BY id')).rows,pins:(await db.client.execute('SELECT id,pinned FROM runs ORDER BY id')).rows,queued:(await db.client.execute("SELECT run_id,seq,payload FROM run_events WHERE type='run.queued' ORDER BY run_id,seq")).rows,receipts:(await db.client.execute('SELECT id,intent FROM webhook_receipts ORDER BY id')).rows,migrations:(await db.client.execute('SELECT * FROM __drizzle_migrations ORDER BY id')).rows});
+ const before=await sqlRows();
+ let snapshotError;try{await db.client.execute({sql:"UPDATE loop_versions SET definition=definition WHERE id=?",args:[fixture.finished.versionId]})}catch(e){snapshotError=String(e)}assert.match(snapshotError,/LOOP_VERSION_SNAPSHOT_IMMUTABLE/);
+ assert.equal(before.migrations.length,19);await stop();const restart=await start(oldDir,'second-api');const after=await sqlRows();assert.deepEqual(after,before);assert.equal(Number(after.migrations.at(-1).created_at),1792818000000);
+ await save('store-after-and-second-start.json',{before,after,snapshotError,restart});db.close();return{unchanged:true,migrations:after.migrations.length,snapshotError};
+});
+
+await check('decision-timeout-capacity-late-and-pin',async()=>{
+ await api('/qa/config',{mode:'stall'});const n=(await obs()).calls.length,c=await create(definition('Decision deadline',route,400)),r=await begin(c);const call=await poll(obs,o=>o.calls.length>n).then(o=>o.calls[n]);
+ const next=await create(definition('Queue successor'));const queued=await begin(next);assert.equal(queued.status,'queued');
+ await api('/loops/'+c.loop.id+'/draft',{definition:definition('Decision deadline',route,null)},'PUT');await poll(()=>read(r.id),terminal);const before=await snapshot(r.id),o=(await obs()).calls[n];assert.equal(before.run.failure.code,'STRUCTURED_COMPLETION_TIMEOUT');assert.equal(before.run.pinned.limits.structuredTimeoutMs,400);assert.equal(o.aborted,true);assert.equal((await poll(()=>read(queued.id),terminal)).status,'succeeded');
+ await release(call.id,{route:'yes',confidence:1,reasoning:'LATE'});const after=await snapshot(r.id);assert.deepEqual(after.thread,before.thread);assert.deepEqual(after.run.failure,before.run.failure);assert.equal(after.events.items.filter(e=>['run.failed','run.finished','run.cancelled'].includes(e.type)).length,1);return{abortedAfterMs:o.abortedAt-call.at,before,after,queued};
+});
+await check('structured-output-transform-timeout-provenance-resume',async()=>{
+ const node={id:'work',kind:'inference',label:'Repair',config:{harness:'codex',prompt:{template:'Answer'},output:{captureTranscript:'none',transforms:[{op:'coerce',source:'/outputs/work',target:'/vars/fixed',jsonSchema:{type:'number'},repair:{enabled:true,maxAttempts:1}}]}}};
+ await api('/qa/config',{mode:'stall',turns:[{finalText:'bad'}]});const n=(await obs()).calls.length,c=await create(definition('Transform repair',node,350)),r=await begin(c);const call=await poll(obs,o=>o.calls.length>n).then(o=>o.calls[n]);await poll(()=>read(r.id),terminal);const before=await snapshot(r.id);assert.equal(before.run.failure.code,'STRUCTURED_COMPLETION_TIMEOUT');const p=before.run.failure.details.provenance;assert.equal(p.provider,'codex');assert.equal(p.model,'gpt-6-luna');assert.equal(p.effort,'low');assert.equal(before.run.failure.details.timeoutMs,350);
+ await release(call.id,7);const late=await snapshot(r.id);assert.deepEqual(late.thread,before.thread);assert.deepEqual(late.run.failure,before.run.failure);await api('/qa/config',{mode:'fast',value:7,turns:[{finalText:'bad'}]});await api('/runs/'+r.id+'/resume',{});const after=await poll(()=>read(r.id),terminal);assert.equal(after.status,'succeeded');return{before,late,after,call};
+});
+await check('same-session-schema-repair-node-timeout',async()=>{
+ const node={id:'work',kind:'inference',label:'Schema repair',config:{harness:'codex',timeoutSeconds:2,prompt:{template:'Answer'},output:{captureTranscript:'none',schema:{jsonSchema:{type:'number'},repair:{enabled:true,maxAttempts:1}}}}};
+ await api('/qa/config',{mode:'stall',turns:[{finalText:'bad'},{finalText:'7',delayMs:4000}]});const old=await obs(),c=await create(definition('Same-session boundary',node,100)),r=await begin(c);await poll(obs,o=>o.resumed.length>old.resumed.length);await sleep(250);const during=await snapshot(r.id);assert.equal(during.run.status,'running');const after=await poll(()=>read(r.id),terminal);assert.equal(after.failure.code,'INFERENCE_TIMEOUT');assert.equal((await obs()).calls.length,old.calls.length);return{during,after,structuredCalls:0};
+});
+await check('unlimited-no-timer-explicit-cancel-late',async()=>{
+ await api('/qa/config',{mode:'stall'});const old=await obs(),n=old.calls.length,c=await create(definition('Unlimited and cancel',route,null)),r=await begin(c);const call=await poll(obs,o=>o.calls.length>n).then(o=>o.calls[n]);await sleep(2000);const during=await snapshot(r.id),o=await obs();assert.equal(during.run.status,'running');assert.equal(o.calls[n].aborted,false);assert.equal(o.timers.length,old.timers.length);await api('/runs/'+r.id+'/cancel',{});await poll(()=>read(r.id),terminal);const cancelled=await snapshot(r.id);assert.equal(cancelled.run.status,'cancelled');assert.equal(cancelled.run.failure,undefined);await release(call.id,{route:'yes',confidence:1,reasoning:'late'});const after=await snapshot(r.id);assert.equal(after.run.status,'cancelled');assert.deepEqual(after.thread,cancelled.thread);return{elapsedMs:Date.now()-call.at,timersBefore:old.timers.length,timersAfter:o.timers.length,during,cancelled,after};
+});
+await check('fast-completion-contract-boundaries-export-import',async()=>{
+ await api('/qa/config',{mode:'fast'});const c=await create(definition('Fast decision',route,1000)),r=await begin(c);const fast=await poll(()=>read(r.id),terminal);assert.equal(fast.status,'succeeded');
+ const invalid=[];for(const value of [0,-1,0.5,'400',true,31536000001]){const r=await request('/loops',{definition:definition('Invalid '+String(value),quick,value)});assert.equal(r.http,400);invalid.push({value,...r})}
+ const bounds=[];for(const value of [null,1,31536000000]){const c=await create(definition('Accepted '+String(value),quick,value));bounds.push(c.draft.definition.settings);assert.equal(c.draft.definition.settings.structuredTimeoutMs,value)}
+ const exported=await api('/loops/'+c.loop.id+'/export');assert.equal(exported.loop.settings.structuredTimeoutMs,1000);exported.loop.name='Imported completion';const imported=await api('/loops/import',exported);assert.equal(imported.draft.definition.settings.structuredTimeoutMs,1000);return{fast,invalid,bounds,exported,imported};
+});
+await save('browser-targets.json',{base,fixture,oldDir});
+if(process.env.QA_BROWSER_SCRIPT){const browserScript=await readFile(process.env.QA_BROWSER_SCRIPT,'utf8');await writeFile(join(work,'browser.mjs'),browserScript);const browserChild=spawn(process.execPath,[join(work,'browser.mjs')],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe']});const chunks=[];for(const stream of [browserChild.stdout,browserChild.stderr])stream.on('data',s=>{chunks.push(s);process.stdout.write(s)});const [code]=await once(browserChild,'exit');await save('browser.log.txt',chunks.join(''));results.push({name:'Edge-browser-script',status:code===0?'PASS':'FAIL',exitCode:code});}
+await save('observations.json',await obs());
+}catch(e){results.push({name:'fatal-qa-harness',status:'FAIL',error:String(e),stack:e.stack});console.error(e)}finally{await save('results.json',results);await stop();await save('temporary-resources.json',{work,oldDir,processes,allOwnedAPIsCooperativelyStopped:true});}

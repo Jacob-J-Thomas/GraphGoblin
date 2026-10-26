@@ -1,0 +1,204 @@
+[
+  {
+    "id": "gate-run",
+    "steps": "Runs → New run; choose imported published fixture; Start run; inspect top and timeline.",
+    "expected": "exhausted, Result 3, route again, port limit-reached, passes 3/3, Maximum passes.",
+    "actual": {
+      "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDTZFEE9M4X7E2ZXSHKDBE\nexhausted\nloop\nchild runs\nExit evaluation\n\nExited: exhausted\n\nLast gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.\n\nResult\n3\nTimeline (23 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\nwork (mutate) attempt 1\n#6\nnode.finished\nwork → out, 1 change, 0 ms\n#7\nnode.started\ngate (decision) attempt 1\n#8\ndecision.made\nChose again with expression; passes 1 → 2 of 3\n#9\nnode.finished\ngate → again, 2 changes, 82 ms\n#10\nnode.started\nwork (mutate) attempt 1\n#11\nnode.finished\nwork → out, 1 change, 0 ms\n#12\nnode.started\ngate (decision) attempt 1\n#13\ndecision.made\nChose again with expression; passes 2 → 3 of 3\n#14\nnode.finished\ngate → again, 2 changes, 17 ms\n#15\nnode.started\nwork (mutate) attempt 1\n#16\nnode.finished\nwork → out, 1 change, 71 ms\n#17\nnode.started\ngate (decision) attempt 1\n#18\ndecision.made\nChose again with expression; passes 3 → 3 of 3; Limit reached (max-passes)\n#19\nnode.finished\ngate → limit-reached, 2 changes, 1 ms\n#20\nnode.started\ngave-up (exit) attempt 1\n#21\nexit.evaluated\nExited: exhausted\n#22\nnode.finished\ngave-up, 0 changes, 0 ms\n#23\nrun.finished\nexhausted (exhausted)\nEvaluation details\n\nChose again with expression; passes 3 → 3 of 3; Limit reached (max-passes)\n\nRoute ID\nagain\nSelected port\nlimit-reached\nLabel\nAgain\nPrevious passes\n3\nCurrent passes\n3\nRepeat route\nagain\nMaximum passes\n3\nMaximum run time\nNot configured\nElapsed from run start\n3.291 seconds\nLimit stopping repeat\nMaximum passes\nEvaluator\nexpression\nThread at event 18\nMessages (3)\nnote\nwork\n\npass 1\n\nnote\nwork\n\npass 2\n\nnote\nwork\n\npass 3\n\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "events": [
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 2.004,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M5GDTZFEE9M4X7E2ZXSHKDBE",
+          "seq": 8,
+          "ts": "2026-10-21T23:48:13.674Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 2.43,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M5GDTZFEE9M4X7E2ZXSHKDBE",
+          "seq": 13,
+          "ts": "2026-10-21T23:48:14.040Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 3.291,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5GDTZFEE9M4X7E2ZXSHKDBE",
+          "seq": 18,
+          "ts": "2026-10-21T23:48:14.887Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5GDTZFEE9M4X7E2ZXSHKDBE",
+          "seq": 21,
+          "ts": "2026-10-21T23:48:15.449Z",
+          "type": "exit.evaluated",
+          "nodeId": "gave-up",
+          "outcome": "exhausted"
+        },
+        {
+          "runId": "01M5GDTZFEE9M4X7E2ZXSHKDBE",
+          "seq": 23,
+          "ts": "2026-10-21T23:48:15.449Z",
+          "type": "run.finished",
+          "status": "exhausted",
+          "outcome": "exhausted",
+          "result": 3
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "null-before",
+    "steps": "Publish trigger→exit returns:\"null\", destinations:[caller]; run twice; preserve one unamended control.",
+    "expected": "API has result:null; Result card null; no exit-returns sentence.",
+    "actual": {
+      "top": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDV7CPZFT60XHNFM2TV2D6\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nResult\nnull\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "detail": "Exit outcome: success. This exit is terminal. See the run result for the returned value.",
+      "run": {
+        "id": "01M5GDV7CPZFT60XHNFM2TV2D6",
+        "ownerId": "local",
+        "loopId": "01M5GDV6X7H25NQ67C5TE45TD2",
+        "versionId": "01M5GDV6X7N1YHYS1JQN2XTXJT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 129 audit null",
+          "label": "QA 129 audit null v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GDV7CPJDA15G49F8MT0WM3",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": null,
+        "createdAt": "2026-10-21T23:48:18.966Z",
+        "startedAt": "2026-10-21T23:48:19.297Z",
+        "finishedAt": "2026-10-21T23:48:20.052Z",
+        "lastEventSeq": 9
+      },
+      "events": [
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 6,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 8,
+          "ts": "2026-10-21T23:48:19.998Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": null
+        },
+        {
+          "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+          "seq": 9,
+          "ts": "2026-10-21T23:48:20.132Z",
+          "type": "return.delivered",
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "unfinished",
+    "steps": "Publish trigger→input-wait→exit None/caller; run; inspect waiting; cancel through API.",
+    "expected": "No exit-returns sentence while unfinished or cancelled.",
+    "actual": {
+      "waiting": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDVBWZ2WNQK71CZ947JA4B\nwaiting\nat wait\nloop\nchild runs\nPause\nCancel run\nInput requested\n\nQA hold\n\nInput (JSON)\nSubmit input\nTimeline (6 events, live)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 1 ms\n#5\nnode.started\nwait (wait) attempt 1\n#6\nrun.waiting\nwait waits for input\nThread at event 6\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (0 nodes)",
+      "cancelled": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5GDVBWZ2WNQK71CZ947JA4B\ncancelled\nat wait\nloop\nchild runs\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 1 ms\n#5\nnode.started\nwait (wait) attempt 1\n#6\nrun.waiting\nwait waits for input\n#7\nrun.cancel_requested\nby user local\n#8\nrun.cancelled\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (0 nodes)"
+    },
+    "verdict": "PASS"
+  }
+]

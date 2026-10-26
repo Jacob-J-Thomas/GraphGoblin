@@ -1,0 +1,809 @@
+{
+  "schema": 2,
+  "columns": {
+    "specification": [
+      "passes",
+      "items",
+      "itemBytes",
+      "contextBytes",
+      "inference",
+      "grow",
+      "artifacts",
+      "delayMs"
+    ],
+    "correctness": [
+      "ok",
+      "succeeded",
+      "nodeCountsOk",
+      "unexpectedAttempts",
+      "storedEvents",
+      "progress",
+      "expectedProgress",
+      "gates",
+      "passes",
+      "history",
+      "historyValuesOk",
+      "terminal",
+      "replayOk",
+      "browserOk"
+    ],
+    "portTimings": [
+      "portIndex",
+      "count",
+      "totalMs",
+      "meanMs",
+      "p95UpperMs",
+      "maxMs"
+    ],
+    "checkpoints": [
+      "pass",
+      "elapsedMs",
+      "snapshotBytes",
+      "getThreadMs",
+      "snapshotSerializeMs",
+      "heapUsed"
+    ],
+    "browserSamples": [
+      "elapsedMs",
+      "nodes",
+      "sessionStorageBytes",
+      "heapUsed",
+      "longTasks",
+      "longTaskMs"
+    ],
+    "flightSamples": [
+      "replayElapsedMs",
+      "socketBytesWritten",
+      "wireBytesConsumed",
+      "bytesInFlight"
+    ],
+    "topCpuFrames": [
+      "cpuLocationIndex",
+      "samples"
+    ]
+  },
+  "ports": [
+    "runs.get",
+    "events.read",
+    "runs.transition",
+    "events.append",
+    "runs.update",
+    "runs.saveThread",
+    "sessions.upsert"
+  ],
+  "cpuLocations": [
+    ":0 (idle)",
+    ":0 libsql_js::statement::Rows::js_next",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw"
+  ],
+  "measurements": [
+    {
+      "workload": "browser",
+      "aged": 2000,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 130506,
+      "environment": {
+        "timestamp": "2026-10-25T05:13:44.601Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "456fcd613abb05701dcd8bcccfef410541716e68",
+        "hostBusyFraction": 0.754,
+        "freeRamBefore": 27229081600,
+        "freeRamAfter": 28410183680
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 94311.05,
+        "admission": {
+          "count": 2000,
+          "totalMs": 35973.757,
+          "meanMs": 17.987,
+          "p50UpperMs": 18.342,
+          "p95UpperMs": 32.494,
+          "maxMs": 76.033
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1631699,
+          "meanMs": 815.85,
+          "p50UpperMs": 913.16,
+          "p95UpperMs": 1617.718,
+          "maxMs": 2121
+        },
+        "disk": {
+          "bytes": 14978939,
+          "files": 4
+        }
+      },
+      "cases": [
+        0
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "specification": [
+        1000,
+        2,
+        120,
+        512,
+        true,
+        true,
+        false,
+        50
+      ],
+      "wallMs": 117246.891,
+      "msPerPass": 117.247,
+      "cpu": {
+        "user": 43656000,
+        "system": 21156000
+      },
+      "durableAdmissionToStartMs": 13,
+      "awaitedPortMs": 84199.268,
+      "observationMs": 18.358,
+      "residualMs": 33029.265,
+      "maxConcurrentPortCalls": 10,
+      "eventLoopDelayMs": {
+        "mean": 14.403,
+        "max": 441.713,
+        "p99": 28.672
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 516601,
+        "wallMs": 10.218
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [
+          0,
+          9250,
+          15775.908,
+          1.706,
+          3.299,
+          58.202
+        ],
+        [
+          1,
+          915,
+          10279.936,
+          11.235,
+          24.413,
+          440.194
+        ],
+        [
+          2,
+          2,
+          7.947,
+          3.973,
+          5.313,
+          5.161
+        ],
+        [
+          3,
+          12007,
+          24108.276,
+          2.008,
+          2.999,
+          164.562
+        ],
+        [
+          4,
+          6005,
+          14061.203,
+          2.342,
+          3.629,
+          37.992
+        ],
+        [
+          5,
+          3003,
+          11526.493,
+          3.838,
+          11.389,
+          40.767
+        ],
+        [
+          6,
+          3000,
+          4746.832,
+          1.582,
+          2.999,
+          23.588
+        ]
+      ],
+      "otherPorts": {
+        "calls": 1395,
+        "totalMs": 3692.674
+      },
+      "checkpoints": [
+        [
+          100,
+          9967.848,
+          52214,
+          0.85,
+          0.254,
+          49556128
+        ],
+        [
+          300,
+          32173.252,
+          155217,
+          0.935,
+          0.334,
+          55709872
+        ],
+        [
+          500,
+          56321.923,
+          258218,
+          1.096,
+          0.573,
+          73316080
+        ],
+        [
+          600,
+          67620.615,
+          309718,
+          1.047,
+          0.624,
+          63302832
+        ],
+        [
+          800,
+          91690.836,
+          412718,
+          1.316,
+          0.724,
+          71328480
+        ],
+        [
+          1000,
+          116733.598,
+          515722,
+          3.937,
+          0.715,
+          53664752
+        ]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        13010,
+        2000,
+        2000,
+        1000,
+        1000,
+        1000,
+        true,
+        1,
+        null,
+        true
+      ],
+      "eventSerialization": {
+        "totalMs": 37.353,
+        "bytes": 4847803,
+        "sha256": "6380266e9ed5ee6bb450d661451eec9a43494986a8886a981392d1cfea6cc6ff",
+        "lateAfter": 11709,
+        "lateSha256": "e402714b412dabe4155d645e6a988fb162ae33a3c7711fb3f63a2b3f0a4d19e1"
+      },
+      "cpuSamples": 71806,
+      "topCpuFrames": [
+        [
+          0,
+          28589
+        ],
+        [
+          1,
+          23934
+        ],
+        [
+          2,
+          1722
+        ]
+      ],
+      "browser": {
+        "browser": "156.0.4314.42",
+        "channel": "msedge",
+        "headless": true,
+        "warmup": {
+          "passes": 250,
+          "wallMs": 25476.254
+        },
+        "inbound": {
+          "events": 50,
+          "payloadValueBytes": 32768
+        },
+        "pages": [
+          0,
+          1,
+          2
+        ]
+      },
+      "storeGrowthBytes": 9247168,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "grow": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    }
+  ],
+  "browserPages": [
+    {
+      "case": 0,
+      "name": "events-empty",
+      "durationMs": 1000,
+      "historyReadyMs": null,
+      "firstRowsMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 578.403,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3477,
+      "serverSeqAfter": 3685,
+      "longTasks": 1,
+      "longTaskMs": 152,
+      "peakHeapUsed": 9140096,
+      "peakNodes": 59,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [
+          411.793,
+          58,
+          0,
+          8412664,
+          1,
+          152
+        ],
+        [
+          623.701,
+          59,
+          0,
+          9076056,
+          1,
+          152
+        ],
+        [
+          885.547,
+          59,
+          0,
+          9097372,
+          1,
+          152
+        ],
+        [
+          1150,
+          59,
+          0,
+          9111552,
+          1,
+          152
+        ],
+        [
+          1412.356,
+          59,
+          0,
+          9125732,
+          1,
+          152
+        ],
+        [
+          1595.948,
+          59,
+          0,
+          9140096,
+          1,
+          152
+        ],
+        [
+          1595.948,
+          59,
+          0,
+          9140096,
+          1,
+          152
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.185,
+        "TaskDuration": 0.247,
+        "LayoutDuration": 0.006,
+        "RecalcStyleDuration": 0.005
+      }
+    },
+    {
+      "case": 0,
+      "name": "inspector",
+      "durationMs": 5000,
+      "historyReadyMs": 1406.248,
+      "firstRowsMs": 1246.834,
+      "historyTargetSeq": 3724,
+      "historyReadyCount": 80,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 1233.59,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3724,
+      "serverSeqAfter": 4046,
+      "longTasks": 3,
+      "longTaskMs": 287,
+      "peakHeapUsed": 38736368,
+      "peakNodes": 1303,
+      "peakSessionStorageBytes": 384288,
+      "samples": [
+        [
+          359.51,
+          86,
+          0,
+          8603116,
+          1,
+          154
+        ],
+        [
+          747.333,
+          1300,
+          381698,
+          20308952,
+          3,
+          287
+        ],
+        [
+          819.711,
+          1290,
+          384232,
+          17757628,
+          3,
+          287
+        ],
+        [
+          1066.412,
+          1290,
+          383358,
+          17771968,
+          3,
+          287
+        ],
+        [
+          1310.584,
+          1293,
+          383440,
+          17126676,
+          3,
+          287
+        ],
+        [
+          1559.812,
+          1293,
+          383446,
+          23090432,
+          3,
+          287
+        ],
+        [
+          1809.109,
+          1303,
+          381780,
+          17120840,
+          3,
+          287
+        ],
+        [
+          2061.424,
+          1290,
+          384250,
+          22422080,
+          3,
+          287
+        ],
+        [
+          2320.347,
+          1290,
+          382748,
+          17020308,
+          3,
+          287
+        ],
+        [
+          2569.066,
+          1300,
+          382366,
+          21936232,
+          3,
+          287
+        ],
+        [
+          2821.578,
+          1295,
+          381654,
+          26649464,
+          3,
+          287
+        ],
+        [
+          3079.006,
+          1301,
+          382370,
+          18622708,
+          3,
+          287
+        ],
+        [
+          3352.414,
+          1303,
+          381790,
+          23975400,
+          3,
+          287
+        ],
+        [
+          3591.942,
+          1290,
+          382762,
+          28134268,
+          3,
+          287
+        ],
+        [
+          3839.037,
+          1296,
+          383032,
+          21437888,
+          3,
+          287
+        ],
+        [
+          4099.368,
+          1296,
+          383034,
+          25756664,
+          3,
+          287
+        ],
+        [
+          4346.235,
+          1303,
+          381800,
+          29776392,
+          3,
+          287
+        ],
+        [
+          4594.758,
+          1295,
+          383038,
+          13350844,
+          3,
+          287
+        ],
+        [
+          4842.26,
+          1300,
+          381936,
+          18649988,
+          3,
+          287
+        ],
+        [
+          6418.052,
+          1291,
+          384280,
+          23254256,
+          3,
+          287
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 1.063,
+        "TaskDuration": 2.11,
+        "LayoutDuration": 0.224,
+        "RecalcStyleDuration": 0.065
+      }
+    },
+    {
+      "case": 0,
+      "name": "events",
+      "durationMs": 5000,
+      "historyReadyMs": null,
+      "firstRowsMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 536.515,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 4127,
+      "serverSeqAfter": 4829,
+      "longTasks": 1,
+      "longTaskMs": 138,
+      "peakHeapUsed": 12473968,
+      "peakNodes": 1071,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [
+          315.664,
+          58,
+          0,
+          8429984,
+          1,
+          138
+        ],
+        [
+          524.905,
+          1071,
+          0,
+          11492708,
+          1,
+          138
+        ],
+        [
+          783.665,
+          1071,
+          0,
+          11520396,
+          1,
+          138
+        ],
+        [
+          1032.454,
+          1071,
+          0,
+          11534644,
+          1,
+          138
+        ],
+        [
+          1282.652,
+          1071,
+          0,
+          11548824,
+          1,
+          138
+        ],
+        [
+          1531.934,
+          1071,
+          0,
+          11563188,
+          1,
+          138
+        ],
+        [
+          1795.878,
+          1071,
+          0,
+          11577432,
+          1,
+          138
+        ],
+        [
+          2046.814,
+          1071,
+          0,
+          11591816,
+          1,
+          138
+        ],
+        [
+          2299.147,
+          1071,
+          0,
+          11606348,
+          1,
+          138
+        ],
+        [
+          2552.36,
+          1071,
+          0,
+          12252312,
+          1,
+          138
+        ],
+        [
+          2802.543,
+          1071,
+          0,
+          12266636,
+          1,
+          138
+        ],
+        [
+          3073.735,
+          1071,
+          0,
+          12280848,
+          1,
+          138
+        ],
+        [
+          3320.63,
+          1071,
+          0,
+          12295060,
+          1,
+          138
+        ],
+        [
+          3572.005,
+          1071,
+          0,
+          12309272,
+          1,
+          138
+        ],
+        [
+          3824.641,
+          1071,
+          0,
+          12324656,
+          1,
+          138
+        ],
+        [
+          4088.479,
+          1071,
+          0,
+          12338968,
+          1,
+          138
+        ],
+        [
+          4338.958,
+          1071,
+          0,
+          12353180,
+          1,
+          138
+        ],
+        [
+          4589.987,
+          1071,
+          0,
+          12417120,
+          1,
+          138
+        ],
+        [
+          4840.503,
+          1071,
+          0,
+          12431332,
+          1,
+          138
+        ],
+        [
+          5548.525,
+          1071,
+          0,
+          12473968,
+          1,
+          138
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.2,
+        "TaskDuration": 0.37,
+        "LayoutDuration": 0.073,
+        "RecalcStyleDuration": 0.011
+      }
+    }
+  ],
+  "replays": []
+}

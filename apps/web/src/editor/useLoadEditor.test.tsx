@@ -167,11 +167,13 @@ it.each([false, true])(
     const view = mount(api, loop.id);
     await waitFor(() => expect(view.result.current.definition?.name).toBe('device'));
     act(() => useEditorStore.getState().updateMeta({ description: 'edited during read' }));
-    await act(() => new Promise((resolve) => setTimeout(resolve, 60)));
     expect(await view.result.current.flush()).toBe(false);
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
-    expect((await drafts.loadLocalDraft(loop.id))?.definition.description).toBe(
-      'edited during read',
+    // Device mirroring is asynchronous; a server-gated flush does not await that write.
+    await waitFor(async () =>
+      expect((await drafts.loadLocalDraft(loop.id))?.definition.description).toBe(
+        'edited during read',
+      ),
     );
     act(() => {
       server.resolve();

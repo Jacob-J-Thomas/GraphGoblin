@@ -20,6 +20,159 @@ export function prettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+/** Thrown inside `prettyJsonPrefix` to stop the walk once the budget is spent; never escapes. */
+const STOP = new Error('prettyJsonPrefix: budget spent');
+/** Characters of a string quoted at a time, so a huge string costs only its first chunks. */
+const QUOTE_CHUNK = 1_024;
+
+/**
+ * The first `limit` characters of `prettyJson(value)` and whether more would follow, produced
+ * without formatting the whole value: the walk stops as soon as the budget is spent, strings and
+ * property names are quoted in chunks up to the remaining budget, and object properties are read
+ * one at a time, so a multi-megabyte variable costs only its first lines of work and memory
+ * (#259). The text is exactly `prettyJson(value).slice(0, limit)` for JSON data (what the API
+ * returns: objects, arrays, strings, numbers, booleans, null) and the usual extras that reach it
+ * from JavaScript: the same key order, escaping, indentation, array holes, same-realm boxed
+ * primitives, `toJSON` (called with the property key, as on `Date`) and omission of `undefined`,
+ * functions and symbols; a BigInt throws the same `TypeError`. Exotic values (a function carrying
+ * `toJSON`, a boxed primitive from another realm or with an overridden `valueOf`, a getter that
+ * changes an array's length while it is read) are outside the guarantee.
+ */
+export function prettyJsonPrefix(
+  value: unknown,
+  limit: number,
+): { text: string; truncated: boolean } {
+  const parts: string[] = [];
+  let length = 0;
+  const push = (part: string): void => {
+    parts.push(part);
+    length += part.length;
+    if (length > limit) throw STOP;
+  };
+  // `JSON.stringify(text)` without quoting the whole text: a chunk boundary moves past a high
+  // surrogate only when the next character is its low half (a lone high surrogate stays where it
+  // is and escapes as `\ud800` either way), so the escapes are the ones the whole string would
+  // get; stops once the budget is spent.
+  const quote = (text: string): void => {
+    push('"');
+    for (let start = 0; start < text.length;) {
+      let end = Math.min(start + QUOTE_CHUNK, text.length);
+      if (
+        end < text.length &&
+        /[\ud800-\udbff]/.test(text[end - 1] ?? '') &&
+        /[\udc00-\udfff]/.test(text[end] ?? '')
+      )
+        end += 1;
+      push(JSON.stringify(text.slice(start, end)).slice(1, -1));
+      start = end;
+    }
+    push('"');
+  };
+  // What `JSON.stringify` serialises for a value found under `key`: `toJSON` applied, boxed
+  // primitives unwrapped; `undefined` means the property is omitted (or `null` in an array).
+  const prepare = (item: unknown, key: string): unknown => {
+    if (item !== null && typeof item === 'object') {
+      const method = (item as { toJSON?: unknown }).toJSON;
+      if (typeof method === 'function') item = (method as (k: string) => unknown).call(item, key);
+    }
+    if (
+      item instanceof String ||
+      item instanceof Number ||
+      item instanceof Boolean ||
+      item instanceof BigInt
+    )
+      item = item.valueOf();
+    if (typeof item === 'function' || typeof item === 'symbol') return undefined;
+    return item;
+  };
+  const write = (prepared: unknown, indent: string): void => {
+    if (prepared === undefined || prepared === null) return push('null');
+    switch (typeof prepared) {
+      case 'string':
+        return quote(prepared);
+      case 'number':
+        return push(Number.isFinite(prepared) ? String(prepared) : 'null');
+      case 'boolean':
+        return push(prepared ? 'true' : 'false');
+      case 'bigint':
+        throw new TypeError('Do not know how to serialize a BigInt');
+      default:
+        break;
+    }
+    const inner = `${indent}  `;
+    if (Array.isArray(prepared)) {
+      if (prepared.length === 0) return push('[]');
+      push('[');
+      for (let index = 0; index < prepared.length; index += 1) {
+        push(`${index === 0 ? '' : ','}\n${inner}`);
+        // A hole reads as `undefined`, which an array serialises as `null`.
+        write(prepare(prepared[index], String(index)), inner);
+      }
+      return push(`\n${indent}]`);
+    }
+    const record = prepared as Record<string, unknown>;
+    // Own enumerable string keys in `Object.keys` order, read one at a time: a budget spent on an
+    // early property never touches a later one; the opening brace becomes `{}` if none is kept.
+    const open = parts.length;
+    push('{');
+    let first = true;
+    for (const key in record) {
+      if (!Object.prototype.hasOwnProperty.call(record, key)) continue;
+      const property = prepare(record[key], key);
+      if (property === undefined) continue;
+      push(first ? '\n' : ',\n');
+      push(inner);
+      quote(key);
+      push(': ');
+      first = false;
+      write(property, inner);
+    }
+    if (first) {
+      parts[open] = '{}';
+      length += 1;
+      if (length > limit) throw STOP;
+      return;
+    }
+    push(`\n${indent}}`);
+  };
+  try {
+    const root = prepare(value, '');
+    if (root === undefined) return { text: '', truncated: false };
+    write(root, '');
+  } catch (error) {
+    if (error !== STOP) throw error;
+    return { text: parts.join('').slice(0, limit), truncated: true };
+  }
+  return { text: parts.join(''), truncated: false };
+}
+
+const PREFIX_CACHE = new WeakMap<object, Map<number, { text: string; truncated: boolean }>>();
+
+/**
+ * `prettyJsonPrefix` remembered per object value and budget, for as long as the value is alive.
+ * The walk itself is bounded, with one exception JavaScript imposes: reading the first property of
+ * an object enumerates all of its keys (engines build the key list eagerly), so a single object
+ * with hundreds of thousands of properties costs that enumeration once. Caching by identity keeps
+ * the cost to the first time a value is shown; a return to it, or a re-render, costs a lookup.
+ */
+export function cachedJsonPrefix(
+  value: unknown,
+  limit: number,
+): { text: string; truncated: boolean } {
+  if (value === null || typeof value !== 'object') return prettyJsonPrefix(value, limit);
+  let byLimit = PREFIX_CACHE.get(value);
+  if (byLimit === undefined) {
+    byLimit = new Map();
+    PREFIX_CACHE.set(value, byLimit);
+  }
+  let result = byLimit.get(limit);
+  if (result === undefined) {
+    result = prettyJsonPrefix(value, limit);
+    byLimit.set(limit, result);
+  }
+  return result;
+}
+
 /** True when the error means the backend could not be reached. */
 export function isOfflineError(error: unknown): boolean {
   return error instanceof GraphGoblinApiError && error.status === NETWORK_ERROR_STATUS;

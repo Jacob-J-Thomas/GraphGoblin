@@ -1,0 +1,3179 @@
+[
+  {
+    "at": "2026-10-25T00:39:25.428Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Browser phase recurrence confirm-held",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "hold",
+            "kind": "script",
+            "label": "Held script",
+            "config": {
+              "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+              "args": [
+                "-e",
+                "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "hold"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "hold",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+        "ownerId": "local",
+        "name": "Browser phase recurrence confirm-held",
+        "draftVersionId": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+        "createdAt": "2026-10-25T00:39:25.411Z",
+        "updatedAt": "2026-10-25T00:39:25.411Z"
+      },
+      "draft": {
+        "id": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+        "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Browser phase recurrence confirm-held",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-25T00:39:25.411Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:25.451Z",
+    "path": "/loops/01M5R7YYZ45HBYEJ4TDJTS5XC9/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+        "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Browser phase recurrence confirm-held",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-browser-cycle-confirm-held-1RAs8A\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-25T00:39:25.411Z",
+        "publishedAt": "2026-10-25T00:39:25.439Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:25.482Z",
+    "path": "/loops/01M5R7YYZ45HBYEJ4TDJTS5XC9/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R7YZ0KXAN509FJ0XPD6ZRV",
+        "ownerId": "local",
+        "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+        "versionId": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Browser phase recurrence confirm-held",
+          "label": "Browser phase recurrence confirm-held v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R7YZ0KXAN509FJ0XPD6ZRW",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-25T00:39:25.459Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:26.061Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.091Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.387Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.473Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.660Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.756Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.852Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:27.942Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.047Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.128Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.342Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.432Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.521Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.615Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.706Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.804Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:28.920Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.074Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.153Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.236Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.333Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.425Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.536Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.628Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.720Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.813Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:29.905Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.002Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.095Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.186Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.316Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.407Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.498Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.580Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.673Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.765Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.860Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:30.949Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.123Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.249Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.340Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.477Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.562Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.645Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.789Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.879Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:31.976Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.134Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.219Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.298Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.395Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.485Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.564Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.658Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.736Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.830Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:32.924Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.019Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.119Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.223Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.368Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.475Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.603Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.713Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.794Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:33.935Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.036Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.161Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.251Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.333Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.468Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.563Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.657Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.763Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.856Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:34.957Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.045Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.203Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.296Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.464Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.545Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.646Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.732Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.865Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:35.983Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.126Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.216Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.378Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.524Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.616Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.703Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.791Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.891Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:36.998Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.089Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.183Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.459Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.545Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.638Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.745Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:37.855Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.080Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.161Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.263Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.347Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.446Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.536Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.838Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:38.936Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.022Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.117Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.208Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.298Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.397Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.486Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.589Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.675Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.788Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:39.873Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.043Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.141Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.234Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.381Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.478Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.573Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.680Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.857Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:40.980Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:41.081Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:41.084Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:41.092Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "wait"
+    },
+    "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:2:awaiting-choice",
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 15000,
+      "startedAt": "2026-10-25T00:39:26.052Z",
+      "choiceAt": "2026-10-25T00:39:41.052Z",
+      "activeRunIds": [
+        "01M5R7YZ0KXAN509FJ0XPD6ZRV"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "4cac89e7-0651-42e2-9c52-2056fe5f4608:3:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:41.097Z",
+    "path": "/runs/01M5R7YZ0KXAN509FJ0XPD6ZRV",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R7YZ0KXAN509FJ0XPD6ZRV",
+      "ownerId": "local",
+      "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+      "versionId": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Browser phase recurrence confirm-held",
+        "label": "Browser phase recurrence confirm-held v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R7YZ0KXAN509FJ0XPD6ZRW",
+      "status": "running",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "createdAt": "2026-10-25T00:39:25.459Z",
+      "startedAt": "2026-10-25T00:39:25.488Z",
+      "lastEventSeq": 5
+    }
+  },
+  {
+    "at": "2026-10-25T00:39:41.259Z",
+    "path": "/runs/01M5R7YZ0KXAN509FJ0XPD6ZRV",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R7YZ0KXAN509FJ0XPD6ZRV",
+      "ownerId": "local",
+      "loopId": "01M5R7YYZ45HBYEJ4TDJTS5XC9",
+      "versionId": "01M5R7YYZ45HBYEJ4TDJTS5XCA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Browser phase recurrence confirm-held",
+        "label": "Browser phase recurrence confirm-held v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R7YZ0KXAN509FJ0XPD6ZRW",
+      "status": "running",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "createdAt": "2026-10-25T00:39:25.459Z",
+      "startedAt": "2026-10-25T00:39:25.488Z",
+      "lastEventSeq": 5
+    }
+  }
+]

@@ -1,0 +1,38 @@
+CHECK damaged replay state is a clear per-run error
+FAIL damaged replay state is a clear per-run error: Expected values to be strictly equal:
+
+500 !== 409
+
+CHECK bounded current and 200-event lagging snapshots on 10001 durable events
+PASS bounded current and 200-event lagging snapshots on 10001 durable events
+CHECK six polling readers while 100 pairs append and checkpoints advance
+PASS six polling readers while 100 pairs append and checkpoints advance
+CHECK checkpoint proof and missing boundary fallbacks
+FAIL checkpoint proof and missing boundary fallbacks: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
+    artifacts: [],
+    counters: {
++     nodeVisits: {},
+-     nodeVisits: {
+-       a: 1,
+-       b: 1
+-     },
+      usage: {
+        cachedInputTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        reasoningOutputTokens: 0
+...
+    schemaVersion: 1,
++   vars: {}
+-   vars: {
+-     items: [
+-       'a',
+-       'b'
+-     ]
+-   }
+  }
+

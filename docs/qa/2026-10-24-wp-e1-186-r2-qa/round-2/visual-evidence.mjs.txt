@@ -1,0 +1,35 @@
+import assert from'node:assert/strict';
+import{readFile,writeFile}from'node:fs/promises';
+import{createHash}from'node:crypto';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[];
+const ctl=async(path,b={})=>(await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)})).json();
+const c=await ctl('/connection'),fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8')),all=await ctl('/oracle',{runId:fixture.runId,full:true}),huge=all.events.find(e=>e.seq===fixture.oversizedSeq);
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const watchdog=setTimeout(()=>{void browser.close();},180000);
+for(const width of[1440,390])for(const theme of['dark','light']){
+ const context=await browser.newContext({viewport:{width,height:width===390?844:900},serviceWorkers:'block'});await context.addInitScript(({token,theme})=>{localStorage.setItem('graphgoblin-api-key',token);localStorage.setItem('graphgoblin-theme',theme);},{token:c.keys.admin,theme});
+ for(const kind of['probabilities','unknown','labels','oversized']){
+  const page=await context.newPage();page.setDefaultTimeout(15000);await page.bringToFront();const id=kind==='probabilities'?fixture.probabilityRunId:kind==='unknown'?fixture.unknownId:fixture.runId;
+  const item={name:kind+' '+width+' '+theme,pass:false};
+  try{
+   if(kind==='unknown')await page.route('**/loops/*/versions/*',r=>r.fulfill({status:404,contentType:'application/problem+json',body:JSON.stringify({status:404,detail:'QA unavailable pinned labels'})}));
+   await page.goto(c.url+'/app/runs/'+id);await page.getByRole('list',{name:'Timeline',exact:true}).waitFor();
+   const seek=async n=>{await page.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill(String(n));await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();};
+   if(kind==='probabilities'){
+    await seek(1);const region=page.getByRole('region',{name:'Evaluation details',exact:true});await region.waitFor();const text=await region.innerText();assert.ok(text.includes('12.35%'));assert.ok(text.includes('87.65%'));assert.ok(await region.locator('[title="0.123456"]').count()>0);await region.scrollIntoViewIfNeeded();item.evidence={display:['12.35%','87.65%'],exactTitle:'0.123456'};
+   }else if(kind==='unknown'){
+    await page.getByText('Pinned definition unavailable. Authored node and route labels are not recorded in the available history.',{exact:true}).waitFor();const text=await page.getByRole('region',{name:'Execution context',exact:true}).innerText();assert.ok(text.includes('actor not recorded'));await page.getByRole('region',{name:'Execution context',exact:true}).scrollIntoViewIfNeeded();item.evidence={text};
+   }else if(kind==='labels'){
+    await seek(fixture.finished.seq);await page.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();assert.ok(!(await page.locator('body').innerText()).includes('DRAFT RENAMED'));assert.ok((await page.getByRole('list',{name:'Messages',exact:true}).innerText()).includes('Pinned Worker (work)'));const add=fixture.finished.patch.find(p=>p.path==='/messages/-');assert.deepEqual(JSON.parse(await page.getByLabel('Value after /messages/-',{exact:true}).innerText()),add.value);await page.getByRole('list',{name:'Timeline',exact:true}).scrollIntoViewIfNeeded();item.evidence={pinnedLabel:'Pinned Worker (work)',selected:fixture.finished.seq,appendValue:add.value};
+   }else{
+    await seek(huge.seq);await page.getByRole('button',{name:'Exact recorded event #'+huge.seq,exact:true}).click();await page.getByTestId('recorded-event-json').waitFor();const marker=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id].uncached.find(e=>e.seq===753),id);assert.equal(marker.description,'work, 1 change, 1 ms');
+    const waiting=page.waitForEvent('download');await page.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const download=await waiting;const path='.tmp/qa186r2/visual-huge-'+width+'-'+theme+'.json';await download.saveAs(path);const raw=await readFile(path);assert.deepEqual(JSON.parse(raw),huge);item.evidence={marker,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex'),access:'bounded disclosure with exact full JSON download; Show all was not requested'};
+   }
+   const geometry=await page.evaluate(()=>({width:innerWidth,documentWidth:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme}));assert.ok(geometry.documentWidth<=width);assert.equal(geometry.theme,theme);item.evidence.geometry=geometry;await page.screenshot({path:out+'/visual-'+kind+'-'+width+'-'+theme+'.png'});item.pass=true;
+  }catch(e){item.error=String(e).slice(0,2000);}finally{await page.close();}
+  checks.push(item);await writeFile(out+'/visual-evidence-results.json',JSON.stringify(checks,null,2));
+ }
+ await context.close();
+}
+clearTimeout(watchdog);await browser.close();console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failures:checks.filter(x=>!x.pass)}));

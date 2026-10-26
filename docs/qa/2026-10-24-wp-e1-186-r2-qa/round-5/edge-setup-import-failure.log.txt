@@ -1,0 +1,40 @@
+Node v22.14.0
+Command: pnpm.cmd exec playwright test -c .tmp/qa5/playwright.config.ts e2e/issue-7-qa.spec.ts e2e/responsive.spec.ts e2e/thread-history.spec.ts --grep "I7-QA-03|on a coarse pointer|persisted failure" --retries=0 --workers=1 --reporter=list,json --output=.tmp/qa5/edge-targeted-results
+Cwd: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-5\apps\web
+Started: 2026-10-25T12:38:59.046Z
+
+node:internal/modules/run_main:122
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@graphgoblin/infrastructure' imported from %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-5\apps\web\.tmp\qa5\testing\test-app.ts
+Did you mean to import "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/packages/infrastructure/src/sqlite/testing/index.ts"?
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:268:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:854:18)
+    at defaultResolve (node:internal/modules/esm/resolve:984:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:10494)
+    at resolveDirectory (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11581)
+    at resolveTsPaths (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13222)
+    at resolve (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:15453)
+    at nextResolve (node:internal/modules/esm/hooks:748:28) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.14.0
+Error: the E2E server exited early with code 1
+
+   at global-setup.ts:41
+
+  39 |     child.once('exit', (code) => {
+  40 |       clearTimeout(timer);
+> 41 |       reject(new Error(`the E2E server exited early with code ${String(code)}`));
+     |              ^
+  42 |     });
+  43 |   });
+  44 |   process.env['GG_E2E_BASE_URL'] = url;
+    at ChildProcess.<anonymous> (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-5\apps\web\.tmp\qa5\e2e\global-setup.ts:41:14)
+
+
+Exit code: 1
+Elapsed seconds: 1.938

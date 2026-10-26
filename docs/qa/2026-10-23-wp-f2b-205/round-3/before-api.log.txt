@@ -1,0 +1,132 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/claude-effort-readiness.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/api
+
+ ❯ src/claude-effort-readiness.test.ts (6 tests | 4 failed) 6942ms
+   × refuses capability-only unsupported high before manual admission (explicit=false) 1742ms
+   × refuses capability-only unsupported high before manual admission (explicit=true) 348ms
+   × guards starts without the manual admission callback (explicit=false) 1439ms
+   × guards starts without the manual admission callback (explicit=true) 1724ms
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/claude-effort- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude-effort-readiness.test.ts > refuses capability-only unsupported high before manual admission 
+(explicit=false)
+ FAIL  src/claude-effort-readiness.test.ts > refuses capability-only unsupported high before manual admission 
+(explicit=true)
+AssertionError: expected { status: 202, requests: [ { …(2) } ] } to deeply equal { status: 422, requests: [] }
+
+- Expected
++ Received
+
+  {
+-   "requests": [],
+-   "status": 422,
++   "requests": [
++     {
++       "effort": "high",
++       "model": "claude-opus-5-5",
++     },
++   ],
++   "status": 202,
+  }
+
+ ❯ src/claude-effort-readiness.test.ts:35:6
+     33|   await app.idle();
+     34|   expect({ status: response.statusCode, requests: harness.started.map(…
+     35|     .toEqual({ status: 422, requests: [] });
+       |      ^
+     36|   expect(response.json()).toMatchObject({ errors: [expect.objectContai…
+     37|     code: 'EFFORT_UNSUPPORTED', nodeId: 'work', path: 'config.effort',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/claude-effort-readiness.test.ts > guards starts without the manual admission callback (explicit=false)
+AssertionError: expected [ { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "effort": "high",
++     "model": "claude-opus-5-5",
++     "options": {
++       "approval": "never",
++       "sandbox": "read-only",
++     },
++     "turn": {
++       "prompt": "q",
++     },
++     "workingDirectory": 
+"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-08Fa25\\workspaces\\01M3Y7RKG0T0MMJ1VHS2C0X5G7",
++   },
++ ]
+
+ ❯ src/claude-effort-readiness.test.ts:45:27
+     43|   const run = await app.container.manager.startRun({ ownerId: 'local',…
+     44|   await app.idle();
+     45|   expect(harness.started).toEqual([]);
+       |                           ^
+     46|   expect(await app.container.repos.runs.get(run.id)).toMatchObject({ s…
+     47|     code: 'EVALUATION_INVALID_CONFIGURATION', nodeId: 'work', details:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/claude-effort-readiness.test.ts > guards starts without the manual admission callback (explicit=true)
+AssertionError: expected [ { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "effort": "high",
++     "model": "claude-opus-5-5",
++     "options": {
++       "approval": "never",
++       "sandbox": "read-only",
++     },
++     "turn": {
++       "prompt": "q",
++     },
++     "workingDirectory": 
+"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-QE5Lt8\\workspaces\\01M3Y7RKG0N5AG1F6VW6V0X05W",
++   },
++ ]
+
+ ❯ src/claude-effort-readiness.test.ts:45:27
+     43|   const run = await app.container.manager.startRun({ ownerId: 'local',…
+     44|   await app.idle();
+     45|   expect(harness.started).toEqual([]);
+       |                           ^
+     46|   expect(await app.container.repos.runs.get(run.id)).toMatchObject({ s…
+     47|     code: 'EVALUATION_INVALID_CONFIGURATION', nodeId: 'work', details:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  02:30:06
+   Duration  34.82s (transform 58%, import 21%, tests 20%)
+
+  Transform  transforming modules took 19.80s · 58% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\api
+
+RESULT: exit 1

@@ -1,0 +1,344 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: qa.spec.ts >> failure reasons are typed and visible: harness failure and decider unavailable
+- Location: .tmp\qa3\specs\qa.spec.ts:148:1
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Failed: HARNESS_TURN_FAILED')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByText('Failed: HARNESS_TURN_FAILED') with timeout 10000ms
+  - waiting for getByText('Failed: HARNESS_TURN_FAILED')
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - heading "Run 01M3Y7RKG01GC0ESFNC3Q42C02" [level=1]
+  - text: failed at Ask (ask)
+  - link "loop":
+    - /url: /app/loops/01M3Y7RKG01GC0ESFNC3Q42C00/edit
+  - link "child runs":
+    - /url: /app/runs?parent=01M3Y7RKG01GC0ESFNC3Q42C02
+- alert:
+  - paragraph: "Failed: HARNESS_DELIVERY_UNCERTAIN"
+  - text: "harness turn failed: scripted (resumable)"
+- region "Execution limits":
+  - heading "Execution limits" [level=2]
+  - paragraph: "Maximum node visits: 10. Run deadline: none."
+  - paragraph: "Structured completion: Unlimited."
+  - paragraph: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+- region "Execution context":
+  - heading "Execution context" [level=2]
+  - paragraph:
+    - text: qa failing v1 · version ID
+    - code: 01M3Y7RKG01GC0ESFNC3Q42C01
+  - button "Exact run record"
+  - button "Pinned definition JSON"
+- region "Timeline (11 events, complete)":
+  - heading "Timeline (11 events, complete)" [level=2]
+  - button "Load older" [disabled]
+  - button "Previous rows" [disabled]
+  - button "Next rows" [disabled]
+  - button "Load newer" [disabled]
+  - button "Follow live" [disabled]
+  - text: Showing events 1–11 of the retained window. Event sequence
+  - spinbutton "Event sequence"
+  - button "Go to event"
+  - list "Timeline":
+    - listitem:
+      - button "#1 run.queued":
+        - text: "#1"
+        - code: run.queued
+    - listitem:
+      - button "#2 run.started attempt 1":
+        - text: "#2"
+        - code: run.started
+        - text: attempt 1
+    - listitem:
+      - button "#3 node.started Start (start) (trigger) attempt 1":
+        - text: "#3"
+        - code: node.started
+        - text: Start (start) (trigger) attempt 1
+    - listitem:
+      - button "#4 node.finished Start (start) → out, 2 changes, 1 ms":
+        - text: "#4"
+        - code: node.finished
+        - text: Start (start) → out, 2 changes, 1 ms
+    - listitem:
+      - button "#5 node.started Ask (ask) (inference) attempt 1":
+        - text: "#5"
+        - code: node.started
+        - text: Ask (ask) (inference) attempt 1
+    - listitem:
+      - button "#6 harness.turn Ask (ask)":
+        - text: "#6"
+        - code: harness.turn
+        - text: Ask (ask)
+    - listitem:
+      - button "#7 harness.session Ask (ask)":
+        - text: "#7"
+        - code: harness.session
+        - text: Ask (ask)
+    - listitem:
+      - button "#8 node.progress Ask (ask)":
+        - text: "#8"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#9 harness.submission Ask (ask)":
+        - text: "#9"
+        - code: harness.submission
+        - text: Ask (ask)
+    - listitem:
+      - button "#10 harness.submission Ask (ask)":
+        - text: "#10"
+        - code: harness.submission
+        - text: Ask (ask)
+    - listitem:
+      - 'button "#11 run.failed HARNESS_DELIVERY_UNCERTAIN: harness turn failed: scripted"':
+        - text: "#11"
+        - code: run.failed
+        - text: "HARNESS_DELIVERY_UNCERTAIN: harness turn failed: scripted"
+- 'button "Exact recorded event #11"'
+- region "Current thread":
+  - heading "Current thread" [level=2]
+  - heading "Messages (0)" [level=3]
+  - list "Messages"
+  - heading "Variables" [level=3]
+  - text: "{}"
+  - button "Full thread JSON"
+- paragraph: Activity below covers the retained history window. Earlier activity is available through Load older.
+- button "Node progress (1 nodes)"
+```
+
+# Test source
+
+```ts
+  57  | }) => {
+  58  |   const errors: string[] = [];
+  59  |   page.on('pageerror', (e) => errors.push(e.message));
+  60  |   // Define this test's turn explicitly; the control server's harness is shared across specs.
+  61  |   await control(request, '/harness/script', {
+  62  |     turns: [{ matchPrompt: 'child turn', finalText: 'OK' }],
+  63  |   });
+  64  |   const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+  65  |   const parentId = await publishLoop(request, {
+  66  |     ...chain('qa parent', {
+  67  |       id: 'sub',
+  68  |       kind: 'subloop',
+  69  |       label: 'Sub',
+  70  |       config: { loopRef: { loopId: childId } },
+  71  |     }),
+  72  |   });
+  73  |   const parentRun = await startRun(request, parentId);
+  74  |   await expect
+  75  |     .poll(async () => {
+  76  |       const res = await request.get(`/runs?parent=${parentRun}`);
+  77  |       return ((await res.json()) as { items: unknown[] }).items.length;
+  78  |     })
+  79  |     .toBe(1);
+  80  |   const children = (await (await request.get(`/runs?parent=${parentRun}`)).json()) as {
+  81  |     items: { id: string }[];
+  82  |   };
+  83  |   await page.goto(`/app/runs/${children.items[0]!.id}`);
+  84  |   await expect(page.getByText(/events, complete/)).toBeVisible();
+  85  |   await expect(page.getByLabel('Messages')).toContainText('OK');
+  86  |   // The first event: the seeded thread, before any node ran.
+  87  |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').first().click();
+  88  |   await expect(page.getByText('Thread at event 1')).toBeVisible();
+  89  |   await expect(page.getByText('This screen failed to render')).toHaveCount(0);
+  90  |   await expect(page.getByText(/cannot be reconstructed/)).toHaveCount(0);
+  91  |   expect(errors).toEqual([]);
+  92  | });
+  93  | 
+  94  | test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+  95  |   page,
+  96  |   request,
+  97  | }) => {
+  98  |   await control(request, '/harness/script', {
+  99  |     turns: [{ matchPrompt: 'MANY ITEMS', items: 1200, delayMs: 1500 }],
+  100 |   });
+  101 |   const loopId = await publishLoop(request, chain('qa many', ask('MANY ITEMS')));
+  102 |   let runGets = 0;
+  103 |   page.on('request', (r) => {
+  104 |     if (/\/runs\/[0-9A-Z]{26}$/.test(new URL(r.url()).pathname)) runGets += 1;
+  105 |   });
+  106 |   const runId = await startRun(request, loopId);
+  107 |   const started = Date.now();
+  108 |   await page.goto(`/app/runs/${runId}`);
+  109 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+  110 |     timeout: 30_000,
+  111 |   });
+  112 |   const live = Date.now() - started;
+  113 |   // Twelve lifecycle/evidence facts include the persisted exit evaluation; all 1,200 items remain.
+  114 |   const timeline = page.getByRole('list', { name: 'Timeline' });
+  115 |   await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
+  116 |     1200,
+  117 |   );
+  118 |   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.session ask$/ })).toHaveCount(
+  119 |     1,
+  120 |   );
+  121 |   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
+  122 |   await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
+  123 |   const seqs = await timelineSeqs(page);
+  124 |   expect(seqs).toEqual(Array.from({ length: 1212 }, (_, i) => i + 1));
+  125 |   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
+  126 |   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
+  127 |   const liveRunGets = runGets;
+  128 |   expect(liveRunGets).toBeLessThanOrEqual(5 + Math.ceil(live / 100));
+  129 |   expect(liveRunGets).toBeLessThan(1200);
+  130 | 
+  131 |   // Opening the finished run fresh, then selecting an event deep in the log.
+  132 |   await page.evaluate(() => sessionStorage.clear());
+  133 |   const fresh = Date.now();
+  134 |   await page.reload();
+  135 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible();
+  136 |   const freshMs = Date.now() - fresh;
+  137 |   const click = Date.now();
+  138 |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+  139 |   await expect(page.getByText('Thread at event 601')).toBeVisible();
+  140 |   const clickMs = Date.now() - click;
+  141 |   console.log(
+  142 |     `1,212-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+  143 |   );
+  144 |   expect(freshMs).toBeLessThan(5_000);
+  145 |   expect(clickMs).toBeLessThan(2_000);
+  146 | });
+  147 | 
+  148 | test('failure reasons are typed and visible: harness failure and decider unavailable', async ({
+  149 |   page,
+  150 |   request,
+  151 | }) => {
+  152 |   await control(request, '/harness/script', {
+  153 |     turns: [{ matchPrompt: 'FAIL THIS', error: { code: 'TURN_FAILED', message: 'scripted' } }],
+  154 |   });
+  155 |   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+  156 |   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+> 157 |   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+      |                                                               ^ Error: expect(locator).toBeVisible() failed
+  158 | 
+  159 |   await control(request, '/deciders', { jev: true, codex: true });
+  160 |   try {
+  161 |     const decide = {
+  162 |       schemaVersion: CURRENT_DEFINITION_FORMAT,
+  163 |       name: 'qa decider',
+  164 |       nodes: [
+  165 |         start,
+  166 |         {
+  167 |           id: 'pick',
+  168 |           kind: 'decision',
+  169 |           label: 'Pick',
+  170 |           config: {
+  171 |             kind: 'llm',
+  172 |             harness: 'codex',
+  173 |             model: { mode: 'inherit' },
+  174 |             effort: { mode: 'inherit' },
+  175 |             instructions: 'which?',
+  176 |             routes: [
+  177 |               {
+  178 |                 id: 'a',
+  179 |                 label: 'A',
+  180 |               },
+  181 |               {
+  182 |                 id: 'b',
+  183 |                 label: 'B',
+  184 |               },
+  185 |             ],
+  186 |           },
+  187 |         },
+  188 |         done,
+  189 |       ],
+  190 |       edges: [
+  191 |         { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  192 |         { id: 'e2', from: { node: 'pick', port: 'a' }, to: { node: 'done' } },
+  193 |         { id: 'e3', from: { node: 'pick', port: 'b' }, to: { node: 'done' } },
+  194 |       ],
+  195 |     };
+  196 |     const loopId = await publishLoop(request, decide);
+  197 |     // Publication admits a ready evaluator; losing it later is a typed runtime failure.
+  198 |     await control(request, '/deciders', { jev: true, codex: false });
+  199 |     await page.goto(`/app/runs/${await startRun(request, loopId)}`);
+  200 |     await expect(page.getByText('Failed: EVALUATION_UNAVAILABLE')).toBeVisible();
+  201 |   } finally {
+  202 |     await control(request, '/deciders', { jev: true, codex: true });
+  203 |   }
+  204 | });
+  205 | 
+  206 | test('the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees', async ({
+  207 |   page,
+  208 |   request,
+  209 | }) => {
+  210 |   const loopId = await publishLoop(request, approvalLoop('qa syntax'));
+  211 |   await page.goto(`/app/loops/${loopId}/edit`);
+  212 |   await showLoopPanel(page);
+  213 |   await openNode(page, 'approve');
+  214 |   const prompt = page.locator('[data-field="prompt"] .cm-content');
+  215 |   await prompt.click();
+  216 |   await page.keyboard.press('Control+A');
+  217 |   await page.keyboard.type('Approve {% if x %}');
+  218 |   // The node editor's badge, beside its title, counts the node's issues; its popover names them.
+  219 |   const editor = page.getByRole('dialog', { name: 'Edit wait approve' });
+  220 |   const issues = editor.getByRole('button', { name: /issues? on approve$/ });
+  221 |   await expect(issues).toHaveAccessibleName('1 issue on approve');
+  222 |   await issues.click();
+  223 |   await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+  224 |     'TEMPLATE_INVALID',
+  225 |   );
+  226 |   // Esc closes the popover, not the editor.
+  227 |   await page.keyboard.press('Escape');
+  228 |   await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toBeHidden();
+  229 |   await expect(editor).toBeVisible();
+  230 |   // The page behind the node editor is inert: close it to reach Publish.
+  231 |   await closeNode(page);
+  232 |   await expect(page.getByRole('button', { name: '1 error' })).toBeVisible();
+  233 |   await page.getByRole('button', { name: 'Publish' }).click();
+  234 |   await expect(page.getByText('Publish failed')).toBeVisible();
+  235 |   await expect(page.getByText(/TEMPLATE_INVALID|template at node/).first()).toBeVisible();
+  236 | 
+  237 |   await openNode(page, 'approve');
+  238 |   await prompt.click();
+  239 |   await page.keyboard.press('Control+A');
+  240 |   await page.keyboard.type('Approve?');
+  241 |   await expect(issues).toHaveCount(0);
+  242 | 
+  243 |   // Input schema text that is not JSON blocks publishing until fixed, after the editor closes.
+  244 |   const schema = page.locator('[data-field="inputSchema"] .cm-content');
+  245 |   await schema.click();
+  246 |   await page.keyboard.type('{"type": ');
+  247 |   await expect(issues).toHaveAccessibleName('1 issue on approve');
+  248 |   await issues.click();
+  249 |   await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+  250 |     'FIELD_INPUT_INVALID',
+  251 |   );
+  252 |   await page.keyboard.press('Escape');
+  253 |   await closeNode(page);
+  254 |   await page.getByRole('button', { name: 'Publish' }).click();
+  255 |   await expect(
+  256 |     page.getByText(
+  257 |       'Some fields hold input that is not a valid value yet; complete or discard it first.',
+```

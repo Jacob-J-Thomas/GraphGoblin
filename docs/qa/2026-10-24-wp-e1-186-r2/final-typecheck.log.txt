@@ -1,0 +1,64 @@
+pnpm.cmd : $ turbo run typecheck
+At line:6 char:2
++  & pnpm.cmd $gateName *> $gateLog
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing cec98320b253134c
+@graphgoblin/contracts:typecheck: cache miss, executing 4fe82fd78eb9b7a8
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:typecheck: cache miss, executing 5d05f18473538a58
+@graphgoblin/domain:build: cache miss, executing 218a82cb799f5dea
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 449c6fd4a6d1aabc
+@graphgoblin/engine:typecheck: cache miss, executing dbb2cb0f35d5254b
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:build: cache miss, executing a3a2ccf2f00cd5fc
+@graphgoblin/adapter-jev:build: cache miss, executing c786856bf4dce0e2
+@graphgoblin/infrastructure:typecheck: cache miss, executing 1d3a9ed698d7f6e4
+@graphgoblin/adapter-jev:typecheck: cache miss, executing d701963605310656
+@graphgoblin/infrastructure:build: cache miss, executing f08ffa3612d37d14
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 343154363cc97464
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 3604d7cd4c8d9abb
+@graphgoblin/api:typecheck: cache miss, executing 8777fc37ae72c433
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:typecheck: cache miss, executing b49b269edb919d7f
+@graphgoblin/api-client:build: cache miss, executing 21c66bf3ce000a4a
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: cache miss, executing 8a8f8b9ed41b411e
+@graphgoblin/mcp:build: cache miss, executing bcd6f09762b16aff
+@graphgoblin/mcp:typecheck: cache miss, executing 4d8e510af4897006
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing eaa1d6f4f80fc2f3
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    4m7.876s 
+
+EXIT_CODE=0

@@ -1,0 +1,75 @@
+// Run from the worktree root with Node 22. Arguments: disposable root, phase.
+// Copy this file to <disposable root>/run-checks.mjs before execution.
+import {spawn,execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync,existsSync,copyFileSync,mkdirSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+const root=process.cwd(), temp=resolve(process.argv[2]), phase=process.argv[3]??'gates';
+const evidence=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+if(!/gg-qa-f1-/.test(temp)) throw Error('Disposable root required');
+mkdirSync(join(temp,'tests'),{recursive:true});
+const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+if(revision!=='c2a2b6632c0996383abe491268baf871aec448dd')throw Error('HEAD differs from the QA target');
+const scopePath=join(temp,'port-scope-'+phase+'.cjs');
+copyFileSync(join(evidence,'port-scope.cjs.txt'),scopePath);
+const clean = text => text.replace(/\x1b\[[0-9;]*m/g,'').split(root).join('<worktree>').split(root.replaceAll('\\','/')).join('<worktree>').split(temp).join('<temp>').split(temp.replaceAll('\\','/')).join('<temp>').replace(/[A-Za-z]:[\\/]*Users[\\/]*[^\s"'<>]+/g,'<user-path>').replace(/gg_[A-Za-z0-9_-]{25,}/g,'<redacted-key>');
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_') && !['JEV_API_KEY','NODE_OPTIONS'].includes(k)));
+Object.assign(env,{LIVE:'0',TEMP:join(temp,'tests'),TMP:join(temp,'tests'),TMPDIR:join(temp,'tests'),GG_E2E_BROWSER_CHANNEL:'msedge',NODE_OPTIONS:`--require="${scopePath.replaceAll('\\','/')}"`,QA_PORT_LOG:join(temp,'ports.jsonl'),NO_COLOR:'1',CI:''});
+const summary=existsSync(join(evidence,'checks-results.json'))?JSON.parse(readFileSync(join(evidence,'checks-results.json'),'utf8')):[];
+async function run(name,command) {
+  const start=Date.now(); let output='';
+  const child=spawn('powershell.exe',['-NoProfile','-Command',`& pnpm.cmd ${command}; exit $LASTEXITCODE`],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+  writeFileSync(join(temp,name+'-process.json'),JSON.stringify({runner:process.pid,child:child.pid,at:new Date().toISOString()}));
+  for(const stream of [child.stdout,child.stderr]) stream.on('data',b=>output+=b.toString());
+  const code=await new Promise(r=>child.on('exit',r));
+  writeFileSync(join(evidence,name+'.log.txt'),clean(`Command: pnpm.cmd ${command}\nNode: ${process.version}\nRevision: c2a2b6632c0996383abe491268baf871aec448dd\nExit: ${code}\nElapsed ms: ${Date.now()-start}\n\n${output}`));
+  const current=existsSync(join(evidence,'checks-results.json'))?JSON.parse(readFileSync(join(evidence,'checks-results.json'),'utf8')):[];
+  current.push({name,command,code,ms:Date.now()-start});
+  writeFileSync(join(evidence,'checks-results.json'),JSON.stringify(current,null,2));
+  console.log(name+': exit '+code+' ('+Math.round((Date.now()-start)/1000)+'s)');
+  if(name.endsWith('-coverage')) {
+    const pkg=name.replace('-coverage','');
+    const base=pkg==='api'||pkg==='web'?'apps':'packages';
+    const file=join(root,base,pkg,'coverage/coverage-summary.json');
+    if(existsSync(file)) writeFileSync(join(evidence,name+'.json'),JSON.stringify({revision:'c2a2b6632c0996383abe491268baf871aec448dd',totals:JSON.parse(readFileSync(file,'utf8')).total},null,2));
+  }
+}
+const coverage='--maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary';
+const exclude="-t '^(?![\\s\\S]*(?:probes the actual installed|classifies a real installed signed-out))'";
+if(phase==='gates') {
+  await run('build','build');
+  for(const [name,cmd] of [['typecheck','typecheck --concurrency=2'],['lint','lint --concurrency=2'],['format','format:check'],['docs','check:docs'],['tokens','check:tokens'],['layers','check:layers'],['deps','check:deps'],['licenses','check:licenses']]) await run(name,cmd);
+  for(const name of ['domain','adapter-codex','infrastructure','web']) await run(name+'-coverage',`--filter @graphgoblin/${name} test:coverage ${name==='web'?coverage.replace('--maxWorkers 1','--maxWorkers 4'):coverage} ${name==='infrastructure'||name==='adapter-codex'?exclude:''}`);
+}
+if(phase==='api') {
+  await run('api-coverage',`--filter @graphgoblin/api test:coverage ${coverage}`);
+  await run('api-readiness-alone','--filter @graphgoblin/api exec vitest run src/model-readiness.test.ts src/readiness-evidence.test.ts src/nested-readiness.test.ts --maxWorkers 1');
+}
+if(phase==='api-triage') {
+  for(const file of ['main','retired-event-startup','subloop-restart'])await run('api-'+file+'-alone',`--filter @graphgoblin/api exec vitest run src/${file}.test.ts --maxWorkers 1`);
+}
+if(phase==='api-timeout-triage')await run('api-main-timeout-alone','--filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers 1');
+if(phase==='api-recheck'){
+  await run('api-coverage-corrected',`--filter @graphgoblin/api test:coverage ${coverage}`);
+  writeFileSync(join(evidence,'api-coverage-corrected.json'),JSON.stringify({revision,totals:JSON.parse(readFileSync('apps/api/coverage/coverage-summary.json','utf8')).total},null,2));
+}
+if(phase==='web-recheck'){
+  const report=join(temp,'web-unfiltered.json').replaceAll('\\','/');
+  await run('web-coverage-unfiltered',`--filter @graphgoblin/web test:coverage --maxWorkers 4 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary --reporter=default --reporter=json --outputFile='${report}'`);
+  writeFileSync(join(evidence,'web-coverage-unfiltered.json'),JSON.stringify({revision,totals:JSON.parse(readFileSync('apps/web/coverage/coverage-summary.json','utf8')).total},null,2));
+  const results=JSON.parse(readFileSync(report,'utf8'));
+  const previous=/^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$/;
+  const filtered=results.testResults.flatMap(file=>file.assertionResults.filter(test=>!previous.test(test.fullName)).map(test=>({file:file.name.replace(root,'<worktree>'),name:test.fullName,status:test.status})));
+  writeFileSync(join(evidence,'web-filter-correction.json'),JSON.stringify({reason:'The initial installed-CLI exclusion regex unintentionally filtered multiline web test names. Web needs no such exclusion.',filteredCases:filtered},null,2));
+}
+if(phase==='web-triage'){
+  for(const file of ['DecisionAuthoring','NodeEditorDialog','EditorPage'])await run('web-'+file+'-alone',`--filter @graphgoblin/web exec vitest run src/editor/${file}.test.tsx --maxWorkers 1`);
+}
+if(phase==='edge') {
+  await run('edge','--filter @graphgoblin/web test:e2e readiness claude-harness model-picker');
+  await run('edge-claude-alone','--filter @graphgoblin/web test:e2e claude-harness');
+  await run('edge-picker-alone','--filter @graphgoblin/web test:e2e model-picker');
+}
+if(phase==='infra-triage') {
+  for(const [name,file] of [['adversarial','adversarial'],['scripts','process/scripts'],['claude-process','claude/process'],['claude-readiness','claude/readiness'],['fs','fs/fs']])
+    await run('infra-'+name+'-alone',`--filter @graphgoblin/infrastructure exec vitest run src/${file}.test.ts --maxWorkers 1 ${exclude}`);
+}

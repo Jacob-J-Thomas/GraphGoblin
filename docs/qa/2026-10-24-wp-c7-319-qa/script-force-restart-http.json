@@ -1,0 +1,228 @@
+[
+  {
+    "at": "2026-10-24T23:05:27.010Z",
+    "path": "/runs/01M5R2JBJDFZFQMY6R77WSCJSQ",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+      "ownerId": "local",
+      "loopId": "01M5R2JBGK8WYV4BZJ83PNFEY0",
+      "versionId": "01M5R2JBGK8WYV4BZJ83PNFEY1",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Unconfirmed native cleanup",
+        "label": "Unconfirmed native cleanup v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2JBJDFZFQMY6R77WSCJSR",
+      "status": "failed",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "failure": {
+        "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+        "message": "Script process tree termination was not confirmed; stop the process before restarting",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "interruptedByStop": true
+        }
+      },
+      "createdAt": "2026-10-24T23:05:09.453Z",
+      "startedAt": "2026-10-24T23:05:09.483Z",
+      "finishedAt": "2026-10-24T23:05:12.902Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:05:27.032Z",
+    "path": "/runs/01M5R2JBJDFZFQMY6R77WSCJSQ/events",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 1,
+          "ts": "2026-10-24T23:05:09.453Z",
+          "type": "run.queued",
+          "versionId": "01M5R2JBGK8WYV4BZJ83PNFEY1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Unconfirmed native cleanup",
+            "label": "Unconfirmed native cleanup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+              "loopId": "01M5R2JBGK8WYV4BZJ83PNFEY0",
+              "versionId": "01M5R2JBGK8WYV4BZJ83PNFEY1",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5R2JBJDFZFQMY6R77WSCJSR",
+              "source": "manual.api",
+              "caller": {
+                "kind": "api-key",
+                "id": "01M5R2HZGDB3XJ524JM5Y47SGX"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-24T23:05:09.453Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 2,
+          "ts": "2026-10-24T23:05:09.488Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 3,
+          "ts": "2026-10-24T23:05:09.502Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 4,
+          "ts": "2026-10-24T23:05:09.513Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T23:05:09.510Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T23:05:09.510Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 5,
+          "ts": "2026-10-24T23:05:09.530Z",
+          "type": "node.started",
+          "nodeId": "hold",
+          "kind": "script",
+          "attempt": 1,
+          "configHash": "fe3f45787f740eb5"
+        },
+        {
+          "runId": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+          "seq": 6,
+          "ts": "2026-10-24T23:05:12.898Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+            "message": "Script process tree termination was not confirmed; stop the process before restarting",
+            "nodeId": "hold",
+            "resumable": false,
+            "details": {
+              "interruptedByStop": true
+            }
+          }
+        }
+      ],
+      "nextAfter": 6,
+      "hasMore": false
+    }
+  },
+  {
+    "at": "2026-10-24T23:05:27.052Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:05:27.049Z",
+      "choiceAt": "2026-10-24T23:05:27.849Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "6892e1ac-aad3-481b-ae76-673349bc924e:draining"
+    }
+  }
+]

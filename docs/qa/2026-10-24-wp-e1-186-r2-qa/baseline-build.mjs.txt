@@ -1,0 +1,38 @@
+import {readdir,readFile,writeFile,mkdir,cp} from 'node:fs/promises';
+import {resolve,join,dirname} from 'node:path';
+import ts from '../../node_modules/typescript/lib/typescript.js';
+import {build,loadConfigFromFile} from '../../apps/web/node_modules/vite/dist/node/index.js';
+const root=resolve('.tmp/qa186/baseline'), head=process.cwd();
+async function files(dir){const entries=await readdir(dir,{withFileTypes:true});return (await Promise.all(entries.map(e=>e.isDirectory()?files(join(dir,e.name)):[join(dir,e.name)]))).flat();}
+let count=0;
+for(const group of ['packages','apps'])for(const folder of await readdir(join(root,group))){
+ const pkg=join(root,group,folder);let list;try{list=await files(join(pkg,'src'));}catch{continue;}
+ for(const file of list){if(!file.endsWith('.ts')||file.endsWith('.test.ts')||file.endsWith('.d.ts'))continue;
+ const dest=file.replace(join(pkg,'src'),join(pkg,'dist')).replace(/\.ts$/,'.js');await mkdir(dirname(dest),{recursive:true});
+ const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,verbatimModuleSyntax:true}}).outputText;
+ await writeFile(dest,code);count++;
+ }
+}
+await cp(join(root,'apps/api/templates'),join(root,'apps/api/dist/catalog'),{recursive:true});
+const config=(await loadConfigFromFile({command:'build',mode:'production'},resolve('apps/web/vite.config.ts'))).config;
+const pkg=JSON.parse(await readFile('apps/web/package.json','utf8'));
+const aliases=[];
+for(const name of Object.keys(pkg.dependencies)){
+ if(name.startsWith('@graphgoblin/')){
+  const folder=name.slice('@graphgoblin/'.length);
+  const pj=JSON.parse(await readFile(join(root,folder==='api'?'apps':'packages',folder,'package.json'),'utf8'));
+  for(const [sub,entry] of Object.entries(pj.exports??{})){
+   const src=entry.development??entry.import;
+   aliases.push({find:sub==='.'?name:name+sub.slice(1),replacement:join(root,folder==='api'?'apps':'packages',folder,src)});
+  }
+ }else aliases.push({find:name,replacement:join(head,'apps/web/node_modules',name)});
+}
+for(const folder of ['domain','api-client','contracts']){
+ const pp=JSON.parse(await readFile(join(root,'packages',folder,'package.json'),'utf8'));
+ for(const name of Object.keys(pp.dependencies??{}))if(!name.startsWith('@graphgoblin/')&&!aliases.some(a=>a.find===name))aliases.push({find:name,replacement:join(head,'packages',folder,'node_modules',name)});
+}
+await build({...config,configFile:false,root:join(root,'apps/web'),resolve:{alias:aliases.sort((a,b)=>b.find.length-a.find.length)},build:{...config.build,outDir:'dist',emptyOutDir:false}});
+console.log(JSON.stringify({baseline:'498da565d445113116495301691e5e284d0e3d42',transpiled:count,dependencyManifests:'unchanged against head; existing installed dependencies resolved without new links'}));
+
+
+

@@ -1,0 +1,766 @@
+{
+  "name": "11b-delivery-cleanup",
+  "startedAt": "2026-10-24T08:25:54.468Z",
+  "endedAt": "2026-10-24T08:26:37.429Z",
+  "checks": [
+    {
+      "name": "in-flight delivery retains API and lock",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "delivery holds drain until bounded outcome",
+      "pass": true,
+      "actual": "awaiting-choice",
+      "expected": "awaiting-choice"
+    },
+    {
+      "name": "no second delivery started during drain",
+      "pass": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "drain records delivery outcome and exits",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "no retry launched while stopping",
+      "pass": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "same delivery key after restart",
+      "pass": true,
+      "actual": "01M5PG8TVKDXG9DQ6A5M4373GB",
+      "expected": "01M5PG8TVKDXG9DQ6A5M4373GB"
+    },
+    {
+      "name": "captured journal records delivery.finished delivered after restart",
+      "actual": "delivered",
+      "expected": "delivered",
+      "pass": true
+    },
+    {
+      "name": "captured journal records two attempts and exactly one execution finish",
+      "actual": [
+        2,
+        1
+      ],
+      "expected": [
+        2,
+        1
+      ],
+      "pass": true
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:26:00.941Z",
+      "kind": "key-cli",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdout": "Created API key \"Independent QA\" (id 01M5PG8JEZPKTJ2M1XKPQ0G0K2, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  [disposable-key]\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-24T08:26:08.438Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:26:08.438Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-delivery-hEWDog",
+      "port": 5860,
+      "pid": 53452
+    },
+    {
+      "at": "2026-10-24T08:26:08.509Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA delivery cleanup",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {
+                "returns": "{\"qa\":224}",
+                "destinations": [
+                  {
+                    "kind": "webhook",
+                    "url": "http://127.0.0.1:5861/return"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PG8TQF7CJAP1MXHH0Y853A",
+          "ownerId": "local",
+          "name": "QA delivery cleanup",
+          "draftVersionId": "01M5PG8TQF7CJAP1MXHH0Y853B",
+          "createdAt": "2026-10-24T08:26:08.495Z",
+          "updatedAt": "2026-10-24T08:26:08.495Z"
+        },
+        "draft": {
+          "id": "01M5PG8TQF7CJAP1MXHH0Y853B",
+          "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA delivery cleanup",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "{\"qa\":224}",
+                  "destinations": [
+                    {
+                      "kind": "webhook",
+                      "url": "http://127.0.0.1:5861/return"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:26:08.495Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:26:08.530Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PG8TQF7CJAP1MXHH0Y853A/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PG8TQF7CJAP1MXHH0Y853B",
+          "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA delivery cleanup",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "{\"qa\":224}",
+                  "destinations": [
+                    {
+                      "kind": "webhook",
+                      "url": "http://127.0.0.1:5861/return"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:26:08.495Z",
+          "publishedAt": "2026-10-24T08:26:08.520Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:26:08.562Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PG8TQF7CJAP1MXHH0Y853A/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "ownerId": "local",
+          "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+          "versionId": "01M5PG8TQF7CJAP1MXHH0Y853B",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA delivery cleanup",
+            "label": "QA delivery cleanup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PG8TRVR7MMXAH2F4V7YCBX",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:26:08.539Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:26:08.822Z",
+      "kind": "condition",
+      "label": "delivery in flight"
+    },
+    {
+      "at": "2026-10-24T08:26:08.839Z",
+      "kind": "condition",
+      "label": "01M5PG8TRVR7MMXAH2F4V7YCBW succeeded"
+    },
+    {
+      "at": "2026-10-24T08:26:08.849Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:26:08.844Z",
+        "choiceAt": "2026-10-24T08:26:09.044Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:26:09.764Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "awaiting-choice",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:26:08.844Z",
+        "choiceAt": "2026-10-24T08:26:09.044Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:26:09.891Z",
+      "kind": "delivery-before-restart",
+      "receipts": [
+        {
+          "at": "2026-10-24T08:26:08.727Z",
+          "key": "01M5PG8TVKDXG9DQ6A5M4373GB",
+          "body": {
+            "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+            "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+            "outcome": "success",
+            "result": {
+              "qa": 224
+            }
+          }
+        },
+        {
+          "at": "2026-10-24T08:26:16.889Z",
+          "key": "01M5PG8TVKDXG9DQ6A5M4373GB",
+          "body": {
+            "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+            "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+            "outcome": "success",
+            "result": {
+              "qa": 224
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-10-24T08:26:16.913Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:26:16.913Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-delivery-hEWDog",
+      "port": 5860,
+      "pid": 37160
+    },
+    {
+      "at": "2026-10-24T08:26:16.913Z",
+      "kind": "condition",
+      "label": "delivery recovered"
+    },
+    {
+      "at": "2026-10-24T08:26:37.184Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:26:37.182Z",
+        "choiceAt": "2026-10-24T08:26:37.382Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    }
+  ],
+  "lastCapturedEventPage": {
+    "at": "2026-10-24T08:26:37.007Z",
+    "kind": "http",
+    "method": "GET",
+    "path": "/runs/01M5PG8TRVR7MMXAH2F4V7YCBW/events?limit=1000",
+    "status": 200,
+    "data": {
+      "items": [
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 1,
+          "ts": "2026-10-24T08:26:08.539Z",
+          "type": "run.queued",
+          "versionId": "01M5PG8TQF7CJAP1MXHH0Y853B",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA delivery cleanup",
+            "label": "QA delivery cleanup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+              "loopId": "01M5PG8TQF7CJAP1MXHH0Y853A",
+              "versionId": "01M5PG8TQF7CJAP1MXHH0Y853B",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5PG8TRVR7MMXAH2F4V7YCBX",
+              "source": "manual.api",
+              "caller": {
+                "kind": "api-key",
+                "id": "01M5PG8JEZPKTJ2M1XKPQ0G0K2"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-24T08:26:08.539Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 2,
+          "ts": "2026-10-24T08:26:08.573Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 3,
+          "ts": "2026-10-24T08:26:08.586Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 4,
+          "ts": "2026-10-24T08:26:08.597Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T08:26:08.594Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T08:26:08.594Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 3
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 5,
+          "ts": "2026-10-24T08:26:08.616Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "4322eeab82aec00a"
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 6,
+          "ts": "2026-10-24T08:26:08.627Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 7,
+          "ts": "2026-10-24T08:26:08.627Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 5
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 8,
+          "ts": "2026-10-24T08:26:08.627Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": {
+            "qa": 224
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 9,
+          "ts": "2026-10-24T08:26:08.627Z",
+          "type": "delivery.queued",
+          "delivery": {
+            "id": "01M5PG8TVKDXG9DQ6A5M4373GB",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:5861/return"
+            },
+            "status": "pending",
+            "attempts": 0,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "not_sent",
+            "effectMayHaveHappened": false,
+            "acknowledgementUncertain": false
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 10,
+          "ts": "2026-10-24T08:26:08.666Z",
+          "type": "delivery.attempted",
+          "delivery": {
+            "id": "01M5PG8TVKDXG9DQ6A5M4373GB",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:5861/return"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false,
+            "nextAttemptAt": "2026-10-24T08:26:20.663Z"
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 11,
+          "ts": "2026-10-24T08:26:09.775Z",
+          "type": "delivery.attempt_finished",
+          "delivery": {
+            "id": "01M5PG8TVKDXG9DQ6A5M4373GB",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:5861/return"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "nextAttemptAt": "2026-10-24T08:26:11.772Z",
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 12,
+          "ts": "2026-10-24T08:26:16.109Z",
+          "type": "delivery.attempted",
+          "delivery": {
+            "id": "01M5PG8TVKDXG9DQ6A5M4373GB",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:5861/return"
+            },
+            "status": "pending",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "nextAttemptAt": "2026-10-24T08:26:31.104Z",
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        },
+        {
+          "runId": "01M5PG8TRVR7MMXAH2F4V7YCBW",
+          "seq": 13,
+          "ts": "2026-10-24T08:26:16.917Z",
+          "type": "delivery.finished",
+          "delivery": {
+            "id": "01M5PG8TVKDXG9DQ6A5M4373GB",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:5861/return"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        }
+      ],
+      "nextAfter": 13,
+      "hasMore": false
+    }
+  },
+  "error": "Error: Timed out: delivery succeeded recorded",
+  "captureNote": "Harness waited for a nonexistent delivery.succeeded event. The actual delivery.finished event and delivered status were already captured; evaluations above read that retained page without another product run.",
+  "sourceCapture": {
+    "file": "11b-delivery-cleanup.json",
+    "bytes": 2459063,
+    "sha256": "9f21a91a6df0f02343c1b18678d54c5d7c9d9d6c3ab286467478ee9600ed3bb9",
+    "omittedBecauseOver1000000": true
+  }
+}

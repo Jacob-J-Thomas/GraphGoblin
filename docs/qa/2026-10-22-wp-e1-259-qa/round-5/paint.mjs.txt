@@ -1,0 +1,10 @@
+// Paint-only follow-up at ordinary viewport heights, using full-resolution compositor frames.
+// The original tall-viewport Trace Screenshot data are retained, including their thumbnail limit.
+import {readFile} from 'node:fs/promises';import {resolve} from 'node:path';
+import {dir,save,assert} from './gg-qa-e1-r5-support.mjs';import {launch,go,timeline,variables,frame,prepareClick,trace} from './gg-qa-e1-r5-browser-support.mjs';
+const fixtures=JSON.parse(await readFile(resolve(dir,'fixtures.json'),'utf8')),s=await launch(),{browser,page,cdp}=s,results=[];
+for(const width of [1440,390])for(const kind of ['wait','seed']){
+ await page.setViewportSize({width,height:width===390?844:900});await go(page,fixtures.runs[width].wide);await timeline(page,/run\.queued/).click();await frame(page);const click=await prepareClick(page,cdp,timeline(page,kind==='wait'?/run\.waiting ask\b/:/node\.finished seed\b/));
+ const probe=await trace(page,cdp,'paint-'+kind+'-'+width,click,true);const expected=(await readFile(resolve(dir,'wide-api-before.json.txt'),'utf8')).slice(0,4096)+'…';assert(await variables(page).textContent()===expected,'paint probe prefix differs');results.push({width,kind,probe});await save('paint-results.json',results);console.log(JSON.stringify({width,kind,wallMs:probe.wallMs,firstSerializer:probe.firstSerializerSampleAt,pending:probe.pendingDomAt,ready:probe.settledDomAt,paints:probe.paintEvents.map(x=>x.at),frames:probe.frames}));
+}
+await browser.close();

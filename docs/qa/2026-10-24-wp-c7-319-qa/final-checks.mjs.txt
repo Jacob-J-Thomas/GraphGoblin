@@ -1,0 +1,11 @@
+process.env.QA_RESULTS='final-checks-results.json';
+const H=await import('data:text/javascript;base64,'+Buffer.from(await (await import('node:fs/promises')).readFile('docs/qa/2026-10-24-wp-c7-319-qa/helpers.mjs.txt','utf8')).toString('base64'));
+const {boot,check,ok,gateways}=H;
+try{
+ const g=await boot('default-grace',{port:6077,env:{GG_SHUTDOWN_GRACE_MS:undefined}});
+ const before=(await g.call('/system/shutdown')).body;
+ await check('default grace reports five minutes on the real built gateway',async()=>{ok(before.graceMs===300000,JSON.stringify(before));return before;});
+ await check('shutdown read and write reject unauthenticated requests without state change',async()=>{const read=await g.call('/system/shutdown','GET',undefined,undefined,'');const write=await g.call('/system/shutdown','POST',{action:'force'},undefined,'');ok(read.status===401&&write.status===401);ok((await g.call('/system/shutdown')).body.phase==='running');return{read,write};});
+ await g.close();const n=await boot('same-phase-incarnation',{directory:g.dir,port:6077});
+ await check('old incarnation token rejected even when both gateway phases are running',async()=>{const state=(await n.call('/system/shutdown')).body;ok(state.phase==='running'&&before.phase==='running');ok(state.controlToken!==before.controlToken);const response=await n.call('/system/shutdown','POST',{action:'force'},before.controlToken);ok(response.status===409&&response.body.phase==='running');ok(!n.closed);return{before,state,response};});await n.close();
+}finally{for(const g of gateways)try{await g.close();}catch{}}

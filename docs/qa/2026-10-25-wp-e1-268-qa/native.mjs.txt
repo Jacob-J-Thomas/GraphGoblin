@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import { fork, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const dep=name=>import(import.meta.resolve(name,pathToFileURL(join(root,'apps/api/package.json'))));
+const sanitize=x=>x.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+if(process.env.QA_ROLE){
+ const {createContainer,loadConfig,buildApp}=await dep('@graphgoblin/api');
+ const {RunManager}=await dep('@graphgoblin/engine');
+ const {FakeHarness}=await dep('@graphgoblin/engine/testing');
+ const harness=new FakeHarness();harness.script([{items:Array.from({length:600},(_,i)=>({id:String(i),type:'message',summary:'native qa '+i})),finalText:'OK'}]);
+ const container=await createContainer(loadConfig(process.env),{harnesses:{codex:harness},startTimers:false});
+ await container.start();container.manager.stop();await container.manager.waitForIdle();
+ const ports={...container.ports},store=ports.events;
+ let terminal=false;
+ ports.events={
+  subscribe:(...a)=>store.subscribe(...a),
+  append:async(...a)=>{const es=await store.append(...a);if(es.some(e=>e.type==='run.finished'))terminal=true;return es;},
+  read:async(id,after,limit)=>{
+   if(process.env.QA_ROLE==='crash'&&terminal&&after===256){
+    await ports.runs.clearFinalized(id);
+    const history=await store.read(id);
+    const record={pid:process.pid,runId:id,after,limit,terminalSeq:history.find(e=>e.type==='run.finished').seq,eventCount:history.length,deliveries:history.filter(e=>e.type==='return.delivered').length,eventsSha256:createHash('sha256').update(JSON.stringify(history)).digest('hex')};
+    await writeFile(join(out,'native-before-events.json'),JSON.stringify(history,null,2)+'\n');
+    await writeFile(join(out,'native-crash-point.json'),JSON.stringify(record,null,2)+'\n');
+    process.send({kind:'crash-point',record});
+    process.exit(77);
+   }
+   return store.read(id,after,limit);
+  }
+ };
+ const manager=new RunManager(ports,container.settings);await manager.start();
+ const app=await buildApp({...container,manager},{logger:false});
+ await app.listen({host:'127.0.0.1',port:6191});
+ process.on('message',async msg=>{
+  if(msg.kind==='capture'){
+   await manager.waitForIdle();const id=msg.runId;
+   const history=await store.read(id),run=await manager.getRun(id),thread=await manager.getThread(id),pending=await ports.runs.listRecoveryCandidates();
+   await writeFile(join(out,'native-after-events.json'),JSON.stringify(history,null,2)+'\n');
+   process.send({kind:'capture',run,thread,pending,historyCount:history.length,deliveries:history.filter(e=>e.type==='return.delivered').length,prefixSha256:createHash('sha256').update(JSON.stringify(history.slice(0,msg.count))).digest('hex')});
+  }
+  if(msg.kind==='close'){manager.stop();await manager.waitForIdle();await app.close();await container.stop();process.send({kind:'closed'});process.disconnect();}
+ });
+ process.on('disconnect',async()=>{manager.stop();await manager.waitForIdle();await app.close();await container.stop();}); process.send({kind:'ready',pid:process.pid});
+}else{
+ const dir=await mkdtemp(join(tmpdir(),'gg-qa-e1-268-native-'));
+ const env={...process.env,GG_DATA_DIR:dir,GG_REQUIRE_API_KEY:'true',GG_SWAGGER_UI:'false',GG_MASTER_KEY:Buffer.alloc(32,19).toString('base64')};
+ delete env.NODE_OPTIONS;
+ const cli=spawn(process.execPath,['apps/api/dist/main.js','--create-api-key','independent-qa'],{cwd:root,env,windowsHide:true});
+ let text='',errors='';cli.stdout.on('data',x=>text+=x);cli.stderr.on('data',x=>errors+=x);const [keyCode]=await once(cli,'close');assert.equal(keyCode,0,errors);
+ const token=/^  (\S+)$/m.exec(text)?.[1];assert(token,'CLI did not print a token');
+ await writeFile(join(out,'native-key.log.txt'),sanitize('Binary --create-api-key independent-qa\nEXIT='+keyCode+'\n'+text.replaceAll(token,'<disposable-token-redacted>')+errors));
+ async function start(role){const child=fork(process.argv[1],[],{cwd:root,env:{...env,QA_ROLE:role},execArgv:['--experimental-import-meta-resolve'],windowsHide:true,silent:true});let log='';child.stdout.on('data',x=>log+=x);child.stderr.on('data',x=>log+=x);const messages=[],waiters=[];child.on('message',m=>{messages.push(m);for(const w of [...waiters])if(w.kind===m.kind){waiters.splice(waiters.indexOf(w),1);w.resolve(m);}});const receive=kind=>{const old=messages.find(m=>m.kind===kind);if(old)return Promise.resolve(old);return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('native message timeout '+kind)),30000);waiters.push({kind,resolve:m=>{clearTimeout(timeout);resolve(m);}});});};const closed=once(child,'close').then(async([code,signal])=>{await writeFile(join(out,'native-'+role+'.log.txt'),sanitize(log+'\nEXIT='+code+' SIGNAL='+signal+'\n'));return {code,signal};});await receive('ready');return {child,receive,closed};}
+ const crash=await start('crash');
+ const base='http://127.0.0.1:6191';
+ const unauth=await fetch(base+'/runs');assert.equal(unauth.status,401);
+ const req=async(path,body)=>{const r=await fetch(base+path,{method:body===undefined?'GET':'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(30000)});const value=await r.json();if(!r.ok)throw Error(JSON.stringify({path,status:r.status,value}));return {status:r.status,value};};
+ const {singleNodeLoop}=await dep('@graphgoblin/engine/testing');
+ const def=singleNodeLoop('native crash between finalization pages',{id:'work',kind:'inference',label:'Work',config:{prompt:{template:'native fake qa'},output:{toMessages:'none'}}},{returns:'{"answer":7}',destinations:[{kind:'caller'},{kind:'log'}]});
+ const created=await req('/loops',{definition:def}),id=created.value.loop.id;await req('/loops/'+id+'/publish',{});const admitted=await req('/loops/'+id+'/runs',{});const runId=admitted.value.run.id;
+ const point=(await crash.receive('crash-point')).record,exit=await crash.closed;assert.equal(exit.code,77);assert.equal(point.after,256);assert.equal(point.limit,256);assert.equal(point.deliveries,0);
+ const recovery=await start('recovery');recovery.child.send({kind:'capture',runId,count:point.eventCount});const capture=await recovery.receive('capture');assert.equal(capture.run.status,'succeeded');assert.deepEqual(capture.run.result,{answer:7});assert.equal(capture.deliveries,2);assert.equal(capture.prefixSha256,point.eventsSha256);assert.deepEqual(capture.pending,[]);
+ const publicRun=await req('/runs/'+runId);assert.equal(publicRun.value.status,'succeeded');const publicThread=await req('/runs/'+runId+'/thread');
+ recovery.child.send({kind:'close'});await recovery.receive('closed');const recoveryExit=await recovery.closed;assert.equal(recoveryExit.code,0);
+ const result={status:'pass',mechanism:'New real Node process, injected public EventStore read crashes with process.exit(77) after clearFinalized between page 1 and page 2; new process opens same SQLite store. No process-tree termination.',dataDir:dir,port:6191,unauthStatus:unauth.status,createStatus:created.status,startStatus:admitted.status,crash:point,crashExit:exit,recovered:capture,publicRun:publicRun.value,publicThread:publicThread.value,recoveryExit};
+ await writeFile(join(out,'native-restart.json'),sanitize(JSON.stringify(result,null,2)+'\n'));console.log('NATIVE_RESTART_PASS',capture.historyCount,capture.deliveries);
+}

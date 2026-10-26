@@ -1,0 +1,127 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --cov ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792901466696,"pid":12008,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5680"}
+{"level":30,"time":1792901466697,"pid":12008,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5680,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-GiCX94","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792901466946,"pid":12008,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792901466985,"pid":12008,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":38.91019999999844,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 1 failed | 4 skipped) 210398ms
+   ❯ built API entry and startup failures (6)
+     × releases ownership after a real occupied-port listen failure 60340ms
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 93855ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20446ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/run-json-values.test.ts (9 tests | 1 failed) 46847ms
+   ❯ run result snapshots over file SQLite (9)
+     × preserves object through execution, rejected updates and reopen 21263ms
+ ❯ src/routes/run-event-paging.test.ts (5 tests | 2 failed) 55696ms
+   ❯ run-event page boundaries over file-backed SQLite (5)
+     × returns the unchanged requested page when only its lookahead payload is {} 23334ms
+     × returns the unchanged requested page when only its lookahead payload is {invalid-json 25185ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:183:3
+    181|   };
+    182|
+    183|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    184|     const t = await app({ requireApiKey: true });
+    185|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen 
+failure
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:103:3
+    101|   }, 60_000);
+    102|
+    103|   it('releases ownership after a real occupied-port listen failure', a…
+       |   ^
+    104|     const f = await fixture();
+    105|     await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/run-json-values.test.ts > run result snapshots over file SQLite > preserves object through execution, 
+rejected updates and reopen
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/run-json-values.test.ts:48:17
+     46|
+     47| describe('run result snapshots over file SQLite', () => {
+     48|   it.each(cases)(
+       |                 ^
+     49|     'preserves $name through execution, rejected updates and reopen',
+     50|     async ({ name, returns, value }) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged 
+requested page when only its lookahead payload is {}
+ FAIL  src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged 
+requested page when only its lookahead payload is {invalid-json
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/routes/run-event-paging.test.ts:16:3
+     14|   let headers: Record<string, string>;
+     15|
+     16|   beforeEach(async () => {
+       |   ^
+     17|     dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g2-lookahead-'));
+     18|     t = await createTestApp({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged 
+requested page when only its lookahead payload is {invalid-json
+Error: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-g2-lookahead-kzCmoI\history.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  4 failed | 73 passed | 2 skipped (79)
+      Tests  5 failed | 1386 passed | 11 skipped (1402)
+   Start at  23:10:35
+   Duration  1492.20s (tests 79%, import 19%, transform 2%)
+
+    Isolate  79 workers spawned · ~1.26s startup each (spawn + environment, per file)
+             at least ~48.32s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.5% ( 2379/2491 )
+Branches     : 91.89% ( 1541/1677 )
+Functions    : 93.29% ( 459/492 )
+Lines        : 97.39% ( 2171/2229 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\api
+
+EXIT_CODE=1

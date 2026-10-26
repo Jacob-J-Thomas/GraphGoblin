@@ -1,0 +1,169 @@
+{
+  "runId": "01M5RW3WY56WQBPRSD7NX15YJ6",
+  "checks": [
+    {
+      "name": "thousands of payload-heavy live events stay bounded in Edge",
+      "pass": true,
+      "evidence": {
+        "samples": 8,
+        "last": {
+          "elapsedMs": 10519,
+          "heapUsed": 12433540,
+          "heapTotal": 28295168,
+          "rows": 80,
+          "dom": 400,
+          "count": 88,
+          "retainedUTF16Bytes": 141344,
+          "persistedUTF16Bytes": 141818,
+          "ack": 88
+        }
+      }
+    },
+    {
+      "name": "browsing while executing freezes window but advances acknowledgement",
+      "pass": false,
+      "error": "Error: too few events",
+      "stack": "Error: too few events\n    at until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:16:131)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:34:2\n    at async check (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:17:72)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:33:1"
+    },
+    {
+      "name": "reload during active historical browsing uses acknowledged cursor",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'198' !== '197'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'198' !== '197'\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:44:56\n    at async check (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:17:72)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:42:1"
+    },
+    {
+      "name": "Follow live rejoins executing stream with exact retained suffix",
+      "pass": false,
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Follow live', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-4…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    56 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "stack": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Follow live', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-4…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    56 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2\\.tmp\\qa186\\live.mjs:49:65\n    at check (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2\\.tmp\\qa186\\live.mjs:17:78)\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2\\.tmp\\qa186\\live.mjs:48:7"
+    },
+    {
+      "name": "oversized event retains identity and exact transient payload",
+      "pass": true,
+      "evidence": {
+        "seq": 1093,
+        "exactCharacters": 600000,
+        "marker": {
+          "seq": 1093,
+          "type": "run.woken",
+          "uncached": true,
+          "description": "qa woken by manual"
+        },
+        "cachedBytes": 212978
+      }
+    },
+    {
+      "name": "actual session quota exhaustion remains nonfatal",
+      "pass": true,
+      "evidence": {
+        "quota": {
+          "entries": 52,
+          "name": "QuotaExceededError"
+        },
+        "rows": 80,
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "old cache version discarded and fresh SSE begins at zero",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'384' !== '0'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'384' !== '0'\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:77:9\n    at async check (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:17:72)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/live.mjs:74:1"
+    }
+  ],
+  "samples": [
+    {
+      "elapsedMs": 13,
+      "heapUsed": 8918964,
+      "heapTotal": 12304384,
+      "rows": 0,
+      "dom": 0,
+      "count": null,
+      "persistedUTF16Bytes": 0
+    },
+    {
+      "elapsedMs": 1739,
+      "heapUsed": 10564500,
+      "heapTotal": 16236544,
+      "rows": 13,
+      "dom": 65,
+      "count": 13,
+      "retainedUTF16Bytes": 19904,
+      "persistedUTF16Bytes": 20226,
+      "ack": 13
+    },
+    {
+      "elapsedMs": 3265,
+      "heapUsed": 11148656,
+      "heapTotal": 18333696,
+      "rows": 23,
+      "dom": 115,
+      "count": 23,
+      "retainedUTF16Bytes": 38118,
+      "persistedUTF16Bytes": 38460,
+      "ack": 23
+    },
+    {
+      "elapsedMs": 5115,
+      "heapUsed": 11786324,
+      "heapTotal": 19644416,
+      "rows": 49,
+      "dom": 245,
+      "count": 49,
+      "retainedUTF16Bytes": 78986,
+      "persistedUTF16Bytes": 79380,
+      "ack": 49
+    },
+    {
+      "elapsedMs": 6046,
+      "heapUsed": 12522728,
+      "heapTotal": 20168704,
+      "rows": 64,
+      "dom": 320,
+      "count": 64,
+      "retainedUTF16Bytes": 101940,
+      "persistedUTF16Bytes": 102366,
+      "ack": 64
+    },
+    {
+      "elapsedMs": 7061,
+      "heapUsed": 16554164,
+      "heapTotal": 22003712,
+      "rows": 73,
+      "dom": 365,
+      "count": 73,
+      "retainedUTF16Bytes": 118378,
+      "persistedUTF16Bytes": 118822,
+      "ack": 73
+    },
+    {
+      "elapsedMs": 8028,
+      "heapUsed": 16038424,
+      "heapTotal": 24625152,
+      "rows": 80,
+      "dom": 400,
+      "count": 85,
+      "retainedUTF16Bytes": 138076,
+      "persistedUTF16Bytes": 138544,
+      "ack": 85
+    },
+    {
+      "elapsedMs": 10519,
+      "heapUsed": 12433540,
+      "heapTotal": 28295168,
+      "rows": 80,
+      "dom": 400,
+      "count": 88,
+      "retainedUTF16Bytes": 141344,
+      "persistedUTF16Bytes": 141818,
+      "ack": 88
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:6150/runs/01M5RW3WY56WQBPRSD7NX15YJ6/events?after=0",
+    "http://127.0.0.1:6150/runs/01M5RW3WY56WQBPRSD7NX15YJ6/events?after=198",
+    "http://127.0.0.1:6150/runs/01M5RW3WY56WQBPRSD7NX15YJ6/events?after=0",
+    "http://127.0.0.1:6150/runs/01M5RW3WY56WQBPRSD7NX15YJ6/events?after=384"
+  ],
+  "errors": []
+}

@@ -1,0 +1,21 @@
+{
+  "corrections": [
+    {
+      "initial": "Wait for the last REST event sequence even after terminal event",
+      "evidence": "timeline-diagnosis.json",
+      "actual": "REST appends return.delivered after run.finished; SSE closes at run.finished",
+      "change": "Synchronize at terminal event for completed runs"
+    },
+    {
+      "initial": "Replace vars.change with a single A/B character",
+      "actual": "Original fixture uses 20000 characters",
+      "change": "Restore 20000 A/B characters; expected 2322721 pretty JSON characters"
+    },
+    {
+      "initial": "One 1440 historical Show all click did not stabilize within 15 seconds",
+      "actual": "No component assertion was reached; initial failed result retained",
+      "change": "Use focus plus Enter for the historical keyboard probe; no force-click or retry setting"
+    }
+  ],
+  "scope": "Only previously blocked checks run again, after these explicit probe changes; passed cases are not repeated"
+}

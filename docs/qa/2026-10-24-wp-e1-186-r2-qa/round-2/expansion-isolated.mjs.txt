@@ -1,0 +1,16 @@
+import assert from'node:assert/strict';
+import{readFile,writeFile}from'node:fs/promises';
+import{createHash}from'node:crypto';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const ctl=async(path,b={})=>(await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)})).json();
+const c=await ctl('/connection'),fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8')),all=await ctl('/oracle',{runId:fixture.runId,full:true}),event=all.events.find(e=>e.seq===fixture.oversizedSeq);
+const result={case:'one isolated diagnostic of extra sweep Show-all timeout',initial:'evidence-matrix: oversized exact download and ID-only marker 1440 dark, 30,000ms timeout performing Show all click in background tab',testFile:'.tmp/qa186r2/expansion-isolated.mjs',productionComponent:'apps/web/src/components/ui/BoundedValue.tsx (not changed by requested base-to-head diff)',ownConcurrentTests:0,host:'shared; unrelated host work uncontrolled',started:new Date().toISOString(),pass:false};
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});const watchdog=setTimeout(()=>{void browser.close();},60000);
+try{
+ await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);const page=await context.newPage();page.setDefaultTimeout(30000);await page.bringToFront();await page.goto(c.url+'/app/runs/'+fixture.runId);await page.getByRole('list',{name:'Timeline',exact:true}).waitFor();
+ await page.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill(String(event.seq));await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event '+event.seq,exact:true}).waitFor();await page.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true}).click();
+ const started=Date.now();await page.getByRole('button',{name:'Show all of Exact recorded event',exact:true}).click();result.expansionMs=Date.now()-started;
+ const shown=JSON.parse(await page.getByTestId('recorded-event-json').innerText());assert.deepEqual(shown,event);result.sha256=createHash('sha256').update(JSON.stringify(shown)).digest('hex');result.valueCharacters=shown.patch[0].value.length;result.pass=true;await page.screenshot({path:out+'/expansion-isolated.png'});
+}catch(e){result.error=String(e).slice(0,3500);}finally{clearTimeout(watchdog);await context.close().catch(()=>{});await browser.close().catch(()=>{});}
+result.finished=new Date().toISOString();await writeFile(out+'/expansion-isolated-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

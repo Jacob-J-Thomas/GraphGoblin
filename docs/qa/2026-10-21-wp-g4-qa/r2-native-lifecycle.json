@@ -1,0 +1,75 @@
+{
+  "head": "5d2783359dbcb95aa719146416f02dc303cbd1ed",
+  "node": "v22.14.0",
+  "port": 5641,
+  "stages": [
+    {
+      "action": "start-built-main",
+      "pid": 46248,
+      "health": "ok",
+      "log": ""
+    },
+    {
+      "transport": "Reviewed PowerShell text via EncodedCommand; execution policy unchanged",
+      "command": "-NoProfile -File <worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1",
+      "exit": 0,
+      "signal": null,
+      "stdout": "gate-loop.json -> 01M5GJ0ERENZWZMAN281SK9GE6\r\nsuppressed-loop.json -> 01M5GJ0EXKVAE33WW8NZKKYV53\r\nquiet-loop.json -> 01M5GJ0F1TPPMJ0DZXE08AKHHF\r\nhistory-loop.json -> 01M5GJ0F7K5MKYCBY27X7QDJEN\r\n",
+      "stderr": "[PowerShell progress records omitted]"
+    },
+    {
+      "command": "<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-served-checks.cjs before",
+      "exit": 0,
+      "signal": null,
+      "stdout": "PASS gate-editor\nPASS suppressed-editor\nPASS quiet-editor\nPASS gate-run\nPASS suppressed-run\nPASS quiet-run\nPASS history-editor\nPASS history-before\n",
+      "stderr": ""
+    },
+    {
+      "action": "stop-owned-api",
+      "pid": 46248,
+      "method": "Fixture-owned process termination; no graceful-signal claim",
+      "healthRefused": true
+    },
+    {
+      "transport": "Reviewed PowerShell text via EncodedCommand; execution policy unchanged",
+      "command": "-NoProfile -File <worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-amend.ps1",
+      "exit": 0,
+      "signal": null,
+      "stdout": "amended run 01M5GJ12HHGEF4G1AMV3K6P0W9: 1 run.finished event(s), 1 run row(s)\n",
+      "stderr": "[PowerShell progress records omitted]"
+    },
+    {
+      "action": "start-built-main",
+      "pid": 41600,
+      "health": "ok",
+      "log": ""
+    },
+    {
+      "command": "<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-served-checks.cjs after",
+      "exit": 0,
+      "signal": null,
+      "stdout": "PASS history-amended\nPASS quiet-restart\nPASS suppressed-restart\nPASS missing-definition\n",
+      "stderr": ""
+    },
+    {
+      "action": "stop-owned-api",
+      "pid": 41600,
+      "method": "Fixture-owned process termination; no graceful-signal claim",
+      "healthRefused": true
+    }
+  ],
+  "store": "%TEMP%\\gg-qa-129-r2-native-EI3s8w",
+  "key": "Created by built binary; token suppressed and never saved",
+  "verdict": "PASS",
+  "cleanup": {
+    "path": "%TEMP%\\gg-qa-129-r2-native-EI3s8w",
+    "items": [
+      "graphgoblin.db",
+      "graphgoblin.db-shm",
+      "graphgoblin.db-wal",
+      "graphgoblin.lock",
+      "master.key"
+    ],
+    "absent": true
+  }
+}

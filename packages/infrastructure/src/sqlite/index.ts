@@ -7,6 +7,7 @@
 export * from './db.js';
 export * from './schema.js';
 export * from './runs.js';
+export * from './delivery-runs.js';
 export * from './events.js';
 export * from './loops.js';
 export * from './sessions.js';

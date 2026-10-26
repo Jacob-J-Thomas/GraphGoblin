@@ -1,0 +1,4110 @@
+[
+  {
+    "name": "prepare-current-shape-source",
+    "status": "PASS",
+    "elapsedMs": 707,
+    "data": {
+      "preDraft": {
+        "loop": {
+          "id": "01M5PYKER6KVDN3CRQT5YBN8K3",
+          "ownerId": "local",
+          "name": "Pre243 draft",
+          "draftVersionId": "01M5PYKER6KVDN3CRQT5YBN8K4",
+          "createdAt": "2026-10-24T12:36:36.742Z",
+          "updatedAt": "2026-10-24T12:36:36.742Z"
+        },
+        "draft": {
+          "id": "01M5PYKER6KVDN3CRQT5YBN8K4",
+          "loopId": "01M5PYKER6KVDN3CRQT5YBN8K3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Pre243 draft",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.742Z"
+        },
+        "issues": []
+      },
+      "prePublished": {
+        "loop": {
+          "id": "01M5PYKESHGNE9TNMVM0543JPD",
+          "ownerId": "local",
+          "name": "Pre243 published",
+          "draftVersionId": "01M5PYKESHGNE9TNMVM0543JPE",
+          "createdAt": "2026-10-24T12:36:36.785Z",
+          "updatedAt": "2026-10-24T12:36:36.785Z"
+        },
+        "draft": {
+          "id": "01M5PYKESHGNE9TNMVM0543JPE",
+          "loopId": "01M5PYKESHGNE9TNMVM0543JPD",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Pre243 published",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.785Z"
+        },
+        "issues": []
+      },
+      "postDraft": {
+        "loop": {
+          "id": "01M5PYKETY7E9RSV2RQPBPECSD",
+          "ownerId": "local",
+          "name": "Post243 draft",
+          "draftVersionId": "01M5PYKETY7E9RSV2RQPBPECSE",
+          "createdAt": "2026-10-24T12:36:36.830Z",
+          "updatedAt": "2026-10-24T12:36:36.830Z"
+        },
+        "draft": {
+          "id": "01M5PYKETY7E9RSV2RQPBPECSE",
+          "loopId": "01M5PYKETY7E9RSV2RQPBPECSD",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Post243 draft",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.830Z"
+        },
+        "issues": []
+      },
+      "postFinite": {
+        "loop": {
+          "id": "01M5PYKEVH6QCXQT79835NMWWJ",
+          "ownerId": "local",
+          "name": "Post243 finite",
+          "draftVersionId": "01M5PYKEVJZFSD3GF2X35698VY",
+          "createdAt": "2026-10-24T12:36:36.849Z",
+          "updatedAt": "2026-10-24T12:36:36.849Z"
+        },
+        "draft": {
+          "id": "01M5PYKEVJZFSD3GF2X35698VY",
+          "loopId": "01M5PYKEVH6QCXQT79835NMWWJ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Post243 finite",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": 9876,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.849Z"
+        },
+        "issues": []
+      },
+      "authored": {
+        "loop": {
+          "id": "01M5PYKEWE6SCWWXRBV44FBFKJ",
+          "ownerId": "local",
+          "name": "Authored both",
+          "draftVersionId": "01M5PYKEWE6SCWWXRBV44FBFKK",
+          "createdAt": "2026-10-24T12:36:36.878Z",
+          "updatedAt": "2026-10-24T12:36:36.878Z"
+        },
+        "draft": {
+          "id": "01M5PYKEWE6SCWWXRBV44FBFKK",
+          "loopId": "01M5PYKEWE6SCWWXRBV44FBFKJ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Authored both",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": 456,
+              "structuredTimeoutMs": 765,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.878Z"
+        },
+        "issues": []
+      },
+      "damaged": {
+        "loop": {
+          "id": "01M5PYKEX89HPEF1EZMBTNZ7CX",
+          "ownerId": "local",
+          "name": "Damaged JSON",
+          "draftVersionId": "01M5PYKEX89HPEF1EZMBTNZ7CY",
+          "createdAt": "2026-10-24T12:36:36.904Z",
+          "updatedAt": "2026-10-24T12:36:36.904Z"
+        },
+        "draft": {
+          "id": "01M5PYKEX89HPEF1EZMBTNZ7CY",
+          "loopId": "01M5PYKEX89HPEF1EZMBTNZ7CX",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Damaged JSON",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.904Z"
+        },
+        "issues": []
+      },
+      "snap": {
+        "loop": {
+          "id": "01M5PYKEXM94NDKX4MGMN8EGVF",
+          "ownerId": "local",
+          "name": "Snapshot old",
+          "draftVersionId": "01M5PYKEXM94NDKX4MGMN8EGVG",
+          "createdAt": "2026-10-24T12:36:36.916Z",
+          "updatedAt": "2026-10-24T12:36:36.916Z"
+        },
+        "draft": {
+          "id": "01M5PYKEXM94NDKX4MGMN8EGVG",
+          "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Snapshot old",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:36.916Z"
+        },
+        "issues": []
+      },
+      "finished": {
+        "id": "01M5PYKEY00SZWN636XMPP88K7",
+        "ownerId": "local",
+        "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+        "versionId": "01M5PYKEY1H6906RPXB109PRJH",
+        "pinned": {
+          "source": "draft",
+          "version": 1,
+          "name": "Snapshot old",
+          "label": "Snapshot old draft v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYKEY1H6906RPXB109PRJG",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T12:36:36.928Z",
+        "lastEventSeq": 1
+      },
+      "wait": {
+        "loop": {
+          "id": "01M5PYKF47YFVVGHPPRMD38RFQ",
+          "ownerId": "local",
+          "name": "Waiting old",
+          "draftVersionId": "01M5PYKF47YFVVGHPPRMD38RFR",
+          "createdAt": "2026-10-24T12:36:37.126Z",
+          "updatedAt": "2026-10-24T12:36:37.126Z"
+        },
+        "draft": {
+          "id": "01M5PYKF47YFVVGHPPRMD38RFR",
+          "loopId": "01M5PYKF47YFVVGHPPRMD38RFQ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Waiting old",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Input",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "input",
+                  "prompt": "Continue",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ],
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:37.126Z"
+        },
+        "issues": []
+      },
+      "waiting": {
+        "id": "01M5PYKF4XXNT8MPN4DGT04Z58",
+        "ownerId": "local",
+        "loopId": "01M5PYKF47YFVVGHPPRMD38RFQ",
+        "versionId": "01M5PYKF47YFVVGHPPRMD38RFR",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Waiting old",
+          "label": "Waiting old v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYKF4XXNT8MPN4DGT04Z59",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T12:36:37.149Z",
+        "lastEventSeq": 1
+      },
+      "event": {
+        "loop": {
+          "id": "01M5PYKF90G24X53NJXPDCM3DN",
+          "ownerId": "local",
+          "name": "Queued Event old",
+          "draftVersionId": "01M5PYKF90G24X53NJXPDCM3DP",
+          "createdAt": "2026-10-24T12:36:37.280Z",
+          "updatedAt": "2026-10-24T12:36:37.280Z"
+        },
+        "draft": {
+          "id": "01M5PYKF90G24X53NJXPDCM3DP",
+          "loopId": "01M5PYKF90G24X53NJXPDCM3DN",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Queued Event old",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "qa-ready"
+                }
+              },
+              {
+                "id": "work",
+                "label": "Quick",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "delete",
+                      "path": "/vars/missing"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:36:37.280Z"
+        },
+        "issues": []
+      },
+      "emitted": {
+        "id": "01M5PYKF9TN6NA6RGVFPEMK70V",
+        "ownerId": "local",
+        "type": "qa-ready",
+        "payload": {
+          "qa": true
+        },
+        "source": "api",
+        "receivedAt": "2026-10-24T12:36:37.306Z",
+        "runIds": [
+          "01M5PYKFA025SDS57MZ4MC6WFS"
+        ],
+        "duplicate": false
+      },
+      "receiptId": "HWCACYVD0951FKDKYS9GGCH4XW",
+      "webhookRunId": "S5JBSD7P6MCJDRTBMM632WCW12",
+      "webhookSnapshotId": "26R1W2BGGJ1FYPBPJGEFS0FV87"
+    }
+  },
+  {
+    "name": "construct-0017-store",
+    "status": "PASS",
+    "elapsedMs": 353,
+    "data": {
+      "oldDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-2-upgrade-jc2teN",
+      "journalHead": {
+        "idx": 17,
+        "version": "6",
+        "when": 1792600000000,
+        "tag": "0017_run_execution_limits",
+        "breakpoints": true
+      },
+      "counts": [
+        {
+          "table": "api_keys",
+          "count": 1
+        },
+        {
+          "table": "harness_sessions",
+          "count": 0
+        },
+        {
+          "table": "loop_versions",
+          "count": 10
+        },
+        {
+          "table": "loops",
+          "count": 9
+        },
+        {
+          "table": "model_catalog",
+          "count": 12
+        },
+        {
+          "table": "run_events",
+          "count": 17
+        },
+        {
+          "table": "runs",
+          "count": 3
+        },
+        {
+          "table": "secrets",
+          "count": 1
+        },
+        {
+          "table": "settings",
+          "count": 0
+        },
+        {
+          "table": "timers",
+          "count": 0
+        },
+        {
+          "table": "inbound_events",
+          "count": 1
+        },
+        {
+          "table": "schedules",
+          "count": 0
+        },
+        {
+          "table": "classifier_models",
+          "count": 1
+        },
+        {
+          "table": "webhook_receipts",
+          "count": 0
+        },
+        {
+          "table": "webhook_endpoints",
+          "count": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "damaged-json-startup-diagnostic-and-direct-migration-preservation",
+    "status": "PASS",
+    "elapsedMs": 9482,
+    "data": {
+      "diagnostic": "Error: server exited 1 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/infrastructure/dist/sqlite/upgrade.js:108\r\n                    throw new DatabaseUpgradeRequiredError('A stored loop version is not strict current format');\r\n                          ^\r\n\r\nDatabaseUpgradeRequiredError: A stored loop version is not strict current format\r\n    at guardDatabaseUpgrade (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/infrastructure/dist/sqlite/upgrade.js:108:27)\r\n    at async createContainer (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/apps/api/dist/container.js:57:31)\r\n    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-runtime-krNjWE/server.mjs:21:17 {\r\n  code: 'DATA_UPGRADE_REQUIRED'\r\n}\r\n\r\nNode.js v22.14.0\r\n",
+      "damagedAfterMigration": "{broken"
+    }
+  },
+  {
+    "name": "cold-upgrade-and-public-reads",
+    "status": "FAIL",
+    "elapsedMs": 10182,
+    "error": "AssertionError [ERR_ASSERTION]: {\"http\":404,\"data\":{\"type\":\"https://graphgoblin.dev/problems/run-not-found\",\"title\":\"run not found\",\"status\":404,\"code\":\"RUN_NOT_FOUND\",\"detail\":\"run S5JBSD7P6MCJDRTBMM632WCW12 not found\"}}",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"http\":404,\"data\":{\"type\":\"https://graphgoblin.dev/problems/run-not-found\",\"title\":\"run not found\",\"status\":404,\"code\":\"RUN_NOT_FOUND\",\"detail\":\"run S5JBSD7P6MCJDRTBMM632WCW12 not found\"}}\n    at api (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-launch-603d482c8d9f48398a4a5a400e039e59/qa.mjs:24:60)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async poll (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-launch-603d482c8d9f48398a4a5a400e039e59/qa.mjs:22:81)\n    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-launch-603d482c8d9f48398a4a5a400e039e59/qa.mjs:108:16\n    at async check (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-launch-603d482c8d9f48398a4a5a400e039e59/qa.mjs:25:66)\n    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-launch-603d482c8d9f48398a4a5a400e039e59/qa.mjs:93:1"
+  },
+  {
+    "name": "migration-preservation-guards-idempotence",
+    "status": "PASS",
+    "elapsedMs": 7280,
+    "data": {
+      "unchanged": true,
+      "migrations": 19,
+      "snapshotError": "LibsqlError: SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes"
+    }
+  },
+  {
+    "name": "decision-timeout-capacity-late-and-pin",
+    "status": "PASS",
+    "elapsedMs": 800,
+    "data": {
+      "abortedAfterMs": 412,
+      "before": {
+        "run": {
+          "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+          "ownerId": "local",
+          "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+          "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Decision deadline",
+            "label": "Decision deadline v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 400
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMA3F434M9TQJ664XS8DK",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "STRUCTURED_COMPLETION_TIMEOUT",
+            "message": "Structured completion exceeded its configured deadline of 400 ms",
+            "nodeId": "work",
+            "resumable": true,
+            "details": {
+              "timeoutMs": 400,
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          },
+          "createdAt": "2026-10-24T12:37:04.751Z",
+          "startedAt": "2026-10-24T12:37:04.782Z",
+          "finishedAt": "2026-10-24T12:37:05.257Z",
+          "lastEventSeq": 6
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+            "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+            "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMA3F434M9TQJ664XS8DK",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:04.751Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:04.805Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:04.805Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:04.751Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Decision deadline",
+                "label": "Decision deadline v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": 400
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+                  "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+                  "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMA3F434M9TQJ664XS8DK",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:04.751Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:04.787Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:04.798Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:04.809Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:04.805Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:04.805Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:04.827Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "decision",
+              "attempt": 1,
+              "configHash": "6f6b7487537542aa"
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:05.254Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "STRUCTURED_COMPLETION_TIMEOUT",
+                "message": "Structured completion exceeded its configured deadline of 400 ms",
+                "nodeId": "work",
+                "resumable": true,
+                "details": {
+                  "timeoutMs": 400,
+                  "provenance": {
+                    "kind": "llm",
+                    "provider": "codex",
+                    "classifierId": null,
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            }
+          ],
+          "nextAfter": 6,
+          "hasMore": false
+        }
+      },
+      "after": {
+        "run": {
+          "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+          "ownerId": "local",
+          "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+          "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Decision deadline",
+            "label": "Decision deadline v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 400
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMA3F434M9TQJ664XS8DK",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "STRUCTURED_COMPLETION_TIMEOUT",
+            "message": "Structured completion exceeded its configured deadline of 400 ms",
+            "nodeId": "work",
+            "resumable": true,
+            "details": {
+              "timeoutMs": 400,
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          },
+          "createdAt": "2026-10-24T12:37:04.751Z",
+          "startedAt": "2026-10-24T12:37:04.782Z",
+          "finishedAt": "2026-10-24T12:37:05.257Z",
+          "lastEventSeq": 6
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+            "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+            "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMA3F434M9TQJ664XS8DK",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:04.751Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:04.805Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:04.805Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:04.751Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Decision deadline",
+                "label": "Decision deadline v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": 400
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+                  "loopId": "01M5PYMA2B5HBBHXX6KB9C5PW9",
+                  "versionId": "01M5PYMA2B5HBBHXX6KB9C5PWA",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMA3F434M9TQJ664XS8DK",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:04.751Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:04.787Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:04.798Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:04.809Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:04.805Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:04.805Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:04.827Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "decision",
+              "attempt": 1,
+              "configHash": "6f6b7487537542aa"
+            },
+            {
+              "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:05.254Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "STRUCTURED_COMPLETION_TIMEOUT",
+                "message": "Structured completion exceeded its configured deadline of 400 ms",
+                "nodeId": "work",
+                "resumable": true,
+                "details": {
+                  "timeoutMs": 400,
+                  "provenance": {
+                    "kind": "llm",
+                    "provider": "codex",
+                    "classifierId": null,
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            }
+          ],
+          "nextAfter": 6,
+          "hasMore": false
+        }
+      },
+      "queued": {
+        "id": "01M5PYMA8CDDPJRP8YQSCQ15X3",
+        "ownerId": "local",
+        "loopId": "01M5PYMA7NWRSAPK9175QWWZW7",
+        "versionId": "01M5PYMA7NWRSAPK9175QWWZW8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Queue successor",
+          "label": "Queue successor v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYMA8CDDPJRP8YQSCQ15X4",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T12:37:04.908Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "name": "structured-output-transform-timeout-provenance-resume",
+    "status": "PASS",
+    "elapsedMs": 833,
+    "data": {
+      "before": {
+        "run": {
+          "id": "01M5PYMAW33VPKTMNBCK816292",
+          "ownerId": "local",
+          "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+          "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Transform repair",
+            "label": "Transform repair v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 350
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMAW33VPKTMNBCK816293",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "STRUCTURED_COMPLETION_TIMEOUT",
+            "message": "Structured completion exceeded its configured deadline of 350 ms",
+            "nodeId": "work",
+            "resumable": true,
+            "details": {
+              "timeoutMs": 350,
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            },
+            "inference": {
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "fake-session-1"
+            }
+          },
+          "createdAt": "2026-10-24T12:37:05.539Z",
+          "startedAt": "2026-10-24T12:37:05.549Z",
+          "finishedAt": "2026-10-24T12:37:06.038Z",
+          "lastEventSeq": 12
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMAW33VPKTMNBCK816292",
+            "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+            "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMAW33VPKTMNBCK816293",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:05.539Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:05.564Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:05.564Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:05.539Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Transform repair",
+                "label": "Transform repair v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": 350
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMAW33VPKTMNBCK816292",
+                  "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+                  "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMAW33VPKTMNBCK816293",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:05.539Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:05.552Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:05.559Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:05.566Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:05.564Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:05.564Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:05.591Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "inference",
+              "attempt": 1,
+              "configHash": "4eb0544cc6dd63b1"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:05.600Z",
+              "type": "harness.turn",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "harness": "codex",
+              "promptKind": "authored",
+              "prompt": "Answer"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 7,
+              "ts": "2026-10-24T12:37:05.607Z",
+              "type": "harness.session",
+              "nodeId": "work",
+              "harness": "codex",
+              "sessionId": "fake-session-1",
+              "mode": "fresh",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 8,
+              "ts": "2026-10-24T12:37:05.610Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "submitted",
+              "marker": "fake.accepted"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 9,
+              "ts": "2026-10-24T12:37:05.613Z",
+              "type": "node.progress",
+              "nodeId": "work",
+              "progress": {
+                "item": {
+                  "id": "i1",
+                  "summary": "bad",
+                  "type": "message"
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 10,
+              "ts": "2026-10-24T12:37:05.617Z",
+              "type": "harness.usage",
+              "nodeId": "work",
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 11,
+              "ts": "2026-10-24T12:37:06.028Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "delivery-uncertain"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 12,
+              "ts": "2026-10-24T12:37:06.036Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "STRUCTURED_COMPLETION_TIMEOUT",
+                "message": "Structured completion exceeded its configured deadline of 350 ms",
+                "nodeId": "work",
+                "resumable": true,
+                "details": {
+                  "timeoutMs": 350,
+                  "provenance": {
+                    "kind": "llm",
+                    "provider": "codex",
+                    "classifierId": null,
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                },
+                "inference": {
+                  "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+                  "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+                  "submission": "delivery-uncertain",
+                  "promptKind": "authored",
+                  "sessionId": "fake-session-1"
+                }
+              }
+            }
+          ],
+          "nextAfter": 12,
+          "hasMore": false
+        }
+      },
+      "late": {
+        "run": {
+          "id": "01M5PYMAW33VPKTMNBCK816292",
+          "ownerId": "local",
+          "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+          "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Transform repair",
+            "label": "Transform repair v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 350
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMAW33VPKTMNBCK816293",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "STRUCTURED_COMPLETION_TIMEOUT",
+            "message": "Structured completion exceeded its configured deadline of 350 ms",
+            "nodeId": "work",
+            "resumable": true,
+            "details": {
+              "timeoutMs": 350,
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            },
+            "inference": {
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "fake-session-1"
+            }
+          },
+          "createdAt": "2026-10-24T12:37:05.539Z",
+          "startedAt": "2026-10-24T12:37:05.549Z",
+          "finishedAt": "2026-10-24T12:37:06.038Z",
+          "lastEventSeq": 12
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMAW33VPKTMNBCK816292",
+            "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+            "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMAW33VPKTMNBCK816293",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:05.539Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:05.564Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:05.564Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:05.539Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Transform repair",
+                "label": "Transform repair v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": 350
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMAW33VPKTMNBCK816292",
+                  "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+                  "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMAW33VPKTMNBCK816293",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:05.539Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:05.552Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:05.559Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:05.566Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:05.564Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:05.564Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:05.591Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "inference",
+              "attempt": 1,
+              "configHash": "4eb0544cc6dd63b1"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:05.600Z",
+              "type": "harness.turn",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "harness": "codex",
+              "promptKind": "authored",
+              "prompt": "Answer"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 7,
+              "ts": "2026-10-24T12:37:05.607Z",
+              "type": "harness.session",
+              "nodeId": "work",
+              "harness": "codex",
+              "sessionId": "fake-session-1",
+              "mode": "fresh",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 8,
+              "ts": "2026-10-24T12:37:05.610Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "submitted",
+              "marker": "fake.accepted"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 9,
+              "ts": "2026-10-24T12:37:05.613Z",
+              "type": "node.progress",
+              "nodeId": "work",
+              "progress": {
+                "item": {
+                  "id": "i1",
+                  "summary": "bad",
+                  "type": "message"
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 10,
+              "ts": "2026-10-24T12:37:05.617Z",
+              "type": "harness.usage",
+              "nodeId": "work",
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 11,
+              "ts": "2026-10-24T12:37:06.028Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+              "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+              "submission": "delivery-uncertain"
+            },
+            {
+              "runId": "01M5PYMAW33VPKTMNBCK816292",
+              "seq": 12,
+              "ts": "2026-10-24T12:37:06.036Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "STRUCTURED_COMPLETION_TIMEOUT",
+                "message": "Structured completion exceeded its configured deadline of 350 ms",
+                "nodeId": "work",
+                "resumable": true,
+                "details": {
+                  "timeoutMs": 350,
+                  "provenance": {
+                    "kind": "llm",
+                    "provider": "codex",
+                    "classifierId": null,
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                },
+                "inference": {
+                  "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+                  "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+                  "submission": "delivery-uncertain",
+                  "promptKind": "authored",
+                  "sessionId": "fake-session-1"
+                }
+              }
+            }
+          ],
+          "nextAfter": 12,
+          "hasMore": false
+        }
+      },
+      "after": {
+        "id": "01M5PYMAW33VPKTMNBCK816292",
+        "ownerId": "local",
+        "loopId": "01M5PYMAVDZ3PBCA7HMMSW98SC",
+        "versionId": "01M5PYMAVDZ3PBCA7HMMSW98SD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Transform repair",
+          "label": "Transform repair v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 350
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYMAW33VPKTMNBCK816293",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T12:37:05.539Z",
+        "startedAt": "2026-10-24T12:37:05.549Z",
+        "finishedAt": "2026-10-24T12:37:06.303Z",
+        "lastEventSeq": 24
+      },
+      "call": {
+        "id": 1,
+        "at": 1792845425665,
+        "request": {
+          "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n{\n  \"nodeId\": \"work\",\n  \"value\": \"bad\",\n  \"at\": \"2026-10-24T12:37:05.620Z\"\n}\n\nValidation errors:\n- / must be number\n",
+          "schema": {
+            "type": "number"
+          },
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "abortedAt": null,
+        "aborted": false
+      }
+    }
+  },
+  {
+    "name": "same-session-schema-repair-node-timeout",
+    "status": "PASS",
+    "elapsedMs": 2133,
+    "data": {
+      "during": {
+        "run": {
+          "id": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+          "ownerId": "local",
+          "loopId": "01M5PYMBN396WWPGKDGB5WZ53F",
+          "versionId": "01M5PYMBN396WWPGKDGB5WZ53G",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Same-session boundary",
+            "label": "Same-session boundary v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 100
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMBNRQKMFJ92H5T2BPHVY",
+          "status": "running",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "createdAt": "2026-10-24T12:37:06.360Z",
+          "startedAt": "2026-10-24T12:37:06.371Z",
+          "lastEventSeq": 15
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+            "loopId": "01M5PYMBN396WWPGKDGB5WZ53F",
+            "versionId": "01M5PYMBN396WWPGKDGB5WZ53G",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMBNRQKMFJ92H5T2BPHVY",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:06.360Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:06.393Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:06.393Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:06.360Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMBN396WWPGKDGB5WZ53G",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Same-session boundary",
+                "label": "Same-session boundary v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": 100
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+                  "loopId": "01M5PYMBN396WWPGKDGB5WZ53F",
+                  "versionId": "01M5PYMBN396WWPGKDGB5WZ53G",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMBNRQKMFJ92H5T2BPHVY",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:06.360Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:06.374Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:06.388Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:06.395Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:06.393Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:06.393Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:06.419Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "inference",
+              "attempt": 1,
+              "configHash": "976817804acb856e"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:06.424Z",
+              "type": "harness.turn",
+              "nodeId": "work",
+              "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+              "turnId": "01M5PYMBQRDK8NXXB39GZDGK8T",
+              "harness": "codex",
+              "promptKind": "authored",
+              "prompt": "Answer"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 7,
+              "ts": "2026-10-24T12:37:06.429Z",
+              "type": "harness.session",
+              "nodeId": "work",
+              "harness": "codex",
+              "sessionId": "fake-session-2",
+              "mode": "fresh",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 8,
+              "ts": "2026-10-24T12:37:06.430Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+              "turnId": "01M5PYMBQRDK8NXXB39GZDGK8T",
+              "submission": "submitted",
+              "marker": "fake.accepted"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 9,
+              "ts": "2026-10-24T12:37:06.432Z",
+              "type": "node.progress",
+              "nodeId": "work",
+              "progress": {
+                "item": {
+                  "id": "i1",
+                  "summary": "bad",
+                  "type": "message"
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 10,
+              "ts": "2026-10-24T12:37:06.434Z",
+              "type": "harness.usage",
+              "nodeId": "work",
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 11,
+              "ts": "2026-10-24T12:37:06.437Z",
+              "type": "harness.turn",
+              "nodeId": "work",
+              "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+              "turnId": "01M5PYMBR478RAT0PS5Q0P3564",
+              "harness": "codex",
+              "promptKind": "repair",
+              "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n\"bad\"\n\nValidation errors:\n- / must be number\n",
+              "resumeSessionId": "fake-session-2"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 12,
+              "ts": "2026-10-24T12:37:06.444Z",
+              "type": "harness.session",
+              "nodeId": "work",
+              "harness": "codex",
+              "sessionId": "fake-session-2",
+              "mode": "resumed",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 13,
+              "ts": "2026-10-24T12:37:06.446Z",
+              "type": "harness.submission",
+              "nodeId": "work",
+              "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+              "turnId": "01M5PYMBR478RAT0PS5Q0P3564",
+              "submission": "submitted",
+              "marker": "fake.accepted"
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 14,
+              "ts": "2026-10-24T12:37:06.448Z",
+              "type": "node.progress",
+              "nodeId": "work",
+              "progress": {
+                "item": {
+                  "id": "i1",
+                  "summary": "7",
+                  "type": "message"
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+              "seq": 15,
+              "ts": "2026-10-24T12:37:06.450Z",
+              "type": "harness.usage",
+              "nodeId": "work",
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "nextAfter": 15,
+          "hasMore": false
+        }
+      },
+      "after": {
+        "id": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+        "ownerId": "local",
+        "loopId": "01M5PYMBN396WWPGKDGB5WZ53F",
+        "versionId": "01M5PYMBN396WWPGKDGB5WZ53G",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Same-session boundary",
+          "label": "Same-session boundary v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 100
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYMBNRQKMFJ92H5T2BPHVY",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "INFERENCE_TIMEOUT",
+          "message": "inference exceeded 2s",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+            "turnId": "01M5PYMBR478RAT0PS5Q0P3564",
+            "submission": "delivery-uncertain",
+            "promptKind": "repair",
+            "sessionId": "fake-session-2"
+          }
+        },
+        "createdAt": "2026-10-24T12:37:06.360Z",
+        "startedAt": "2026-10-24T12:37:06.371Z",
+        "finishedAt": "2026-10-24T12:37:08.435Z",
+        "lastEventSeq": 17
+      },
+      "structuredCalls": 0
+    }
+  },
+  {
+    "name": "unlimited-no-timer-explicit-cancel-late",
+    "status": "PASS",
+    "elapsedMs": 2268,
+    "data": {
+      "elapsedMs": 2179,
+      "timersBefore": 3,
+      "timersAfter": 3,
+      "during": {
+        "run": {
+          "id": "01M5PYMDRH1X06GQ51RA13YG71",
+          "ownerId": "local",
+          "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+          "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Unlimited and cancel",
+            "label": "Unlimited and cancel v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMDRH1X06GQ51RA13YG72",
+          "status": "running",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "createdAt": "2026-10-24T12:37:08.497Z",
+          "startedAt": "2026-10-24T12:37:08.505Z",
+          "lastEventSeq": 5
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG71",
+            "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+            "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG72",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:08.497Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:08.526Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:08.526Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:08.497Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Unlimited and cancel",
+                "label": "Unlimited and cancel v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG71",
+                  "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+                  "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG72",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:08.497Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:08.508Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:08.522Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:08.528Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:08.553Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "decision",
+              "attempt": 1,
+              "configHash": "6f6b7487537542aa"
+            }
+          ],
+          "nextAfter": 5,
+          "hasMore": false
+        }
+      },
+      "cancelled": {
+        "run": {
+          "id": "01M5PYMDRH1X06GQ51RA13YG71",
+          "ownerId": "local",
+          "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+          "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Unlimited and cancel",
+            "label": "Unlimited and cancel v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMDRH1X06GQ51RA13YG72",
+          "status": "cancelled",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "cancelRequestedAt": "2026-10-24T12:37:10.588Z",
+          "createdAt": "2026-10-24T12:37:08.497Z",
+          "startedAt": "2026-10-24T12:37:08.505Z",
+          "finishedAt": "2026-10-24T12:37:10.600Z",
+          "lastEventSeq": 7
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG71",
+            "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+            "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG72",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:08.497Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:08.526Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:08.526Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:08.497Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Unlimited and cancel",
+                "label": "Unlimited and cancel v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG71",
+                  "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+                  "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG72",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:08.497Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:08.508Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:08.522Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:08.528Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:08.553Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "decision",
+              "attempt": 1,
+              "configHash": "6f6b7487537542aa"
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:10.590Z",
+              "type": "run.cancel_requested",
+              "actor": {
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 7,
+              "ts": "2026-10-24T12:37:10.597Z",
+              "type": "run.cancelled"
+            }
+          ],
+          "nextAfter": 7,
+          "hasMore": false
+        }
+      },
+      "after": {
+        "run": {
+          "id": "01M5PYMDRH1X06GQ51RA13YG71",
+          "ownerId": "local",
+          "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+          "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Unlimited and cancel",
+            "label": "Unlimited and cancel v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PYMDRH1X06GQ51RA13YG72",
+          "status": "cancelled",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "cancelRequestedAt": "2026-10-24T12:37:10.588Z",
+          "createdAt": "2026-10-24T12:37:08.497Z",
+          "startedAt": "2026-10-24T12:37:08.505Z",
+          "finishedAt": "2026-10-24T12:37:10.600Z",
+          "lastEventSeq": 7
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG71",
+            "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+            "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PYMDRH1X06GQ51RA13YG72",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T12:37:08.497Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:37:08.526Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:37:08.526Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {
+              "start": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 1,
+              "ts": "2026-10-24T12:37:08.497Z",
+              "type": "run.queued",
+              "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Unlimited and cancel",
+                "label": "Unlimited and cancel v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG71",
+                  "loopId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EM",
+                  "versionId": "01M5PYMDQWTPP6Z5AH1ZKBJ8EN",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5PYMDRH1X06GQ51RA13YG72",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-24T12:37:08.497Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 2,
+              "ts": "2026-10-24T12:37:08.508Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 3,
+              "ts": "2026-10-24T12:37:08.522Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 4,
+              "ts": "2026-10-24T12:37:08.528Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-24T12:37:08.526Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 1
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 5,
+              "ts": "2026-10-24T12:37:08.553Z",
+              "type": "node.started",
+              "nodeId": "work",
+              "kind": "decision",
+              "attempt": 1,
+              "configHash": "6f6b7487537542aa"
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 6,
+              "ts": "2026-10-24T12:37:10.590Z",
+              "type": "run.cancel_requested",
+              "actor": {
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            {
+              "runId": "01M5PYMDRH1X06GQ51RA13YG71",
+              "seq": 7,
+              "ts": "2026-10-24T12:37:10.597Z",
+              "type": "run.cancelled"
+            }
+          ],
+          "nextAfter": 7,
+          "hasMore": false
+        }
+      }
+    }
+  },
+  {
+    "name": "fast-completion-contract-boundaries-export-import",
+    "status": "PASS",
+    "elapsedMs": 246,
+    "data": {
+      "fast": {
+        "id": "01M5PYMFZDFP4MDFD5C092YV1A",
+        "ownerId": "local",
+        "loopId": "01M5PYMFYSNQWQDTJ2JCNZDD8S",
+        "versionId": "01M5PYMFYSNQWQDTJ2JCNZDD8T",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Fast decision",
+          "label": "Fast decision v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 1000
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PYMFZDFP4MDFD5C092YV1B",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T12:37:10.765Z",
+        "startedAt": "2026-10-24T12:37:10.774Z",
+        "finishedAt": "2026-10-24T12:37:10.874Z",
+        "lastEventSeq": 11
+      },
+      "invalid": [
+        {
+          "value": 0,
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Too small: expected number to be >0"
+              }
+            ]
+          }
+        },
+        {
+          "value": -1,
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Too small: expected number to be >0"
+              }
+            ]
+          }
+        },
+        {
+          "value": 0.5,
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Invalid input: expected int, received number"
+              }
+            ]
+          }
+        },
+        {
+          "value": "400",
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Invalid input: expected number, received string"
+              }
+            ]
+          }
+        },
+        {
+          "value": true,
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Invalid input: expected number, received boolean"
+              }
+            ]
+          }
+        },
+        {
+          "value": 31536000001,
+          "http": 400,
+          "data": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/definition/settings/structuredTimeoutMs",
+                "message": "Too big: expected number to be <=31536000000"
+              }
+            ]
+          }
+        }
+      ],
+      "bounds": [
+        {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": 1,
+          "subloopDepthLimit": 8
+        },
+        {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": 31536000000,
+          "subloopDepthLimit": 8
+        }
+      ],
+      "exported": {
+        "format": "graphgoblin-loop",
+        "formatVersion": 4,
+        "exportedAt": "2026-10-24T12:37:10.974Z",
+        "loop": {
+          "schemaVersion": 4,
+          "name": "Imported completion",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 1000,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Decision",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "imported": {
+        "loop": {
+          "id": "01M5PYMG64RD0DF6K7E19691YF",
+          "ownerId": "local",
+          "name": "Imported completion",
+          "draftVersionId": "01M5PYMG64RD0DF6K7E19691YG",
+          "createdAt": "2026-10-24T12:37:10.980Z",
+          "updatedAt": "2026-10-24T12:37:10.980Z"
+        },
+        "draft": {
+          "id": "01M5PYMG64RD0DF6K7E19691YG",
+          "loopId": "01M5PYMG64RD0DF6K7E19691YF",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Imported completion",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": 1000,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Decision",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "routes": [
+                    {
+                      "id": "yes",
+                      "label": "Yes"
+                    },
+                    {
+                      "id": "no",
+                      "label": "No"
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "yes",
+                "from": {
+                  "node": "work",
+                  "port": "yes"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "no",
+                "from": {
+                  "node": "work",
+                  "port": "no"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T12:37:10.980Z"
+        },
+        "issues": [],
+        "notices": []
+      }
+    }
+  },
+  {
+    "name": "Edge-browser-script",
+    "status": "FAIL",
+    "exitCode": 1
+  }
+]

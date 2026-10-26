@@ -21,20 +21,47 @@ export function killTree(
   child: ChildProcess,
   platform: NodeJS.Platform = process.platform,
   spawnImpl: typeof spawn = spawn,
-): void {
-  if (child.pid === undefined) return;
+): Promise<boolean> {
+  if (child.pid === undefined) return Promise.resolve(true);
   if (platform === 'win32') {
-    const killer = spawnImpl('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
-      stdio: 'ignore',
-      windowsHide: true,
+    return new Promise((resolve) => {
+      let killer: ChildProcess;
+      try {
+        killer = spawnImpl('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+      } catch {
+        try {
+          child.kill();
+        } catch {
+          /* no confirmed root cleanup */
+        }
+        resolve(false);
+        return;
+      }
+      // Killing just the root is best effort; it never establishes tree cleanup.
+      killer.once('error', () => {
+        try {
+          child.kill();
+        } catch {
+          /* no confirmed root cleanup */
+        }
+        resolve(false);
+      });
+      killer.once('close', (code) => resolve(code === 0));
     });
-    killer.on('error', () => child.kill());
-    return;
   }
   try {
     process.kill(-child.pid, 'SIGKILL');
+    return Promise.resolve(true);
   } catch {
-    child.kill('SIGKILL');
+    try {
+      child.kill('SIGKILL');
+    } catch {
+      /* no confirmed root cleanup */
+    }
+    return Promise.resolve(false);
   }
 }
 
@@ -52,6 +79,17 @@ export class ProcessScripts implements ScriptPort {
   }
 
   run(request: ScriptRunRequest): Promise<ScriptRunResult> {
+    if (request.signal.aborted)
+      return Promise.resolve({
+        exitCode: null,
+        timedOut: false,
+        stdout: '',
+        stderr: '',
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
+      });
     const stdout = new BoundedOutputCapture(request.maxStdoutBytes ?? this.maxOutputBytes);
     const stderr = new BoundedOutputCapture(request.maxStderrBytes ?? this.maxOutputBytes);
     return new Promise((resolve) => {
@@ -66,6 +104,11 @@ export class ProcessScripts implements ScriptPort {
 
       let timedOut = false;
       let settled = false;
+      let killing: Promise<boolean> | undefined;
+      let closed = false;
+      let treeConfirmed = false;
+      let closeCode: number | null = null;
+      let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
       child.stdout?.on('data', (chunk: Buffer) => {
         if (!settled) stdout.append(chunk);
       });
@@ -73,7 +116,19 @@ export class ProcessScripts implements ScriptPort {
         if (!settled) stderr.append(chunk);
       });
 
-      const kill = (): void => killTree(child, this.platform, this.spawnImpl);
+      const kill = (): void => {
+        if (settled || killing) return;
+        // Five seconds bounds acknowledgement of explicit native termination, not normal drain.
+        cleanupTimer = setTimeout(() => finish(null, false, true), 5000);
+        killing = killTree(child, this.platform, this.spawnImpl);
+        void killing.then((confirmed) => {
+          if (!confirmed) finish(null, false, true);
+          else {
+            treeConfirmed = true;
+            if (closed) finish(closeCode);
+          }
+        });
+      };
       const timer =
         request.timeoutMs !== undefined
           ? setTimeout(() => {
@@ -82,17 +137,20 @@ export class ProcessScripts implements ScriptPort {
             }, request.timeoutMs)
           : undefined;
       const onAbort = (): void => kill();
-      if (request.signal.aborted) onAbort();
-      else request.signal.addEventListener('abort', onAbort, { once: true });
-
-      const finish = (exitCode: number | null, spawnFailed = false): void => {
+      const finish = (
+        exitCode: number | null,
+        spawnFailed = false,
+        terminationUnconfirmed = false,
+      ): void => {
         if (settled) return;
         settled = true;
         if (timer) clearTimeout(timer);
+        clearTimeout(cleanupTimer);
         request.signal.removeEventListener('abort', onAbort);
         const errorText = stderr.text();
         resolve({
           exitCode,
+          ...(terminationUnconfirmed ? { terminationUnconfirmed: true as const } : {}),
           timedOut,
           stdout: stdout.text(),
           stdoutBytes: stdout.byteLength,
@@ -110,9 +168,13 @@ export class ProcessScripts implements ScriptPort {
         finish(null, true);
       });
       child.on('close', (code) => {
-        finish(code);
+        closed = true;
+        closeCode = code;
+        if (!killing || treeConfirmed) finish(code);
       });
 
+      if (request.signal.aborted) onAbort();
+      else request.signal.addEventListener('abort', onAbort, { once: true });
       if (child.stdin) {
         child.stdin.on('error', () => undefined);
         if (request.stdin !== undefined) child.stdin.end(request.stdin);

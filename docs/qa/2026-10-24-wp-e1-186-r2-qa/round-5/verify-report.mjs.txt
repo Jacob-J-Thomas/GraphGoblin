@@ -1,0 +1,45 @@
+import { readFile,writeFile,readdir,stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { resolve,join } from 'node:path';
+import assert from 'node:assert/strict';
+
+const out=resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5');
+const expected='d6760dcdcb719a3d98c0b3e06a0a6d15d80cbdc9';
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+assert.equal(head,expected,'HEAD changed');
+const tracked=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim();
+const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
+assert.equal(tracked,'','Tracked source was changed');assert.equal(staged,'','Index was changed');
+let readme=await readFile(join(out,'README.md'),'utf8');
+const names=(await readdir(out)).filter((n)=>n!=='README.md');
+for(const planned of ['artifact-manifest.json','report-verification.json','final-format-check.log.txt'])if(!names.includes(planned))names.push(planned);
+const list=names.sort().map((n)=>`- [${n}](${n})`).join('\n');
+const block='<!-- ARTIFACTS START -->\n\n'+list+'\n\n<!-- ARTIFACTS END -->';
+if(readme.includes('<!-- ARTIFACTS START -->'))readme=readme.replace(/<!-- ARTIFACTS START -->[\s\S]*?<!-- ARTIFACTS END -->/,block);
+else readme=readme.replace('## 5. Observations outside scope',block+'\n\n## 5. Observations outside scope');
+await writeFile(join(out,'README.md'),readme);
+if(process.argv[2]==='inventory'){console.log('Artifact links refreshed');process.exit(0);}
+const files=[];const bad=[];const decoder=new TextDecoder('utf-8',{fatal:true});
+for(const name of (await readdir(out)).sort()) {
+  const path=join(out,name);if(!(await stat(path)).isFile())continue;
+  const bytes=await readFile(path);
+  if(/\.(txt|md|json|jsonl)$/.test(name)) {
+    if(bytes[0]===0xef&&bytes[1]===0xbb&&bytes[2]===0xbf)bad.push(name+': BOM');
+    const text=decoder.decode(bytes);
+    if(text.includes(process.env.USERPROFILE)||text.includes(process.env.USERPROFILE.replaceAll('\\','/'))||text.includes(process.env.USERPROFILE.replaceAll('\\','\\\\')))bad.push(name+': unnormalized user path');
+  }
+  if(/\.(png|jpe?g|zip)$/.test(name)&&bytes.length>1_000_000)bad.push(name+': oversized capture retained');
+  if(!['artifact-manifest.json','report-verification.json'].includes(name))files.push({path:name,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+}
+for(const match of readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+  const target=match[1];if(/^(https?:|#)/.test(target)||['artifact-manifest.json','report-verification.json'].includes(target))continue;
+  try{await stat(resolve(out,target.split('#')[0]));}catch{bad.push('Missing README target: '+target);}
+}
+const linked=new Set([...readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map((m)=>m[1]));
+for(const name of await readdir(out))if(name!=='README.md'&&!linked.has(name))bad.push('Unlinked artifact: '+name);
+assert.equal(bad.length,0,JSON.stringify(bad));
+assert(!/IN PROGRESS|Pending final results|still being collected|will be appended when/.test(readme),'Report still has provisional wording');
+await writeFile(join(out,'artifact-manifest.json'),JSON.stringify({head,algorithm:'SHA-256 of final retained bytes',excluded:['artifact-manifest.json','report-verification.json'],reason:'Self/verification metadata excluded to avoid circular hashes; both files are linked from README.',files},null,2));
+await writeFile(join(out,'report-verification.json'),JSON.stringify({head,branch:execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim(),trackedChanges:tracked,stagedChanges:staged,status:execFileSync('git',['status','--short'],{encoding:'utf8'}).trim(),retainedFiles:files.length+2,allReadmeLinksResolve:true,everyArtifactLinked:true,utf8WithoutBom:true,localUserPathsNormalized:true,oversizedCapturesRetained:false,manifestEntries:files.length},null,2));
+console.log(JSON.stringify({head,retainedFiles:files.length+2,problems:bad}));

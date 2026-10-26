@@ -1,0 +1,18 @@
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const root=process.cwd();
+const load=p=>import(pathToFileURL(join(root,p)));
+const {buildApp,createContainer,loadConfig}=await load('apps/api/dist/index.js');
+const {FakeHarness}=await load('packages/engine/dist/testing/index.js');
+const fake=new FakeHarness([], 'codex');
+const container=await createContainer(loadConfig({GG_PORT:'6130',GG_DATA_DIR:process.argv[2],GG_SWAGGER_UI:'false',GG_LOG_LEVEL:'silent'}),{harnesses:{codex:fake},startTimers:false});
+await container.start();
+const {token}=await container.repos.apiKeys.create('local','qa-round-2',['*']);
+const app=await buildApp(container,{logger:false});await app.listen({host:'127.0.0.1',port:6130});
+process.send({ready:true,pid:process.pid,token});
+process.on('message',async m=>{
+ try{
+  if(m.op==='script'){fake.script(m.turns);process.send({reply:m.id,value:true});}
+  if(m.op==='stop'){app.server.closeAllConnections();await app.close();await container.stop();process.send({reply:m.id,value:true});process.disconnect();process.exit(0);}
+ }catch(e){process.send({reply:m.id,error:String(e)});}
+});

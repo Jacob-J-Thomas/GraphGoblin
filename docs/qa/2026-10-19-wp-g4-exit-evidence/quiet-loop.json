@@ -1,0 +1,48 @@
+{
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 129 quiet exit",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": { "type": "manual" },
+        "ui": { "x": 0, "y": 80 }
+      },
+      {
+        "id": "check",
+        "kind": "decision",
+        "label": "Check",
+        "config": {
+          "kind": "expression",
+          "jsonata": "\"ignore\"",
+          "routes": [
+            { "id": "ignore", "label": "Ignore" },
+            { "id": "keep", "label": "Keep" }
+          ]
+        },
+        "ui": { "x": 260, "y": 80 }
+      },
+      {
+        "id": "quiet",
+        "kind": "exit",
+        "label": "Quiet",
+        "config": { "returns": "none", "destinations": [] },
+        "ui": { "x": 540, "y": 0 }
+      },
+      {
+        "id": "kept",
+        "kind": "exit",
+        "label": "Kept",
+        "config": { "returns": "\"kept\"" },
+        "ui": { "x": 540, "y": 200 }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "from": { "node": "start", "port": "out" }, "to": { "node": "check" } },
+      { "id": "e2", "from": { "node": "check", "port": "ignore" }, "to": { "node": "quiet" } },
+      { "id": "e3", "from": { "node": "check", "port": "keep" }, "to": { "node": "kept" } }
+    ]
+  }
+}

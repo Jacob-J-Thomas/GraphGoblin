@@ -1,0 +1,21 @@
+import{readFile,writeFile,readdir,stat}from'node:fs/promises';
+import{spawn,execFileSync}from'node:child_process';
+import{createHash}from'node:crypto';
+import{resolve}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+for(const name of['format-final.log.txt','finalize.log.txt','report-verification.json'])await writeFile(out+'/'+name,'');
+await import('./retain.mjs');await import('./report.mjs');
+async function run(command){let log='';const p=spawn(process.env.ComSpec,['/d','/s','/c',command],{windowsHide:true,env:process.env});p.stdout.on('data',b=>log+=b.toString());p.stderr.on('data',b=>log+=b.toString());const code=await new Promise(r=>p.on('close',r));return{command,code,log};}
+let command='pnpm.cmd exec prettier --write '+out+'/README.md '+out+'/NOT-KEPT.md';const format=[];format.push(await run(command));if(format.at(-1).log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK'))format.push(await run(command.replace('pnpm.cmd exec prettier','node_modules\\.bin\\prettier.cmd')));
+command='pnpm.cmd exec prettier --check '+out+'/README.md '+out+'/NOT-KEPT.md';format.push(await run(command));if(format.at(-1).log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK'))format.push(await run(command.replace('pnpm.cmd exec prettier','node_modules\\.bin\\prettier.cmd')));
+await writeFile(out+'/format-final.log.txt',format.map(x=>'Command: '+x.command+'\n'+x.log+'\nExit: '+x.code).join('\n').replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+const files=(await readdir(out)).sort(),body=await readFile(out+'/README.md','utf8');
+const missingLinks=[],unlinked=[];let links=0;
+for(const m of body.matchAll(/(?<!!)\[[^\]]*\]\(([^)]+)\)/g)){const target=m[1];if(/^https?:/.test(target))continue;links++;try{await stat(resolve(out,target.split('#')[0]));}catch{missingLinks.push(target);}}
+for(const name of files)if(name!=='README.md'&&!body.includes(']('+name+')'))unlinked.push(name);
+const badFiles=[],paths=[];for(const name of files){if(['artifact-manifest.json','report-verification.json'].includes(name))continue;const raw=await readFile(out+'/'+name);if(raw.length>1000000)badFiles.push({name,reason:'over 1000000 bytes'});if(name.endsWith('.png'))continue;try{new TextDecoder('utf-8',{fatal:true}).decode(raw);}catch{badFiles.push({name,reason:'invalid UTF-8'});}if(raw.subarray(0,3).equals(Buffer.from([239,187,191])))badFiles.push({name,reason:'BOM'});const text=raw.toString();if(text.includes(process.env.USERPROFILE)||text.includes(process.env.USERPROFILE.replaceAll('\\','/')))paths.push(name);}
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const source=execFileSync('git',['diff','d33ac0e56be9f559ab88c60ac204e4efdc123501','HEAD','--','.',':!docs/qa'],{maxBuffer:20000000});
+const result={head:git('rev-parse','HEAD'),trackedDiff:git('diff','--name-only','HEAD'),fileCount:files.length,links,missingLinks,unlinked,badFiles,unredactedPathFiles:paths,sourceDiffByteExact:source.equals(await readFile(out+'/source.diff.txt')),format:format.map(({command,code})=>({command,code})),manifestExcludes:['artifact-manifest.json','report-verification.json']};result.pass=result.head==='dc325b2fd8a4a40dda2c77789080fc822235dd69'&&!result.trackedDiff&&!missingLinks.length&&!unlinked.length&&!badFiles.length&&!paths.length&&result.sourceDiffByteExact&&format.at(-1).code===0;
+await writeFile(out+'/report-verification.json',JSON.stringify(result,null,2));await writeFile(out+'/finalize.log.txt',JSON.stringify(result,null,2));
+const manifest=[];for(const name of files){if(result.manifestExcludes.includes(name))continue;const raw=await readFile(out+'/'+name);manifest.push({name,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex')});}await writeFile(out+'/artifact-manifest.json',JSON.stringify(manifest,null,2));console.log(JSON.stringify(result));

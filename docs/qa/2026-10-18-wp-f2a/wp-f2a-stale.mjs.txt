@@ -1,0 +1,84 @@
+﻿import { spawn, execFileSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createRequire } from 'node:module';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+import net from 'node:net';
+
+const root = process.cwd(), web = join(root, 'apps/web');
+const req = createRequire(join(web, 'package.json'));
+const { chromium, expect } = req('@playwright/test');
+const { minimalLoop } = await import(pathToFileURL(join(root, 'packages/contracts/dist/testing/index.js')));
+const evidence = join(root, 'docs/qa/2026-10-18-wp-f2a');
+await mkdir(evidence, { recursive: true });
+const results = [], env = { ...process.env, LIVE: '0', LIVE_CLAUDE: '0' };
+const delay = ms => new Promise(r => setTimeout(r, ms));
+let browser, server, native;
+async function save() { await writeFile(join(evidence, 'checks-stale.json'), JSON.stringify(results, null, 2)); }
+async function check(name, fn) {
+  console.log('START ' + name);
+  try { const detail = await fn(); results.push({ name, status: 'pass', detail }); console.log('PASS ' + name); }
+  catch (e) { results.push({ name, status: 'fail', error: String(e.stack) }); console.log('FAIL ' + name + ': ' + e.message); }
+  await save();
+}
+async function api(base, path, method = 'GET', body, token) {
+  const r = await fetch(base + path, { method, headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(token ? { authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const t = await r.text(); let data; try { data = JSON.parse(t); } catch { data = t; }
+  return { status: r.status, data };
+}
+function loop(name, model, effort) {
+  const base = minimalLoop();
+  return { ...base, name, nodes: [base.nodes[0], { id: 'infer', kind: 'inference', label: 'Infer', config: { harness: 'claude', session: { policy: 'fresh' }, prompt: { template: 'Synthetic QA result.' }, harnessOptions: { sandbox: 'read-only', approval: 'never' }, ...(model ? { model } : {}), ...(effort ? { effort } : {}) } }, base.nodes[1]].map((n,i) => ({ ...n, ui: { x: i * 260, y: 80 } })), edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'infer' } }, { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'done' } }] };
+}
+async function create(base, definition, token) {
+  const r = await api(base, '/loops', 'POST', { definition }, token); assert.equal(r.status, 201, JSON.stringify(r)); return r.data.loop.id;
+}
+async function open(page, base, id) {
+  await page.goto(base + '/app/loops/' + id + '/edit');
+  await page.getByTestId('node-infer').click({ position: { x: 60, y: 12 } });
+  const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible();
+  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  if (await advanced.getAttribute('aria-expanded') === 'false') await advanced.click();
+  return dialog;
+}
+async function done(page, dialog) { await dialog.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.getByTestId('save-state')).toContainText('All changes saved'); }
+async function terminal(base, id) {
+  let r;
+  for (let i = 0; i < 100; i++) { r = await api(base, '/runs/' + id); if (['succeeded', 'failed', 'cancelled'].includes(r.data.status)) return r.data; await delay(100); }
+  throw new Error('run did not terminate: ' + JSON.stringify(r));
+}
+async function shot(page, name) { await page.screenshot({ path: join(evidence, name + '.png'), fullPage: true }); }
+async function stopChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  const exited = once(child, 'exit'); child.kill();
+  await Promise.race([exited, delay(10000).then(() => { if(child.exitCode === null) throw new Error('child did not exit'); })]);
+}
+
+
+
+let page, other;
+try {
+ server=spawn(process.execPath,['--conditions=development','--import',pathToFileURL(req.resolve('tsx')).href,'e2e/server.ts'],{cwd:web,env,windowsHide:true,stdio:['pipe','pipe','pipe']});
+ let output='',errors='';server.stdout.on('data',x=>output+=x);server.stderr.on('data',x=>errors+=x);
+ for(let i=0;i<600&&!/GG_E2E_READY/.test(output);i++){if(server.exitCode!==null)throw new Error(errors);await delay(100);}
+ const controlUrl=/GG_E2E_CONTROL (\S+)/.exec(output)?.[1];assert.ok(controlUrl);const made=await api(controlUrl,'/apps','POST',{claude:true});assert.equal(made.status,200);const base=made.data.url;
+ results.push({name:'environment',status:'info',detail:{base,controlUrl,node:process.version,reason:'Previous scratch default 5-second assertion expired during Saving; this probe records public draft PUT completion before the stale edit.'}});
+ browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:900}});page=await context.newPage();other=await context.newPage();
+ await check('Two tabs stale write returns conflict; server model survives; reload and overwrite choices',async()=>{
+  const id=await create(base,loop('Causal stale-tab probe','claude-opus-5-5','high'));
+  const first=await open(page,base,id),second=await open(other,base,id);
+  const before=await api(base,'/loops/'+id);const saved=page.waitForResponse(r=>r.url()===base+'/loops/'+id+'/draft'&&r.request().method()==='PUT',{timeout:30000});const t0=Date.now();
+  await first.getByLabel('Model',{exact:true}).selectOption('claude-sonnet-5-5');const saveResponse=await saved;assert.equal(saveResponse.status(),200,await saveResponse.text());const saveMs=Date.now()-t0;
+  await expect(page.getByTestId('save-state')).toContainText('All changes saved',{timeout:15000});
+  const conflictResponse=other.waitForResponse(r=>r.url()===base+'/loops/'+id+'/draft'&&r.request().method()==='PUT',{timeout:30000});
+  await second.getByLabel('Model',{exact:true}).selectOption('claude-haiku-5-5');const conflict=await conflictResponse;const problem=await conflict.json();assert.equal(conflict.status(),409,JSON.stringify(problem));assert.equal(problem.code,'DRAFT_CONFLICT');
+  await expect(other.getByText('The draft changed on the server',{exact:true}).first()).toBeVisible({timeout:15000});const after=await api(base,'/loops/'+id);assert.equal(after.data.draft.definition.nodes.find(x=>x.id==='infer').config.model,'claude-sonnet-5-5');await shot(other,'two-tabs-conflict');
+  await second.getByRole('button',{name:'Reload server draft'}).click();await expect(other.getByRole('dialog')).toHaveCount(0);const reloaded=await open(other,base,id);await expect(reloaded.getByLabel('Model',{exact:true})).toHaveValue('claude-sonnet-5-5');await reloaded.getByRole('button',{name:'Done',exact:true}).click();
+  return{loopId:id,saveMs,originalDraftToken:before.data.draftToken,save:await saveResponse.json(),conflict:problem,after:after.data.draft.definition.nodes.find(x=>x.id==='infer').config,reloadedModel:'claude-sonnet-5-5'};
+ });
+ if(results.some(x=>x.status==='fail')){await shot(page,'stale-first-failure');await shot(other,'stale-second-failure');await writeFile(join(evidence,'stale-failure.txt'),JSON.stringify({first:await page.locator('body').innerText(),second:await other.locator('body').innerText()},null,2));}
+} finally {await browser?.close();if(server&&server.exitCode===null&&server.signalCode===null){const e=once(server,'exit');server.stdin.end('stop\n');await Promise.race([e,delay(10000)]);}await save();}
+console.log(JSON.stringify(results));process.exitCode=results.some(x=>x.status==='fail')?1:0;

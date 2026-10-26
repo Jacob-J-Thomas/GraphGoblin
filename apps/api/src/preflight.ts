@@ -1,9 +1,10 @@
+import { readinessMessage } from '@graphgoblin/domain';
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import type { HarnessId } from '@graphgoblin/contracts';
+import { HarnessReadinessStateSchema, type HarnessId } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
 import {
   DEFAULT_MODEL_CATALOG,
@@ -36,6 +37,7 @@ export const PreflightStatusSchema = z.enum(['ok', 'warn', 'fail']);
 export type PreflightStatus = z.infer<typeof PreflightStatusSchema>;
 
 export const PreflightCheckSchema = z.object({
+  state: HarnessReadinessStateSchema.optional(),
   id: z.string(),
   label: z.string(),
   status: PreflightStatusSchema,
@@ -182,34 +184,36 @@ async function checkHarnesses(
   config: ApiConfig,
 ): Promise<PreflightCheck[]> {
   const checks: PreflightCheck[] = [];
-  for (const [id, harness] of Object.entries(harnesses)) {
-    const label = `Harness ${id}`;
-    const unavailableStatus =
-      id === 'claude' && !config.defaults.byHarness.claude ? ('warn' as const) : ('fail' as const);
-    try {
-      const result = await harness.preflight();
-      const version = result.version ? ` ${result.version}` : '';
-      checks.push(
-        result.ok
-          ? check(`harness.${id}`, label, 'ok', `${id}${version} is installed and logged in`)
-          : check(
-              `harness.${id}`,
-              label,
-              unavailableStatus,
-              result.problems.join('; ') || `${id} is not ready`,
-            ),
-      );
-    } catch (error) {
-      checks.push(
-        check(
-          `harness.${id}`,
-          label,
-          unavailableStatus,
-          id === 'claude' ? 'Claude preflight failed' : message(error),
-        ),
-      );
-    }
-  }
+  await Promise.all(
+    Object.entries(harnesses).map(async ([id, harness]) => {
+      if (!harness) return;
+      const label = `Harness ${id}`;
+      const unavailableStatus =
+        id === 'claude' && !config.defaults.byHarness.claude
+          ? ('warn' as const)
+          : ('fail' as const);
+      try {
+        const result = await harness.preflight();
+        const version = result.version ? ` ${result.version}` : '';
+        checks.push({
+          state: result.state,
+          ...(result.ok
+            ? check(`harness.${id}`, label, 'ok', `${id}${version} is installed and logged in`)
+            : check(
+                `harness.${id}`,
+                label,
+                unavailableStatus,
+                result.problems.join(' ') || readinessMessage(id, result.state),
+              )),
+        });
+      } catch {
+        checks.push({
+          state: 'unknown',
+          ...check(`harness.${id}`, label, unavailableStatus, readinessMessage(id, 'unknown')),
+        });
+      }
+    }),
+  );
   if (checks.length === 0) {
     checks.push(check('harness', 'Harness', 'fail', 'no harness adapter is configured'));
   }

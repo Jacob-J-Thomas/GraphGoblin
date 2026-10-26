@@ -37,7 +37,7 @@ describe('poll HTTP overflow diagnostics', () => {
         logger,
         probes: new HttpProbes(),
         scripts: new FakeScripts(),
-        manager: { startRun, startPollItem },
+        manager: { startRun, startPollItem, assertAdmissionOpen: () => undefined },
         hasDedupe: () => Promise.resolve(false),
         findSeen: () => Promise.resolve(new Set()),
         scriptCwd: process.cwd(),

@@ -1,0 +1,163 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: thread-history.spec.ts >> open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots
+- Location: e2e\thread-history.spec.ts:6:1
+
+# Error details
+
+```
+Test timeout of 180000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - generic [ref=e33]:
+        - heading "Run 01M5QR9BPMT0HS7MJ8FD0433Q3" [level=1] [ref=e34]:
+          - text: Run
+          - generic [ref=e35]: 01M5QR9BPMT0HS7MJ8FD0433Q3
+        - generic [ref=e36]: succeeded
+      - generic [ref=e40]:
+        - link "loop" [ref=e41] [cursor=pointer]:
+          - /url: /app/loops/01M5QR9A80X70D6Y6PWH1RFATQ/edit
+        - link "child runs" [ref=e42] [cursor=pointer]:
+          - /url: /app/runs?parent=01M5QR9BPMT0HS7MJ8FD0433Q3
+    - region [ref=e43]:
+      - heading "Exit evaluation" [level=2] [ref=e45]
+      - paragraph [ref=e47]: "Exited: success"
+    - region [ref=e48]:
+      - heading "Result" [level=2] [ref=e50]
+      - generic [ref=e51]: "{ \"prepared\": true, \"completed\": true }"
+    - region [ref=e54]:
+      - heading "Execution limits" [level=2] [ref=e56]
+      - generic [ref=e57]:
+        - paragraph [ref=e58]: "Maximum node visits: 10. Run deadline: none."
+        - paragraph [ref=e59]: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+    - generic [ref=e60]:
+      - region [ref=e61]:
+        - heading "Timeline (18 events, complete)" [level=2] [ref=e63]
+        - list "Timeline" [ref=e65]:
+          - listitem [ref=e66]:
+            - button "#1 run.queued" [ref=e67] [cursor=pointer]:
+              - generic [ref=e68]: "#1"
+              - code [ref=e69]: run.queued
+          - listitem [ref=e70]:
+            - button "#2 run.started attempt 1" [ref=e71] [cursor=pointer]:
+              - generic [ref=e72]: "#2"
+              - code [ref=e73]: run.started
+              - generic [ref=e74]: attempt 1
+          - listitem [ref=e75]:
+            - button "#3 node.started start (trigger) attempt 1" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: "#3"
+              - code [ref=e78]: node.started
+              - generic [ref=e79]: start (trigger) attempt 1
+          - listitem [ref=e80]:
+            - button "#4 node.finished start → out, 2 changes, 2 ms" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: "#4"
+              - code [ref=e83]: node.finished
+              - generic [ref=e84]: start → out, 2 changes, 2 ms
+          - listitem [ref=e85]:
+            - button "#5 node.started prepare (mutate) attempt 1" [ref=e86] [cursor=pointer]:
+              - generic [ref=e87]: "#5"
+              - code [ref=e88]: node.started
+              - generic [ref=e89]: prepare (mutate) attempt 1
+          - listitem [ref=e90]:
+            - button "#6 node.finished prepare → out, 1 change, 1 ms" [ref=e91] [cursor=pointer]:
+              - generic [ref=e92]: "#6"
+              - code [ref=e93]: node.finished
+              - generic [ref=e94]: prepare → out, 1 change, 1 ms
+          - listitem [ref=e95]:
+            - button "#7 node.started work (script) attempt 1" [ref=e96] [cursor=pointer]:
+              - generic [ref=e97]: "#7"
+              - code [ref=e98]: node.started
+              - generic [ref=e99]: work (script) attempt 1
+          - listitem [ref=e100]:
+            - button "#8 node.progress work" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: "#8"
+              - code [ref=e103]: node.progress
+              - generic [ref=e104]: work
+          - listitem [ref=e105]:
+            - 'button "#9 run.failed SCRIPT_EXIT_CODE: script exited with code 1" [ref=e106] [cursor=pointer]':
+              - generic [ref=e107]: "#9"
+              - code [ref=e108]: run.failed
+              - generic [ref=e109]: "SCRIPT_EXIT_CODE: script exited with code 1"
+          - listitem [ref=e110]:
+            - button "#10 run.resumed by user local" [ref=e111] [cursor=pointer]:
+              - generic [ref=e112]: "#10"
+              - code [ref=e113]: run.resumed
+              - generic [ref=e114]: by user local
+          - listitem [ref=e115]:
+            - button "#11 node.started work (script) attempt 2" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: "#11"
+              - code [ref=e118]: node.started
+              - generic [ref=e119]: work (script) attempt 2
+          - listitem [ref=e120]:
+            - button "#12 node.progress work" [ref=e121] [cursor=pointer]:
+              - generic [ref=e122]: "#12"
+              - code [ref=e123]: node.progress
+              - generic [ref=e124]: work
+          - listitem [ref=e125]:
+            - button "#13 node.finished work → out, 1 change, 95123 ms" [ref=e126] [cursor=pointer]:
+              - generic [ref=e127]: "#13"
+              - code [ref=e128]: node.finished
+              - generic [ref=e129]: work → out, 1 change, 95123 ms
+          - listitem [ref=e130]:
+            - button "#14 node.started done (exit) attempt 1" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: "#14"
+              - code [ref=e133]: node.started
+              - generic [ref=e134]: done (exit) attempt 1
+          - listitem [ref=e135]:
+            - 'button "#15 exit.evaluated Exited: success" [ref=e136] [cursor=pointer]':
+              - generic [ref=e137]: "#15"
+              - code [ref=e138]: exit.evaluated
+              - generic [ref=e139]: "Exited: success"
+          - listitem [ref=e140]:
+            - button "#16 node.finished done, 0 changes, 2 ms" [ref=e141] [cursor=pointer]:
+              - generic [ref=e142]: "#16"
+              - code [ref=e143]: node.finished
+              - generic [ref=e144]: done, 0 changes, 2 ms
+          - listitem [ref=e145]:
+            - button "#17 run.finished succeeded (success)" [ref=e146] [cursor=pointer]:
+              - generic [ref=e147]: "#17"
+              - code [ref=e148]: run.finished
+              - generic [ref=e149]: succeeded (success)
+          - listitem [ref=e150]:
+            - button "#18 return.delivered caller" [ref=e151] [cursor=pointer]:
+              - generic [ref=e152]: "#18"
+              - code [ref=e153]: return.delivered
+              - generic [ref=e154]: caller
+      - generic [ref=e155]:
+        - region [ref=e157]:
+          - heading "Thread at event 18" [level=2] [ref=e159]
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - heading "Messages (0)" [level=3] [ref=e163]
+              - list "Messages"
+            - generic [ref=e164]:
+              - heading "Variables" [level=3] [ref=e165]
+              - generic "Variables" [ref=e167]: "{ \"prepared\": true, \"completed\": true }"
+            - generic [ref=e168]:
+              - button "Full thread JSON" [expanded] [active] [ref=e169] [cursor=pointer]
+              - generic [ref=e174]: "{ \"schemaVersion\": 1, \"run\": { \"id\": \"01M5QR9BPMT0HS7MJ8FD0433Q3\", \"loopId\": \"01M5QR9A80X70D6Y6PWH1RFATQ\", \"versionId\": \"01M5QR9A80X70D6Y6PWH1RFATR\", \"iteration\": 1 }, \"invocation\": { \"id\": \"01M5QR9BPMT0HS7MJ8FD0433Q4\", \"source\": \"manual.api\", \"caller\": { \"kind\": \"user\", \"id\": \"local\" }, \"trigger\": { \"nodeId\": \"start\", \"kind\": \"manual\", \"payload\": null, \"receivedAt\": \"2026-10-24T20:05:28.916Z\" } }, \"messages\": [], \"vars\": { \"prepared\": true, \"completed\": true }, \"artifacts\": [], \"outputs\": { \"start\": { \"nodeId\": \"start\", \"value\": null, \"at\": \"2026-10-24T20:05:30.968Z\" } }, \"gates\": {}, \"counters\": { \"nodeVisits\": { \"start\": 1, \"prepare\": 1, \"work\": 2, \"done\": 1 }, \"usage\": { \"inputTokens\": 0, \"outputTokens\": 0, \"cachedInputTokens\": 0, \"reasoningOutputTokens\": 0 } }, \"lastOutput\": { \"nodeId\": \"start\", \"value\": null, \"at\": \"2026-10-24T20:05:30.968Z\" } }"
+        - button "Node progress (2 nodes)" [ref=e178] [cursor=pointer]
+```

@@ -1,0 +1,944 @@
+{
+  "schema": 2,
+  "workload": "append",
+  "command": [
+    "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-268\\tooling\\perf\\measure.mjs",
+    "append",
+    "--passes=10",
+    "--items=100",
+    "--profile=inspector",
+    "--port=6190",
+    "--store-prefix=gg-qa-e1-268-",
+    "--out=%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-before"
+  ],
+  "output": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-before",
+  "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-before\\gg-qa-e1-268-IvtyoV",
+  "aged": 0,
+  "environment": {
+    "measurePid": 32608,
+    "launcherPid": 46528,
+    "timestamp": "2026-10-25T11:46:17.103Z",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+    "logicalCpus": 12,
+    "ramBytes": 68662202368,
+    "freeRamBefore": 27577085952,
+    "node": "v22.14.0",
+    "profileMode": "inspector",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "loadAverage": [
+      0,
+      0,
+      0
+    ],
+    "commit": "07fa8456a70e786116e8dd0e7907686bda6b5078",
+    "loadConditions": "Unspecified; record concurrent activity externally and inspect hostBusyFraction/free RAM.",
+    "freeRamAfter": 27552460800,
+    "hostBusyFraction": 0.7049785961414414
+  },
+  "cases": [
+    {
+      "runId": "01M5SE44W9H8N0E1WMCQ4WAF3W",
+      "profileWindow": {
+        "startUs": 677100697225,
+        "endUs": 677103073510
+      },
+      "specification": {
+        "passes": 10,
+        "items": 100,
+        "itemBytes": 120,
+        "contextBytes": 128,
+        "inference": true,
+        "grow": false,
+        "artifacts": false,
+        "itemPauseMs": 0,
+        "returnControl": true,
+        "delayMs": 0
+      },
+      "wallMs": 2379.6785999999997,
+      "msPerPass": 237.96785999999997,
+      "cpu": {
+        "user": 1328000,
+        "system": 687000
+      },
+      "durableAdmissionToStartMs": 30,
+      "timings": {
+        "loops.getVersion": {
+          "count": 4,
+          "totalMs": 2.3080000000004475,
+          "meanMs": 0.5770000000001119,
+          "p50UpperMs": 0.44579156845259255,
+          "p95UpperMs": 0.8687216524793882,
+          "maxMs": 0.8559000000000196
+        },
+        "settings.ownerDefaults": {
+          "count": 1,
+          "totalMs": 0.4261999999998807,
+          "meanMs": 0.4261999999998807,
+          "p50UpperMs": 0.44579156845259255,
+          "p95UpperMs": 0.44579156845259255,
+          "maxMs": 0.4261999999998807
+        },
+        "admission.create": {
+          "count": 1,
+          "totalMs": 16.446100000000115,
+          "meanMs": 16.446100000000115,
+          "p50UpperMs": 16.674540931185085,
+          "p95UpperMs": 16.674540931185085,
+          "maxMs": 16.446100000000115
+        },
+        "runs.get": {
+          "count": 71,
+          "totalMs": 98.3819000000044,
+          "meanMs": 1.3856605633803438,
+          "p50UpperMs": 1.2718953713950725,
+          "p95UpperMs": 2.7264206856132733,
+          "maxMs": 4.754700000000412
+        },
+        "events.read": {
+          "count": 4,
+          "totalMs": 35.57900000000018,
+          "meanMs": 8.894750000000045,
+          "p50UpperMs": 0.8687216524793882,
+          "p95UpperMs": 35.74335935197535,
+          "maxMs": 32.78729999999996
+        },
+        "runs.getThreadCheckpoint": {
+          "count": 1,
+          "totalMs": 0.587800000000243,
+          "meanMs": 0.587800000000243,
+          "p50UpperMs": 0.5933485776104008,
+          "p95UpperMs": 0.5933485776104008,
+          "maxMs": 0.587800000000243
+        },
+        "runs.getInitialThread": {
+          "count": 1,
+          "totalMs": 0.4555000000000291,
+          "meanMs": 0.4555000000000291,
+          "p50UpperMs": 0.49037072529785186,
+          "p95UpperMs": 0.49037072529785186,
+          "maxMs": 0.4555000000000291
+        },
+        "runs.transition": {
+          "count": 2,
+          "totalMs": 7.367600000000039,
+          "meanMs": 3.6838000000000193,
+          "p50UpperMs": 2.999062754174601,
+          "p95UpperMs": 4.830020556225739,
+          "maxMs": 4.422900000000027
+        },
+        "events.append": {
+          "count": 1087,
+          "totalMs": 1918.7036999999882,
+          "meanMs": 1.765136798528048,
+          "p50UpperMs": 1.6928927393268418,
+          "p95UpperMs": 2.7264206856132733,
+          "maxMs": 6.566600000000108
+        },
+        "runs.update": {
+          "count": 43,
+          "totalMs": 97.27440000000206,
+          "meanMs": 2.262195348837257,
+          "p50UpperMs": 2.2532402360440273,
+          "p95UpperMs": 3.6288659325512675,
+          "maxMs": 5.574399999999969
+        },
+        "runs.saveThread": {
+          "count": 22,
+          "totalMs": 23.538600000000315,
+          "meanMs": 1.069936363636378,
+          "p50UpperMs": 1.0511531995000598,
+          "p95UpperMs": 1.5389933993880383,
+          "maxMs": 1.8744999999998981
+        },
+        "modelCatalog.list": {
+          "count": 10,
+          "totalMs": 5.378299999999399,
+          "meanMs": 0.5378299999999399,
+          "p50UpperMs": 0.49037072529785186,
+          "p95UpperMs": 0.955593817727327,
+          "maxMs": 0.9090000000005602
+        },
+        "workspace.resolve": {
+          "count": 1,
+          "totalMs": 1.4582000000000335,
+          "meanMs": 1.4582000000000335,
+          "p50UpperMs": 1.5389933993880383,
+          "p95UpperMs": 1.5389933993880383,
+          "maxMs": 1.4582000000000335
+        },
+        "sessions.upsert": {
+          "count": 30,
+          "totalMs": 42.87209999999959,
+          "meanMs": 1.4290699999999863,
+          "p50UpperMs": 1.39908490853458,
+          "p95UpperMs": 1.8621820132595264,
+          "maxMs": 4.315599999999904
+        },
+        "events.lastLifecycleEvent": {
+          "count": 1,
+          "totalMs": 2.546400000000176,
+          "meanMs": 2.546400000000176,
+          "p50UpperMs": 2.7264206856132733,
+          "p95UpperMs": 2.7264206856132733,
+          "maxMs": 2.546400000000176
+        },
+        "events.finalizationRead": {
+          "count": 1,
+          "totalMs": 32.79069999999956,
+          "meanMs": 32.79069999999956,
+          "p50UpperMs": 35.74335935197535,
+          "p95UpperMs": 35.74335935197535,
+          "maxMs": 32.79069999999956
+        },
+        "runs.markFinalized": {
+          "count": 1,
+          "totalMs": 1.018000000000029,
+          "meanMs": 1.018000000000029,
+          "p50UpperMs": 1.0511531995000598,
+          "p95UpperMs": 1.0511531995000598,
+          "maxMs": 1.018000000000029
+        }
+      },
+      "awaitedPortMs": 2287.1324999999947,
+      "observationMs": 7.297200000001794,
+      "residualMs": 85.24890000000323,
+      "maxConcurrentPortCalls": 2,
+      "checkpoints": [
+        {
+          "pass": 1,
+          "elapsedMs": 327.42570000000023,
+          "snapshotBytes": 800,
+          "snapshotSerializeMs": 0.08550000000013824,
+          "getThreadMs": 1.2087000000001353,
+          "rss": 211795968,
+          "heapTotal": 77680640,
+          "heapUsed": 46958016,
+          "external": 2968751,
+          "arrayBuffers": 117346
+        },
+        {
+          "pass": 2,
+          "elapsedMs": 587.7252999999996,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.023999999999432475,
+          "getThreadMs": 0.7111999999997352,
+          "rss": 212910080,
+          "heapTotal": 77680640,
+          "heapUsed": 50858736,
+          "external": 2985135,
+          "arrayBuffers": 133730
+        },
+        {
+          "pass": 3,
+          "elapsedMs": 822.2962999999995,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.021999999999934516,
+          "getThreadMs": 0.5317000000004555,
+          "rss": 211152896,
+          "heapTotal": 77942784,
+          "heapUsed": 40846872,
+          "external": 2985145,
+          "arrayBuffers": 92370
+        },
+        {
+          "pass": 4,
+          "elapsedMs": 1024.3040999999998,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.017300000000432192,
+          "getThreadMs": 0.46309999999994034,
+          "rss": 212811776,
+          "heapTotal": 77942784,
+          "heapUsed": 43003912,
+          "external": 2951967,
+          "arrayBuffers": 100562
+        },
+        {
+          "pass": 5,
+          "elapsedMs": 1226.8465,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.01540000000022701,
+          "getThreadMs": 0.3753999999998996,
+          "rss": 213008384,
+          "heapTotal": 77942784,
+          "heapUsed": 44635368,
+          "external": 2951967,
+          "arrayBuffers": 100562
+        },
+        {
+          "pass": 6,
+          "elapsedMs": 1431.1959000000002,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.02599999999983993,
+          "getThreadMs": 0.8055999999996857,
+          "rss": 213602304,
+          "heapTotal": 77942784,
+          "heapUsed": 46532400,
+          "external": 2960159,
+          "arrayBuffers": 108754
+        },
+        {
+          "pass": 7,
+          "elapsedMs": 1641.4302000000002,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.02070000000003347,
+          "getThreadMs": 0.5987000000004628,
+          "rss": 213495808,
+          "heapTotal": 78204928,
+          "heapUsed": 47965064,
+          "external": 2968751,
+          "arrayBuffers": 117346
+        },
+        {
+          "pass": 8,
+          "elapsedMs": 1865.8861000000002,
+          "snapshotBytes": 1189,
+          "snapshotSerializeMs": 0.03479999999944994,
+          "getThreadMs": 0.9207000000005792,
+          "rss": 212885504,
+          "heapTotal": 78204928,
+          "heapUsed": 49736032,
+          "external": 2976943,
+          "arrayBuffers": 125538
+        },
+        {
+          "pass": 9,
+          "elapsedMs": 2086.6983999999998,
+          "snapshotBytes": 1188,
+          "snapshotSerializeMs": 0.016099999999823922,
+          "getThreadMs": 0.4444000000003143,
+          "rss": 213778432,
+          "heapTotal": 78729216,
+          "heapUsed": 52290024,
+          "external": 2976943,
+          "arrayBuffers": 125538
+        },
+        {
+          "pass": 10,
+          "elapsedMs": 2298.8250999999996,
+          "snapshotBytes": 1192,
+          "snapshotSerializeMs": 0.030099999999947613,
+          "getThreadMs": 0.6635000000005675,
+          "rss": 214638592,
+          "heapTotal": 78729216,
+          "heapUsed": 53937488,
+          "external": 2984735,
+          "arrayBuffers": 133330
+        }
+      ],
+      "samples": [
+        {
+          "label": "before",
+          "elapsedMs": 0.34609999999975116,
+          "rss": 209641472,
+          "heapTotal": 76894208,
+          "heapUsed": 37262200,
+          "external": 2937492,
+          "arrayBuffers": 75970,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 412032
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 260.38300000000027,
+          "rss": 210145280,
+          "heapTotal": 77418496,
+          "heapUsed": 42661192,
+          "external": 2960159,
+          "arrayBuffers": 108754,
+          "writableBytes": 0,
+          "socketBytesWritten": 29454,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 1985872
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 519.502,
+          "rss": 212824064,
+          "heapTotal": 77680640,
+          "heapUsed": 46895312,
+          "external": 2968351,
+          "arrayBuffers": 116946,
+          "writableBytes": 0,
+          "socketBytesWritten": 68067,
+          "openResponses": 1,
+          "dbBytes": 4096,
+          "walBytes": 3926392
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 779.998,
+          "rss": 212934656,
+          "heapTotal": 77942784,
+          "heapUsed": 50944976,
+          "external": 2976553,
+          "arrayBuffers": 125148,
+          "writableBytes": 0,
+          "socketBytesWritten": 110649,
+          "openResponses": 1,
+          "dbBytes": 352256,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1040.1182000000003,
+          "rss": 212848640,
+          "heapTotal": 77942784,
+          "heapUsed": 45163920,
+          "external": 2951967,
+          "arrayBuffers": 100562,
+          "writableBytes": 0,
+          "socketBytesWritten": 159370,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1295.9163000000003,
+          "rss": 213299200,
+          "heapTotal": 77942784,
+          "heapUsed": 50824112,
+          "external": 2968361,
+          "arrayBuffers": 116956,
+          "writableBytes": 0,
+          "socketBytesWritten": 208407,
+          "openResponses": 1,
+          "dbBytes": 438272,
+          "walBytes": 4124152
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1555.4175,
+          "rss": 211935232,
+          "heapTotal": 77942784,
+          "heapUsed": 42133848,
+          "external": 2951967,
+          "arrayBuffers": 100562,
+          "writableBytes": 0,
+          "socketBytesWritten": 258129,
+          "openResponses": 1,
+          "dbBytes": 520192,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1814.7796999999996,
+          "rss": 212783104,
+          "heapTotal": 78204928,
+          "heapUsed": 46482272,
+          "external": 2968351,
+          "arrayBuffers": 116946,
+          "writableBytes": 0,
+          "socketBytesWritten": 306423,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2066.9244000000003,
+          "rss": 213487616,
+          "heapTotal": 78467072,
+          "heapUsed": 50792536,
+          "external": 2976543,
+          "arrayBuffers": 125138,
+          "writableBytes": 0,
+          "socketBytesWritten": 351501,
+          "openResponses": 1,
+          "dbBytes": 610304,
+          "walBytes": 4144752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2317.9337,
+          "rss": 214646784,
+          "heapTotal": 78729216,
+          "heapUsed": 56047728,
+          "external": 2984735,
+          "arrayBuffers": 133330,
+          "writableBytes": 0,
+          "socketBytesWritten": 395937,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        },
+        {
+          "label": "after-before-gc",
+          "elapsedMs": 2379.7670000000003,
+          "rss": 214306816,
+          "heapTotal": 78729216,
+          "heapUsed": 54425016,
+          "external": 2944175,
+          "arrayBuffers": 92770,
+          "writableBytes": 383,
+          "socketBytesWritten": 397140,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        },
+        {
+          "label": "after-gc",
+          "elapsedMs": 2395.8529000000003,
+          "rss": 214405120,
+          "heapTotal": 78991360,
+          "heapUsed": 39781888,
+          "external": 2944575,
+          "arrayBuffers": 76186,
+          "writableBytes": 0,
+          "socketBytesWritten": 397140,
+          "openResponses": 1,
+          "dbBytes": 696320,
+          "walBytes": 4144752
+        }
+      ],
+      "eventLoopDelayMs": {
+        "mean": 12.290971191709845,
+        "max": 35.717119,
+        "p99": 25.231359
+      },
+      "eventSerialization": {
+        "count": 2,
+        "totalMs": 2.695400000000518,
+        "meanMs": 1.347700000000259,
+        "p50UpperMs": 0.25163771862927237,
+        "p95UpperMs": 2.4785642596484303,
+        "maxMs": 2.4656000000004497,
+        "bytes": 348511,
+        "pageSize": 1000,
+        "sha256": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+        "lateAfter": 990,
+        "lateSha256": "bf62faaa4041f31e760ab842fda9764748312df043b04a866b43b1fdca497a08"
+      },
+      "storageBefore": {
+        "bytes": 448995,
+        "files": 4
+      },
+      "storageAfter": {
+        "bytes": 4873939,
+        "files": 4
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "correctness": {
+        "entries": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "completed": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "types": {
+          "run.queued": 1,
+          "run.started": 1,
+          "node.started": 22,
+          "node.finished": 22,
+          "harness.turn": 10,
+          "harness.session": 10,
+          "harness.submission": 10,
+          "node.progress": 1000,
+          "harness.usage": 10,
+          "decision.made": 10,
+          "exit.evaluated": 1,
+          "run.finished": 1,
+          "return.delivered": 2
+        },
+        "expectedVisits": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "nodeCountsOk": true,
+        "unexpectedAttempts": 0,
+        "succeeded": true,
+        "storedEvents": 1100,
+        "appendEvents": 1099,
+        "progress": 1000,
+        "expectedProgress": 1000,
+        "gates": 10,
+        "passes": 10,
+        "visits": {
+          "start": 1,
+          "work": 10,
+          "gate": 10,
+          "done": 1
+        },
+        "history": 0,
+        "historyValuesOk": true,
+        "terminal": 1,
+        "returnsOk": true,
+        "ok": true,
+        "replayOk": true,
+        "recoveryOk": false
+      },
+      "equivalence": {
+        "eventsSha256": "8c21058c399b70d66b87fe95b3c1885812d6d8e39f2a3b0904cd91a9d2143a5b",
+        "stateSha256": "b6cf0c8e20d213c62c7b1c92b2e5ec17818d6845602f03046e41fc2c78918f46",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "appendSql": {
+        "client.otherStatement": {
+          "count": 6,
+          "totalMs": 14.296700000001238,
+          "meanMs": 2.3827833333335398,
+          "p50UpperMs": 0.33492980349556156,
+          "p95UpperMs": 12.527829399838527,
+          "maxMs": 12.033699999999953
+        },
+        "client.begin": {
+          "count": 1087,
+          "totalMs": 149.96929999999338,
+          "meanMs": 0.1379662373504999,
+          "p50UpperMs": 0.08819748525897504,
+          "p95UpperMs": 0.36842278384511773,
+          "maxMs": 2.523699999999735
+        },
+        "transaction.sequenceLookup": {
+          "count": 1087,
+          "totalMs": 127.73409999999421,
+          "meanMs": 0.11751067157313175,
+          "p50UpperMs": 0.1067189571633598,
+          "p95UpperMs": 0.18905914247127897,
+          "maxMs": 1.0312000000003536
+        },
+        "transaction.insert": {
+          "count": 1087,
+          "totalMs": 109.65039999998498,
+          "meanMs": 0.10087433302666513,
+          "p50UpperMs": 0.09701723378487254,
+          "p95UpperMs": 0.17187194770116268,
+          "maxMs": 0.7686000000003332
+        },
+        "transaction.runSequenceUpdate": {
+          "count": 1087,
+          "totalMs": 92.54999999999836,
+          "meanMs": 0.08514259429622664,
+          "p50UpperMs": 0.08017953205361365,
+          "p95UpperMs": 0.14204293198443194,
+          "maxMs": 0.33549999999922875
+        },
+        "transaction.commit": {
+          "count": 1087,
+          "totalMs": 947.1743999999862,
+          "meanMs": 0.8713655933762523,
+          "p50UpperMs": 0.8687216524793882,
+          "p95UpperMs": 1.2718953713950725,
+          "maxMs": 4.018399999999929
+        }
+      },
+      "liveReplay": {
+        "after": 0,
+        "pauseMs": 0,
+        "initialPauseMs": 0,
+        "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+        "firstMs": 23.55739999999969,
+        "totalMs": 2556.9058999999997,
+        "sha256": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+        "events": 1100,
+        "lastSeq": 1100,
+        "gaps": 0,
+        "receivedBytes": 389301,
+        "wireBytesConsumed": 397196,
+        "reads": 206
+      },
+      "liveReplayComplete": true,
+      "deliveryTailReplay": {
+        "after": 1100,
+        "pauseMs": 0,
+        "initialPauseMs": 0,
+        "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+        "firstMs": null,
+        "totalMs": 7.818199999999706,
+        "sha256": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+        "events": 0,
+        "lastSeq": 1100,
+        "gaps": 0,
+        "receivedBytes": 58,
+        "wireBytesConsumed": 292,
+        "reads": 2
+      },
+      "recovery": {
+        "beforeHash": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+        "afterHash": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+        "events": 1100,
+        "ok": false,
+        "mechanism": "Public clearFinalized port; container close and file-backed reopen; no process crash claim"
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1547,
+        "wallMs": 45.85729999999967
+      },
+      "queueDuring": {
+        "wallMs": 5.839799999999741,
+        "latency": {
+          "count": 16,
+          "totalMs": 88.64439999999968,
+          "meanMs": 5.54027499999998,
+          "p50UpperMs": 5.844324873033145,
+          "p95UpperMs": 5.844324873033145,
+          "maxMs": 5.779999999999745
+        }
+      },
+      "cpuSamples": {
+        "count": 1509,
+        "top": [
+          [
+            ":0 libsql_js::statement::Rows::js_next",
+            812
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+            68
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+            40
+          ],
+          [
+            ":0 (idle)",
+            33
+          ],
+          [
+            ":0 (program)",
+            26
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/dialect.js:29 escapeName",
+            25
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+            23
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+            20
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:504 executeStmt",
+            17
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+            16
+          ],
+          [
+            ":3 ",
+            15
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+            15
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+            12
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+            10
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:53 append",
+            10
+          ],
+          [
+            ":0 (garbage collector)",
+            9
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/tooling/perf/append-observer.mjs:18 ",
+            9
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/apps/api/dist/sse.js:130 encode",
+            9
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:57 ",
+            9
+          ],
+          [
+            ":0 writev",
+            8
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:60 transaction",
+            8
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/tooling/perf/append-observer.mjs:7 record",
+            7
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/dialect.js:65 buildUpdateSet",
+            6
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:402 #settle",
+            6
+          ],
+          [
+            "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/engine/dist/run-manager.js:1613 execute",
+            5
+          ]
+        ]
+      }
+    }
+  ],
+  "boot": {
+    "base": "http://127.0.0.1:6190",
+    "bootMs": 700.3807000000002,
+    "pid": 61412
+  },
+  "idleSqlQueue": {
+    "wallMs": 1.1765000000000327,
+    "latency": {
+      "count": 16,
+      "totalMs": 11.572899999998754,
+      "meanMs": 0.7233062499999221,
+      "p50UpperMs": 0.7179517789085851,
+      "p95UpperMs": 1.156268519450066,
+      "maxMs": 1.0697000000000116
+    }
+  },
+  "correctnessFailure": true,
+  "cpuProfile": {
+    "samples": 2326,
+    "top": [
+      [
+        ":0 libsql_js::statement::Rows::js_next",
+        910
+      ],
+      [
+        ":0 (idle)",
+        158
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+        73
+      ],
+      [
+        ":0 getNearestParentPackageJSON",
+        56
+      ],
+      [
+        ":0 internalModuleStat",
+        50
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+        48
+      ],
+      [
+        ":0 (garbage collector)",
+        44
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+        38
+      ],
+      [
+        ":0 (program)",
+        30
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/dialect.js:29 escapeName",
+        27
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+        25
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+        24
+      ],
+      [
+        ":0 readFileUtf8",
+        23
+      ],
+      [
+        ":0 lstat",
+        23
+      ],
+      [
+        "node:internal/modules/cjs/loader:1444 wrapSafe",
+        23
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+        22
+      ],
+      [
+        ":3 ",
+        21
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+        20
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:504 executeStmt",
+        20
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+        12
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:149 ",
+        12
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:53 append",
+        10
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:371 next",
+        10
+      ],
+      [
+        ":0 readPackageJSON",
+        9
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/tooling/perf/append-observer.mjs:18 ",
+        9
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/apps/api/dist/sse.js:130 encode",
+        9
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:57 ",
+        9
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:97 inst._zod.run",
+        9
+      ],
+      [
+        "%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/find-my-way@9.9.0/node_modules/find-my-way/lib/node.js:209 _compilePrefixMatch",
+        8
+      ],
+      [
+        ":0 writev",
+        8
+      ]
+    ]
+  }
+}

@@ -1,0 +1,1499 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index af10f603..c222eb38 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Separate execution outcome from durable finalization across run reads, SSE, client waits, MCP and the inspector. Pending returns keep subscriptions live; final delivery failures remain distinct from execution success. **Upgrade:** update API, api-client and MCP callers together: run snapshots expose optional finalizedAt; waitForRun/wait_for_run finished now requires terminal execution and that acknowledgement, and SSE completes only after finalization. Inspect deliveries and return.failed for delivery outcome. No migration or store reset. (#185)
++
+ - Enforce visible, pinned structured-completion deadlines for LLM decision evaluations and output-transform repairs through the structured port, abort overdue Codex work, release run capacity and discard late results while preserving explicit cancellation. No completion deadline applies by default; Unlimited removes that cutoff. **Upgrade:** engine embedders configure `LoopSettings.structuredTimeoutMs` instead of the previously unenforced `EngineSettings.structuredTimeoutMs`; startup migration `0019_completion_deadline_defaults` materializes omitted loop/pin deadline values as null in drafts, versions, run snapshots, queued events and admission intents, preserving authored values. This also fixes reopening pre-#243 loops without `runDeadlineSeconds`. Same-session inference schema repairs follow node/run timeouts. Timeout details retain the completion provider, model and effort. Direct evaluator callers must supply `runId` and `structuredTimeoutMs` (null for Unlimited). Export and API clients must accept the nullable loop-settings field `structuredTimeoutMs`, `pinned.limits.structuredTimeoutMs` and the `STRUCTURED_COMPLETION_TIMEOUT` value of `RunErrorCode`. Regenerate clients for this contract. (#270)
+ 
+ - Page SSE replay and bound transport buffering, honour backpressure, and report slow readers explicitly with cursor recovery. Replay and live notification overflow catch up from durable history on the same connection; transient replay failures retry. Bounded lifecycle and tail reads confirm completion only after historical outcomes and durable delivery audits are delivered; an id-less `stream.complete` control also completes empty terminal cursors. Stored-history corruption is fatal before or after SSE headers. The inspector shows the retry reason and bounds held batches using the client's received JSON size. History browsing follows in #186 round 2. **Upgrade:** rebuild the API, API client and web together for `stream.complete`, typed stream failures and the `onEvent(event, jsonBytes)` callback; SSE consumers must wait for completion rather than stop at historical terminal events. No store migration is required. (#186)
+diff --git a/apps/api/src/adversarial.test.ts b/apps/api/src/adversarial.test.ts
+index 0ac5bd3a..ac50f1e9 100644
+--- a/apps/api/src/adversarial.test.ts
++++ b/apps/api/src/adversarial.test.ts
+@@ -554,6 +554,8 @@ describe('adversarial API invariants', () => {
+       { type: 'run.finished', status: 'succeeded', outcome: 'success' },
+     ]);
+     await t.container.repos.runs.update(r.id, { status: 'succeeded' });
++    // This fabricated completed-history fixture also acknowledges terminal cleanup.
++    await t.container.repos.runs.markFinalized(r.id);
+     const res = await t.app.inject({
+       url: `/runs/${r.id}/events`,
+       headers: { accept: 'text/event-stream' },
+diff --git a/apps/api/src/edges.test.ts b/apps/api/src/edges.test.ts
+index bfd49ce6..6ba0e347 100644
+--- a/apps/api/src/edges.test.ts
++++ b/apps/api/src/edges.test.ts
+@@ -337,7 +337,10 @@ describe('SSE framing', () => {
+     } as unknown as EventStorePort;
+     const app = await buildApp(t.container, { logger: false });
+     app.get('/probe/sse', (request, reply) =>
+-      streamRunEvents(request, reply, store, 'r1', 0, { heartbeatMs: 5 }),
++      streamRunEvents(request, reply, store, 'r1', 0, {
++        heartbeatMs: 5,
++        isFinalized: () => Promise.resolve(true),
++      }),
+     );
+     try {
+       const pending = app.inject('/probe/sse');
+@@ -389,11 +392,14 @@ describe('SSE terminal runs', () => {
+   async function probe(
+     store: EventStorePort,
+     after: number,
+-    options: Parameters<typeof streamRunEvents>[5],
++    options: Omit<Parameters<typeof streamRunEvents>[5], 'isFinalized'>,
+   ) {
+     const app = await buildApp(t.container, { logger: false });
+     app.get('/probe/sse', (request, reply) =>
+-      streamRunEvents(request, reply, store, 'r1', after, options),
++      streamRunEvents(request, reply, store, 'r1', after, {
++        ...options,
++        isFinalized: () => Promise.resolve(true),
++      }),
+     );
+     return app;
+   }
+diff --git a/apps/api/src/finalization.test.ts b/apps/api/src/finalization.test.ts
+new file mode 100644
+index 00000000..fbc9b5c4
+--- /dev/null
++++ b/apps/api/src/finalization.test.ts
+@@ -0,0 +1,110 @@
++import { createServer, type ServerResponse } from 'node:http';
++import { afterAll, beforeAll, expect, it, vi } from 'vitest';
++import type { RunRecord } from '@graphgoblin/contracts';
++import { createTestApp } from './testing/test-app.js';
++
++let response: ServerResponse | undefined;
++function closePending() {
++  response?.end();
++}
++const receiver = createServer((req, res) => {
++  req.resume();
++  req.on('end', () => {
++    response = res;
++  });
++});
++let receiverUrl: string;
++beforeAll(async () => {
++  await new Promise<void>((ok) => receiver.listen(0, '127.0.0.1', ok));
++  const address = receiver.address();
++  if (!address || typeof address === 'string') throw Error('Missing receiver address');
++  receiverUrl = 'http://127.0.0.1:' + address.port;
++});
++afterAll(async () => {
++  receiver.closeAllConnections();
++  await new Promise<void>((ok) => receiver.close(() => ok()));
++});
++
++it.each([200, 400])(
++  'keeps terminal and consumed-cursor streams live until HTTP %i finalization',
++  { timeout: 20_000 },
++  async (status) => {
++    response = undefined;
++    const api = await createTestApp();
++    const base = await api.app.listen({ host: '127.0.0.1', port: 0 });
++    const controllers: AbortController[] = [];
++    try {
++      const loopId = await api.publishLoop({
++        schemaVersion: 4,
++        name: 'Finalization ' + status,
++        nodes: [
++          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++          {
++            id: 'done',
++            kind: 'exit',
++            label: 'Done',
++            config: {
++              returns: 'trigger.payload',
++              destinations: [{ kind: 'webhook', url: receiverUrl }],
++            },
++          },
++        ],
++        edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
++      });
++      const started = await api.app.inject({
++        method: 'POST',
++        url: '/loops/' + loopId + '/runs',
++        payload: { input: 42 },
++      });
++      const { run } = started.json<{ run: { id: string } }>();
++      await vi.waitFor(() => expect(response).toBeDefined());
++      const history = (await api.app.inject('/runs/' + run.id + '/events')).json<{
++        items: { seq: number; type: string }[];
++      }>();
++      const terminal = history.items.find((event) => event.type === 'run.finished')!;
++      const streams = await Promise.all(
++        [0, terminal.seq, terminal.seq + 100].map(async (after) => {
++          const controller = new AbortController();
++          controllers.push(controller);
++          const http = await fetch(base + '/runs/' + run.id + '/events?after=' + after, {
++            headers: { accept: 'text/event-stream' },
++            signal: controller.signal,
++          });
++          let complete = false;
++          const text = http.text().then((body) => {
++            complete = true;
++            return body;
++          });
++          return { after, text, complete: () => complete };
++        }),
++      );
++      // Longer than the old 2-second terminal grace: pending delivery is a live stream.
++      await new Promise((ok) => setTimeout(ok, 2100));
++      expect(streams.map((stream) => stream.complete())).toEqual([false, false, false]);
++      const pending = (await api.app.inject('/runs/' + run.id)).json<RunRecord>();
++      expect(pending.status).toBe('succeeded');
++      expect(pending.finalizedAt).toBeUndefined();
++      expect(pending.deliveries?.[0]?.status).toBe('pending');
++      response!.writeHead(status).end('ack');
++      await api.idle();
++      const bodies = await Promise.all(streams.map((stream) => stream.text));
++      expect(bodies[0]).toContain('event: delivery.finished');
++      expect(bodies[1]).toContain('event: delivery.finished');
++      expect(bodies[2]).not.toContain('event: delivery.finished');
++      for (const body of bodies) expect(body).toContain('event: stream.complete');
++      const final = (await api.app.inject('/runs/' + run.id)).json<RunRecord>();
++      expect(final.finalizedAt).toEqual(expect.any(String));
++      expect(final.status).toBe('succeeded');
++      expect(final.deliveries?.[0]?.status).toBe(status === 200 ? 'delivered' : 'failed');
++      const alreadyConsumed = await fetch(
++        base + '/runs/' + run.id + '/events?after=' + final.lastEventSeq,
++        { headers: { accept: 'text/event-stream' } },
++      );
++      expect(await alreadyConsumed.text()).toContain('event: stream.complete');
++    } finally {
++      controllers.forEach((controller) => controller.abort());
++      closePending();
++      await api.close();
++    }
++  },
++);
+diff --git a/apps/api/src/routes/runs.ts b/apps/api/src/routes/runs.ts
+index f1552438..4602e5f0 100644
+--- a/apps/api/src/routes/runs.ts
++++ b/apps/api/src/routes/runs.ts
+@@ -225,6 +225,13 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void
+             const run = await repos.runs.get(request.params.id);
+             return run !== undefined && isTerminal(run.status);
+           },
++          isFinalized: async () => {
++            const run = await repos.runs.get(request.params.id);
++            return (
++              run?.finalizedAt !== undefined &&
++              !run.deliveries?.some((delivery) => delivery.status === 'pending')
++            );
++          },
+           lastLifecycleEvent: () => repos.events.lastLifecycleEvent(request.params.id),
+         });
+         return reply;
+diff --git a/apps/api/src/sse-bounds.test.ts b/apps/api/src/sse-bounds.test.ts
+index 56fbad50..bc2376a8 100644
+--- a/apps/api/src/sse-bounds.test.ts
++++ b/apps/api/src/sse-bounds.test.ts
+@@ -29,7 +29,11 @@ describe('bounded SSE transport', () => {
+         }),
+     };
+     const app = Fastify();
+-    app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
++    app.get('/', (request, reply) =>
++      streamRunEvents(request, reply, store, runId, 0, {
++        isFinalized: () => Promise.resolve(true),
++      }),
++    );
+     const base = await app.listen({ host: '127.0.0.1', port: 0 });
+     try {
+       const response = await fetch(base);
+@@ -63,7 +67,11 @@ describe('bounded SSE transport', () => {
+         },
+       };
+       const app = Fastify();
+-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, after));
++      app.get('/', (request, reply) =>
++        streamRunEvents(request, reply, store, runId, after, {
++          isFinalized: () => Promise.resolve(true),
++        }),
++      );
+       try {
+         const response = await app.inject('/');
+         expect(reads.every(({ limit }) => limit !== undefined && limit <= 128)).toBe(true);
+@@ -92,7 +100,11 @@ describe('bounded SSE transport', () => {
+         },
+       };
+       const app = Fastify();
+-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
++      app.get('/', (request, reply) =>
++        streamRunEvents(request, reply, store, runId, 0, {
++          isFinalized: () => Promise.resolve(true),
++        }),
++      );
+       const base = await app.listen({ host: '127.0.0.1', port: 0 });
+       try {
+         const response = await fetch(base);
+@@ -177,7 +189,10 @@ describe('bounded SSE transport', () => {
+         };
+       },
+     };
+-    const options: SseOptions & { drainTimeoutMs: number } = { drainTimeoutMs: 100 };
++    const options: SseOptions & { drainTimeoutMs: number } = {
++      drainTimeoutMs: 100,
++      isFinalized: () => Promise.resolve(true),
++    };
+     app.get<{ Querystring: { after?: string } }>('/', (request, reply) =>
+       streamRunEvents(
+         request,
+@@ -185,7 +200,9 @@ describe('bounded SSE transport', () => {
+         transportStore,
+         run.id,
+         Number(request.query.after ?? 0),
+-        request.query.after ? { drainTimeoutMs: 5_000 } : options,
++        request.query.after
++          ? { drainTimeoutMs: 5_000, isFinalized: () => Promise.resolve(true) }
++          : options,
+       ),
+     );
+     const base = await app.listen({ host: '127.0.0.1', port: 0 });
+diff --git a/apps/api/src/sse-catchup.test.ts b/apps/api/src/sse-catchup.test.ts
+index 075b5a3d..3ccb0281 100644
+--- a/apps/api/src/sse-catchup.test.ts
++++ b/apps/api/src/sse-catchup.test.ts
+@@ -54,7 +54,11 @@ describe('durable SSE catch-up', () => {
+         },
+       };
+       const app = Fastify();
+-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
++      app.get('/', (request, reply) =>
++        streamRunEvents(request, reply, store, runId, 0, {
++          isFinalized: () => Promise.resolve(true),
++        }),
++      );
+       const base = await app.listen({ host: '127.0.0.1', port: 0 });
+       try {
+         const text = await (await fetch(base)).text();
+@@ -115,7 +119,11 @@ describe('durable SSE catch-up', () => {
+         },
+       };
+       const app = Fastify();
+-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
++      app.get('/', (request, reply) =>
++        streamRunEvents(request, reply, store, runId, 0, {
++          isFinalized: () => Promise.resolve(true),
++        }),
++      );
+       try {
+         const response = await app.inject('/');
+         expect(response.statusCode).toBe(200);
+@@ -169,7 +177,10 @@ describe('durable SSE catch-up', () => {
+         lastLifecycleEvent: () => Promise.resolve(log.at(-1)),
+       };
+       app.get('/', (request, reply) =>
+-        streamRunEvents(request, reply, store, runId, count + past, options),
++        streamRunEvents(request, reply, store, runId, count + past, {
++          ...options,
++          isFinalized: () => Promise.resolve(true),
++        }),
+       );
+       try {
+         const response = await app.inject('/');
+@@ -225,7 +236,10 @@ describe('durable SSE catch-up', () => {
+       lastLifecycleEvent: () => Promise.resolve(terminal),
+     };
+     app.get('/', (request, reply) =>
+-      streamRunEvents(request, reply, store, runId, terminal!.seq, options),
++      streamRunEvents(request, reply, store, runId, terminal!.seq, {
++        ...options,
++        isFinalized: () => Promise.resolve(true),
++      }),
+     );
+     try {
+       const response = await app.inject('/');
+@@ -265,7 +279,10 @@ describe('durable SSE catch-up', () => {
+       };
+       const app = Fastify();
+       app.get('/', (request, reply) =>
+-        streamRunEvents(request, reply, events, runId, log.at(-1)!.seq, options),
++        streamRunEvents(request, reply, events, runId, log.at(-1)!.seq, {
++          ...options,
++          isFinalized: () => Promise.resolve(true),
++        }),
+       );
+       try {
+         const response = await app.inject('/');
+@@ -307,7 +324,9 @@ describe('durable SSE catch-up', () => {
+     };
+     app.get('/', (request, reply) => {
+       expect(reply.raw.writableHighWaterMark).toBe(1_048_576);
+-      return streamRunEvents(request, reply, store, runId, 0);
++      return streamRunEvents(request, reply, store, runId, 0, {
++        isFinalized: () => Promise.resolve(true),
++      });
+     });
+     const base = await app.listen({ host: '127.0.0.1', port: 0 });
+     try {
+diff --git a/apps/api/src/sse-completion.test.ts b/apps/api/src/sse-completion.test.ts
+index 9f8a3b9a..2ce4c62d 100644
+--- a/apps/api/src/sse-completion.test.ts
++++ b/apps/api/src/sse-completion.test.ts
+@@ -106,6 +106,8 @@ describe('authoritative SSE completion', () => {
+           sql: 'UPDATE runs SET status = ? WHERE id = ?',
+           args: ['succeeded', run.id],
+         });
++        // The completed-history fixture includes the durable finalizer acknowledgement.
++        await t.container.repos.runs.markFinalized(run.id);
+         const log = await store.read(run.id);
+         const response = await t.app.inject({
+           url: `/runs/${run.id}/events?after=${after}`,
+@@ -139,6 +141,7 @@ describe('authoritative SSE completion', () => {
+     const app = Fastify();
+     app.get('/', (request, reply) =>
+       streamRunEvents(request, reply, store, runId, 106, {
++        isFinalized: () => Promise.resolve(true),
+         isTerminal: () => Promise.resolve(false),
+         lastLifecycleEvent: async () => {
+           const marker = await latestLifecycle(store, runId);
+@@ -174,6 +177,7 @@ describe('authoritative SSE completion', () => {
+     const app = Fastify();
+     app.get('/', (request, reply) =>
+       streamRunEvents(request, reply, store, runId, 112, {
++        isFinalized: () => Promise.resolve(true),
+         // Status lags, so the first lookup is the post-catch-up confirmation itself.
+         isTerminal: () => Promise.resolve(false),
+         lastLifecycleEvent: async () => {
+@@ -215,6 +219,7 @@ describe('authoritative SSE completion', () => {
+       const app = Fastify();
+       app.get('/', (request, reply) =>
+         streamRunEvents(request, reply, store, runId, 1, {
++          isFinalized: () => Promise.resolve(true),
+           // The outcome is durable, but the status write has not landed yet.
+           isTerminal: () => Promise.resolve(false),
+           lastLifecycleEvent: async () =>
+@@ -246,6 +251,7 @@ describe('authoritative SSE completion', () => {
+       const app = Fastify();
+       app.get('/', (request, reply) =>
+         streamRunEvents(request, reply, store, runId, 0, {
++          isFinalized: () => Promise.resolve(true),
+           lastLifecycleEvent: async () => {
+             const log = await store.read(runId);
+             const marker = log.findLast((event) =>
+diff --git a/apps/api/src/sse.ts b/apps/api/src/sse.ts
+index bd9969be..3ea98fe0 100644
+--- a/apps/api/src/sse.ts
++++ b/apps/api/src/sse.ts
+@@ -30,6 +30,8 @@ export interface SseOptions {
+   isTerminal?: () => Promise<boolean>;
+   /** Bounded lookup of the latest terminal/started/resumed marker; absent marker uses grace. */
+   lastLifecycleEvent?: () => Promise<RunEvent | undefined>;
++  /** Existing durable finalizer acknowledgement; terminal execution alone is insufficient. */
++  isFinalized: () => Promise<boolean>;
+   /** Defensive close for a terminal status with no terminal event. Default 2 s. */
+   terminalGraceMs?: number;
+   /** Maximum time without drain before explicit slow-consumer failure. Default 5 s. */
+@@ -58,7 +60,7 @@ export async function streamRunEvents(
+   store: EventStorePort,
+   runId: string,
+   after: number,
+-  options: SseOptions = {},
++  options: SseOptions,
+ ): Promise<void> {
+   const res = reply.raw;
+   let closed = false;
+@@ -80,6 +82,7 @@ export async function streamRunEvents(
+   let failure: StreamProblem | undefined;
+   let heartbeat: ReturnType<typeof setInterval> | undefined;
+   let grace: ReturnType<typeof setTimeout> | undefined;
++  let confirmation: ReturnType<typeof setTimeout> | undefined;
+   let forceClose: ReturnType<typeof setTimeout> | undefined;
+   let releaseDrain: (() => void) | undefined;
+   let unsubscribe = () => {};
+@@ -87,6 +90,7 @@ export async function streamRunEvents(
+   const cleanup = (): void => {
+     clearInterval(heartbeat);
+     clearTimeout(grace);
++    clearTimeout(confirmation);
+     const stop = unsubscribe;
+     unsubscribe = () => {};
+     stop();
+@@ -240,6 +244,17 @@ export async function streamRunEvents(
+             needsConfirmation = false;
+             break;
+           }
++          // The existing marker is written after every return receipt and terminal cleanup.
++          // It has no event of its own, so a quiet pending finalizer gets one bounded recheck
++          // per 250 ms. This is observation latency, not a delivery or execution deadline.
++          if (!(await options.isFinalized())) {
++            confirmation ??= setTimeout(() => {
++              confirmation = undefined;
++              needsConfirmation = true;
++              void flushLive();
++            }, 250);
++            break;
++          }
+           // The lifecycle lookup can race a resume or a delivery audit. Read AFTER it and
+           // keep the writer locked through this confirmation and the completion control.
+           // Nothing already durable at this read may be omitted, even after a terminal row.
+@@ -357,7 +372,10 @@ export async function streamRunEvents(
+     await flushLive();
+     if (closed || !terminal) return;
+     // Grace is deliberately unconfirmed EOF, never authoritative stream.complete.
+-    if (!closed) grace = setTimeout(() => end(), options.terminalGraceMs ?? 2_000);
++    // A known outcome with outstanding finalization is a live stream, not an inconsistent log.
++    // Only a missing/currently active lifecycle retains the pre-existing defensive grace.
++    if (!closed && confirmation === undefined)
++      grace = setTimeout(() => end(), options.terminalGraceMs ?? 2_000);
+   } catch (error) {
+     if (closed) return;
+     if (!started) {
+diff --git a/apps/mcp/src/describe.ts b/apps/mcp/src/describe.ts
+index 05635a0e..b0f85dd0 100644
+--- a/apps/mcp/src/describe.ts
++++ b/apps/mcp/src/describe.ts
+@@ -130,6 +130,7 @@ export function summarizeRun(run: RunRecord) {
+     /** The definition the run executes for its whole life, e.g. "Review v3" or "Review draft v4". */
+     definition: run.pinned.label,
+     status: run.status,
++    ...(run.finalizedAt ? { finalizedAt: run.finalizedAt } : {}),
+     ...(run.deliveries ? { deliveries: run.deliveries } : {}),
+     ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
+     iteration: run.iteration,
+diff --git a/apps/mcp/src/tools.ts b/apps/mcp/src/tools.ts
+index 3bd9e323..291a2c6a 100644
+--- a/apps/mcp/src/tools.ts
++++ b/apps/mcp/src/tools.ts
+@@ -77,6 +77,8 @@ function nextStep(run: RunRecord): string {
+     return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal with waitId from the observed waiting.waitId if you are the one expected to send it; otherwise call wait_for_run again.`;
+   }
+   if (run.status === 'paused') return 'The run is paused. Call resume_run to continue it.';
++  if (['succeeded', 'failed', 'cancelled', 'exhausted'].includes(run.status))
++    return 'Execution ended; finalization is pending. Inspect deliveries for result delivery state, and call wait_for_run again.';
+   return 'The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far.';
+ }
+ 
+@@ -180,7 +182,7 @@ export function registerTools(
+     'wait_for_run',
+     {
+       title: 'Wait for a run',
+-      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). The finished flag refers to execution only; inspect run.deliveries separately for pending or failed webhook returns. If execution finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
++      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). The finished flag requires terminal execution and run.finalizedAt. Delivery failure is final too: inspect run.deliveries and return.failed events separately from execution status. When fully finalized it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
+       inputSchema: {
+         runId,
+         timeoutSeconds: z
+@@ -232,6 +234,8 @@ export function registerTools(
+         return {
+           finished: false,
+           status: run.status,
++          ...(run.finalizedAt ? { finalizedAt: run.finalizedAt } : {}),
++          ...(run.deliveries ? { deliveries: run.deliveries } : {}),
+           cursor: run.lastEventSeq,
+           ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
+           ...(run.waiting ? { waiting: run.waiting } : {}),
+diff --git a/apps/mcp/src/units.test.ts b/apps/mcp/src/units.test.ts
+index e79cf054..de84c59c 100644
+--- a/apps/mcp/src/units.test.ts
++++ b/apps/mcp/src/units.test.ts
+@@ -214,6 +214,10 @@ describe('describe helpers', () => {
+       createdAt: '2026-10-02T00:00:00.000Z',
+       lastEventSeq: 3,
+     } as const;
++    expect(summarizeRun({ ...run, finalizedAt: run.createdAt })).toHaveProperty(
++      'finalizedAt',
++      run.createdAt,
++    );
+     expect(summarizeRun(run)).toEqual({
+       id: run.id,
+       loopId: run.loopId,
+diff --git a/apps/mcp/src/webhook-delivery.test.ts b/apps/mcp/src/webhook-delivery.test.ts
+index f2c86475..cb155f1f 100644
+--- a/apps/mcp/src/webhook-delivery.test.ts
++++ b/apps/mcp/src/webhook-delivery.test.ts
+@@ -7,7 +7,12 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+ import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
+ import { createTestApp } from '@graphgoblin/api/testing';
+-import { createGraphGoblinClient, runs, waitForRun } from '@graphgoblin/api-client';
++import {
++  createGraphGoblinClient,
++  runs,
++  waitForRun,
++  subscribeRunEvents,
++} from '@graphgoblin/api-client';
+ import { createMcpServer } from './server.js';
+ 
+ let response: ServerResponse | undefined;
+@@ -53,7 +58,7 @@ it.each([200, 400])(
+   { timeout: 30_000 },
+   async (status) => {
+     response = undefined;
+-    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-interfaces-'));
++    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-185-interfaces-'));
+     const api = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
+     const baseUrl = await api.app.listen({ host: '127.0.0.1', port: 0 });
+     const client = createGraphGoblinClient({ baseUrl });
+@@ -63,7 +68,12 @@ it.each([200, 400])(
+     const mcp = new Client({ name: 'delivery-test', version: '1' });
+     await mcp.connect(clientTransport);
+     const call = async (name: string, runId: string) =>
+-      payload(await mcp.callTool({ name, arguments: { runId } }));
++      payload(
++        await mcp.callTool({
++          name,
++          arguments: { runId, ...(name === 'wait_for_run' ? { timeoutSeconds: 1 } : {}) },
++        }),
++      );
+     try {
+       const loopId = await api.publishLoop({
+         schemaVersion: 4,
+@@ -94,16 +104,50 @@ it.each([200, 400])(
+         deliveries: pending.deliveries,
+       });
+       expect(await call('wait_for_run', started.id)).toMatchObject({
+-        finished: true,
+-        run: { status: 'succeeded', deliveries: pending.deliveries },
++        finished: false,
++        status: 'succeeded',
++        deliveries: pending.deliveries,
+       });
+-      expect(await waitForRun(client, started.id, { timeoutMs: 1000 })).toMatchObject({
+-        finished: true,
++      expect(await waitForRun(client, started.id, { timeoutMs: 100 })).toMatchObject({
++        finished: false,
+         run: { deliveries: pending.deliveries },
+       });
+-      acknowledge(status);
++      const terminal = (await runs.events(client, started.id)).items.find(
++        (event) => event.type === 'run.finished',
++      )!;
++      const subscriptions = [0, terminal.seq, pending.lastEventSeq + 100].map((after) => {
++        let settled = false;
++        const events: string[] = [];
++        const sub = subscribeRunEvents({
++          client,
++          runId: started.id,
++          after,
++          onEvent: (event) => {
++            events.push(event.type);
++          },
++        });
++        void sub.done.then(
++          () => {
++            settled = true;
++          },
++          () => undefined,
++        );
++        return { sub, events, settled: () => settled };
++      });
++      try {
++        await new Promise((ok) => setTimeout(ok, 100));
++        expect(subscriptions.map((s) => s.settled())).toEqual([false, false, false]);
++        acknowledge(status);
++        await Promise.all(subscriptions.map((s) => s.sub.done));
++        expect(subscriptions[0]?.events).toContain('delivery.finished');
++        expect(subscriptions[1]?.events).toContain('delivery.finished');
++      } finally {
++        subscriptions.forEach((s) => s.sub.close());
++      }
++
+       await api.idle();
+       const final = await runs.get(client, started.id);
++      expect(final.finalizedAt).toEqual(expect.any(String));
+       expect(final).toMatchObject({
+         status: 'succeeded',
+         result: { answer: 42 },
+@@ -122,7 +166,7 @@ it.each([200, 400])(
+       await server.close();
+       await api.close();
+       expect(dirname(dataDir)).toBe(resolve(tmpdir()));
+-      expect(basename(dataDir).startsWith('gg-wp-d2-interfaces-')).toBe(true);
++      expect(basename(dataDir).startsWith('gg-wp-d2-185-interfaces-')).toBe(true);
+       await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+     }
+   },
+diff --git a/apps/web/e2e/webhook-delivery.spec.ts b/apps/web/e2e/webhook-delivery.spec.ts
+index 8fa412a9..07f0c0d2 100644
+--- a/apps/web/e2e/webhook-delivery.spec.ts
++++ b/apps/web/e2e/webhook-delivery.spec.ts
+@@ -1,8 +1,9 @@
+-import { test, expect } from './fixtures.js';
++import { test, expect, control, publishLoop } from './fixtures.js';
+ import { createServer, type ServerResponse } from 'node:http';
+ 
+ let receiverUrl: string;
+ let acknowledge = false;
++let acknowledgementStatus = 200;
+ const uncertainRequests: string[] = [];
+ const held = new Set<ServerResponse>();
+ const receiver = createServer((req, res) => {
+@@ -17,7 +18,7 @@ const receiver = createServer((req, res) => {
+       } else res.writeHead(uncertainRequests.length === 2 ? 429 : 200).end('ack');
+       return;
+     }
+-    if (acknowledge) res.writeHead(200).end('ack');
++    if (acknowledge) res.writeHead(acknowledgementStatus).end('ack');
+     else {
+       held.add(res);
+       res.once('close', () => held.delete(res));
+@@ -58,7 +59,9 @@ test('inspector retains unknown acknowledgement after a rejection and eventual s
+   ).json()) as { run: { id: string } };
+   await page.goto('/app/runs/' + run.id);
+   await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
+-  await expect(page.getByText(/HTTP 429/)).toBeVisible();
++  await expect(
++    page.getByRole('region', { name: 'Webhook delivery' }).getByText(/HTTP 429/),
++  ).toBeVisible();
+   await expect(page.getByText(/An acknowledgement was unknown/)).toBeVisible();
+   expect(uncertainRequests).toHaveLength(3);
+   expect(new Set(uncertainRequests).size).toBe(1);
+@@ -85,49 +88,118 @@ test.afterAll(async () => {
+   await new Promise<void>((ok) => receiver.close(() => ok()));
+ });
+ 
+-test('inspector updates pending delivery to delivered without a reload while execution stays succeeded', async ({
+-  page,
+-  request,
+-}, testInfo) => {
+-  const made = await request.post('/loops', {
+-    data: {
+-      definition: {
+-        schemaVersion: 4,
+-        name: 'Browser webhook delivery',
+-        nodes: [
+-          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+-          {
+-            id: 'done',
+-            kind: 'exit',
+-            label: 'Done',
+-            config: {
+-              returns: 'trigger.payload',
+-              destinations: [{ kind: 'webhook', url: receiverUrl + '/hook' }],
+-            },
++for (const finalStatus of [200, 400]) {
++  test(
++    'inspector finalizes HTTP ' + finalStatus + ' without a reload while execution stays succeeded',
++    async ({ page, request }, testInfo) => {
++      acknowledge = false;
++      acknowledgementStatus = finalStatus;
++      const made = await request.post('/loops', {
++        data: {
++          definition: {
++            schemaVersion: 4,
++            name: 'Browser webhook delivery ' + finalStatus,
++            nodes: [
++              { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++              {
++                id: 'done',
++                kind: 'exit',
++                label: 'Done',
++                config: {
++                  returns: 'trigger.payload',
++                  destinations: [{ kind: 'webhook', url: receiverUrl + '/hook' }],
++                },
++              },
++            ],
++            edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+           },
+-        ],
+-        edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+-      },
++        },
++      });
++      expect(made.status()).toBe(201);
++      const { loop } = (await made.json()) as { loop: { id: string } };
++      expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
++      const started = await request.post('/loops/' + loop.id + '/runs', {
++        data: { input: { answer: 42 } },
++      });
++      const { run } = (await started.json()) as { run: { id: string } };
++      await page.goto('/app/runs/' + run.id);
++      await expect(
++        page.getByText('Execution: succeeded. Delivery is tracked separately.'),
++      ).toBeVisible();
++      await expect(page.getByText(/Pending \(\d\/5 attempts\)/)).toBeVisible();
++      await expect(page.getByText(/Delivery identity:/)).toBeVisible();
++      await expect(page.getByRole('heading', { name: /^Timeline .*live\)/ })).toBeVisible();
++      await expect(page.getByText('Execution ended; finalization pending.')).toBeVisible();
++      acknowledge = true;
++      for (const res of held) res.writeHead(finalStatus).end('ack');
++      await expect(
++        page.getByText(
++          finalStatus === 200 ? /Delivered after \d attempts?/ : /Failed after \d attempts?/,
++        ),
++      ).toBeVisible();
++      await expect(
++        page.getByText('Execution: succeeded. Delivery is tracked separately.'),
++      ).toBeVisible();
++      await expect(page.getByRole('heading', { name: /^Timeline .*complete\)/ })).toBeVisible();
++      await expect(page.getByText('Fully finalized.')).toBeVisible();
++      await page.screenshot({ path: testInfo.outputPath('delivered.png'), fullPage: true });
+     },
++  );
++}
++
++test('remote resume that finishes between polls stays live while its webhook is pending', async ({
++  page,
++  request,
++}) => {
++  acknowledge = false;
++  acknowledgementStatus = 200;
++  await control(request, '/harness/script', {
++    turns: [
++      { error: { code: 'TURN_FAILED', message: 'controlled resumable failure' } },
++      { finalText: 'recovered without a provider call' },
++    ],
+   });
+-  expect(made.status()).toBe(201);
+-  const { loop } = (await made.json()) as { loop: { id: string } };
+-  expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+-  const started = await request.post('/loops/' + loop.id + '/runs', {
+-    data: { input: { answer: 42 } },
++  const loopId = await publishLoop(request, {
++    schemaVersion: 4,
++    name: 'Remote resume delivery completion',
++    nodes: [
++      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++      {
++        id: 'work',
++        kind: 'inference',
++        label: 'Work',
++        config: { prompt: { template: 'controlled turn' } },
++      },
++      {
++        id: 'done',
++        kind: 'exit',
++        label: 'Done',
++        config: {
++          returns: 'trigger.payload',
++          destinations: [{ kind: 'webhook', url: receiverUrl + '/remote' }],
++        },
++      },
++    ],
++    edges: [
++      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
++      { id: 'b', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
++    ],
+   });
+-  const { run } = (await started.json()) as { run: { id: string } };
+-  await page.goto('/app/runs/' + run.id);
+-  await expect(
+-    page.getByText('Execution: succeeded. Delivery is tracked separately.'),
+-  ).toBeVisible();
+-  await expect(page.getByText(/Pending \(\d\/5 attempts\)/)).toBeVisible();
+-  await expect(page.getByText(/Delivery identity:/)).toBeVisible();
+-  acknowledge = true;
+-  for (const res of held) res.writeHead(200).end('ack');
+-  await expect(page.getByText(/Delivered after \d attempts?/)).toBeVisible();
+-  await expect(
+-    page.getByText('Execution: succeeded. Delivery is tracked separately.'),
+-  ).toBeVisible();
+-  await page.screenshot({ path: testInfo.outputPath('delivered.png'), fullPage: true });
++  const { run } = (await (
++    await request.post('/loops/' + loopId + '/runs', { data: { input: 42 } })
++  ).json()) as { run: { id: string } };
++  try {
++    await page.goto('/app/runs/' + run.id);
++    await expect(page.getByRole('heading', { name: /^Timeline .*complete\)/ })).toBeVisible();
++    expect((await request.post('/runs/' + run.id + '/resume', { data: {} })).ok()).toBe(true);
++    await expect(page.getByText(/Pending \(\d\/5 attempts\)/)).toBeVisible();
++    await expect(page.getByRole('heading', { name: /^Timeline .*live\)/ })).toBeVisible();
++    acknowledge = true;
++    for (const res of held) res.writeHead(200).end('ack');
++    await expect(page.getByText(/Delivered after \d attempts?/)).toBeVisible();
++    await expect(page.getByRole('heading', { name: /^Timeline .*complete\)/ })).toBeVisible();
++  } finally {
++    acknowledge = true;
++    for (const res of held) res.writeHead(200).end('ack');
++  }
+ });
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index 4630361c..00a02811 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -18,7 +18,11 @@ import type {
+   LoopDefinitionInput,
+   ModelCatalogEntry,
+ } from '@graphgoblin/contracts';
+-import { HarnessDefaultsSchema, HarnessPreflightSchema } from '@graphgoblin/contracts';
++import {
++  TERMINAL_RUN_STATUSES,
++  HarnessDefaultsSchema,
++  HarnessPreflightSchema,
++} from '@graphgoblin/contracts';
+ import {
+   useInfiniteQuery,
+   useMutation,
+@@ -131,7 +135,10 @@ export function useRun(id: string) {
+     queryKey: keys.run(id),
+     queryFn: () => runs.get(client, id),
+     refetchInterval: (query) =>
+-      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending')
++      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending') ||
++      (query.state.data !== undefined &&
++        TERMINAL_RUN_STATUSES.includes(query.state.data.status) &&
++        query.state.data.finalizedAt === undefined)
+         ? 1000
+         : false,
+   });
+diff --git a/apps/web/src/runs/follow-run-attempts.test.ts b/apps/web/src/runs/follow-run-attempts.test.ts
+index 02c0289a..305bbe88 100644
+--- a/apps/web/src/runs/follow-run-attempts.test.ts
++++ b/apps/web/src/runs/follow-run-attempts.test.ts
+@@ -25,7 +25,7 @@ function observer(start = 0) {
+     error: vi.fn(),
+   };
+ }
+-it('catches up across historical terminals in pages and stops at the captured boundary', async () => {
++it('catches up across historical terminals in pages and reconnects for authoritative completion', async () => {
+   vi.useFakeTimers();
+   const read = vi.fn((request: Request) => {
+     const url = new URL(request.url);
+@@ -47,7 +47,8 @@ it('catches up across historical terminals in pages and stops at the captured bo
+   await vi.advanceTimersByTimeAsync(0);
+   expect(o.cursor()).toBe(4);
+   expect(read).toHaveBeenCalledTimes(4);
+-  expect(o.finished).toHaveBeenCalledOnce();
++  expect(o.finished).not.toHaveBeenCalled();
++  expect(o.running).toHaveBeenCalledOnce();
+   expect(o.error).not.toHaveBeenCalled();
+   stop();
+ });
+@@ -184,7 +185,7 @@ it('exposes a permanent HTTP refusal without retrying it', async () => {
+   stop();
+ });
+ 
+-it('settles completion that overtakes the captured run snapshot and refreshes the lagging snapshot', async () => {
++it('delegates completion that overtakes the captured run snapshot to SSE', async () => {
+   vi.useFakeTimers();
+   const active = runRecord({ id, status: 'running', currentNodeId: 'done', lastEventSeq: 2 });
+   let current = active;
+@@ -212,12 +213,12 @@ it('settles completion that overtakes the captured run snapshot and refreshes th
+   const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+   try {
+     await vi.advanceTimersByTimeAsync(0);
+-    expect(o.finished).toHaveBeenCalledOnce();
+-    expect(o.running).not.toHaveBeenCalled();
++    expect(o.finished).not.toHaveBeenCalled();
++    expect(o.running).toHaveBeenCalledOnce();
+     await vi.advanceTimersByTimeAsync(2_000);
+-    expect(o.changed).toHaveBeenCalledOnce();
++    expect(o.changed).not.toHaveBeenCalled();
+     await vi.advanceTimersByTimeAsync(10_000);
+-    expect(read).toHaveBeenCalledTimes(3);
++    expect(read).toHaveBeenCalledTimes(2);
+   } finally {
+     stop();
+   }
+diff --git a/apps/web/src/runs/follow-run-attempts.ts b/apps/web/src/runs/follow-run-attempts.ts
+index a2b28185..1c65cc2b 100644
+--- a/apps/web/src/runs/follow-run-attempts.ts
++++ b/apps/web/src/runs/follow-run-attempts.ts
+@@ -61,7 +61,9 @@ export function followRunAttempts(
+       if (controller.signal.aborted) return;
+       const events = observer.events();
+       const status = events.length ? summarizeRun(events).status : run.status;
+-      if (!isTerminal(status)) {
++      // New history needs a fresh stream.complete, even if a fast resumed attempt already
++      // ended: its result delivery may still be pending after the terminal execution event.
++      if (appended || !isTerminal(status)) {
+         observer.running();
+         return;
+       }
+diff --git a/apps/web/src/runs/inspector/DeliveryPanel.tsx b/apps/web/src/runs/inspector/DeliveryPanel.tsx
+index a999cd9f..6e3a0182 100644
+--- a/apps/web/src/runs/inspector/DeliveryPanel.tsx
++++ b/apps/web/src/runs/inspector/DeliveryPanel.tsx
+@@ -1,13 +1,18 @@
+-import type { RunRecord } from '@graphgoblin/contracts';
++import { TERMINAL_RUN_STATUSES, type RunRecord } from '@graphgoblin/contracts';
+ import { Card } from '../../components/ui/index.js';
+ import { formatDateTime } from '../../lib/utils.js';
+ 
+ export function DeliveryPanel({ run }: { run: RunRecord }) {
+-  if (!run.deliveries?.length) return null;
++  if (!run.deliveries?.length && !TERMINAL_RUN_STATUSES.includes(run.status)) return null;
+   return (
+-    <Card title="Webhook delivery">
++    <Card title={run.deliveries?.length ? 'Webhook delivery' : 'Finalization'}>
++      <p role="status">
++        {run.finalizedAt && !run.deliveries?.some((delivery) => delivery.status === 'pending')
++          ? 'Fully finalized.'
++          : 'Execution ended; finalization pending.'}
++      </p>
+       <p className="text-sm text-muted">Execution: {run.status}. Delivery is tracked separately.</p>
+-      {run.deliveries.map((delivery) => (
++      {run.deliveries?.map((delivery) => (
+         <div key={delivery.id} className="grid gap-2">
+           <p>{delivery.channel.url}</p>
+           <p>
+diff --git a/apps/web/src/runs/useRunEvents.ts b/apps/web/src/runs/useRunEvents.ts
+index 1fe7901f..5542964d 100644
+--- a/apps/web/src/runs/useRunEvents.ts
++++ b/apps/web/src/runs/useRunEvents.ts
+@@ -178,6 +178,8 @@ export function useRunEvents(
+           if (!current()) return;
+           flush();
+           setStatus('finished');
++          // The finalization marker can follow the last delivery event's invalidation.
++          void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
+           followAttempts();
+         },
+         (err: unknown) => {
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index 2aeee461..bb1bdfca 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -128,6 +128,17 @@ outcome is not a resumable node failure. A run paused while parked (or while par
+ to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
+ keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
+ 
++## Observing finalization (#185, ADR-0057)
++
++RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
++Terminal status, finishedAt and run.finished describe execution; none proves that
++returns or terminal cleanup are finished. A current terminal lifecycle plus finalizedAt, with no pending webhook in the snapshot,
++means fully finalized, including when delivery failed. Webhook deliveries still
++report pending/delivered/failed independently; other sinks retain return.delivered
++and return.failed. The finalizer sets the marker only after its receipt reconciliation
++and cleanup, and clears it before a failed-run resume. No new stored state is added.
++Pending delivery survives restart with the same identity and remaining retry budget.
++
+ ## Thread reads and delayed snapshots (#116, ADR-0053)
+ 
+ The durable event log determines the thread for both execution and observation. Domain
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 3b4eba7f..ce2cf8d8 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -202,7 +202,7 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
+ - `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.
+ - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
+ - A terminal event is history, not a completion signal: an earlier `run.failed`, `run.finished`, or `run.cancelled` can be superseded by `run.started` or `run.resumed`. Replay continues through those markers and through already-durable delivery audits after the final outcome.
+-- After catching up, confirm that the current lifecycle is terminal. This check runs whatever the run's status said when the stream opened, because the status write can lag a durable outcome the cursor already holds; replay that delivers a started or resumed marker skips it until a later terminal event arrives. A lifecycle notification at or below the cursor (a cursor past the durable tail) is not delivered but still starts a confirmation, and any lifecycle notification that arrives while a confirmation is in progress makes it start over, so such a cursor neither waits forever after a later outcome nor completes while a resume is active. Then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
++- After catching up, confirm that the current lifecycle is terminal and the existing durable finalizedAt acknowledgement is present (#185, ADR-0057). Pending finalization keeps the stream live; a single 250 ms timer rechecks its eventless marker write and is cancelled on disconnect. This check runs whatever the run's status said when the stream opened, because the status write can lag a durable outcome the cursor already holds; replay that delivers a started or resumed marker skips it until a later terminal event arrives. A lifecycle notification at or below the cursor (a cursor past the durable tail) is not delivered but still starts a confirmation, and any lifecycle notification that arrives while a confirmation is in progress makes it start over, so such a cursor neither waits forever after a later outcome nor completes while a resume is active. Then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
+ - Confirmation uses the indexed lifecycle tail, with five fixed type seeks and one row read, including the pre-header check for an empty terminal replay; it never scans the history. The terminal event precedes its status write, including crash recovery, but delivery audits may follow it. If no current terminal marker is visible, the stream allows up to 2 seconds for late subscription delivery, then closes without `stream.complete`. This defensive grace remains for inconsistent logs and is unconfirmed EOF, so clients retry it.
+ - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
+ - Replay reads at most 128 events per repository page, writes that page before reading the next,
+@@ -323,9 +323,11 @@ following a timezone issue focuses the time zone control.
+ Run snapshots include optional `deliveries` for outbound webhooks, with separate pending,
+ delivered or failed state, stable identity, attempts/budget, next attempt and typed last error.
+ REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run` preserve it.
+-`wait_for_run.finished` means execution finished, even with pending or failed delivery; call
+-`get_run` again to observe delivery. The inspector polls once per second while delivery is
+-pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
++`wait_for_run.finished` requires terminal execution and durable finalization. Pending delivery
++returns `finished:false` at the deadline with the execution status and delivery snapshot; a final
++failed delivery returns `finished:true` with its failed snapshot. The inspector polls once per
++second while finalization is pending. SSE stays open through delivery and sends `stream.complete`
++only after finalization and durable-tail confirmation. Both SSE and JSON event pages expose
+ `delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
+ Unknown acknowledgement is never represented as non-delivery. The required
+ `acknowledgementUncertain` flag in each delivery snapshot retains earlier uncertainty even
+@@ -344,6 +346,17 @@ The `caller` return channel resolves at delivery time:
+ 
+ The file and log channels are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each; webhooks use the delivery journal above. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
+ 
++## Execution and finalization reads (#185)
++
++Run snapshots expose optional finalizedAt from the existing finalization marker.
++Its absence after terminal execution means finalization is pending; it is not inferred
++from EOF, result availability or the execution status. Once present, inspect deliveries
++for each webhook's delivered/failed outcome, and return.failed events for other sinks.
++A pending webhook snapshot always keeps observation open, even if it carries a marker
++from a read racing resume. Finalization does not imply execution success or successful delivery. No store migration
++is required. waitForRun and MCP wait_for_run require terminal execution plus this marker;
++a timeout returns finished:false with pending delivery snapshots even if status is succeeded.
++
+ ## MCP server (Decided)
+ 
+ `apps/mcp` (`@graphgoblin/mcp`) is a thin client over the REST API through `@graphgoblin/api-client`, built on `@modelcontextprotocol/sdk` 1.31. It identifies itself with `client: 'mcp'`, so runs it starts record the `manual.mcp` invocation source.
+@@ -353,20 +366,20 @@ The file and log channels are delivered by the engine after the run finishes, wi
+ 
+ Tools (each with a Zod input schema; descriptions tell the agent when to call it and what to do next):
+ 
+-| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                     |
+-| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+-| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                       |
+-| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds        |
+-| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                             |
+-| `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)           | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
+-| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                  |
+-| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                                |
+-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                        |
+-| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                               |
+-| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                                 |
+-| `provide_input`                         | `runId`, `waitId`, `input`                                  | Answers the observed input wait                                                                                                                                                                               |
+-| `send_signal`                           | `runId`, `name`, `waitId`, `payload?`                       | `{ woke, run }`                                                                                                                                                                                               |
+-| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                                 |
++| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                                                  |
++| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
++| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                                                    |
++| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds                                     |
++| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                                                          |
++| `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)           | Returns `{ finished: true, run }` after terminal execution and durable finalization, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
++| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                                               |
++| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                                                             |
++| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                                                     |
++| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                                                            |
++| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                                                              |
++| `provide_input`                         | `runId`, `waitId`, `input`                                  | Answers the observed input wait                                                                                                                                                                                                            |
++| `send_signal`                           | `runId`, `name`, `waitId`, `payload?`                       | `{ woke, run }`                                                                                                                                                                                                                            |
++| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                                                              |
+ 
+ `wait_for_run` uses the client's shared `observeRun` polling implementation, once a second,
+ with early returns for input and paused runs and MCP progress notifications when the caller
+@@ -418,7 +431,7 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
+ - **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
+ - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
+ - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
+-- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the deadline. Every GET and sleep receives a signal combining caller cancellation and the total observation budget. Caller abort rejects promptly with the signal's exact reason, including before the first request. The deadline resolves `{ finished: false, run? }` without waiting for an in-flight request or sleep, retaining only the last snapshot received before the deadline; when none arrived, `run` is omitted. The deadline result carries the last timely snapshot, which can be up to one poll interval old during normal polling (older if a request stalls). A zero budget makes no request. A timely terminal snapshot returns `{ finished: true, run }`. Late responses and rejections cannot change the settled result or trigger another poll. The first cancellation cause wins; a caller signal already aborted at entry wins over a zero deadline. Timers and caller listeners are removed on completion. `observeRun(client, runId, options, { stopWhen?, onPoll? })` shares these semantics while supporting MCP's early returns and progress reporting.
++- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until terminal execution is durably finalized with no pending webhook, or the deadline. Every GET and sleep receives a signal combining caller cancellation and the total observation budget. Caller abort rejects promptly with the signal's exact reason, including before the first request. The deadline resolves `{ finished: false, run? }` without waiting for an in-flight request or sleep, retaining only the last snapshot received before the deadline; when none arrived, `run` is omitted. The deadline result carries the last timely snapshot, which can be up to one poll interval old during normal polling (older if a request stalls). A zero budget makes no request. A timely terminal, fully finalized snapshot returns `{ finished: true, run }`. Late responses and rejections cannot change the settled result or trigger another poll. The first cancellation cause wins; a caller signal already aborted at entry wins over a zero deadline. Timers and caller listeners are removed on completion. `observeRun(client, runId, options, { stopWhen?, onPoll? })` shares these semantics while supporting MCP's early returns and progress reporting.
+ - **Observation and run cancellation.** Aborting a client wait or MCP request, reaching its deadline, or closing/aborting an SSE subscription stops observation only. The run continues. Cancelling the run requires the explicit `POST /runs/{id}/cancel` endpoint (`runs.cancel` / MCP `cancel_run`). SSE already passes its subscription signal into the fetch and body reader, including reconnects; closing or aborting resolves its `done` promise.
+ 
+ Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at `waiting.waitId`, or the `run.waiting` event at `wait.waitId`. The matching input or signal-mode answer is consumed once. Stale, unknown or already consumed identities return RFC 9457 409 `WAIT_MISMATCH` without appending another answer or replacing the accepted payload. A retry can finish the status acknowledgement and enqueue an earlier durable answer. A matching identity on a paused run returns 409 `INVALID_STATE` with a paused-run message; resume first, then answer the same observed wait. Missing identities are 400 validation errors. Input and signal acceptance retry at most ten conditional-append conflicts; a saturated caller receives `WAIT_MISMATCH` and must refresh its observed snapshot. Heartbeat signals are observations within the current logical visit; every accepted signal is counted once, and each new park has a new identity. The browser submits the identity associated with its displayed form. MCP callers obtain it from `get_run` or `wait_for_run`.
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 26d79c4d..7b7bde48 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -92,6 +92,16 @@ acceptance marker and submission classification are available through REST; the
+ does not display them as event details today.
+ The provenance detail view is coordinated with #379.
+ 
++The inspector displays finalization separately from execution (#185, ADR-0057).
++A terminal run without finalizedAt says "Execution ended; finalization pending."
++Its timeline remains live until authoritative stream.complete. Once the marker is
++present and no webhook is pending it says "Fully finalized."; failed webhook delivery remains visibly failed
++beside the unchanged execution outcome. Terminal snapshots poll once per second
++while the marker is absent, and stream completion refreshes the snapshot. EOF never
++marks the timeline complete. After completion, any new history discovered by the
++remote-resume watcher opens a fresh SSE subscription, even if that attempt has already
++ended, so pending delivery cannot be finalized by JSON polling alone.
++
+ ## PWA behaviour (Decided)
+ 
+ - `vite-plugin-pwa` with Workbox, `registerType: 'prompt'`.
+@@ -254,7 +264,7 @@ windowed Timeline rows are not delivered by round 1, even though G2 paging is me
+ - **Client.** One `@graphgoblin/api-client` instance created with `client: 'ui'`, so runs started here are `manual.ui`. TanStack Query holds server state; Zustand holds the editor draft (`src/editor/store.ts`), per-run event logs (`src/runs/event-store.ts`), and the PWA update state. Browser code imports only `contracts`, `domain`, and `api-client`; lint (`no-restricted-imports`) and dependency-cruiser (`web-is-browser-only`) refuse `engine` and `infrastructure`.
+ - **Editor.** Palette of the nine kinds (drag onto the canvas, or press a palette button to add below the graph). Custom node cards with an input handle (none on triggers) and one labelled output handle per port: decision routes, script exit-code routes, and Limit reached on marked decision gates; exits have no output. Connections into triggers, from unknown ports, or from an already connected port are refused. Validation runs `LoopDefinitionSchema` then `validateLoop` from `domain` on every change; schema issues are listed first with their node and path, and clicking an issue selects its node (since #13 it opens the node's editor; since #15 the issues are listed in each node's badge and beside Publish, and choosing one opens the node's editor at the issue's field). Autosave is debounced (600 ms): every edit is mirrored to IndexedDB first, then a schema-valid draft goes to `PUT /loops/{id}/draft`; a schema-invalid draft stays on the device with a notice (or in the window only while device storage refuses it, see "Device storage and the save states"), an offline save retries on the browser's `online` event or confirmed API reachability recovery, and an unsynced local draft wins over the server copy on reload. Publish saves first, then shows the 422 issue list if the server refuses. A Run tab started the published version from any manual trigger, with an input form generated from the trigger's `inputSchema` (since #46 runs start from Runs → New run). A subloop picker lists published loops and shows their trigger input schemas and return mappings.
+ - **Schema-driven forms** (`src/forms`). `SchemaForm` takes a node kind's config schema from `contracts` and renders it with react-hook-form and the Zod resolver; the same component renders loop settings and declared variables. Introspection reads Zod 4's `_zod.def`: strings (plain, `TemplateSchema` as a Liquid CodeMirror editor, `ExpressionSchema` as a JSONata editor, both with a live preview against `sampleThread()`), numbers (integer, bounds), booleans (a switch when the boolean has a default or is required; a segmented **Not set** / **Yes** / **No** when it is optional without a default, so it can stay or go back to unset), enums and multi-value literals (a segmented control for two to four options, a select for one or for five and more; an optional enum without a default keeps **Not set**; arrays of enums become checkbox groups), single literals (read-only), objects (a fieldset with the object's name as its legend; optional ones get Add and Remove), arrays (add and remove items, respecting min and max), records (stacked key and full-width value rows that remain usable in narrow panels, captioned **Key** and **Value**; each value is a field of its own at `<record>.<key>`, drawn by the same renderers over the value the record hands it: a string as an input, a template or expression as its editor with the preview, anything else as JSON, with its marker, help, and error), discriminated and plain unions (a fieldset with a variant picker that seeds the chosen variant), defaults and prefaults (shown as placeholders or initial selections, and as a JSON field's placeholder), and `unknown`, `z.json()`, and `JsonSchemaSchema` as JSON editors tagged JSON. Collection rows sit on a left rail with Remove as an icon button keeping its name ("Remove args 2") beside the row's control (at the foot of a row that holds a group of fields), so Tab reaches it after the row's controls as it reads; Add is a secondary button with a plus. A field is required when its schema is neither optional nor defaulted (`unwrap`): its label shows the marker and its control `aria-required` (value controls, record values, and union variant pickers); a required collection shows the marker after its legend and its minimum as describing text, and a nested object is not marked, and the host form's first line explains the marker (the node dialog, the loop panel). A schema's `.describe()` text (`descriptionOf`, the outermost along its wrapper chain, so a description under `.default()` or `.optional()` counts) shows as help under the field. `Row` in `forms/fields/shared.tsx` keeps its props (`label`, `htmlFor`, `aside`, `children`, `name`) and adds `required`, `help`, and `caption` (a shorter visible label, while `label` stays the accessible name); `children` may be a function of the control's props (`id`, `aria-describedby`, `aria-invalid`, `aria-required`), so help and the field's error (`FieldError`, now with an id) describe the control and an error marks it invalid. `focusField` focuses a segmented control's chosen segment and treats a switch as a value control. Since #14 the contracts' field metadata orders and groups the fields, with the advanced ones under a collapsed Advanced disclosure (see "Basic and advanced fields" below). Array Add and Remove actions use the latest child edits, so the displayed values and autosaved draft agree. Rows have stable identities: removing a row drops its unparsed JSON and blocking issue, shifts surviving array error paths, and keeps surviving text with its own value; renaming a record key moves its text and issue to the new path. A duplicate record key is refused with an inline error while the key input retains the typed text and both committed values survive. The error reflects the current committed keys. Entering a collision announces the conflicting key once through the collection's polite status region; continued typing while invalid does not repeat the announcement. Leaving a still-refused input restores its committed key and announces both the revert and its reason. Add focuses the new row's first control after its editor has mounted, including in StrictMode; Remove focuses the collection's Add button. A polite live region announces each addition and removal. Empty or whitespace-only optional JSONata expressions are absent and omit the preview. Required blank expressions show the schema message (Required only as a fallback), omit the preview, and retain the typed whitespace in the editor. Fallback help is quiet on mount and becomes an alert after editing. Liquid templates retain exactly what is typed, including whitespace and required empty strings; only exactly empty optional template input is absent. Malformed supplied source retains its error. Optional JSON fields clear without a parse error and have no expression preview. Refinements are not introspected; their messages appear in the form's issue summary. Clearing a field stores an internal "unset" marker that is stripped before validation, because react-hook-form otherwise restores a field's initial value when it becomes `undefined`.
+-- **Run inspector.** The timeline comes from `subscribeRunEvents`; events are kept per run in session storage, so a reload resumes after the stored cursor. A cached terminal event triggers JSON history reconciliation rather than permanently suppressing the stream. After a terminal subscription, finite JSON pages catch up through an observed run cursor; active execution opens a new SSE tail, while resumable failures are checked every two seconds for a resume from another client. Durable lifecycle events choose the tail state if a page overtakes the captured run record; two-second checks then refresh metadata until the record agrees. Success, cancellation and non-resumable failures stop polling once that status agrees. Unmounting cancels observation and discards late responses. Selecting an event reconstructs the thread at that point with `reconcileThread` from `domain` (starting from the initial thread recorded on `run.queued`, and counting `node.started` for node visits, which the engine keeps outside patches); a `node.finished` event also shows its patch with the value before and after each path; reconstruction results are cached per sequence while the log grows (`createThreadCache`, #259), and every shown value is bounded on screen with the whole text and an exact download on request (`BoundedValue`). A progress drawer groups `node.progress`, harness session, usage, decision, and heartbeat events per node. Waiting runs show an input form generated from the wait node's `inputSchema` (or a signal form); cancel, pause, and resume are buttons.
++- **Run inspector.** The timeline comes from `subscribeRunEvents`; events are kept per run in session storage, so a reload resumes after the stored cursor. A cached terminal event triggers JSON history reconciliation rather than permanently suppressing the stream. After a terminal subscription, finite JSON pages catch up through an observed run cursor; new history or active execution opens a new SSE tail, while resumable failures are checked every two seconds for a resume from another client. Durable lifecycle events choose the tail state if a page overtakes the captured run record; two-second checks then refresh metadata until the record agrees. Success, cancellation and non-resumable failures stop polling once that status agrees. Unmounting cancels observation and discards late responses. Selecting an event reconstructs the thread at that point with `reconcileThread` from `domain` (starting from the initial thread recorded on `run.queued`, and counting `node.started` for node visits, which the engine keeps outside patches); a `node.finished` event also shows its patch with the value before and after each path; reconstruction results are cached per sequence while the log grows (`createThreadCache`, #259), and every shown value is bounded on screen with the whole text and an exact download on request (`BoundedValue`). A progress drawer groups `node.progress`, harness session, usage, decision, and heartbeat events per node. Waiting runs show an input form generated from the wait node's `inputSchema` (or a signal form); cancel, pause, and resume are buttons.
+ - **Settings.** The model catalog enables/disables every entry through PATCH using #8's Switch, named "Enable <display name>". The reusable Settings EnableSwitch marks its switch aria-disabled and aria-busy, ignores activation, and shows an hourglass with Enabling/Disabling while saving; a polite status announces Enabled/Disabled. Keyboard focus stays on the pending switch, including concurrent requests on different rows; a deliberate move to another control is preserved. A refusal restores the previous state and announces a plain sentence through MutationError with section-specific messages for MODEL_MANAGED_BY_HARNESS, LITELLM_NOT_CONFIGURED, or MODEL_NOT_FOUND. A 404 refreshes the catalog, preserves its reason in a section-level live region until the next toggle clears it, and focuses the heading when the switch had focus as it was activated and its row has since disappeared. The switch is recorded at activation (`ToggleFailure.opener`), so this also holds when another refresh removed the row while the PATCH was pending and focus had already fallen to the page body (`restoreVanishedToggleFocus` in `settings/shared.tsx`). Successful updates refresh the catalog so the Default model select removes disabled entries from new choices and restores enabled ones. A saved default remains selected as "<name> (disabled)" or "<id> (not in catalog)", with a diagnostic that the invalid or unavailable selection must be corrected before publication or execution. Harness rows have no Edit/Delete actions in the DOM. Add is hidden until a LiteLLM row exists. Row presence is a temporary proxy until #25 supplies a provider-configured signal. When Add is hidden, a short note explains that local models will appear once the LiteLLM adapter is configured and names the Settings guide section Choose a model and effort without a network link. The note waits until the catalog loads. With local entries, only LiteLLM rows offer Edit/Delete; editing metadata omits enabled so it cannot revert a concurrent toggle. Regression coverage is in SettingsPage.test.tsx, settings/shared.test.tsx, and Edge e2e/actions.spec.ts; both-theme screenshots are in docs/qa/2026-10-04-issue-24-catalog/. Settings also manages default model and effort (stored under owner `defaults.byHarness`, which the engine reads at run start ahead of the harness-keyed process `GG_DEFAULTS`), write-only secrets, API keys (the token is shown once), harness preflight, and an install hint.
+ - **PWA.** `vite-plugin-pwa` generates the worker (`registerType: 'prompt'`, `injectRegister: false`, scope `/app/`); the app registers it with `workbox-window` and checks for updates as described under "PWA behaviour". A waiting worker raises the "A new version is available" toast; only Update sends `SKIP_WAITING`, and the page reloads when the new worker takes control. Only the app shell is precached, there is no runtime caching, and navigation fallback is limited to `/app/`. Browser update tests and screenshots publish byte-different service-worker builds through the disposable E2E server and wait for a real waiting worker. They verify that confirmation sends `SKIP_WAITING` and reloads once, with no activation before confirmation. The manifest has 192 and 512 px icons (generated by `scripts/generate-icons.mjs`). Screens that need the API show an explicit offline notice, and the banner distinguishes browser connectivity from API unreachability. Regression tests include `src/lib/reachability.test.ts`, `src/api/queries.reconnect.test.tsx`, `src/pwa/register.test.ts`, and Edge `e2e/pwa.spec.ts` (same-port listener restart and a byte-different worker).
+ 
+diff --git a/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md b/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md
+index fdede4ba..78805c20 100644
+--- a/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md
++++ b/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md
+@@ -129,7 +129,9 @@ previous build refuses a migrated store with `DATA_UPGRADE_REQUIRED`; restoring
+ restores the previous build's ability to boot.
+ 
+ REST detail/list snapshots, generated api-client types, MCP `get_run` / `wait_for_run` and the
+-inspector expose `deliveries`. `wait_for_run.finished` and SSE terminal closure still refer to
+-execution. Poll the snapshot or read later JSON event pages for delivery; the inspector polls
+-once per second while a delivery is pending. Targeted Event admission (#343), non-webhook
++inspector expose `deliveries`. Amendment #185 (ADR-0057): `wait_for_run.finished` and SSE
++completion now require the existing durable `finalizedAt` acknowledgement as well as terminal
++execution. Pending delivery stays live, including after a consumed terminal cursor;
++final delivery failure settles observation with its failed snapshot. The inspector polls
++once per second while terminal finalization is pending. Targeted Event admission (#343), non-webhook
+ effect retry and missing configured signing secrets (#345) remain separate scopes.
+diff --git a/docs/decisions/ADR-0050-bounded-sse-replay.md b/docs/decisions/ADR-0050-bounded-sse-replay.md
+index bcba6707..5f9c451a 100644
+--- a/docs/decisions/ADR-0050-bounded-sse-replay.md
++++ b/docs/decisions/ADR-0050-bounded-sse-replay.md
+@@ -37,7 +37,9 @@ Stored history and the loop's intended context must remain complete.
+   marker, and delivery audits can follow the current outcome. Deliver every replay page and
+   held notification first. With the writer still locked, look up the current lifecycle, then
+   make another bounded cursor read. More rows/notifications re-enter catch-up before another
+-  confirmation. A terminal lifecycle plus an empty confirmed tail emits id-less
++  confirmation. As amended by ADR-0057 (#185), require the existing durable finalization acknowledgement
++  after terminal lifecycle confirmation; pending delivery remains live and its marker is rechecked
++  by one 250 ms timer. A terminal lifecycle, finalization acknowledgement and an empty confirmed tail emit id-less
+   `event: stream.complete` with `data: {"after":<written cursor>}`, then closes. Completion
+   acknowledges the tail-read snapshot, not the immutability of future history. Later appends
+   require a new subscription. Port-only compositions can track the newest lifecycle marker
+diff --git a/docs/decisions/ADR-0057-execution-and-delivery-finalization.md b/docs/decisions/ADR-0057-execution-and-delivery-finalization.md
+new file mode 100644
+index 00000000..f688b5c2
+--- /dev/null
++++ b/docs/decisions/ADR-0057-execution-and-delivery-finalization.md
+@@ -0,0 +1,66 @@
++# ADR-0057: Observe execution outcome and durable finalization separately
++
++Date: 2026-10-24. Status: Implementation decision for #185; independent review and owner acceptance pending.
++
++## Evidence
++
++At baseline 456fcd61, the public-interface reproduction in
++[before.log.txt](../qa/2026-10-24-wp-d2-185/before.log.txt) observes a delayed retry,
++permanent HTTP 400 failure and a real API-process restart with pending delivery.
++REST already exposes truthful webhook snapshots, but SSE completes while they are
++pending, both polling waits return finished, and the inspector timeline says complete.
++
++## Decision
++
++Expose the existing optional RunRecord.finalizedAt, backed by runs.finalized_at.
++Keep status, outcome, result, finishedAt and run.finished about execution alone.
++A run is fully finalized when its current lifecycle is terminal and the existing
++finalization marker is present and the delivery snapshot has no pending webhook.
++Pending journal evidence vetoes the marker: a snapshot read racing resume must never
++hide a newer pending delivery behind an older acknowledgement. Delivery failure is a final outcome, never execution
++failure or proof of a successful external effect. Webhook deliveries retain their
++independent pending/delivered/failed snapshots and uncertainty evidence;
++non-webhook returns retain return.delivered and return.failed.
++
++No new stored state, migration, terminal event or stream control is introduced.
++Directly reconstructing finality on every read would duplicate the finalizer's channel
++selection (the pinned exit plus invocation defaults), receipt reconciliation, retired
++Event handling, child cancellation and parent notification rules. The existing marker
++already acknowledges those operations: non-webhook receipts and final webhook
++journal snapshots must be durable before it is set. Recovery retries incomplete
++bookkeeping, and a failed-run resume clears it before recording run.resumed.
++Reuse this acknowledgement instead of introducing another fallible projection or
++claiming finalization before terminal cleanup completes. Expose it as optional because
++it does not exist during execution or pending finalization, not for old-client parsing.
++
++Extend ADR-0050's confirmation: after a consumed terminal lifecycle, require that
++acknowledgement, then confirm the durable tail under the existing single writer.
++Lifecycle changes invalidate the confirmation, including notifications below an
++ahead-of-tail cursor. Pending finalization stays live beyond the inconsistent-log
++grace. Because the existing marker write has no journal event, schedule at most one
++250 ms confirmation timer per pending connection. Delivery events also wake the writer.
++This engineering parameter bounds observation latency and quiet-store reads; it
++does not alter request deadlines, retry policy or execution limits. Cancel it on close.
++Standalone stream compositions must supply the same finalization callback;
++its required type prevents execution-only completion by omission.
++
++The client still settles only on stream.complete with its matching cursor; an already
++consumed cursor needs no event redelivery. EOF alone retries, including during restart.
++Polling waitForRun and MCP wait_for_run require terminal status and finalizedAt.
++A deadline during pending delivery returns finished:false with the latest delivery
++snapshots and execution status. A final failed delivery returns finished:true with the
++failed snapshot. These flags mean observation completion, never execution success.
++
++The inspector independently shows execution, finalization pending/complete, webhook
++outcomes and acknowledgement uncertainty. Its stream remains live while delivery is
++pending. Snapshot polling covers the marker write after the last event; stream
++completion invalidates the run snapshot as well. Any new history discovered after a
++completed stream reopens SSE, including a remote attempt that already ended between polls;
++JSON history alone never substitutes for the next stream.complete.
++
++## Consequences
++
++API, client and MCP callers must upgrade together and distinguish finished/finalized
++from status and delivery outcome. There is no data migration or store reset.
++Existing recovery and retry identity/budget semantics remain authoritative.
++Owner product acceptance is required before #185 closes.
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 44c1ba2d..97c99f45 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -53,3 +53,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
+ [ADR-0045: Inherited session IDs do not establish authored-task acceptance](ADR-0045-inference-inherited-session-recovery.md) records D-022: uncertain authored work cannot continue an inherited conversation without acceptance evidence.
+ 
+ [ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.
++
++[ADR-0057: Observe execution outcome and durable finalization separately](ADR-0057-execution-and-delivery-finalization.md) exposes the existing finalization marker as `finalizedAt` and extends the stream completion rule to wait for it, so readers tell execution end apart from delivery pending, delivered and failed.
+diff --git a/docs/guide/03-run-and-observe.md b/docs/guide/03-run-and-observe.md
+index 5b35f234..5010b432 100644
+--- a/docs/guide/03-run-and-observe.md
++++ b/docs/guide/03-run-and-observe.md
+@@ -221,7 +221,7 @@ curl -N -H 'Accept: text/event-stream' -H 'Last-Event-ID: 12' \
+   "http://127.0.0.1:4747/runs/$RUN_ID/events"
+ ```
+ 
+-The query's `after` overrides the header when both are supplied. Replay includes events after the cursor, then tails live events. The stream closes after `run.finished`, `run.failed`, or `run.cancelled`; reconnecting beyond a terminal event ends after replay. Without the SSE Accept header, the same route returns an event page with `items` and `nextAfter`.
++The query's `after` overrides the header when both are supplied. Replay includes events after the cursor, then tails live events. Execution ends at `run.finished`, `run.failed`, or `run.cancelled`. The stream stays open through return finalization and settles only on the id-less `stream.complete` control after lifecycle and durable-tail confirmation, including when the terminal cursor was already consumed. EOF alone requires reconnecting from the last received cursor. Without the SSE Accept header, the same route returns an event page with `items` and `nextAfter`.
+ 
+ ## Read returns and child runs
+ 
+@@ -234,7 +234,7 @@ Set the exit's `returns` JSONata expression to produce a payload, and `destinati
+ | `file`       | Write `path` in `json`, `markdown`, or `text` format. Relative paths resolve against the run workspace; absolute paths are used as given. |
+ | `log`        | Write the result to the API's logger.                                                                                                     |
+ 
+-Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished` and does not change execution status. The inspector's Webhook delivery section and `run.deliveries` show pending, delivered or failed after N attempts, the identity and the last typed error. Webhooks retry eligible failures up to five times, with 10-second deadlines and 2/5/10/20-second delays. Every attempt sends the same `Idempotency-Key`. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do. Orderly stop lets an in-flight request finish within its existing deadline and starts no new attempt; pending delivery resumes on the next start with the same identity and budget. Deleting a loop stops its pending deliveries. A timeout, truncated acknowledgement or interrupted process means the effect may have happened. Other return sinks still record `return.failed`. SSE closes at the terminal execution event, so fetch the run again or read a subsequent JSON event page to check durable `delivery.*` events:
++Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished` and does not change execution status. The inspector's Webhook delivery section and `run.deliveries` show pending, delivered or failed after N attempts, the identity and the last typed error. Webhooks retry eligible failures up to five times, with 10-second deadlines and 2/5/10/20-second delays. Every attempt sends the same `Idempotency-Key`. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do. Orderly stop lets an in-flight request finish within its existing deadline and starts no new attempt; pending delivery resumes on the next start with the same identity and budget. Deleting a loop stops its pending deliveries. A timeout, truncated acknowledgement or interrupted process means the effect may have happened. Other return sinks still record `return.failed`. SSE remains open through pending delivery and completes only after durable finalization; a failed delivery also finalizes without changing execution status. Run snapshots expose `finalizedAt` separately from execution status. Fetch the run or read JSON event pages to inspect durable `delivery.*` evidence:
+ 
+ <!-- guide-example: returns-bash -->
+ 
+diff --git a/docs/guide/05-mcp-and-codex-plugin.md b/docs/guide/05-mcp-and-codex-plugin.md
+index f6068a14..872e7452 100644
+--- a/docs/guide/05-mcp-and-codex-plugin.md
++++ b/docs/guide/05-mcp-and-codex-plugin.md
+@@ -67,7 +67,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
+ 
+ `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
+ 
+-`wait_for_run` accepts an integer from 1 to 600 seconds and defaults to 60. A timeout returns `finished` false and a suggested next action; call it again with the same run ID. It includes the last observed status and cursor when a snapshot arrived; otherwise status, waiting details and cursor are omitted. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
++`wait_for_run` accepts an integer from 1 to 600 seconds and defaults to 60. A timeout returns `finished` false and a suggested next action; call it again with the same run ID. It includes the last observed status and cursor when a snapshot arrived; otherwise status, waiting details and cursor are omitted. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A fully finalized result has `finished` true and the run snapshot. Terminal execution with pending delivery remains unfinished at the deadline. Inspect `deliveries` separately: a final failed delivery also finalizes the run without changing its execution outcome.
+ 
+ Resources expose the log and thread through these templates:
+ 
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index 3f7481b5..6890516f 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -5002,6 +5002,11 @@
+             "format": "date-time",
+             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+           },
++          "finalizedAt": {
++            "type": "string",
++            "format": "date-time",
++            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
++          },
+           "lastEventSeq": {
+             "type": "integer",
+             "minimum": 0,
+@@ -13904,6 +13909,11 @@
+             "format": "date-time",
+             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+           },
++          "finalizedAt": {
++            "type": "string",
++            "format": "date-time",
++            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
++          },
+           "lastEventSeq": {
+             "type": "integer",
+             "minimum": 0,
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index 688deb84..c19395a4 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -3930,6 +3930,8 @@ export interface components {
+             startedAt?: string | undefined;
+             /** Format: date-time */
+             finishedAt?: string | undefined;
++            /** Format: date-time */
++            finalizedAt?: string | undefined;
+             lastEventSeq: number;
+         };
+         RunEventInput: {
+@@ -6017,6 +6019,8 @@ export interface components {
+             startedAt?: string | undefined;
+             /** Format: date-time */
+             finishedAt?: string | undefined;
++            /** Format: date-time */
++            finalizedAt?: string | undefined;
+             lastEventSeq: number;
+         };
+         RunEvent: {
+diff --git a/packages/api-client/src/sse.ts b/packages/api-client/src/sse.ts
+index 2ea98dc0..b808cf62 100644
+--- a/packages/api-client/src/sse.ts
++++ b/packages/api-client/src/sse.ts
+@@ -232,7 +232,8 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
+             } catch (cause) {
+               throw new Fatal(new RunEventParseError(frame, cause));
+             }
+-            // An id-less control confirms the delivered cursor; it never advances it.
++            // The server confirms terminal execution, durable finalization and the delivered tail.
++            // This also settles an already-consumed cursor; EOF cannot substitute for the control.
+             return true;
+           }
+           if (frame.event === 'stream.error') {
+diff --git a/packages/api-client/src/wait.test.ts b/packages/api-client/src/wait.test.ts
+index 246a5a2b..1d43e567 100644
+--- a/packages/api-client/src/wait.test.ts
++++ b/packages/api-client/src/wait.test.ts
+@@ -11,6 +11,9 @@ function snapshot(status: string) {
+     pinned: samplePin(),
+     invocationId: FIXTURE_IDS.invocation,
+     status,
++    ...(['succeeded', 'failed', 'cancelled', 'exhausted'].includes(status)
++      ? { finalizedAt: FIXTURE_TS }
++      : {}),
+     iteration: 1,
+     createdAt: FIXTURE_TS,
+     lastEventSeq: 1,
+@@ -472,3 +475,60 @@ it('consumes a late transport rejection after the deadline', async () => {
+     vi.useRealTimers();
+   }
+ });
++
++it('keeps successful execution pending until the durable finalization acknowledgement', async () => {
++  let polls = 0;
++  const run = snapshot('succeeded');
++  const client = createGraphGoblinClient({
++    baseUrl: 'http://api',
++    fetch: () => {
++      polls += 1;
++      const { finalizedAt: _finalizedAt, ...pending } = run;
++      return Promise.resolve(Response.json(polls === 1 ? pending : run));
++    },
++  });
++  const observed: string[] = [];
++  const result = await waitForRun(client, FIXTURE_IDS.run, {
++    timeoutMs: 1000,
++    pollMs: 1,
++    sleep: () => {
++      observed.push('pending');
++      return Promise.resolve();
++    },
++  });
++  expect(observed).toEqual(['pending']);
++  expect(polls).toBe(2);
++  expect(result).toEqual({ finished: true, run });
++});
++
++it('does not hide pending delivery evidence behind a finalization acknowledgement', async () => {
++  let polls = 0;
++  const run = snapshot('succeeded');
++  const client = createGraphGoblinClient({
++    baseUrl: 'http://api',
++    fetch: () => {
++      polls++;
++      return Promise.resolve(
++        Response.json({
++          ...run,
++          deliveries: [
++            {
++              id: 'delivery-id',
++              channel: { kind: 'webhook', url: 'https://example.test' },
++              status: polls === 1 ? 'pending' : 'delivered',
++              attempts: 1,
++              maxAttempts: 5,
++              inFlight: polls === 1,
++              acknowledgement: polls === 1 ? 'unknown' : 'accepted',
++              effectMayHaveHappened: true,
++              acknowledgementUncertain: false,
++            },
++          ],
++        }),
++      );
++    },
++  });
++  const result = await waitForRun(client, FIXTURE_IDS.run, { timeoutMs: 1000, pollMs: 1 });
++  expect(result.finished).toBe(true);
++  expect(polls).toBe(2);
++});
+diff --git a/packages/api-client/src/wait.ts b/packages/api-client/src/wait.ts
+index 66e33787..3b2c20b7 100644
+--- a/packages/api-client/src/wait.ts
++++ b/packages/api-client/src/wait.ts
+@@ -97,7 +97,13 @@ export async function observeRun(
+       const run = await abortable(runs.get(client, runId, { signal }), signal);
+       check();
+       latest = run;
+-      if (TERMINAL.has(run.status)) return { run, finished: true };
++      // Pending journal evidence vetoes a marker from a snapshot racing resume.
++      if (
++        TERMINAL.has(run.status) &&
++        run.finalizedAt !== undefined &&
++        !run.deliveries?.some((delivery) => delivery.status === 'pending')
++      )
++        return { run, finished: true };
+       if (observer.stopWhen?.(run)) return { run, finished: false };
+       if (observer.onPoll) await abortable(Promise.resolve(observer.onPoll(run, polls)), signal);
+       check();
+@@ -118,7 +124,7 @@ export async function observeRun(
+ }
+ 
+ /**
+- * Poll until a terminal status or timeout. Caller abort rejects with its reason; the deadline
++ * Poll until terminal execution and durable finalization, or timeout. Caller abort rejects with its reason; the deadline
+  * returns finished: false and the last timely snapshot, if any. Waiting for input is nonterminal.
+  */
+ export function waitForRun(
+diff --git a/packages/contracts/src/run.ts b/packages/contracts/src/run.ts
+index dd98dfac..3d7e2f72 100644
+--- a/packages/contracts/src/run.ts
++++ b/packages/contracts/src/run.ts
+@@ -209,6 +209,11 @@ export const RunRecordSchema = z.strictObject({
+   createdAt: TimestampSchema,
+   startedAt: TimestampSchema.optional(),
+   finishedAt: TimestampSchema.optional(),
++  /** Existing durable finalization marker: absent until returns and terminal cleanup finish.
++   * A failed delivery is final too; inspect deliveries and return.failed for its outcome.
++   * Exposing the existing marker avoids a second stored completion state (ADR-0057).
++   */
++  finalizedAt: TimestampSchema.optional(),
+   lastEventSeq: z.number().int().nonnegative(),
+ });
+ export type RunRecord = z.infer<typeof RunRecordSchema>;
+diff --git a/packages/engine/src/ports.ts b/packages/engine/src/ports.ts
+index ad6ebd8b..74bd294f 100644
+--- a/packages/engine/src/ports.ts
++++ b/packages/engine/src/ports.ts
+@@ -76,7 +76,7 @@ export interface EventStorePort {
+ 
+ /** Field-level changes to a run record; `undefined` clears a field. */
+ export type RunRecordChanges = {
+-  [K in Exclude<keyof RunRecord, 'deliveries'>]?: RunRecord[K] | undefined;
++  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt'>]?: RunRecord[K] | undefined;
+ };
+ 
+ export interface RunRepository {
+diff --git a/packages/engine/src/testing/fakes.ts b/packages/engine/src/testing/fakes.ts
+index 213baded..6d11ede2 100644
+--- a/packages/engine/src/testing/fakes.ts
++++ b/packages/engine/src/testing/fakes.ts
+@@ -294,10 +294,14 @@ export class InMemoryRunRepository implements RunRepository {
+   }
+   markFinalized(runId: string): Promise<void> {
+     this.finalized.add(runId);
++    const run = this.runs.get(runId);
++    if (run) run.finalizedAt = new Date().toISOString();
+     return Promise.resolve();
+   }
+   clearFinalized(runId: string): Promise<void> {
+     this.finalized.delete(runId);
++    const run = this.runs.get(runId);
++    if (run) delete run.finalizedAt;
+     return Promise.resolve();
+   }
+   listRunReferences(
+diff --git a/packages/infrastructure/src/sqlite/delivery-runs.test.ts b/packages/infrastructure/src/sqlite/delivery-runs.test.ts
+index 8bdf57a3..06142f53 100644
+--- a/packages/infrastructure/src/sqlite/delivery-runs.test.ts
++++ b/packages/infrastructure/src/sqlite/delivery-runs.test.ts
+@@ -365,3 +365,15 @@ it.each(['succeeded', 'running', 'resumed', 'receipted'] as const)(
+     expect(await events.read(run.id)).toEqual(migrated);
+   },
+ );
++
++it('exposes and clears the existing durable finalization acknowledgement across run reads', async () => {
++  expect((await repo.get(run.id))?.finalizedAt).toBeUndefined();
++  await repo.markFinalized(run.id);
++  const marked = await repo.get(run.id);
++  expect(marked?.finalizedAt).toEqual(expect.any(String));
++  expect((await repo.list())[0]?.finalizedAt).toBe(marked?.finalizedAt);
++  expect((await repo.page({ ownerId: 'local' })).items[0]?.finalizedAt).toBe(marked?.finalizedAt);
++  expect((await repo.listChildren(run.parentRunId!))[0]?.finalizedAt).toBe(marked?.finalizedAt);
++  await repo.clearFinalized(run.id);
++  expect((await repo.get(run.id))?.finalizedAt).toBeUndefined();
++});
+diff --git a/packages/infrastructure/src/sqlite/run-decoding.ts b/packages/infrastructure/src/sqlite/run-decoding.ts
+index 214db93a..c26cdd5e 100644
+--- a/packages/infrastructure/src/sqlite/run-decoding.ts
++++ b/packages/infrastructure/src/sqlite/run-decoding.ts
+@@ -30,6 +30,7 @@ export const rawRunColumns = {
+   createdAt: runs.createdAt,
+   startedAt: runs.startedAt,
+   finishedAt: runs.finishedAt,
++  finalizedAt: runs.finalizedAt,
+   lastEventSeq: runs.lastEventSeq,
+   pinned: sql<string | null>`${runs.pinned}`,
+ };
+diff --git a/packages/infrastructure/src/sqlite/run-row.ts b/packages/infrastructure/src/sqlite/run-row.ts
+index d9513fa7..da016691 100644
+--- a/packages/infrastructure/src/sqlite/run-row.ts
++++ b/packages/infrastructure/src/sqlite/run-row.ts
+@@ -7,7 +7,6 @@ export type RunRecordRow = Omit<
+   | 'threadSnapshot'
+   | 'threadSnapshotSeq'
+   | 'threadSnapshotReplayState'
+-  | 'finalizedAt'
+   | 'result'
+   | 'pinned'
+ > & { result: JsonValue | undefined; pinned: RunPin };
+@@ -33,6 +32,7 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
+     createdAt: row.createdAt,
+     ...(row.startedAt ? { startedAt: row.startedAt } : {}),
+     ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),
++    ...(row.finalizedAt !== null ? { finalizedAt: row.finalizedAt } : {}),
+     lastEventSeq: row.lastEventSeq,
+   };
+ }

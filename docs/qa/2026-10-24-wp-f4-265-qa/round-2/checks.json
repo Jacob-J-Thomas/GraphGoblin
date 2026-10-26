@@ -1,0 +1,326 @@
+[
+  {
+    "case": "codex-no-reset",
+    "system": "Current definition",
+    "steps": "Validate complete current schema, POST/publish, read pinned version",
+    "expected": "201; no unknown top-level limits; correct configured policy",
+    "actual": "Accepted and published; pinned policy matched",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-definition.json](codex-no-reset-definition.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Visit 1",
+    "steps": "Run until input wait; inspect calls and sessions",
+    "expected": "Fresh A; finished session row A",
+    "actual": "Fresh ca76f445-a1ff-4217-8f9d-65e644dfa06b; finished row",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-1.json](codex-no-reset-visit-1.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Visit 2 missing",
+    "steps": "Delete A provider file, submit wait input",
+    "expected": "Resume A fails with handle and resume-own origin; failed row A",
+    "actual": "HARNESS_SESSION_MISSING; origin resume-own; A failed",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-2-missing.json](codex-no-reset-visit-2-missing.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Plain Resume",
+    "steps": "POST /resume at missing-session failure",
+    "expected": "409, deliberate choice required",
+    "actual": "409 in traffic; no extra provider call",
+    "result": "PASS",
+    "evidence": "[traffic.json](traffic.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Explicit choice",
+    "steps": "POST recover-session for worker and observed failure sequence",
+    "expected": "One durable choice, actor/time, failure answered, no prior context; fresh B",
+    "actual": "run.resumed seq 25, failureSeq 24, priorContextCarried false; fresh 0849c678-0342-4178-845d-3c1afc52ad2c",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-2-recovered.json](codex-no-reset-visit-2-recovered.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Visit 3",
+    "steps": "Submit second wait input",
+    "expected": "No reset: resume B; resetAfterVisits 2: fresh C",
+    "actual": "resume 0849c678-0342-4178-845d-3c1afc52ad2c; finished row",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-3.json](codex-no-reset-visit-3.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Session announcements",
+    "steps": "Inspect durable harness.session events",
+    "expected": "No resumed claim for missing provider turn",
+    "actual": "fresh, fresh, resumed",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-3.json](codex-no-reset-visit-3.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Visits and completion",
+    "steps": "Count worker turn/finished events and run.finished",
+    "expected": "4 calls within 3 logical visits; 3 worker completions; run completes once",
+    "actual": "4 turns, 3 visits, 3 worker completions, 1 run.finished",
+    "result": "PASS",
+    "evidence": "[codex-no-reset-visit-3.json](codex-no-reset-visit-3.json)"
+  },
+  {
+    "case": "codex-no-reset",
+    "system": "Configuration/provenance",
+    "steps": "Compare pinned full version before/after; every provider request",
+    "expected": "Policy/reset unchanged; exact authored prompt/model/effort",
+    "actual": "Full version deep-equal; all four calls retained authored prompt/model/effort",
+    "result": "PASS",
+    "evidence": "[own-policy-results.json](own-policy-results.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Current definition",
+    "steps": "Validate complete current schema, POST/publish, read pinned version",
+    "expected": "201; no unknown top-level limits; correct configured policy",
+    "actual": "Accepted and published; pinned policy matched",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-definition.json](codex-reset-2-definition.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Visit 1",
+    "steps": "Run until input wait; inspect calls and sessions",
+    "expected": "Fresh A; finished session row A",
+    "actual": "Fresh ffef573c-f73c-4083-8cfe-86177f7426d1; finished row",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-1.json](codex-reset-2-visit-1.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Visit 2 missing",
+    "steps": "Delete A provider file, submit wait input",
+    "expected": "Resume A fails with handle and resume-own origin; failed row A",
+    "actual": "HARNESS_SESSION_MISSING; origin resume-own; A failed",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-2-missing.json](codex-reset-2-visit-2-missing.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Plain Resume",
+    "steps": "POST /resume at missing-session failure",
+    "expected": "409, deliberate choice required",
+    "actual": "409 in traffic; no extra provider call",
+    "result": "PASS",
+    "evidence": "[traffic.json](traffic.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Explicit choice",
+    "steps": "POST recover-session for worker and observed failure sequence",
+    "expected": "One durable choice, actor/time, failure answered, no prior context; fresh B",
+    "actual": "run.resumed seq 25, failureSeq 24, priorContextCarried false; fresh ca0f8e9e-3513-44cf-a2c6-e131d3d32258",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-2-recovered.json](codex-reset-2-visit-2-recovered.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Visit 3",
+    "steps": "Submit second wait input",
+    "expected": "No reset: resume B; resetAfterVisits 2: fresh C",
+    "actual": "fresh f6be7621-4643-4381-aafd-07087ce961e3; finished row",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-3.json](codex-reset-2-visit-3.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Session announcements",
+    "steps": "Inspect durable harness.session events",
+    "expected": "No resumed claim for missing provider turn",
+    "actual": "fresh, fresh, fresh",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-3.json](codex-reset-2-visit-3.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Visits and completion",
+    "steps": "Count worker turn/finished events and run.finished",
+    "expected": "4 calls within 3 logical visits; 3 worker completions; run completes once",
+    "actual": "4 turns, 3 visits, 3 worker completions, 1 run.finished",
+    "result": "PASS",
+    "evidence": "[codex-reset-2-visit-3.json](codex-reset-2-visit-3.json)"
+  },
+  {
+    "case": "codex-reset-2",
+    "system": "Configuration/provenance",
+    "steps": "Compare pinned full version before/after; every provider request",
+    "expected": "Policy/reset unchanged; exact authored prompt/model/effort",
+    "actual": "Full version deep-equal; all four calls retained authored prompt/model/effort",
+    "result": "PASS",
+    "evidence": "[own-policy-results.json](own-policy-results.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Current definition",
+    "steps": "Validate complete current schema, POST/publish, read pinned version",
+    "expected": "201; no unknown top-level limits; correct configured policy",
+    "actual": "Accepted and published; pinned policy matched",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-definition.json](claude-no-reset-definition.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Visit 1",
+    "steps": "Run until input wait; inspect calls and sessions",
+    "expected": "Fresh A; finished session row A",
+    "actual": "Fresh 0933b6e1-b96e-40ca-aa73-568ca9b50fca; finished row",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-1.json](claude-no-reset-visit-1.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Visit 2 missing",
+    "steps": "Delete A provider file, submit wait input",
+    "expected": "Resume A fails with handle and resume-own origin; failed row A",
+    "actual": "HARNESS_SESSION_MISSING; origin resume-own; A failed",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-2-missing.json](claude-no-reset-visit-2-missing.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Plain Resume",
+    "steps": "POST /resume at missing-session failure",
+    "expected": "409, deliberate choice required",
+    "actual": "409 in traffic; no extra provider call",
+    "result": "PASS",
+    "evidence": "[traffic.json](traffic.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Explicit choice",
+    "steps": "POST recover-session for worker and observed failure sequence",
+    "expected": "One durable choice, actor/time, failure answered, no prior context; fresh B",
+    "actual": "run.resumed seq 25, failureSeq 24, priorContextCarried false; fresh 07b025bc-54e5-4113-8053-862c188ec3ef",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-2-recovered.json](claude-no-reset-visit-2-recovered.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Visit 3",
+    "steps": "Submit second wait input",
+    "expected": "No reset: resume B; resetAfterVisits 2: fresh C",
+    "actual": "resume 07b025bc-54e5-4113-8053-862c188ec3ef; finished row",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-3.json](claude-no-reset-visit-3.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Session announcements",
+    "steps": "Inspect durable harness.session events",
+    "expected": "No resumed claim for missing provider turn",
+    "actual": "fresh, fresh, resumed",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-3.json](claude-no-reset-visit-3.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Visits and completion",
+    "steps": "Count worker turn/finished events and run.finished",
+    "expected": "4 calls within 3 logical visits; 3 worker completions; run completes once",
+    "actual": "4 turns, 3 visits, 3 worker completions, 1 run.finished",
+    "result": "PASS",
+    "evidence": "[claude-no-reset-visit-3.json](claude-no-reset-visit-3.json)"
+  },
+  {
+    "case": "claude-no-reset",
+    "system": "Configuration/provenance",
+    "steps": "Compare pinned full version before/after; every provider request",
+    "expected": "Policy/reset unchanged; exact authored prompt/model/effort",
+    "actual": "Full version deep-equal; all four calls retained authored prompt/model/effort",
+    "result": "PASS",
+    "evidence": "[own-policy-results.json](own-policy-results.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Current definition",
+    "steps": "Validate complete current schema, POST/publish, read pinned version",
+    "expected": "201; no unknown top-level limits; correct configured policy",
+    "actual": "Accepted and published; pinned policy matched",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-definition.json](claude-reset-2-definition.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Visit 1",
+    "steps": "Run until input wait; inspect calls and sessions",
+    "expected": "Fresh A; finished session row A",
+    "actual": "Fresh 031bdc66-31e1-4283-a1e1-acdff72b4bc1; finished row",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-1.json](claude-reset-2-visit-1.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Visit 2 missing",
+    "steps": "Delete A provider file, submit wait input",
+    "expected": "Resume A fails with handle and resume-own origin; failed row A",
+    "actual": "HARNESS_SESSION_MISSING; origin resume-own; A failed",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-2-missing.json](claude-reset-2-visit-2-missing.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Plain Resume",
+    "steps": "POST /resume at missing-session failure",
+    "expected": "409, deliberate choice required",
+    "actual": "409 in traffic; no extra provider call",
+    "result": "PASS",
+    "evidence": "[traffic.json](traffic.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Explicit choice",
+    "steps": "POST recover-session for worker and observed failure sequence",
+    "expected": "One durable choice, actor/time, failure answered, no prior context; fresh B",
+    "actual": "run.resumed seq 25, failureSeq 24, priorContextCarried false; fresh 3d6f13f9-9b88-4bc0-9194-c23e06ec500e",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-2-recovered.json](claude-reset-2-visit-2-recovered.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Visit 3",
+    "steps": "Submit second wait input",
+    "expected": "No reset: resume B; resetAfterVisits 2: fresh C",
+    "actual": "fresh bcb15a2b-461e-4560-9d6e-62f68ea57830; finished row",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-3.json](claude-reset-2-visit-3.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Session announcements",
+    "steps": "Inspect durable harness.session events",
+    "expected": "No resumed claim for missing provider turn",
+    "actual": "fresh, fresh, fresh",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-3.json](claude-reset-2-visit-3.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Visits and completion",
+    "steps": "Count worker turn/finished events and run.finished",
+    "expected": "4 calls within 3 logical visits; 3 worker completions; run completes once",
+    "actual": "4 turns, 3 visits, 3 worker completions, 1 run.finished",
+    "result": "PASS",
+    "evidence": "[claude-reset-2-visit-3.json](claude-reset-2-visit-3.json)"
+  },
+  {
+    "case": "claude-reset-2",
+    "system": "Configuration/provenance",
+    "steps": "Compare pinned full version before/after; every provider request",
+    "expected": "Policy/reset unchanged; exact authored prompt/model/effort",
+    "actual": "Full version deep-equal; all four calls retained authored prompt/model/effort",
+    "result": "PASS",
+    "evidence": "[own-policy-results.json](own-policy-results.json)"
+  }
+]

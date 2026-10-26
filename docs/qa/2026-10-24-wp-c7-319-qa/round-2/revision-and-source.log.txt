@@ -1,0 +1,166 @@
+git rev-parse HEAD:
+ebaaab0fdb683509386a5ded0692470cc75dcb75
+git branch --show-current:
+codex-qa-wp-c7-319
+round-2 production delta from round-1 head:
+ CHANGELOG.md                         |  2 +-
+ apps/api/src/routes/system.ts        |  2 +-
+ apps/api/src/shutdown-choice.test.ts | 61 ++++++++++++++++++++++++++++++++++++
+ apps/api/src/shutdown.ts             | 35 +++++++++++++++------
+ docs/07-api-and-streaming.md         |  9 ++++--
+ docs/09-frontend-and-pwa.md          |  5 +--
+ 6 files changed, 98 insertions(+), 16 deletions(-)
+docs/07-api-and-streaming.md lines 619-642:
+`["wait", "force"]` without interruption. Wait has no hidden kill timer. Force is available
+before expiry. A force cleanup failure offers `["force"]`: a further explicit force exits
+code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
+terminations remain warnings without preventing normal completion. A drain observation
+failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
+Shutdown responses also carry an opaque `controlToken` (#319). A client can send it
+in `x-graphgoblin-shutdown-token` on POST. The gateway checks it synchronously before
+dispatch and returns 409 with the current snapshot if the gateway incarnation changed, the
+phase changed, or another control chose since the token was read. Every phase entry and
+every accepted wait issue a new token, so a phase that recurs (draining, then
+awaiting-choice, then draining after a wait) does not revive the earlier token. This
+prevents a delayed force from acknowledging another request's newly failed cleanup or
+overriding a later choice to keep waiting. The browser always sends this precondition and resets confirmation
+when the token changes. Unconditional operator/API actions remain supported; signals
+and the controller's force semantics are unchanged. The token is a concurrency value,
+not an authentication credential. Reads require `system:read`; actions require
+`system:write`, including conditional actions.
+
+Existing `GET /runs/{id}` reads supply pinned loop names when permitted, with run IDs
+as the fallback. See docs/09 for the app-wide notice.
+
+Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
+503 before saving any inbound record or dedupe key, so the same Event can be retried after
+restart. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`. Independent queued runs remain
+docs/09-frontend-and-pwa.md shutdown token passage:
+
+  docs\09-frontend-and-pwa.md:196:- `components/layout/`: `AppShell` (header, offline banner), `MainNav` (green 
+underline, optional attention dot, a Menu button below 640 px), `Page`, and `PageHeader`. The responsive utilities 
+behind the primitives are in `styles/layout.css` (see "Breakpoints and layout primitives" below).
+  docs\09-frontend-and-pwa.md:197:- `components/status.tsx` (`RunStatusBadge`, `QueryState`) and 
+`components/ErrorBoundary.tsx`.
+> docs\09-frontend-and-pwa.md:198:- Feature folders assemble primitives and keep their public exports: `editor/` 
+(`EditorPage` with `EditorToolbar` and `ValidationIndicator`, `LoopPanel`, `NodeEditorDialog` with `NodeConnections`, 
+`IssueBadge` with `IssuePopover`, `ConflictNotice`, `useLoadEditor`, `useResolveConflict`; `KindChip`), `runs/` 
+(`RunInspectorPage` with `runs/inspector/`: `RunControls`, `WaitPanel`, `Timeline`, `ThreadViewer`, `ProgressDrawer`; 
+`runs/new/`: `NewRunPage` and `RunLauncher`), `settings/` (`SettingsPage` with `settings/sections/`), and `forms/` 
+(`fields.tsx` re-exporting `forms/fields/`: `shared`, `text`, `choice`, `json`, and `structure`, which holds the 
+dispatcher with the object, array, record, and union fields so the recursion has no import cycle; `layout.ts` and 
+`sections.tsx` place a form's basic and advanced fields, #14).
+  docs\09-frontend-and-pwa.md:199:
+  docs\09-frontend-and-pwa.md:200:### Breakpoints and layout primitives (Decided, #41)
+  docs\09-frontend-and-pwa.md:253:- **Editor.** Palette additions pan into view. List fields with a default show the 
+default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the 
+setting.
+  docs\09-frontend-and-pwa.md:254:- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a 
+subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A 
+recorded seed takes precedence over the empty fallback. Domain `reconcileThread` delegates replay to `replayThread`, 
+which adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration 
+increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual 
+admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still 
+shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not 
+replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and 
+reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a 
+handful of run fetches (it took 7 s and one fetch per event before).
+> docs\09-frontend-and-pwa.md:255:- **Events screen** shows each event's source (API, webhook delivery, or the run 
+whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and 
+current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While 
+the mounted page contains pending receipts, it checks every two seconds and updates matching loaded receipts so 
+recovery results and new run links appear automatically; this polling stops after displayed receipts are terminal or 
+the page unmounts. Background reads preserve loaded row identities, order and opaque page boundaries. Each loaded page 
+is re-read inclusively at its original first row using the list route's anchor parameter and a limit equal to its 
+loaded size. New arrivals, including timestamp ties, cannot push a loaded pending receipt outside that read. If the 
+anchoring row has been deleted, the read comes back empty and the page's next read anchors at its next loaded row, 
+with the limit reduced to match; the deleted row stays shown until Refresh. This costs one indexed anchor lookup and 
+one bounded SQL page per loaded page, without scanning history; only requested rows are decoded. Each delivery can 
+disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET 
+/loops/{id}/triggers`.
+> docs\09-frontend-and-pwa.md:256:  The Events page appends older events with **Load more**, keeps long preformatted 
+payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user 
+load. **Refresh** deliberately returns to the newest page within the active filters, replacing appended pages only 
+when the fresh first page arrives; subsequent loads use its new opaque cursor. While Refresh is pending or fails, the 
+current rows, position and filters stay. Failure says "Refresh failed. Your current events are still shown. Refresh to 
+try again." Across filter changes, unmounts and revisits, only the latest Refresh for the same cached query scope may 
+replace its snapshot; obsolete responses produce no status. A successful Refresh announces "Showing the newest 
+events." through the existing polite live region. URL `type` and exclusive `before` filters are shown above the table 
+and retained on every page, availability check and Refresh. Each has a keyboard-accessible **Clear** control named for 
+its filter; it removes only that parameter and returns focus to Refresh. An empty filtered result says "No inbound 
+events match these filters." An unfiltered empty result says "No inbound events yet."
+  docs\09-frontend-and-pwa.md:257:  A separate two-second check requests only the newest matching event (`GET /events` 
+with the same filters and `limit=1`). A newer `(receivedAt, id)` than the loaded head, or a first arrival into an 
+empty result, shows **New events available** in the existing header without inserting rows, changing focus or 
+scrolling. It reports availability rather than an exact count to keep reads bounded. Focus and reconnect do not 
+replace loaded rows. Failed availability checks say "Could not check for new events. Refresh to try again." alongside 
+any existing arrival notice; the failure message clears when checks recover. Refresh remains available without a 
+notice and ignores activation during a history fetch or another Refresh, retaining keyboard focus. Checks stop on 
+unmount and pause in a hidden tab under the normal query defaults. No new endpoint or stored-data change is needed; 
+the existing list route accepts an inclusive anchor for bounded receipt reads (#240).
+  docs\09-frontend-and-pwa.md:258:- **Settings** check the secret name rule before sending, and validation messages 
+name the first failing field.
+  docs\09-frontend-and-pwa.md:425:- **Context tabs (#170).** `components/ui/tabs.tsx` supplies horizontal, 
+automatically activated Settings/Context tabs: one tab stop, Left/Right with wraparound, Home/End, `aria-selected`, 
+and linked `aria-controls`/`aria-labelledby` panels. Tabs count problems, Context also counts fields with their own 
+values, and Settings has no indicator for valid required controls because every dialog opening starts on Settings. 
+Each problem badge counts each issue path once. Context also shows how many placed context fields hold a value of 
+their own ("2 set"), using the Advanced counting rules below, in both its text and accessible name. A provider Context 
+object counts once when any child is customized; inference input and context files count separately. Both panels 
+remain mounted inside one form so values, validation and held unparsed text survive switching. `#context-tab` in the 
+dialog disclosure session stores selection; reopening starts on Settings, while undo/redo remounts preserve the user's 
+tab. Advanced states are separate for Settings, Context and nested object bodies. Node id/label and Connections stay 
+outside the config tabs. The primitive decision is [ADR-0031](decisions/ADR-0031-mounted-context-tabs.md).
+  docs\09-frontend-and-pwa.md:426:- **The disclosure.** `components/ui/disclosure.tsx`: a button with `aria-expanded` 
+and `aria-controls`, a chevron that turns with the state, and the shared focus ring; Enter and Space toggle it. It 
+starts collapsed. The node editor keeps which of its config form's disclosures are open (the Advanced group, 
+collapsible list items, the cron schedule's raw expression) in its own state, which it passes to `SchemaForm` as 
+`disclosures` (`forms/disclosures.ts`, keyed `#advanced`, by a stable row identity for collection items, and 
+`<field>#advanced`): the remount an undo, a redo, or a subloop pick causes keeps them as the user left them, and 
+closing the dialog or opening another node starts collapsed again. Without `disclosures` a form keeps them itself for 
+as long as it is mounted. Its panel stays mounted while hidden, so its fields keep their state and validation. Each 
+group is a section `Fieldset` with a `Legend` (borderless, a quiet uppercase heading, ruled off from the section 
+before it). The loop panel's forms have no advanced fields and no disclosure.
+> docs\09-frontend-and-pwa.md:427:- **What a collapsed group hides.** The toggle's text, and so its accessible name, 
+adds how many advanced fields hold a value of their own ("2 set": set and not their default; an object counts when any 
+field inside does, so `{}` or a copy of each default does not, while an opaque JSON value such as a JSON Schema counts 
+once supplied, `{}` included) and how many problems are inside ("1 error" on the bad tone with its glyph): schema 
+issues, unparsed JSON text, and the loop's errors at or under an advanced field. The loop's errors are those its 
+validation lists on the node with a field path, such as a Liquid template or JSONata expression that does not parse 
+(the domain's syntax issues carry their field's path) and the API's checks; the node editor passes their paths to its 
+config form (`SchemaForm`'s `problems`). Each path counts once. It shows while open too.
+  docs\09-frontend-and-pwa.md:428:- **Following an issue.** `focusField` reveals the tab holding the field 
+(`revealTabs`) and every enclosing collapsed disclosure (`revealDisclosures`) before focusing its control. Issue 
+badges on the canvas or beside the dialog title therefore reach Context fields inside Advanced and collapsed mutation 
+rows. Unrelated hidden or inert fields remain unreachable. History focus restoration uses the same reveal order. 
+Problems remain discoverable in tab/disclosure counts and the form-wide Config issues summary even while their panel 
+is hidden.
+  docs\09-frontend-and-pwa.md:429:- **Collapsible operations.** A list whose metadata sets `collapseItems` (every 
+mutation list: a mutate node's `operations`, an inference node's `input` and `output.transforms`) draws each item as a 
+disclosure whose header names it ("Operations 1"), summarises it in one line (its kind and its path, or whatever its 
+first short text says: "set /vars/topic", "drop messages"), flags its problems ("1 error"), and keeps its Remove 
+button beside it. Items there when the form opens start collapsed; an added one starts open, with focus on its first 
+control. In the node editor each row has an in-memory identity kept alongside the form values that undo history 
+restores; its disclosure state stays with that identity through edits, removal, undo, and redo, even for identical 
+rows. Restoring a removed row brings back its own open or collapsed state, and focus follows a surviving row when its 
+index changes. These identities are scoped to the dialog opening and never enter the saved draft. Inside, the item's 
+group keeps its name for assistive technology without a second visible legend. Add and Remove work as before (#53).
+  docs\09-frontend-and-pwa.md:800:reports an unknown outcome. A 409 replaces the displayed snapshot with the returned
+  docs\09-frontend-and-pwa.md:801:current state, including when another tab acted first. Each tab observes the gateway;
+> docs\09-frontend-and-pwa.md:802:navigation, reload and tab closure send no shutdown action. Each response includes 
+an opaque `controlToken`. Choices send it as
+  docs\09-frontend-and-pwa.md:803:`x-graphgoblin-shutdown-token`; the gateway compares it synchronously before 
+dispatch.
+  docs\09-frontend-and-pwa.md:804:A phase change, another control's accepted choice or another gateway incarnation 
+makes a
+  docs\09-frontend-and-pwa.md:805:stale choice return 409 instead of turning it into a different force operation; a 
+phase
+> docs\09-frontend-and-pwa.md:806:that recurs gets a new token, so a confirmation opened before it stays stale. 
+Changing the token unmounts any open
+  docs\09-frontend-and-pwa.md:807:confirmation, requiring a fresh deliberate choice. A missing token is an invalid
+  docs\09-frontend-and-pwa.md:808:snapshot and never permits an unguarded browser choice. These choices preserve engine
+
+
+
+CHANGELOG shutdown entry:
+- Show gateway drain state and active run inspectors on every page, with explicit keep-waiting and confirmed force controls, current-state conflict handling, and connection-closure feedback. Closing or reloading a tab never requests shutdown. Choices reject stale tokens before dispatch: a token names one gateway, one entry into a phase and the choices accepted since. **Upgrade:** update the gateway and web app together; browser choices require the shutdown control token. (#319)

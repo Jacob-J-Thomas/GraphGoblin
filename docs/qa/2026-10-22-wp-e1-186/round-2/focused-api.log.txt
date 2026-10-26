@@ -1,0 +1,102 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+stdout | src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast in-memory reader, 2 live appends per 128-event page over a 19,200-event replay
+{"probe":"in-memory-real-socket","stored":19507,"liveAppendedDuringReplay":306,"delivered":19507,"lastDelivered":19507,"slowConsumer":false}
+
+ ✓ src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast in-memory reader, 2 live appends per 128-event page over a 19,200-event replay 10415ms
+stdout | src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast real-socket reader on SQLite while the run appends ~100 events/s
+{"probe":"sqlite-real-socket","replayMs":15046,"appendedWhileOpen":2289,"delivered":43290,"lastDelivered":43290,"slowConsumer":false}
+
+ ✓ src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast real-socket reader on SQLite while the run appends ~100 events/s 18572ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 250ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 56ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 14ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 19ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 23ms
+ × src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 38ms
+   → expected true to be false // Object.is equality
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 1904ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 1113ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 320ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 548ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 325ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 261ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 216ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 245ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 341ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 4395ms
+stdout | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events
+{"probe":"memory","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 1099ms
+stdout | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events
+{"probe":"sqlite","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 3792ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 394ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 670ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 195ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > scans multiple terminal pages before closing an already consumed cursor 26ms
+ × src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked high-water-mark transport 24ms
+   → expected false to be true // Object.is equality
+pnpm.cmd : 
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-bounds.tes ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log 
+without a stream failure
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/sse-bounds.test.ts:108:63
+    106|       try {
+    107|         const response = await app.inject('/');
+    108|         expect(response.body.includes('event: stream.error')).toBe(fal…
+       |                                                               ^
+    109|         const stored = await events.read(runId);
+    110|         expect(stored).toHaveLength(kind === 'count' ? 302 : 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked 
+high-water-mark transport
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/sse-catchup.test.ts:195:52
+    193|     try {
+    194|       const text = await (await fetch(base)).text();
+    195|       expect(text.includes('event: stream.error')).toBe(true);
+       |                                                    ^
+    196|       expect(text.includes('SSE_SLOW_CONSUMER')).toBe(true);
+    197|       expect(ids(text)).toEqual([0]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 23 passed (25)
+   Start at  02:15:27
+   Duration  69.66s (tests 66%, import 25%, transform 9%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

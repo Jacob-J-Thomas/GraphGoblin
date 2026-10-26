@@ -1,0 +1,264 @@
+[
+  {
+    "stream": "stdout",
+    "preflight": {
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "state": "auth",
+            "ok": false,
+            "version": "0.160.0",
+            "authenticated": false,
+            "problems": ["Codex is not signed in. Run codex login, then retry preflight."],
+            "harness": "codex"
+          },
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "system": {
+      "status": 200,
+      "data": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "[local-path] is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from [local-path]"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "unknown",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "warn",
+            "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "state": "auth",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex is not signed in. Run codex login, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "warn",
+            "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          }
+        ]
+      }
+    },
+    "validation": {
+      "status": 200,
+      "data": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "think",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      }
+    }
+  },
+  {
+    "stream": "stderr",
+    "preflight": {
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "state": "auth",
+            "ok": false,
+            "version": "0.160.0",
+            "authenticated": false,
+            "problems": ["Codex is not signed in. Run codex login, then retry preflight."],
+            "harness": "codex"
+          },
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "system": {
+      "status": 200,
+      "data": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "[local-path] is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from [local-path]"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "unknown",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "warn",
+            "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "state": "auth",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex is not signed in. Run codex login, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "warn",
+            "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          }
+        ]
+      }
+    },
+    "validation": {
+      "status": 200,
+      "data": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "think",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      }
+    }
+  }
+]

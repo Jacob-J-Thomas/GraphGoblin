@@ -1,0 +1,320 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2
+At line:9 char:1
++ pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 *> do ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=2:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/web
+      Coverage enabled with v8
+
+ ❯ src/settings/SettingsPage.test.tsx (38 tests | 2 failed) 205181ms
+   ❯ SettingsPage (35)
+     × finishes revocation before a held list refresh, then restores focus after 401 20509ms
+     × edits and deletes LiteLLM rows and toggles through PATCH 20029ms
+ ❯ src/runs/follow-run-attempts.test.ts (12 tests | 1 failed) 128ms
+   × reopens at its cursor when the lifecycle observation overtakes the captured row and pages 34ms
+ ❯ src/components/ui/bounded-value.deferred.test.tsx (3 tests | 1 failed) 819ms
+   ❯ ThreadViewer while a selection is being reconstructed (1)
+     × keeps the previous thread mounted, with its own identifiers and a note, until the selected one is rebuilt 50ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/follow-run-attempts.test.ts > reopens at its cursor when the lifecycle observation overtakes the 
+captured row and pages
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ src/runs/follow-run-attempts.test.ts:48:21
+     46|   const stop = followRunAttempts(client, id, o);
+     47|   await vi.advanceTimersByTimeAsync(0);
+     48|   expect(o.running).toHaveBeenCalledOnce();
+       |                     ^
+     49|   expect(o.finished).not.toHaveBeenCalled();
+     50|   expect(o.cursor()).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/settings/SettingsPage.test.tsx > SettingsPage > finishes revocation before a held list refresh, then 
+restores focus after 401
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/settings/SettingsPage.test.tsx:119:39
+    117|   );
+    118|
+    119|   it.each(['success', '401'] as const)(
+       |                                       ^
+    120|     'finishes revocation before a held list refresh, then restores foc…
+    121|     async (outcome) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/settings/SettingsPage.test.tsx > SettingsPage > edits and deletes LiteLLM rows and toggles through PATCH
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/settings/SettingsPage.test.tsx:244:3
+    242|     expect(screen.getByRole('alertdialog')).toHaveTextContent('next se…
+    243|   });
+    244|   it('edits and deletes LiteLLM rows and toggles through PATCH', async…
+       |   ^
+    245|     const user = userEvent.setup();
+    246|     const api = seeded('litellm');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/components/ui/bounded-value.deferred.test.tsx > ThreadViewer while a selection is being reconstructed > 
+keeps the previous thread mounted, with its own identifiers and a note, until the selected one is rebuilt
+TestingLibraryElementError: Unable to find an element with the text: Thread at event 1. This could be because the text 
+is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher 
+more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid gap-section"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_0_"[39m
+        [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 
+rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+            [33mid[39m=[32m"_r_0_"[39m
+          [36m>[39m
+            [0mThread at event 3[0m
+          [36m</h2>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-5"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid gap-2"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold"[39m
+              [36m>[39m
+                [0mMessages ([0m
+                [0m2[0m
+                [0m)[0m
+              [36m</h3>[39m
+              [36m<ol[39m
+                [33maria-label[39m=[32m"Messages"[39m
+                [33mclass[39m=[32m"grid gap-2 text-md"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"grid min-w-0 gap-1 rounded-md border border-default p-3"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-2"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border 
+border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-5 gap-1 
+px-[7px] text-[11px] [&_svg]:size-[11px]"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                      [36m>[39m
+                        [0muser[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [0m [0m
+                    [36m<code[39m
+                      [33mclass[39m=[32m"text-xs text-muted"[39m
+                    [36m>[39m
+                      [0mstart[0m
+                    [36m</code>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid min-w-0 gap-1.5 -mx-3"[39m
+                  [36m>[39m
+                    [36m<pre[39m
+                      [33mclass[39m=[32m"m-0 min-w-0 px-3 py-2 leading-normal whitespace-pre-wrap wrap-anywhere 
+text-md"[39m
+                    [36m>[39m
+                      [0mWrite a haiku about loops.[0m
+                    [36m</pre>[39m
+                  [36m</div>[39m
+                [36m</li>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"grid min-w-0 gap-1 rounded-md border border-default p-3"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-2"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border 
+border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-5 gap-1 
+px-[7px] text-[11px] [&_svg]:size-[11px]"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                      [36m>[39m
+                        [0massistant[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [0m [0m
+                    [36m<code[39m
+                      [33mclass[39m=[32m"text-xs text-muted"[39m
+                    [36m>[39m
+                      [0minfer[0m
+                    [36m</code>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid min-w-0 gap-1.5 -mx-3"[39m
+                  [36m>[39m
+                    [36m<pre[39m
+                      [33mclass[39m=[32m"m-0 min-w-0 px-3 py-2 leading-normal whitespace-pre-wrap wrap-anywhere 
+text-md"[39m
+                    [36m>[39m
+                      [0mLoops within loops turn.[0m
+                    [36m</pre>[39m
+                  [36m</div>[39m
+                [36m</li>[39m
+              [36m</ol>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid gap-2"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold"[39m
+              [36m>[39m
+                [0mVariables[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid min-w-0 gap-1.5"[39m
+              [36m>[39m
+                [36m<pre[39m
+                  [33maria-label[39m=[32m"Variables"[39m
+                  [33mclass[39m=[32m"m-0 min-w-0 px-3 py-2 leading-normal whitespace-pre-wrap wrap-anywhere 
+rounded-md border border-default bg-code-bg font-mono text-[12.5px] text-code-fg"[39m
+                [36m>[39m
+                  [0m{
+  "topic": "hello",
+  "wide": {
+    "items": [
+      1,
+      2,
+      3
+    ]
+  }
+}[0m
+                [36m</pre>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid min-w-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-controls[39m=[32m"_r_1_-panel"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mclass[39m=[32m"group/disclosure flex min-w-0 cursor-pointer items-center gap-2 text-left 
+text-default rounded-md transition-colors hover:bg-surface-hover pointer-coarse:min-h-11 focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus flex-1 px-1.5 py-1 text-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0 size-4 shrink-0 -rotate-90 text-muted transition-transform 
+group-aria-expanded/disclosure:rotate-0"[39m
+                  [33mdata-icon[39m=[32m"chevron"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1"[39m
+
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"min-w-0"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"font-semibold"[39m
+                    [36m>[39m
+                      [0mFull thread JSON[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 grid gap-3 pt-2 pl-1.5"[39m
+                [33mdata-disclosure-panel[39m=[32m""[39m
+                [33mhidden[39m=[32m""[39m
+                [33mid[39m=[32m"_r_1_-panel"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/bounded-value.deferred.test.tsx:158:19
+    156|     // The previous thread's body stays, under its own event's title, …
+    157|     // keyboard and the download names keep their place; the note says…
+    158|     expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
+       |                   ^
+    159|     expect(screen.queryByText('Thread at event 3')).not.toBeInTheDocum…
+    160|     expect(screen.getByText('Reconstructing the thread at event 3…')).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files %USERPROFILE%/source/repos/GraphGoblin/.claude/workt
+rees/codex-wp-e1-186-r2/apps/web/src/editor/OrthogonalEdge.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ Test Files  3 failed | 136 passed (139)
+      Tests  4 failed | 1683 passed (1687)
+     Errors  1 error
+   Start at  20:56:41
+   Duration  2547.99s (tests 43%, environment 31%, setup 12%, import 11%, transform 2%, worker 1%)
+
+Environment  jsdom was created 139 times · 1451.60s total, 31% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\web
+

@@ -1,0 +1,11 @@
+// Evidence validation succeeds when the report faithfully retains the known two focus failures.
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';import {resolve} from 'node:path';import {createHash} from 'node:crypto';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-4'),prettier=createRequire(resolve('package.json'))('prettier'),files=await readdir(dir),read=n=>readFile(resolve(dir,n),'utf8');
+const report=await read('README.md'),links=[...report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]);const missing=[];
+for(const name of links){if(/^https?:|^#/.test(name))continue;try{await stat(resolve(dir,name.split('#')[0]));}catch{missing.push(name);}}
+const unlinked=files.filter(n=>n!=='README.md'&&!links.includes(n)),localPaths=[];
+for(const name of files){if(name.endsWith('.png'))continue;const text=await read(name);if(/(?:[A-Z]:)?[\\/]+Users[\\/]+[A-Za-z0-9._-]+/i.test(text))localPaths.push(name);}
+const main=JSON.parse(await read('browser-results.json')),focus=JSON.parse(await read('message-focus-results.json')),old=JSON.parse(await read('focus-small-repro.json'));
+const downloads=[];for(const width of [1440,390])for(const kind of ['messages','nested']){const raw=await readFile(resolve(dir,kind+'-download-'+width+'.json.txt')),api=await readFile(resolve(dir,kind+'-api.json.txt'));downloads.push({kind,width,bytes:raw.length,identical:raw.equals(api),sha256:createHash('sha256').update(raw).digest('hex')});}
+const result={files:files.length,missingLinks:missing,unlinkedFiles:unlinked,localUserPathFiles:localPaths,mainCases:main.length,mainFailures:main.filter(x=>!x.pass).length,oldFocusCases:old.length,oldFocusFailures:old.filter(x=>!x.pass).length,newMessageFocusCases:focus.results.length,newMessageFocusFailures:focus.results.filter(x=>!x.pass).length,knownDefectFaithfullyReported:report.includes('QA-259-R4-01')&&report.includes('**FAIL**')&&focus.results.every(x=>x.after.tag==='BODY'),downloads};
+await writeFile(resolve(dir,'validation.json'),await prettier.format(JSON.stringify(result),{parser:'json'}));console.log(JSON.stringify(result));process.exitCode=missing.length||unlinked.length||localPaths.length||result.mainFailures||result.oldFocusFailures||!result.knownDefectFaithfullyReported||downloads.some(x=>!x.identical)?1:0;

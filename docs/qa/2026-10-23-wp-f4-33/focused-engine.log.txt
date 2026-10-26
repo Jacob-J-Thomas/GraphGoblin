@@ -1,0 +1,229 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-33/packages/engine
+
+ ❯ src/own-session.test.ts (21 tests | 10 failed) 3433ms
+   ❯ node conversations through the public RunManager (3)
+     × resumes only the worker conversation after reviewer feedback 471ms
+   ❯ claude own-session isolation (8)
+     × keeps two parallel runs and both nodes separate 24ms
+     × does not inherit the private handle or reset count in a replay fork or child run 44ms
+     × honors only the authored reset boundary 1 and keeps loop context 43ms
+     × honors only the authored reset boundary 2 and keeps loop context 18ms
+     × honors only the authored reset boundary undefined and keeps loop context 6ms
+     × classifies a missing own conversation without silently starting another 31ms
+     × does not continue unaccepted new work using only the prior visit handle 26ms
+     × retains the exact task on proven refusal at a reset boundary 33ms
+   × keeps fresh sessions isolated while deliberately supplying selected main-loop context 4ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/own-session.test.ts > node conversations through the public RunManager > resumes only the worker 
+conversation after reviewer feedback
+AssertionError: expected 'worker 00000000000000000000000001: [o…' to be 'worker 00000000000000000000000001: OK' // 
+Object.is equality
+
+Expected: "worker 00000000000000000000000001: OK"
+Received: "worker 00000000000000000000000001: [object Object]"
+
+ ❯ src/own-session.test.ts:68:61
+     66|       { nodeId: 'reviewer', sessionId: 'fake-session-3', mode: 'fresh'…
+     67|     ]);
+     68|     expect(e.ports.harness.resumed[0]?.request.turn.prompt).toBe(`work…
+       |                                                             ^
+     69|     e.manager.stop();
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > keeps two parallel runs and both nodes separate
+AssertionError: expected 'failed' to be 'succeeded' // Object.is equality
+
+Expected: "succeeded"
+Received: "failed"
+
+ ❯ src/own-session.test.ts:131:47
+    129|     const firstIds: string[] = [];
+    130|     for (const run of runs) {
+    131|       expect((await e.settle(run.id)).status).toBe('succeeded');
+       |                                               ^
+    132|       const events = handles(e, run.id);
+    133|       for (const nodeId of ['worker', 'reviewer']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > does not inherit the private handle or reset count in 
+a replay fork or child run
+AssertionError: expected 'failed' to be 'succeeded' // Object.is equality
+
+Expected: "succeeded"
+Received: "failed"
+
+ ❯ src/own-session.test.ts:148:46
+    146|     const source = await e.runToIdle(v.loopId);
+    147|     const fork = await e.manager.replay({ runId: source.id, nodeId: 'w…
+    148|     expect((await e.settle(fork.id)).status).toBe('succeeded');
+       |                                              ^
+    149|     const parent = e.publish(
+    150|       singleNodeLoop('own-session parent', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > honors only the authored reset boundary 1 and keeps 
+loop context
+ FAIL  src/own-session.test.ts > claude own-session isolation > honors only the authored reset boundary 2 and keeps 
+loop context
+ FAIL  src/own-session.test.ts > claude own-session isolation > honors only the authored reset boundary undefined and 
+keeps loop context
+AssertionError: expected 'failed' to be 'succeeded' // Object.is equality
+
+Expected: "succeeded"
+Received: "failed"
+
+ ❯ src/own-session.test.ts:178:26
+    176|       const { e, v } = await setup(count, reset);
+    177|       const run = await e.runToIdle(v.loopId);
+    178|       expect(run.status).toBe('succeeded');
+       |                          ^
+    179|       const events = handles(e, run.id);
+    180|       const worker = events.filter((x) => x.nodeId === 'worker');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > classifies a missing own conversation without silently 
+starting another
+AssertionError: expected { …(5) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_SESSION_MISSING",
+-   "inference": {
+-     "promptKind": "authored",
+-     "submission": "session-missing",
+-   },
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "resumable": false,
+  }
+
+ ❯ src/own-session.test.ts:210:25
+    208|     ]);
+    209|     const run = await e.runToIdle(v.loopId);
+    210|     expect(run.failure).toMatchObject({
+       |                         ^
+    211|       code: 'HARNESS_SESSION_MISSING',
+    212|       resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > does not continue unaccepted new work using only the 
+prior visit handle
+AssertionError: expected { …(5) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_DELIVERY_UNCERTAIN",
+-   "inference": {
+-     "promptKind": "authored",
+-     "submission": "delivery-uncertain",
+-   },
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "resumable": false,
+  }
+
+ ❯ src/own-session.test.ts:235:25
+    233|     ]);
+    234|     const run = await e.runToIdle(v.loopId);
+    235|     expect(run.failure).toMatchObject({
+       |                         ^
+    236|       code: 'HARNESS_DELIVERY_UNCERTAIN',
+    237|       resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > retains the exact task on proven refusal at a reset 
+boundary
+AssertionError: expected undefined to be 'definitely-not-submitted' // Object.is equality
+
+- Expected:
+"definitely-not-submitted"
+
++ Received:
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 11 passed (21)
+   Start at  22:11:54
+   Duration  33.72s (transform 76%, import 13%, tests 11%)
+
+  Transform  transforming modules took 23.72s · 76% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+undefined
+
+ ❯ src/own-session.test.ts:258:48
+    256|     ]);
+    257|     const run = await e.runToIdle(v.loopId);
+    258|     expect(run.failure?.inference?.submission).toBe('definitely-not-su…
+       |                                                ^
+    259|     const before = e
+    260|       .events(run.id)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/own-session.test.ts > keeps fresh sessions isolated while deliberately supplying selected main-loop context
+ZodError: [
+  {
+    "code": "invalid_union",
+    "errors": [],
+    "note": "No matching discriminator",
+    "discriminator": "op",
+    "options": [
+      "set",
+      "delete",
+      "append-message",
+      "inject",
+      "truncate",
+      "drop",
+      "replace",
+      "redact",
+      "coerce"
+    ],
+    "path": [
+      "nodes",
+      1,
+      "config",
+      "input",
+      0,
+      "op"
+    ],
+    "message": "Invalid discriminator value. Expected 'set' | 'delete' | 'append-message' | 'inject' | 'truncate' | 
+'drop' | 'replace' | 'redact' | 'coerce'"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/own-session.test.ts:304:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 33\packages\engine
+

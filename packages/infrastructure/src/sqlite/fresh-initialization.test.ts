@@ -206,9 +206,13 @@ describe('atomic fresh SQLite initialisation', () => {
             return async (mode?: TransactionMode) => {
               // The first guard saw an empty store. Complete the other initialiser just before
               // this one acquires its write lock, leaving a later ordinary migration pending.
-              races += 1;
-              const winner = open(url);
-              await expect(initializeFreshStore(winner.client)).resolves.toBe('fresh');
+              // Ordinary migrations now use this same transaction API. Inject only the one
+              // freshness race, including when the test later repeats startup for idempotence.
+              if (races === 0) {
+                races += 1;
+                const winner = open(url);
+                await expect(initializeFreshStore(winner.client)).resolves.toBe('fresh');
+              }
               return target.transaction(mode);
             };
           const value: unknown = Reflect.get(target, prop, receiver);

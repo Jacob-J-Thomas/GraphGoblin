@@ -1,0 +1,49 @@
+{
+  "phase": "before",
+  "verified": true,
+  "head": "389dc14f24fcab33f6c22b0ba14428596fdda539",
+  "transportCases": 12,
+  "corruptionCases": 2,
+  "auxiliaryFixtureError": "TimeoutError: The operation was aborted due to timeout\n    at new DOMException (node:internal/per_context/domexception:53:5)\n    at Timeout._onTimeout (node:internal/abort_controller:155:9)\n    at listOnTimeout (node:internal/timers:594:17)\n    at process.processTimers (node:internal/timers:529:7)",
+  "realRun": {
+    "expected": 24,
+    "rawLast": 12,
+    "clientLast": 12
+  },
+  "terminalCursors": [
+    {
+      "after": 387,
+      "opens": 2,
+      "rejection": {
+        "message": "gave up on the event stream for run 01M3Y7RKG046ZYVTQ2AVCES8ED after 2 attempts"
+      }
+    },
+    {
+      "after": 487,
+      "opens": 2,
+      "rejection": {
+        "message": "gave up on the event stream for run 01M3Y7RKG046ZYVTQ2AVCES8ED after 2 attempts"
+      }
+    }
+  ],
+  "corruption": [
+    {
+      "location": "first page",
+      "requests": 2,
+      "rejection": {
+        "name": "Error",
+        "message": "gave up on the event stream for run 01M3Y7RKG0CHVXAFZXQEQN9J68 after 2 attempts"
+      },
+      "lastSeq": 0
+    },
+    {
+      "location": "consumed terminal lookup",
+      "requests": 2,
+      "rejection": {
+        "name": "Error",
+        "message": "gave up on the event stream for run 01M3Y7RKG0CHVXAFZXQEQN9J6C after 2 attempts"
+      },
+      "lastSeq": 8
+    }
+  ]
+}

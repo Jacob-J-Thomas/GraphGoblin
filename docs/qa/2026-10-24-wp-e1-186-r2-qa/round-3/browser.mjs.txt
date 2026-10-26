@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+const imp=p=>import(pathToFileURL(resolve(p)).href);
+const {chromium}=await imp('apps/web/node_modules/@playwright/test/index.mjs');
+const {definition}=await imp('tooling/perf/common.mjs');
+const {CURRENT_DEFINITION_FORMAT}=await imp('packages/contracts/dist/index.js');
+const {historyCursor}=await imp('apps/api/dist/run-history.js');
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3',checks=[],errors=[];
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection');
+const http=async(path,body,key=c.keys.admin)=>{const r=await fetch(c.url+path,{headers:{authorization:'Bearer '+key,'content-type':'application/json'},...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});return {status:r.status,body:await r.json()};};
+const api=async(path,body)=>{const r=await http(path,body);assert.ok(r.status<300,JSON.stringify(r));return r.body;};
+const until=async(fn,msg)=>{for(let i=0;i<600;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+async function check(name,steps,expected,fn){try{checks.push({name,steps,expected,pass:true,actual:await fn()});}catch(e){checks.push({name,steps,expected,pass:false,error:String(e),stack:e.stack});}await writeFile(out+'/browser-results.json',JSON.stringify({checks,errors},null,2));console.log(JSON.stringify(checks.at(-1)));}
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+const cache=(p,id)=>p.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')??'{}').state?.runs?.[id],id);
+async function open(id){const p=await context.newPage();p.on('pageerror',e=>errors.push(String(e)));await p.goto(c.url+'/app/runs/'+id);await p.getByRole('list',{name:'Timeline',exact:true}).waitFor();await until(async()=>!!(await cache(p,id)),'cache');return p;}
+async function seek(p,n){await p.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill(String(n));await p.getByRole('button',{name:'Go to event',exact:true}).click();await p.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();}
+const execution=p=>p.getByRole('region',{name:'Execution context',exact:true}).innerText();
+async function capture(p,name){await writeFile(out+'/'+name+'.aria.txt',await p.locator('body').ariaSnapshot());await p.screenshot({path:out+'/'+name+'.png'});}
+const source=await ctl('/start',{passes:2,delay:0,items:1});await ctl('/idle');
+await check('cursor limits, both directions, empty and populated histories','Seed 0/1/2/1003 rows; request limits 1/2/500 at zero, first/tail neighbours and maximum safe integer neighbours; follow each emitted cursor','Every accepted page and every emitted continuation is valid, ordered and includes the opposite edge',async()=>{
+ let pages=0,edges=0;const samples=[];
+ for(const count of [0,1,2,1003]){
+  const run=await ctl('/seed',{source:source.id,count});
+  for(const limit of [1,2,500])for(const direction of ['older','newer'])for(const seq of [...new Set([0,1,2,count,count+1,Number.MAX_SAFE_INTEGER-2,Number.MAX_SAFE_INTEGER-1,Number.MAX_SAFE_INTEGER])]){
+   const cursor=historyCursor({runId:run.id,seq,direction});const r=await http(`/runs/${run.id}/events?cursor=${cursor}&limit=${limit}`);assert.equal(r.status,200);pages++;
+   const items=r.body.items;assert.ok(items.every((x,i)=>i===0||x.seq>items[i-1].seq));assert.ok(items.every(x=>direction==='older'?x.seq<seq:x.seq>seq));
+   for(const field of ['olderCursor','newerCursor'])if(r.body[field]){const follow=await http(`/runs/${run.id}/events?cursor=${r.body[field]}&limit=${limit}`);assert.equal(follow.status,200,JSON.stringify({count,limit,direction,seq,field,follow}));edges++;if(!items.length&&count)assert.ok(follow.body.items.length>0);}
+   if(limit===1&&(seq===0||seq>=Number.MAX_SAFE_INTEGER-1))samples.push({count,limit,direction,seq,response:r.body});
+  }
+ }
+ return {pages,edges,samples};
+});
+await check('observation authorization and malformed history','GET observation with reader, wrong scope, other owner, absent key; invalid cursors, unsafe integer and fractional seeks','200/403/404/401 and 400 respectively',async()=>{
+ const results=[];for(const [key,status] of [[c.keys.reader,200],[c.keys.denied,403],[c.keys.other,404],['',401]]){const r=await http('/runs/'+source.id+'/observation',undefined,key);assert.equal(r.status,status);results.push({status:r.status,body:r.body});}
+ for(const q of ['cursor=!!!','cursor='+historyCursor({runId:source.id,seq:9007199254740992,direction:'newer'}),'around=-1','around=1.5','around=1&after=0','limit=0']){const r=await http('/runs/'+source.id+'/events?'+q);assert.equal(r.status,400);results.push({q,...r});}return results;
+});
+const live=await ctl('/start',{passes:150,delay:20,items:1});
+await until(async()=>{const r=await api('/runs/'+live.id);return r.lastEventSeq>700&&r.status==='running';},'long run');
+await api('/runs/'+live.id+'/cancel',{});await ctl('/idle');
+let durable=await ctl('/oracle',{runId:live.id,full:true});const actor=durable.events.findLast(e=>e.type==='run.cancel_requested').actor;
+await writeFile(out+'/cancel-events.json',JSON.stringify(durable.events.filter(e=>e.type.startsWith('run.cancel')),null,2));
+const cp=await open(live.id);
+await check('QA-186R2-002 real long cancellation, both browsing directions','Cancel >700-event running workload; seek 50; Load newer and older; reload frozen window; Follow live','Execution context always retains the recorded actor, bounded window and 80 mounted rows',async()=>{
+ const contexts=[];await until(async()=>(await execution(cp)).includes(actor.id),'actor at tail');contexts.push(await execution(cp));
+ await seek(cp,50);contexts.push(await execution(cp));await cp.getByRole('button',{name:'Load newer',exact:true}).click();contexts.push(await execution(cp));await cp.getByRole('button',{name:'Load older',exact:true}).click();contexts.push(await execution(cp));
+ await cp.reload();await until(async()=>(await execution(cp)).includes(actor.id),'actor reload');contexts.push(await execution(cp));
+ for(const text of contexts)assert.ok(text.includes(actor.id),text);
+ await capture(cp,'cancel-browsed');const frozen=await cache(cp,live.id);assert.equal(frozen.mode,'history');assert.ok(frozen.events.length<=512);assert.ok(frozen.bytes<=1048576);
+ await cp.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache(cp,live.id)).mode==='live','live');const tail=await cache(cp,live.id);assert.deepEqual(tail.events,durable.events.slice(-tail.events.length));assert.ok(await cp.getByRole('list',{name:'Timeline',exact:true}).getByRole('listitem').count()<=80);
+ return {runId:live.id,total:durable.total,actor,contexts,frozen:{first:frozen.events[0]?.seq,last:frozen.events.at(-1)?.seq},tail:{count:tail.events.length,bytes:tail.bytes}};
+});
+await ctl('/append',{runId:live.id,count:700});await cp.reload();
+await check('QA-186R2-002 synthetic post-terminal suffix','Append 700 explicit synthetic audit rows after cancellation; reload then seek 50 and tail','Whole-run recorded actor survives eviction and opposite-direction seek',async()=>{
+ await until(async()=>(await execution(cp)).includes(actor.id),'suffix actor');const observations=[await api('/runs/'+live.id+'/observation')];
+ await seek(cp,50);assert.ok((await execution(cp)).includes(actor.id));await seek(cp,durable.last+700);const text=await execution(cp);assert.ok(text.includes(actor.id));await capture(cp,'cancel-suffix');return {text,observation:observations[0],window:(await cache(cp,live.id)).events.map(e=>e.seq).filter((_,i,a)=>i===0||i===a.length-1)};
+});
+await check('observation pending, failed, then answered','Intercept observation at the HTTP boundary, hold read; return 503 for all retries; restore real response and reload','Reading the cancellation record, explicit unreadable record, then correct actor',async()=>{
+ const p=await context.newPage();let mode='pending',release;const blocked=new Promise(r=>release=r);let requests=0;
+ await p.route('**/runs/'+live.id+'/observation',async route=>{requests++;if(mode==='pending')await blocked;if(mode==='failed')await route.fulfill({status:503,contentType:'application/problem+json',body:JSON.stringify({status:503,title:'QA transient',code:'QA_TRANSIENT',detail:'Independent QA transient observation failure'})});else await route.continue();});
+ await p.goto(c.url+'/app/runs/'+live.id);await p.getByText('Cancelled. Reading the cancellation record…',{exact:false}).waitFor();const pending=await execution(p);await capture(p,'observation-pending');mode='failed';release();
+ await p.getByText('Cancelled. The cancellation record could not be read.',{exact:false}).waitFor({timeout:30000});const failed=await execution(p);await capture(p,'observation-failed');mode='answered';await p.reload();await until(async()=>(await execution(p)).includes(actor.id),'answered');const answered=await execution(p);await p.close();return {requests,pending,failed,answered};
+});
+await check('request answered by resume and twice-cancelled run','Synthetic valid event histories: request, resume, cancel; then second request, 600 intervening rows and cancellation','Answered request omitted; latest second actor retained across event 1 and tail browsing',async()=>{
+ const run=await ctl('/seed',{source:source.id,status:'cancelled',drafts:[{type:'run.cancel_requested',actor:{kind:'user',id:'answered-request'}},{type:'run.resumed',actor:{kind:'user',id:'resumer'}},{type:'run.cancelled'}]});
+ const first=await api('/runs/'+run.id+'/observation');assert.ok(!first.cancelRequested);const p=await open(run.id);await until(async()=>(await execution(p)).includes('actor not recorded'),'unknown cancellation actor');const firstText=await execution(p);assert.ok(!firstText.includes('answered-request'));
+ await ctl('/append',{runId:run.id,drafts:[{type:'run.resumed',actor:{kind:'user',id:'resumer'}},{type:'run.cancel_requested',actor:{kind:'api-key',id:'second-actor'}},...Array.from({length:600},()=>({type:'run.woken',nodeId:'work',reason:'manual'})),{type:'run.cancelled'}]});
+ await p.reload();await until(async()=>(await execution(p)).includes('second-actor'),'second actor');await seek(p,1);assert.ok((await execution(p)).includes('second-actor'));await p.getByRole('button',{name:'Follow live',exact:true}).click();const second=await api('/runs/'+run.id+'/observation');assert.equal(second.cancelRequested.actor.id,'second-actor');await capture(p,'twice-cancelled');await p.close();return {first,firstText,second};
+});
+const missingTurn={announceSession:false,accepted:false,items:[],submission:'session-missing',error:{code:'HARNESS_SESSION_MISSING',message:'Session removed from provider store'}};
+const choice=(id,i)=>({type:'run.resumed',actor:{kind:'user',id:'historical-choice-'+i},freshSession:{visitId:id+':work:1',harness:'codex',origin:'resume-previous',model:'gpt-6-luna',effort:'low',nodeId:'work',failureSeq:i+1,sessionId:'removed-'+i,priorContextCarried:false}});
+async function missingFixture(){
+ const def=definition(CURRENT_DEFINITION_FORMAT,{passes:100,inference:true});def.settings.maxNodeVisits=10000;const work=def.nodes.find(n=>n.id==='work');work.label='Pinned Worker';work.config.session={policy:'resume-previous'};work.config.model='gpt-6-luna';work.config.effort='low';
+ const r=await ctl('/start',{definition:def,script:[...Array.from({length:90},(_,i)=>({finalText:'original-'+i,delayMs:5})),missingTurn]});await ctl('/idle');const record=await api('/runs/'+r.id);assert.equal(record.failure?.code,'HARNESS_SESSION_MISSING');
+ const all=await ctl('/oracle',{runId:r.id,full:true});const failed=all.events.findLast(e=>e.type==='run.failed');const draft={...failed};delete draft.runId;delete draft.seq;delete draft.ts;
+ // Deliberate synthetic past choices and audit suffix, followed by the same real failure;
+ // this preserves the original visit and makes the latest failure the recovery precondition.
+ await ctl('/append',{runId:r.id,drafts:[...Array.from({length:25},(_,i)=>choice(r.id,i)),...Array.from({length:700},()=>({type:'run.woken',nodeId:'work',reason:'manual'})),draft]});
+ return {id:r.id,originalFailure:failed,record,observation:await api('/runs/'+r.id+'/observation')};
+}
+for(const method of ['inspector','other-tab','api'])await check('missing-session long bounded inspector recovery via '+method,'Create >1000-event real fake-harness failure with 25 explicit synthetic historical choices outside window; older/newer/reload; decline plain resume; recover '+method,'Latest 20 notes remain ordered; recovery choice remains available; one choice succeeds; observer follows outcome without reload',async()=>{
+ const f=await missingFixture();assert.ok(f.record.lastEventSeq>512);assert.deepEqual(f.observation.freshSessionChoices.map(e=>e.actor.id),Array.from({length:20},(_,i)=>'historical-choice-'+(i+5)));
+ const p=await open(f.id);const button=p.getByRole('button',{name:'Start fresh session for work',exact:true});await button.waitFor();await until(async()=>await button.isEnabled(),'eligible');
+ const notes=()=>p.getByText(/chose a fresh session for work; prior provider context was not carried over/).allTextContents();await until(async()=>(await notes()).length===20,'20 notes');const atTail=await notes();
+ await seek(p,50);assert.ok(await button.isEnabled());assert.deepEqual(await notes(),atTail);await p.getByRole('button',{name:'Load newer',exact:true}).click();assert.deepEqual(await notes(),atTail);await p.reload();await until(async()=>await button.isEnabled(),'reload eligible');assert.deepEqual(await notes(),atTail);
+ const rejected=await http('/runs/'+f.id+'/resume',{});assert.equal(rejected.status,409);assert.equal((await api('/runs/'+f.id)).status,'failed');
+ await capture(p,'missing-'+method+'-browsed');await ctl('/script',{turns:Array.from({length:20},()=>({finalText:'Fresh recovered',delayMs:20}))});
+ let recovery;if(method==='inspector'){await button.focus();await p.keyboard.press('Enter');}else if(method==='other-tab'){const q=await open(f.id);await q.getByRole('button',{name:'Start fresh session for work',exact:true}).click();await q.close();}else{recovery=await http('/runs/'+f.id+'/recover-session',{nodeId:'work',failureSeq:f.observation.lifecycle.seq});assert.equal(recovery.status,200);}
+ await until(async()=>(await api('/runs/'+f.id)).status==='succeeded','run outcome');const finished=await api('/runs/'+f.id);
+ await until(async()=>!(await button.count())&&(await p.locator('body').innerText()).includes('succeeded'),'observer outcome without reload');
+ await until(async()=>(await notes()).some(t=>t.includes('api-key')),'new choice note');const after=await notes();assert.equal(after.length,20);assert.ok(!after.some(t=>t.includes('historical-choice-5 chose')));
+ const stale=await http('/runs/'+f.id+'/recover-session',{nodeId:'work',failureSeq:f.observation.lifecycle.seq});assert.equal(stale.status,409);await capture(p,'missing-'+method+'-outcome');await p.close();return {id:f.id,eventsBefore:f.record.lastEventSeq,failedSeq:f.observation.lifecycle.seq,latest20:f.observation.freshSessionChoices.map(e=>({seq:e.seq,actor:e.actor.id})),notesBefore:atTail,notesAfter:after,status:finished.status,lastEventSeq:finished.lastEventSeq,rejectedPlain:rejected,stale,recovery};
+});
+await check('#255 pinned labels and exact historical patch/message','Run pinned worker with messages; append 700 rows; seek original node.finished; inspect patch and messages and exact download; phone and desktop in light/dark','Pinned Worker in Timeline, patch and messages; exact downloaded bytes match durable event; no horizontal overflow',async()=>{
+ const def=definition(CURRENT_DEFINITION_FORMAT,{passes:2,inference:true});def.nodes.find(n=>n.id==='work').label='Pinned Worker';def.nodes.find(n=>n.id==='work').config.output.toMessages='final';
+ const r=await ctl('/start',{definition:def,passes:2,delay:0,items:1});await ctl('/idle');const all=await ctl('/oracle',{runId:r.id,full:true});const event=all.events.find(e=>e.type==='node.finished'&&e.nodeId==='work');await ctl('/append',{runId:r.id,count:700});const p=await open(r.id);await seek(p,event.seq);
+ await p.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();assert.ok((await p.getByRole('list',{name:'Timeline',exact:true}).innerText()).includes('Pinned Worker (work)'));assert.ok((await p.getByRole('list',{name:'Messages',exact:true}).innerText()).includes('Pinned Worker (work)'));
+ await p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true}).click();const wait=p.waitForEvent('download');await p.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const d=await wait;await d.saveAs(out+'/exact-label-event.json');assert.deepEqual(JSON.parse(await readFile(out+'/exact-label-event.json','utf8')),event);
+ const dimensions=[];for(const width of [1440,390])for(const theme of ['dark','light']){await p.setViewportSize({width,height:900});await p.evaluate(t=>{document.documentElement.dataset.theme=t;localStorage.setItem('graphgoblin-theme',t);},theme);await p.getByRole('list',{name:'Timeline',exact:true}).scrollIntoViewIfNeeded();await capture(p,'labels-'+width+'-'+theme);const w=await p.evaluate(()=>({innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(w.scroll<=width);dimensions.push({width,theme,...w});}await p.close();return {eventSeq:event.seq,dimensions};
+});
+await cp.close();await context.close();await browser.close();
+console.log(JSON.stringify({total:checks.length,passed:checks.filter(x=>x.pass).length,failures:checks.filter(x=>!x.pass).map(x=>x.name),errors}));

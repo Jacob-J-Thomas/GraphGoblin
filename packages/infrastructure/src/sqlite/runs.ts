@@ -1,3 +1,4 @@
+import type { ReplayState, ThreadCheckpoint } from '@graphgoblin/domain';
 import { RunRecordSchema, TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
@@ -7,7 +8,12 @@ import type { Database } from './db.js';
 import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
 
-import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
+import {
+  rawRunColumns,
+  decodeRunRecord,
+  decodeStoredReplayState,
+  decodeStoredThread,
+} from './run-decoding.js';
 export { runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
@@ -311,27 +317,48 @@ export class SqliteRunRepository implements RunRepository {
       : undefined;
   }
 
-  async saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+  async saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
     await this.db
       .update(runs)
-      .set({ threadSnapshot: thread, threadSnapshotSeq: seq ?? null })
+      .set({
+        threadSnapshot: thread,
+        threadSnapshotSeq: seq,
+        threadSnapshotReplayState: replayState,
+      })
       .where(eq(runs.id, runId));
   }
 
   async getThreadCheckpoint(
     runId: string,
-  ): Promise<{ thread: ContextThread; seq: number } | undefined> {
+    atOrBefore?: number,
+  ): Promise<ThreadCheckpoint | undefined> {
     const [row] = await this.db
       .select({
         thread: sql<string | null>`${runs.threadSnapshot}`,
         seq: runs.threadSnapshotSeq,
+        replayState: sql<string | null>`${runs.threadSnapshotReplayState}`,
       })
       .from(runs)
       .where(eq(runs.id, runId))
       .limit(1);
     if (row?.thread === null || row?.thread === undefined) return undefined;
+    // A later checkpoint is left undecoded for an earlier read (see the port).
+    if (row.seq !== null && row.seq > (atOrBefore ?? Infinity)) return undefined;
     const thread = decodeStoredThread(runId, 'thread_snapshot', row.thread);
-    return row.seq === null ? undefined : { thread, seq: row.seq };
+    return row.seq === null
+      ? undefined
+      : {
+          thread,
+          seq: row.seq,
+          ...(row.replayState === null
+            ? {}
+            : { replayState: decodeStoredReplayState(runId, row.replayState) }),
+        };
   }
 
   /**
@@ -381,7 +408,7 @@ export class SqliteRunRepository implements RunRepository {
   async clearThreadSnapshot(runId: string): Promise<void> {
     await this.db
       .update(runs)
-      .set({ threadSnapshot: null, threadSnapshotSeq: null })
+      .set({ threadSnapshot: null, threadSnapshotSeq: null, threadSnapshotReplayState: null })
       .where(eq(runs.id, runId));
   }
 }

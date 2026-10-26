@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[],logs=[];
+const dir=await mkdtemp(join(tmpdir(),'gg-qa-e1-186r2-2-restart-'));
+const env={...process.env,GG_DATA_DIR:dir,GG_DB_URL:'file:'+join(dir,'qa.db').replaceAll('\\','/'),GG_PORT:'6156',QA_PORT:'6156',QA_STORE:dir,GG_REQUIRE_API_KEY:'true'};
+async function processRun(args){let stdout='',stderr='';const p=spawn(process.execPath,args,{env,windowsHide:true});p.stdout.on('data',b=>stdout+=b.toString());p.stderr.on('data',b=>stderr+=b.toString());const code=await new Promise(r=>p.on('close',r));return {code,stdout,stderr};}
+const key=await processRun(['apps/api/dist/main.js','--create-api-key','QA round 2 binary key']);assert.equal(key.code,0,key.stderr);const token=/\bgg_\S+/.exec(key.stdout)?.[0];assert.ok(token);logs.push({command:'node apps/api/dist/main.js --create-api-key "QA round 2 binary key"',...key,stdout:key.stdout.replaceAll(token,'<redacted disposable API key>')});
+const ctl=async(path,b={})=>{const r=await fetch('http://127.0.0.1:6157'+path,{method:'POST',body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+async function start(){let text='';const p=spawn(process.execPath,['.tmp/qa186r2/server.mjs'],{env,windowsHide:true});p.stdout.on('data',b=>text+=b.toString());p.stderr.on('data',b=>text+=b.toString());
+ for(let i=0;i<300;i++){try{const c=await ctl('/connection');logs.push({pid:p.pid,startup:text});return {p,c};}catch{}if(p.exitCode!==null)throw Error(text);await new Promise(r=>setTimeout(r,100));}throw Error('restart gateway startup deadline '+text);}
+async function stop(p){const exit=new Promise(r=>p.once('exit',(code,signal)=>r({code,signal})));const result=await ctl('/stop');const state=await exit;assert.equal(state.code,0);logs.push({pid:p.pid,result,state});}
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const first=await start();const run=await ctl('/start',{passes:75,delay:0,items:3});await ctl('/idle');await ctl('/append',{runId:run.id,count:700});let before=await ctl('/oracle',{runId:run.id,full:true,at:[0,100,127,128,129,99999]});await writeFile('.tmp/qa186r2/restart-full.json',JSON.stringify(before));await stop(first.p);
+const second=await start();const after=await ctl('/oracle',{runId:run.id,full:true,at:[0,100,127,128,129,99999]});assert.notEqual(first.p.pid,second.p.pid);assert.deepEqual(after,before);
+checks.push({name:'real graceful process exit/restart on same file-backed store',pass:true,evidence:{runId:run.id,total:after.total,beforePid:first.p.pid,afterPid:second.p.pid,historyHash:hash(after.events),threadsHash:hash(after.threads),store:dir}});
+for(const suffix of ['/events?around=0&limit=1','/events?around=100&limit=2','/thread?at=128','/observation']){const r=await fetch(second.c.url+'/runs/'+run.id+suffix,{headers:{authorization:'Bearer '+token}});assert.equal(r.status,200);checks.push({name:'binary-created API key after restart '+suffix,pass:true,evidence:{status:r.status,sha256:hash(await r.json())}});}
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),token);const page=await context.newPage();await page.goto(second.c.url+'/app/runs/'+run.id);await page.getByRole('list',{name:'Timeline',exact:true}).waitFor();await page.getByText('Done (done): Exited: success',{exact:true}).waitFor();
+await page.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill('100');await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event 100',exact:true}).waitFor();await page.getByRole('button',{name:'Full thread JSON',exact:true}).click();const more=page.getByRole('button',{name:'Show all of Full thread JSON',exact:true});if(await more.isVisible())await more.click();assert.deepEqual(JSON.parse(await page.getByTestId('thread-json').innerText()),after.threads[100]);
+await page.screenshot({path:out+'/restart-browser.png'});checks.push({name:'Edge inspector reads old exact thread and whole-history exit with binary key after restart',pass:true,evidence:{at:100,threadHash:hash(after.threads[100]),rows:await page.getByRole('list',{name:'Timeline',exact:true}).getByRole('listitem').count()}});
+await context.close();await browser.close();await stop(second.p);
+await writeFile(out+'/restart-results.json',JSON.stringify({checks,logs},null,2).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,pids:[first.p.pid,second.p.pid],total:after.total}));

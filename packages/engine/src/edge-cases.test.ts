@@ -663,7 +663,8 @@ describe('handler edge cases', () => {
     // A harness whose session rejects without emitting an error event or a session id.
     const silent: HarnessPort = {
       id: 'codex',
-      preflight: () => Promise.resolve({ ok: true, authenticated: true, problems: [] }),
+      preflight: () =>
+        Promise.resolve({ state: 'ready', ok: true, authenticated: true, problems: [] }),
       start: (): HarnessSession => ({
         sessionId: Promise.resolve('never'),
         events: asyncIterableOf([{ type: 'turn-complete' as const }]),
@@ -677,8 +678,8 @@ describe('handler edge cases', () => {
     engine.ports.harnesses.codex = silent;
     const failed = await engine.runToIdle(version.loopId);
     expect(failed.failure).toMatchObject({
-      code: 'HARNESS_TURN_FAILED',
-      message: 'harness turn failed: socket closed',
+      code: 'HARNESS_DELIVERY_UNCERTAIN',
+      message: expect.stringContaining('harness turn failed: socket closed'),
     });
 
     // A harness that never reports a session id cannot repair; the policy falls through to continue-raw.

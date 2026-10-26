@@ -1,0 +1,186 @@
+pnpm.cmd : $ vitest run --coverage --coverage.reportOnFailure 
+'--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-round3-api-coverage'
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api test:coverage --covera ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...3-api-coverage':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+      Coverage enabled with v8
+
+[before-receipt] fixture
+[before-receipt] key
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+{"level":30,"time":1792830559046,"pid":36080,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5676"}
+{"level":30,"time":1792830559047,"pid":36080,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5676,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-rdWlTW","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792830559375,"pid":36080,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792830559382,"pid":36080,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.913899999999558,"msg":"request completed"}
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 92883ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20817ms
+ ❯ src/targeted-events-restart.test.ts (3 tests | 1 failed) 237211ms
+   × recovers targeted Event identities across process death: after-run 103433ms
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 256010ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 139971ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:178:3
+    176|   };
+    177|
+    178|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    179|     const t = await app({ requireApiKey: true });
+    180|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+completion leaves every parent one continuation after restart
+Error: API child exited before GraphGoblin API listening: Error: another GraphGoblin process holds 
+%USERPROFILE%\AppData\Local\Temp\gg-api-process-EEWfdC\graphgoblin.lock
+    at held (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/data-dir-l
+ock.js:19:24)
+    at removeStale (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/dat
+a-dir-lock.js:43:15)
+    at async 
+file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/data-dir-lock.js:50:9
+    at async acquireFile (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/di
+st/data-dir-lock.js:47:18)
+    at async acquireDataDirLock (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps
+/api/dist/data-dir-lock.js:112:20)
+    at async createContainer 
+(file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/container.js:40:18)
+    at async 
+file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/main.js:42:23
+    at async main 
+(file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/dist/main.js:64:16)
+
+ ❯ held src/data-dir-lock.ts:27:39
+     25| }
+     26|
+     27| const held = (path: string): Error => new Error(`another GraphGoblin p…
+       |                                       ^
+     28|
+     29| async function removeStale(path: string): Promise<void> {
+ ❯ removeStale src/data-dir-lock.ts:51:11
+ ❯ src/data-dir-lock.ts:58:5
+ ❯ acquireFile src/data-dir-lock.ts:56:16
+ ❯ acquireDataDirLock src/data-dir-lock.ts:113:14
+ ❯ createContainer src/container.ts:151:16
+ ❯ src/main.ts:46:19
+ ❯ main src/main.ts:74:12
+ ❯ src/testing/api-subprocess.ts:111:27
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:109:7
+ ❯ Object.ready src/testing/api-subprocess.ts:181:7
+ ❯ Object.start src/subloop-restart.test.ts:100:7
+ ❯ src/subloop-restart.test.ts:166:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/targeted-events-restart.test.ts > recovers targeted Event identities across process death: after-run
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/targeted-events-restart.test.ts:9:1
+      7|
+      8| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+      9| afterEach(async () => {
+       | ^
+     10|   for (const f of fixtures.splice(0)) await f.dispose();
+     11| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.onTaskError ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_
+modules/vitest/dist/chunks/index.DpLw24bj.js:11532:21
+ ❯ EventEmitter.emit node:events:518:28
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed5
+3/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11007:22
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+Caused by: Error: Worker exited unexpectedly with exit code 3221225477 during started state while running test file 
+%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api/src/cron-preview.test.ts
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed5
+3/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11005:33
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 failed | 62 passed | 2 skipped (68)
+      Tests  3 failed | 1343 passed | 8 skipped (1361)
+     Errors  1 error
+   Start at  03:28:34
+   Duration  655.14s (tests 76%, import 16%, transform 7%)
+
+    Isolate  68 workers spawned · ~1.96s startup each (spawn + environment, per file)
+             at least ~10.17s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.82% ( 2020/2108 )
+Branches     : 92.91% ( 1338/1440 )
+Functions    : 94.35% ( 401/425 )
+Lines        : 97.08% ( 1835/1890 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+
