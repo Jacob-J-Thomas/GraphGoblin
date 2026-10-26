@@ -60,6 +60,8 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.
 
+[ADR-0058: Node 22.22.2 floor for development and gates](ADR-0058-node-22-patch-floor-for-development.md) amends ADR-0040's `^22` range: pnpm refuses an older Node 22, while the built app still needs only major 22.
+
 [ADR-0057: Observe execution outcome and durable finalization separately](ADR-0057-execution-and-delivery-finalization.md) exposes the existing finalization marker as `finalizedAt` and extends the stream completion rule to wait for it, so readers tell execution end apart from delivery pending, delivered and failed.
 
 [ADR-0059: Uncertain script recovery](ADR-0059-uncertain-script-recovery.md) records dispatch provenance, explicit retry consent and authoritative resumed observation (#321).

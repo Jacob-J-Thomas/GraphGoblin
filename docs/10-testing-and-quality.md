@@ -76,11 +76,11 @@ The `gates` job runs:
 
 The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0 --workers=1` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job, and under `CI` a focused (`.only`) test fails the run instead of silently skipping the rest of the suite. The functional step has a 60-minute timeout inside the 75-minute job budget. The expanded serial suite took 45m32s in the Windows candidate run; the step budget leaves about 14 minutes beyond that measurement, with another 15 minutes for setup/build and evidence upload outside the test step. These are whole-job budgets; individual test and performance limits stay unchanged. On Ubuntu the Browser job took 20m47s, its test step 19m04s, for 420 passed tests and the one paid-provider skip (CI run 40184348129, 2026-10-25). A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
 
-Run the same provider-free gate locally after selecting Node 22. On Windows PowerShell:
+Run the same provider-free gate locally after selecting Node 22.22.2 or later (ADR-0058). On Windows PowerShell, with `$node22` the folder of that Node:
 
 ```powershell
-$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
-node --version # must report v22.x
+$env:PATH = "$node22;$env:PATH"
+node --version # must report v22.22.2 or later
 pnpm.cmd build
 $env:GG_E2E_BROWSER_CHANNEL = 'msedge'
 $env:LIVE = '0'
