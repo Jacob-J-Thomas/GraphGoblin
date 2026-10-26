@@ -1,0 +1,398 @@
+Regression control at 3acb79c4a5bb13eae4c8c0c58ef127d038cbb411: the committed script ../c04-partial-failure.mjs, run unchanged with Node v22.23.4 first on PATH. The script writes its log beside itself; this copy was moved here and the committed original log restored.
+
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF
+
+=== 4a: an artifact file held open with FileShare.None ===
+holder pid 48488 holds artifacts/text/a2 with FileShare.None
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 1; 8085 ms
+--- confirmed reset with a held artifact stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+--- end confirmed reset with a held artifact stdout ---
+--- confirmed reset with a held artifact stderr ---
+Reset stopped: could not remove artifacts/text/a2: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\artifacts\text\a2'
+  Removed:        workspaces/01JQAB3INTRUNAAAAAAAAAAAAA
+  Partly removed: artifacts (1 of 4 entries)
+  Not removed:    graphgoblin.db, graphgoblin.db-wal, graphgoblin.db-shm
+  Released graphgoblin.lock.
+Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.
+--- end confirmed reset with a held artifact stderr ---
+PASS: exit 1 (1)
+PASS: names the entry that could not be removed
+PASS: lists the removed run workspace
+PASS: lists artifacts as partly removed with counts
+PASS: lists the database and sidecars as not removed
+PASS: says the lock was released and to rerun before starting
+PASS: the lock file is gone
+after the failure: ["artifacts","graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key","workspaces"]; artifacts/text: ["a2"]
+$ node apps/api/dist/main.js 
+exit code: 1; 2226 ms
+--- start before the rerun stderr ---
+GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+  Database: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db
+  Found:    format 3
+  Requires: format 4
+  Reason:   The store is format 3; this build reads only format 4
+No stored data was changed. This build does not convert stores from other formats.
+To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):
+  node apps/api/dist/main.js --reset --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data"
+--- end start before the rerun stderr ---
+PASS: a start before the rerun is refused by the store guard (the database is still there) (1)
+holder: HELD
+RELEASED
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 0; 7810 ms
+--- rerun after release stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  artifacts                              artifacts                1 file, 2 directories, 12 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 4 files, 2 directories, 337.8 KB in 4 items.
+
+Removing:
+  removed artifacts (1 file, 2 directories, 12 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+--- end rerun after release stdout ---
+PASS: rerun completes (0)
+PASS: rerun lists only what is left of artifacts
+PASS: rerun does not list the removed workspace
+PASS: 4a: the next start succeeds ()
+PASS: 4a: fresh store has no loops
+PASS: 4a: API drains and exits 0
+4a: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+PASS: 4a: fresh store is complete format 4
+
+=== 4b: the database held open with FileShare.Read (readable, not deletable) ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 1; 8310 ms
+--- confirmed reset with a held database stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+--- end confirmed reset with a held database stdout ---
+--- confirmed reset with a held database stderr ---
+Reset stopped: could not remove graphgoblin.db: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db'
+  Removed:        workspaces/01JQAB3INTRUNAAAAAAAAAAAAA, artifacts
+  Partly removed: graphgoblin.db (0 of 1 entries)
+  Not removed:    graphgoblin.db-wal, graphgoblin.db-shm
+  Released graphgoblin.lock.
+Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.
+--- end confirmed reset with a held database stderr ---
+PASS: exit 1 (1)
+PASS: workspace and artifacts removed first
+PASS: database partly removed (0 of 1)
+PASS: sidecars not removed
+holder: HELD
+RELEASED
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 0; 7838 ms
+--- rerun after release stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3 files, 337.8 KB in 3 items.
+
+Removing:
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+--- end rerun after release stdout ---
+PASS: rerun completes (0)
+PASS: 4b: the next start succeeds ()
+PASS: 4b: fresh store has no loops
+PASS: 4b: API drains and exits 0
+4b: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+PASS: 4b: fresh store is complete format 4
+
+=== 4c: the database held with FileShare.None (cannot even be copied for reading) ===
+$ node apps/api/dist/main.js --reset
+exit code: 0; 3280 ms
+--- dry run with an unreadable database stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (unreadable: EBUSY: resource busy or locked, copyfile '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db' -> '%USERPROFILE%\AppData\Local\Temp\gg-reset-store-D9QC5O\store.db')
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  the store could not be read to match run IDs
+  workspaces/my-notes                    the store could not be read to match run IDs
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 2 directories, 337.8 KB in 4 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data"
+--- end dry run with an unreadable database stdout ---
+PASS: the dry run reports the store as unreadable (0)
+PASS: run workspaces are kept when run IDs cannot be read
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 1; 4958 ms
+--- confirmed reset with an unreadable database stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (unreadable: EBUSY: resource busy or locked, copyfile '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db' -> '%USERPROFILE%\AppData\Local\Temp\gg-reset-store-QvfihK\store.db')
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  the store could not be read to match run IDs
+  workspaces/my-notes                    the store could not be read to match run IDs
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 2 directories, 337.8 KB in 4 items.
+
+Removing:
+  removed artifacts (2 files, 2 directories, 24 B)
+--- end confirmed reset with an unreadable database stdout ---
+--- confirmed reset with an unreadable database stderr ---
+Reset stopped: could not remove graphgoblin.db: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db'
+  Removed:        artifacts
+  Partly removed: graphgoblin.db (0 of 1 entries)
+  Not removed:    graphgoblin.db-wal, graphgoblin.db-shm
+  Released graphgoblin.lock.
+Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.
+--- end confirmed reset with an unreadable database stderr ---
+PASS: stops at the database (1)
+holder: HELD
+RELEASED
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 0; 8319 ms
+--- rerun after release stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 6 files, 1 directory, 337.8 KB in 4 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+--- end rerun after release stdout ---
+PASS: rerun completes (0)
+PASS: the rerun reads the still-present database and removes the run workspace it kept the first time: ["my-notes"]
+
+=== 4d: read-only files and a read-only directory inside a run workspace ===
+attrib: A    R               %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\f00000.txt | R               %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\ro-dir
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 0; 8406 ms
+--- confirmed reset with read-only entries stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            5 files, 2 directories, 44 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 10 files, 4 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (5 files, 2 directories, 44 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+--- end confirmed reset with read-only entries stdout ---
+observed: exit 0; run workspace present afterwards: false
+PASS: either removed (Windows unlink clears the read-only attribute) or reported as a partial failure
+
+=== 4e: a planned directory gains an entry after planning (rmdir fails: not empty) ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 1; 11549 ms
+--- confirmed reset, directory made non-empty stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            2000 files, 1 directory, 30.2 KB
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 2005 files, 3 directories, 368.0 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (2000 files, 1 directory, 30.2 KB)
+--- end confirmed reset, directory made non-empty stdout ---
+--- confirmed reset, directory made non-empty stderr ---
+Reset stopped: could not remove artifacts/text: ENOTEMPTY: directory not empty, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\artifacts\text'
+  Removed:        workspaces/01JQAB3INTRUNAAAAAAAAAAAAA
+  Partly removed: artifacts (2 of 4 entries)
+  Not removed:    graphgoblin.db, graphgoblin.db-wal, graphgoblin.db-shm
+  Released graphgoblin.lock.
+Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.
+--- end confirmed reset, directory made non-empty stderr ---
+--- timeline ---
+9877 ms: Removing:
+9877-9878 ms: [hook ran: wrote artifacts/text/late-artifact]
+11530 ms:   removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (2000 files, 1 directory, 30.2 KB)
+--- end timeline ---
+PASS: exit 1 (1)
+PASS: names the directory that is no longer empty
+PASS: removed and partly removed with counts
+PASS: the late file is kept
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+exit code: 0; 7791 ms
+--- rerun stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  artifacts                              artifacts                1 file, 2 directories, 22 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 4 files, 2 directories, 337.8 KB in 4 items.
+
+Removing:
+  removed artifacts (1 file, 2 directories, 22 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c04-grWyfF\data.
+--- end rerun stdout ---
+PASS: rerun plans afresh, listing the late file inside artifacts, and completes (0)
+PASS: 4e: the next start succeeds ()
+PASS: 4e: fresh store has no loops
+PASS: 4e: API drains and exits 0
+4e: marker [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+PASS: 4e: fresh store is complete format 4
+final tree: 7 entries
+
+SUMMARY c04-partial-failure: 39 passed, 0 failed

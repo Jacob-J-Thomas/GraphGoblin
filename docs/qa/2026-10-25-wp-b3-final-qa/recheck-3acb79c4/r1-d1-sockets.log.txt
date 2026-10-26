@@ -1,0 +1,239 @@
+
+=== 1: socket inside a run workspace ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl
+created tool.sock in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA
+$ node apps/api/dist/main.js --reset
+exit code: 1; 5518 ms
+--- socket in a run workspace (dry run) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\tool.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket in a run workspace (dry run) stderr ---
+PASS: socket in a run workspace (dry run): exit 1, no blocking (5518 ms) (1)
+PASS: socket in a run workspace (dry run): stderr is exactly the documented refusal naming the absolute path
+PASS: socket in a run workspace (dry run): nothing on stdout (no manifest, no removal)
+PASS: socket in a run workspace (dry run): no byte changed (socket recorded as present) (before 018bbbbed1e8fef4 after 018bbbbed1e8fef4)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data
+exit code: 1; 5545 ms
+--- socket in a run workspace (confirmed) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\tool.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket in a run workspace (confirmed) stderr ---
+PASS: socket in a run workspace (confirmed): exit 1, no blocking (5545 ms) (1)
+PASS: socket in a run workspace (confirmed): stderr is exactly the documented refusal naming the absolute path
+PASS: socket in a run workspace (confirmed): nothing on stdout (no manifest, no removal)
+PASS: socket in a run workspace (confirmed): no byte changed (socket recorded as present) (before 018bbbbed1e8fef4 after 018bbbbed1e8fef4)
+PASS: socket in a run workspace: the socket file still exists
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data
+exit code: 0; 8179 ms
+--- confirmed after unlinking the socket by hand stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-QRZXHl\data.
+--- end confirmed after unlinking the socket by hand stdout ---
+PASS: with the socket removed by hand the reset completes (0)
+
+=== 2: socket at the data-directory root ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-sv1UNG
+created agent.sock in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-sv1UNG\data
+$ node apps/api/dist/main.js --reset
+exit code: 1; 2598 ms
+--- socket at the root (dry run) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-sv1UNG\data\agent.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket at the root (dry run) stderr ---
+PASS: socket at the root (dry run): exit 1, no blocking (2598 ms) (1)
+PASS: socket at the root (dry run): stderr is exactly the documented refusal naming the absolute path
+PASS: socket at the root (dry run): nothing on stdout (no manifest, no removal)
+PASS: socket at the root (dry run): no byte changed (socket recorded as present) (before e5f03ac6f2fe341d after e5f03ac6f2fe341d)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-sv1UNG\data
+exit code: 1; 2231 ms
+--- socket at the root (confirmed) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-sv1UNG\data\agent.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket at the root (confirmed) stderr ---
+PASS: socket at the root (confirmed): exit 1, no blocking (2231 ms) (1)
+PASS: socket at the root (confirmed): stderr is exactly the documented refusal naming the absolute path
+PASS: socket at the root (confirmed): nothing on stdout (no manifest, no removal)
+PASS: socket at the root (confirmed): no byte changed (socket recorded as present) (before e5f03ac6f2fe341d after e5f03ac6f2fe341d)
+PASS: socket at the root: the socket file still exists
+
+=== 3: socket inside artifacts/ ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-oJSK13
+created a.sock in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-oJSK13\data\artifacts\text
+$ node apps/api/dist/main.js --reset
+exit code: 1; 5711 ms
+--- socket inside artifacts (dry run) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-oJSK13\data\artifacts\text\a.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket inside artifacts (dry run) stderr ---
+PASS: socket inside artifacts (dry run): exit 1, no blocking (5711 ms) (1)
+PASS: socket inside artifacts (dry run): stderr is exactly the documented refusal naming the absolute path
+PASS: socket inside artifacts (dry run): nothing on stdout (no manifest, no removal)
+PASS: socket inside artifacts (dry run): no byte changed (socket recorded as present) (before 0402250e98a850b0 after 0402250e98a850b0)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-oJSK13\data
+exit code: 1; 5593 ms
+--- socket inside artifacts (confirmed) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-oJSK13\data\artifacts\text\a.sock cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket inside artifacts (confirmed) stderr ---
+PASS: socket inside artifacts (confirmed): exit 1, no blocking (5593 ms) (1)
+PASS: socket inside artifacts (confirmed): stderr is exactly the documented refusal naming the absolute path
+PASS: socket inside artifacts (confirmed): nothing on stdout (no manifest, no removal)
+PASS: socket inside artifacts (confirmed): no byte changed (socket recorded as present) (before 0402250e98a850b0 after 0402250e98a850b0)
+PASS: socket inside artifacts: the socket file still exists
+
+=== 4: socket as the configured database ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL
+created graphgoblin.db in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data
+$ node apps/api/dist/main.js --reset   [{"GG_DB_URL":"file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-r1-GyBkVL/data/graphgoblin.db"}]
+exit code: 1; 2626 ms
+--- socket as the database (dry run) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data\graphgoblin.db cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket as the database (dry run) stderr ---
+PASS: socket as the database (dry run): exit 1, no blocking (2626 ms) (1)
+PASS: socket as the database (dry run): stderr is exactly the documented refusal naming the absolute path
+PASS: socket as the database (dry run): nothing on stdout (no manifest, no removal)
+PASS: socket as the database (dry run): no byte changed (socket recorded as present) (before cd6f94b1022d4fc9 after cd6f94b1022d4fc9)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data   [{"GG_DB_URL":"file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-r1-GyBkVL/data/graphgoblin.db"}]
+exit code: 1; 2356 ms
+--- socket as the database (confirmed) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data\graphgoblin.db cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket as the database (confirmed) stderr ---
+PASS: socket as the database (confirmed): exit 1, no blocking (2356 ms) (1)
+PASS: socket as the database (confirmed): stderr is exactly the documented refusal naming the absolute path
+PASS: socket as the database (confirmed): nothing on stdout (no manifest, no removal)
+PASS: socket as the database (confirmed): no byte changed (socket recorded as present) (before cd6f94b1022d4fc9 after cd6f94b1022d4fc9)
+PASS: socket as the database: the socket file still exists
+$ node apps/api/dist/main.js --reset
+exit code: 1; 2208 ms
+--- socket as the default database path (dry run) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data\graphgoblin.db cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket as the default database path (dry run) stderr ---
+PASS: socket as the default database path (dry run): exit 1, no blocking (2208 ms) (1)
+PASS: socket as the default database path (dry run): stderr is exactly the documented refusal naming the absolute path
+PASS: socket as the default database path (dry run): nothing on stdout (no manifest, no removal)
+PASS: socket as the default database path (dry run): no byte changed (socket recorded as present) (before cd6f94b1022d4fc9 after cd6f94b1022d4fc9)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data
+exit code: 1; 2380 ms
+--- socket as the default database path (confirmed) stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-GyBkVL\data\graphgoblin.db cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end socket as the default database path (confirmed) stderr ---
+PASS: socket as the default database path (confirmed): exit 1, no blocking (2380 ms) (1)
+PASS: socket as the default database path (confirmed): stderr is exactly the documented refusal naming the absolute path
+PASS: socket as the default database path (confirmed): nothing on stdout (no manifest, no removal)
+PASS: socket as the default database path (confirmed): no byte changed (socket recorded as present) (before cd6f94b1022d4fc9 after cd6f94b1022d4fc9)
+PASS: socket as the default database path: the socket file still exists
+
+=== 5: a planned file replaced by a socket after planning ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U
+created f00002.txt in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data\workspaces\01JQAB3INTRUNBBBBBBBBBBBBB
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data
+exit code: 1; 12924 ms
+--- socket swapped in at Removing: stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3000 files, 1 directory, 45.8 KB
+  workspaces/01JQAB3INTRUNBBBBBBBBBBBBB  run workspace            5 files, 1 directory, 65 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 334.0 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  nothing else is in the data directory
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3008 files, 2 directories, 415.8 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3000 files, 1 directory, 45.8 KB)
+--- end socket swapped in at Removing: stdout ---
+--- socket swapped in at Removing: stderr ---
+Reset stopped: could not remove workspaces/01JQAB3INTRUNBBBBBBBBBBBBB/f00002.txt: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data\workspaces\01JQAB3INTRUNBBBBBBBBBBBBB\f00002.txt cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+  Removed:        workspaces/01JQAB3INTRUNAAAAAAAAAAAAA
+  Partly removed: workspaces/01JQAB3INTRUNBBBBBBBBBBBBB (2 of 6 entries)
+  Not removed:    graphgoblin.db, graphgoblin.db-wal, graphgoblin.db-shm
+  Released graphgoblin.lock.
+Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.
+--- end socket swapped in at Removing: stderr ---
+--- timeline ---
+10524 ms: Removing:
+10524-10525 ms: [hook ran: unlinked workspaces/01JQAB3INTRUNBBBBBBBBBBBBB/f00002.txt; creating a socket with that name]
+12902 ms:   removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3000 files, 1 directory, 45.8 KB)
+--- end timeline ---
+PASS: exit 1 (1)
+PASS: the incomplete-reset report names the uninspectable entry and its path
+PASS: removed / partly removed / not removed
+PASS: the socket is still there
+$ node apps/api/dist/main.js --reset
+exit code: 1; 5175 ms
+--- rerun (dry run) with the socket still there stderr ---
+reset refused: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data\workspaces\01JQAB3INTRUNBBBBBBBBBBBBB\f00002.txt cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again
+Nothing in the data directory was changed.
+--- end rerun (dry run) with the socket still there stderr ---
+PASS: the rerun refuses with the same guidance
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data
+exit code: 0; 7358 ms
+--- rerun after unlinking the socket stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNBBBBBBBBBBBBB  run workspace            2 files, 1 directory, 26 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 334.0 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  nothing else is in the data directory
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 1 directory, 370.0 KB in 4 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNBBBBBBBBBBBBB (2 files, 1 directory, 26 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 334.0 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-r1-Ym8B8U\data.
+--- end rerun after unlinking the socket stdout ---
+PASS: the rerun completes (0)
+
+SUMMARY r1-d1-sockets: 52 passed, 0 failed

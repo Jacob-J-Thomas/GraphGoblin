@@ -83,7 +83,7 @@ describe.runIf(process.platform === 'win32')('uninspectable Windows AF_UNIX entr
           expect
             .soft(err)
             .toContain('move or remove that entry yourself, then run the reset again');
-          expect.soft(err).toContain('Nothing was changed.');
+          expect.soft(err).toContain('Nothing in the data directory was changed.');
           expect.soft(out).not.toContain('Removing:');
           expect(await readdir(dirname(socket))).toEqual(beforeNames);
           await expect(lstat(socket)).rejects.toMatchObject({ code: 'EACCES' });

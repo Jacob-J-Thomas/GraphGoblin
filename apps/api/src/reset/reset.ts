@@ -600,8 +600,8 @@ export async function resetDataDirectory(
       `the database ${databaseFile} is outside the data directory ${configured}; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory`,
     );
   const database = segments.join('/');
-  // Check the lock and plan the whole reset read-only first: every refusal happens here, before
-  // the lock (or a stale lock file left by a dead process) is touched.
+  // Validate the lock and preview read-only before touching even a stale lock. The fresh plan
+  // can still refuse after acquisition; in that case the reset releases its own lock.
   const state = await dataDirLockState(dataDir);
   if (state.state === 'held')
     throw new ResetRefusedError(
@@ -630,6 +630,24 @@ export async function resetDataDirectory(
     // Plan again under the lock, so GraphGoblin cannot change the manifest concurrently. External
     // processes do not obey this lock; removeEntry rechecks the planned filesystem identities.
     const plan = await planReset({ dataDir, database, readStore: io.readStore });
+    // Never discard the run IDs after a transient reader failure or keep a workspace that the
+    // preview identified for removal. Refuse before executing any target, so a retry can still
+    // identify those workspaces. A store unreadable in both plans retains the damaged-store reset.
+    if (preview.store.readable && !plan.store.readable)
+      throw new ResetRefusedError(
+        `the store was readable in the preview but could not be read under the data-directory lock (${plan.store.reason}); run the reset again before removing the database or run workspaces`,
+      );
+    const newlyKept = preview.targets.find(
+      (target) =>
+        target.what === 'run workspace' &&
+        plan.kept.some(
+          (entry) => entry.path === target.path || target.path.startsWith(entry.path + '/'),
+        ),
+    );
+    if (newlyKept)
+      throw new ResetRefusedError(
+        `${newlyKept.path} was a run workspace in the preview but would be kept by the plan under the data-directory lock; run the reset again before removing its database`,
+      );
     io.write(formatPlan(plan, { dryRun: false, configured }));
     io.write('Removing:\n');
     try {
@@ -685,7 +703,7 @@ export async function runResetCli(options: ResetCliOptions = {}): Promise<number
   try {
     config = loadConfig(options.env ?? process.env);
   } catch (error) {
-    writeError(`reset refused: ${message(error)}\nNothing was changed.\n`);
+    writeError(`reset refused: ${message(error)}\nNothing in the data directory was changed.\n`);
     return 1;
   }
   try {
@@ -699,7 +717,7 @@ export async function runResetCli(options: ResetCliOptions = {}): Promise<number
       writeError(`${error.message}\n`);
       return 1;
     }
-    writeError(`reset refused: ${message(error)}\nNothing was changed.\n`);
+    writeError(`reset refused: ${message(error)}\nNothing in the data directory was changed.\n`);
     return 1;
   }
 }

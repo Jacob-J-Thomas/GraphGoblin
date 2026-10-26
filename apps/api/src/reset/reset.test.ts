@@ -549,7 +549,7 @@ describe('refused resets change nothing', () => {
       expect(result.code).toBe(1);
       expect(result.out).toBe('');
       expect(result.err).toContain(error);
-      expect(result.err).toMatch(/Nothing was changed\.\n$/);
+      expect(result.err).toMatch(/Nothing in the data directory was changed\.\n$/);
       expect(await snapshotTree(base)).toEqual(before);
     },
   );
@@ -583,7 +583,7 @@ describe('refused resets change nothing', () => {
         expect(result.err).toContain(
           `the database ${name} has the name of the ${name} directory, which a reset removes; rename it first`,
         );
-        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect(result.err).toMatch(/Nothing in the data directory was changed\.\n$/);
         expect(await snapshotTree(base)).toEqual(before);
       }
     },
@@ -687,7 +687,7 @@ describe('refused resets change nothing', () => {
         );
         expect(result.code).toBe(1);
         expect(result.err).toContain(refusal);
-        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect(result.err).toMatch(/Nothing in the data directory was changed\.\n$/);
         expect(await snapshotTree(base)).toEqual(before);
       }
       // The short name of an ordinary database resolves to its listed spelling: planned once, under
@@ -919,7 +919,7 @@ describe('refused resets change nothing', () => {
         expect(result.err).toContain(
           'graphgoblin.db is a special file, not a database file; a reset removes only regular database files',
         );
-        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect(result.err).toMatch(/Nothing in the data directory was changed\.\n$/);
         expect((await readdir(dataDir)).sort()).toEqual(before);
         expect((await lstat(fifo)).isFIFO()).toBe(true);
       }
@@ -941,7 +941,7 @@ describe('refused resets change nothing', () => {
       expect(result).toEqual({
         code: 1,
         out: '',
-        err: `reset refused: another GraphGoblin process holds ${join(dataDir, 'graphgoblin.lock')}; stop it before resetting\nNothing was changed.\n`,
+        err: `reset refused: another GraphGoblin process holds ${join(dataDir, 'graphgoblin.lock')}; stop it before resetting\nNothing in the data directory was changed.\n`,
       });
       expect(await snapshotTree(base)).toEqual(before);
     } finally {
@@ -1030,7 +1030,7 @@ describe('refused resets change nothing', () => {
     expect(result.code).toBe(1);
     expect(result.out).toBe('');
     expect(result.err).toMatch(error);
-    expect(result.err).toMatch(/Nothing was changed\.\n$/);
+    expect(result.err).toMatch(/Nothing in the data directory was changed\.\n$/);
     expect(await snapshotTree(base)).toEqual(before);
   });
 
@@ -1042,7 +1042,7 @@ describe('refused resets change nothing', () => {
     expect(result).toEqual({
       code: 1,
       out: '',
-      err: `reset refused: ${join(base, 'data')} is not a directory\nNothing was changed.\n`,
+      err: `reset refused: ${join(base, 'data')} is not a directory\nNothing in the data directory was changed.\n`,
     });
   });
 

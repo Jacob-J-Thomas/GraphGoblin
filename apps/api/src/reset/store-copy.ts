@@ -108,7 +108,14 @@ export async function cleanupStaleStoreCopies(): Promise<void> {
       }
     }
     if (!safe) continue;
-    await removeCopy(root, directory);
+    try {
+      await removeCopy(root, directory);
+    } catch (error) {
+      throw new Error(
+        `could not clean stale private reset copy ${join(root, name)}. Close the program holding its files, check its permissions, then run the reset again`,
+        { cause: error },
+      );
+    }
   }
 }
 
