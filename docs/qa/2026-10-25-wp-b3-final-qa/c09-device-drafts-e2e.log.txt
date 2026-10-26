@@ -1,0 +1,15 @@
+Command (from apps/web, head 603cbaa6): GG_E2E_MAIN_PORT=6348 GG_E2E_CONTROL_PORT=6349 pnpm exec playwright test e2e/device-draft-format.spec.ts e2e/drafts.spec.ts --retries=0 --workers=1 (Microsoft Edge: playwright.config.ts defaults the channel to msedge on Windows)
+Node v22.23.4
+
+
+Running 6 tests using 1 worker
+
+  ok 1 [chromium] › e2e\device-draft-format.spec.ts:75:1 › an older device draft is refused, never converted or saved, and discarded only on request (2.0s)
+  ok 2 [chromium] › e2e\device-draft-format.spec.ts:119:3 › a device record with no definition keeps export and discard instead of failing to render (1.8s)
+  ok 3 [chromium] › e2e\device-draft-format.spec.ts:119:3 › a device record with a null definition keeps export and discard instead of failing to render (1.5s)
+  ok 4 [chromium] › e2e\drafts.spec.ts:24:1 › two tabs editing one draft: the stale tab is asked to reload or overwrite (6.8s)
+  ok 5 [chromium] › e2e\drafts.spec.ts:79:1 › a restored-draft notice stays dismissed through edits and returns after a restoring reload (3.8s)
+  ok 6 [chromium] › e2e\drafts.spec.ts:158:1 › an older version’s open connection blocks device drafts: the editor says so until it closes (review F2) (8.9s)
+
+  6 passed (49.9s)
+exit 0

@@ -1,0 +1,692 @@
+
+=== a1: database file named exactly artifacts / workspaces (and spellings) at the root ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 5796 ms
+--- database named artifacts while artifacts/ is a directory (dry run) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named artifacts while artifacts/ is a directory (dry run) stderr ---
+PASS: database named artifacts while artifacts/ is a directory (dry run): exit 1 without blocking (5796 ms) (1)
+PASS: database named artifacts while artifacts/ is a directory (dry run): a refusal, not an incomplete reset
+PASS: database named artifacts while artifacts/ is a directory (dry run): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: database named artifacts while artifacts/ is a directory (dry run): no byte changed (before 2c7450a5a6b02374 after 2c7450a5a6b02374)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 5754 ms
+--- database named artifacts while artifacts/ is a directory (confirmed) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named artifacts while artifacts/ is a directory (confirmed) stderr ---
+PASS: database named artifacts while artifacts/ is a directory (confirmed): exit 1 without blocking (5754 ms) (1)
+PASS: database named artifacts while artifacts/ is a directory (confirmed): a refusal, not an incomplete reset
+PASS: database named artifacts while artifacts/ is a directory (confirmed): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: database named artifacts while artifacts/ is a directory (confirmed): no byte changed (before 2c7450a5a6b02374 after 2c7450a5a6b02374)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces]
+exit code: 1; 3573 ms
+--- database named workspaces while workspaces/ is a directory (dry run) stderr ---
+reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named workspaces while workspaces/ is a directory (dry run) stderr ---
+PASS: database named workspaces while workspaces/ is a directory (dry run): exit 1 without blocking (3573 ms) (1)
+PASS: database named workspaces while workspaces/ is a directory (dry run): a refusal, not an incomplete reset
+PASS: database named workspaces while workspaces/ is a directory (dry run): message (the database workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: database named workspaces while workspaces/ is a directory (dry run): no byte changed (before 2c7450a5a6b02374 after 2c7450a5a6b02374)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces]
+exit code: 1; 4126 ms
+--- database named workspaces while workspaces/ is a directory (confirmed) stderr ---
+reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named workspaces while workspaces/ is a directory (confirmed) stderr ---
+PASS: database named workspaces while workspaces/ is a directory (confirmed): exit 1 without blocking (4126 ms) (1)
+PASS: database named workspaces while workspaces/ is a directory (confirmed): a refusal, not an incomplete reset
+PASS: database named workspaces while workspaces/ is a directory (confirmed): message (the database workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: database named workspaces while workspaces/ is a directory (confirmed): no byte changed (before 2c7450a5a6b02374 after 2c7450a5a6b02374)
+data directory: ["artifacts","artifacts-shm","artifacts-wal","graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 4026 ms
+--- regular database file named artifacts (dry run) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named artifacts (dry run) stderr ---
+PASS: regular database file named artifacts (dry run): exit 1 without blocking (4026 ms) (1)
+PASS: regular database file named artifacts (dry run): a refusal, not an incomplete reset
+PASS: regular database file named artifacts (dry run): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: regular database file named artifacts (dry run): no byte changed (before 3286d79f6acd207a after 3286d79f6acd207a)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 3463 ms
+--- regular database file named artifacts (confirmed) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named artifacts (confirmed) stderr ---
+PASS: regular database file named artifacts (confirmed): exit 1 without blocking (3463 ms) (1)
+PASS: regular database file named artifacts (confirmed): a refusal, not an incomplete reset
+PASS: regular database file named artifacts (confirmed): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: regular database file named artifacts (confirmed): no byte changed (before 3286d79f6acd207a after 3286d79f6acd207a)
+data directory: ["graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key","workspaces","workspaces-shm","workspaces-wal"]
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces]
+exit code: 1; 4310 ms
+--- regular database file named workspaces (dry run) stderr ---
+reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named workspaces (dry run) stderr ---
+PASS: regular database file named workspaces (dry run): exit 1 without blocking (4310 ms) (1)
+PASS: regular database file named workspaces (dry run): a refusal, not an incomplete reset
+PASS: regular database file named workspaces (dry run): message (the database workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: regular database file named workspaces (dry run): no byte changed (before c1d8177f79e54a7e after c1d8177f79e54a7e)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces]
+exit code: 1; 3591 ms
+--- regular database file named workspaces (confirmed) stderr ---
+reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named workspaces (confirmed) stderr ---
+PASS: regular database file named workspaces (confirmed): exit 1 without blocking (3591 ms) (1)
+PASS: regular database file named workspaces (confirmed): a refusal, not an incomplete reset
+PASS: regular database file named workspaces (confirmed): message (the database workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: regular database file named workspaces (confirmed): no byte changed (before c1d8177f79e54a7e after c1d8177f79e54a7e)
+data directory: ["Artifacts","Artifacts-shm","Artifacts-wal","graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/Artifacts]
+exit code: 1; 3774 ms
+--- regular database file named Artifacts (dry run) stderr ---
+reset refused: the database Artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named Artifacts (dry run) stderr ---
+PASS: regular database file named Artifacts (dry run): exit 1 without blocking (3774 ms) (1)
+PASS: regular database file named Artifacts (dry run): a refusal, not an incomplete reset
+PASS: regular database file named Artifacts (dry run): message (the database Artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: regular database file named Artifacts (dry run): no byte changed (before adb9dad89a347ecd after adb9dad89a347ecd)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/Artifacts]
+exit code: 1; 3684 ms
+--- regular database file named Artifacts (confirmed) stderr ---
+reset refused: the database Artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named Artifacts (confirmed) stderr ---
+PASS: regular database file named Artifacts (confirmed): exit 1 without blocking (3684 ms) (1)
+PASS: regular database file named Artifacts (confirmed): a refusal, not an incomplete reset
+PASS: regular database file named Artifacts (confirmed): message (the database Artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: regular database file named Artifacts (confirmed): no byte changed (before adb9dad89a347ecd after adb9dad89a347ecd)
+data directory: ["WORKSPACES","WORKSPACES-shm","WORKSPACES-wal","graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key"]
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/WORKSPACES]
+exit code: 1; 3799 ms
+--- regular database file named WORKSPACES (dry run) stderr ---
+reset refused: the database WORKSPACES has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named WORKSPACES (dry run) stderr ---
+PASS: regular database file named WORKSPACES (dry run): exit 1 without blocking (3799 ms) (1)
+PASS: regular database file named WORKSPACES (dry run): a refusal, not an incomplete reset
+PASS: regular database file named WORKSPACES (dry run): message (the database WORKSPACES has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: regular database file named WORKSPACES (dry run): no byte changed (before 5ddb7b0a8d99e2e2 after 5ddb7b0a8d99e2e2)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/WORKSPACES]
+exit code: 1; 4641 ms
+--- regular database file named WORKSPACES (confirmed) stderr ---
+reset refused: the database WORKSPACES has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end regular database file named WORKSPACES (confirmed) stderr ---
+PASS: regular database file named WORKSPACES (confirmed): exit 1 without blocking (4641 ms) (1)
+PASS: regular database file named WORKSPACES (confirmed): a refusal, not an incomplete reset
+PASS: regular database file named WORKSPACES (confirmed): message (the database WORKSPACES has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: regular database file named WORKSPACES (confirmed): no byte changed (before 5ddb7b0a8d99e2e2 after 5ddb7b0a8d99e2e2)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 3917 ms
+--- absent database named artifacts (dry run) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end absent database named artifacts (dry run) stderr ---
+PASS: absent database named artifacts (dry run): exit 1 without blocking (3917 ms) (1)
+PASS: absent database named artifacts (dry run): a refusal, not an incomplete reset
+PASS: absent database named artifacts (dry run): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: absent database named artifacts (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts]
+exit code: 1; 4726 ms
+--- absent database named artifacts (confirmed) stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end absent database named artifacts (confirmed) stderr ---
+PASS: absent database named artifacts (confirmed): exit 1 without blocking (4726 ms) (1)
+PASS: absent database named artifacts (confirmed): a refusal, not an incomplete reset
+PASS: absent database named artifacts (confirmed): message (the database artifacts has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: absent database named artifacts (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/Workspaces]
+exit code: 1; 8392 ms
+--- absent database named Workspaces (dry run) stderr ---
+reset refused: the database Workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end absent database named Workspaces (dry run) stderr ---
+PASS: absent database named Workspaces (dry run): exit 1 without blocking (8392 ms) (1)
+PASS: absent database named Workspaces (dry run): a refusal, not an incomplete reset
+PASS: absent database named Workspaces (dry run): message (the database Workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: absent database named Workspaces (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/Workspaces]
+exit code: 1; 7501 ms
+--- absent database named Workspaces (confirmed) stderr ---
+reset refused: the database Workspaces has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end absent database named Workspaces (confirmed) stderr ---
+PASS: absent database named Workspaces (confirmed): exit 1 without blocking (7501 ms) (1)
+PASS: absent database named Workspaces (confirmed): a refusal, not an incomplete reset
+PASS: absent database named Workspaces (confirmed): message (the database Workspaces has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: absent database named Workspaces (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts.]
+exit code: 1; 7688 ms
+--- database named "artifacts." (trailing dot) (dry run) stderr ---
+reset refused: the database path artifacts. names artifacts. with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it
+Nothing was changed.
+--- end database named "artifacts." (trailing dot) (dry run) stderr ---
+PASS: database named "artifacts." (trailing dot) (dry run): exit 1 without blocking (7688 ms) (1)
+PASS: database named "artifacts." (trailing dot) (dry run): a refusal, not an incomplete reset
+PASS: database named "artifacts." (trailing dot) (dry run): message (the database path artifacts. names artifacts. with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it)
+PASS: database named "artifacts." (trailing dot) (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/artifacts.]
+exit code: 1; 7203 ms
+--- database named "artifacts." (trailing dot) (confirmed) stderr ---
+reset refused: the database path artifacts. names artifacts. with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it
+Nothing was changed.
+--- end database named "artifacts." (trailing dot) (confirmed) stderr ---
+PASS: database named "artifacts." (trailing dot) (confirmed): exit 1 without blocking (7203 ms) (1)
+PASS: database named "artifacts." (trailing dot) (confirmed): a refusal, not an incomplete reset
+PASS: database named "artifacts." (trailing dot) (confirmed): message (the database path artifacts. names artifacts. with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it)
+PASS: database named "artifacts." (trailing dot) (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/graphgoblin.lock]
+exit code: 1; 7373 ms
+--- database named graphgoblin.lock (dry run) stderr ---
+reset refused: the database graphgoblin.lock has the name of the reset's lock file; rename it first
+Nothing was changed.
+--- end database named graphgoblin.lock (dry run) stderr ---
+PASS: database named graphgoblin.lock (dry run): exit 1 without blocking (7373 ms) (1)
+PASS: database named graphgoblin.lock (dry run): a refusal, not an incomplete reset
+PASS: database named graphgoblin.lock (dry run): message (the database graphgoblin.lock has the name of the reset's lock file; rename it first)
+PASS: database named graphgoblin.lock (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/graphgoblin.lock]
+exit code: 1; 7181 ms
+--- database named graphgoblin.lock (confirmed) stderr ---
+reset refused: the database graphgoblin.lock has the name of the reset's lock file; rename it first
+Nothing was changed.
+--- end database named graphgoblin.lock (confirmed) stderr ---
+PASS: database named graphgoblin.lock (confirmed): exit 1 without blocking (7181 ms) (1)
+PASS: database named graphgoblin.lock (confirmed): a refusal, not an incomplete reset
+PASS: database named graphgoblin.lock (confirmed): message (the database graphgoblin.lock has the name of the reset's lock file; rename it first)
+PASS: database named graphgoblin.lock (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/graphgoblin.lock.reclaim]
+exit code: 1; 5228 ms
+--- database named graphgoblin.lock.reclaim (dry run) stderr ---
+reset refused: the database graphgoblin.lock.reclaim has the name of the reset's lock file; rename it first
+Nothing was changed.
+--- end database named graphgoblin.lock.reclaim (dry run) stderr ---
+PASS: database named graphgoblin.lock.reclaim (dry run): exit 1 without blocking (5228 ms) (1)
+PASS: database named graphgoblin.lock.reclaim (dry run): a refusal, not an incomplete reset
+PASS: database named graphgoblin.lock.reclaim (dry run): message (the database graphgoblin.lock.reclaim has the name of the reset's lock file; rename it first)
+PASS: database named graphgoblin.lock.reclaim (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/graphgoblin.lock.reclaim]
+exit code: 1; 5997 ms
+--- database named graphgoblin.lock.reclaim (confirmed) stderr ---
+reset refused: the database graphgoblin.lock.reclaim has the name of the reset's lock file; rename it first
+Nothing was changed.
+--- end database named graphgoblin.lock.reclaim (confirmed) stderr ---
+PASS: database named graphgoblin.lock.reclaim (confirmed): exit 1 without blocking (5997 ms) (1)
+PASS: database named graphgoblin.lock.reclaim (confirmed): a refusal, not an incomplete reset
+PASS: database named graphgoblin.lock.reclaim (confirmed): message (the database graphgoblin.lock.reclaim has the name of the reset's lock file; rename it first)
+PASS: database named graphgoblin.lock.reclaim (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces/graphgoblin.db]
+exit code: 1; 4740 ms
+--- database inside workspaces/ (dry run) stderr ---
+reset refused: the database workspaces/graphgoblin.db is inside workspaces/, which a reset removes; move it first
+Nothing was changed.
+--- end database inside workspaces/ (dry run) stderr ---
+PASS: database inside workspaces/ (dry run): exit 1 without blocking (4740 ms) (1)
+PASS: database inside workspaces/ (dry run): a refusal, not an incomplete reset
+PASS: database inside workspaces/ (dry run): message (the database workspaces/graphgoblin.db is inside workspaces/, which a reset removes; move it first)
+PASS: database inside workspaces/ (dry run): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-jqGbg5\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-jqGbg5/data/workspaces/graphgoblin.db]
+exit code: 1; 4543 ms
+--- database inside workspaces/ (confirmed) stderr ---
+reset refused: the database workspaces/graphgoblin.db is inside workspaces/, which a reset removes; move it first
+Nothing was changed.
+--- end database inside workspaces/ (confirmed) stderr ---
+PASS: database inside workspaces/ (confirmed): exit 1 without blocking (4543 ms) (1)
+PASS: database inside workspaces/ (confirmed): a refusal, not an incomplete reset
+PASS: database inside workspaces/ (confirmed): message (the database workspaces/graphgoblin.db is inside workspaces/, which a reset removes; move it first)
+PASS: database inside workspaces/ (confirmed): no byte changed (before 0654240e8a3710f8 after 0654240e8a3710f8)
+
+=== a2: database named by the 8.3 short name of artifacts/ or workspaces/ ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl
+short name of artifacts: ARTIFA~1
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-8UaZBl/data/ARTIFA~1]
+exit code: 1; 5841 ms
+--- database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run) stderr ---
+reset refused: the database ARTIFA~1 has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run) stderr ---
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run): exit 1 without blocking (5841 ms) (1)
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run): a refusal, not an incomplete reset
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run): message (the database ARTIFA~1 has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (dry run): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-8UaZBl/data/ARTIFA~1]
+exit code: 1; 6700 ms
+--- database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed) stderr ---
+reset refused: the database ARTIFA~1 has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed) stderr ---
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed): exit 1 without blocking (6700 ms) (1)
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed): a refusal, not an incomplete reset
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed): message (the database ARTIFA~1 has the name of the artifacts directory, which a reset removes; rename it first)
+PASS: database named ARTIFA~1 (the 8.3 name of artifacts/) (confirmed): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+short name of workspaces: WORKSP~1
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-8UaZBl/data/WORKSP~1]
+exit code: 1; 7358 ms
+--- database named WORKSP~1 (the 8.3 name of workspaces/) (dry run) stderr ---
+reset refused: the database WORKSP~1 has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named WORKSP~1 (the 8.3 name of workspaces/) (dry run) stderr ---
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (dry run): exit 1 without blocking (7358 ms) (1)
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (dry run): a refusal, not an incomplete reset
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (dry run): message (the database WORKSP~1 has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (dry run): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-8UaZBl/data/WORKSP~1]
+exit code: 1; 7832 ms
+--- database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed) stderr ---
+reset refused: the database WORKSP~1 has the name of the workspaces directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed) stderr ---
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed): exit 1 without blocking (7832 ms) (1)
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed): a refusal, not an incomplete reset
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed): message (the database WORKSP~1 has the name of the workspaces directory, which a reset removes; rename it first)
+PASS: database named WORKSP~1 (the 8.3 name of workspaces/) (confirmed): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/GG35F7~2/data/WORKSP~1]
+exit code: 1; 4168 ms
+--- database path with the data directory itself in 8.3 form (dry run) stderr ---
+reset refused: the database %USERPROFILE%\AppData\Local\Temp\GG35F7~2\data\WORKSP~1 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database path with the data directory itself in 8.3 form (dry run) stderr ---
+PASS: database path with the data directory itself in 8.3 form (dry run): exit 1 without blocking (4168 ms) (1)
+PASS: database path with the data directory itself in 8.3 form (dry run): a refusal, not an incomplete reset
+PASS: database path with the data directory itself in 8.3 form (dry run): message (the database %USERPROFILE%\AppData\Local\Temp\GG35F7~2\data\WORKSP~1 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database path with the data directory itself in 8.3 form (dry run): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/GG35F7~2/data/WORKSP~1]
+exit code: 1; 4181 ms
+--- database path with the data directory itself in 8.3 form (confirmed) stderr ---
+reset refused: the database %USERPROFILE%\AppData\Local\Temp\GG35F7~2\data\WORKSP~1 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database path with the data directory itself in 8.3 form (confirmed) stderr ---
+PASS: database path with the data directory itself in 8.3 form (confirmed): exit 1 without blocking (4181 ms) (1)
+PASS: database path with the data directory itself in 8.3 form (confirmed): a refusal, not an incomplete reset
+PASS: database path with the data directory itself in 8.3 form (confirmed): message (the database %USERPROFILE%\AppData\Local\Temp\GG35F7~2\data\WORKSP~1 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-8UaZBl\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database path with the data directory itself in 8.3 form (confirmed): no byte changed (before d0cf1316a3c835d5 after d0cf1316a3c835d5)
+
+=== b1: database path is a directory ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-cfLImo
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-cfLImo/data/graphgoblin.db]
+exit code: 1; 4300 ms
+--- database is a directory (dry run) stderr ---
+reset refused: graphgoblin.db is a directory, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end database is a directory (dry run) stderr ---
+PASS: database is a directory (dry run): exit 1 without blocking (4300 ms) (1)
+PASS: database is a directory (dry run): a refusal, not an incomplete reset
+PASS: database is a directory (dry run): message (graphgoblin.db is a directory, not a database file; a reset removes only regular database files)
+PASS: database is a directory (dry run): no byte changed (before 534ad36078360e44 after 534ad36078360e44)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-cfLImo\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-cfLImo/data/graphgoblin.db]
+exit code: 1; 4676 ms
+--- database is a directory (confirmed) stderr ---
+reset refused: graphgoblin.db is a directory, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end database is a directory (confirmed) stderr ---
+PASS: database is a directory (confirmed): exit 1 without blocking (4676 ms) (1)
+PASS: database is a directory (confirmed): a refusal, not an incomplete reset
+PASS: database is a directory (confirmed): message (graphgoblin.db is a directory, not a database file; a reset removes only regular database files)
+PASS: database is a directory (confirmed): no byte changed (before 534ad36078360e44 after 534ad36078360e44)
+
+=== b2: database path is a junction to an outside folder ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-YoAzkq
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-YoAzkq/data/graphgoblin.db]
+exit code: 1; 4364 ms
+--- database is a junction (dry run) stderr ---
+reset refused: graphgoblin.db is a link, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end database is a junction (dry run) stderr ---
+PASS: database is a junction (dry run): exit 1 without blocking (4364 ms) (1)
+PASS: database is a junction (dry run): a refusal, not an incomplete reset
+PASS: database is a junction (dry run): message (graphgoblin.db is a link, not a database file; a reset removes only regular database files)
+PASS: database is a junction (dry run): no byte changed (before 52d93bc2cf3fa840 after 52d93bc2cf3fa840)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-YoAzkq\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-YoAzkq/data/graphgoblin.db]
+exit code: 1; 4667 ms
+--- database is a junction (confirmed) stderr ---
+reset refused: graphgoblin.db is a link, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end database is a junction (confirmed) stderr ---
+PASS: database is a junction (confirmed): exit 1 without blocking (4667 ms) (1)
+PASS: database is a junction (confirmed): a refusal, not an incomplete reset
+PASS: database is a junction (confirmed): message (graphgoblin.db is a link, not a database file; a reset removes only regular database files)
+PASS: database is a junction (confirmed): no byte changed (before 52d93bc2cf3fa840 after 52d93bc2cf3fa840)
+
+=== b3: a sidecar is a directory or a junction ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-f7eyNe
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-f7eyNe/data/graphgoblin.db]
+exit code: 1; 5437 ms
+--- -shm sidecar is a junction (dry run) stderr ---
+reset refused: graphgoblin.db-shm is a link, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end -shm sidecar is a junction (dry run) stderr ---
+PASS: -shm sidecar is a junction (dry run): exit 1 without blocking (5437 ms) (1)
+PASS: -shm sidecar is a junction (dry run): a refusal, not an incomplete reset
+PASS: -shm sidecar is a junction (dry run): message (graphgoblin.db-shm is a link, not a database file; a reset removes only regular database files)
+PASS: -shm sidecar is a junction (dry run): no byte changed (before 6c6e89542a4e14b3 after 6c6e89542a4e14b3)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-f7eyNe\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-f7eyNe/data/graphgoblin.db]
+exit code: 1; 4777 ms
+--- -shm sidecar is a junction (confirmed) stderr ---
+reset refused: graphgoblin.db-shm is a link, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end -shm sidecar is a junction (confirmed) stderr ---
+PASS: -shm sidecar is a junction (confirmed): exit 1 without blocking (4777 ms) (1)
+PASS: -shm sidecar is a junction (confirmed): a refusal, not an incomplete reset
+PASS: -shm sidecar is a junction (confirmed): message (graphgoblin.db-shm is a link, not a database file; a reset removes only regular database files)
+PASS: -shm sidecar is a junction (confirmed): no byte changed (before 6c6e89542a4e14b3 after 6c6e89542a4e14b3)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-f7eyNe/data/graphgoblin.db]
+exit code: 1; 3698 ms
+--- -journal sidecar is a directory (dry run) stderr ---
+reset refused: graphgoblin.db-journal is a directory, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end -journal sidecar is a directory (dry run) stderr ---
+PASS: -journal sidecar is a directory (dry run): exit 1 without blocking (3698 ms) (1)
+PASS: -journal sidecar is a directory (dry run): a refusal, not an incomplete reset
+PASS: -journal sidecar is a directory (dry run): message (graphgoblin.db-journal is a directory, not a database file; a reset removes only regular database files)
+PASS: -journal sidecar is a directory (dry run): no byte changed (before 430e6956f4c9a5c5 after 430e6956f4c9a5c5)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-f7eyNe\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-f7eyNe/data/graphgoblin.db]
+exit code: 1; 3724 ms
+--- -journal sidecar is a directory (confirmed) stderr ---
+reset refused: graphgoblin.db-journal is a directory, not a database file; a reset removes only regular database files
+Nothing was changed.
+--- end -journal sidecar is a directory (confirmed) stderr ---
+PASS: -journal sidecar is a directory (confirmed): exit 1 without blocking (3724 ms) (1)
+PASS: -journal sidecar is a directory (confirmed): a refusal, not an incomplete reset
+PASS: -journal sidecar is a directory (confirmed): message (graphgoblin.db-journal is a directory, not a database file; a reset removes only regular database files)
+PASS: -journal sidecar is a directory (confirmed): no byte changed (before 430e6956f4c9a5c5 after 430e6956f4c9a5c5)
+
+=== b4: database path is a Windows AF_UNIX socket file ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-6MddDU
+created graphgoblin.db in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-6MddDU\data
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-6MddDU/data/graphgoblin.db]
+exit code: 1; 3868 ms
+--- database is an AF_UNIX socket file (dry run) stderr ---
+reset refused: EACCES: permission denied, lstat '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-6MddDU\data\graphgoblin.db'
+Nothing was changed.
+--- end database is an AF_UNIX socket file (dry run) stderr ---
+PASS: database is an AF_UNIX socket file (dry run): exit 1 without blocking (3868 ms) (1)
+PASS: database is an AF_UNIX socket file (dry run): a refusal, not an incomplete reset
+PASS: database is an AF_UNIX socket file (dry run): no byte changed (before 2fd2cddf00edfd33 after 2fd2cddf00edfd33)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-6MddDU\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-6MddDU/data/graphgoblin.db]
+exit code: 1; 3851 ms
+--- database is an AF_UNIX socket file (confirmed) stderr ---
+reset refused: EACCES: permission denied, lstat '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-6MddDU\data\graphgoblin.db'
+Nothing was changed.
+--- end database is an AF_UNIX socket file (confirmed) stderr ---
+PASS: database is an AF_UNIX socket file (confirmed): exit 1 without blocking (3851 ms) (1)
+PASS: database is an AF_UNIX socket file (confirmed): a refusal, not an incomplete reset
+PASS: database is an AF_UNIX socket file (confirmed): no byte changed (before 2fd2cddf00edfd33 after 2fd2cddf00edfd33)
+PASS: the socket file still exists
+
+=== b5: an AF_UNIX socket file elsewhere in the data directory (not the database) ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk
+created tool.sock in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA
+$ node apps/api/dist/main.js --reset
+exit code: 1; 6817 ms
+--- socket inside a run workspace (dry run) stderr ---
+reset refused: EACCES: permission denied, lstat '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\tool.sock'
+Nothing was changed.
+--- end socket inside a run workspace (dry run) stderr ---
+observed: exit 1
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data
+exit code: 1; 6521 ms
+--- socket inside a run workspace (confirmed) stderr ---
+reset refused: EACCES: permission denied, lstat '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data\workspaces\01JQAB3INTRUNAAAAAAAAAAAAA\tool.sock'
+Nothing was changed.
+--- end socket inside a run workspace (confirmed) stderr ---
+observed: exit 1
+FAIL: a socket file inside a run workspace is removed with the workspace, as ADR-0042 says for special files inside a removed directory (1)
+PASS: the refused reset changed nothing (before ec49d1a474a60bbc after ec49d1a474a60bbc)
+created agent.sock in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data
+$ node apps/api/dist/main.js --reset
+exit code: 1; 3959 ms
+--- socket as a kept root entry (dry run) stderr ---
+reset refused: EACCES: permission denied, lstat '%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data\agent.sock'
+Nothing was changed.
+--- end socket as a kept root entry (dry run) stderr ---
+FAIL: a socket file at the data-directory root is listed under Keeps (1)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data
+exit code: 0; 9962 ms
+--- confirmed after unlinking the socket files by hand stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-RyS5bk\data.
+--- end confirmed after unlinking the socket files by hand stdout ---
+PASS: with the socket files unlinked by hand the reset completes (0)
+
+=== b6: device names, a stream and a named pipe as the database path ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-enQ1bY/data/store/graphgoblin.db:x]
+exit code: 1; 4253 ms
+--- database is a stream of a file (graphgoblin.db:x) (dry run) stderr ---
+reset refused: the database path store/graphgoblin.db:x names a stream of a file (graphgoblin.db:x contains a colon); configure GG_DB_URL with the file itself
+Nothing was changed.
+--- end database is a stream of a file (graphgoblin.db:x) (dry run) stderr ---
+PASS: database is a stream of a file (graphgoblin.db:x) (dry run): exit 1 without blocking (4253 ms) (1)
+PASS: database is a stream of a file (graphgoblin.db:x) (dry run): a refusal, not an incomplete reset
+PASS: database is a stream of a file (graphgoblin.db:x) (dry run): message (the database path store/graphgoblin.db:x names a stream of a file (graphgoblin.db:x contains a colon); configure GG_DB_URL with the file itself)
+PASS: database is a stream of a file (graphgoblin.db:x) (dry run): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data   [GG_DB_URL=file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c10-enQ1bY/data/store/graphgoblin.db:x]
+exit code: 1; 3769 ms
+--- database is a stream of a file (graphgoblin.db:x) (confirmed) stderr ---
+reset refused: the database path store/graphgoblin.db:x names a stream of a file (graphgoblin.db:x contains a colon); configure GG_DB_URL with the file itself
+Nothing was changed.
+--- end database is a stream of a file (graphgoblin.db:x) (confirmed) stderr ---
+PASS: database is a stream of a file (graphgoblin.db:x) (confirmed): exit 1 without blocking (3769 ms) (1)
+PASS: database is a stream of a file (graphgoblin.db:x) (confirmed): a refusal, not an incomplete reset
+PASS: database is a stream of a file (graphgoblin.db:x) (confirmed): message (the database path store/graphgoblin.db:x names a stream of a file (graphgoblin.db:x contains a colon); configure GG_DB_URL with the file itself)
+PASS: database is a stream of a file (graphgoblin.db:x) (confirmed): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file:////./pipe/gg-qa-b3-int-pipe-25824]
+exit code: 1; 3384 ms
+--- database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run) stderr ---
+reset refused: the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run) stderr ---
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run): exit 1 without blocking (3384 ms) (1)
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run): a refusal, not an incomplete reset
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run): message (the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (dry run): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data   [GG_DB_URL=file:////./pipe/gg-qa-b3-int-pipe-25824]
+exit code: 1; 3654 ms
+--- database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed) stderr ---
+reset refused: the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed) stderr ---
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed): exit 1 without blocking (3654 ms) (1)
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed): a refusal, not an incomplete reset
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed): message (the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database is a live named pipe (file:////./pipe/gg-qa-b3-int-pipe-25824) (confirmed): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=file://localhost//./pipe/gg-qa-b3-int-pipe-25824]
+exit code: 1; 4030 ms
+--- database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run) stderr ---
+reset refused: the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run) stderr ---
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run): exit 1 without blocking (4030 ms) (1)
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run): a refusal, not an incomplete reset
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run): message (the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (dry run): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data   [GG_DB_URL=file://localhost//./pipe/gg-qa-b3-int-pipe-25824]
+exit code: 1; 3886 ms
+--- database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed) stderr ---
+reset refused: the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed) stderr ---
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed): exit 1 without blocking (3886 ms) (1)
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed): a refusal, not an incomplete reset
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed): message (the database \\.\pipe\gg-qa-b3-int-pipe-25824 is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory)
+PASS: database is a live named pipe (file://localhost//./pipe/gg-qa-b3-int-pipe-25824) (confirmed): no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+PASS: the reset never connected to the named pipe (0)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=<data>/NUL]
+exit code: 0; 4409 ms
+--- database named NUL (dry run) stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data\NUL (no database file)
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  store                                  not part of the store
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  no database to match run IDs against
+  workspaces/my-notes                    no database to match run IDs against
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 2 files, 2 directories, 24 B in 1 item.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data"
+--- end database named NUL (dry run) stdout ---
+PASS: NUL: the dry run does not block (4409 ms)
+PASS: NUL: refused, or planned as "no database file" (the device is never opened or removed) (0)
+PASS: NUL: no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=<data>/CON]
+exit code: 0; 4891 ms
+--- database named CON (dry run) stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data\CON (no database file)
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  store                                  not part of the store
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  no database to match run IDs against
+  workspaces/my-notes                    no database to match run IDs against
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 2 files, 2 directories, 24 B in 1 item.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data"
+--- end database named CON (dry run) stdout ---
+PASS: CON: the dry run does not block (4891 ms)
+PASS: CON: refused, or planned as "no database file" (the device is never opened or removed) (0)
+PASS: CON: no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+$ node apps/api/dist/main.js --reset   [GG_DB_URL=<data>/COM1]
+exit code: 0; 3622 ms
+--- database named COM1 (dry run) stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data\COM1 (no database file)
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  store                                  not part of the store
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  no database to match run IDs against
+  workspaces/my-notes                    no database to match run IDs against
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 2 files, 2 directories, 24 B in 1 item.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-enQ1bY\data"
+--- end database named COM1 (dry run) stdout ---
+PASS: COM1: the dry run does not block (3622 ms)
+PASS: COM1: refused, or planned as "no database file" (the device is never opened or removed) (0)
+PASS: COM1: no byte changed (before 0d91e93ae5245556 after 0d91e93ae5245556)
+
+=== b7: database is a hard link to a file outside the data directory (observation) ===
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5
+$ node apps/api/dist/main.js --reset
+exit code: 0; 7530 ms
+--- hard-linked database (dry run) stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data\graphgoblin.db (no format marker (an older build wrote it))
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  store                                  not part of the store
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  not a stored run ID
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3 files, 2 directories, 4.0 KB in 2 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data"
+--- end hard-linked database (dry run) stdout ---
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data
+exit code: 0; 10653 ms
+--- hard-linked database (confirmed) stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data\graphgoblin.db (no format marker (an older build wrote it))
+
+Removes:
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  store                                  not part of the store
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  not a stored run ID
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3 files, 2 directories, 4.0 KB in 2 items.
+
+Removing:
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c10-Q28tx5\data.
+--- end hard-linked database (confirmed) stdout ---
+observed: exit 0; data/graphgoblin.db exists: false; outside link bytes unchanged: true
+PASS: the other hard link (outside the data directory) keeps its bytes
+
+SUMMARY c10-review-threads: 196 passed, 2 failed
+  FAILED: a socket file inside a run workspace is removed with the workspace, as ADR-0042 says for special files inside a removed directory
+  FAILED: a socket file at the data-directory root is listed under Keeps

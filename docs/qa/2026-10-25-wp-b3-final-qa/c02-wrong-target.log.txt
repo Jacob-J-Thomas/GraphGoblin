@@ -1,0 +1,637 @@
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5
+
+=== Refused: --yes naming another directory ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\other   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2717 ms
+--- another store stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\other, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end another store stderr ---
+PASS: another store: exit 1 (1)
+PASS: another store: refusal text and "Nothing was changed."
+PASS: another store: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+PASS: message names both directories
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2640 ms
+--- the parent directory stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end the parent directory stderr ---
+PASS: the parent directory: exit 1 (1)
+PASS: the parent directory: refusal text and "Nothing was changed."
+PASS: the parent directory: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\workspaces   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2647 ms
+--- a subdirectory (workspaces) stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\workspaces, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end a subdirectory (workspaces) stderr ---
+PASS: a subdirectory (workspaces): exit 1 (1)
+PASS: a subdirectory (workspaces): refusal text and "Nothing was changed."
+PASS: a subdirectory (workspaces): no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2414 ms
+--- the database file stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end the database file stderr ---
+PASS: the database file: exit 1 (1)
+PASS: the database file: refusal text and "Nothing was changed."
+PASS: the database file: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\a-file.txt   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2609 ms
+--- a file stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\a-file.txt, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end a file stderr ---
+PASS: a file: exit 1 (1)
+PASS: a file: refusal text and "Nothing was changed."
+PASS: a file: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\missing   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2425 ms
+--- a missing directory stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\missing, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end a missing directory stderr ---
+PASS: a missing directory: exit 1 (1)
+PASS: a missing directory: refusal text and "Nothing was changed."
+PASS: a missing directory: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-other   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2395 ms
+--- a junction to another store stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-other, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end a junction to another store stderr ---
+PASS: a junction to another store: exit 1 (1)
+PASS: a junction to another store: refusal text and "Nothing was changed."
+PASS: a junction to another store: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\datax   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 3251 ms
+--- a sibling with a longer name (data + "x") stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\datax, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end a sibling with a longer name (data + "x") stderr ---
+PASS: a sibling with a longer name (data + "x"): exit 1 (1)
+PASS: a sibling with a longer name (data + "x"): refusal text and "Nothing was changed."
+PASS: a sibling with a longer name (data + "x"): no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data:x   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2544 ms
+--- the data directory with a stream suffix (data:x) stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data:x, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end the data directory with a stream suffix (data:x) stderr ---
+PASS: the data directory with a stream suffix (data:x): exit 1 (1)
+PASS: the data directory with a stream suffix (data:x): refusal text and "Nothing was changed."
+PASS: the data directory with a stream suffix (data:x): no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\other   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data]
+exit code: 1; 2216 ms
+--- dry run naming another store stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\other, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end dry run naming another store stderr ---
+PASS: dry run naming another store: exit 1 (1)
+PASS: dry run naming another store: refusal text and "Nothing was changed."
+PASS: dry run naming another store: no byte changed in data, other or the junctions (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+
+=== Usage errors: exit 2, nothing read or changed ===
+$ node apps/api/dist/main.js --reset --yes
+exit code: 2; 2219 ms
+--- usage stderr ---
+--yes needs --data-dir <path> naming the data directory to reset
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir
+exit code: 2; 2253 ms
+--- usage stderr ---
+--data-dir needs the path of the data directory
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--data-dir"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir 
+exit code: 2; 2658 ms
+--- usage stderr ---
+--data-dir needs the path of the data directory
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--data-dir",""] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+exit code: 2; 2244 ms
+--- usage stderr ---
+--yes is given more than once
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--yes","--data-dir","%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-b3-int-c02-4wHRV5\\data"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+exit code: 2; 2211 ms
+--- usage stderr ---
+--data-dir is given more than once
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--data-dir","%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-b3-int-c02-4wHRV5\\data","--data-dir","%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-b3-int-c02-4wHRV5\\data"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir --yes
+exit code: 2; 2070 ms
+--- usage stderr ---
+--data-dir needs the path of the data directory
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--data-dir","--yes"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data extra
+exit code: 2; 2202 ms
+--- usage stderr ---
+unexpected argument "extra"
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--yes","--data-dir","%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-b3-int-c02-4wHRV5\\data","extra"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --force --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+exit code: 2; 2010 ms
+--- usage stderr ---
+unknown option --force
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage stderr ---
+PASS: exit 2 with usage for ["--force","--data-dir","%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-b3-int-c02-4wHRV5\\data"] (2)
+PASS: usage error changes nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+
+=== Same directory, other spellings: the dry run accepts each and changes nothing ===
+short name of the data directory: %USERPROFILE%\AppData\Local\Temp\GG6C7A~1\data
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\APPDATA\LOCAL\TEMP\GG-QA-B3-INT-C02-4WHRV5\DATA
+exit code: 0; 5468 ms
+--- upper case stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end upper case stdout ---
+PASS: upper case: dry run accepted (0)
+PASS: upper case: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\appdata\local\temp\gg-qa-b3-int-c02-4whrv5\data
+exit code: 0; 4754 ms
+--- lower case stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end lower case stdout ---
+PASS: lower case: dry run accepted (0)
+PASS: lower case: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\
+exit code: 0; 4207 ms
+--- trailing backslash stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end trailing backslash stdout ---
+PASS: trailing backslash: dry run accepted (0)
+PASS: trailing backslash: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data/
+exit code: 0; 5212 ms
+--- trailing slash stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end trailing slash stdout ---
+PASS: trailing slash: dry run accepted (0)
+PASS: trailing slash: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c02-4wHRV5/data
+exit code: 0; 4556 ms
+--- forward slashes stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end forward slashes stdout ---
+PASS: forward slashes: dry run accepted (0)
+PASS: forward slashes: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data
+exit code: 0; 3584 ms
+--- junction to the data directory stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end junction to the data directory stdout ---
+PASS: junction to the data directory: dry run accepted (0)
+PASS: junction to the data directory: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir ..\..\..\..\..\..\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+exit code: 0; 3778 ms
+--- relative path from the checkout stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end relative path from the checkout stdout ---
+PASS: relative path from the checkout: dry run accepted (0)
+PASS: relative path from the checkout: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\other\..\data
+exit code: 0; 3897 ms
+--- dot segments stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end dot segments stdout ---
+PASS: dot segments: dry run accepted (0)
+PASS: dot segments: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\GG6C7A~1\data
+exit code: 0; 5243 ms
+--- 8.3 short name stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end 8.3 short name stdout ---
+PASS: 8.3 short name: dry run accepted (0)
+PASS: 8.3 short name: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+$ node apps/api/dist/main.js --reset --data-dir=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+exit code: 0; 15297 ms
+--- --data-dir=<path> form stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data"
+--- end --data-dir=<path> form stdout ---
+PASS: --data-dir=<path> form: dry run accepted (0)
+PASS: --data-dir=<path> form: dry run changed nothing (before c05cbeff1dbbb65f after c05cbeff1dbbb65f)
+
+=== Same directory, other spellings: the confirmed reset accepts each ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\APPDATA\LOCAL\TEMP\GG-QA-B3-INT-C02-4WHRV5\DATA
+exit code: 0; 9383 ms
+--- confirmed (upper case) stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data.
+--- end confirmed (upper case) stdout ---
+PASS: upper case: confirmed reset completes (0)
+PASS: upper case: only master.key and workspaces/my-notes remain (["master.key","workspaces"])
+PASS: upper case: master.key unchanged
+PASS: upper case: the other store is untouched (before 5c74c8eb7449430a after 5c74c8eb7449430a)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\
+exit code: 0; 7029 ms
+--- confirmed (trailing backslash) stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data.
+--- end confirmed (trailing backslash) stdout ---
+PASS: trailing backslash: confirmed reset completes (0)
+PASS: trailing backslash: only master.key and workspaces/my-notes remain (["master.key","workspaces"])
+PASS: trailing backslash: master.key unchanged
+PASS: trailing backslash: the other store is untouched (before 5c74c8eb7449430a after 5c74c8eb7449430a)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data
+exit code: 0; 7325 ms
+--- confirmed (junction to the data directory) stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data.
+--- end confirmed (junction to the data directory) stdout ---
+PASS: junction to the data directory: confirmed reset completes (0)
+PASS: junction to the data directory: only master.key and workspaces/my-notes remain (["master.key","workspaces"])
+PASS: junction to the data directory: master.key unchanged
+PASS: junction to the data directory: the other store is untouched (before 5c74c8eb7449430a after 5c74c8eb7449430a)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\GG6C7A~1\data
+exit code: 0; 6608 ms
+--- confirmed (8.3 short name) stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data.
+--- end confirmed (8.3 short name) stdout ---
+PASS: 8.3 short name: confirmed reset completes (0)
+PASS: 8.3 short name: only master.key and workspaces/my-notes remain (["master.key","workspaces"])
+PASS: 8.3 short name: master.key unchanged
+PASS: 8.3 short name: the other store is untouched (before 5c74c8eb7449430a after 5c74c8eb7449430a)
+
+=== Configured through a junction, confirmed with the physical path ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data]
+exit code: 0; 6055 ms
+--- GG_DATA_DIR is a junction stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data (physical path %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data)
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data\graphgoblin.db (format 3; this build requires format 4)
+
+Removes:
+  workspaces/01JQAB3INTRUNAAAAAAAAAAAAA  run workspace            3 files, 1 directory, 39 B
+  artifacts                              artifacts                2 files, 2 directories, 24 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 8 files, 3 directories, 337.9 KB in 5 items.
+
+Removing:
+  removed workspaces/01JQAB3INTRUNAAAAAAAAAAAAA (3 files, 1 directory, 39 B)
+  removed artifacts (2 files, 2 directories, 24 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 301.8 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-data.
+--- end GG_DATA_DIR is a junction stdout ---
+PASS: accepted; the manifest names the physical path (0)
+
+=== Configured directory is a junction to another store; --data-dir names this store ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-other]
+exit code: 1; 2334 ms
+--- GG_DATA_DIR junction to other, --data-dir data stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\data, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c02-4wHRV5\junction-to-other (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end GG_DATA_DIR junction to other, --data-dir data stderr ---
+PASS: GG_DATA_DIR junction to other, --data-dir data: exit 1 (1)
+PASS: GG_DATA_DIR junction to other, --data-dir data: refusal text and "Nothing was changed."
+PASS: GG_DATA_DIR junction to other, --data-dir data: no byte changed in data, other or the junctions (before 7a9eebe644fef6de after 7a9eebe644fef6de)
+
+SUMMARY c02-wrong-target: 87 passed, 0 failed
