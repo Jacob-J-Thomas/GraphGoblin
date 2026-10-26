@@ -164,6 +164,15 @@ export function RunInspectorPage() {
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop
                 </Link>
+                {run.recovery.replayOf ? (
+                  <span>
+                    Replay run {run.id} from{' '}
+                    <Link to={`/runs/${run.recovery.replayOf.runId}`} className={META_LINK}>
+                      {run.recovery.replayOf.runId}
+                    </Link>{' '}
+                    at {run.recovery.replayOf.nodeId}
+                  </span>
+                ) : null}
                 {run.parentRunId ? (
                   <Link to={`/runs/${run.parentRunId}`} className={META_LINK}>
                     parent run
@@ -190,7 +199,7 @@ export function RunInspectorPage() {
                 ) : (
                   run.failure.message
                 )}
-                {run.failure.resumable ? ' (resumable)' : ''}
+                {run.recovery.resume.allowed ? ' (resumable)' : ''}
                 <FailedChildLink details={run.failure.details} />
               </Alert>
             ) : null}

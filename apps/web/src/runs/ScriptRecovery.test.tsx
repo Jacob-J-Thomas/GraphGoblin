@@ -123,7 +123,11 @@ describe('deliberate script recovery (#321)', () => {
     await user.click(await screen.findByRole('button', { name: 'Recover script' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Replay' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/replay`)).toHaveLength(1));
-    expect(api.callsTo('POST', `/runs/${run.id}/replay`)[0]!.body).toEqual({ nodeId: 'script' });
+    expect(api.callsTo('POST', `/runs/${run.id}/replay`)[0]!.body).toEqual({
+      nodeId: 'script',
+      observedSeq: 1,
+      retryUncertainScript: true,
+    });
     expect(await screen.findByText(next.id)).toBeInTheDocument();
   });
 
@@ -148,9 +152,7 @@ describe('deliberate script recovery (#321)', () => {
     expect(
       await screen.findByText('The script process did not start. Resume tries to start it again.'),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Recover script' }));
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Resume' }));
+    await user.click(screen.getByRole('button', { name: 'Resume' }));
     expect(await screen.findByText(/Resume refused/)).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

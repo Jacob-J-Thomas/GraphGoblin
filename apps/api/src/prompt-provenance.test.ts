@@ -131,7 +131,7 @@ describe('inference recovery contract over the API', () => {
         const resumed = await test.app.inject({
           method: 'POST',
           url: `/runs/${runId}/resume`,
-          payload: {},
+          payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
         });
         await test.idle();
         expect.soft(resumed.statusCode).toBe(409);
@@ -185,7 +185,7 @@ describe('inference recovery contract over the API', () => {
         const resumed = await test.app.inject({
           method: 'POST',
           url: `/runs/${runId}/resume`,
-          payload: {},
+          payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
         });
         expect(resumed.statusCode).toBe(submission === 'definitely-not-submitted' ? 200 : 409);
         await test.idle();

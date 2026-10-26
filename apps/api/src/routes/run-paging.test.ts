@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { RunRecord } from '@graphgoblin/contracts';
+import type { RunRecord, RunSnapshot } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
@@ -247,7 +247,9 @@ describe('ordinary run paging', () => {
     expect((await page()).items).toEqual([run]);
     const snapshot = await t.app.inject({ method: 'GET', url: '/runs/' + run.id, headers });
     expect(snapshot.statusCode).toBe(200);
-    expect(snapshot.json()).toEqual(run);
+    const { recovery, ...record } = snapshot.json<RunSnapshot>();
+    expect(record).toEqual(run);
+    expect(recovery.resume).toMatchObject({ allowed: false, code: 'DEFINITION_UNAVAILABLE' });
     expect(
       (
         await t.container.handle.client.execute(

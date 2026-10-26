@@ -29,7 +29,10 @@ import type {
   RunEvent,
   RunFailure,
   RunRecord,
+  RunSnapshot,
   RunStatus,
+  RunRecovery,
+  RecoveryCommand,
   TriggerKind,
   WaitSpec,
 } from '@graphgoblin/contracts';
@@ -56,6 +59,7 @@ import {
   AppendConflictError,
   ChildCancelledError,
   RunFailureError,
+  RecoveryRefusedError,
   ShutdownCleanupError,
   UnreadableRunHistoryError,
   describeError,
@@ -81,6 +85,7 @@ import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-def
 import { finalizationHistory } from './finalization-history.js';
 import { FreshEntries } from './fresh-entries.js';
 import { visitTurn } from './handlers/inference-turn.js';
+import { runRecovery, replayAction, refused } from './run-recovery.js';
 import { childSessionRecovered } from './session-recovery.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
@@ -159,7 +164,9 @@ interface PreparedStart {
 }
 
 export interface ReplayRunInput {
-  /** The run to fork. It may be in any status. */
+  observedSeq?: number;
+  retryUncertainScript?: true;
+  /** The source must have finished execution and have an eligible reached node. */
   runId: string;
   /** The node to start the fork at. The source run must have started it at least once. */
   nodeId: string;
@@ -1158,14 +1165,145 @@ export class RunManager {
     return updated;
   }
 
-  async resume(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
-    return this.withWork(() => this.resumeRun(runId, actor));
+  private async recoveryState(
+    runId: string,
+    owningParent?: string,
+  ): Promise<{ run: RunRecord; recovery: RunRecovery; events: RunEvent[] }> {
+    let run: RunRecord | undefined;
+    try {
+      // Never attach a future history sequence to an older failure/consent target.
+      const events = await this.ports.events.read(runId);
+      run = await this.mustGet(runId);
+      const observedSeq = events.at(-1)?.seq ?? 0;
+      if (run.lastEventSeq > observedSeq) {
+        const action = refused(
+          'RECOVERY_STALE',
+          'The run changed while its recovery state was being read. Refresh and review its current recovery choices.',
+        );
+        return {
+          run,
+          events,
+          recovery: { observedSeq, resume: action, replayDefault: action, replay: [] },
+        };
+      }
+      return { run, events, recovery: await runRecovery(this.ports, run, events, owningParent) };
+    } catch (error) {
+      if (!(error instanceof UnreadableRunHistoryError)) throw error;
+      run ??= await this.mustGet(runId);
+      const action = {
+        allowed: false as const,
+        code: 'STATE_UNAVAILABLE' as const,
+        message:
+          'The recorded recovery state cannot be read. Repair or explicitly delete this history before recovering.',
+      };
+      return {
+        run,
+        events: [],
+        recovery: {
+          observedSeq: run.lastEventSeq,
+          resume: action,
+          replayDefault: action,
+          replay: [],
+        },
+      };
+    }
   }
 
-  private async resumeRun(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
+  async getSnapshot(runId: string): Promise<RunSnapshot> {
+    const { run, recovery } = await this.recoveryState(runId);
+    if (this.draining || this.forcing) {
+      const action = {
+        allowed: false as const,
+        code: 'SHUTTING_DOWN' as const,
+        message: 'The server is shutting down. Try recovery after it restarts.',
+      };
+      return {
+        ...run,
+        recovery: {
+          ...recovery,
+          resume: action,
+          replayDefault: action,
+          replay: recovery.replay.map((node) => ({ ...node, action })),
+          scriptConsent: undefined,
+        },
+      };
+    }
+    return { ...run, recovery };
+  }
+
+  async getRecovery(runId: string): Promise<RunRecovery> {
+    return (await this.getSnapshot(runId)).recovery;
+  }
+
+  private readonly recoveryLocks = new Map<string, Promise<unknown>>();
+  private recoveryLock<T>(id: string, work: () => Promise<T>): Promise<T> {
+    const next = (this.recoveryLocks.get(id) ?? Promise.resolve()).then(work);
+    const tail = next.catch(() => undefined);
+    this.recoveryLocks.set(id, tail);
+    void tail.then(() => {
+      if (this.recoveryLocks.get(id) === tail) this.recoveryLocks.delete(id);
+    });
+    return next;
+  }
+
+  async resume(
+    runId: string,
+    actor: Actor = SYSTEM_ACTOR,
+    command?: Partial<RecoveryCommand>,
+  ): Promise<RunRecord> {
+    if ((this.draining || this.forcing) && actor.kind !== 'run') this.assertAdmissionOpen();
+    // Capture the observation before queuing the command, so simultaneous callers share it.
+    const observedSeq =
+      command?.observedSeq ?? (await this.ports.events.read(runId)).at(-1)?.seq ?? 0;
+    return this.withWork(() =>
+      this.recoveryLock(runId, async () => {
+        const { run: current, recovery } = await this.recoveryState(
+          runId,
+          actor.kind === 'run' ? actor.id : undefined,
+        );
+        if (recovery.observedSeq !== observedSeq)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+        if (
+          !recovery.resume.allowed &&
+          !(
+            recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED' &&
+            command?.retryUncertainScript &&
+            recovery.scriptConsent
+          )
+        )
+          throw new RecoveryRefusedError(recovery.resume.code, recovery.resume.message);
+        try {
+          return await this.resumeRun(
+            current,
+            actor,
+            command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
+          );
+        } catch (error) {
+          if (!(error instanceof EngineRequestError) || error.code !== 'INVALID_STATE') throw error;
+          const latest = (await this.getRecovery(runId)).resume;
+          throw new RecoveryRefusedError(
+            latest.allowed ? 'RECOVERY_STALE' : latest.code,
+            latest.allowed
+              ? 'The run changed since it was shown. Refresh and review its current recovery choices.'
+              : latest.message,
+          );
+        }
+      }),
+    );
+  }
+
+  private async resumeRun(
+    run: RunRecord,
+    actor: Actor = SYSTEM_ACTOR,
+    retryUncertainScript?: true,
+  ): Promise<RunRecord> {
+    const runId = run.id;
     if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
     if (this.forcing) this.assertAdmissionOpen();
-    const run = await this.mustGet(runId);
+    // Keep the validated status branch. A paused script failing now is not permission to retry it.
     // Paused while parked (or while parking): go back to waiting rather than re-running the node,
     // so a wait keeps its deadline and a subloop keeps its child. Anything that should have woken
     // it meanwhile is delivered now: its timers are re-armed and a finished child reconciled.
@@ -1211,7 +1349,9 @@ export class RunManager {
           return undefined;
         }
         await this.ports.runs.clearFinalized(runId);
-        await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
+        await this.ports.events.append(runId, [
+          { type: 'run.resumed', actor, ...(retryUncertainScript ? { retryUncertainScript } : {}) },
+        ]);
         return this.completeResume(runId);
       });
       if (!resumed) {
@@ -1437,16 +1577,34 @@ export class RunManager {
   /**
    * Replay-at-node: fork a new run on the source's loop version and trigger envelope whose thread
    * is the source thread as it was just before `nodeId` first started, and which starts executing
-   * at `nodeId`. The fork has its own id and event log; the source is untouched, and its child
-   * runs are not copied (a subloop node in the fork starts a new child).
+   * at `nodeId`. The fork has its own id and log. The source records the requested fork while
+   * retaining its execution state. Consumed external work cannot be repeated by the fork.
    */
   async replay(input: ReplayRunInput): Promise<RunRecord> {
-    return this.withIntake(undefined, () => this.replayAdmitted(input));
+    const observedSeq =
+      input.observedSeq ?? (await this.ports.events.read(input.runId)).at(-1)?.seq ?? 0;
+    return this.withIntake(undefined, () =>
+      this.recoveryLock(input.runId, () => this.replayAdmitted({ ...input, observedSeq })),
+    );
   }
 
   private async replayAdmitted(input: ReplayRunInput): Promise<RunRecord> {
-    const source = await this.mustGet(input.runId);
-    const events = await this.ports.events.read(source.id);
+    const { run: source, events, recovery } = await this.recoveryState(input.runId);
+    if (recovery.observedSeq !== input.observedSeq)
+      throw new RecoveryRefusedError(
+        'RECOVERY_STALE',
+        'The run changed since it was shown. Refresh and review its current recovery choices.',
+      );
+    const eligibility = replayAction(recovery, input.nodeId);
+    if (
+      !eligibility.allowed &&
+      !(
+        eligibility.code === 'SCRIPT_CONSENT_REQUIRED' &&
+        input.retryUncertainScript &&
+        recovery.scriptConsent?.nodeId === input.nodeId
+      )
+    )
+      throw new RecoveryRefusedError(eligibility.code, eligibility.message);
     const firstStart = events.find(
       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
         e.type === 'node.started' && e.nodeId === input.nodeId,
@@ -1471,6 +1629,31 @@ export class RunManager {
     }
     const before = replayThread(initial, events, firstStart.seq - 1);
     const runId = this.ports.ids.next();
+    // A conditional durable claim consumes exactly this observed intent before admitting its
+    // fork. A lost admission acknowledgement cannot create another fork from a stale click.
+    try {
+      const claimed = await this.ports.events.append(
+        source.id,
+        [
+          {
+            type: 'run.replay_requested',
+            nodeId: input.nodeId,
+            replayRunId: runId,
+            observedSeq: recovery.observedSeq,
+          },
+        ],
+        { expectedLastSeq: recovery.observedSeq, requireRun: true },
+      );
+      if (!claimed.length)
+        throw new EngineRequestError('RUN_NOT_FOUND', `run ${source.id} not found`);
+    } catch (error) {
+      if (error instanceof AppendConflictError)
+        throw new RecoveryRefusedError(
+          'RECOVERY_STALE',
+          'The run changed since it was shown. Refresh and review its current recovery choices.',
+        );
+      throw error;
+    }
     const invocationId = this.ports.ids.next();
     const replayOf = { runId: source.id, nodeId: input.nodeId };
     // The fork keeps the trigger envelope (the input) but not the original caller's extra return
@@ -2883,9 +3066,21 @@ export class RunManager {
    */
   private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
     try {
-      await this.resume(childRunId, { kind: 'run', id: parent.id });
+      const consent = (await this.ports.events.read(parent.id)).findLast(
+        (event) => event.type === 'run.resumed',
+      );
+      await this.resume(
+        childRunId,
+        { kind: 'run', id: parent.id },
+        {
+          ...(consent?.type === 'run.resumed' && consent.retryUncertainScript
+            ? { retryUncertainScript: true }
+            : {}),
+        },
+      );
     } catch (error) {
-      if (!(error instanceof EngineRequestError)) throw error;
+      if (!(error instanceof EngineRequestError) && !(error instanceof RecoveryRefusedError))
+        throw error;
     }
     return this.childOutcome(childRunId);
   }

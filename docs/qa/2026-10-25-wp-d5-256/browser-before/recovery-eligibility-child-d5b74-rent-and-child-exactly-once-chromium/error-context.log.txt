@@ -1,0 +1,348 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: recovery-eligibility.spec.ts >> child directs recovery to its parent; two tabs Resume the same parent and child exactly once
+- Location: e2e\recovery-eligibility.spec.ts:45:1
+
+# Error details
+
+```
+Error: expect(locator).toContainText(expected) failed
+
+Locator: getByText(/Recovery belongs to parent run/)
+Expected substring: "01M3Y7RKG0T97RVP2CA496CQ24"
+Error: strict mode violation: getByText(/Recovery belongs to parent run/) resolved to 2 elements:
+    1) <p class="text-sm text-muted" id="resume-reason-01M3Y7RKG0T97RVP2CA496CQ26">…</p> aka getByText('Resume unavailable: Recovery')
+    2) <p aria-live="polite" id="replay-reason-01M3Y7RKG0T97RVP2CA496CQ26">Recovery belongs to parent run 01M3Y7RKG0T97RVP2C…</p> aka locator('dialog').getByText('Recovery belongs to parent')
+
+Call log:
+  - Expect "toContainText" getByText(/Recovery belongs to parent run/) with timeout 10000ms
+  - waiting for getByText(/Recovery belongs to parent run/)
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - generic [ref=e33]:
+        - heading "Run 01M3Y7RKG0T97RVP2CA496CQ26" [level=1] [ref=e34]:
+          - text: Run
+          - generic [ref=e35]: 01M3Y7RKG0T97RVP2CA496CQ26
+        - generic [ref=e36]: failed
+      - generic [ref=e40]:
+        - generic [ref=e41]: at Think (think)
+        - link "loop" [ref=e42] [cursor=pointer]:
+          - /url: /app/loops/01M3Y7RKG0T97RVP2CA496CQ20/edit
+        - link "parent run" [ref=e43] [cursor=pointer]:
+          - /url: /app/runs/01M3Y7RKG0T97RVP2CA496CQ24
+        - link "child runs" [ref=e44] [cursor=pointer]:
+          - /url: /app/runs?parent=01M3Y7RKG0T97RVP2CA496CQ26
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - button "Resume" [disabled]
+          - button "Replay..." [ref=e48] [cursor=pointer]
+        - paragraph [ref=e50]:
+          - text: "Resume unavailable: Recovery belongs to parent run 01M3Y7RKG0T97RVP2CA496CQ24. Resume that parent to retry this same child."
+          - link "Open parent 01M3Y7RKG0T97RVP2CA496CQ24" [ref=e51] [cursor=pointer]:
+            - /url: /app/runs/01M3Y7RKG0T97RVP2CA496CQ24
+    - alert [ref=e52]:
+      - paragraph [ref=e55]: "Failed: HARNESS_QUOTA_EXHAUSTED"
+      - generic [ref=e56]: Controlled quota failure
+    - region [ref=e57]:
+      - heading "Execution limits" [level=2] [ref=e59]
+      - generic [ref=e60]:
+        - paragraph [ref=e61]: "Maximum node visits: 10. Run deadline: none."
+        - paragraph [ref=e62]: "Structured completion: Unlimited."
+        - paragraph [ref=e63]: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+    - region [ref=e64]:
+      - heading "Execution context" [level=2] [ref=e66]
+      - generic [ref=e67]:
+        - paragraph [ref=e68]:
+          - text: Recovery child v1 · version ID
+          - code [ref=e69]: 01M3Y7RKG0T97RVP2CA496CQ21
+        - button "Exact run record" [ref=e71] [cursor=pointer]
+        - button "Pinned definition JSON" [ref=e77] [cursor=pointer]
+    - region [ref=e82]:
+      - heading "Finalization" [level=2] [ref=e84]
+      - generic [ref=e85]:
+        - status [ref=e86]: Fully finalized.
+        - paragraph [ref=e87]: "Execution: failed. Delivery is tracked separately."
+    - generic [ref=e88]:
+      - region [ref=e89]:
+        - heading "Timeline (11 events, complete)" [level=2] [ref=e91]
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - button "Load older" [disabled]
+            - button "Previous rows" [disabled]
+            - button "Next rows" [disabled]
+            - button "Load newer" [disabled]
+            - button "Follow live" [disabled]
+            - generic [ref=e94]: Showing events 1–11 of the retained window.
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - text: Event sequence
+              - spinbutton "Event sequence" [ref=e97]
+            - button "Go to event" [ref=e98] [cursor=pointer]
+          - list "Timeline" [ref=e100]:
+            - listitem [ref=e101]:
+              - button "#1 run.queued" [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]: "#1"
+                - code [ref=e104]: run.queued
+            - listitem [ref=e105]:
+              - button "#2 run.started attempt 1" [ref=e106] [cursor=pointer]:
+                - generic [ref=e107]: "#2"
+                - code [ref=e108]: run.started
+                - generic [ref=e109]: attempt 1
+            - listitem [ref=e110]:
+              - button "#3 node.started Start (start) (trigger) attempt 1" [ref=e111] [cursor=pointer]:
+                - generic [ref=e112]: "#3"
+                - code [ref=e113]: node.started
+                - generic [ref=e114]: Start (start) (trigger) attempt 1
+            - listitem [ref=e115]:
+              - button "#4 node.finished Start (start) → out, 2 changes, 1 ms" [ref=e116] [cursor=pointer]:
+                - generic [ref=e117]: "#4"
+                - code [ref=e118]: node.finished
+                - generic [ref=e119]: Start (start) → out, 2 changes, 1 ms
+            - listitem [ref=e120]:
+              - button "#5 node.started Think (think) (inference) attempt 1" [ref=e121] [cursor=pointer]:
+                - generic [ref=e122]: "#5"
+                - code [ref=e123]: node.started
+                - generic [ref=e124]: Think (think) (inference) attempt 1
+            - listitem [ref=e125]:
+              - button "#6 harness.turn Think (think)" [ref=e126] [cursor=pointer]:
+                - generic [ref=e127]: "#6"
+                - code [ref=e128]: harness.turn
+                - generic [ref=e129]: Think (think)
+            - listitem [ref=e130]:
+              - button "#7 harness.session Think (think)" [ref=e131] [cursor=pointer]:
+                - generic [ref=e132]: "#7"
+                - code [ref=e133]: harness.session
+                - generic [ref=e134]: Think (think)
+            - listitem [ref=e135]:
+              - button "#8 node.progress Think (think)" [ref=e136] [cursor=pointer]:
+                - generic [ref=e137]: "#8"
+                - code [ref=e138]: node.progress
+                - generic [ref=e139]: Think (think)
+            - listitem [ref=e140]:
+              - button "#9 harness.submission Think (think)" [ref=e141] [cursor=pointer]:
+                - generic [ref=e142]: "#9"
+                - code [ref=e143]: harness.submission
+                - generic [ref=e144]: Think (think)
+            - listitem [ref=e145]:
+              - button "#10 harness.submission Think (think)" [ref=e146] [cursor=pointer]:
+                - generic [ref=e147]: "#10"
+                - code [ref=e148]: harness.submission
+                - generic [ref=e149]: Think (think)
+            - listitem [ref=e150]:
+              - 'button "#11 run.failed HARNESS_QUOTA_EXHAUSTED: Controlled quota failure" [ref=e151] [cursor=pointer]':
+                - generic [ref=e152]: "#11"
+                - code [ref=e153]: run.failed
+                - generic [ref=e154]: "HARNESS_QUOTA_EXHAUSTED: Controlled quota failure"
+      - generic [ref=e155]:
+        - 'button "Exact recorded event #11" [ref=e157] [cursor=pointer]'
+        - region [ref=e163]:
+          - heading "Current thread" [level=2] [ref=e165]
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - heading "Messages (0)" [level=3] [ref=e169]
+              - list "Messages"
+            - generic [ref=e170]:
+              - heading "Variables" [level=3] [ref=e171]
+              - generic "Variables" [ref=e173]: "{}"
+            - button "Full thread JSON" [ref=e175] [cursor=pointer]
+        - paragraph [ref=e180]: Activity below covers the retained history window. Earlier activity is available through Load older.
+        - button "Node progress (1 nodes)" [ref=e182] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  1   | import type { APIRequestContext, Route } from '@playwright/test';
+  2   | import type { LoopDefinitionInput, RunRecord, RunRecovery } from '@graphgoblin/contracts';
+  3   | import { minimalLoop } from '@graphgoblin/contracts/testing';
+  4   | import { control, expect, publishLoop, test } from './fixtures.js';
+  5   | type Snapshot = RunRecord & { recovery: RunRecovery };
+  6   | const read = async (request: APIRequestContext, id: string): Promise<Snapshot> =>
+  7   |   (await request.get(`/runs/${id}`)).json() as Promise<Snapshot>;
+  8   | function chain(name: string, work: LoopDefinitionInput['nodes'][number]): LoopDefinitionInput {
+  9   |   const base = minimalLoop();
+  10  |   return {
+  11  |     ...base,
+  12  |     name,
+  13  |     nodes: [base.nodes[0]!, work, base.nodes[1]!],
+  14  |     edges: [
+  15  |       { id: 'a', from: { node: 'start', port: 'out' }, to: { node: work.id } },
+  16  |       { id: 'b', from: { node: work.id, port: 'out' }, to: { node: 'done' } },
+  17  |     ],
+  18  |   };
+  19  | }
+  20  | const inference = {
+  21  |   id: 'think',
+  22  |   kind: 'inference' as const,
+  23  |   label: 'Think',
+  24  |   config: { prompt: { template: 'Controlled recovery' } },
+  25  | };
+  26  | async function fail(request: APIRequestContext, loopId: string) {
+  27  |   await control(request, '/harness/script', {
+  28  |     turns: [
+  29  |       {
+  30  |         error: {
+  31  |           code: 'usage_limit_reached',
+  32  |           message: 'Controlled quota failure',
+  33  |           retriable: true,
+  34  |         },
+  35  |       },
+  36  |     ],
+  37  |   });
+  38  |   const response = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  39  |   expect(response.status()).toBe(202);
+  40  |   const { run } = (await response.json()) as { run: RunRecord };
+  41  |   await expect.poll(async () => (await read(request, run.id)).status).toBe('failed');
+  42  |   return read(request, run.id);
+  43  | }
+  44  | 
+  45  | test('child directs recovery to its parent; two tabs Resume the same parent and child exactly once', async ({
+  46  |   page,
+  47  |   context,
+  48  |   request,
+  49  | }, info) => {
+  50  |   const childLoop = await publishLoop(request, chain('Recovery child', inference));
+  51  |   const parentLoop = await publishLoop(
+  52  |     request,
+  53  |     chain('Recovery parent', {
+  54  |       id: 'sub',
+  55  |       kind: 'subloop',
+  56  |       label: 'Sub',
+  57  |       config: { loopRef: { loopId: childLoop } },
+  58  |     }),
+  59  |   );
+  60  |   const parent = await fail(request, parentLoop);
+  61  |   const { items } = (await (await request.get(`/runs?parent=${parent.id}`)).json()) as {
+  62  |     items: RunRecord[];
+  63  |   };
+  64  |   const child = items[0]!;
+  65  |   expect(items).toHaveLength(1);
+  66  |   await page.goto(`/app/runs/${child.id}`);
+  67  |   await expect(page.getByRole('button', { name: 'Resume', exact: true })).toBeDisabled();
+> 68  |   await expect(page.getByText(/Recovery belongs to parent run/)).toContainText(parent.id);
+      |                                                                  ^ Error: expect(locator).toContainText(expected) failed
+  69  |   await page.screenshot({ path: info.outputPath('child-recovery.png') });
+  70  |   await page.getByRole('link', { name: `Open parent ${parent.id}` }).click();
+  71  |   await expect(page.getByRole('heading', { level: 1 })).toContainText(parent.id);
+  72  |   const other = await context.newPage();
+  73  |   await other.goto(`/app/runs/${parent.id}`);
+  74  |   for (const tab of [page, other])
+  75  |     await expect(tab.getByRole('button', { name: 'Resume', exact: true })).toBeEnabled();
+  76  |   await control(request, '/harness/script', { turns: [{ finalText: 'Recovered' }] });
+  77  |   const routes: Route[] = [];
+  78  |   let release!: () => void;
+  79  |   const gate = new Promise<void>((resolve) => {
+  80  |     release = resolve;
+  81  |   });
+  82  |   for (const tab of [page, other])
+  83  |     await tab.route(`**/runs/${parent.id}/resume`, async (route) => {
+  84  |       routes.push(route);
+  85  |       if (routes.length === 2) release();
+  86  |       await gate;
+  87  |       await route.continue();
+  88  |     });
+  89  |   const responses = [page, other].map((tab) =>
+  90  |     tab.waitForResponse((response) => response.url().endsWith(`/runs/${parent.id}/resume`)),
+  91  |   );
+  92  |   // Activate each actual tab as a user would; both HTTP requests remain held until released together.
+  93  |   for (const tab of [page, other]) {
+  94  |     await tab.bringToFront();
+  95  |     await tab.getByRole('button', { name: 'Resume', exact: true }).click();
+  96  |   }
+  97  |   const results = await Promise.all(responses);
+  98  |   expect(results.map((r) => r.status()).sort()).toEqual([200, 409]);
+  99  |   expect(await results.find((r) => r.status() === 409)!.json()).toMatchObject({
+  100 |     code: 'RECOVERY_STALE',
+  101 |   });
+  102 |   await expect.poll(async () => (await read(request, parent.id)).status).toBe('succeeded');
+  103 |   expect((await read(request, child.id)).status).toBe('succeeded');
+  104 |   const children = (await (await request.get(`/runs?parent=${parent.id}`)).json()) as {
+  105 |     items: RunRecord[];
+  106 |   };
+  107 |   expect(children.items.map((r) => r.id)).toEqual([child.id]);
+  108 |   for (const id of [parent.id, child.id]) {
+  109 |     const history = (await (await request.get(`/runs/${id}/events`)).json()) as {
+  110 |       items: { type: string }[];
+  111 |     };
+  112 |     expect(history.items.filter((event) => event.type === 'run.resumed')).toHaveLength(1);
+  113 |   }
+  114 |   await page.bringToFront();
+  115 |   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
+  116 |   expect(page.url()).toContain(`/runs/${parent.id}`);
+  117 |   await page.screenshot({ path: info.outputPath('parent-resumed.png') });
+  118 |   await other.close();
+  119 | });
+  120 | 
+  121 | test('stale inspector Resume is refused after API recovery, with no second attempt', async ({
+  122 |   page,
+  123 |   request,
+  124 | }) => {
+  125 |   const loop = await publishLoop(request, chain('Stale recovery', inference));
+  126 |   const run = await fail(request, loop);
+  127 |   await page.goto(`/app/runs/${run.id}`);
+  128 |   await expect(page.getByRole('button', { name: 'Resume', exact: true })).toBeEnabled();
+  129 |   // Preserve the actual old server snapshot in this tab while the API advances the run.
+  130 |   await page.route(`**/runs/${run.id}`, (route) => route.fulfill({ json: run }));
+  131 |   await control(request, '/harness/script', { turns: [{ finalText: 'API recovered' }] });
+  132 |   const response = await request.post(`/runs/${run.id}/resume`, {
+  133 |     data: { observedSeq: run.recovery.observedSeq },
+  134 |   });
+  135 |   expect(response.status()).toBe(200);
+  136 |   await expect.poll(async () => (await read(request, run.id)).status).toBe('succeeded');
+  137 |   const refused = page.waitForResponse((r) => r.url().endsWith(`/runs/${run.id}/resume`));
+  138 |   await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  139 |   expect((await refused).status()).toBe(409);
+  140 |   await expect(
+  141 |     page.getByRole('alert').filter({ hasText: 'changed since it was shown' }),
+  142 |   ).toBeVisible();
+  143 |   const history = (await (await request.get(`/runs/${run.id}/events`)).json()) as {
+  144 |     items: { type: string }[];
+  145 |   };
+  146 |   expect(history.items.filter((event) => event.type === 'run.resumed')).toHaveLength(1);
+  147 |   await page.unroute(`**/runs/${run.id}`);
+  148 |   await page.reload();
+  149 |   await page.bringToFront();
+  150 |   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
+  151 | });
+  152 | 
+  153 | test('two tabs Replay one observed intent into one separate linked run; repeat clicks cannot add a fork', async ({
+  154 |   page,
+  155 |   context,
+  156 |   request,
+  157 | }, info) => {
+  158 |   const loop = await publishLoop(request, { ...minimalLoop(), name: 'Replay identity' });
+  159 |   const start = await request.post(`/loops/${loop}/runs`, { data: {} });
+  160 |   const { run } = (await start.json()) as { run: RunRecord };
+  161 |   await expect.poll(async () => (await read(request, run.id)).status).toBe('succeeded');
+  162 |   const other = await context.newPage();
+  163 |   for (const tab of [page, other]) {
+  164 |     await tab.bringToFront();
+  165 |     await tab.goto(`/app/runs/${run.id}`);
+  166 |     await tab.getByRole('button', { name: 'Replay...', exact: true }).click();
+  167 |     await expect(tab.getByRole('dialog', { name: 'Replay as a new run' })).toContainText('new id');
+  168 |     await tab.getByLabel('Replay from node').selectOption('done');
+```

@@ -1,0 +1,318 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: recovery-eligibility.spec.ts >> repeat browser clicks send one Resume and one Replay intent and preserve the exact identities
+- Location: e2e\recovery-eligibility.spec.ts:217:1
+
+# Error details
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 1
+Received: 2
+
+Call Log:
+- Timeout 10000ms exceeded while waiting on the predicate
+```
+
+```
+Error: page.waitForResponse: Test ended.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - generic [ref=e33]:
+        - heading "Run 01M3Y7RKG0T97RVP2CA496CQ2S" [level=1] [ref=e34]:
+          - text: Run
+          - generic [ref=e35]: 01M3Y7RKG0T97RVP2CA496CQ2S
+        - generic [ref=e36]: failed
+      - generic [ref=e40]:
+        - generic [ref=e41]: at Think (think)
+        - link "loop" [ref=e42] [cursor=pointer]:
+          - /url: /app/loops/01M3Y7RKG0T97RVP2CA496CQ2Q/edit
+        - link "child runs" [ref=e43] [cursor=pointer]:
+          - /url: /app/runs?parent=01M3Y7RKG0T97RVP2CA496CQ2S
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - button "Resume" [disabled]
+          - button "Replay..." [disabled]
+        - paragraph [ref=e47]: Resume continues run 01M3Y7RKG0T97RVP2CA496CQ2S.
+    - alert [ref=e48]:
+      - paragraph [ref=e51]: "Failed: HARNESS_QUOTA_EXHAUSTED"
+      - generic [ref=e52]: Controlled quota failure (resumable)
+    - region [ref=e53]:
+      - heading "Execution limits" [level=2] [ref=e55]
+      - generic [ref=e56]:
+        - paragraph [ref=e57]: "Maximum node visits: 10. Run deadline: none."
+        - paragraph [ref=e58]: "Structured completion: Unlimited."
+        - paragraph [ref=e59]: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+    - region [ref=e60]:
+      - heading "Execution context" [level=2] [ref=e62]
+      - generic [ref=e63]:
+        - paragraph [ref=e64]:
+          - text: Repeat recovery clicks v1 · version ID
+          - code [ref=e65]: 01M3Y7RKG0T97RVP2CA496CQ2R
+        - button "Exact run record" [ref=e67] [cursor=pointer]
+        - button "Pinned definition JSON" [ref=e73] [cursor=pointer]
+    - region [ref=e78]:
+      - heading "Finalization" [level=2] [ref=e80]
+      - generic [ref=e81]:
+        - status [ref=e82]: Fully finalized.
+        - paragraph [ref=e83]: "Execution: failed. Delivery is tracked separately."
+    - generic [ref=e84]:
+      - region [ref=e85]:
+        - heading "Timeline (11 events, complete)" [level=2] [ref=e87]
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - button "Load older" [disabled]
+            - button "Previous rows" [disabled]
+            - button "Next rows" [disabled]
+            - button "Load newer" [disabled]
+            - button "Follow live" [disabled]
+            - generic [ref=e90]: Showing events 1–11 of the retained window.
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - text: Event sequence
+              - spinbutton "Event sequence" [ref=e93]
+            - button "Go to event" [ref=e94] [cursor=pointer]
+          - list "Timeline" [ref=e96]:
+            - listitem [ref=e97]:
+              - button "#1 run.queued" [ref=e98] [cursor=pointer]:
+                - generic [ref=e99]: "#1"
+                - code [ref=e100]: run.queued
+            - listitem [ref=e101]:
+              - button "#2 run.started attempt 1" [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]: "#2"
+                - code [ref=e104]: run.started
+                - generic [ref=e105]: attempt 1
+            - listitem [ref=e106]:
+              - button "#3 node.started Start (start) (trigger) attempt 1" [ref=e107] [cursor=pointer]:
+                - generic [ref=e108]: "#3"
+                - code [ref=e109]: node.started
+                - generic [ref=e110]: Start (start) (trigger) attempt 1
+            - listitem [ref=e111]:
+              - button "#4 node.finished Start (start) → out, 2 changes, 1 ms" [ref=e112] [cursor=pointer]:
+                - generic [ref=e113]: "#4"
+                - code [ref=e114]: node.finished
+                - generic [ref=e115]: Start (start) → out, 2 changes, 1 ms
+            - listitem [ref=e116]:
+              - button "#5 node.started Think (think) (inference) attempt 1" [ref=e117] [cursor=pointer]:
+                - generic [ref=e118]: "#5"
+                - code [ref=e119]: node.started
+                - generic [ref=e120]: Think (think) (inference) attempt 1
+            - listitem [ref=e121]:
+              - button "#6 harness.turn Think (think)" [ref=e122] [cursor=pointer]:
+                - generic [ref=e123]: "#6"
+                - code [ref=e124]: harness.turn
+                - generic [ref=e125]: Think (think)
+            - listitem [ref=e126]:
+              - button "#7 harness.session Think (think)" [ref=e127] [cursor=pointer]:
+                - generic [ref=e128]: "#7"
+                - code [ref=e129]: harness.session
+                - generic [ref=e130]: Think (think)
+            - listitem [ref=e131]:
+              - button "#8 node.progress Think (think)" [ref=e132] [cursor=pointer]:
+                - generic [ref=e133]: "#8"
+                - code [ref=e134]: node.progress
+                - generic [ref=e135]: Think (think)
+            - listitem [ref=e136]:
+              - button "#9 harness.submission Think (think)" [ref=e137] [cursor=pointer]:
+                - generic [ref=e138]: "#9"
+                - code [ref=e139]: harness.submission
+                - generic [ref=e140]: Think (think)
+            - listitem [ref=e141]:
+              - button "#10 harness.submission Think (think)" [ref=e142] [cursor=pointer]:
+                - generic [ref=e143]: "#10"
+                - code [ref=e144]: harness.submission
+                - generic [ref=e145]: Think (think)
+            - listitem [ref=e146]:
+              - 'button "#11 run.failed HARNESS_QUOTA_EXHAUSTED: Controlled quota failure" [ref=e147] [cursor=pointer]':
+                - generic [ref=e148]: "#11"
+                - code [ref=e149]: run.failed
+                - generic [ref=e150]: "HARNESS_QUOTA_EXHAUSTED: Controlled quota failure"
+      - generic [ref=e151]:
+        - 'button "Exact recorded event #11" [ref=e153] [cursor=pointer]'
+        - region [ref=e159]:
+          - heading "Current thread" [level=2] [ref=e161]
+          - generic [ref=e163]:
+            - generic [ref=e164]:
+              - heading "Messages (0)" [level=3] [ref=e165]
+              - list "Messages"
+            - generic [ref=e166]:
+              - heading "Variables" [level=3] [ref=e167]
+              - generic "Variables" [ref=e169]: "{}"
+            - button "Full thread JSON" [ref=e171] [cursor=pointer]
+        - paragraph [ref=e176]: Activity below covers the retained history window. Earlier activity is available through Load older.
+        - button "Node progress (1 nodes)" [ref=e178] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  137 |   const refused = page.waitForResponse((r) => r.url().endsWith(`/runs/${run.id}/resume`));
+  138 |   await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  139 |   expect((await refused).status()).toBe(409);
+  140 |   await expect(
+  141 |     page.getByRole('alert').filter({ hasText: 'changed since it was shown' }),
+  142 |   ).toBeVisible();
+  143 |   const history = (await (await request.get(`/runs/${run.id}/events`)).json()) as {
+  144 |     items: { type: string }[];
+  145 |   };
+  146 |   expect(history.items.filter((event) => event.type === 'run.resumed')).toHaveLength(1);
+  147 |   await page.unroute(`**/runs/${run.id}`);
+  148 |   await page.reload();
+  149 |   await page.bringToFront();
+  150 |   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
+  151 | });
+  152 | 
+  153 | test('two tabs Replay one observed intent into one separate linked run; repeat clicks cannot add a fork', async ({
+  154 |   page,
+  155 |   context,
+  156 |   request,
+  157 | }, info) => {
+  158 |   const loop = await publishLoop(request, { ...minimalLoop(), name: 'Replay identity' });
+  159 |   const start = await request.post(`/loops/${loop}/runs`, { data: {} });
+  160 |   const { run } = (await start.json()) as { run: RunRecord };
+  161 |   await expect.poll(async () => (await read(request, run.id)).status).toBe('succeeded');
+  162 |   const other = await context.newPage();
+  163 |   for (const tab of [page, other]) {
+  164 |     await tab.bringToFront();
+  165 |     await tab.goto(`/app/runs/${run.id}`);
+  166 |     await tab.getByRole('button', { name: 'Replay...', exact: true }).click();
+  167 |     await expect(tab.getByRole('dialog', { name: 'Replay as a new run' })).toContainText('new id');
+  168 |     await tab.getByLabel('Replay from node').selectOption('done');
+  169 |   }
+  170 |   let count = 0;
+  171 |   let release!: () => void;
+  172 |   const gate = new Promise<void>((resolve) => {
+  173 |     release = resolve;
+  174 |   });
+  175 |   for (const tab of [page, other])
+  176 |     await tab.route(`**/runs/${run.id}/replay`, async (route) => {
+  177 |       if (++count === 2) release();
+  178 |       await gate;
+  179 |       await route.continue();
+  180 |     });
+  181 |   const responses = [page, other].map((tab) =>
+  182 |     tab.waitForResponse((r) => r.url().endsWith(`/runs/${run.id}/replay`)),
+  183 |   );
+  184 |   for (const tab of [page, other]) {
+  185 |     await tab.bringToFront();
+  186 |     await tab.getByRole('button', { name: 'Create replay run' }).click();
+  187 |   }
+  188 |   const results = await Promise.all(responses);
+  189 |   expect(results.map((r) => r.status()).sort()).toEqual([202, 409]);
+  190 |   const fork = ((await results.find((r) => r.status() === 202)!.json()) as { run: RunRecord }).run;
+  191 |   expect(fork.id).not.toBe(run.id);
+  192 |   const winner = results[0]!.status() === 202 ? page : other;
+  193 |   await winner.bringToFront();
+  194 |   await expect(winner).toHaveURL(new RegExp(`/app/runs/${fork.id}$`));
+  195 |   await expect(winner.getByRole('heading', { level: 1 })).toContainText(fork.id);
+  196 |   await expect(winner.getByText(`Replay run ${fork.id} from`, { exact: false })).toContainText(
+  197 |     run.id,
+  198 |   );
+  199 |   const source = await read(request, run.id);
+  200 |   expect(source.status).toBe('succeeded');
+  201 |   const history = (await (await request.get(`/runs/${run.id}/events`)).json()) as {
+  202 |     items: { type: string; replayRunId?: string }[];
+  203 |   };
+  204 |   expect(
+  205 |     history.items
+  206 |       .filter((event) => event.type === 'run.replay_requested')
+  207 |       .map((event) => event.replayRunId),
+  208 |   ).toEqual([fork.id]);
+  209 |   const stale = await request.post(`/runs/${run.id}/replay`, {
+  210 |     data: { observedSeq: source.recovery.observedSeq - 1, nodeId: 'done' },
+  211 |   });
+  212 |   expect(stale.status()).toBe(409);
+  213 |   await winner.screenshot({ path: info.outputPath('replay-identity.png') });
+  214 |   await other.close();
+  215 | });
+  216 | 
+  217 | test('repeat browser clicks send one Resume and one Replay intent and preserve the exact identities', async ({
+  218 |   page,
+  219 |   request,
+  220 | }) => {
+  221 |   const loop = await publishLoop(request, chain('Repeat recovery clicks', inference));
+  222 |   const source = await fail(request, loop);
+  223 |   await page.goto(`/app/runs/${source.id}`);
+  224 |   await control(request, '/harness/script', {
+  225 |     turns: [{ finalText: 'One deliberate continuation' }],
+  226 |   });
+  227 |   let resumeRequests = 0;
+  228 |   let releaseResume!: () => void;
+  229 |   const resumeGate = new Promise<void>((resolve) => {
+  230 |     releaseResume = resolve;
+  231 |   });
+  232 |   await page.route(`**/runs/${source.id}/resume`, async (route) => {
+  233 |     resumeRequests++;
+  234 |     await resumeGate;
+  235 |     await route.continue();
+  236 |   });
+> 237 |   const resumed = page.waitForResponse((response) =>
+      |                        ^ Error: page.waitForResponse: Test ended.
+  238 |     response.url().endsWith(`/runs/${source.id}/resume`),
+  239 |   );
+  240 |   await page.getByRole('button', { name: 'Resume', exact: true }).dblclick();
+  241 |   await expect.poll(() => resumeRequests).toBe(1);
+  242 |   releaseResume();
+  243 |   expect((await resumed).status()).toBe(200);
+  244 |   await expect.poll(async () => (await read(request, source.id)).status).toBe('succeeded');
+  245 |   expect(page.url()).toContain(`/runs/${source.id}`);
+  246 |   await page.bringToFront();
+  247 |   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
+  248 |   const before = await control(request, '/harness/requests');
+  249 |   await page.getByRole('button', { name: 'Replay...', exact: true }).click();
+  250 |   await page.getByLabel('Replay from node').selectOption('done');
+  251 |   let replayRequests = 0;
+  252 |   let releaseReplay!: () => void;
+  253 |   const replayGate = new Promise<void>((resolve) => {
+  254 |     releaseReplay = resolve;
+  255 |   });
+  256 |   await page.route(`**/runs/${source.id}/replay`, async (route) => {
+  257 |     replayRequests++;
+  258 |     await replayGate;
+  259 |     await route.continue();
+  260 |   });
+  261 |   const replayed = page.waitForResponse((response) =>
+  262 |     response.url().endsWith(`/runs/${source.id}/replay`),
+  263 |   );
+  264 |   await page.getByRole('button', { name: 'Create replay run' }).dblclick();
+  265 |   await expect.poll(() => replayRequests).toBe(1);
+  266 |   releaseReplay();
+  267 |   const response = await replayed;
+  268 |   expect(response.status()).toBe(202);
+  269 |   const fork = ((await response.json()) as { run: RunRecord }).run;
+  270 |   expect(fork.id).not.toBe(source.id);
+  271 |   await expect(page).toHaveURL(new RegExp(`/app/runs/${fork.id}$`));
+  272 |   await expect.poll(async () => (await read(request, fork.id)).status).toBe('succeeded');
+  273 |   expect(await control(request, '/harness/requests')).toEqual(before);
+  274 |   const history = (await (await request.get(`/runs/${source.id}/events`)).json()) as {
+  275 |     items: { type: string }[];
+  276 |   };
+  277 |   expect(history.items.filter((event) => event.type === 'run.resumed')).toHaveLength(1);
+  278 |   expect(history.items.filter((event) => event.type === 'run.replay_requested')).toHaveLength(1);
+  279 | });
+  280 | 
+```

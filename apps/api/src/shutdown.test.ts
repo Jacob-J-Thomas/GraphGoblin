@@ -150,7 +150,14 @@ it('offers a choice, waits without a hidden timer, then forces the executor whil
     status: 'failed',
     failure: { code: 'RUN_INTERRUPTED_BY_STOP', nodeId: 'wait', details: { attempt: 1 } },
   });
-  expect((await api.app.inject(`/runs/${run.id}`)).json()).toEqual(before);
+  const after = (await api.app.inject(`/runs/${run.id}`)).json();
+  expect(after.recovery.resume).toMatchObject({ allowed: false, code: 'SHUTTING_DOWN' });
+  expect(after.recovery.replayDefault).toMatchObject({
+    allowed: false,
+    code: 'SHUTTING_DOWN',
+  });
+  // The parked execution is unchanged; current recovery admission reflects the drain.
+  expect({ ...after, recovery: before.recovery }).toEqual(before);
 });
 
 it('rejects wait without a drain with the current phase', async () => {

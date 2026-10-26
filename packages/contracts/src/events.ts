@@ -128,6 +128,13 @@ export const RunEventSchema = z.discriminatedUnion('type', [
      */
     subloopVersions: z.record(UlidSchema, UlidSchema).optional(),
   }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('run.replay_requested'),
+    nodeId: SlugSchema,
+    replayRunId: UlidSchema,
+    observedSeq: z.number().int().nonnegative(),
+  }),
   z.strictObject({ ...Base, type: z.literal('run.started'), attempt: z.number().int().positive() }),
   z.strictObject({
     ...Base,
@@ -142,6 +149,7 @@ export const RunEventSchema = z.discriminatedUnion('type', [
   z.strictObject({
     ...Base,
     type: z.literal('run.resumed'),
+    retryUncertainScript: z.literal(true).optional(),
     actor: Actor,
     freshSession: FreshSessionChoiceSchema.optional(),
   }),

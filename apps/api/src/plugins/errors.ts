@@ -5,6 +5,7 @@ import { TemplateError } from '../templates/errors.js';
 import {
   ArtifactStoreError,
   EngineRequestError,
+  RecoveryRefusedError,
   LoopUpgradeRequiredError,
   UnreadableRunHistoryError,
 } from '@graphgoblin/engine';
@@ -110,6 +111,14 @@ export function registerErrorHandler(app: FastifyInstance): void {
           500,
           'RESPONSE_INVALID',
           'the server produced a response that does not match its schema',
+        );
+      }
+      if (error instanceof RecoveryRefusedError) {
+        return problem(
+          reply,
+          error.code === 'SHUTTING_DOWN' ? 503 : 409,
+          error.code,
+          error.message,
         );
       }
       if (error instanceof EngineRequestError) {

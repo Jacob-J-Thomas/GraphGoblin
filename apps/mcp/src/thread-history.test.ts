@@ -1,7 +1,7 @@
 import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
 import { expect, it } from 'vitest';
 import { createThreadHistoryFixture } from '@graphgoblin/api/testing';
-import { ContextThreadSchema, RunRecordSchema } from '@graphgoblin/contracts';
+import { ContextThreadSchema, RunRecordSchema, RunSnapshotSchema } from '@graphgoblin/contracts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -34,7 +34,12 @@ it('MCP reads agree through persisted failure and resume with stale snapshots', 
     await t.manager.waitForIdle();
     for (const status of ['failed', 'running', 'succeeded']) {
       if (status === 'running') {
-        await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' });
+        const resumed = await t.app.inject({
+          method: 'POST',
+          url: '/runs/' + run.id + '/resume',
+          payload: { observedSeq: (await t.manager.getRecovery(run.id)).observedSeq },
+        });
+        expect(resumed.statusCode, resumed.body).toBe(200);
         await t.working;
       }
       if (status === 'succeeded') {
@@ -42,7 +47,7 @@ it('MCP reads agree through persisted failure and resume with stale snapshots', 
         await t.manager.waitForIdle();
       }
       const before = await t.bytes(run.id);
-      expect(RunRecordSchema.parse(await call('get_run', run.id)).status).toBe(status);
+      expect(RunSnapshotSchema.parse(await call('get_run', run.id)).status).toBe(status);
       const thread = ContextThreadSchema.parse(await call('get_run_thread', run.id));
       expect(thread.vars).toEqual({
         prepared: true,

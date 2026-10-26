@@ -1,0 +1,47 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/run-recovery.test.ts (8 tests | 1 failed | 7 skipped) 194ms
+   ❯ recovery effect boundaries (#256) (8)
+     × does not reinterpret paused Resume as consent when the active script fails during validation 192ms
+pnpm.cmd : 
+At line:2 char:103
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > does not reinterpret paused Resume as consent 
+when the active script fails during validation
+AssertionError: expected [ { command: 'effect', …(5) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/run-recovery.test.ts:46:35
+     44|     } catch (error) { refusal = error; }
+     45|     await e.manager.waitForIdle();
+     46|     expect(e.ports.scripts.calls).toHaveLength(1);
+       |                                   ^
+     47|     expect(refusal).toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
+     48|     e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  03:06:40
+   Duration  3.47s (import 51%, transform 43%, tests 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

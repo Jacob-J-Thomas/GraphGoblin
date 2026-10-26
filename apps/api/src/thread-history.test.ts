@@ -27,7 +27,13 @@ it('reconciles persisted failure, unfinished resume and success without writing 
     };
     await check('failed', 1, false);
     expect(
-      (await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' })).statusCode,
+      (
+        await t.app.inject({
+          method: 'POST',
+          url: '/runs/' + run.id + '/resume',
+          payload: { observedSeq: (await t.manager.getRecovery(run.id)).observedSeq },
+        })
+      ).statusCode,
     ).toBe(200);
     await t.working;
     await check('running', 2, false);
@@ -53,7 +59,12 @@ it('does not apply the resumed script patch when that attempt is cancelled', asy
     });
     const { run } = response.json<{ run: RunRecord }>();
     await t.manager.waitForIdle();
-    await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/resume' });
+    const resumed = await t.app.inject({
+      method: 'POST',
+      url: '/runs/' + run.id + '/resume',
+      payload: { observedSeq: (await t.manager.getRecovery(run.id)).observedSeq },
+    });
+    expect(resumed.statusCode, resumed.body).toBe(200);
     await t.working;
     await t.app.inject({ method: 'POST', url: '/runs/' + run.id + '/cancel' });
     t.release();

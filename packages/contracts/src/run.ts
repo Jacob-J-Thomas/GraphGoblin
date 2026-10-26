@@ -256,3 +256,52 @@ export const RunRecordSchema = z.strictObject({
   lastEventSeq: z.number().int().nonnegative(),
 });
 export type RunRecord = z.infer<typeof RunRecordSchema>;
+
+/** Present-tense recovery decisions; computed on reads, never stored in the run row. */
+export const RecoveryRefusalCodeSchema = z.enum([
+  'RUN_ACTIVE',
+  'RUN_PAUSED',
+  'RUN_FINISHED',
+  'RUN_CANCELLED',
+  'FAILURE_NOT_RESUMABLE',
+  'SCRIPT_CONSENT_REQUIRED',
+  'SESSION_RECOVERY_REQUIRED',
+  'PARENT_RECOVERY_REQUIRED',
+  'REPLAY_NODE_NOT_REACHED',
+  'DEFINITION_UNAVAILABLE',
+  'STATE_UNAVAILABLE',
+  'EXTERNAL_EFFECT_CONSUMED',
+  'RECOVERY_STALE',
+  'SHUTTING_DOWN',
+]);
+export type RecoveryRefusalCode = z.infer<typeof RecoveryRefusalCodeSchema>;
+export const RecoveryActionSchema = z.discriminatedUnion('allowed', [
+  z.strictObject({ allowed: z.literal(true) }),
+  z.strictObject({
+    allowed: z.literal(false),
+    code: RecoveryRefusalCodeSchema,
+    message: z.string(),
+    parentRunId: UlidSchema.optional(),
+  }),
+]);
+export type RecoveryAction = z.infer<typeof RecoveryActionSchema>;
+export const RecoveryCommandSchema = z.strictObject({
+  observedSeq: z.number().int().nonnegative(),
+  retryUncertainScript: z.literal(true).optional(),
+});
+export type RecoveryCommand = z.infer<typeof RecoveryCommandSchema>;
+export const RunRecoverySchema = z.strictObject({
+  observedSeq: z.number().int().nonnegative(),
+  resume: RecoveryActionSchema,
+  replayDefault: RecoveryActionSchema,
+  replay: z.array(
+    z.strictObject({ nodeId: SlugSchema, label: z.string(), action: RecoveryActionSchema }),
+  ),
+  scriptConsent: z
+    .strictObject({ failureSeq: z.number().int().positive(), nodeId: SlugSchema })
+    .optional(),
+  replayOf: z.strictObject({ runId: UlidSchema, nodeId: SlugSchema }).optional(),
+});
+export type RunRecovery = z.infer<typeof RunRecoverySchema>;
+export const RunSnapshotSchema = RunRecordSchema.extend({ recovery: RunRecoverySchema });
+export type RunSnapshot = z.infer<typeof RunSnapshotSchema>;

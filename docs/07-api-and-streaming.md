@@ -27,10 +27,11 @@ Runs
   GET    /runs/{id}                     snapshot: pinned definition, status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
-  POST   /runs/{id}/cancel | pause | resume
+  POST   /runs/{id}/cancel | pause
+  POST   /runs/{id}/resume              body: { observedSeq, retryUncertainScript?: true }; same run ID, typed eligibility refusal
   POST   /runs/{id}/input               body: { waitId, input }; observed identity and inputSchema validated
   POST   /runs/{id}/signals/{name}      body: { waitId, payload? }; deliver to the observed wait
-  POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
+  POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId, observedSeq, retryUncertainScript?: true }; 202 { run }; typed eligibility refusal (ADR-0061)
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
@@ -751,3 +752,9 @@ visit, failed sequence, prior handle/origin, model/effort and
 `priorContextCarried: false`. The event survives restart and completes an interrupted
 resume. No request leaves the failure unchanged; `/resume` still refuses it.
 The typed client exposes `runs.recoverSession(client, runId, { nodeId, failureSeq })`.
+
+## Recovery eligibility (#256)
+
+`GET /runs/{id}` includes `recovery`: the observed event sequence, Resume decision, per-node Replay decisions, a default refusal for unknown nodes, optional script-consent evidence and optional replay source identity. Each unavailable decision has a typed `code` and human-readable `message`; a parent-owned choice also names the exact `parentRunId`. MCP `get_run` exposes this same read. `resume_run` and `replay_run` require the reviewed `observedSeq`, with `retryUncertainScript: true` only after explicit script retry consent. The API client wrappers require the same command object.
+
+Both POSTs recheck the single engine policy, returning the read's refusal code in Problem Details. Stale sequences are 409 `RECOVERY_STALE`; other policy refusals are 409, shutdown is 503 `SHUTTING_DOWN`, and absent/deleted/unowned history is 404 `RUN_NOT_FOUND`. See [ADR-0061](decisions/ADR-0061-recovery-eligibility.md) for the complete table. Resume returns the original ID. Replay returns a different ID linked by `replayOf`; the source logs `run.replay_requested` with that requested ID, consuming the observed intent before admission. A lost acknowledgement requires inspection and a new deliberate observation, never automatic resubmission. Readable run rows remain visible with recovery disabled when their recovery history is unreadable.

@@ -1,4 +1,4 @@
-import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, RunSnapshotSchema } from '@graphgoblin/contracts';
 /**
  * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
@@ -110,7 +110,7 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
     timeout: 30_000,
   });
   const live = Date.now() - started;
-  const completedRun = RunRecordSchema.parse(await (await request.get(`/runs/${runId}`)).json());
+  const completedRun = RunSnapshotSchema.parse(await (await request.get(`/runs/${runId}`)).json());
   expect(completedRun.status).toBe('succeeded');
   // Derive the full durable sequence rather than hard-coding its lifecycle/evidence overhead.
   const eventCount = completedRun.lastEventSeq;

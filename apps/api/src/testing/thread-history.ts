@@ -61,7 +61,9 @@ export const threadHistoryLoop: LoopDefinitionInput = {
 };
 /** Physical disposable store, retained for orchestrator inspection. No provider calls. */
 export async function createThreadHistoryFixture(webDist?: string) {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-'));
+  const dataDir = await mkdtemp(
+    join(tmpdir(), process.env['GG_TEST_DATA_PREFIX'] ?? 'gg-wp-g1-116-'),
+  );
   let calls = 0;
   let release!: () => void;
   let entered!: () => void;
@@ -78,10 +80,12 @@ export async function createThreadHistoryFixture(webDist?: string) {
         entered();
         await blocked;
       }
-      const stdout = JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
+      // Reconciliation needs a retryable failure without a consumed script effect (#256).
+      const stdout =
+        calls === 1 ? '' : JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
       return {
-        state: 'completed',
-        exitCode: calls === 1 ? 1 : 0,
+        state: calls === 1 ? 'definitely-not-started' : 'completed',
+        exitCode: calls === 1 ? null : 0,
         stdout,
         stderr: '',
         stdoutBytes: stdout.length,

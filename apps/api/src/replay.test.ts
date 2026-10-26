@@ -83,7 +83,7 @@ async function finishedRun(): Promise<RunRecord> {
 }
 
 describe('POST /runs/{id}/replay', () => {
-  it('exposes the executable seed through replay events and the queued thread route without changing source bytes', async () => {
+  it('exposes the executable seed through replay events and the queued thread route while preserving source execution data and auditing the fork', async () => {
     const source = await finishedRun();
     const sourceBytes = async () =>
       JSON.stringify({
@@ -106,7 +106,10 @@ describe('POST /runs/{id}/replay', () => {
     const response = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
     });
     expect(response.statusCode).toBe(202);
     const { run: fork } = response.json<{ run: RunRecord }>();
@@ -138,7 +141,17 @@ describe('POST /runs/{id}/replay', () => {
     expect(
       (await t.app.inject(`/runs/${fork.id}/thread`)).json<ContextThread>().counters.nodeVisits,
     ).toEqual({ start: 1, prep: 1, ask: 2, done: 1 });
-    expect(await sourceBytes()).toBe(before);
+    const after = JSON.parse(await sourceBytes()) as {
+      record: Record<string, unknown>[];
+      events: Record<string, unknown>[];
+    };
+    const prior = JSON.parse(before) as {
+      record: Record<string, unknown>[];
+      events: Record<string, unknown>[];
+    };
+    expect(after.events.pop()).toMatchObject({ type: 'run.replay_requested' });
+    after.record[0]!.last_event_seq = prior.record[0]!.last_event_seq;
+    expect(after).toEqual(prior);
   });
 
   it('forks a finished run at a node and runs it from there', async () => {
@@ -146,7 +159,10 @@ describe('POST /runs/{id}/replay', () => {
     const response = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
       headers: { 'x-graphgoblin-client': 'mcp' },
     });
     expect(response.statusCode).toBe(202);
@@ -193,10 +209,19 @@ describe('POST /runs/{id}/replay', () => {
       await t.app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} })
     ).json<{ run: RunRecord }>();
     await t.idle();
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))!.waiting!.waitId,
+      'yes',
+    );
+    await t.idle();
     const notReached = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/replay`,
-      payload: { nodeId: 'done' },
+      payload: {
+        nodeId: 'never',
+        observedSeq: (await t.container.manager.getRecovery(run.id)).observedSeq,
+      },
     });
     expect(notReached.statusCode).toBe(409);
     expect(notReached.json()).toMatchObject({ code: 'REPLAY_NODE_NOT_REACHED' });
@@ -204,7 +229,7 @@ describe('POST /runs/{id}/replay', () => {
     const unknown = await t.app.inject({
       method: 'POST',
       url: `/runs/${fakeUlid('nope')}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: { nodeId: 'ask', observedSeq: 0 },
     });
     expect(unknown.statusCode).toBe(404);
     expect(unknown.json()).toMatchObject({ code: 'RUN_NOT_FOUND' });
@@ -229,7 +254,10 @@ describe('POST /runs/{id}/replay', () => {
     const forbidden = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
       headers: { authorization: `Bearer ${token}` },
     });
     expect(forbidden.statusCode).toBe(403);

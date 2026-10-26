@@ -517,8 +517,10 @@ describe('RunInspectorPage', () => {
     const view = renderApp(`/runs/${run.id}`, api);
     await user.click(await screen.findByRole('button', { name: 'Pause' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/pause`)).toHaveLength(1));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Resume' })).toBeEnabled());
     await user.click(await screen.findByRole('button', { name: 'Resume' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/resume`)).toHaveLength(1));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel run' })).toBeEnabled());
     await user.click(await screen.findByRole('button', { name: 'Cancel run' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/cancel`)).toHaveLength(1));
     await waitFor(() =>

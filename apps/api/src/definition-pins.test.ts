@@ -280,7 +280,10 @@ describe('runs pin their definition across edits, Settings changes and a restart
         await call<{ run: RunRecord }>(
           'POST',
           `/runs/${drafted.id}/replay`,
-          { nodeId: 'shape' },
+          {
+            nodeId: 'done',
+            observedSeq: (await container!.manager.getRecovery(drafted.id)).observedSeq,
+          },
           202,
         )
       ).run;

@@ -22,7 +22,7 @@ async function eventually(check: () => Promise<boolean>) {
 }
 
 async function freePort() {
-  for (let port = 6320; port <= 6339; port++) {
+  for (let port = 6371; port <= 6389; port++) {
     const listener = createServer();
     const free = await new Promise<boolean>((resolve, reject) => {
       listener.once('error', (error: NodeJS.ErrnoException) =>
@@ -32,7 +32,7 @@ async function freePort() {
     });
     if (free) return port;
   }
-  throw new Error('No free #321 port in 6320..6339');
+  throw new Error('No free #321 port in 6371..6389');
 }
 
 test('a real interrupted script explains its effect and only Resume repeats it (#321)', async ({
@@ -40,7 +40,7 @@ test('a real interrupted script explains its effect and only Resume repeats it (
 }, testInfo) => {
   test.setTimeout(180_000);
   const port = await freePort();
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d1-int-browser-'));
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d5-script-browser-'));
   const marker = join(dataDir, 'marker');
   const release = join(dataDir, 'release');
   const apiRoot = fileURLToPath(new URL('../../api/', import.meta.url));
@@ -174,6 +174,13 @@ test('a real interrupted script explains its effect and only Resume repeats it (
     await expect(dialog).toBeHidden();
     expect(await count()).toBe(1);
     expect((await call<RunRecord>('GET', `/runs/${run.id}`)).status).toBe('failed');
+    await page.getByRole('button', { name: 'Replay...', exact: true }).click();
+    const earlierReplay = page.getByRole('dialog', { name: 'Replay as a new run' });
+    await earlierReplay.getByLabel('Replay from node').selectOption('start');
+    await expect(earlierReplay.getByRole('button', { name: 'Create replay run' })).toBeDisabled();
+    await expect(earlierReplay).toContainText('could repeat recorded external work');
+    await earlierReplay.getByRole('button', { name: 'Cancel', exact: true }).click();
+    expect(await count()).toBe(1);
     await eventually(async () => !(await markerRunning()));
     await rm(release, { force: true });
     await page.getByRole('button', { name: 'Recover script' }).click();
@@ -197,6 +204,30 @@ test('a real interrupted script explains its effect and only Resume repeats it (
     expect(completed.status).toBe('succeeded');
     await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
     expect(await count()).toBe(2);
+    // Replay after the consumed marker keeps its recorded state; replaying the script is refused.
+    await page.getByRole('button', { name: 'Replay...', exact: true }).click();
+    const replayDialog = page.getByRole('dialog', { name: 'Replay as a new run' });
+    await replayDialog.getByLabel('Replay from node').selectOption('script');
+    await expect(replayDialog.getByRole('button', { name: 'Create replay run' })).toBeDisabled();
+    await expect(replayDialog).toContainText('could repeat recorded external work');
+    expect(await count()).toBe(2);
+    await replayDialog.getByLabel('Replay from node').selectOption('done');
+    const replayResponse = page.waitForResponse((response) =>
+      response.url().endsWith(`/runs/${run.id}/replay`),
+    );
+    await replayDialog.getByRole('button', { name: 'Create replay run' }).click();
+    const response = await replayResponse;
+    expect(response.status()).toBe(202);
+    const fork = ((await response.json()) as { run: RunRecord }).run;
+    expect(fork.id).not.toBe(run.id);
+    await expect(page).toHaveURL(new RegExp(`/app/runs/${fork.id}$`));
+    await expect(page.getByRole('link', { name: run.id, exact: true })).toBeVisible();
+    await eventually(
+      async () => (await call<RunRecord>('GET', `/runs/${fork.id}`)).status === 'succeeded',
+    );
+    expect(await count()).toBe(2);
+    expect((await call<RunRecord>('GET', `/runs/${run.id}`)).status).toBe('succeeded');
+    await page.screenshot({ path: testInfo.outputPath('replay-after-consumed-script.png') });
   } catch (error) {
     console.warn(
       JSON.stringify({

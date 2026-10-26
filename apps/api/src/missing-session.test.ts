@@ -54,7 +54,13 @@ describe('explicit missing-session API recovery', () => {
     const { t, runId, payload } = await failed();
     try {
       expect(
-        (await t.app.inject({ method: 'POST', url: `/runs/${runId}/resume` })).statusCode,
+        (
+          await t.app.inject({
+            method: 'POST',
+            url: `/runs/${runId}/resume`,
+            payload: { observedSeq: (await t.container.manager.getRecovery(runId)).observedSeq },
+          })
+        ).statusCode,
       ).toBe(409);
       expect((await t.container.repos.runs.get(runId))?.status).toBe('failed');
       const chosen = await t.app.inject({
@@ -196,7 +202,15 @@ it.each(['success', 'failure', 'exhausted'] as const)(
         resumable: false,
       });
       expect(
-        (await t.app.inject({ method: 'POST', url: `/runs/${parent.id}/resume` })).statusCode,
+        (
+          await t.app.inject({
+            method: 'POST',
+            url: `/runs/${parent.id}/resume`,
+            payload: {
+              observedSeq: (await t.container.manager.getRecovery(parent.id)).observedSeq,
+            },
+          })
+        ).statusCode,
       ).toBe(409);
       const failureSeq = (await t.container.repos.events.read(child.id)).findLast(
         (event) => event.type === 'run.failed',
@@ -212,7 +226,15 @@ it.each(['success', 'failure', 'exhausted'] as const)(
       ).toBe(200);
       await t.idle();
       expect(
-        (await t.app.inject({ method: 'POST', url: `/runs/${parent.id}/resume` })).statusCode,
+        (
+          await t.app.inject({
+            method: 'POST',
+            url: `/runs/${parent.id}/resume`,
+            payload: {
+              observedSeq: (await t.container.manager.getRecovery(parent.id)).observedSeq,
+            },
+          })
+        ).statusCode,
       ).toBe(200);
       await t.idle();
       expect((await t.container.repos.runs.get(parent.id))?.status).toBe('succeeded');

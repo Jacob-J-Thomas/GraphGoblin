@@ -49,7 +49,7 @@ export interface TestAppOptions {
 
 /** An API over an in-memory database with fake harness, deciders, and structured completion. */
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-'));
+  const dataDir = await mkdtemp(join(tmpdir(), process.env['GG_TEST_DATA_PREFIX'] ?? 'gg-api-'));
   const config = loadConfig({
     GG_DATA_DIR: dataDir,
     GG_DB_URL: ':memory:',

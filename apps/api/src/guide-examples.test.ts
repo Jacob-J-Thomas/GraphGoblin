@@ -5,7 +5,7 @@ import {
   LoopExportSchema,
   LoopSettingsSchema,
   RunFailureSchema,
-  RunRecordSchema,
+  RunSnapshotSchema,
   type LoopDefinition,
   type LoopRecord,
   type LoopVersionRecord,
@@ -126,7 +126,7 @@ async function runSnapshot(id: string): Promise<RunRecord> {
   await t.idle();
   const response = await t.app.inject(`/runs/${id}`);
   expect(response.statusCode, response.body).toBe(200);
-  return RunRecordSchema.parse(response.json());
+  return RunSnapshotSchema.parse(response.json());
 }
 async function startSummary(loopId: string): Promise<RunRecord> {
   const response = await t.app.inject({
@@ -138,14 +138,21 @@ async function startSummary(loopId: string): Promise<RunRecord> {
   expect(response.statusCode, response.body).toBe(202);
   return runSnapshot(response.json<{ run: RunRecord }>().run.id);
 }
-function command(id: string, loopId: string, runId = '') {
+async function command(id: string, loopId: string, runId = '') {
   const source = block(id);
-  const url = /"(http:\/\/127\.0\.0\.1:4747[^"\s]+)"/.exec(source)?.[1];
+  const url = [...source.matchAll(/"(http:\/\/127\.0\.0\.1:4747[^"\s]+)"/g)].at(-1)?.[1];
   if (!url) throw new Error(`Missing URL in ${id}`);
   const path = new URL(
     url.replace(/\$(?:LOOP_ID|loopId)/g, loopId).replace(/\$(?:RUN_ID|runId)/g, runId),
   );
-  const body = /(?:-d|-Body) '(\{[^']*\})'/.exec(source)?.[1];
+  let body = /(?:-d|-Body) '(\{[^']*\})'/.exec(source)?.[1];
+  if (source.includes('recovery.observedSeq')) {
+    const snapshot = RunSnapshotSchema.parse((await t.app.inject('/runs/' + runId)).json());
+    if (path.pathname.endsWith('/replay')) {
+      expect(source).toMatch(/done/);
+      body = JSON.stringify({ nodeId: 'done', observedSeq: snapshot.recovery.observedSeq });
+    } else body = JSON.stringify({ observedSeq: snapshot.recovery.observedSeq });
+  }
   const fromFile = source.includes('@start.json') || source.includes('-InFile start.json');
   const headers: Record<string, string> = {};
   if (source.includes('Accept: text/event-stream')) headers.accept = 'text/event-stream';
@@ -250,7 +257,7 @@ describe('executable guide examples', () => {
     'executes the HTTP request in %s',
     async (example) => {
       const id = await summaryLoop();
-      const request = command(example, id);
+      const request = await command(example, id);
       expect(request.method).toBe('POST');
       expect(request.payload).toBe(block('start-body'));
       t.harness.script([{ finalText: summaryText }]);
@@ -267,14 +274,16 @@ describe('executable guide examples', () => {
     'replays the documented node in %s',
     async (example) => {
       const id = await summaryLoop();
-      const source = await startSummary(id);
       t.harness.script([{ finalText: summaryText }]);
-      const response = await t.app.inject(command(example, id, source.id));
+      const source = await startSummary(id);
+      const response = await t.app.inject(await command(example, id, source.id));
       expect(response.statusCode, response.body).toBe(202);
+      expect(response.json<{ run: RunRecord }>().run.id).not.toBe(source.id);
       expect(await runSnapshot(response.json<{ run: RunRecord }>().run.id)).toMatchObject({
         status: 'succeeded',
         result: { summary: summaryText },
       });
+      expect(t.harness.started).toHaveLength(1);
       expect((await runSnapshot(source.id)).result).toEqual(source.result);
     },
   );
@@ -291,7 +300,7 @@ describe('executable guide examples', () => {
       const failed = await startSummary(id);
       expect(failed).toMatchObject({ status: 'failed', failure: { resumable: true } });
       t.harness.script([{ finalText: summaryText }]);
-      const request = command(example, id, failed.id);
+      const request = await command(example, id, failed.id);
       const resumed = await t.app.inject(request);
       expect(resumed.statusCode, resumed.body).toBe(200);
       expect(await runSnapshot(failed.id)).toMatchObject({
@@ -311,7 +320,7 @@ describe('executable guide examples', () => {
   ])('reads the documented events request in %s', async (example) => {
     const id = await summaryLoop();
     const run = await startSummary(id);
-    const request = command(example, id, run.id);
+    const request = await command(example, id, run.id);
     if (example === 'reconnect-bash') expect(request.headers['last-event-id']).toBe('12');
     const response = await t.app.inject(request);
     expect(response.statusCode, response.body).toBe(200);

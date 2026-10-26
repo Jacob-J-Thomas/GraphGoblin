@@ -156,7 +156,7 @@ describe.each(['codex', 'claude'] as const)('%s own-session isolation', (harness
   it('does not inherit the private handle or reset count in a replay fork or child run', async () => {
     const { e, v } = await setup();
     const source = await e.runToIdle(v.loopId);
-    const fork = await e.manager.replay({ runId: source.id, nodeId: 'worker' });
+    const fork = await e.manager.replay({ runId: source.id, nodeId: 'done' });
     expect((await e.settle(fork.id)).status).toBe('succeeded');
     const parent = e.publish(
       singleNodeLoop('own-session parent', {
@@ -169,7 +169,8 @@ describe.each(['codex', 'claude'] as const)('%s own-session isolation', (harness
     const parentRun = await e.runToIdle(parent.loopId);
     expect(parentRun.status).toBe('succeeded');
     const child = (await e.ports.runs.listChildren(parentRun.id))[0]!;
-    const firstIds = [source.id, fork.id, child.id].map((id) => {
+    expect(handles(e, fork.id)).toEqual([]);
+    const firstIds = [source.id, child.id].map((id) => {
       const first = handles(e, id)[0]!;
       expect(first).toMatchObject({ nodeId: 'worker', mode: 'fresh' });
       const turns = e.events(id).filter((x) => x.type === 'harness.turn');
@@ -177,7 +178,7 @@ describe.each(['codex', 'claude'] as const)('%s own-session isolation', (harness
       expect(turns[0]?.visitId.startsWith(id + ':')).toBe(true);
       return first.sessionId;
     });
-    expect(new Set(firstIds).size).toBe(3);
+    expect(new Set(firstIds).size).toBe(2);
     e.manager.stop();
   });
 

@@ -1,5 +1,10 @@
 import { writeFile } from 'node:fs/promises';
-import { ContextThreadSchema, RunRecordSchema, type ContextThread } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  RunRecordSchema,
+  RunSnapshotSchema,
+  type ContextThread,
+} from '@graphgoblin/contracts';
 import type { Page } from '@playwright/test';
 import { test, expect, control } from './fixtures.js';
 
@@ -66,7 +71,7 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       const api = ContextThreadSchema.parse(
         await (await request.get(ready.url + '/runs/' + run.id + '/thread')).json(),
       );
-      const record = RunRecordSchema.parse(
+      const record = RunSnapshotSchema.parse(
         await (await request.get(ready.url + '/runs/' + run.id)).json(),
       );
       const existing = await matchedThread(open, api);
@@ -95,7 +100,17 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     await context.setOffline(true);
     const outage = await failedPoll;
     expect(outage.failure()?.errorText).toBeTruthy();
-    expect((await request.post(ready.url + '/runs/' + run.id + '/resume')).ok()).toBe(true);
+    expect(
+      (
+        await request.post(ready.url + '/runs/' + run.id + '/resume', {
+          data: {
+            observedSeq: RunSnapshotSchema.parse(
+              await (await request.get(ready.url + '/runs/' + run.id)).json(),
+            ).recovery.observedSeq,
+          },
+        })
+      ).ok(),
+    ).toBe(true);
     await action('working');
     await context.setOffline(false);
     await check('resumed-unfinished');

@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (17 tests | 1 failed | 16 skipped) 3398ms
+   ❯ server recovery eligibility (#256) (17)
+     × returns the run and its consent target from one observed recovery state 3395ms
+pnpm.cmd : 
+At line:2 char:203
++ ... gg-wp-d5-'; pnpm.cmd --filter @graphgoblin/api exec vitest run src/re ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > returns the run and its consent target 
+from one observed recovery state
+AssertionError: expected 7 to be 15 // Object.is equality
+
+- Expected
++ Received
+
+- 15
++ 7
+
+ ❯ src/recovery-eligibility.test.ts:112:37
+    110|       armed = true;
+    111|       const snapshot = (await api.inject(`/runs/${run.id}`)).json<Snap…
+    112|       expect(snapshot.lastEventSeq).toBe(snapshot.recovery.observedSeq…
+       |                                     ^
+    113|       expect(snapshot.failure?.nodeId).toBe('b');
+    114|       expect(snapshot.recovery.scriptConsent?.nodeId).toBe('b');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  03:11:18
+   Duration  26.33s (transform 56%, import 31%, tests 13%)
+
+  Transform  transforming modules took 14.11s · 56% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

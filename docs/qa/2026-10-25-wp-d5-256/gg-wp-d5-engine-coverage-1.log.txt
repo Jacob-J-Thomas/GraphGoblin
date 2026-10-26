@@ -1,0 +1,472 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:105
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine test:coverage > "$e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/child-failure-parity.test.ts (14 tests | 10 failed) 2060ms
+   × retains an uncertain child script dispatch on the parent and retries only on explicit Resume 250ms
+   ❯ child failures follow the inline rules (#251) (9)
+     × transient: script exits non-zero fails the parent like the inline node, and resumes alike 111ms
+     × transient: script times out fails the parent like the inline node, and resumes alike 104ms
+     × deterministic: decision expression fails fails the parent like the inline node, and resumes alike 161ms
+     × provider: classifier answers outside the declared… fails the parent like the inline node, and resumes alike 141ms
+     × depth exceeded deep in a tree fails every ancestor non-resumably (G12) 153ms
+     × cancellation: a cancelled child cancels its parent, as cancelling the inline work cancels its run 116ms
+   ❯ repeat and recovery attempts (#251) (4)
+     × each resume of the parent resumes the same child until it succeeds 94ms
+     × a child resumed directly lets the parent continue on its own resume 95ms
+     × nested: the root fails with the leaf failure, and resuming the root resumes the tree 109ms
+ ❯ src/run-manager.test.ts (27 tests | 2 failed) 2366ms
+   ❯ run control (9)
+     × pauses a queued run and resumes it later 72ms
+   ❯ failure and recovery (6)
+     × resumes a failed run from the failed node 50ms
+ ❯ src/adversarial.test.ts (42 tests | 3 failed) 2957ms
+   ❯ adversarial engine invariants (42)
+     × 1: queued pause, invalid resume, waiting cancel and terminal signals are typed 81ms
+     × ADV-004: pins reach grandchildren, replay forks, and recovery 187ms
+     × ADV-013: a non-resumable failure cannot leave its terminal status 32ms
+ ❯ src/awaited-children.test.ts (24 tests | 3 failed) 3787ms
+   ❯ awaiting a child across failures and restarts (#242) (12)
+     × an unfinished child is never mapped: a parent woken before its child was resumed awaits it again 95ms
+     × a child resumed directly after its parent lost its failure write records the completion the parent observes when it succeeds (#398) 68ms
+     × a child resumed directly after its parent lost its failure write records the completion the parent observes when it fails again (#398) 57ms
+ ❯ src/finalization.test.ts (44 tests | 2 failed) 4516ms
+   × of two concurrent resumes of one failure, only one acts (same failure) 78ms
+   × of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 62ms
+ ❯ src/replay.test.ts (7 tests | 1 failed) 871ms
+   ❯ replay-at-node (7)
+     × forks a run that is still waiting, and rejects nodes the source never started 98ms
+(node:17628) PromiseRejectionHandledWarning: Promise rejection was handled asynchronously (rejection id: 18)
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/recovery.test.ts (69 tests | 3 failed) 8692ms
+   ❯ pins and timers (review probes) (9)
+     × a replay fork copies pins and fails at the subloop when the pinned version is gone 112ms
+   ❯ deletion against replay and root resolution (fourth round) (3)
+     × a replay fork requested during a deletion registers only after it 153ms
+     × a replay fork registered first makes the deletion refuse 109ms
+ ❯ src/own-session.test.ts (26 tests | 2 failed) 4825ms
+   ❯ codex own-session isolation (10)
+     × does not inherit the private handle or reset count in a replay fork or child run 137ms
+   ❯ claude own-session isolation (10)
+     × does not inherit the private handle or reset count in a replay fork or child run 108ms
+ ❯ src/child-creation.test.ts (7 tests | 3 failed) 837ms
+   ❯ child creation and finish across a process death (#320) (7)
+     × a new outcome of the same child after a resume is recorded again 101ms
+     × an explicit retry records a second failed outcome of the same child 63ms
+     × records a child independently retried while its parent was interrupted 124ms
+ ❯ src/handlers/script.test.ts (11 tests | 1 failed) 579ms
+   ❯ ordinary script resume (1)
+     × keeps the pinned script and run and starts a new attempt when resuming after a newer version is published 121ms
+ ❯ src/stored-definition.test.ts (5 tests | 1 failed) 461ms
+   ❯ stored definitions with an Event destination (#242) (5)
+     × refuses admission and replay, creating no run 58ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > 1: queued pause, invalid resume, waiting cancel and 
+terminal signals are typed
+AssertionError: expected RecoveryRefusedError: This run is still a… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "RUN_ACTIVE",
+  }
+
+ ❯ src/adversarial.test.ts:37:41
+     35|     const v = e.publish(inputLoop());
+     36|     const r = await e.start(v.loopId);
+     37|     await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code:…
+       |                                         ^
+     38|     await e.manager.pause(r.id);
+     39|     await e.manager.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-004: pins reach grandchildren, replay forks, and 
+recovery
+ FAIL  src/own-session.test.ts > codex own-session isolation > does not inherit the private handle or reset count in a 
+replay fork or child run
+ FAIL  src/own-session.test.ts > claude own-session isolation > does not inherit the private handle or reset count in 
+a replay fork or child run
+ FAIL  src/recovery.test.ts > pins and timers (review probes) > a replay fork copies pins and fails at the subloop 
+when the pinned version is gone
+ FAIL  src/recovery.test.ts > deletion against replay and root resolution (fourth round) > a replay fork requested 
+during a deletion registers only after it
+RecoveryRefusedError: Replay here could repeat recorded external work or deliveries. Choose a node after that work.
+ ❯ RunManager.replayAdmitted src/run-manager.ts:1491:13
+    1489|     const eligibility = replayAction(recovery, input.nodeId);
+    1490|     if (!eligibility.allowed && !(eligibility.code === 'SCRIPT_CONSENT…
+    1491|       throw new RecoveryRefusedError(eligibility.code, eligibility.mes…
+       |             ^
+    1492|     const firstStart = events.find(
+    1493|       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-013: a non-resumable failure cannot leave its 
+terminal status
+AssertionError: expected RecoveryRefusedError: This failure cannot… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "FAILURE_NOT_RESUMABLE",
+  }
+
+ ❯ src/adversarial.test.ts:459:41
+    457|       failure: { code: 'INTERNAL_ERROR', message: 'not resumable', res…
+    458|     });
+    459|     await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code:…
+       |                                         ^
+    460|     await e.manager.waitForIdle();
+    461|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > an unfinished child is 
+never mapped: a parent woken before its child was resumed awaits it again
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a child resumed directly 
+after its parent lost its failure write records the completion the parent observes when it succeeds (#398)
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a child resumed directly 
+after its parent lost its failure write records the completion the parent observes when it fails again (#398)
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > a new outcome of the 
+same child after a resume is recorded again
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > records a child 
+independently retried while its parent was interrupted
+ FAIL  src/child-failure-parity.test.ts > repeat and recovery attempts (#251) > a child resumed directly lets the 
+parent continue on its own resume
+RecoveryRefusedError: Recovery belongs to parent run 00000000000000000000000001. Resume that parent to retry this same 
+child.
+ ❯ src/run-manager.ts:1195:15
+    1193|         throw new RecoveryRefusedError('RECOVERY_STALE', 'The run chan…
+    1194|       if (!recovery.resume.allowed && !(recovery.resume.code === 'SCRI…
+    1195|         throw new RecoveryRefusedError(recovery.resume.code, recovery.…
+       |               ^
+    1196|       return this.resumeRun(runId, actor, command?.retryUncertainScrip…
+    1197|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > an explicit retry 
+records a second failed outcome of the same child
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > transient: script exits 
+non-zero fails the parent like the inline node, and resumes alike
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > transient: script times out 
+fails the parent like the inline node, and resumes alike
+ FAIL  src/child-failure-parity.test.ts > repeat and recovery attempts (#251) > each resume of the parent resumes the 
+same child until it succeeds
+ FAIL  src/child-failure-parity.test.ts > repeat and recovery attempts (#251) > nested: the root fails with the leaf 
+failure, and resuming the root resumes the tree
+ FAIL  src/run-manager.test.ts > failure and recovery > resumes a failed run from the failed node
+ FAIL  src/handlers/script.test.ts > ordinary script resume > keeps the pinned script and run and starts a new attempt 
+when resuming after a newer version is published
+RecoveryRefusedError: The failed script already executed. Resume would repeat its external work; start a deliberate 
+new execution instead.
+ ❯ src/run-manager.ts:1195:15
+    1193|         throw new RecoveryRefusedError('RECOVERY_STALE', 'The run chan…
+    1194|       if (!recovery.resume.allowed && !(recovery.resume.code === 'SCRI…
+    1195|         throw new RecoveryRefusedError(recovery.resume.code, recovery.…
+       |               ^
+    1196|       return this.resumeRun(runId, actor, command?.retryUncertainScrip…
+    1197|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  src/child-failure-parity.test.ts > retains an uncertain child script dispatch on the parent and retries only on 
+explicit Resume
+RecoveryRefusedError: The script may already have produced its effect. Choose Recover script to explicitly retry.
+ ❯ src/run-manager.ts:1195:15
+    1193|         throw new RecoveryRefusedError('RECOVERY_STALE', 'The run chan…
+    1194|       if (!recovery.resume.allowed && !(recovery.resume.code === 'SCRI…
+    1195|         throw new RecoveryRefusedError(recovery.resume.code, recovery.…
+       |               ^
+    1196|       return this.resumeRun(runId, actor, command?.retryUncertainScrip…
+    1197|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > deterministic: decision 
+expression fails fails the parent like the inline node, and resumes alike
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > provider: classifier answers 
+outside the declared… fails the parent like the inline node, and resumes alike
+AssertionError: expected RecoveryRefusedError: This failure cannot… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "FAILURE_NOT_RESUMABLE",
+  }
+
+ ❯ src/child-failure-parity.test.ts:309:50
+    307|       if (!scenario.resumable) {
+    308|         // Not advertised as resumable, so neither run can be resumed.
+    309|         await expect(e.manager.resume(inline.id)).rejects.toMatchObjec…
+       |                                                  ^
+    310|         await expect(e.manager.resume(parent.id)).rejects.toMatchObjec…
+    311|         expect((await e.ports.runs.get(child!.id))?.status).toBe('fail…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > depth exceeded deep in a 
+tree fails every ancestor non-resumably (G12)
+AssertionError: expected RecoveryRefusedError: This failure cannot… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "FAILURE_NOT_RESUMABLE",
+  }
+
+ ❯ src/child-failure-parity.test.ts:360:43
+    358|     }
+    359|     expect(top.failure?.nodeId).toBe('sub');
+    360|     await expect(e.manager.resume(top.id)).rejects.toMatchObject({ cod…
+       |                                           ^
+    361|   });
+    362|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  src/child-failure-parity.test.ts > child failures follow the inline rules (#251) > cancellation: a cancelled 
+child cancels its parent, as cancelling the inline work cancels its run
+AssertionError: expected RecoveryRefusedError: This run was cancel… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "RUN_CANCELLED",
+  }
+
+ ❯ src/child-failure-parity.test.ts:393:46
+    391|     ]);
+    392|     expect(ofType(e, parent.id, 'run.cancelled')).toHaveLength(1);
+    393|     await expect(e.manager.resume(inline.id)).rejects.toMatchObject({ …
+       |                                              ^
+    394|     await expect(e.manager.resume(parent.id)).rejects.toMatchObject({ …
+    395|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  src/finalization.test.ts > of two concurrent resumes of one failure, only one acts (same failure)
+ FAIL  src/finalization.test.ts > of two concurrent resumes of one failure, only one acts (newer non-resumable failure)
+AssertionError: expected { status: 'rejected', …(1) } to match object { reason: { code: 'INVALID_STATE' } }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reason": {
+-     "code": "INVALID_STATE",
++   "reason": RecoveryRefusedError {
++     "code": "RECOVERY_STALE",
+    },
+  }
+
+ ❯ src/finalization.test.ts:731:59
+    729|     await e.manager.waitForIdle();
+    730|     expect(outcomes.filter((x) => x.status === 'fulfilled')).toHaveLen…
+    731|     expect(outcomes.find((x) => x.status === 'rejected')).toMatchObjec…
+       |                                                           ^
+    732|       reason: { code: 'INVALID_STATE' },
+    733|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  src/recovery.test.ts > deletion against replay and root resolution (fourth round) > a replay fork registered 
+first makes the deletion refuse
+RecoveryRefusedError: Replay here could repeat recorded external work or deliveries. Choose a node after that work.
+ ❯ RunManager.replayAdmitted src/run-manager.ts:1491:13
+    1489|     const eligibility = replayAction(recovery, input.nodeId);
+    1490|     if (!eligibility.allowed && !(eligibility.code === 'SCRIPT_CONSENT…
+    1491|       throw new RecoveryRefusedError(eligibility.code, eligibility.mes…
+       |             ^
+    1492|     const firstStart = events.find(
+    1493|       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  src/replay.test.ts > replay-at-node > forks a run that is still waiting, and rejects nodes the source never 
+started
+AssertionError: promise resolved "{ …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "done",
++   "id": "00000000000000000000000004",
++   "invocationId": "00000000000000000000000005",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "X0NRMHENM72PQV3XS5938ZMK2G",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "waits v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "waits",
++     "source": "published",
++     "version": 1,
++   },
++   "status": "queued",
++   "versionId": "A2WZ2QH2PTJ51Y0VT628M227EW",
+  }
+
+ ❯ src/replay.test.ts:205:78
+    203|     await engine.manager.provideInput(source.id, source.waiting!.waitI…
+    204|     await engine.settle(source.id);
+    205|     await expect(engine.manager.replay({ runId: source.id, nodeId: 'do…
+       |                                                                              ^
+    206|       { code: 'REPLAY_NODE_NOT_REACHED' },
+    207|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  src/run-manager.test.ts > run control > pauses a queued run and resumes it later
+AssertionError: expected RecoveryRefusedError: This run has finish… { code: '…' } to match object { code: 
+'INVALID_STATE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "INVALID_STATE",
++ RecoveryRefusedError {
++   "code": "RUN_FINISHED",
+  }
+
+ ❯ src/run-manager.test.ts:273:48
+    271|       expect.arrayContaining(['run.paused', 'run.resumed', 'run.starte…
+    272|     );
+    273|     await expect(engine.manager.resume(run.id)).rejects.toMatchObject(…
+       |                                                ^
+    274|   });
+    275|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  src/stored-definition.test.ts > stored definitions with an Event destination (#242) > refuses admission and 
+replay, creating no run
+AssertionError: expected RecoveryRefusedError: This run is still a… { code: '…' } to match object { code: 
+'LOOP_UPGRADE_REQUIRED' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "LOOP_UPGRADE_REQUIRED",
++ RecoveryRefusedError {
++   "code": "RUN_ACTIVE",
+  }
+
+ ❯ src/stored-definition.test.ts:119:68
+    117|     const version = stored(e, (await e.ports.loops.getVersion(ok.versi…
+    118|     await expect(e.start(version.loopId)).rejects.toBeInstanceOf(LoopU…
+    119|     await expect(e.manager.replay({ runId: ok.id, nodeId: 'ask' })).re…
+       |                                                                    ^
+    120|       code: 'LOOP_UPGRADE_REQUIRED',
+    121|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+RecoveryRefusedError: Replay here could repeat recorded external work or deliveries. Choose a node after that work.
+ ❯ RunManager.replayAdmitted src/run-manager.ts:1491:13
+    1489|     const eligibility = replayAction(recovery, input.nodeId);
+    1490|     if (!eligibility.allowed && !(eligibility.code === 'SCRIPT_CONSENT…
+    1491|       throw new RecoveryRefusedError(eligibility.code, eligibility.mes…
+       |             ^
+    1492|     const firstStart = events.find(
+    1493|       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EXTERNAL_EFFECT_CONSUMED' }
+This error originated in "src/recovery.test.ts" test file. It doesn't mean the error was thrown inside the file 
+itself, but while it was running.
+The last test to run before this error was "a replay fork requested during a deletion registers only after it". This 
+means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  11 failed | 47 passed (58)
+      Tests  31 failed | 1699 passed (1730)
+     Errors  1 error
+   Start at  22:14:43
+   Duration  53.80s (tests 45%, import 44%, transform 10%, worker 1%)
+
+    Isolate  58 workers spawned · ~812ms startup each (spawn + environment, per file)
+             at least ~3.47s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

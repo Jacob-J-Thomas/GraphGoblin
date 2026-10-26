@@ -83,6 +83,8 @@ export function descriptionParts(event: RunEvent): DescriptionPart[] {
       return [`${event.status} (${event.outcome})`];
     case 'run.failed':
       return [`${event.failure.code}: ${event.failure.message}`];
+    case 'run.replay_requested':
+      return [`Replay fork ${event.replayRunId} requested at ${event.nodeId}`];
     case 'run.paused':
     case 'run.resumed':
     case 'run.cancel_requested':

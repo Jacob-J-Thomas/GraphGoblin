@@ -44,6 +44,79 @@
           "code"
         ]
       },
+      "RecoveryConflictInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "RUN_ACTIVE",
+              "RUN_PAUSED",
+              "RUN_FINISHED",
+              "RUN_CANCELLED",
+              "FAILURE_NOT_RESUMABLE",
+              "SCRIPT_CONSENT_REQUIRED",
+              "SESSION_RECOVERY_REQUIRED",
+              "PARENT_RECOVERY_REQUIRED",
+              "REPLAY_NODE_NOT_REACHED",
+              "DEFINITION_UNAVAILABLE",
+              "STATE_UNAVAILABLE",
+              "EXTERNAL_EFFECT_CONSUMED",
+              "RECOVERY_STALE",
+              "SHUTTING_DOWN"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail"
+        ]
+      },
+      "RecoveryUnavailableInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 503
+          },
+          "code": {
+            "type": "string",
+            "const": "SHUTTING_DOWN"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail"
+        ]
+      },
       "ClassifierModelSummaryInput": {
         "type": "object",
         "properties": {
@@ -5115,6 +5188,721 @@
         ],
         "additionalProperties": false
       },
+      "RunSnapshotInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "ownerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "loopId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "versionId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "pinned": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "published",
+                  "draft"
+                ]
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "process": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "owner",
+                  "process"
+                ],
+                "additionalProperties": false
+              },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "source",
+              "version",
+              "name",
+              "label",
+              "defaults",
+              "limits",
+              "classifiers"
+            ],
+            "additionalProperties": false
+          },
+          "parentRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatusInput"
+          },
+          "currentNodeId": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+          },
+          "iteration": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "waiting": {
+            "$ref": "#/components/schemas/WaitSpecInput"
+          },
+          "cancelRequestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "pausedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/RunFailureInput"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failure",
+              "exhausted"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/JsonValueInput"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "lastEventSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "recovery": {
+            "$ref": "#/components/schemas/RunRecoveryInput"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "loopId",
+          "versionId",
+          "pinned",
+          "invocationId",
+          "status",
+          "iteration",
+          "createdAt",
+          "lastEventSeq",
+          "recovery"
+        ],
+        "additionalProperties": false
+      },
+      "RunRecoveryInput": {
+        "type": "object",
+        "properties": {
+          "observedSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "resume": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "allowed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "RUN_ACTIVE",
+                      "RUN_PAUSED",
+                      "RUN_FINISHED",
+                      "RUN_CANCELLED",
+                      "FAILURE_NOT_RESUMABLE",
+                      "SCRIPT_CONSENT_REQUIRED",
+                      "SESSION_RECOVERY_REQUIRED",
+                      "PARENT_RECOVERY_REQUIRED",
+                      "REPLAY_NODE_NOT_REACHED",
+                      "DEFINITION_UNAVAILABLE",
+                      "STATE_UNAVAILABLE",
+                      "EXTERNAL_EFFECT_CONSUMED",
+                      "RECOVERY_STALE",
+                      "SHUTTING_DOWN"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "replayDefault": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "allowed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "RUN_ACTIVE",
+                      "RUN_PAUSED",
+                      "RUN_FINISHED",
+                      "RUN_CANCELLED",
+                      "FAILURE_NOT_RESUMABLE",
+                      "SCRIPT_CONSENT_REQUIRED",
+                      "SESSION_RECOVERY_REQUIRED",
+                      "PARENT_RECOVERY_REQUIRED",
+                      "REPLAY_NODE_NOT_REACHED",
+                      "DEFINITION_UNAVAILABLE",
+                      "STATE_UNAVAILABLE",
+                      "EXTERNAL_EFFECT_CONSUMED",
+                      "RECOVERY_STALE",
+                      "SHUTTING_DOWN"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "replay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nodeId": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "action": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "allowed": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "allowed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "allowed": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "RUN_ACTIVE",
+                            "RUN_PAUSED",
+                            "RUN_FINISHED",
+                            "RUN_CANCELLED",
+                            "FAILURE_NOT_RESUMABLE",
+                            "SCRIPT_CONSENT_REQUIRED",
+                            "SESSION_RECOVERY_REQUIRED",
+                            "PARENT_RECOVERY_REQUIRED",
+                            "REPLAY_NODE_NOT_REACHED",
+                            "DEFINITION_UNAVAILABLE",
+                            "STATE_UNAVAILABLE",
+                            "EXTERNAL_EFFECT_CONSUMED",
+                            "RECOVERY_STALE",
+                            "SHUTTING_DOWN"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "parentRunId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                        }
+                      },
+                      "required": [
+                        "allowed",
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "nodeId",
+                "label",
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scriptConsent": {
+            "type": "object",
+            "properties": {
+              "failureSeq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "failureSeq",
+              "nodeId"
+            ],
+            "additionalProperties": false
+          },
+          "replayOf": {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "runId",
+              "nodeId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "observedSeq",
+          "resume",
+          "replayDefault",
+          "replay"
+        ],
+        "additionalProperties": false
+      },
       "RunEventInput": {
         "oneOf": [
           {
@@ -6067,6 +6855,52 @@
               },
               "type": {
                 "type": "string",
+                "const": "run.replay_requested"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "replayRunId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "observedSeq": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "replayRunId",
+              "observedSeq"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
                 "const": "run.started"
               },
               "attempt": {
@@ -6244,6 +7078,10 @@
               "type": {
                 "type": "string",
                 "const": "run.resumed"
+              },
+              "retryUncertainScript": {
+                "type": "boolean",
+                "const": true
               },
               "actor": {
                 "type": "object",
@@ -9006,6 +9844,81 @@
           "title",
           "status",
           "code"
+        ],
+        "additionalProperties": false
+      },
+      "RecoveryConflict": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "RUN_ACTIVE",
+              "RUN_PAUSED",
+              "RUN_FINISHED",
+              "RUN_CANCELLED",
+              "FAILURE_NOT_RESUMABLE",
+              "SCRIPT_CONSENT_REQUIRED",
+              "SESSION_RECOVERY_REQUIRED",
+              "PARENT_RECOVERY_REQUIRED",
+              "REPLAY_NODE_NOT_REACHED",
+              "DEFINITION_UNAVAILABLE",
+              "STATE_UNAVAILABLE",
+              "EXTERNAL_EFFECT_CONSUMED",
+              "RECOVERY_STALE",
+              "SHUTTING_DOWN"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail"
+        ],
+        "additionalProperties": false
+      },
+      "RecoveryUnavailable": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 503
+          },
+          "code": {
+            "type": "string",
+            "const": "SHUTTING_DOWN"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail"
         ],
         "additionalProperties": false
       },
@@ -14229,6 +15142,732 @@
         ],
         "additionalProperties": false
       },
+      "RunSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "ownerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "loopId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "versionId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "pinned": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "published",
+                  "draft"
+                ]
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "byHarness"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "process": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "byHarness"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "owner",
+                  "process"
+                ],
+                "additionalProperties": false
+              },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "maxNodeVisits",
+                  "runDeadlineSeconds",
+                  "structuredTimeoutMs"
+                ],
+                "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "source",
+              "version",
+              "name",
+              "label",
+              "defaults",
+              "limits",
+              "classifiers"
+            ],
+            "additionalProperties": false
+          },
+          "parentRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "currentNodeId": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+          },
+          "iteration": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "waiting": {
+            "$ref": "#/components/schemas/WaitSpec"
+          },
+          "cancelRequestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "pausedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/RunFailure"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failure",
+              "exhausted"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "lastEventSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "recovery": {
+            "$ref": "#/components/schemas/RunRecovery"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "loopId",
+          "versionId",
+          "pinned",
+          "invocationId",
+          "status",
+          "iteration",
+          "createdAt",
+          "lastEventSeq",
+          "recovery"
+        ],
+        "additionalProperties": false
+      },
+      "RunRecovery": {
+        "type": "object",
+        "properties": {
+          "observedSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "resume": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "allowed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "RUN_ACTIVE",
+                      "RUN_PAUSED",
+                      "RUN_FINISHED",
+                      "RUN_CANCELLED",
+                      "FAILURE_NOT_RESUMABLE",
+                      "SCRIPT_CONSENT_REQUIRED",
+                      "SESSION_RECOVERY_REQUIRED",
+                      "PARENT_RECOVERY_REQUIRED",
+                      "REPLAY_NODE_NOT_REACHED",
+                      "DEFINITION_UNAVAILABLE",
+                      "STATE_UNAVAILABLE",
+                      "EXTERNAL_EFFECT_CONSUMED",
+                      "RECOVERY_STALE",
+                      "SHUTTING_DOWN"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "replayDefault": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "allowed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allowed": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "RUN_ACTIVE",
+                      "RUN_PAUSED",
+                      "RUN_FINISHED",
+                      "RUN_CANCELLED",
+                      "FAILURE_NOT_RESUMABLE",
+                      "SCRIPT_CONSENT_REQUIRED",
+                      "SESSION_RECOVERY_REQUIRED",
+                      "PARENT_RECOVERY_REQUIRED",
+                      "REPLAY_NODE_NOT_REACHED",
+                      "DEFINITION_UNAVAILABLE",
+                      "STATE_UNAVAILABLE",
+                      "EXTERNAL_EFFECT_CONSUMED",
+                      "RECOVERY_STALE",
+                      "SHUTTING_DOWN"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "replay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nodeId": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "action": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "allowed": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "allowed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "allowed": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "RUN_ACTIVE",
+                            "RUN_PAUSED",
+                            "RUN_FINISHED",
+                            "RUN_CANCELLED",
+                            "FAILURE_NOT_RESUMABLE",
+                            "SCRIPT_CONSENT_REQUIRED",
+                            "SESSION_RECOVERY_REQUIRED",
+                            "PARENT_RECOVERY_REQUIRED",
+                            "REPLAY_NODE_NOT_REACHED",
+                            "DEFINITION_UNAVAILABLE",
+                            "STATE_UNAVAILABLE",
+                            "EXTERNAL_EFFECT_CONSUMED",
+                            "RECOVERY_STALE",
+                            "SHUTTING_DOWN"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "parentRunId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                        }
+                      },
+                      "required": [
+                        "allowed",
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "nodeId",
+                "label",
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scriptConsent": {
+            "type": "object",
+            "properties": {
+              "failureSeq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "failureSeq",
+              "nodeId"
+            ],
+            "additionalProperties": false
+          },
+          "replayOf": {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "runId",
+              "nodeId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "observedSeq",
+          "resume",
+          "replayDefault",
+          "replay"
+        ],
+        "additionalProperties": false
+      },
       "RunEvent": {
         "oneOf": [
           {
@@ -15192,6 +16831,52 @@
               },
               "type": {
                 "type": "string",
+                "const": "run.replay_requested"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "replayRunId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "observedSeq": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "replayRunId",
+              "observedSeq"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
                 "const": "run.started"
               },
               "attempt": {
@@ -15369,6 +17054,10 @@
               "type": {
                 "type": "string",
                 "const": "run.resumed"
+              },
+              "retryUncertainScript": {
+                "type": "boolean",
+                "const": true
               },
               "actor": {
                 "type": "object",
@@ -19741,7 +21430,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunRecord"
+                  "$ref": "#/components/schemas/RunSnapshot"
                 }
               }
             }
@@ -20018,10 +21707,37 @@
     },
     "/runs/{id}/resume": {
       "post": {
-        "summary": "Resume a run",
+        "summary": "Resume the observed eligible run in place",
         "tags": [
           "runs"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observedSeq": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "retryUncertainScript": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "observedSeq"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "schema": {
@@ -20040,6 +21756,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RunRecord"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryConflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryUnavailable"
                 }
               }
             }
@@ -20270,14 +22006,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "observedSeq": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "retryUncertainScript": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
                   "nodeId": {
                     "type": "string",
-                    "minLength": 1
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
                   }
                 },
                 "required": [
+                  "observedSeq",
                   "nodeId"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -20309,6 +22058,26 @@
                     "run"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryConflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryUnavailable"
                 }
               }
             }

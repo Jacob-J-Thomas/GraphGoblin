@@ -270,7 +270,7 @@ describe('run control', () => {
     expect(engine.eventTypes(run.id)).toEqual(
       expect.arrayContaining(['run.paused', 'run.resumed', 'run.started']),
     );
-    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'RUN_FINISHED' });
   });
 
   it('pauses a running run after the current node and resumes from the next one', async () => {
@@ -387,14 +387,14 @@ describe('failure and recovery', () => {
   it('resumes a failed run from the failed node', async () => {
     const engine = await createTestEngine();
     engine.ports.scripts.respondWith(() => ({
-      exitCode: 1,
+      exitCode: null,
       stdout: '',
       stderr: 'boom',
       stdoutBytes: 0,
       stdoutOverflow: false,
       stderrBytes: 4,
       stderrOverflow: false,
-      state: 'completed' as const,
+      state: 'definitely-not-started' as const,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -403,7 +403,7 @@ describe('failure and recovery', () => {
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('failed');
     expect(run.failure).toMatchObject({
-      code: 'SCRIPT_EXIT_CODE',
+      code: 'SCRIPT_START_FAILED',
       nodeId: 'script',
       resumable: true,
     });

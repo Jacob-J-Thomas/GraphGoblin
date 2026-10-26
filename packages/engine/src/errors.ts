@@ -1,4 +1,4 @@
-import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
+import type { RunErrorCode, RunFailure, RecoveryRefusalCode } from '@graphgoblin/contracts';
 import type { EventDraft } from './ports.js';
 
 /** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
@@ -168,5 +168,16 @@ export class ShutdownCleanupError extends Error {
   constructor() {
     super('Native process termination unconfirmed during explicit stop; ownership retained');
     this.name = 'ShutdownCleanupError';
+  }
+}
+
+/** The same typed refusal returned by the read-only recovery policy. */
+export class RecoveryRefusedError extends Error {
+  constructor(
+    readonly code: RecoveryRefusalCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'RecoveryRefusedError';
   }
 }

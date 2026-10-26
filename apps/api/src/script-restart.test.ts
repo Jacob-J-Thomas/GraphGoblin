@@ -159,7 +159,11 @@ describe('script effects across a real API kill (#321)', () => {
         });
         expect(recovered.failure?.message).toMatch(/may already have produced its effect/);
         const first = (await events()).filter((event) => event.type === 'script.dispatched');
-        await call('POST', `/runs/${run.id}/resume`);
+        await call('POST', `/runs/${run.id}/resume`, {
+          observedSeq: (await call<{ recovery: { observedSeq: number } }>('GET', `/runs/${run.id}`))
+            .recovery.observedSeq,
+          retryUncertainScript: true,
+        });
         await eventually(async () => (await get()).status === 'succeeded');
         expect(await count()).toBe(2);
         const dispatches = (await events()).filter((event) => event.type === 'script.dispatched');

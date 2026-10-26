@@ -729,7 +729,7 @@ it.each(['same failure', 'newer non-resumable failure'] as const)(
     await e.manager.waitForIdle();
     expect(outcomes.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
     expect(outcomes.find((x) => x.status === 'rejected')).toMatchObject({
-      reason: { code: 'INVALID_STATE' },
+      reason: { code: 'RECOVERY_STALE' },
     });
     // The rejected resume wrote nothing; the run ran its retry once.
     expect(e.eventTypes(r.id).filter((t) => t === 'run.resumed')).toHaveLength(1);

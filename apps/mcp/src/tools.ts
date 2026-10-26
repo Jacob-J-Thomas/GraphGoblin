@@ -76,7 +76,8 @@ function nextStep(run: RunRecord): string {
   if (run.status === 'waiting' && run.waiting?.kind === 'signal') {
     return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal with waitId from the observed waiting.waitId if you are the one expected to send it; otherwise call wait_for_run again.`;
   }
-  if (run.status === 'paused') return 'The run is paused. Call resume_run to continue it.';
+  if (run.status === 'paused')
+    return 'The run is paused. Review recovery and call resume_run with recovery.observedSeq to continue the same run.';
   if (['succeeded', 'failed', 'cancelled', 'exhausted'].includes(run.status))
     return 'Execution ended; finalization is pending. Inspect deliveries for result delivery state, and call wait_for_run again.';
   return 'The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far.';
@@ -234,6 +235,7 @@ export function registerTools(
         return {
           finished: false,
           status: run.status,
+          recovery: run.recovery,
           ...(run.finalizedAt ? { finalizedAt: run.finalizedAt } : {}),
           ...(run.deliveries ? { deliveries: run.deliveries } : {}),
           cursor: run.lastEventSeq,
@@ -249,7 +251,7 @@ export function registerTools(
     {
       title: 'Get a run',
       description:
-        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its returned value (including exhausted), and its failure details (for node failures). Call this to check a run without waiting; use wait_for_run to wait.',
+        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its returned value (including exhausted), its failure details (for node failures), and authoritative recovery eligibility with reason codes and observedSeq. Call this to check a run without waiting; use wait_for_run to wait.',
       inputSchema: { runId },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -358,13 +360,6 @@ export function registerTools(
       runs.pause,
       false,
     ],
-    [
-      'resume_run',
-      'Resume a run',
-      'Resume a paused run or a resumable failure. SCRIPT_START_FAILED means the script did not start; Resume tries again. SCRIPT_OUTCOME_UNCERTAIN means the previous script attempt may already have produced its effect; Resume runs it again and may repeat that effect. Resume uncertain scripts only when the user explicitly chooses to retry; offer replay_run or leave the failed run unchanged when they cancel recovery. A paused wait returns to waiting; other resumes continue running. Then call wait_for_run.',
-      runs.resume,
-      false,
-    ],
   ] as const;
   for (const [name, title, description, call, destructive] of control) {
     server.registerTool(
@@ -380,13 +375,39 @@ export function registerTools(
   }
 
   server.registerTool(
+    'resume_run',
+    {
+      title: 'Resume the observed run',
+      description:
+        'Continue the same run id only when get_run.recovery.resume allows it. Pass recovery.observedSeq from that read. A SCRIPT_CONSENT_REQUIRED refusal requires the user to explicitly choose retryUncertainScript; the effect may repeat. A missing session needs the inspector Start fresh session choice or POST /runs/{id}/recover-session, and a child owned by its parent must be resumed through that parent. Stale observations are refused; read get_run again before a new decision.',
+      inputSchema: {
+        runId,
+        observedSeq: z.number().int().nonnegative(),
+        retryUncertainScript: z.literal(true).optional(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ runId: id, observedSeq, retryUncertainScript }) =>
+      guard(async () =>
+        summarizeRun(
+          await runs.resume(client, id, {
+            observedSeq,
+            ...(retryUncertainScript ? { retryUncertainScript } : {}),
+          }),
+        ),
+      ),
+  );
+
+  server.registerTool(
     'replay_run',
     {
       title: 'Replay a run from a node',
       description:
-        'Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The original run is not changed. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.',
+        'Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The original execution state is retained; its history records the fork. Replay refuses consumed external work and recorded deliveries. Consult get_run.recovery for each node and pass its observedSeq. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.',
       inputSchema: {
         runId,
+        observedSeq: z.number().int().nonnegative(),
+        retryUncertainScript: z.literal(true).optional(),
         nodeId: z
           .string()
           .min(1)
@@ -394,9 +415,12 @@ export function registerTools(
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    ({ runId: id, nodeId }) =>
+    ({ runId: id, nodeId, observedSeq, retryUncertainScript }) =>
       guard(async () => {
-        const fork = await runs.replay(client, id, nodeId);
+        const fork = await runs.replay(client, id, nodeId, {
+          observedSeq,
+          ...(retryUncertainScript ? { retryUncertainScript } : {}),
+        });
         return {
           ...summarizeRun(fork),
           replayOf: { runId: id, nodeId },

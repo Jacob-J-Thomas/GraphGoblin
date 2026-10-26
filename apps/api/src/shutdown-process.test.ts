@@ -546,7 +546,17 @@ it.each(['drain', 'force'] as const)(
     );
     for (const run of [parked[1]!, parked[2]!]) {
       if (run.status === 'paused')
-        expect((await a.call('POST', `/runs/${run.id}/resume`, {})).status).toBe(200);
+        expect(
+          (
+            await a.call('POST', `/runs/${run.id}/resume`, {
+              observedSeq: (
+                (await (await a.call('GET', `/runs/${run.id}`)).json()) as {
+                  recovery: { observedSeq: number };
+                }
+              ).recovery.observedSeq,
+            })
+          ).status,
+        ).toBe(200);
       expect(
         (
           await a.call('POST', `/runs/${run.id}/input`, {

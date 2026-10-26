@@ -5,6 +5,8 @@ import {
   ReturnChannelSchema,
   RunEventSchema,
   RunRecordSchema,
+  RunSnapshotSchema,
+  RecoveryCommandSchema,
   RunStatusSchema,
   TimestampSchema,
   UlidSchema,
@@ -22,7 +24,12 @@ import { assertRunReadiness, RunReadinessError } from '../run-readiness.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
-import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
+import {
+  openApiRegistry,
+  WaitConflictSchema,
+  RecoveryConflictSchema,
+  RecoveryUnavailableSchema,
+} from '../openapi-registry.js';
 import { historicalThread, historyCursor, readHistoryCursor } from '../run-history.js';
 
 const IdParams = z.object({ id: UlidSchema });
@@ -171,11 +178,12 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'Run snapshot: status, current node, iteration, waiting spec, result, failure',
         params: IdParams,
-        response: { 200: RunRecordSchema },
+        response: { 200: RunSnapshotSchema },
       },
     },
     async (request) => {
-      return ownedRun(request, request.params.id);
+      await ownedRun(request, request.params.id);
+      return manager.getSnapshot(request.params.id);
     },
   );
 
@@ -336,13 +344,13 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     },
   );
 
-  for (const action of ['cancel', 'pause', 'resume'] as const) {
+  for (const action of ['cancel', 'pause'] as const) {
     app.post(
       `/runs/:id/${action}`,
       {
         schema: {
           tags: ['runs'],
-          summary: `${action === 'cancel' ? 'Cancel' : action === 'pause' ? 'Pause' : 'Resume'} a run`,
+          summary: `${action === 'cancel' ? 'Cancel' : 'Pause'} a run`,
           params: IdParams,
           response: { 200: RunRecordSchema },
         },
@@ -353,6 +361,27 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       },
     );
   }
+
+  app.post(
+    '/runs/:id/resume',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Resume the observed eligible run in place',
+        params: IdParams,
+        body: RecoveryCommandSchema,
+        response: {
+          200: RunRecordSchema,
+          409: RecoveryConflictSchema,
+          503: RecoveryUnavailableSchema,
+        },
+      },
+    },
+    async (request) => {
+      await ownedRun(request, request.params.id);
+      return manager.resume(request.params.id, request.auth.actor, request.body);
+    },
+  );
 
   app.post(
     '/runs/:id/recover-session',
@@ -432,10 +461,16 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'Fork a new run at a node, with the thread as it was just before that node',
         params: IdParams,
-        body: z.object({
-          nodeId: z.string().min(1).describe('A node the source run has started at least once'),
+        body: RecoveryCommandSchema.extend({
+          nodeId: SlugSchema.describe(
+            'A node with an allowed replay action in the observed run snapshot',
+          ),
         }),
-        response: { 202: z.object({ run: RunRecordSchema }) },
+        response: {
+          202: z.object({ run: RunRecordSchema }),
+          409: RecoveryConflictSchema,
+          503: RecoveryUnavailableSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -443,6 +478,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const run = await manager.replay({
         runId: request.params.id,
         nodeId: request.body.nodeId,
+        observedSeq: request.body.observedSeq,
+        ...(request.body.retryUncertainScript ? { retryUncertainScript: true } : {}),
         source: sourceFor(request),
         caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
       });

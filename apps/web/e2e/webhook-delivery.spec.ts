@@ -191,7 +191,19 @@ test('remote resume that finishes between polls stays live while its webhook is 
   try {
     await page.goto('/app/runs/' + run.id);
     await expect(page.getByRole('heading', { name: /^Timeline .*complete\)/ })).toBeVisible();
-    expect((await request.post('/runs/' + run.id + '/resume', { data: {} })).ok()).toBe(true);
+    expect(
+      (
+        await request.post('/runs/' + run.id + '/resume', {
+          data: {
+            observedSeq: (
+              (await (await request.get('/runs/' + run.id)).json()) as {
+                recovery: { observedSeq: number };
+              }
+            ).recovery.observedSeq,
+          },
+        })
+      ).ok(),
+    ).toBe(true);
     await expect(page.getByText(/Pending \(\d\/5 attempts\)/)).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Timeline .*live\)/ })).toBeVisible();
     acknowledge = true;

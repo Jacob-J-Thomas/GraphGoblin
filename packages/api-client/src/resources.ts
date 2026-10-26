@@ -1,3 +1,4 @@
+import type { RecoveryCommand } from '@graphgoblin/contracts';
 /**
  * Thin convenience wrappers over the typed client, grouped by resource. Every function takes the
  * client first, returns the response body, and throws `GraphGoblinApiError` on a non-2xx response.
@@ -156,8 +157,8 @@ export const runs = {
     unwrap(await client.POST('/runs/{id}/cancel', id(runId))),
   pause: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/pause', id(runId))),
-  resume: async (client: GraphGoblinClient, runId: string) =>
-    unwrap(await client.POST('/runs/{id}/resume', id(runId))),
+  resume: async (client: GraphGoblinClient, runId: string, command: RecoveryCommand) =>
+    unwrap(await client.POST('/runs/{id}/resume', { ...id(runId), body: command })),
   /** Deliberately abandon the missing provider context for this observed failed node. */
   recoverSession: async (
     client: GraphGoblinClient,
@@ -188,8 +189,14 @@ export const runs = {
   sessions: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.GET('/runs/{id}/sessions', id(runId))).items,
   /** Fork a new run at `nodeId` with the thread from just before that node. Returns the queued fork. */
-  replay: async (client: GraphGoblinClient, runId: string, nodeId: string) =>
-    unwrap(await client.POST('/runs/{id}/replay', { ...id(runId), body: { nodeId } })).run,
+  replay: async (
+    client: GraphGoblinClient,
+    runId: string,
+    nodeId: string,
+    command: RecoveryCommand,
+  ) =>
+    unwrap(await client.POST('/runs/{id}/replay', { ...id(runId), body: { nodeId, ...command } }))
+      .run,
 };
 
 export const settings = {

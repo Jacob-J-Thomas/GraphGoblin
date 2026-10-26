@@ -27,19 +27,19 @@ describe('ordinary script resume', () => {
   it('keeps the pinned script and run and starts a new attempt when resuming after a newer version is published', async () => {
     const engine = await createTestEngine();
     engine.ports.scripts.respondWith(() => ({
-      exitCode: 1,
+      exitCode: null,
       stdout: '',
       stderr: 'retry needed',
       stdoutBytes: 0,
       stdoutOverflow: false,
       stderrBytes: 12,
       stderrOverflow: false,
-      state: 'completed' as const,
+      state: 'definitely-not-started' as const,
       timedOut: false,
     }));
     const pinned = engine.publish(scriptLoop());
     const failed = await engine.runToIdle(pinned.loopId);
-    expect(failed.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
+    expect(failed.failure).toMatchObject({ code: 'SCRIPT_START_FAILED', resumable: true });
     const latest = engine.publish(scriptLoop('new-version-script'), {
       loopId: pinned.loopId,
       version: 2,

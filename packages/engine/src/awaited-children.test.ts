@@ -526,7 +526,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     let calls = 0;
     vi.spyOn(e.ports.scripts, 'run').mockImplementation(async () => {
       calls += 1;
-      if (calls === 1) return result(1, '');
+      if (calls === 1) return { ...result(1, ''), state: 'definitely-not-started', exitCode: null };
       await second;
       return result(0, '"done"');
     });
@@ -735,7 +735,9 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       vi.spyOn(e.ports.scripts, 'run').mockImplementation(() => {
         calls += 1;
         return Promise.resolve(
-          calls === 1 ? output(1, '') : output(exitCode, exitCode === 0 ? '"new"' : ''),
+          calls === 1
+            ? { ...output(1, ''), state: 'definitely-not-started' as const, exitCode: null }
+            : output(exitCode, exitCode === 0 ? '"new"' : ''),
         );
       });
       const parentLoop = e.publish(withAfter('lost-failure-parent', child.loopId));
