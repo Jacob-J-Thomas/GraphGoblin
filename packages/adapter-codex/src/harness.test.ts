@@ -426,7 +426,7 @@ describe('cancellation', () => {
     await session.cancel(); // idempotent once settled
   });
 
-  it('cancel() gives up waiting after the grace period', async () => {
+  it('cancel() reports unconfirmed termination when the turn does not end within the grace period', async () => {
     const stuck: CodexClientFactory = () => ({
       startThread: () => ({
         runStreamed: () => new Promise(() => {}),
@@ -435,11 +435,67 @@ describe('cancellation', () => {
         throw new Error('unused');
       },
     });
-    const session = new CodexHarness({ clientFactory: stuck, cancelGraceMs: 10 }).start(
-      request(),
-      new AbortController().signal,
+    const log = logger();
+    const session = new CodexHarness({
+      clientFactory: stuck,
+      cancelGraceMs: 10,
+      logger: log,
+    }).start(request(), new AbortController().signal);
+    await expect(session.cancel()).rejects.toMatchObject({
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      retriable: false,
+    });
+    expect((await drain(session)).at(-1)).toMatchObject({
+      type: 'error',
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'HARNESS_TERMINATION_UNCONFIRMED', retriable: false }),
+      expect.stringMatching(/termination was not confirmed/),
     );
-    await session.cancel();
+  });
+
+  it('stops waiting for an event stream that outlives an abort, even one it cannot close', async () => {
+    const accepted = loadFixture('message').events.slice(0, 1);
+    const factory: CodexClientFactory = () => ({
+      startThread: () => ({
+        runStreamed: () => {
+          let index = 0;
+          // An iterator without `return`: after the accepted events it never settles again.
+          const events: AsyncIterable<{ type: string }> = {
+            [Symbol.asyncIterator]: () => ({
+              next: () =>
+                index < accepted.length
+                  ? Promise.resolve({ done: false as const, value: accepted[index++]! })
+                  : new Promise<never>(() => {}),
+            }),
+          };
+          return Promise.resolve({ events });
+        },
+      }),
+      resumeThread: () => {
+        throw new Error('unused');
+      },
+    });
+    const controller = new AbortController();
+    const session = new CodexHarness({ clientFactory: factory, cancelGraceMs: 10 }).start(
+      request(),
+      controller.signal,
+    );
+    await session.sessionId;
+    controller.abort();
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+  });
+
+  it('cancel() after a completed turn has nothing to stop', async () => {
+    const session = new CodexHarness({
+      clientFactory: ReplayCodex.fromFixtures('message').factory,
+      cancelGraceMs: 10,
+    }).start(request(), new AbortController().signal);
+    await expect(session.result).resolves.toMatchObject({ finalText: 'OK' });
+    await expect(session.cancel()).resolves.toBeUndefined();
   });
 
   it('never starts the CLI for an already-aborted signal', async () => {

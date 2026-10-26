@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest';
+import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import { RunManager } from '@graphgoblin/engine';
 import { ShutdownController } from './shutdown.js';
@@ -99,6 +100,57 @@ it('B3 force failure offers an explicit nonzero exit acknowledgement, retaining 
   expect((await e.ports.runs.get(run.id))?.failure).toEqual(failure);
   expect(controller.closing.signal.aborted).toBe(false);
   manager.stop();
+});
+
+it('force over a Codex turn whose CLI output outlives the kill fails cleanup instead of waiting in forcing', async () => {
+  const e = await createTestEngine();
+  // The SDK's event stream ends only at the CLI's stdout EOF. A process the CLI started can hold
+  // that pipe after the abort kills the CLI, so this stream never ends once the turn is accepted.
+  e.ports.harnesses.codex = new CodexHarness({
+    cancelGraceMs: 100,
+    clientFactory: () => {
+      const thread = {
+        runStreamed: () =>
+          Promise.resolve({
+            events: (async function* () {
+              yield { type: 'thread.started', thread_id: 'held-output' };
+              yield { type: 'turn.started' };
+              await new Promise<never>(() => {});
+            })(),
+          }),
+      };
+      return { startThread: () => thread, resumeThread: () => thread };
+    },
+  });
+  const v = e.publish(
+    singleNodeLoop('held codex output', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'Infer',
+      config: { harness: 'codex', prompt: { template: 'Controlled fixture; no provider call' } },
+    }),
+  );
+  const run = await e.start(v.loopId);
+  await vi.waitFor(() =>
+    expect(e.events(run.id)).toContainEqual(
+      expect.objectContaining({ type: 'harness.submission', submission: 'submitted' }),
+    ),
+  );
+  const controller = new ShutdownController(e.manager, 300_000, () => undefined, e.ports.logger);
+  await controller.request('force');
+  await vi.waitFor(() => expect(controller.state().phase).toBe('force-failed'));
+  expect(controller.state()).toMatchObject({ unconfirmedRunIds: [run.id], choices: ['force'] });
+  expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+    code: 'HARNESS_TERMINATION_UNCONFIRMED',
+    nodeId: 'infer',
+    details: { interruptedByStop: true },
+  });
+  expect(await controller.request('force')).toMatchObject({
+    phase: 'exiting',
+    unconfirmedRunIds: [run.id],
+  });
+  await controller.abandoned;
+  e.manager.stop();
 });
 
 it('labels a drain observation failure accurately and rejects invalid transitions', async () => {
