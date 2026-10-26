@@ -159,3 +159,6 @@ executor/delivery cleanup; HTTP closes next, then SQLite, then the directory loc
 On Windows, use the API controls when stopping from another process. Windows `taskkill`
 and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
 they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.
+A Ctrl+C in the gateway's own console is covered on Windows by
+`apps/api/src/shutdown-console.test.ts`, which delivers a real console control event; every
+provider and tool process has its own hidden console, so only the gateway receives it.
