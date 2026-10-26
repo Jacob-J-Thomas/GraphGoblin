@@ -1,0 +1,43 @@
+2026-10-26T10:32:17.829Z +2.9s gateway r1 listening {"pid":36584,"port":6535,"viaConsole":false}
+2026-10-26T10:32:23.313Z +8.3s CHECK PASS R1-1 API drain: both runs active, the Codex CLI and the script alive {"drain":202,"phase":"draining","active":["01M5VW992C5Z94DM83J1KG5MZ9","01M5VW99C3BMZQZDGBG2TJGK84"]}
+2026-10-26T10:32:23.334Z +8.4s CHECK PASS R1-1 no Codex turn failure during the API drain null
+2026-10-26T10:32:55.472Z +40.5s R1 samples after Keep waiting (5 graces) [{"ms":2507,"phase":"draining","cli":true,"script":true},{"ms":5593,"phase":"draining","cli":true,"script":true},{"ms":8577,"phase":"draining","cli":true,"script":true},{"ms":11506,"phase":"draining","cli":true,"script":true},{"ms":14588,"phase":"draining","cli":true,"script":true},{"ms":17568,"phase":"draining","cli":true,"script":true},{"ms":20580,"phase":"draining","cli":true,"script":true},{"ms":23523,"phase":"draining","cli":true,"script":true},{"ms":26541,"phase":"draining","cli":true,"script":true}]
+2026-10-26T10:32:55.473Z +40.5s CHECK PASS R1-2 after Keep waiting no second expiry and nothing is killed for 5 graces {"ms":26541,"phase":"draining","cli":true,"script":true}
+2026-10-26T10:32:55.498Z +40.5s R1 notice after Keep waiting "Gateway is draining\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\nWaiting never starts a browser countdown. Any further choice comes from the gateway.\nDrain Codex turn — 01M5VW992C5Z94DM83J1KG5MZ9\nDrain script — 01M5VW99C3BMZQZDGBG2TJGK84\nKeep waiting\nForce stop"
+2026-10-26T10:32:55.564Z +40.6s CHECK PASS R1-2 the browser sent exactly one POST (Keep waiting) [{"at":"2026-10-26T10:32:27.943Z","method":"POST","tab":"r1"}]
+2026-10-26T10:32:55.884Z +40.9s CHECK PASS R1-3 releasing the work completes the drain with exit 0 0
+2026-10-26T10:32:59.210Z +44.2s gateway r1r listening {"pid":36564,"port":6535,"viaConsole":false}
+2026-10-26T10:32:59.238Z +44.3s CHECK PASS R1-4 both runs succeeded {"codex":"succeeded","script":"succeeded"}
+2026-10-26T10:32:59.358Z +44.4s CHECK PASS R1-5 restarted gateway exits 0 0
+2026-10-26T10:33:02.224Z +47.3s gateway r2 listening {"pid":2800,"port":6536,"viaConsole":false}
+2026-10-26T10:33:04.647Z +49.7s R2 work started {"treeRun":"01M5VWAMK2D8JB3WF4FD6ZJP3R","codexRun":"01M5VWAMKPETV5YJCHA4B0A84P","parentRun":"01M5VWAMXM74FVQ3DCPQ7H7PZW","childRun":"01M5VWAMZ9AY2X2F5JC3ZTFVP8","parkRun":"01M5VWAME8X6ENYKXMCK6FSHRH","queuedRun":"01M5VWAN5VK07BAT1VZ03STSYK","queuedBefore":"queued","pids":{"treePid":21304,"grandPid":19804,"cliPid":60936,"childPid":45560}}
+2026-10-26T10:33:04.647Z +49.7s CHECK PASS R2-0 OS tree shows the script root, its grandchild, the Codex CLI and the child script under the gateway null
+2026-10-26T10:33:04.648Z +49.7s CHECK PASS R2-0 the independent run beyond capacity is queued "queued"
+2026-10-26T10:33:05.559Z +50.6s CHECK PASS R2-1 active work lists the script, Codex and child runs; not the wait or the queued run ["01M5VWAMK2D8JB3WF4FD6ZJP3R","01M5VWAMKPETV5YJCHA4B0A84P","01M5VWAMZ9AY2X2F5JC3ZTFVP8"]
+2026-10-26T10:33:13.751Z +58.8s CHECK PASS R2-2 the notice names each active run with its loop name null
+2026-10-26T10:33:13.813Z +58.8s R2 force confirmation "Force stop active work?\n\nInterrupt the active executors and queued family work listed below, including required children. Already saved waits and paused runs stay saved.\n\nForce tree script — 01M5VWAMK2D8JB3WF4FD6ZJP3R\nForce Codex turn — 01M5VWAMKPETV5YJCHA4B0A84P\nForce child — 01M5VWAMZ9AY2X2F5JC3ZTFVP8\n\nExternal effects may be uncertain. Interrupted work does not automatically resume; inspect the run evidence before an explicit replay. Work may finish or a required child may start while you decide.\n\nGo back\nConfirm force stop"
+2026-10-26T10:33:14.728Z +59.8s CHECK PASS R2-3 Go back sends nothing null
+2026-10-26T10:33:15.332Z +60.4s R2 gateway exit after the browser force {"code":0,"ms":528}
+2026-10-26T10:33:15.333Z +60.4s CHECK PASS R2-4 force completes and the gateway exits 0 0
+2026-10-26T10:33:16.446Z +61.5s CHECK PASS R2-4 tasklist: script root, grandchild, Codex CLI, child script and gateway are gone; lock released {"treeRoot":false,"grandchild":false,"codexCli":false,"childScript":false,"gateway":false}
+2026-10-26T10:33:18.066Z +63.1s CHECK PASS R2-4 CIM: no process names the store []
+2026-10-26T10:33:22.262Z +67.3s gateway r2r listening {"pid":24216,"port":6536,"viaConsole":false}
+2026-10-26T10:33:22.282Z +67.3s CHECK PASS R2-5 script, Codex and child runs record RUN_INTERRUPTED_BY_STOP at their nodes (attempt 1, non-resumable, effects may have happened) {"tree":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"hold","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true},"script":{"visitId":"01M5VWAMK2D8JB3WF4FD6ZJP3R:5","dispatchId":"01M5VWAMN5NKC7WQCW7Z6BGFD3","state":"outcome-uncertain"}},"codex":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}},"child":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"hold","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true},"script":{"visitId":"01M5VWAMZ9AY2X2F5JC3ZTFVP8:5","dispatchId":"01M5VWAN1P14V0ZXKCQ6AQ4N6V","state":"outcome-uncertain"}}}
+2026-10-26T10:33:22.282Z +67.3s CHECK PASS R2-5 the durable wait is unchanged (waiting) "waiting"
+2026-10-26T10:33:22.294Z +67.3s CHECK PASS R2-6 the queued independent run was not interrupted and ran after restart "succeeded"
+2026-10-26T10:33:22.306Z +67.3s CHECK PASS R2-6 the parent did not succeed with fabricated child output "failed"
+2026-10-26T10:33:25.863Z +70.9s CHECK PASS R2-7 no blind replay: the Codex CLI did not run again and no script re-ran []
+2026-10-26T10:33:25.875Z +70.9s CHECK PASS R2-7 Resume of the interrupted Codex run is refused {"status":409,"code":"INVALID_STATE"}
+2026-10-26T10:33:27.631Z +72.7s CHECK PASS R2-8 the inspector shows the interruption and possible external effects for the Codex run null
+2026-10-26T10:33:28.082Z +73.1s CHECK PASS R2-9 restarted gateway drains to exit 0 0
+2026-10-26T10:33:31.382Z +76.4s gateway r3 listening {"pid":34500,"port":6537,"viaConsole":false}
+2026-10-26T10:33:34.246Z +79.3s CHECK PASS R3-1 API force exits 0; the Codex CLI and the script are gone {"forced":202,"code":0}
+2026-10-26T10:33:37.553Z +82.6s gateway r3r listening {"pid":35060,"port":6537,"viaConsole":false}
+2026-10-26T10:33:40.581Z +85.6s CHECK PASS R3-2 after restart both stay failed RUN_INTERRUPTED_BY_STOP and nothing re-ran {"codex":"RUN_INTERRUPTED_BY_STOP","script":"RUN_INTERRUPTED_BY_STOP"}
+2026-10-26T10:33:40.599Z +85.6s CHECK PASS R3-3 Resume is refused for both [409,409]
+2026-10-26T10:33:40.691Z +85.7s R3 explicit replays {"codex":{"status":202,"run":"01M5VWBSGP7TAF7REMGQXPR70N"},"script":{"status":202,"run":"01M5VWBSJ85472DA8DP1FN1A3Q"}}
+2026-10-26T10:33:40.692Z +85.7s CHECK PASS R3-4 explicit Replay from the interrupted node is accepted for both (202, new runs) {"codex":202,"script":202}
+2026-10-26T10:33:41.068Z +86.1s CHECK PASS R3-5 both replayed runs succeed {"codex":"succeeded","script":"succeeded"}
+2026-10-26T10:33:41.077Z +86.1s CHECK PASS R3-5 the source runs keep their interruption record null
+2026-10-26T10:33:41.193Z +86.2s CHECK PASS R3-6 restarted gateway drains to exit 0 0
+2026-10-26T10:33:41.195Z +86.2s DONE passed=30 failed=0
