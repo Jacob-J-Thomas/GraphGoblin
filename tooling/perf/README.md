@@ -1,9 +1,9 @@
 # Sustained-run measurements (#190)
 
-Build once with Node 22 first on PATH:
+Build once with Node 22.22.2 or later first on PATH (`$node22` is its folder):
 
 ```powershell
-$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$env:PATH = "$node22;$env:PATH"
 pnpm.cmd build
 ```
 
