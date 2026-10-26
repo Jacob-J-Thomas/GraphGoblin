@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -94,6 +94,53 @@ describe('owned native Claude process transport', () => {
     setTimeout(() => running.abort(), 50);
     expect(await promise).toMatchObject({ aborted: true });
   });
+  it.skipIf(process.platform !== 'win32')(
+    'counts a turn process that exited before its cancellation as stopped once its output closes',
+    async () => {
+      const dir = await directory(),
+        marker = join(dir, 'pids.json');
+      // Like a CLI that prints its init line and exits at once; a detached process it started
+      // keeps the output open for 1.5 s.
+      const script =
+        "const {spawn}=await import('node:child_process');const fs=await import('node:fs');" +
+        "const holder=spawn(process.execPath,['-e','setTimeout(()=>{},1500)'],{detached:true,stdio:['ignore','inherit','ignore'],windowsHide:true});" +
+        'holder.unref();' +
+        `fs.writeFileSync(${JSON.stringify(marker)},JSON.stringify({root:process.pid,holder:holder.pid}));` +
+        "process.stdout.write('init\\n');";
+      const controller = new AbortController();
+      const result = run(script, { signal: controller.signal, timeoutMs: 10_000 });
+      const running = (pid: number) => {
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      try {
+        let pids: { root: number; holder: number } | undefined;
+        await vi.waitFor(
+          async () => {
+            pids = JSON.parse(await readFile(marker, 'utf8')) as { root: number; holder: number };
+          },
+          { timeout: 10_000 },
+        );
+        await vi.waitFor(() => expect(running(pids!.root)).toBe(false), { timeout: 10_000 });
+        // Let Node report the exit too, so the cancellation meets a root it already saw exit.
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        expect(running(pids!.holder)).toBe(true);
+        controller.abort();
+        const settled = await result;
+        expect(settled).not.toHaveProperty('terminationUnconfirmed');
+        expect(settled).toMatchObject({ aborted: true, exitCode: 0, stdout: 'init\n' });
+        expect(running(pids!.holder)).toBe(false);
+      } finally {
+        controller.abort();
+        await result;
+      }
+    },
+    15_000,
+  );
   it('kills the descendant that a long-lived child started', async () => {
     const dir = await directory(),
       marker = join(dir, 'descendant-marker');
