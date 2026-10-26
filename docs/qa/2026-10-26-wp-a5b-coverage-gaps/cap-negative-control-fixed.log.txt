@@ -1,0 +1,36 @@
+pnpm.cmd --filter @graphgoblin/engine exec vitest run src/run-manager.test.ts -t limits concurrency to the configured number
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/engine
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed | 26 skipped) 5027ms
+   ❯ run control (9)
+     × limits concurrency to the configured number of workers 5024ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/run-manager.test.ts > run control > limits concurrency to the configured number of workers
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/run-manager.test.ts:358:3
+    356|   });
+    357|
+    358|   it('limits concurrency to the configured number of workers', async (…
+       |   ^
+    359|     const engine = await createTestEngine({ maxConcurrentRuns: 3 });
+    360|     const started = Array.from({ length: 3 }, () => barrier());
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+   Start at  01:05:12
+   Duration  8.18s (tests 64%, import 21%, transform 15%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\packages\engine
+System.Management.Automation.RemoteException
+EXIT 1

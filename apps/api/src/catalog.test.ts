@@ -2,7 +2,12 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { CODEX_DEFAULT_MODEL } from '@graphgoblin/adapter-codex';
 import { CLAUDE_MODEL } from '@graphgoblin/infrastructure/claude';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput, LoopIssue, ModelCatalogEntry } from '@graphgoblin/contracts';
+import type {
+  Effort,
+  LoopDefinitionInput,
+  LoopIssue,
+  ModelCatalogEntry,
+} from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
@@ -359,6 +364,88 @@ describe('advisory model validation', () => {
       ).statusCode,
     ).toBe(404);
   });
+});
+
+describe('Codex efforts are sent unchanged and offered per model (#205)', () => {
+  function withEffort(
+    place: 'inference' | 'decision',
+    model: string,
+    effort: Effort,
+  ): LoopDefinitionInput {
+    const definition = modelLoop(place, model);
+    const node =
+      place === 'inference'
+        ? {
+            id: 'model-node',
+            kind: 'inference' as const,
+            label: 'Infer',
+            config: { prompt: { template: 'Hi' }, model, effort },
+          }
+        : {
+            id: 'model-node',
+            kind: 'decision' as const,
+            label: 'Decide',
+            config: {
+              kind: 'llm' as const,
+              harness: 'codex' as const,
+              instructions: 'Which?',
+              model: { mode: 'explicit' as const, value: model },
+              effort: { mode: 'explicit' as const, value: effort },
+              routes: [
+                { id: 'a', label: 'A' },
+                { id: 'b', label: 'B' },
+              ],
+            },
+          };
+    return { ...definition, nodes: [definition.nodes[0]!, node, definition.nodes[2]!] };
+  }
+
+  it('lists max for every Codex model the CLI catalog gives it, and not for GPT-5.5', async () => {
+    const { items } = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>();
+    const codex = items.filter((entry) => entry.harness === 'codex');
+    expect(codex.find((entry) => entry.model === 'gpt-5.5')?.efforts).toEqual([
+      'minimal',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+    ]);
+    expect(
+      codex.filter((entry) => entry.model !== 'gpt-5.5').every((e) => e.efforts.includes('max')),
+    ).toBe(true);
+  });
+
+  it.each(['inference', 'decision'] as const)(
+    'refuses max for a GPT-5.5 %s before any request and runs max on GPT-6 Luna unchanged',
+    async (place) => {
+      const refused = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: withEffort(place, 'gpt-5.5', 'max') },
+      });
+      expect(refused.statusCode).toBe(400);
+      expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+      const defaults = await t.app.inject({
+        method: 'PUT',
+        url: '/settings',
+        payload: { defaults: { byHarness: { codex: { model: 'gpt-5.5', effort: 'max' } } } },
+      });
+      expect(defaults.statusCode).toBe(400);
+      expect(defaults.body).toContain('EFFORT_UNSUPPORTED');
+      const loopId = await t.publishLoop(withEffort(place, 'gpt-6-luna', 'max'));
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      const requested = place === 'inference' ? t.harness.started : t.codex.routes;
+      expect(requested.map(({ model, effort }) => ({ model, effort }))).toEqual([
+        { model: 'gpt-6-luna', effort: 'max' },
+      ]);
+    },
+  );
 });
 
 describe('uniform strict evaluator admission', () => {

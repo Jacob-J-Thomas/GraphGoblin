@@ -1,0 +1,49 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/apps/api
+
+ × src/shutdown-console.test.ts > one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes 14450ms
+   → The gateway exited with code 0 after one Ctrl+C instead of draining
+ × src/shutdown-console.test.ts > a later terminal Ctrl+C explicitly forces the running Codex turn 25777ms
+   → The gateway exited with code 0 after one Ctrl+C instead of draining
+ ↓ src/shutdown-console.test.ts > force over a Codex CLI whose tool process keeps its output open fails cleanup and offers Force exit
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-console.test.ts > one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes
+Error: The gateway exited with code 0 after one Ctrl+C instead of draining
+ ❯ src/shutdown-console.test.ts:265:19
+    263|           await Promise.race([exit, new Promise((resolve) => setTimeou…
+    264|           if (host.exitCode !== null)
+    265|             throw new Error(
+       |                   ^
+    266|               `The gateway exited with code ${host.exitCode} after one…
+    267|             );
+ ❯ src/shutdown-console.test.ts:262:23
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ Object.draining src/shutdown-console.test.ts:261:7
+ ❯ src/shutdown-console.test.ts:283:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/shutdown-console.test.ts > a later terminal Ctrl+C explicitly forces the running Codex turn
+Error: The gateway exited with code 0 after one Ctrl+C instead of draining
+ ❯ src/shutdown-console.test.ts:265:19
+    263|           await Promise.race([exit, new Promise((resolve) => setTimeou…
+    264|           if (host.exitCode !== null)
+    265|             throw new Error(
+       |                   ^
+    266|               `The gateway exited with code ${host.exitCode} after one…
+    267|             );
+ ❯ src/shutdown-console.test.ts:262:23
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ Object.draining src/shutdown-console.test.ts:261:7
+ ❯ src/shutdown-console.test.ts:308:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 skipped (3)
+   Start at  03:21:52
+   Duration  42.94s (tests 100%)
+

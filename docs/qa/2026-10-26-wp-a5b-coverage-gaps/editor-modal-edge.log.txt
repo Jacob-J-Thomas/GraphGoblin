@@ -1,0 +1,16 @@
+pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/editor-modal.spec.ts --retries=0 --workers=1
+
+Running 7 tests using 1 worker
+
+(node:3732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\editor-modal.spec.ts:53:1 › a click opens the node editor; a drag moves the node and opens nothing (7.9s)
+  ok 2 [chromium] › e2e\editor-modal.spec.ts:102:1 › PR48-QA-02: a double-click on a node leaves one editor open; a later backdrop click closes it (7.6s)
+  ok 3 [chromium] › e2e\editor-modal.spec.ts:146:1 › keyboard: Enter opens, Tab stays inside, Delete edits text only, Esc closes back to the node (2.0s)
+  ok 4 [chromium] › e2e\editor-modal.spec.ts:194:1 › below 768 px the node editor is a full-width sheet along the bottom edge (2.6s)
+  ok 5 [chromium] › e2e\editor-modal.spec.ts:229:1 › the loop panel collapses and expands from its own controls and is remembered (4.1s)
+  ok 6 [chromium] › e2e\editor-modal.spec.ts:308:1 › runs start from Runs: the editor links there, disabled with a reason until published (6.1s)
+  ok 7 [chromium] › e2e\editor-modal.spec.ts:357:1 › a draft conflict is answered from inside an open node editor (5.4s)
+
+  7 passed (2.1m)
+EXIT 0

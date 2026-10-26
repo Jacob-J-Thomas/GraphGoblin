@@ -1,0 +1,278 @@
+{
+  "scenario": "s2-ctrlc-mixed",
+  "passed": 28,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "D1-0 all three runs running before the Ctrl+C",
+      "ok": true,
+      "detail": [
+        "running",
+        "running",
+        "running"
+      ]
+    },
+    {
+      "id": "D1-0 none of the script, Codex CLI or Claude CLI is attached to the gateway console",
+      "ok": true,
+      "detail": {
+        "status": 0,
+        "entries": [
+          "26880:node",
+          "24672:launcher2"
+        ]
+      }
+    },
+    {
+      "id": "D1-1 the first Ctrl+C starts a normal drain; the duplicate is coalesced (not force)",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "D1-1 all three runs are active work",
+      "ok": true,
+      "detail": [
+        "01M5VV4T4R8QY6J841N8B6JJ0Y",
+        "01M5VV4T6VJEFVY0JXQC28B22M",
+        "01M5VV4VDGH75EMGWM3Q198PBJ"
+      ]
+    },
+    {
+      "id": "D1-1 the script tree, the Codex CLI and the Claude CLI all survive",
+      "ok": true,
+      "detail": {
+        "treeRoot": true,
+        "grandchild": true,
+        "codex": true,
+        "claude": true
+      }
+    },
+    {
+      "id": "D1-1 all three runs still running",
+      "ok": true,
+      "detail": [
+        {
+          "status": "running"
+        },
+        {
+          "status": "running"
+        },
+        {
+          "status": "running"
+        }
+      ]
+    },
+    {
+      "id": "D1-1 no turn failure in the gateway log",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D1-2 the expiry notice lists the script, Codex and Claude runs with their loop names",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D1-2 Keep waiting and Force stop are offered",
+      "ok": true,
+      "detail": [
+        "Keep waiting",
+        "Force stop"
+      ]
+    },
+    {
+      "id": "D1-2 everything still alive at expiry",
+      "ok": true,
+      "detail": {
+        "treeRoot": true,
+        "grandchild": true,
+        "codex": true,
+        "claude": true
+      }
+    },
+    {
+      "id": "D1-3 a later Ctrl+C forces and the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D1-3 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D1-3 no script, grandchild, Codex CLI, Claude CLI or gateway process remains (tasklist)",
+      "ok": true,
+      "detail": {
+        "treeRoot": false,
+        "grandchild": false,
+        "codex": false,
+        "claude": false,
+        "gateway": false
+      }
+    },
+    {
+      "id": "D1-3 the browser sent no shutdown POST",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "D1-4 script run records RUN_INTERRUPTED_BY_STOP at node hold, non-resumable, effects may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5VV4T4R8QY6J841N8B6JJ0Y:5",
+          "dispatchId": "01M5VV4T9JCBC06K2V4YGWYS5F",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "D1-4 codex run records RUN_INTERRUPTED_BY_STOP at node infer, non-resumable, effects may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "D1-4 claude run records RUN_INTERRUPTED_BY_STOP at node infer, non-resumable, effects may have happened",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "D1-5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D2-1 Ctrl+C drain keeps the script running",
+      "ok": true,
+      "detail": "draining"
+    },
+    {
+      "id": "D2-2 after expiry with no choice the script still runs",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D2-3 the Ctrl+C drain completes normally with exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D2-4 the run succeeded",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "D2-5 restarted gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D3-1 Ctrl+C drains with both CLI turns alive",
+      "ok": true,
+      "detail": {
+        "phase": "draining",
+        "alive": [
+          {
+            "pid": 4904,
+            "ppid": 17684,
+            "name": "claude.exe",
+            "alive": true
+          },
+          {
+            "pid": 2364,
+            "ppid": 17684,
+            "name": "codex.exe",
+            "alive": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "D3-2 both turns finish and the drain exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "D3-3 the Claude and Codex runs both succeeded",
+      "ok": true,
+      "detail": {
+        "claude": {
+          "status": "succeeded"
+        },
+        "codex": {
+          "status": "succeeded"
+        }
+      }
+    },
+    {
+      "id": "D3-3 each CLI ran exactly one turn",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "claude",
+          "outcome": "answered"
+        },
+        {
+          "harness": "codex",
+          "outcome": "answered"
+        }
+      ]
+    },
+    {
+      "id": "D3-4 restarted gateway exits 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T10:12:31.221Z",
+      "method": "GET",
+      "tab": "d1"
+    },
+    {
+      "at": "2026-10-26T10:12:40.501Z",
+      "method": "GET",
+      "tab": "d1"
+    },
+    {
+      "at": "2026-10-26T10:12:42.506Z",
+      "method": "GET",
+      "tab": "d1"
+    },
+    {
+      "at": "2026-10-26T10:12:44.766Z",
+      "method": "GET",
+      "tab": "d1"
+    }
+  ]
+}

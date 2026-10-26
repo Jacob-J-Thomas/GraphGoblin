@@ -1,5 +1,3 @@
-/* global Buffer, fetch, AbortSignal, setTimeout, URL */
-
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { readdir, stat } from 'node:fs/promises';

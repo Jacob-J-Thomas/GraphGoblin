@@ -1,0 +1,40 @@
+2026-10-26T10:10:34.847Z +3.8s gateway s1a listening {"pid":28816,"launcherPid":53072,"port":6531,"viaConsole":true}
+2026-10-26T10:10:37.453Z +6.4s A work started {"run":"01M5VV1GK0CYE9SCAV9TNBK40N","cliPid":47916,"gatewayPid":28816,"tree":[{"pid":47916,"ppid":28816,"name":"qa-codex.exe"},{"pid":37280,"ppid":47916,"name":"conhost.exe"}],"gatewayConsole":{"status":0,"entries":["28816:node","53072:launcher2"]}}
+2026-10-26T10:10:37.454Z +6.4s CHECK PASS A0 the Codex CLI is not attached to the gateway console (own hidden console) {"status":0,"entries":["28816:node","53072:launcher2"]}
+2026-10-26T10:10:37.459Z +6.4s CHECK PASS A0 run running before Ctrl+C "running"
+2026-10-26T10:10:38.922Z +7.8s A Ctrl+C #1 delivered {"status":0,"stderr":""}
+2026-10-26T10:10:43.369Z +12.3s A samples for 3 s after one Ctrl+C [{"msSinceSignal":508,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":1245,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":1971,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":2725,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":3468,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":4244,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"}]
+2026-10-26T10:10:43.370Z +12.3s CHECK PASS A1 one Ctrl+C starts a normal drain and the gateway keeps running ["draining","draining","draining","draining","draining","draining"]
+2026-10-26T10:10:43.371Z +12.3s CHECK PASS A1 the Codex CLI survives the Ctrl+C (every sample) [true,true,true,true,true,true]
+2026-10-26T10:10:43.371Z +12.3s CHECK PASS A1 the run stays running and listed as active work {"msSinceSignal":4244,"phase":"draining","active":["01M5VV1GK0CYE9SCAV9TNBK40N"],"gatewayExit":null,"cliAlive":true,"status":"running"}
+2026-10-26T10:10:43.383Z +12.3s CHECK PASS A1 the gateway log has no Codex turn failure (no 3221225786 / 0xC000013A) []
+2026-10-26T10:10:48.804Z +17.7s A awaiting-choice reached {"msAfterCtrlC":9881,"state":{"phase":"awaiting-choice","graceMs":8000,"startedAt":"2026-10-26T10:10:38.613Z","choiceAt":"2026-10-26T10:10:46.613Z","activeRunIds":["01M5VV1GK0CYE9SCAV9TNBK40N"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"7621cdc4-24be-40b8-9190-acc3b5e7e96a:2:awaiting-choice"}}
+2026-10-26T10:10:48.850Z +17.8s A notice at expiry {"text":"Gateway is draining\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\nCtrl+C Codex turn A — 01M5VV1GK0CYE9SCAV9TNBK40N\nKeep waiting\nForce stop","buttons":["Keep waiting","Force stop"]}
+2026-10-26T10:10:48.898Z +17.8s CHECK PASS A2 after the grace the notice lists the Codex run with its loop name null
+2026-10-26T10:10:48.899Z +17.8s CHECK PASS A2 the notice offers Keep waiting and Force stop ["Keep waiting","Force stop"]
+2026-10-26T10:10:49.140Z +18.1s CHECK PASS A2 the turn is still alive at expiry null
+2026-10-26T10:10:49.357Z +18.3s A gateway exit after release {"code":0,"msAfterRelease":216}
+2026-10-26T10:10:49.358Z +18.3s CHECK PASS A3 releasing the turn lets the drain complete: gateway exits 0 0
+2026-10-26T10:10:49.358Z +18.3s CHECK PASS A3 lock released null
+2026-10-26T10:10:49.359Z +18.3s CHECK PASS A3 the browser sent no shutdown POST [{"at":"2026-10-26T10:10:38.523Z","method":"GET","tab":"a"},{"at":"2026-10-26T10:10:48.526Z","method":"GET","tab":"a"}]
+2026-10-26T10:10:55.065Z +24.0s gateway s1a-r listening {"pid":53820,"port":6531,"viaConsole":false}
+2026-10-26T10:10:55.087Z +24.0s A run after restart {"status":"succeeded"}
+2026-10-26T10:10:55.088Z +24.0s CHECK PASS A4 after restart the run is succeeded (the turn reached its result) {"status":"succeeded"}
+2026-10-26T10:10:55.096Z +24.0s CHECK PASS A4 the fake CLI ran exactly one turn (no re-run after restart) 1
+2026-10-26T10:10:55.208Z +24.1s CHECK PASS A5 restarted gateway drains to exit 0 0
+2026-10-26T10:10:58.947Z +27.9s gateway s1b listening {"pid":45456,"launcherPid":24000,"port":6532,"viaConsole":true}
+2026-10-26T10:11:00.926Z +29.9s B work started {"run":"01M5VV2831DDSNQS8Q0NG0VXZY","cliPid":25264,"gatewayPid":45456}
+2026-10-26T10:11:01.458Z +30.4s B Ctrl+C #1 {"status":0,"stderr":""}
+2026-10-26T10:11:04.728Z +33.7s B samples after Ctrl+C #1 [{"msSinceSignal":516,"phase":"draining","active":["01M5VV2831DDSNQS8Q0NG0VXZY"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":1281,"phase":"draining","active":["01M5VV2831DDSNQS8Q0NG0VXZY"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":2131,"phase":"draining","active":["01M5VV2831DDSNQS8Q0NG0VXZY"],"gatewayExit":null,"cliAlive":true,"status":"running"},{"msSinceSignal":2947,"phase":"draining","active":["01M5VV2831DDSNQS8Q0NG0VXZY"],"gatewayExit":null,"cliAlive":true,"status":"running"}]
+2026-10-26T10:11:04.729Z +33.7s CHECK PASS B1 first Ctrl+C drains with the turn alive {"msSinceSignal":2947,"phase":"draining","active":["01M5VV2831DDSNQS8Q0NG0VXZY"],"gatewayExit":null,"cliAlive":true,"status":"running"}
+2026-10-26T10:11:05.619Z +34.5s B Ctrl+C #2 (later, outside the coalescing window) {"status":0,"stderr":"","sinceFirstMs":4160}
+2026-10-26T10:11:05.630Z +34.6s B gateway exit after Ctrl+C #2 {"code":0,"ms":10}
+2026-10-26T10:11:05.632Z +34.6s CHECK PASS B2 a later Ctrl+C forces and the gateway exits 0 0
+2026-10-26T10:11:06.047Z +35.0s CHECK PASS B2 the Codex CLI is gone null
+2026-10-26T10:11:06.087Z +35.0s CHECK PASS B2 lock released null
+2026-10-26T10:11:17.604Z +46.5s gateway s1b-r listening {"pid":52956,"port":6532,"viaConsole":false}
+2026-10-26T10:11:17.632Z +46.6s B run after restart {"status":"failed","failure":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}}
+2026-10-26T10:11:17.633Z +46.6s CHECK PASS B3 after restart the run records RUN_INTERRUPTED_BY_STOP, non-resumable, effects may have happened {"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}
+2026-10-26T10:11:17.661Z +46.6s CHECK PASS B3 no HARNESS_TERMINATION_UNCONFIRMED or HARNESS_DELIVERY_UNCERTAIN in the run events [{"type":"run.failed","code":"RUN_INTERRUPTED_BY_STOP"}]
+2026-10-26T10:11:17.885Z +46.8s CHECK PASS B4 restarted gateway drains to exit 0 0
+2026-10-26T10:11:17.899Z +46.8s DONE passed=22 failed=0

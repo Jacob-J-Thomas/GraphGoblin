@@ -1,0 +1,420 @@
+{
+  "scenario": "s5-effort-api",
+  "passed": 28,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "C0 GPT-5.5 lists minimal..xhigh and no max",
+      "ok": true,
+      "detail": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "C0 every other Codex model lists max",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "D-process-codex inherited gpt-6-sol/minimal is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "effort": "minimal",
+            "argvEffort": "model_reasoning_effort=\"minimal\""
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "effort": "minimal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-process-claude inherited claude-sonnet-5-5/medium is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "claude",
+            "model": "claude-sonnet-5-5",
+            "effort": "medium",
+            "argvEffort": "--effort medium"
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "claude",
+            "model": "claude-sonnet-5-5",
+            "effort": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-owner-codex inherited gpt-6-sol/high is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "effort": "high",
+            "argvEffort": "model_reasoning_effort=\"high\""
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "effort": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-owner-claude inherited claude-haiku-5-5/medium is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "claude",
+            "model": "claude-haiku-5-5",
+            "effort": "medium",
+            "argvEffort": "--effort medium"
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "claude",
+            "model": "claude-haiku-5-5",
+            "effort": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-loop-codex inherited gpt-6.1-sol/high is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "effort": "high",
+            "argvEffort": "model_reasoning_effort=\"high\""
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-loop-claude inherited claude-haiku-5-5/xhigh is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "claude",
+            "model": "claude-haiku-5-5",
+            "effort": "xhigh",
+            "argvEffort": "--effort xhigh"
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "claude",
+            "model": "claude-haiku-5-5",
+            "effort": "xhigh"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D-loop (max)-codex inherited gpt-6-luna/max is what the CLI receives and the session row records",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "effort": "max",
+            "argvEffort": "model_reasoning_effort=\"max\""
+          }
+        ],
+        "sessionRows": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "effort": "max"
+          }
+        ]
+      }
+    },
+    {
+      "id": "X1 every explicit Codex model/effort pair is sent unchanged and recorded as sent (47 runs)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "X1 max is sent as model_reasoning_effort=\"max\" on every model that lists it",
+      "ok": true,
+      "detail": [
+        {
+          "model": "gpt-5.6-luna",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-5.6-sol",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-5.6-terra",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-6-astra",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-6-luna",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-6-sol",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "sent": [
+            "model_reasoning_effort=\"max\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "X2 Claude explicit claude-opus-5-5/max is sent as --effort max",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "claude",
+            "model": "claude-opus-5-5",
+            "effort": "max",
+            "argvEffort": "--effort max"
+          }
+        ]
+      }
+    },
+    {
+      "id": "X2 Claude explicit claude-fable-5-1/low is sent as --effort low",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "claude",
+            "model": "claude-fable-5-1",
+            "effort": "low",
+            "argvEffort": "--effort low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "X2 Claude minimal is refused (400 EFFORT_UNSUPPORTED) before any request",
+      "ok": true,
+      "detail": {
+        "status": 400
+      }
+    },
+    {
+      "id": "X3 LLM decision luna-max: the structured Codex request carries gpt-6-luna/max and the decision record says the same",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "effort": "max",
+            "argvEffort": "model_reasoning_effort=\"max\""
+          }
+        ],
+        "decisionEvents": []
+      }
+    },
+    {
+      "id": "X3 LLM decision sol-max: the structured Codex request carries gpt-6.1-sol/max and the decision record says the same",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "effort": "max",
+            "argvEffort": "model_reasoning_effort=\"max\""
+          }
+        ],
+        "decisionEvents": []
+      }
+    },
+    {
+      "id": "X3 LLM decision sol-xhigh: the structured Codex request carries gpt-6.1-sol/xhigh and the decision record says the same",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "effort": "xhigh",
+            "argvEffort": "model_reasoning_effort=\"xhigh\""
+          }
+        ],
+        "decisionEvents": []
+      }
+    },
+    {
+      "id": "X3 LLM decision gpt55-xhigh: the structured Codex request carries gpt-5.5/xhigh and the decision record says the same",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-5.5",
+            "effort": "xhigh",
+            "argvEffort": "model_reasoning_effort=\"xhigh\""
+          }
+        ],
+        "decisionEvents": []
+      }
+    },
+    {
+      "id": "X3 LLM decision inherit: the structured Codex request carries gpt-6-sol/high and the decision record says the same",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "effort": "high",
+            "argvEffort": "model_reasoning_effort=\"high\""
+          }
+        ],
+        "decisionEvents": []
+      }
+    },
+    {
+      "id": "R1 GPT-5.5 max as inference is refused 400 EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "errors": [
+          "EFFORT_UNSUPPORTED"
+        ]
+      }
+    },
+    {
+      "id": "R1 GPT-5.5 max as decision is refused 400 EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "errors": [
+          "EFFORT_UNSUPPORTED"
+        ]
+      }
+    },
+    {
+      "id": "R1 GPT-5.5 max as ownerSettings is refused 400 EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "errors": [
+          null
+        ]
+      }
+    },
+    {
+      "id": "R1 GPT-5.5 max as loopDefaults is refused 400 EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "errors": [
+          "EFFORT_UNSUPPORTED",
+          "EFFORT_UNSUPPORTED"
+        ]
+      }
+    },
+    {
+      "id": "R1 no CLI request was made for any refused GPT-5.5 max",
+      "ok": true,
+      "detail": {
+        "before": 61,
+        "after": 61
+      }
+    },
+    {
+      "id": "R2 explicit max with GPT-5.5 inherited from Settings is refused EFFORT_UNSUPPORTED before any request",
+      "ok": true,
+      "detail": {
+        "refusedAt": "create",
+        "requestsMade": 0
+      }
+    },
+    {
+      "id": "R2 control: xhigh with inherited GPT-5.5 is sent unchanged",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "model": "gpt-5.5",
+            "effort": "xhigh",
+            "argvEffort": "model_reasoning_effort=\"xhigh\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "Z1 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "R3 GG_DEFAULTS codex gpt-5.5/max is refused (startup) before any request",
+      "ok": true,
+      "detail": [
+        "Error: Invalid GG_DEFAULTS: The default reasoning effort is not supported by its model"
+      ]
+    }
+  ]
+}

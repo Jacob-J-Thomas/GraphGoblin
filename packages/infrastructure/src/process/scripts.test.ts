@@ -1,6 +1,6 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter, once } from 'node:events';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -268,6 +268,65 @@ describe('ProcessScripts', () => {
     expect(immediate.state).toBe('definitely-not-started');
   }, 15_000);
 
+  it.skipIf(process.platform !== 'win32')(
+    'releases a cancelled script whose root already exited once the last holder of its output closes',
+    async () => {
+      const dir = await mkdtemp(join(tmpdir(), 'gg-af-exited-root-'));
+      const marker = join(dir, 'pids.json');
+      const release = join(dir, 'release');
+      // The root exits at once. A detached process it started keeps its stdout open until the
+      // test creates the release file (or 30 s pass, so a failed run leaves nothing behind).
+      const holder =
+        "const fs=require('node:fs');setInterval(()=>{if(fs.existsSync(process.argv[1]))process.exit(0)},25);setTimeout(()=>process.exit(0),30000)";
+      const script =
+        "const {spawn}=require('node:child_process');" +
+        `const holder=spawn(process.execPath,['-e',${JSON.stringify(holder)},process.argv[2]],{detached:true,stdio:['ignore','inherit','ignore'],windowsHide:true});` +
+        'holder.unref();' +
+        "require('node:fs').writeFileSync(process.argv[1],JSON.stringify({root:process.pid,holder:holder.pid}));";
+      // Observe the real root through the public spawn seam; later spawns are taskkill.
+      let root: ChildProcess | undefined;
+      const scripts = new ProcessScripts({
+        spawnImpl: new Proxy(spawn, {
+          apply(target, _receiver, args: Parameters<typeof spawn>) {
+            const child = target(args[0], args[1], args[2]);
+            root ??= child;
+            return child;
+          },
+        }),
+      });
+      const controller = new AbortController();
+      const pending = scripts.run(
+        request({ args: ['-e', script, marker, release], signal: controller.signal }),
+      );
+      const running = (pid: number) => {
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      try {
+        // Cancel only after Node itself has reported the root's exit.
+        if (root!.exitCode === null && root!.signalCode === null) await once(root!, 'exit');
+        const pids = JSON.parse(await readFile(marker, 'utf8')) as { root: number; holder: number };
+        expect(running(pids.holder)).toBe(true);
+        controller.abort();
+        await writeFile(release, 'release');
+        const result = await pending;
+        expect(result).not.toHaveProperty('terminationUnconfirmed');
+        expect(result).toMatchObject({ state: 'completed', exitCode: 0 });
+        expect(running(pids.holder)).toBe(false);
+      } finally {
+        controller.abort();
+        await writeFile(release, 'release');
+        await pending;
+        await rm(dir, { recursive: true, force: true, maxRetries: 10 });
+      }
+    },
+    15_000,
+  );
+
   it('reports spawn failures as a null exit code with a message', async () => {
     const scripts = new ProcessScripts();
     const result = await scripts.run(
@@ -358,11 +417,71 @@ describe('ProcessScripts', () => {
 });
 
 describe('killTree', () => {
-  function fakeChild(pid: number | undefined): ChildProcess & { killed_: boolean } {
+  function fakeChild(
+    pid: number | undefined,
+    exitCode: number | null = null,
+  ): ChildProcess & { killed_: boolean } {
     const child = new EventEmitter() as ChildProcess & { killed_: boolean };
-    Object.assign(child, { pid, killed_: false, kill: () => ((child.killed_ = true), true) });
+    Object.assign(child, {
+      pid,
+      exitCode,
+      signalCode: null,
+      killed_: false,
+      kill: () => ((child.killed_ = true), true),
+    });
     return child;
   }
+  function fakeTaskkill() {
+    const calls: unknown[][] = [];
+    const killer = new EventEmitter();
+    const spawnImpl = ((...args: unknown[]) => {
+      calls.push(args);
+      return killer;
+    }) as unknown as typeof spawn;
+    return { calls, killer, spawnImpl };
+  }
+
+  it('does not signal the PID of a Windows root whose exit was already observed', async () => {
+    const { calls, spawnImpl } = fakeTaskkill();
+    expect(await killTree(fakeChild(1234, 0), 'win32', spawnImpl)).toBe(true);
+    expect(calls).toEqual([]);
+  });
+
+  it('counts taskkill not finding the root as released once the root is seen to have exited', async () => {
+    const early = fakeTaskkill();
+    const exited = fakeChild(1234);
+    const pending = killTree(exited, 'win32', early.spawnImpl);
+    Object.assign(exited, { exitCode: 0 });
+    early.killer.emit('close', 128);
+    expect(await pending).toBe(true);
+
+    const late = fakeTaskkill();
+    const exiting = fakeChild(4321);
+    let settled: boolean | undefined;
+    const waiting = killTree(exiting, 'win32', late.spawnImpl).then((value) => (settled = value));
+    late.killer.emit('close', 128);
+    await new Promise((resolve) => setImmediate(resolve));
+    // Not found, but not yet observed to have exited: no release is claimed until the exit arrives.
+    expect(settled).toBeUndefined();
+    exiting.emit('exit', 0, null);
+    expect(await waiting).toBe(true);
+  });
+
+  it('reports any other taskkill failure as unconfirmed', async () => {
+    const { killer, spawnImpl } = fakeTaskkill();
+    const pending = killTree(fakeChild(1234), 'win32', spawnImpl);
+    killer.emit('close', 1);
+    expect(await pending).toBe(false);
+  });
+
+  it.skipIf(process.platform !== 'win32')(
+    'reports a real Windows root that exited before the kill as released',
+    async () => {
+      const child = spawn(node, ['-e', ''], { stdio: 'ignore', windowsHide: true });
+      await new Promise((resolve) => child.once('exit', resolve));
+      expect(await killTree(child)).toBe(true);
+    },
+  );
 
   it('does nothing without a pid', async () => {
     const child = fakeChild(undefined);
@@ -371,12 +490,7 @@ describe('killTree', () => {
   });
 
   it('uses taskkill on Windows and reports root-only fallback when taskkill is missing', async () => {
-    const calls: unknown[][] = [];
-    const killer = new EventEmitter();
-    const spawnImpl = ((...args: unknown[]) => {
-      calls.push(args);
-      return killer;
-    }) as unknown as typeof spawn;
+    const { calls, killer, spawnImpl } = fakeTaskkill();
     const child = fakeChild(1234);
     const pending = killTree(child, 'win32', spawnImpl);
     expect(calls[0]?.[0]).toBe('taskkill');

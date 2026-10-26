@@ -1,0 +1,36 @@
+# Dockerfile build-stage simulation on Windows (the Docker daemon is not running on this host)
+# Context: git archive of the PR head (03493106) for exactly the paths the Dockerfile copies:
+#   package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json patches tooling packages apps
+# Steps, as in the Dockerfile build stage: pnpm install --frozen-lockfile ; pnpm --filter @graphgoblin/api deploy --prod --legacy <out>/apps/api
+# Node v22.23.4, pnpm 12.8.1, Windows 11. The real image builds on node:22-bookworm-slim (Linux).
+
+## pnpm install --frozen-lockfile (tail)
++ eslint-plugin-react-hooks 7.1.1
++ prettier 3.9.9
++ turbo 2.11.6
++ typescript 6.0.3
++ typescript-eslint 8.71.0
++ vitest 5.0.3
+
+Done in 30.4s using pnpm v12.8.1
+
+## patched line in the installed SDK: node_modules/.pnpm/@openai+codex-sdk@0.160.0_p_56da03884d25c71a9b0d2eb5965ec750/node_modules/@openai/codex-sdk/dist/index.js
+266:      windowsHide: true
+
+## pnpm --filter @graphgoblin/api deploy --prod --legacy (tail)
+Progress: resolved 74, reused 103, downloaded 0, added 59
+Progress: resolved 101, reused 103, downloaded 0, added 91
+Progress: resolved 103, reused 103, downloaded 0, added 98
+Progress: resolved 109, reused 103, downloaded 0, added 106
+Packages: +109
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 109, reused 103, downloaded 0, added 109, done
+Done in 9.1s using pnpm v12.8.1
+
+## deployed API (what the runtime image copies to /app): out/apps/api/node_modules/.pnpm/@openai+codex-sdk@0.160.0_p_56da03884d25c71a9b0d2eb5965ec750/node_modules/@openai/codex-sdk/dist/index.js lines 262-267
+    }
+    const child = spawn(this.executablePath, commandArgs, {
+      env,
+      signal: args.signal,
+      windowsHide: true
+    });

@@ -51,7 +51,10 @@ export interface CodexHarnessOptions {
   env?: Record<string, string>;
   /** Timeout for each preflight CLI call. Default 15 s. */
   preflightTimeoutMs?: number;
-  /** How long `cancel()` waits for the CLI to exit after aborting. Default 5 s. */
+  /**
+   * Acknowledgement bound after a turn is aborted: the CLI's output must end within it, or the
+   * turn fails `HARNESS_TERMINATION_UNCONFIRMED`. Default 5 s, the harness bound of ADR-0049.
+   */
   cancelGraceMs?: number;
   /** Injected for tests. Default: `new Codex(options)`. */
   clientFactory?: CodexClientFactory;
@@ -66,15 +69,34 @@ function abortError(): Error {
   return new DOMException('The Codex turn was aborted', 'AbortError');
 }
 
+const TERMINATION_UNCONFIRMED = 'HARNESS_TERMINATION_UNCONFIRMED';
+
+function terminationUnconfirmed(graceMs: number): Error {
+  return Object.assign(
+    new Error(
+      `Codex CLI termination was not confirmed: its output stayed open ${graceMs} ms after the turn was aborted, so a process it started may still be running`,
+    ),
+    { code: TERMINATION_UNCONFIRMED, retriable: false },
+  );
+}
+
+/** A turn result rejects only with errors built by this harness, never with a non-object. */
+function isTerminationUnconfirmed(error: unknown): boolean {
+  return String((error as { code?: unknown }).code).toUpperCase() === TERMINATION_UNCONFIRMED;
+}
+
 /**
  * `HarnessPort` over `@openai/codex-sdk`.
  *
  * Cancellation: the SDK accepts an `AbortSignal` per turn and passes it to `child_process.spawn`,
  * which kills the CLI process when it fires. The SDK keeps the child private, so no pid is
- * reachable and a GraphGoblin-side tree kill is not possible. It is not needed on Windows: verified
- * on 2026-10-02 (CLI 0.160.0, `workspace-write` and `danger-full-access`) that aborting mid-command
- * also ends the shell command Codex was running, because Codex runs commands inside its own job
- * object. See docs/06-harness-integration.md, "Cancellation".
+ * reachable and a GraphGoblin-side tree kill is not possible. The SDK's event stream ends only when
+ * the CLI's stdout closes, which a process the CLI started can hold open after the kill. An aborted
+ * turn therefore stops waiting after `cancelGraceMs` and fails `HARNESS_TERMINATION_UNCONFIRMED`
+ * instead of waiting for that stream (ADR-0049). Verified on 2026-10-02 (CLI 0.160.0,
+ * `workspace-write` and `danger-full-access`) that aborting mid-command also ends the shell command
+ * Codex was running, because Codex runs commands inside its own job object. See
+ * docs/06-harness-integration.md, "Cancellation".
  */
 export class CodexHarness implements HarnessPort {
   readonly id = 'codex' as const;
@@ -141,6 +163,36 @@ export class CodexHarness implements HarnessPort {
       : client.startThread(threadOptions(settings));
 
     const controller = new AbortController();
+    // After an abort the CLI's output must end within the acknowledgement bound. A descendant that
+    // inherited its stdout can hold the SDK's stream open after the CLI is killed; then the turn is
+    // reported as unconfirmed termination rather than awaited indefinitely.
+    const grace = this.options.cancelGraceMs ?? 5_000;
+    let finished = false;
+    let acknowledgement: ReturnType<typeof setTimeout> | undefined;
+    // The one step currently waiting. Each wait registers here and unregisters when its step
+    // settles, so nothing long-lived keeps a consumed step (or its event) reachable. Until the
+    // turn finishes, the pump only ever waits in `bounded`, and it moves from one step to the next
+    // within a single microtask chain, so the deadline (a timer) always finds a wait registered.
+    let interrupt: ((error: Error) => void) | undefined;
+    controller.signal.addEventListener(
+      'abort',
+      () => {
+        if (finished) return;
+        acknowledgement = setTimeout(() => interrupt?.(terminationUnconfirmed(grace)), grace);
+      },
+      { once: true },
+    );
+    const bounded = <T>(work: Promise<T>): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        interrupt = reject;
+        // The work's outcome is observed even after the deadline has won; the wait unregisters
+        // as soon as the step settles.
+        work
+          .finally(() => {
+            interrupt = undefined;
+          })
+          .then(resolve, reject);
+      });
     const onAbort = (): void => controller.abort();
     if (signal.aborted) controller.abort();
     else signal.addEventListener('abort', onAbort, { once: true });
@@ -169,13 +221,29 @@ export class CodexHarness implements HarnessPort {
     // A requested handle is provenance, not evidence of reuse. Await native thread.started.
 
     const pump = async (): Promise<HarnessResult> => {
+      let iterator: AsyncIterator<ThreadEvent | { type: string }> | undefined;
+      let exhausted = false;
       try {
         if (controller.signal.aborted) throw abortError();
-        const streamed = await thread.runStreamed(turn.prompt, {
-          ...(turn.outputSchema ? { outputSchema: turn.outputSchema } : {}),
-          signal: controller.signal,
-        });
-        for await (const event of streamed.events) {
+        const streamed = await bounded(
+          thread.runStreamed(turn.prompt, {
+            ...(turn.outputSchema ? { outputSchema: turn.outputSchema } : {}),
+            signal: controller.signal,
+          }),
+        );
+        iterator = streamed.events[Symbol.asyncIterator]();
+        for (;;) {
+          const step = await bounded(
+            iterator.next().catch((error: unknown) => {
+              exhausted = true;
+              throw error;
+            }),
+          );
+          if (step.done) {
+            exhausted = true;
+            break;
+          }
+          const event = step.value;
           for (const out of accumulator.push(event)) {
             if (out.type === 'submitted') accepted = true;
             if (out.type === 'session') {
@@ -197,14 +265,20 @@ export class CodexHarness implements HarnessPort {
       } catch (error) {
         // Even cancellation cannot discard higher-ranked terminal evidence from this boundary.
         accumulator.fail(error);
+        // Close the stream as `for await` would. Never await it: after an unconfirmed termination
+        // the SDK's generator is still waiting for output that may never end, and its cleanup
+        // (closing the reader and killing the CLI) runs whenever that wait ends.
+        if (iterator && !exhausted) iterator.return?.().catch(() => undefined);
       } finally {
+        finished = true;
+        clearTimeout(acknowledgement);
         signal.removeEventListener('abort', onAbort);
       }
 
       const outcome = accumulator.finish();
       if (
         controller.signal.aborted &&
-        outcome.failure?.code.toUpperCase() !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
+        outcome.failure?.code.toUpperCase() !== TERMINATION_UNCONFIRMED &&
         outcome.failure?.code.toUpperCase() !== 'HARNESS_SESSION_MISSING'
       ) {
         queue.close();
@@ -245,24 +319,20 @@ export class CodexHarness implements HarnessPort {
     // Consumers may cancel without awaiting the result; keep that from becoming unhandled.
     result.catch(() => undefined);
 
-    const grace = this.options.cancelGraceMs ?? 5_000;
     return {
       sessionId,
       events: queue,
       result,
+      // The acknowledgement bound settles the result after an abort; only unconfirmed termination
+      // is a cleanup failure, as for the Claude harness.
       cancel: async () => {
         controller.abort();
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        await Promise.race([
-          result.then(
-            () => undefined,
-            () => undefined,
-          ),
-          new Promise<void>((resolve) => {
-            timer = setTimeout(resolve, grace);
-          }),
-        ]);
-        clearTimeout(timer);
+        await result.then(
+          () => undefined,
+          (error: unknown) => {
+            if (isTerminationUnconfirmed(error)) throw error;
+          },
+        );
       },
     };
   }

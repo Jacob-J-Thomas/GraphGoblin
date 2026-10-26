@@ -1,0 +1,19 @@
+using System;
+using System.Runtime.InteropServices;
+
+// Hold an open handle to <pid> until standard input closes. While any handle to a process object is
+// open, Windows cannot reuse its PID, so a taskkill aimed at that PID after the process exited can
+// only report that the process is gone; it cannot reach an unrelated process.
+public static class HoldProcess {
+  [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+  [DllImport("kernel32.dll", SetLastError = true)] static extern bool CloseHandle(IntPtr h);
+  public static int Main(string[] args) {
+    IntPtr h = OpenProcess(0x00100000 | 0x1000, false, uint.Parse(args[0])); // SYNCHRONIZE | QUERY_LIMITED_INFORMATION
+    if (h == IntPtr.Zero) { Console.Error.WriteLine("OpenProcess failed " + Marshal.GetLastWin32Error()); return 2; }
+    Console.WriteLine("holding");
+    Console.Out.Flush();
+    Console.In.ReadToEnd();
+    CloseHandle(h);
+    return 0;
+  }
+}

@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: max is offered and requested unchanged, but not for GPT-5.5 (12.6s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: max is offered and requested unchanged, but not for GPT-5.5 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option:checked')
+    Expected: "max (not supported by this model)"
+    Received: "max"
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option:checked') with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option:checked')
+        23 × locator resolved to <option value="max">max</option>
+           - unexpected value "max"
+
+
+      340 |   // GPT-5.5 tops out at xhigh in the Codex CLI's own model catalog, so max is not a choice there.
+      341 |   await model.selectOption('gpt-5.5');
+    > 342 |   await expect(effort.locator('option:checked')).toHaveText('max (not supported by this model)');
+          |                                                  ^
+      343 |   await expect(effort).toHaveAccessibleDescription(/not supported/);
+      344 |   await effort.selectOption('xhigh');
+      345 |   expect(await offered()).toEqual(['', 'minimal', 'low', 'medium', 'high', 'xhigh']);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a9b1ddf54c64d7465\apps\web\e2e\model-effort.spec.ts:342:50
+
+    Error Context: test-results\model-effort-Codex-effort--2c6b3-changed-but-not-for-GPT-5-5-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-Codex-effort--2c6b3-changed-but-not-for-GPT-5-5-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-Codex-effort--2c6b3-changed-but-not-for-GPT-5-5-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: max is offered and requested unchanged, but not for GPT-5.5 

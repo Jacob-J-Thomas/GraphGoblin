@@ -1,0 +1,43 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+
+// Controlled fake Codex CLI (no provider). It answers the preflight probes, then for `exec` writes
+// its PID to %SHUTDOWN_FAKE_PID%, reports an accepted turn, and holds it until
+// %SHUTDOWN_FAKE_PID%.release exists, when it completes the turn and exits 0. With
+// SHUTDOWN_FAKE_TOOL_CHILD=1 it first starts one "tool" child process that inherits its handles,
+// including its stdout pipe, like a real CLI running a long command.
+public static class FakeCodex {
+  public static int Main(string[] args) {
+    if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return 0; }
+    if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
+    if (Array.IndexOf(args, "login") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return 0; }
+    string pidFile = Environment.GetEnvironmentVariable("SHUTDOWN_FAKE_PID");
+    if (Array.IndexOf(args, "--tool-child") >= 0) {
+      File.WriteAllText(pidFile + ".tool", Process.GetCurrentProcess().Id.ToString());
+      Thread.Sleep(120000);
+      return 0;
+    }
+    if (Environment.GetEnvironmentVariable("SHUTDOWN_FAKE_TOOL_CHILD") == "1") {
+      var psi = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, "--tool-child");
+      psi.UseShellExecute = false; psi.CreateNoWindow = true;
+      psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.RedirectStandardInput = true;
+      Process.Start(psi);
+    }
+    File.WriteAllText(pidFile, Process.GetCurrentProcess().Id.ToString());
+    Console.WriteLine("{\"type\":\"thread.started\",\"thread_id\":\"controlled-console-session\"}");
+    Console.WriteLine("{\"type\":\"turn.started\"}");
+    Console.Out.Flush();
+    for (int waited = 0; waited < 120000; waited += 50) {
+      if (File.Exists(pidFile + ".release")) {
+        Console.WriteLine("{\"type\":\"item.completed\",\"item\":{\"id\":\"answer\",\"type\":\"agent_message\",\"text\":\"Released\"}}");
+        Console.WriteLine("{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":1,\"cached_input_tokens\":0,\"output_tokens\":1,\"reasoning_output_tokens\":0}}");
+        Console.Out.Flush();
+        return 0;
+      }
+      Thread.Sleep(50);
+    }
+    return 0;
+  }
+}

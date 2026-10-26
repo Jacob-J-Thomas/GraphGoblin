@@ -1,0 +1,39 @@
+pnpm.cmd --filter @graphgoblin/engine exec vitest run src/run-manager.test.ts src/webhook-admission.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/engine
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed) 6067ms
+   ❯ run control (9)
+     × keeps timers running during a fast graph cycle, so the cycle can be cancelled 338ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/run-manager.test.ts > run control > keeps timers running during a fast graph cycle, so the cycle can be cancelled
+AssertionError: expected 1 to be greater than 1
+ ❯ src/run-manager.test.ts:182:83
+    180|     // A timer firing at all proves the executor yields; before the fi…
+    181|     await new Promise((resolve) => setTimeout(resolve, 200));
+    182|     expect(engine.eventTypes(run.id).filter((t) => t === 'decision.mad…
+       |                                                                                   ^
+    183|       1,
+    184|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 40 passed (41)
+   Start at  00:39:12
+   Duration  42.60s (transform 75%, import 15%, tests 10%)
+
+  Transform  transforming modules took 54.66s · 75% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\packages\engine
+System.Management.Automation.RemoteException
+EXIT 1
