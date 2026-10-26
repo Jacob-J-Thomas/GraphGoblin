@@ -315,6 +315,52 @@ for (const kind of ['inference', 'llm'] as const) {
   }
 }
 
+test('Codex effort choices follow the model: max is offered and requested unchanged, but not for GPT-5.5', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  const created = await request.post(url + '/loops', {
+    data: { definition: inheritedInference('205 Codex max', { model: 'gpt-6-luna' }) },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  await page.goto(url + `/app/loops/${loop.id}/edit`);
+  const dialog = await openNode(page, 'work');
+  const model = dialog.getByLabel('Model', { exact: true });
+  const effort = dialog.getByLabel('Effort', { exact: true });
+  const offered = () =>
+    effort
+      .locator('option')
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  expect(await offered()).toEqual(['', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+  await effort.selectOption('max');
+  // GPT-5.5 tops out at xhigh in the Codex CLI's own model catalog, so max is not a choice there.
+  await model.selectOption('gpt-5.5');
+  await expect(effort.locator('option:checked')).toHaveText('max (not supported by this model)');
+  await expect(effort).toHaveAccessibleDescription(/not supported/);
+  await effort.selectOption('xhigh');
+  expect(await offered()).toEqual(['', 'minimal', 'low', 'medium', 'high', 'xhigh']);
+  await model.selectOption('gpt-6-luna');
+  await effort.selectOption('max');
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+  await page.reload();
+  await expect((await openNode(page, 'work')).getByLabel('Effort', { exact: true })).toHaveValue(
+    'max',
+  );
+  await closeNode(page);
+  expect(
+    (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => (await control(request, '/harness/requests', { instanceId }))['started'])
+    .toMatchObject([{ model: 'gpt-6-luna', effort: 'max' }]);
+});
+
 test('classifier keeps Question, Model, Answer visible and has no effort', async ({
   page,
   request,

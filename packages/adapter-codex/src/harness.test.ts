@@ -4,7 +4,6 @@ import { ReplayCodex, loadFixture } from './__fixtures__/replay.js';
 import { createCodexAdapters } from './adapters.js';
 import type { CliRunner } from './cli.js';
 import { CodexHarness, createCodexHarness, type CodexClientFactory } from './harness.js';
-import { mapEffort } from './options.js';
 
 const request = (overrides: Partial<HarnessStartRequest> = {}): HarnessStartRequest => ({
   workingDirectory: '/work',
@@ -164,7 +163,7 @@ describe('CodexHarness.start', () => {
     ).result;
     expect(codex.runs[1]?.threadOptions).toMatchObject({
       model: 'gpt-6.1-sol',
-      modelReasoningEffort: 'xhigh',
+      modelReasoningEffort: 'max',
       sandboxMode: 'danger-full-access',
       approvalPolicy: 'on-request',
       networkAccessEnabled: true,
@@ -174,12 +173,6 @@ describe('CodexHarness.start', () => {
       'mcp_servers.docs': { command: 'npx', args: ['docs-mcp'] },
       list: [1, 'a'],
     });
-  });
-
-  it('maps the canonical effort scale onto Codex levels', () => {
-    expect(
-      ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'].map((e) => mapEffort(e as never)),
-    ).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'xhigh']);
   });
 
   it('replays command and file-change items', async () => {
