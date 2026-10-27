@@ -11,12 +11,16 @@
 // - `unrecognized`: a failure message GraphGoblin does not classify;
 // - `malformed`: a generic diagnostic, then a line that is not JSON and exit 0, so the SDK throws
 //   its own parse error instead of an exit error (PR #426 review B1).
+// GG_FAKE_CODEX_STDERR selects stderr (PR #426 audit scan 2): `banner` (the default), `repeat` (the
+// failure the stream reports, alone) or `banner-repeat` (the banner, then that failure).
+// GG_FAKE_CODEX_STREAM=none leaves `error` and `turn.failed` out, so only stderr has the failure.
 import { readFileSync, writeSync } from 'node:fs';
 import { basename } from 'node:path';
 import process from 'node:process';
 
 if (basename(process.argv[1] ?? '') === 'exec' && process.argv.includes('--experimental-json')) {
-  writeSync(2, 'Reading prompt from stdin...\n');
+  const stderr = process.env.GG_FAKE_CODEX_STDERR ?? 'banner';
+  if (stderr !== 'repeat') writeSync(2, 'Reading prompt from stdin...\n');
   try {
     readFileSync(0);
   } catch {
@@ -44,13 +48,15 @@ if (basename(process.argv[1] ?? '') === 'exec' && process.argv.includes('--exper
     : scenario === 'malformed'
       ? 'An earlier generic diagnostic'
       : 'The synthetic turn stopped for a reason GraphGoblin does not classify';
+  const reported = process.env.GG_FAKE_CODEX_STREAM !== 'none';
   print({ type: 'thread.started', thread_id: 'refused-thread' });
   print({ type: 'turn.started' });
-  print({ type: 'error', message });
+  if (reported) print({ type: 'error', message });
   if (scenario === 'malformed') {
     writeSync(1, 'MALFORMED_PROTOCOL_ITEM\n');
     process.exit(0);
   }
-  print({ type: 'turn.failed', error: { message } });
+  if (reported) print({ type: 'turn.failed', error: { message } });
+  if (stderr !== 'banner') writeSync(2, message + '\n');
   process.exit(1);
 }

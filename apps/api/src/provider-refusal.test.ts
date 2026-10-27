@@ -23,10 +23,11 @@ afterEach(async () => {
   t = undefined;
 });
 
-it('records a Codex request the provider refused with its own cause and offers no Resume (#243)', async () => {
+/** Publish one Codex inference on the fake CLI, run it to failure, and read it over HTTP. */
+async function refusedRun(cli: Record<string, string> = {}) {
   const codex = new CodexHarness({
     codexBinary: process.execPath,
-    env: { ...inherited, NODE_OPTIONS: `--import=${preload}` },
+    env: { ...inherited, NODE_OPTIONS: `--import=${preload}`, ...cli },
   });
   const ready = new FakeHarness([], 'codex');
   const harness: HarnessPort = {
@@ -35,8 +36,9 @@ it('records a Codex request the provider refused with its own cause and offers n
     start: (request, signal) => codex.start(request, signal),
     resume: (sessionId, request, signal) => codex.resume(sessionId, request, signal),
   };
-  t = await createTestApp({ harnesses: { codex: harness } });
-  const loopId = await t.publishLoop(
+  const app = await createTestApp({ harnesses: { codex: harness } });
+  t = app;
+  const loopId = await app.publishLoop(
     singleNodeLoop('Provider refusal', {
       id: 'infer',
       kind: 'inference',
@@ -48,15 +50,28 @@ it('records a Codex request the provider refused with its own cause and offers n
       },
     }),
   );
-  const started = await t.app.inject({
+  const started = await app.app.inject({
     method: 'POST',
     url: `/loops/${loopId}/runs`,
     payload: { input: null },
   });
   expect(started.statusCode, started.body).toBe(202);
   const runId = started.json<{ run: { id: string } }>().run.id;
-  await t.idle();
-  const read = await t.app.inject(`/runs/${runId}`);
+  await app.idle();
+  const read = await app.app.inject(`/runs/${runId}`);
+  const resumed = await app.app.inject({
+    method: 'POST',
+    url: `/runs/${runId}/resume`,
+    payload: { observedSeq: (await app.container.manager.getRecovery(runId)).observedSeq },
+  });
+  const turns = (await app.container.repos.events.read(runId)).filter(
+    (event: RunEvent) => event.type === 'harness.turn',
+  );
+  return { read, resumed, turns };
+}
+
+it('records a Codex request the provider refused with its own cause and offers no Resume (#243)', async () => {
+  const { read, resumed, turns } = await refusedRun();
   expect(read.json()).toMatchObject({
     status: 'failed',
     failure: {
@@ -70,14 +85,44 @@ it('records a Codex request the provider refused with its own cause and offers n
     recovery: { resume: { allowed: false } },
   });
   expect(read.body).not.toContain('Reading prompt from stdin');
-  const resumed = await t.app.inject({
-    method: 'POST',
-    url: `/runs/${runId}/resume`,
-    payload: { observedSeq: (await t.container.manager.getRecovery(runId)).observedSeq },
-  });
   expect(resumed.statusCode).toBe(409);
-  const turns = (await t.container.repos.events.read(runId)).filter(
-    (event: RunEvent) => event.type === 'harness.turn',
-  );
   expect(turns).toHaveLength(1);
 }, 60_000);
+
+// PR #426 audit scan 2: stderr repeats the structured refusal, so the SDK's exit error carries it
+// after its prefix. Provider text that matches a CLI heuristic must still read as the refusal.
+it.each([
+  "Error: invalid value for reasoning.effort: 'minimal'.",
+  'Thread not found in referenced input.',
+])(
+  'records the refusal %j repeated on stderr as the refusal, with Resume refused and Replay allowed',
+  async (text) => {
+    const { read, resumed, turns } = await refusedRun({
+      GG_FAKE_PROVIDER_TEXT: text,
+      GG_FAKE_CODEX_STDERR: 'repeat',
+    });
+    const run = read.json<{
+      failure: Record<string, unknown>;
+      recovery: {
+        resume: { allowed: boolean; code?: string };
+        replay: { nodeId: string; action: { allowed: boolean } }[];
+      };
+    }>();
+    expect(run.failure).toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      message: `harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      resumable: false,
+      details: { adapterCode: 'HARNESS_ARGUMENTS_REJECTED' },
+      inference: { submission: 'delivery-uncertain', sessionId: 'refused-thread' },
+    });
+    expect(run.failure).not.toHaveProperty('missingSession');
+    expect(run.recovery.resume).toMatchObject({ allowed: false, code: 'FAILURE_NOT_RESUMABLE' });
+    expect(run.recovery.replay.find((option) => option.nodeId === 'infer')?.action).toEqual({
+      allowed: true,
+    });
+    expect(resumed.statusCode).toBe(409);
+    expect(resumed.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+    expect(turns).toHaveLength(1);
+  },
+  60_000,
+);

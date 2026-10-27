@@ -33,13 +33,23 @@ async function workspace(): Promise<string> {
 
 function harness(
   failure: 'refused' | 'unrecognized' | 'malformed' | 'invalid-value' | 'missing-thread',
+  output: {
+    stderr?: 'banner' | 'repeat' | 'banner-repeat';
+    stream?: 'report' | 'none';
+  } = {},
 ) {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
   return {
     logger,
     codex: new CodexHarness({
       codexBinary: process.execPath,
-      env: { ...inherited, NODE_OPTIONS: `--import=${preload}`, GG_FAKE_CODEX_FAILURE: failure },
+      env: {
+        ...inherited,
+        NODE_OPTIONS: `--import=${preload}`,
+        GG_FAKE_CODEX_FAILURE: failure,
+        GG_FAKE_CODEX_STDERR: output.stderr ?? 'banner',
+        GG_FAKE_CODEX_STREAM: output.stream ?? 'report',
+      },
       logger,
     }),
   };
@@ -186,4 +196,95 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       e.manager.stop();
     }
   }, 60_000);
+
+  // PR #426 audit scan 2: the CLI's stderr can repeat the structured refusal, which the SDK's exit
+  // error then carries after its prefix. That text must not reach the message heuristics, and a
+  // repeat must not replace what the stream reported.
+  it.each(
+    (
+      [
+        ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+        ['missing-thread', 'Thread not found in referenced input.'],
+      ] as const
+    ).flatMap(([failure, text]) =>
+      (
+        [
+          ['repeat', 'report'],
+          ['banner-repeat', 'report'],
+          ['repeat', 'none'],
+        ] as const
+      ).map(([stderr, stream]) => ({ failure, text, stderr, stream })),
+    ),
+  )(
+    'keeps the $failure refusal when stderr is $stderr and the stream reports $stream',
+    async ({ failure, text, stderr, stream }) => {
+      const { codex } = harness(failure, { stderr, stream });
+      const session = codex.start(
+        {
+          workingDirectory: await workspace(),
+          model: 'gpt-6-luna',
+          effort: 'minimal',
+          options: { sandbox: 'read-only', approval: 'never' },
+          turn: { prompt: 'Controlled fixture; no provider call' },
+        },
+        new AbortController().signal,
+      );
+      const events: HarnessEvent[] = [];
+      for await (const event of session.events) events.push(event);
+      const refusal = {
+        code: 'HARNESS_ARGUMENTS_REJECTED',
+        retriable: false,
+        message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      };
+      expect(events.at(-1)).toEqual({
+        type: 'error',
+        ...refusal,
+        submission: 'delivery-uncertain',
+      });
+      await expect(session.result).rejects.toMatchObject(refusal);
+    },
+    30_000,
+  );
+
+  it.each([
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+    ['missing-thread', 'Thread not found in referenced input.'],
+  ] as const)(
+    'fails the run on the %s refusal repeated on stderr as a refusal, never a missing session',
+    async (failure, text) => {
+      const e = await createTestEngine();
+      e.ports.harnesses.codex = harness(failure, { stderr: 'repeat' }).codex;
+      try {
+        const version = e.publish(
+          singleNodeLoop('Repeated refusal ' + failure, {
+            id: 'infer',
+            kind: 'inference',
+            label: 'Infer',
+            config: {
+              model: 'gpt-6-luna',
+              effort: 'minimal',
+              prompt: { template: 'The complete authored task' },
+            },
+          }),
+        );
+        const run = await e.runToIdle(version.loopId);
+        expect(run.failure).toEqual({
+          code: 'HARNESS_TURN_FAILED',
+          message: `harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+          nodeId: 'infer',
+          resumable: false,
+          details: { adapterCode: 'HARNESS_ARGUMENTS_REJECTED' },
+          inference: expect.objectContaining({
+            submission: 'delivery-uncertain',
+            sessionId: 'refused-thread',
+          }),
+        });
+        expect(run.failure).not.toHaveProperty('missingSession');
+        await expect(e.manager.resume(run.id)).rejects.toThrow();
+      } finally {
+        e.manager.stop();
+      }
+    },
+    60_000,
+  );
 });

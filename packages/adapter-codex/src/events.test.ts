@@ -423,6 +423,56 @@ describe('TurnAccumulator', () => {
     expect(acc.finish().failure).toEqual(classifyCodexError(error));
   });
 
+  // PR #426 audit scan 2: the SDK's exit error can carry the structured refusal from stderr.
+  const providerError = (text: string, status = 400, type = 'invalid_request_error') =>
+    JSON.stringify({ status, error: { type, param: 'reasoning.effort', message: text } });
+  it.each([
+    ["Error: invalid value for reasoning.effort: 'minimal'.", ''],
+    ['Thread not found in referenced input.', ''],
+    ['Thread not found in referenced input.', 'Reading prompt from stdin...\n'],
+  ])(
+    'classifies the structured refusal %j inside the SDK exit error before any heuristic',
+    (text, banner) => {
+      const wrapper = new Error(`Codex Exec exited with code 1: ${banner}${providerError(text)}\n`);
+      expect(classifyCodexError(wrapper)).toEqual({
+        code: 'HARNESS_ARGUMENTS_REJECTED',
+        message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+        retriable: false,
+      });
+    },
+  );
+
+  it('reads other structured provider errors inside the SDK exit error from their structure', () => {
+    expect(
+      classifyCodexError(
+        new Error(`Codex Exec exited with code 1: ${providerError('Slow down', 429, 'requests')}`),
+      ),
+    ).toEqual({ code: 'HARNESS_QUOTA_EXHAUSTED', message: 'Slow down', retriable: true });
+    // Only the SDK's own exit error is unwrapped; other errors keep the whole-text rules.
+    expect(
+      classifyCodexError(new Error(`Something else: ${providerError('Thread not found.')}`)),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
+  });
+
+  it('never lets an exit error that repeats the stream failure replace it, whatever its text ranks', () => {
+    const text = 'Thread not found in referenced input.';
+    const acc = new TurnAccumulator('fresh');
+    acc.push({ type: 'turn.started' });
+    acc.push({ type: 'turn.failed', error: { message: providerError(text) } });
+    // Not parseable as a whole or by line, so the heuristics would call it a missing session.
+    acc.fail(new Error(`Codex Exec exited with code 1: ERROR: ${providerError(text)}`));
+    expect(acc.finish().failure).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      retriable: false,
+    });
+    // A distinct typed cause on stderr is still evidence of its own.
+    const distinct = new TurnAccumulator('fresh');
+    distinct.push({ type: 'turn.failed', error: { message: providerError(text) } });
+    distinct.fail(new Error('Codex Exec exited with code 1: No rollout found for thread abc'));
+    expect(distinct.finish().failure?.code).toBe('HARNESS_SESSION_MISSING');
+  });
+
   it('fails a stream that ends without completing, using the last stream error if any', () => {
     const silent = new TurnAccumulator('fresh');
     silent.push({ type: 'turn.started' });
