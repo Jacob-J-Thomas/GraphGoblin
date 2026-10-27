@@ -1,0 +1,18 @@
+V1 retained template run (trigger -> exit) 01M5W2JRKDED8CQFZXG78VVD1C succeeded
+PASS approve two plain temp-workspace runs (no links, no shared directories, no aliases)
+V1 pass 1 {"state":"pressure","deletedRuns":2,"removedFileBytes":90,"pending":2,"preserved":2} approved runs [404,404] their workspaces on disk 2
+V1 pass 2 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2} approved runs [404,404] their workspaces on disk 2
+V1 pass 3 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2} approved runs [404,404] their workspaces on disk 2
+FAIL V1: approved, unshared workspaces are reclaimed while the template run is retained :: {"onDisk":2,"state":"no-eligible"}
+V1 notice text in this state "Storage is low. No approved eligible history could be cleaned. Review history you can remove or free disk space. Shared, linked, unproven or deferred resources are kept.\n\nReview run history"
+screenshot ui-notice-template-unknown.png
+PASS V1: approving the template run itself
+V1 after approving the template run {"state":"pressure","deletedRuns":1,"removedFileBytes":4000,"pending":0,"preserved":0} workspaces on disk 0
+PASS V1: once the template run is deleted, the workspaces are reclaimed
+V2 retained template run whose directory renders empty 01M5W2T1YQ34T0C5EQKGBMMKKP failed working directory template rendered to an empty path
+PASS approve two more plain temp-workspace runs
+V2 pass 1 {"state":"pressure","deletedRuns":2,"removedFileBytes":90,"pending":2,"preserved":2} their workspaces on disk 2
+V2 pass 2 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2} their workspaces on disk 2
+FAIL V2: approved, unshared workspaces are reclaimed while the failed template run is retained :: {"onDisk":2,"state":"no-eligible"}
+server stop {"code":0,"signal":null}
+failures 2

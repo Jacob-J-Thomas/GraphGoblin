@@ -1,0 +1,9 @@
+variant plain path (control): GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\physical-data-root
+PASS plain path (control): a run with a temp workspace and a transcript succeeds
+variant different letter case: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\PHYSICAL-Data-Root
+PASS different letter case: a run with a temp workspace and a transcript succeeds
+variant 8.3 short name: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\GG1A44~1\PHYSIC~1
+FAIL 8.3 short name: a run with a temp workspace and a transcript succeeds :: "Managed resource root is a link"
+variant junction: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\junction-to-data
+FAIL junction: a run with a temp workspace and a transcript succeeds :: "Managed resource root is a link"
+failures 2

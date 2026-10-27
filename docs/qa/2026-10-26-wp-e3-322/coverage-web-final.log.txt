@@ -1,0 +1,83 @@
+pnpm --filter @graphgoblin/web test:coverage --maxWorkers=4 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-322-web-final-coverage
+$ vitest run --coverage --maxWorkers=4 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-322-web-final-coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+      Coverage enabled with v8
+
+ ❯ src/runs/RunInspectorPage.test.tsx (26 tests | 1 failed) 19471ms
+   ❯ RunInspectorPage (20)
+     × replays a child run from its seeded first event and reports logs that do not replay 456ms
+ ❯ src/editor/EditorPage.device.test.tsx (2 tests | 1 failed) 37049ms
+   ❯ device storage blocked by an older tab (2)
+     × says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 20117ms
+ ❯ src/events/EventsPage.races.test.tsx (5 tests | 2 failed) 60401ms
+   ❯ Events refresh races (#240) (5)
+     × drops Refresh A after filter change, Back, Refresh B and paging 21398ms
+     × drops Refresh A after page unmount, Back, Refresh B and paging 20426ms
+Not implemented: navigation to another Document
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events/EventsPage.races.test.tsx > Events refresh races (#240) > drops Refresh A after filter change, Back, Refresh B and paging
+ FAIL  src/events/EventsPage.races.test.tsx > Events refresh races (#240) > drops Refresh A after page unmount, Back, Refresh B and paging
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/events/EventsPage.races.test.tsx:52:54
+     50|
+     51| describe('Events refresh races (#240)', () => {
+     52|   it.each(['filter change', 'page unmount'] as const)(
+       |                                                      ^
+     53|     'drops Refresh A after %s, Back, Refresh B and paging',
+     54|     async (leave) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/editor/EditorPage.device.test.tsx > device storage blocked by an older tab > says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/editor/EditorPage.device.test.tsx:26:1
+     24| let oldDatabase: IDBDatabase;
+     25|
+     26| beforeEach(async () => {
+       | ^
+     27|   vi.resetModules();
+     28|   vi.stubGlobal('indexedDB', new IDBFactory());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and reports logs that do not replay
+Error: expect(element).toBeInTheDocument()
+
+element could not be found in the document
+ ❯ src/runs/RunInspectorPage.test.tsx:414:60
+    412|     );
+    413|     renderApp(`/runs/${broken.id}`, api);
+    414|     expect(await screen.findByText(/Thread read failed:/)).toBeInTheDo…
+       |                                                            ^
+    415|   });
+    416|
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ Test Files  3 failed | 145 passed (148)
+      Tests  4 failed | 1787 passed (1791)
+   Start at  00:35:18
+   Duration  1477.82s (tests 32%, environment 30%, transform 17%, import 11%, setup 10%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.72% ( 9040/9250 )
+Branches     : 94.54% ( 8388/8872 )
+Functions    : 98% ( 2403/2452 )
+Lines        : 98.68% ( 7902/8007 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+
+EXIT 1

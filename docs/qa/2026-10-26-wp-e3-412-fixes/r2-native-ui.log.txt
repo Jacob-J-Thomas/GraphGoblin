@@ -1,0 +1,24 @@
+﻿pnpm.cmd exec node docs/qa/2026-10-26-wp-e3-412-fixes/r2-ui-edge-2.mjs
+PASS selection clears after confirmation
+a/b after pressure 404 404
+open Runs page after cleanup: row for deleted run visible=0, count text "0 selected"
+count after selecting one visible run 1 selected
+dialog after cleanup removed earlier selected runs
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5VRPXS1MKR4GPD88YT9RE3N
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection"
+screenshot ui-ghost-selection.png
+PASS review after cleanup contains only the newly selected retained run and permits confirmation :: {"confirmDisabled":false}
+deleted run rows available to uncheck: 0
+server stop {"code":0,"signal":null}
+failures 0
+EXIT 0

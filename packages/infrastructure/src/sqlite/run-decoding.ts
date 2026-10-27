@@ -31,10 +31,15 @@ export const rawRunColumns = {
   startedAt: runs.startedAt,
   finishedAt: runs.finishedAt,
   finalizedAt: runs.finalizedAt,
+  deletionApproval: sql<string | null>`${runs.deletionApproval}`,
   lastEventSeq: runs.lastEventSeq,
   pinned: sql<string | null>`${runs.pinned}`,
 };
-type RawRun = Omit<RunRecordRow, 'waiting' | 'failure' | 'result' | 'pinned'> & {
+type RawRun = Omit<
+  RunRecordRow,
+  'waiting' | 'failure' | 'result' | 'pinned' | 'deletionApproval'
+> & {
+  deletionApproval: string | null;
   waiting: string | null;
   failure: string | null;
   result: string | null;
@@ -61,6 +66,10 @@ export function decodeRunRecord(row: RawRun): RunRecord {
   // contract fields, and mapper invariants (including definition pins) stay authoritative.
   const decoded = {
     ...row,
+    deletionApproval:
+      row.deletionApproval === null
+        ? null
+        : decode(row.id, 'deletion_approval', row.deletionApproval),
     waiting: row.waiting === null ? null : decode(row.id, 'waiting', row.waiting),
     failure: row.failure === null ? null : decode(row.id, 'failure', row.failure),
     result: row.result === null ? undefined : decode(row.id, 'result', row.result),

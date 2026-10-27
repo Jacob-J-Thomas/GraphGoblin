@@ -16,6 +16,7 @@ import { registerStatic } from './plugins/static.js';
 import { registerLoopRoutes } from './routes/loops.js';
 import { registerTemplateRoutes } from './routes/templates.js';
 import { registerRunRoutes } from './routes/runs.js';
+import { registerDeletionEligibilityRoutes } from './routes/deletion-eligibility.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerClassifierRoutes } from './routes/classifiers.js';
 import { registerSystemRoutes } from './routes/system.js';
@@ -85,12 +86,17 @@ export async function buildApp(
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
+  registerDeletionEligibilityRoutes(app, container);
   registerRunDiagnosticRoutes(app, container);
   registerTemplateRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);
   registerTriggerRoutes(app, container);
   await registerStatic(app, container.config.webDist);
+  app.addHook('onListen', (done) => {
+    container.historyCleanup.afterListen();
+    done();
+  });
 
   return app;
 }

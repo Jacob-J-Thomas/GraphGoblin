@@ -1,6 +1,8 @@
 import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
+import { HistoryEligibility } from './HistoryEligibility.js';
+import { formatDateTime } from '../lib/utils.js';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
@@ -241,6 +243,14 @@ export function RunInspectorPage() {
               </Card>
             ) : null}
             <RunLimits run={run} />
+            <div className="grid gap-2">
+              <p className="text-sm text-muted">
+                {run.deletionApproval
+                  ? `Delete-ready: confirmed by ${run.deletionApproval.confirmedBy.id} at ${formatDateTime(run.deletionApproval.confirmedAt)}.`
+                  : 'History retained.'}
+              </p>
+              <HistoryEligibility runIds={[run.id]} />
+            </div>
             <ExecutionContext
               run={run}
               cancellation={cancellation}

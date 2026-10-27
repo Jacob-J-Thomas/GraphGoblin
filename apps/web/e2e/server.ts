@@ -56,6 +56,7 @@ class E2eControlError extends Error {
 
 const apps: TestApp[] = [];
 const instances = new Map<string, E2eInstance>();
+const storageCapacities = new Map<string, { availableBytes: number }>();
 const threadHistories = new Map<string, Awaited<ReturnType<typeof createThreadHistoryFixture>>>();
 const closers: (() => Promise<void>)[] = [];
 let nextInstanceId = 1;
@@ -177,13 +178,19 @@ async function startApp(
   env: Record<string, string> = {},
   requireApiKey = false,
   realClassifiers = false,
-  options: { claude?: boolean; id?: string } = {},
+  options: { claude?: boolean; id?: string; tempPrefix?: string } = {},
 ) {
   const id = options.id ?? 'e2e-instance-' + nextInstanceId++;
   const codex = new FakeHarness([], 'codex');
   const claude = options.claude ? new E2eClaudeHarness() : undefined;
   const harnesses = { codex, ...(claude ? { claude } : {}) };
+  const storage = { availableBytes: 50 * 1024 ** 3 };
   const app = await createTestApp({
+    storageCapacity: {
+      read: () =>
+        Promise.resolve({ totalBytes: 100 * 1024 ** 3, availableBytes: storage.availableBytes }),
+    },
+    ...(options.tempPrefix ? { tempPrefix: options.tempPrefix } : {}),
     env: { GG_WEB_DIST: dist, ...env },
     requireApiKey,
     realClassifiers,
@@ -195,6 +202,7 @@ async function startApp(
     port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,
   });
   const instance: E2eInstance = { id, app, url, harnesses };
+  storageCapacities.set(id, storage);
   instances.set(id, instance);
   return instance;
 }
@@ -288,6 +296,17 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/storage/capacity': {
+      const instance = selectedInstance(body);
+      storageCapacities.get(instance.id)!.availableBytes = z
+        .number()
+        .int()
+        .nonnegative()
+        .parse(body['availableBytes']);
+      instance.app.clock.advance(60_000);
+      await instance.app.container.historyCleanup.poll();
+      return instance.app.container.historyCleanup.status();
+    }
     case '/clock/advance':
       selectedInstance(body).app.clock.advance(
         z.number().int().positive().parse(body['milliseconds']),
@@ -548,7 +567,10 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         body['requireApiKey'] === true,
         // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
         body['realClassifiers'] === true,
-        { claude: body['claude'] === true },
+        {
+          claude: body['claude'] === true,
+          ...(body['tempPrefix'] === 'gg-wp-e3-' ? { tempPrefix: 'gg-wp-e3-' } : {}),
+        },
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);

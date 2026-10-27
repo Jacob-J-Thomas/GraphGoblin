@@ -12,7 +12,7 @@ import { loadMasterKey } from './master-key.js';
 
 const opened: TestApp[] = [];
 async function app(options: Parameters<typeof createTestApp>[0] = {}) {
-  const t = await createTestApp(options);
+  const t = await createTestApp({ tempPrefix: 'gg-wp-e3-', ...options });
   opened.push(t);
   return t;
 }
@@ -138,6 +138,8 @@ describe('adversarial API invariants', () => {
     'POST /triggers/cron/preview': 'loops:read',
     'POST /loops/{id}/runs': 'runs:write',
     'GET /runs': 'runs:read',
+    'POST /runs/deletion-eligibility/preview': 'runs:read',
+    'POST /runs/deletion-eligibility': 'runs:write',
     'GET /runs/diagnostics': 'runs:read',
     'GET /runs/{id}': 'runs:read',
     'GET /runs/{id}/thread': 'runs:read',
@@ -177,6 +179,7 @@ describe('adversarial API invariants', () => {
     'GET /system/preflight': 'system:read',
     'GET /system/model-defaults': 'system:read',
     'GET /system/shutdown': 'system:read',
+    'GET /system/storage': 'system:read',
     'POST /system/shutdown': 'system:write',
     'GET /harness/preflight': 'system:read',
   };

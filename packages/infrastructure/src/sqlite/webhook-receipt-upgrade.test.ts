@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { RunEventSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
@@ -46,6 +47,18 @@ const cases = [
 
 beforeEach(async () => {
   handle = await openMemoryDatabase();
+  // Rewind the unshipped eligibility migration before the historical ledger suffix.
+  for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
+  await handle.client.execute('DROP TRIGGER runs_deletion_activity');
+  await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');
+  await handle.client.execute('DROP TRIGGER runs_deletion_revision');
+  await handle.client.execute('DROP TRIGGER runs_deletion_relationship');
+  await handle.client.execute('DROP TRIGGER runs_replay_source_update');
+  await handle.client.execute('DROP INDEX runs_replay_source_idx');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_source_run_id');
+  await handle.client.execute('DROP INDEX runs_deletion_approval_idx');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN deletion_approval');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN deletion_revision');
   // Restore a pre-0015 ledger prefix; remove the later index before both migrations replay.
   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
   // A pre-0015 fixture must not retain the later targeted Event ledger.

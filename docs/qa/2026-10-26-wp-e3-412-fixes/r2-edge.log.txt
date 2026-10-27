@@ -1,0 +1,14 @@
+﻿pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/deletion-eligibility.spec.ts e2e/storage-cleanup.spec.ts --retries=0 --workers=1
+
+Running 5 tests using 1 worker
+
+(node:14540) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\deletion-eligibility.spec.ts:24:1 › individual review cancels safely, confirms persisted consent, and withdraws it (2.7s)
+  ok 2 [chromium] › e2e\deletion-eligibility.spec.ts:59:1 › bulk confirmation covers exactly the frozen selection; later history remains retained (2.3s)
+  ok 3 [chromium] › e2e\deletion-eligibility.spec.ts:81:1 › protected history and a stale confirmation refuse visibly; invalid selections cannot approve a subset (3.1s)
+  ok 4 [chromium] › e2e\storage-cleanup.spec.ts:5:1 › pressure cleans only confirmed history and shows both pressure warnings without broadening consent (2.9s)
+  ok 5 [chromium] › e2e\storage-cleanup.spec.ts:61:1 › clears confirmed selection and prunes selected rows removed by cleanup while Runs stays open (7.1s)
+
+  5 passed (28.3s)
+EXIT 0

@@ -10,6 +10,61 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/system/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cached capacity, bounded cleanup and reusable SQLite storage
+         * @description Observation only; never grants consent or starts cleanup. File-byte counts describe removed file lengths, not promised physical free space. SQLite reusable bytes are internal free pages, not OS-reclaimed storage.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            state: "adequate" | "pressure" | "no-eligible" | "unavailable";
+                            checkedAt: string | null;
+                            volumes: {
+                                /** @enum {string} */
+                                name: "data" | "database";
+                                totalBytes: number;
+                                availableBytes: number;
+                            }[];
+                            cleaning: boolean;
+                            deletedRuns: number;
+                            removedFileBytes: number;
+                            reusableDatabaseBytes: number;
+                            pendingResources: number;
+                            preservedResources: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/model-defaults": {
         parameters: {
             query?: never;
@@ -1524,6 +1579,125 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/deletion-eligibility/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review an explicit history selection without approving or deleting it */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        runIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            token: string;
+                            items: {
+                                runId: string;
+                                approval?: {
+                                    /** Format: date-time */
+                                    confirmedAt: string;
+                                    confirmedBy: {
+                                        ownerId: string;
+                                        kind: string;
+                                        id: string;
+                                    };
+                                } | undefined;
+                                reasons: string[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/deletion-eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm or withdraw deletion eligibility for exactly the reviewed selection; deletes nothing */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        runIds: string[];
+                        token: string;
+                        /** @enum {string} */
+                        action: "mark" | "withdraw";
+                        /** @enum {boolean} */
+                        confirmed: true;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            token: string;
+                            items: {
+                                runId: string;
+                                approval?: {
+                                    /** Format: date-time */
+                                    confirmedAt: string;
+                                    confirmedBy: {
+                                        ownerId: string;
+                                        kind: string;
+                                        id: string;
+                                    };
+                                } | undefined;
+                                reasons: string[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4057,6 +4231,15 @@ export interface components {
                     httpStatus?: number | undefined;
                 } | undefined;
             }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -6190,6 +6373,15 @@ export interface components {
                     httpStatus?: number | undefined;
                 } | undefined;
             }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

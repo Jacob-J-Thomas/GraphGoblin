@@ -27,6 +27,11 @@ it('preserves script uncertainty and retry provenance in the MCP run summary (#3
     failure,
   });
   expect(summarizeRun(run).failure).toEqual(failure);
+  const deletionApproval = {
+    confirmedAt: run.createdAt,
+    confirmedBy: { ownerId: 'local', kind: 'user', id: 'local' },
+  };
+  expect(summarizeRun({ ...run, deletionApproval }).deletionApproval).toEqual(deletionApproval);
 });
 
 describe('evaluator-specific decision descriptions', () => {

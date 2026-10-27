@@ -1,0 +1,70 @@
+﻿pnpm.cmd typecheck
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs ce493e78affee2c4
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 3eaf67470756ea12
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 413c3a5fec096437
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 6cb64eea5215e7fa
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache hit, replaying logs a7d7b5f33ee19282
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: cache hit, replaying logs 6912029ef3571495
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing 954377fe3f078e1b
+@graphgoblin/adapter-codex:typecheck: cache hit, replaying logs 899982b3c7b324cd
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: cache miss, executing a4681ac2bcbab448
+@graphgoblin/adapter-jev:typecheck: cache hit, replaying logs dec6c65227607c8d
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs b6caaafa08eecdd2
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 931cc6dc317d984b
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:typecheck: cache miss, executing 733ef5de704438c8
+@graphgoblin/api:build: cache miss, executing b915631cfaf0efe2
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:typecheck: cache miss, executing e230aaae04d8b0ba
+@graphgoblin/api-client:build: cache miss, executing 5db282a0d6d1db6d
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/web:typecheck: cache miss, executing 6437cfdee081d74a
+@graphgoblin/mcp:typecheck: cache miss, executing aea51082913b9459
+@graphgoblin/mcp:build: cache miss, executing b62cc37091bba976
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing e78a13b139273c1d
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: src/sqlite/history-cleanup.test.ts(213,17): error TS2769: No overload matches this call.
+@graphgoblin/infrastructure:typecheck:   Overload 1 of 8, '(file: string, args: readonly string[], options: ExecFileSyncOptionsWithStringEncoding): string', gave the following error.
+@graphgoblin/infrastructure:typecheck:     Object literal may only specify known properties, and 'windowsVerbatimArguments' does not exist in type 'ExecFileSyncOptionsWithStringEncoding'.
+@graphgoblin/infrastructure:typecheck:   Overload 2 of 8, '(file: string, args: readonly string[], options: ExecFileSyncOptionsWithBufferEncoding): NonSharedBuffer', gave the following error.
+@graphgoblin/infrastructure:typecheck:     Type '"utf8"' is not assignable to type '"buffer"'.
+@graphgoblin/infrastructure:typecheck:   Overload 3 of 8, '(file: string, args?: readonly string[] | undefined, options?: ExecFileSyncOptions | undefined): string | NonSharedBuffer', gave the following error.
+@graphgoblin/infrastructure:typecheck:     Object literal may only specify known properties, and 'windowsVerbatimArguments' does not exist in type 'ExecFileSyncOptions'.
+@graphgoblin/infrastructure:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/infrastructure#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322\packages\infrastructure) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    14 successful, 20 total
+Cached:    10 cached, 20 total
+  Time:    30.823s 
+Failed:    @graphgoblin/infrastructure#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.
+EXIT 2

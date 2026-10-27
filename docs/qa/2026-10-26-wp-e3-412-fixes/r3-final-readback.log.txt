@@ -1,0 +1,150 @@
+Final readback
+worktree: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322
+node executable: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.EXE
+COMMAND node --version
+v22.23.4
+
+
+EXIT 0
+COMMAND git rev-parse HEAD
+b74d3460b61de273453b5e56d51f3a3c4f83bd37
+
+
+EXIT 0
+COMMAND git branch --show-current
+codex-wp-e3-187-322
+
+
+EXIT 0
+COMMAND git diff --check
+
+
+EXIT 0
+COMMAND git diff --cached --quiet
+
+
+EXIT 0
+COMMAND git diff --stat
+ CHANGELOG.md                                       |   2 +-
+ apps/api/src/history-cleanup.test.ts               |  63 ++++-
+ docs/03-domain-model.md                            |   2 +-
+ docs/05-execution-engine.md                        |   2 +-
+ docs/07-api-and-streaming.md                       |   2 +-
+ ...R-0060-explicit-history-deletion-eligibility.md |  18 +-
+ docs/guide/03-run-and-observe.md                   |   2 +-
+ docs/qa/2026-10-26-wp-e3-412-fixes/README.md       | 118 ++++-----
+ .../drizzle/0022_run_resource_ownership.sql        |  87 ++++++-
+ .../infrastructure/drizzle/meta/0022_snapshot.json | 126 +++++++++-
+ packages/infrastructure/src/fs/owned-resources.ts  |   1 +
+ packages/infrastructure/src/sqlite/catalog.test.ts |   4 +-
+ .../src/sqlite/deletion-eligibility.test.ts        |   4 +-
+ .../src/sqlite/delivery-runs.test.ts               |   4 +-
+ .../src/sqlite/history-cleanup.test.ts             | 275 ++++++++++++++++++---
+ .../infrastructure/src/sqlite/history-cleanup.ts   |  73 +-----
+ .../src/sqlite/history-summaries.test.ts           |   4 +-
+ packages/infrastructure/src/sqlite/loops.ts        |  15 ++
+ .../infrastructure/src/sqlite/run-resources.ts     |  18 +-
+ packages/infrastructure/src/sqlite/schema.ts       |  29 +++
+ .../src/sqlite/webhook-receipt-upgrade.test.ts     |   4 +-
+ 21 files changed, 676 insertions(+), 177 deletions(-)
+
+
+EXIT 0
+COMMAND git status --short
+ M CHANGELOG.md
+ M apps/api/src/history-cleanup.test.ts
+ M docs/03-domain-model.md
+ M docs/05-execution-engine.md
+ M docs/07-api-and-streaming.md
+ M docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md
+ M docs/guide/03-run-and-observe.md
+ M docs/qa/2026-10-26-wp-e3-412-fixes/README.md
+ M packages/infrastructure/drizzle/0022_run_resource_ownership.sql
+ M packages/infrastructure/drizzle/meta/0022_snapshot.json
+ M packages/infrastructure/src/fs/owned-resources.ts
+ M packages/infrastructure/src/sqlite/catalog.test.ts
+ M packages/infrastructure/src/sqlite/deletion-eligibility.test.ts
+ M packages/infrastructure/src/sqlite/delivery-runs.test.ts
+ M packages/infrastructure/src/sqlite/history-cleanup.test.ts
+ M packages/infrastructure/src/sqlite/history-cleanup.ts
+ M packages/infrastructure/src/sqlite/history-summaries.test.ts
+ M packages/infrastructure/src/sqlite/loops.ts
+ M packages/infrastructure/src/sqlite/run-resources.ts
+ M packages/infrastructure/src/sqlite/schema.ts
+ M packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts
+?? docs/qa/2026-10-26-wp-e3-412-fixes/ROUND-2.md
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-alias-direct.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-alias-parent-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-alias-parent-verified.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-alias-parent.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-api-first.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-append-bound.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-build-batched.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-build-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-build-first.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-api.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-infrastructure-bounded.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-infrastructure-complete.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-infrastructure-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-infrastructure-scaled.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-coverage-infrastructure.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-deps-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-deps.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-docs-check.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-docs-generate.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-focused-bulk-scale.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-focused-storage-complete.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-focused-storage-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-focused-storage-scaled.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-bounded-drain.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-bulk-fixture.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-fixtures.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-report-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-scale-fixture.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-write-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-format-write.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-latency-before-batching.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-latency.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-latency.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-layers.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-lint-complete.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-lint-final-verified.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-lint-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-lint-readback.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-lint-scaled.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migration-failure-detail.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migration-fixtures-complete.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migration-fixtures-fixed.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migration-generate-relative.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migration-generate.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-migrations-check.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-native-latency-batched.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-native-latency.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-native-startup-batched.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-native-startup.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-qa-lib.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-qa-server.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-red-realistic.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-reference-probes.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-runtime.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-startup-latency-before-batching.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-startup-latency.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-startup-latency.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-storage-batched.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-storage-first.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-storage-next.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-store-fixture.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-complete.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-final-verified.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-first.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-next.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-readback.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r3-typecheck-scaled.log.txt
+?? packages/infrastructure/src/fs/physical-path.ts
+?? packages/infrastructure/src/sqlite/testing/resource-ownership.ts
+?? packages/infrastructure/src/sqlite/workspace-references.ts
+
+
+EXIT 0

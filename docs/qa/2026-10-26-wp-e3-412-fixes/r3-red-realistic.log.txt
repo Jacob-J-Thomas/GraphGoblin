@@ -1,0 +1,45 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts -t 1000 retained --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (29 tests | 1 failed | 28 skipped) 10959ms
+   × reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases 10957ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases
+AssertionError: expected +0 to be 19 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 19
++ 0
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:592:24
+    590|   expect(await store.prepareBatch('local')).toBe(2);
+    591|   const result = await store.reapBatch();
+    592|   expect(result.bytes).toBe(Buffer.byteLength('reclaim these bytes'));
+       |                        ^
+    593|   await expect(lstat(free)).rejects.toMatchObject({ code: 'ENOENT' });
+    594|   expect(await readFile(join(shared, 'keep'), 'utf8')).toBe('retained …
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 skipped (29)
+   Start at  05:19:41
+   Duration  21.73s (tests 53%, transform 26%, import 22%)
+
+  Transform  transforming modules took 5.35s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

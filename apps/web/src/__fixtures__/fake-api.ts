@@ -447,6 +447,18 @@ export class FakeApi {
 
   /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
   builtIn(call: RecordedCall): Response | Promise<Response> {
+    if (call.method === 'GET' && call.path === '/system/storage')
+      return json({
+        state: 'adequate',
+        checkedAt: null,
+        volumes: [],
+        cleaning: false,
+        deletedRuns: 0,
+        removedFileBytes: 0,
+        reusableDatabaseBytes: 0,
+        pendingResources: 0,
+        preservedResources: 0,
+      });
     if (call.method === 'GET' && call.path === '/system/shutdown')
       return json({
         phase: 'running',

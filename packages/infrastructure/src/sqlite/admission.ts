@@ -2,6 +2,7 @@ import { JsonValueSchema, RunEventSchema } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
+  EngineRequestError,
   assertAdmissionIdentity,
   assertWebhookClaim,
   childLinkEvent,
@@ -238,6 +239,18 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         assertAdmissionIdentity(input, run, thread, stored.data);
       } else {
         if (first) throw new AdmissionConflictError();
+        const replaySource = input.initialThread.invocation.replayOf?.runId;
+        if (replaySource) {
+          const [source] = await tx
+            .select({ id: runs.id })
+            .from(runs)
+            .where(and(eq(runs.id, replaySource), eq(runs.ownerId, input.run.ownerId)));
+          if (!source)
+            throw new EngineRequestError(
+              'RUN_NOT_FOUND',
+              'Replay source was removed before admission',
+            );
+        }
         run = { ...input.run, lastEventSeq: 1 };
         event = validateGeneratedEvent(queuedEvent(input));
         if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);

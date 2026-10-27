@@ -1,0 +1,69 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (25 tests | 2 failed) 28436ms
+   × reaps a positively owned workspace and artifact but preserves run-shaped, fixed and unrelated paths 542ms
+   × retains journal state when a transaction fails after file removal, then finishes after reopen 446ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > reaps a positively owned workspace and artifact but preserves run-shaped, fixed and unrelated paths
+AssertionError: expected { bytes: 25, preserved: +0, …(2) } to deeply equal { bytes: 25, preserved: +0, …(1) }
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "bytes": 25,
+    "pending": 0,
+    "preserved": 0,
++   "remaining": false,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:146:35
+    144|   await mark([id]);
+    145|   expect(await store.prepareBatch('local')).toBe(1);
+    146|   expect(await store.reapBatch()).toEqual({ bytes: 25, preserved: 0, p…
+       |                                   ^
+    147|   await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT…
+    148|   expect(await resources.artifacts.get(artifact.ref)).toBeUndefined();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > retains journal state when a transaction fails after file removal, then finishes after reopen
+AssertionError: expected { bytes: +0, preserved: 1, …(2) } to deeply equal { bytes: +0, preserved: 1, pending: 1 }
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "bytes": 0,
+    "pending": 1,
+    "preserved": 1,
++   "remaining": false,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:208:35
+    206|     "CREATE TRIGGER fail_reap BEFORE DELETE ON run_resources BEGIN SEL…
+    207|   );
+    208|   expect(await store.reapBatch()).toEqual({ bytes: 0, preserved: 1, pe…
+       |                                   ^
+    209|   handle.close();
+    210|   globalThis.gc?.();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 23 passed (25)
+   Start at  03:40:57
+   Duration  38.84s (tests 74%, transform 13%, import 13%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

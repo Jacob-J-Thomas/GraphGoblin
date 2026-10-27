@@ -9,6 +9,8 @@ export type RunRecordRow = Omit<
   | 'threadSnapshotReplayState'
   | 'result'
   | 'pinned'
+  | 'deletionRevision'
+  | 'replaySourceRunId'
 > & { result: JsonValue | undefined; pinned: RunPin };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {
@@ -34,5 +36,6 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
     ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),
     ...(row.finalizedAt !== null ? { finalizedAt: row.finalizedAt } : {}),
     lastEventSeq: row.lastEventSeq,
+    ...(row.deletionApproval !== null ? { deletionApproval: row.deletionApproval } : {}),
   };
 }

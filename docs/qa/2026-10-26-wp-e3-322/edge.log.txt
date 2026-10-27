@@ -1,0 +1,59 @@
+pnpm --filter @graphgoblin/web exec playwright test e2e/deletion-eligibility.spec.ts e2e/storage-cleanup.spec.ts --retries=0 --workers=1
+
+Running 4 tests using 1 worker
+
+(node:43856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\deletion-eligibility.spec.ts:24:1 › individual review cancels safely, confirms persisted consent, and withdraws it (16.1s)
+(node:42744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 [chromium] › e2e\deletion-eligibility.spec.ts:57:1 › bulk confirmation covers exactly the frozen selection; later history remains retained (2.7s)
+  ok 3 [chromium] › e2e\deletion-eligibility.spec.ts:79:1 › protected history and a stale confirmation refuse visibly; invalid selections cannot approve a subset (2.4s)
+  ok 4 [chromium] › e2e\storage-cleanup.spec.ts:5:1 › pressure cleans only confirmed history and shows both pressure warnings without broadening consent (2.4s)
+
+
+  1) [chromium] › e2e\deletion-eligibility.spec.ts:24:1 › individual review cancels safely, confirms persisted consent, and withdraws it 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('dialog')
+    Expected substring: "This does not delete anything now"
+    Received string:    "Mark selected history delete-ready?Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.01M3Y7RKG0FCC60K8Y3HK1YYKKCancelConfirm delete-ready selection"
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('dialog') with timeout 10000ms
+      - waiting for getByRole('dialog')
+        23 × locator resolved to <dialog open="" aria-modal="true" aria-labelledby="_r_5_" class="m-auto max-h-[calc(100dvh-4rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none p-0 overflow-hidden rounded-lg border border-default bg-surface-raised text-default shadow-3 backdrop:bg-scrim open:flex open:flex-col max-md:mb-0 max-md:max-h-[92dvh] max-md:w-full max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0">…</dialog>
+           - unexpected value "Mark selected history delete-ready?Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.01M3Y7RKG0FCC60K8Y3HK1YYKKCancelConfirm delete-ready selection"
+
+
+      34 |   let dialog = page.getByRole('dialog');
+      35 |   await expect(dialog).toContainText(id);
+    > 36 |   await expect(dialog).toContainText('This does not delete anything now');
+         |                        ^
+      37 |   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      38 |   expect((await snapshot(request, url, id)).deletionApproval).toBeUndefined();
+      39 |   await page.getByRole('button', { name: 'Review delete-ready history' }).click();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322\apps\web\e2e\deletion-eligibility.spec.ts:36:24
+
+    Error Context: test-results\deletion-eligibility-indiv-ab84a-ed-consent-and-withdraws-it-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\deletion-eligibility-indiv-ab84a-ed-consent-and-withdraws-it-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\deletion-eligibility-indiv-ab84a-ed-consent-and-withdraws-it-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\deletion-eligibility.spec.ts:24:1 › individual review cancels safely, confirms persisted consent, and withdraws it 
+  3 passed (2.3m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+
+EXIT 1

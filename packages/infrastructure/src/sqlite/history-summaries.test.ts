@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +25,18 @@ describe('SQLite history queries', () => {
   });
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
+    // Rewind migration 0022 together with the older ledger used by this historical fixture.
+    for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
+    await handle.client.execute('DROP TRIGGER runs_deletion_activity');
+    await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');
+    await handle.client.execute('DROP TRIGGER runs_deletion_revision');
+    await handle.client.execute('DROP TRIGGER runs_deletion_relationship');
+    await handle.client.execute('DROP TRIGGER runs_replay_source_update');
+    await handle.client.execute('DROP INDEX runs_replay_source_idx');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_source_run_id');
+    await handle.client.execute('DROP INDEX runs_deletion_approval_idx');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN deletion_approval');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN deletion_revision');
     await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
     await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
     const historyMigration = readMigrationFiles({

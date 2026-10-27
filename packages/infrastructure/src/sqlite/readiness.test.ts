@@ -1,6 +1,12 @@
 import { afterEach, expect, it } from 'vitest';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
-import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import {
+  minimalLoop,
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { guardCurrentStore } from './store-format.js';
 import { currentStoreReadiness, SHIPPED_MIGRATIONS } from './readiness.js';
@@ -134,6 +140,50 @@ async function through(index: number) {
   });
   return handle;
 }
+it('upgrades main observation indexes through eligibility and ownership without losing history', async () => {
+  const handle = await through(21);
+  const thread = sampleThread();
+  await handle.client.execute({
+    sql: `INSERT INTO runs
+      (id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,initial_thread,pinned,finalized_at)
+      VALUES (?,?,?,?,?,'succeeded',1,?,?,?,?)`,
+    args: [
+      FIXTURE_IDS.run,
+      'local',
+      FIXTURE_IDS.loop,
+      FIXTURE_IDS.version,
+      FIXTURE_IDS.invocation,
+      FIXTURE_TS,
+      JSON.stringify(thread),
+      JSON.stringify(samplePin()),
+      FIXTURE_TS,
+    ],
+  });
+  const before = (await handle.client.execute('SELECT * FROM runs')).rows[0]!;
+  const indexes = (
+    await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")
+  ).rows;
+  expect(await handle.pendingMigrations()).toBe(2);
+  await handle.migrate();
+  expect((await handle.client.execute('SELECT * FROM runs')).rows).toEqual([
+    {
+      ...before,
+      deletion_approval: null,
+      deletion_revision: 0,
+      replay_source_run_id: null,
+    },
+  ]);
+  expect(
+    (await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")).rows,
+  ).toEqual(indexes);
+  expect((await handle.client.execute('SELECT * FROM run_resources')).rows).toEqual([]);
+  expect((await handle.client.execute('SELECT * FROM workspace_references')).rows).toEqual([]);
+  const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+  expect(ledger).toHaveLength(24);
+  await handle.migrate();
+  expect(await handle.pendingMigrations()).toBe(0);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(ledger);
+});
 it.each([8, 9, 10, 11, 12])(
   'refuses a format-4 marker whose ledger stops before the baseline at migration %s',
   async (index) => {

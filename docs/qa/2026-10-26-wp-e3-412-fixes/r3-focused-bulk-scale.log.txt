@@ -1,0 +1,35 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts -t 1000 retained --maxWorkers=1 --coverage --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp/gg-wp-e3-r3-focused-scale-coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+      Coverage enabled with v8
+
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 29 skipped (30)
+   Start at  06:21:56
+   Duration  11.56s (import 39%, tests 33%, transform 27%)
+
+  Transform  transforming modules took 2.80s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 22.93% ( 652/2843 )
+Branches     : 16% ( 349/2180 )
+Functions    : 26.99% ( 159/589 )
+Lines        : 24.5% ( 611/2493 )
+================================================================================
+ERROR: Coverage for lines (24.5%) does not meet global threshold (90%)
+ERROR: Coverage for functions (26.99%) does not meet global threshold (90%)
+ERROR: Coverage for statements (22.93%) does not meet global threshold (90%)
+ERROR: Coverage for branches (16%) does not meet global threshold (90%)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

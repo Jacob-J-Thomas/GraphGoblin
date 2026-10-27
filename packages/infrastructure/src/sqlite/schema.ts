@@ -8,6 +8,7 @@ import type {
   LoopDefinition,
   LoopVersionStatus,
   RunFailure,
+  DeletionApproval,
   RunPin,
   WaitSpec,
 } from '@graphgoblin/contracts';
@@ -67,6 +68,8 @@ export const runs = sqliteTable(
     loopId: text('loop_id').notNull(),
     versionId: text('version_id').notNull(),
     parentRunId: text('parent_run_id'),
+    /** Indexed replay provenance; written with the initial thread at admission. */
+    replaySourceRunId: text('replay_source_run_id'),
     invocationId: text('invocation_id').notNull(),
     status: text('status').notNull(),
     currentNodeId: text('current_node_id'),
@@ -92,6 +95,8 @@ export const runs = sqliteTable(
     }).$type<ReplayState>(),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
+    deletionApproval: text('deletion_approval', { mode: 'json' }).$type<DeletionApproval>(),
+    deletionRevision: integer('deletion_revision').notNull().default(0),
     /**
      * What `version_id` pins (ADR-0041). Nullable only because SQLite cannot add a NOT NULL column
      * without a default; every run is written with one and migration 0014 pinned the runs before it.
@@ -109,6 +114,8 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    index('runs_replay_source_idx').on(t.replaySourceRunId),
+    index('runs_deletion_approval_idx').on(t.deletionApproval),
     // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
     index('runs_version_idx').on(t.versionId),
   ],
@@ -397,7 +404,66 @@ export const eventReceipts = sqliteTable(
   ],
 );
 
+/** Positive creation proof; pending rows survive removal of their owner's history. */
+export const runResources = sqliteTable(
+  'run_resources',
+  {
+    key: text('key').primaryKey(),
+    ownerRunId: text('owner_run_id').notNull(),
+    kind: text('kind', { enum: ['workspace', 'artifact'] }).notNull(),
+    path: text('path').notNull(),
+    identity: text('identity').notNull(),
+    physicalPath: text('physical_path'),
+    approval: text('approval', { mode: 'json' }).$type<DeletionApproval>(),
+    pending: integer('pending', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    index('run_resources_owner_idx').on(t.ownerRunId),
+    index('run_resources_pending_idx').on(t.pending, t.key),
+  ],
+);
+
+export const runResourceUses = sqliteTable(
+  'run_resource_uses',
+  {
+    runId: text('run_id').notNull(),
+    key: text('key').notNull(),
+    path: text('path').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.runId, t.key] }), index('run_resource_uses_key_idx').on(t.key)],
+);
+
+/** Live workspace obligations, maintained only by admission/version/use changes, never events. */
+export const workspaceReferences = sqliteTable(
+  'workspace_references',
+  {
+    id: text('id').primaryKey(),
+    runId: text('run_id'),
+    versionId: text('version_id'),
+    path: text('path'),
+    physicalPath: text('physical_path'),
+    checkedEpoch: integer('checked_epoch').notNull().default(0),
+  },
+  (t) => [
+    index('workspace_references_physical_idx').on(t.physicalPath),
+    index('workspace_references_run_idx').on(t.runId),
+    index('workspace_references_version_idx').on(t.versionId),
+    index('workspace_references_epoch_idx').on(t.checkedEpoch, t.id),
+  ],
+);
+
+/** A bounded refresh sweep must finish before any workspace can be staged. */
+export const workspaceReferenceState = sqliteTable('workspace_reference_state', {
+  id: integer('id').primaryKey(),
+  epoch: integer('epoch').notNull().default(0),
+  sweeping: integer('sweeping', { mode: 'boolean' }).notNull().default(false),
+});
+
 export const schema = {
+  workspaceReferences,
+  workspaceReferenceState,
+  runResources,
+  runResourceUses,
   webhookReceipts,
   eventReceipts,
   classifierModels,

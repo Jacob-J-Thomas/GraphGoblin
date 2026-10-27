@@ -1,0 +1,212 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:164
++ ... OUNT='100'; pnpm.cmd --filter @graphgoblin/api test:coverage > docs/q ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 2 failed) 38147ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 1152ms
+     × ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 1101ms
+{"level":30,"time":1792985015671,"pid":36904,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5651"}
+{"level":30,"time":1792985015672,"pid":36904,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5651,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-Z0aCnC","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792985015825,"pid":36904,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792985015832,"pid":36904,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":6.644400000000132,"msg":"request completed"}
+ ❯ src/loop-deletion.test.ts (9 tests | 1 failed) 4565ms
+   ❯ DELETE /loops/:id (9)
+     × maps the transactional active-run refusal to 409 if a run appears after the route check 298ms
+[before-receipt] fixture
+[before-receipt] key
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+child admission kill: delay=0ms snapshots=36872 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 41.28650000000198ms
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+ ❯ src/thread-history.test.ts (4 tests | 1 failed) 32628ms
+   × reconciles persisted failure, unfinished resume and success without writing on reads 22043ms
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+child admission kill: delay=5ms snapshots=53705 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 28.208500000007916ms
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+child admission kill: delay=25ms snapshots=29392 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 20.32500000001164ms
+{"status":"draft","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+ ❯ src/webhook-delivery-lifecycle.test.ts (2 tests | 2 failed) 2290ms
+   × loop deletion stops a webhook during in-flight without orphan events 1834ms
+   × loop deletion stops a webhook during backoff without orphan events 439ms
+{"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+AssertionError: expected [ 'DELETE /api-keys/{id}', …(57) ] to deeply equal [ 'DELETE /api-keys/{id}', …(55) ]
+
+- Expected
++ Received
+
+@@ -38,10 +38,12 @@
+    "POST /loops",
+    "POST /loops/import",
+    "POST /loops/{id}/publish",
+    "POST /loops/{id}/runs",
+    "POST /loops/{id}/validate",
++   "POST /runs/deletion-eligibility",
++   "POST /runs/deletion-eligibility/preview",
+    "POST /runs/{id}/cancel",
+    "POST /runs/{id}/input",
+    "POST /runs/{id}/pause",
+    "POST /runs/{id}/recover-session",
+    "POST /runs/{id}/replay",
+
+ ❯ src/adversarial.test.ts:200:31
+    200|       }
+    201|     }
+    202|     expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort()…
+       |                 ^
+    203|     for (const route of advertised) {
+    204|       const required = ROUTE_SCOPES[route]!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a loop an active run can still start as 
+a subloop cannot be deleted
+AssertionError: expected 409 to be 204 // Object.is equality
+
+- Expected
++ Received
+
+- 204
++ 409
+
+ ❯ src/adversarial.test.ts:725:91
+    724|     );
+    725|     await t.idle();
+    726|     expect((await t.container.manager.getRun(run.id))?.status).toBe('s…
+       |                                                                       ^
+    727|     expect((await t.app.inject({ method: 'DELETE', url: `/loops/${chil…
+    728|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/loop-deletion.test.ts > DELETE /loops/:id > maps the transactional active-run refusal to 409 if a run 
+appears after the route check
+AssertionError: expected { …(5) } to match object { code: 'LOOP_IN_USE', …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "LOOP_IN_USE",
+-   "detail": StringContaining "cancel them first",
++   "detail": "loop 01M3Y7RKG0BACE1A5A7R9JAVXS has active or unfinished runs; cancel active runs or wait for 
+finalization first",
+  }
+
+ ❯ src/loop-deletion.test.ts:192:29
+    190|     const response = await t.app.inject({ method: 'DELETE', url: `/loo…
+    191|     expect(response.statusCode).toBe(409);
+    192|     expect(response.json()).toMatchObject({
+       |                             ^
+    193|       code: 'LOOP_IN_USE',
+    194|       detail: expect.stringContaining('cancel them first'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/thread-history.test.ts > reconciles persisted failure, unfinished resume and success without writing on 
+reads
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/thread-history.test.ts:9:1
+      7| import { createThreadHistoryFixture } from './testing/thread-history.j…
+      8|
+      9| it('reconciles persisted failure, unfinished resume and success withou…
+       | ^
+     10|   const t = await createThreadHistoryFixture();
+     11|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during in-flight without orphan events
+ FAIL  src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during backoff without orphan events
+AssertionError: expected 409 to be 204 // Object.is equality
+
+- Expected
++ Received
+
+- 204
++ 409
+
+ ❯ src/webhook-delivery-lifecycle.test.ts:70:96
+     68|         expect(requests.filter((p) => p === '/' + phase)).toHaveLength…
+     69|       });
+     70|       expect((await api.app.inject({ method: 'DELETE', url: `/loops/${…
+       |                                                                                                ^
+     71|         204,
+     72|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  4 failed | 85 passed | 2 skipped (91)
+      Tests  6 failed | 1468 passed | 11 skipped (1485)
+   Start at  22:21:39
+   Duration  489.40s (tests 77%, import 16%, transform 6%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\api
+

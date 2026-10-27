@@ -1,0 +1,64 @@
+﻿pnpm.cmd --filter @graphgoblin/web test src/runs/HistoryEligibility.test.tsx -t returns focus to the selection status
+$ vitest run src/runs/HistoryEligibility.test.tsx -t 'returns focus to the selection status'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+
+ ❯ src/runs/HistoryEligibility.test.tsx (12 tests | 2 failed | 10 skipped) 830ms
+   × returns focus to the selection status and announces a successful mark 538ms
+   × returns focus to the selection status and announces a successful withdraw 290ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/runs/HistoryEligibility.test.tsx > returns focus to the selection status and announces a successful mark
+ FAIL  src/runs/HistoryEligibility.test.tsx > returns focus to the selection status and announces a successful withdraw
+Error: expect(element).toHaveFocus()
+System.Management.Automation.RemoteException
+Expected element with focus:
+  <span
+  aria-atomic="true"
+  aria-live="polite"
+  class="text-sm text-muted"
+>
+  0
+   selected
+</span>
+Received element with focus:
+  <button
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 active:bg-accent-active h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"
+  disabled=""
+  type="button"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Confirm withdrawal
+  </span>
+</button>
+ ❯ src/runs/HistoryEligibility.test.tsx:47:21
+     45|   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInT…
+     46|   const selection = screen.getByText(/0 selected/);
+     47|   expect(selection).toHaveFocus();
+       |                     ^
+     48|   expect(selection).toHaveAttribute('aria-live', 'polite');
+     49|   expect(selection).toHaveTextContent(action === 'mark' ? '1 run marke…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  07:48:15
+   Duration  9.57s (environment 35%, transform 29%, import 18%, setup 10%, tests 9%)
+
+  Transform  transforming modules took 2.66s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+System.Management.Automation.RemoteException
+EXIT 1

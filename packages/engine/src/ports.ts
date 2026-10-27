@@ -77,7 +77,8 @@ export interface EventStorePort {
 
 /** Field-level changes to a run record; `undefined` clears a field. */
 export type RunRecordChanges = {
-  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt'>]?: RunRecord[K] | undefined;
+  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt' | 'deletionApproval'>]?:
+    RunRecord[K] | undefined;
 };
 
 export interface RunRepository {
@@ -470,7 +471,7 @@ export interface ReturnDeliveryPort {
 
 export interface ArtifactStorePort {
   /** Publish complete bytes, or throw ArtifactStoreError(ARTIFACT_WRITE_FAILED). */
-  put(kind: string, content: string): Promise<{ ref: string; bytes: number }>;
+  put(kind: string, content: string, runId: string): Promise<{ ref: string; bytes: number }>;
   /** Undefined means missing/invalid reference; corrupt bytes throw ArtifactStoreError(ARTIFACT_CORRUPT). */
   get(ref: string): Promise<string | undefined>;
 }

@@ -13,6 +13,7 @@ import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
 import { WebhookDeliverySchema } from './delivery.js';
+import { DeletionApprovalSchema } from './deletion.js';
 
 export const RunStatusSchema = z.enum([
   'queued',
@@ -245,6 +246,8 @@ export const RunRecordSchema = z.strictObject({
   result: JsonValueSchema.optional(),
   /** Webhook delivery is independent of execution status; absent when no webhook is queued. */
   deliveries: z.array(WebhookDeliverySchema).optional(),
+  /** Explicit, revocable approval for this history only; absent means retain. */
+  deletionApproval: DeletionApprovalSchema.optional(),
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),

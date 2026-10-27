@@ -20,7 +20,7 @@ import { FsWorkspace } from './workspace.js';
 let dataDir: string;
 
 beforeEach(() => {
-  dataDir = mkdtempSync(join(tmpdir(), 'gg-fs-'));
+  dataDir = mkdtempSync(join(tmpdir(), 'gg-wp-e3-'));
 });
 
 afterEach(() => {
@@ -148,7 +148,8 @@ describe('FsArtifactStore', () => {
       const a = stored[i * 2]!;
       expect(stored[i * 2 + 1]).toEqual(a);
       expect(a.bytes).toBe(Buffer.byteLength(content));
-      expect(await store.get(a.ref.toUpperCase())).toBe(content);
+      expect(await store.get(a.ref)).toBe(content);
+      expect(await store.get(a.ref.toUpperCase())).toBeUndefined();
       expect(readFileSync(join(dir, a.ref.split('/')[1]!)).equals(Buffer.from(content))).toBe(true);
     }
     expect(new Set(stored.map((item) => item.ref)).size).toBe(contents.length);

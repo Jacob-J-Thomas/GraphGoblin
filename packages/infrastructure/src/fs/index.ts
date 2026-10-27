@@ -5,3 +5,5 @@
  */
 export * from './workspace.js';
 export * from './artifacts.js';
+export * from './capacity.js';
+export * from './owned-resources.js';
