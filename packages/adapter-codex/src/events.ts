@@ -207,6 +207,22 @@ function unwrap(raw: string): {
   return { message: raw };
 }
 
+/**
+ * The error `@openai/codex-sdk` 0.160.0 throws when the CLI exits non-zero or on a signal, after
+ * the event stream has ended (`CodexExec.run`): a plain `Error`, without typed metadata, whose
+ * message is `Codex Exec exited with code <n>: <stderr>` or `… with signal <name>: <stderr>`.
+ */
+const PROCESS_EXIT_MESSAGE = /^Codex Exec exited with (?:code -?\d+|signal [A-Z0-9]+): /;
+
+function isProcessExitWrapper(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    Object.getPrototypeOf(error) === Error.prototype &&
+    !('code' in error) &&
+    PROCESS_EXIT_MESSAGE.test(error.message)
+  );
+}
+
 /** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
 export function classifyCodexError(error: unknown): ClassifiedError {
   const metadata = harnessFailureEvidence(error);
@@ -234,6 +250,17 @@ function classifyNativeError(error: unknown): ClassifiedError {
   }
   const raw = describeError(error);
   const { status, type, param, refused, message } = unwrap(raw);
+  // The provider refused the turn's request as invalid, for example an effort the model does not
+  // accept (final integrated check F2, LP-5). Model, effort, options, schema and prompt all come
+  // from the run's pinned definition, so the same request is refused again: a pinned argument
+  // refusal, never resumable (#243, #244). The structured status and type decide this before any
+  // message heuristic below, whatever the provider's text says, and its message is kept.
+  if (refused)
+    return {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400${param ? `, ${param}` : ''}): ${message}`,
+      retriable: false,
+    };
   const text = `${type ?? ''} ${message}`.toLowerCase();
   if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
     return {
@@ -249,16 +276,6 @@ function classifyNativeError(error: unknown): ClassifiedError {
     return {
       code: 'HARNESS_SESSION_MISSING',
       message: 'The recorded Codex conversation was not found',
-      retriable: false,
-    };
-  // The provider refused the turn's request as invalid, for example an effort the model does not
-  // accept (final integrated check F2, LP-5). Model, effort, options, schema and prompt all come
-  // from the run's pinned definition, so the same request is refused again: a pinned argument
-  // refusal, never resumable (#243, #244). The provider's own message is kept.
-  if (refused)
-    return {
-      code: 'HARNESS_ARGUMENTS_REJECTED',
-      message: `The provider refused the request (HTTP 400${param ? `, ${param}` : ''}): ${message}`,
       retriable: false,
     };
   if (
@@ -314,8 +331,10 @@ export interface TurnOutcome {
  *   successful turns tolerate nonfatal top-level diagnostics.
  * - The SDK's process-exit error (`Codex Exec exited with code 1: <stderr>`) only wraps a failure
  *   the stream already reported, and the CLI's stderr is usually just its startup banner. Once the
- *   stream has reported an error or `turn.failed` for an unfinished turn, a thrown generic wrapper
- *   (lowest rank) never replaces that evidence; typed or higher-ranked thrown evidence still does.
+ *   stream has reported an error or `turn.failed` for an unfinished turn, that exact wrapper never
+ *   replaces the stream's evidence while it classifies as generic (lowest rank). Every other
+ *   thrown error, such as a protocol parse failure, joins the fold as usual, and a wrapper whose
+ *   stderr names a typed cause (for example `Not logged in`) still outranks the stream.
  */
 export class TurnAccumulator {
   private submitted = false;
@@ -368,8 +387,14 @@ export class TurnAccumulator {
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
   fail(error: unknown): void {
     const next = classifyCodexError(error);
-    if (this.streamFailure && !this.completed && harnessFailureRank(next) === 1) {
-      // A generic wrapper of a failure the stream already reported adds nothing (#243).
+    if (
+      this.streamFailure &&
+      !this.completed &&
+      isProcessExitWrapper(error) &&
+      harnessFailureRank(next) === 1
+    ) {
+      // The SDK's exit error only wraps the failure the stream already reported (#243). Any
+      // other thrown error, such as a protocol parse failure, is evidence of its own.
       this.fatal = true;
       return;
     }

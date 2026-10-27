@@ -31,7 +31,9 @@ async function workspace(): Promise<string> {
   return directory;
 }
 
-function harness(failure: 'refused' | 'unrecognized') {
+function harness(
+  failure: 'refused' | 'unrecognized' | 'malformed' | 'invalid-value' | 'missing-thread',
+) {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
   return {
     logger,
@@ -96,6 +98,62 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
     expect(events.at(-1)).toMatchObject({ type: 'error', ...failure });
     await expect(session.result).rejects.toMatchObject(failure);
   }, 30_000);
+
+  // PR #426 review B1: only the SDK's own process-exit error is a wrapper of the stream's failure.
+  it('records the SDK parse failure that follows an earlier stream diagnostic', async () => {
+    const { codex } = harness('malformed');
+    const session = codex.start(
+      {
+        workingDirectory: await workspace(),
+        options: { sandbox: 'read-only', approval: 'never' },
+        turn: { prompt: 'Controlled fixture; no provider call' },
+      },
+      new AbortController().signal,
+    );
+    const events: HarnessEvent[] = [];
+    for await (const event of session.events) events.push(event);
+    const failure = {
+      code: 'HARNESS_TURN_FAILED',
+      message: 'Failed to parse item: MALFORMED_PROTOCOL_ITEM',
+    };
+    expect(events.at(-1)).toMatchObject({ type: 'error', ...failure });
+    await expect(session.result).rejects.toMatchObject(failure);
+  }, 30_000);
+
+  // PR #426 review B2: the structured 400 decides before any message heuristic.
+  it.each([
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+    ['missing-thread', 'Thread not found in referenced input.'],
+  ] as const)(
+    'keeps the %s provider refusal as a refusal with its own text',
+    async (failure, text) => {
+      const { codex } = harness(failure);
+      const session = codex.start(
+        {
+          workingDirectory: await workspace(),
+          model: 'gpt-6-luna',
+          effort: 'minimal',
+          options: { sandbox: 'read-only', approval: 'never' },
+          turn: { prompt: 'Controlled fixture; no provider call' },
+        },
+        new AbortController().signal,
+      );
+      const events: HarnessEvent[] = [];
+      for await (const event of session.events) events.push(event);
+      const refusal = {
+        code: 'HARNESS_ARGUMENTS_REJECTED',
+        retriable: false,
+        message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      };
+      expect(events.at(-1)).toEqual({
+        type: 'error',
+        ...refusal,
+        submission: 'delivery-uncertain',
+      });
+      await expect(session.result).rejects.toMatchObject(refusal);
+    },
+    30_000,
+  );
 
   it('fails the run with the provider refusal as its non-resumable cause and offers no Resume', async () => {
     const e = await createTestEngine();

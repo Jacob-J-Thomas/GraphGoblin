@@ -214,6 +214,57 @@ describe('classifyCodexError', () => {
     ).toEqual({ code: 'HARNESS_TURN_FAILED', message: 'bad gateway text', retriable: false });
   });
 
+  // PR #426 review B2: the parsed status and type decide before any CLI-message heuristic.
+  it.each([
+    'Error: unexpected argument in reasoning.effort',
+    'Error: unknown option reasoning.effort',
+    "Error: invalid value for reasoning.effort: 'minimal'.",
+    'No rollout found for this request.',
+    'Session not found in referenced input.',
+    'Session does not exist for this request.',
+    'Thread not found in referenced input.',
+    'Thread does not exist for this request.',
+    'Failed to load session settings for this model.',
+    'Failed to find rollout settings for this model.',
+    'This would exceed the usage limit for the model.',
+    'The quota for this parameter is fixed.',
+    'The rate limit parameter is not supported.',
+    'Too many requests in one batch.',
+    'insufficient_quota is not a valid value.',
+    'Not logged in users cannot set this value.',
+    'Unauthorized value for reasoning.effort.',
+    'Authentication parameters are not accepted here.',
+    'login is not a valid value.',
+    'Invalid API key format in metadata.',
+    'Token has expired is not a valid value.',
+    'ENOENT is not a valid value.',
+    'not recognized as an internal value.',
+    'unable to locate codex tool definition.',
+    'stream disconnected is not a valid value.',
+    'timed out is not a valid value.',
+    'ECONNRESET is not a valid value.',
+    'network is not a valid value.',
+    'overloaded is not a valid value.',
+    'temporarily unavailable is not a valid value.',
+  ])('keeps a 400 invalid-request refusal saying %j a refusal with its text', (text) => {
+    const refusal = JSON.stringify({
+      type: 'error',
+      error: { message: text, type: 'invalid_request_error', param: 'reasoning.effort' },
+      status: 400,
+    });
+    expect(classifyCodexError(refusal)).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      retriable: false,
+    });
+    // Typed metadata keeps its earlier boundary.
+    expect(
+      classifyCodexError(
+        Object.assign(new Error(refusal), { code: 'HARNESS_SESSION_MISSING', retriable: false }),
+      ),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
+  });
+
   it('classifies quota, rate limits, auth, missing binaries, and transient failures', () => {
     expect(classifyCodexError("You've hit your usage limit. Try again later.")).toMatchObject({
       code: 'HARNESS_QUOTA_EXHAUSTED',
@@ -336,9 +387,40 @@ describe('TurnAccumulator', () => {
     expect(silent.finish().failure?.message).toBe(exit.message);
     const completed = new TurnAccumulator('fresh');
     completed.push({ type: 'error', message: 'Reconnecting... 1/5' });
-    completed.push({ type: 'turn.completed', usage: { input_tokens: 1 } } as never);
+    completed.push({
+      type: 'turn.completed',
+      usage: {
+        input_tokens: 1,
+        cached_input_tokens: 0,
+        cache_write_input_tokens: 0,
+        output_tokens: 1,
+        reasoning_output_tokens: 0,
+      },
+    });
     completed.fail(exit);
     expect(completed.finish().failure?.message).toBe(exit.message);
+    // The SDK reports a signal the same way.
+    const signalled = new TurnAccumulator('fresh');
+    signalled.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    signalled.fail(new Error('Codex Exec exited with signal SIGTERM: '));
+    expect(signalled.finish().failure?.message).toBe('something odd');
+  });
+
+  // PR #426 review B1: only the SDK's own process-exit error wraps the stream's failure.
+  it.each([
+    ['an SDK parse failure', new Error('Failed to parse item: MALFORMED_PROTOCOL_ITEM')],
+    ['an exit-shaped message that is not an Error', 'Codex Exec exited with code 1: text'],
+    ['an Error subclass', new TypeError('Codex Exec exited with code 1: from elsewhere')],
+    [
+      'an error with its own code',
+      Object.assign(new Error('Codex Exec exited with code 1: pipe'), { code: 'EPIPE' }),
+    ],
+  ] as const)('records %s thrown after a stream failure as evidence of its own', (_, error) => {
+    const acc = new TurnAccumulator('fresh');
+    acc.push({ type: 'turn.started' });
+    acc.push({ type: 'error', message: 'An earlier generic diagnostic' });
+    acc.fail(error);
+    expect(acc.finish().failure).toEqual(classifyCodexError(error));
   });
 
   it('fails a stream that ends without completing, using the last stream error if any', () => {

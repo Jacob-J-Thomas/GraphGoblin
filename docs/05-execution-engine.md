@@ -384,9 +384,12 @@ Higher-ranked evidence wins; within a rank the later observation wins. This appl
 launch exceptions, streamed errors, rejected promises/results, iterator throws, Codex top-level
 errors and `turn.failed`, cleanup and cancellation. Unconfirmed termination overrides
 cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
-The Codex SDK's process-exit error is a generic final wrapper of a failure the CLI's event stream
-already reported: after the stream reports an error or `turn.failed` for an unfinished turn, it
-never replaces that evidence, though typed or higher-ranked thrown evidence still does (#243).
+The Codex SDK's own process-exit error (a plain `Error` reading `Codex Exec exited with code <n>:`
+or `… with signal <name>:`, then the CLI's stderr) is a generic final wrapper of a failure the CLI's
+event stream already reported: after the stream reports an error or `turn.failed` for an
+unfinished turn, that wrapper never replaces the stream's evidence while it classifies as generic.
+A wrapper whose stderr names a typed cause still outranks the stream, and every other thrown
+error, such as the SDK's protocol parse failure, joins the fold as usual (#243).
 Acceptance cannot be downgraded to safe non-submission by later metadata.
 
 Classification is decided independently of persistence. A failed classification/status write
