@@ -223,9 +223,57 @@ Its record is kept outside this branch. Three of its findings are fixed here.
 - QA O-5: provider-side session files are the owner's to remove.
 - QA O-6 is a note for briefs.
 - HQ-1, whether to add `none` or drop `minimal` from the scale, remains the owner's decision.
-
 - The reviewer's N2 (unchanged API tests unreliable in the combined suite, with the port collision under #407) is outside this change.
 - The reviewer's sandbox could not confirm process-tree termination, so the Claude guard test failed there on unconfirmed termination (D-015). It passed in this environment in the earlier gates.
+
+## Scan 2 (PR #426 audit, resumed at `ae88d757`)
+
+The second audit returned CHANGES REQUIRED with one P2 in `packages/adapter-codex/src/events.ts`. Its record is kept outside this branch.
+
+**Finding.** The CLI's stderr can repeat the structured HTTP 400 refusal. The SDK then throws `Codex Exec exited with code 1: {"status":400,"error":{"type":"invalid_request_error",…}}`.
+
+- `unwrap` tried to parse that whole prefixed text as JSON, failed, and the message heuristics then read the provider's text.
+- The resulting typed class outranked the stream's correct `HARNESS_ARGUMENTS_REJECTED`, so the round 1 suppression (generic wrappers only) did not apply.
+- "Thread not found in referenced input." became a false `HARNESS_SESSION_MISSING`: `submission: session-missing`, Start-fresh-session guidance, and Resume answering `SESSION_RECOVERY_REQUIRED`.
+- "Error: invalid value for reasoning.effort." became "Codex rejected the turn arguments", losing the provider's text and parameter.
+
+**Fix.**
+
+- **Structure first.** Inside the recognised SDK exit error, the stderr payload after the prefix is now read as a provider error: the whole payload, or else its last line that is such JSON, so a banner line before it is fine. A JSON object with an `error` object or a numeric `status` is classified from that structure (`wrappedProviderError`), so a 400 `invalid_request_error` is a refusal with the provider's message and parameter before any heuristic runs. A non-JSON payload keeps the whole-text rules, so a distinct typed cause such as `Not logged in` on stderr is unchanged.
+- **Repeats never replace the stream.** After the stream has reported a failure for an unfinished turn, an SDK exit error that merely repeats it is dropped whatever rank its text would get. A repeat is the same classified code and message, or stderr containing the stream's own structured provider error verbatim. A distinct typed cause still outranks the stream, and the existing ranking is otherwise unchanged.
+
+**Regression tests**, all 15 failing against `ae88d757`, with only `events.ts` restored for the run ([tests-scan2-adapter-before.log.txt](tests-scan2-adapter-before.log.txt), [tests-scan2-api-before.log.txt](tests-scan2-api-before.log.txt)):
+
+- **`packages/adapter-codex/src/refusal.test.ts`**, through the public `CodexHarness` and the real SDK. The fake CLI gained `GG_FAKE_CODEX_STDERR` (`repeat`, `banner-repeat`) and `GG_FAKE_CODEX_STREAM=none`.
+  - `keeps the invalid-value|missing-thread refusal when stderr is repeat|banner-repeat and the stream reports report|none` (6 cases). Each expects `HARNESS_ARGUMENTS_REJECTED`, the provider's text and `delivery-uncertain`.
+  - `fails the run on the invalid-value|missing-thread refusal repeated on stderr as a refusal, never a missing session`, through `createTestEngine` (2 cases). The run record is exactly `HARNESS_TURN_FAILED`, `details.adapterCode: HARNESS_ARGUMENTS_REJECTED`, the provider's message and `delivery-uncertain`, with no `missingSession`. Resume is refused.
+- **`apps/api/src/provider-refusal.test.ts`**, over HTTP with the real `CodexHarness`: `records the refusal … repeated on stderr as the refusal, with Resume refused and Replay allowed`, for both texts. The fake CLI gained `GG_FAKE_PROVIDER_TEXT` and `GG_FAKE_CODEX_STDERR=repeat`. Each case asserts:
+  - `failure.code: HARNESS_TURN_FAILED`, `details.adapterCode: HARNESS_ARGUMENTS_REJECTED`, the message `harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): <text>`, `inference.submission: delivery-uncertain`, no `missingSession`;
+  - `recovery.resume` `{allowed: false, code: FAILURE_NOT_RESUMABLE}`, and Replay at `infer` allowed;
+  - `POST /resume` refused with 409 `FAILURE_NOT_RESUMABLE`, and one turn.
+- **`packages/adapter-codex/src/events.test.ts`:**
+  - the structured refusal inside the exit error for both texts, also after a banner line;
+  - another structured provider error (429) read from its structure;
+  - the repeat rule: stderr `ERROR: <the stream's JSON>`, which no parse reaches and the heuristics would call a missing session, is dropped, while a distinct `No rollout found …` on stderr still outranks.
+
+**The auditor's driver, copied.** [scripts/scan2-wrapper-http.mjs](scripts/scan2-wrapper-http.mjs) with [scripts/scan2-order-cli.mjs](scripts/scan2-order-cli.mjs) changes only the fake CLI name, the temporary prefix and the output path. On the built fix, both rows meet its expectations and its assertions pass (exit 0) ([scan2-wrapper-http.log.txt](scan2-wrapper-http.log.txt), [console](scan2-wrapper-http-console.log.txt)):
+
+- `HARNESS_TURN_FAILED` / `HARNESS_ARGUMENTS_REJECTED`, `delivery-uncertain`, the full provider message;
+- Resume 409 `FAILURE_NOT_RESUMABLE`.
+
+**Docs.** docs/05 (evidence fold), docs/06 (Codex failure mapping) and the #243 CHANGELOG bullet describe the structured stderr payload and the repeat rule.
+
+**Checks**, Node `v22.23.4`, logs `gates/s2-*`:
+
+| Check                                                                                                                              | Result                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `pnpm build`                                                                                                                       | pass                                                                                                   |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                                                                           | pass: 568 passed, 4 skipped (live); statements 98.05%, branches 95.15%, functions 99.06%, lines 99.27% |
+| `pnpm --filter @graphgoblin/engine exec vitest run src/handlers/inference-refusal.test.ts`                                         | pass, 20/20                                                                                            |
+| `pnpm --filter @graphgoblin/api exec vitest run src/provider-refusal.test.ts` (`GG_TEST_PORT_START=7000`, `GG_TEST_PORT_COUNT=40`) | pass, 3/3                                                                                              |
+| `pnpm typecheck`, `pnpm lint`, `pnpm format:check`                                                                                 | pass                                                                                                   |
+
+**Not changed.** Structured errors other than the 400 refusal still go through the existing rules in their existing order; the status checks for 429, 401/403 and 5xx come after the text heuristics, as before. The audit's N1 (local Windows termination checks blocked by `taskkill` Access denied, D-015) is environmental and outside this change.
 
 ## Live check for the QA to repeat
 
@@ -244,7 +292,7 @@ The fixes were verified only with fake CLIs. The independent behaviour QA should
 
 ## Files
 
-- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) and [settings-kept-minimal.png](settings-kept-minimal.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt` (`gates/r1-*` after review round 1); [tests-review-r1-before.log.txt](tests-review-r1-before.log.txt), [review-r1-error-probes.log.txt](review-r1-error-probes.log.txt) and the copied review probe in `scripts/review-r1-*.mjs`; [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
+- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) and [settings-kept-minimal.png](settings-kept-minimal.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt` (`gates/r1-*` after review round 1); [tests-review-r1-before.log.txt](tests-review-r1-before.log.txt), [review-r1-error-probes.log.txt](review-r1-error-probes.log.txt) and the copied review probe in `scripts/review-r1-*.mjs`; `tests-scan2-*-before.log.txt`, `scan2-wrapper-http*.log.txt` and the copied audit driver in `scripts/scan2-*.mjs` (scan 2); [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
 - Paths, the user name, the machine name and SIDs are redacted. Every file is UTF-8 without a byte-order mark and under 1,000,000 bytes, so there is no `NOT-KEPT.md`.
 
 ## Cleanup

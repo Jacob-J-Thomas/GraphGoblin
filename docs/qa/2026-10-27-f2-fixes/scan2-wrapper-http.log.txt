@@ -1,0 +1,174 @@
+[
+  {
+    "text": "Thread not found in referenced input.",
+    "expected": {
+      "code": "HARNESS_TURN_FAILED",
+      "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
+      "submission": "delivery-uncertain",
+      "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input."
+    },
+    "actual": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+      "nodeId": "work",
+      "resumable": false,
+      "details": {
+        "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+      },
+      "inference": {
+        "visitId": "01M3Y7RKG0Y9ASNXP6RRTSB7XH:5",
+        "turnId": "01M3Y7RKG0Y9ASNXP6RRTSB7XK",
+        "submission": "delivery-uncertain",
+        "promptKind": "authored",
+        "sessionId": "audit-order-session"
+      }
+    },
+    "resumeStatus": 409,
+    "resumeBody": {
+      "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+      "title": "failure not resumable",
+      "status": 409,
+      "code": "FAILURE_NOT_RESUMABLE",
+      "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "recovery": {
+      "observedSeq": 11,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "work",
+              "label": "Work",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "work",
+          "label": "Work",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "work",
+              "label": "Work",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  {
+    "text": "Error: invalid value for reasoning.effort.",
+    "expected": {
+      "code": "HARNESS_TURN_FAILED",
+      "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
+      "submission": "delivery-uncertain",
+      "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort."
+    },
+    "actual": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+      "nodeId": "work",
+      "resumable": false,
+      "details": {
+        "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+      },
+      "inference": {
+        "visitId": "01M3Y7RKG00VDAFEDNEF47K2E6:5",
+        "turnId": "01M3Y7RKG00VDAFEDNEF47K2E8",
+        "submission": "delivery-uncertain",
+        "promptKind": "authored",
+        "sessionId": "audit-order-session"
+      }
+    },
+    "resumeStatus": 409,
+    "resumeBody": {
+      "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+      "title": "failure not resumable",
+      "status": 409,
+      "code": "FAILURE_NOT_RESUMABLE",
+      "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "recovery": {
+      "observedSeq": 11,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "work",
+              "label": "Work",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "work",
+          "label": "Work",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "work",
+              "label": "Work",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ]
+    }
+  }
+]
