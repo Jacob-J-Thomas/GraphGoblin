@@ -165,11 +165,17 @@ export interface ClassifiedError extends HarnessFailureEvidence {
  * `{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"..."}}`.
  * Unwrap it so the code and message are useful.
  */
-function unwrap(raw: string): { status?: number; type?: string; message: string } {
+function unwrap(raw: string): {
+  status?: number;
+  type?: string;
+  param?: string;
+  refused?: true;
+  message: string;
+} {
   try {
     const parsed = JSON.parse(raw) as {
       status?: unknown;
-      error?: { type?: unknown; message?: unknown; code?: unknown };
+      error?: { type?: unknown; message?: unknown; code?: unknown; param?: unknown };
       message?: unknown;
     };
     if (parsed && typeof parsed === 'object') {
@@ -187,6 +193,11 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
           : typeof inner.code === 'string'
             ? { type: inner.code }
             : {}),
+        ...(typeof inner.param === 'string' && inner.param ? { param: inner.param } : {}),
+        // The provider's explicit refusal of the request itself: HTTP 400 `invalid_request_error`.
+        ...(parsed.status === 400 && inner.type === 'invalid_request_error'
+          ? { refused: true as const }
+          : {}),
         message,
       };
     }
@@ -222,7 +233,7 @@ function classifyNativeError(error: unknown): ClassifiedError {
     };
   }
   const raw = describeError(error);
-  const { status, type, message } = unwrap(raw);
+  const { status, type, param, refused, message } = unwrap(raw);
   const text = `${type ?? ''} ${message}`.toLowerCase();
   if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
     return {
@@ -238,6 +249,16 @@ function classifyNativeError(error: unknown): ClassifiedError {
     return {
       code: 'HARNESS_SESSION_MISSING',
       message: 'The recorded Codex conversation was not found',
+      retriable: false,
+    };
+  // The provider refused the turn's request as invalid, for example an effort the model does not
+  // accept (final integrated check F2, LP-5). Model, effort, options, schema and prompt all come
+  // from the run's pinned definition, so the same request is refused again: a pinned argument
+  // refusal, never resumable (#243, #244). The provider's own message is kept.
+  if (refused)
+    return {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400${param ? `, ${param}` : ''}): ${message}`,
       retriable: false,
     };
   if (
@@ -291,6 +312,10 @@ export interface TurnOutcome {
  * - An `error` item (for example a configuration deprecation warning) is a normal item, not a
  *   failure. `turn.failed` is the failure signal. Top-level errors, `turn.failed` and thrown failures share the evidence precedence;
  *   successful turns tolerate nonfatal top-level diagnostics.
+ * - The SDK's process-exit error (`Codex Exec exited with code 1: <stderr>`) only wraps a failure
+ *   the stream already reported, and the CLI's stderr is usually just its startup banner. Once the
+ *   stream has reported an error or `turn.failed` for an unfinished turn, a thrown generic wrapper
+ *   (lowest rank) never replaces that evidence; typed or higher-ranked thrown evidence still does.
  */
 export class TurnAccumulator {
   private submitted = false;
@@ -300,6 +325,7 @@ export class TurnAccumulator {
   private failure: ClassifiedError | undefined;
   private fatal = false;
   private completed = false;
+  private streamFailure = false;
   sessionId: string | undefined;
 
   constructor(private readonly mode: 'fresh' | 'resumed') {}
@@ -325,11 +351,13 @@ export class TurnAccumulator {
         this.usage = mapUsage(ev.usage);
         return [{ type: 'usage', usage: this.usage }, { type: 'turn-complete' }];
       case 'turn.failed':
-        this.fail(ev.error);
+        this.streamFailure = true;
+        this.add(classifyCodexError(ev.error), false);
         return [];
       case 'error':
         // Native top-level errors and turn.failed use the same evidence fold. A completed
         // turn may tolerate diagnostics, but terminal/pinned refusals are not diagnostics.
+        this.streamFailure = true;
         this.add(classifyCodexError(ev), true);
         return [];
       default:
@@ -339,7 +367,13 @@ export class TurnAccumulator {
 
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
   fail(error: unknown): void {
-    this.add(classifyCodexError(error), false);
+    const next = classifyCodexError(error);
+    if (this.streamFailure && !this.completed && harnessFailureRank(next) === 1) {
+      // A generic wrapper of a failure the stream already reported adds nothing (#243).
+      this.fatal = true;
+      return;
+    }
+    this.add(next, false);
   }
 
   private add(next: ClassifiedError, diagnostic: boolean): void {

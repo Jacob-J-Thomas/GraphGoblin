@@ -853,16 +853,27 @@ describe('settings, api keys, model catalog', () => {
     expect(await catalog.seed()).toBe(0);
     const entries = await catalog.list();
     expect(entries.map((m) => m.model)).toContain('gpt-6-luna');
-    // Codex CLI 0.160.0's own model catalog tops GPT-5.5 out at xhigh (#205).
-    for (const entry of entries.filter((m) => m.harness === 'codex')) {
-      expect(entry.efforts).toEqual(
-        entry.model === 'gpt-5.5'
-          ? ['minimal', 'low', 'medium', 'high', 'xhigh']
-          : ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
-      );
-    }
+    // Each seeded Codex model offers exactly the canonical efforts that Codex CLI 0.160.0's own
+    // compiled model catalog lists for it: none lists minimal, and GPT-5.5 stops at xhigh (#205).
+    expect(
+      Object.fromEntries(
+        entries.filter((m) => m.harness === 'codex').map((m) => [m.model, m.efforts]),
+      ),
+    ).toEqual({
+      'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+      'gpt-5.6-luna': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-5.6-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-5.6-terra': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-6-astra': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-6-luna': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-6-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-6.1-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
+    });
+    for (const entry of entries.filter((m) => m.harness === 'codex'))
+      expect(entry.efforts).toContain(entry.defaultEffort);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'low')).toBe(true);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(true);
+    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'minimal')).toBe(false);
     expect(await catalog.isAllowed('codex', 'gpt-5.5', 'max')).toBe(false);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna')).toBe(true);
     expect(await catalog.isAllowed('codex', 'nope')).toBe(false);
@@ -1136,10 +1147,12 @@ describe('migration 0003 model catalog max effort', () => {
       });
       await current.migrate();
       await catalog.seed();
+      // The startup seed replaces stored harness efforts, so a store from before #205's F2 fix
+      // stops offering minimal for GPT-6 Luna on its next start.
       expect((await catalog.list()).find((entry) => entry.model === row.model)).toEqual({
         ...row,
         source: 'harness',
-        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       });
     });
   });

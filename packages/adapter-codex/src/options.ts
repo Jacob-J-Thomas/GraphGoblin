@@ -20,9 +20,10 @@ import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
  * | `workingDirectory`     | `--cd <dir>`                                       |
  * | `skipGitRepoCheck`     | `--skip-git-repo-check`                            |
  *
- * Every canonical effort is a Codex effort and is sent unchanged, so the effort a run records is
- * the effort the CLI receives. CLI 0.160.0 passes `model_reasoning_effort` through to the request
- * as `reasoning.effort`, and its model catalog lists `max` (docs/06-harness-integration.md).
+ * The effort is sent unchanged, so the effort a run records is the effort the CLI receives. CLI
+ * 0.160.0 passes `model_reasoning_effort` through to the request as `reasoning.effort` without
+ * checking it; the model catalog limits each model to the efforts the CLI's own catalog lists
+ * (`low` to `max`, no `minimal`; docs/06-harness-integration.md).
  */
 
 export interface ResolvedSettings {

@@ -91,6 +91,8 @@ describe('CodexDecider.route', () => {
     ['HARNESS_QUOTA_EXHAUSTED', true, 'DECIDER_RATE_LIMITED'],
     ['HARNESS_TURN_FAILED', true, 'DECIDER_UNREACHABLE'],
     ['HARNESS_TURN_FAILED', false, 'DECIDER_HTTP_ERROR'],
+    // The provider refused the route request itself (#243): a failed request, not an internal error.
+    ['HARNESS_ARGUMENTS_REJECTED', false, 'DECIDER_HTTP_ERROR'],
   ] as const)(
     'maps native Choice failure %s without retaining provider text',
     async (code, retriable, expected) => {

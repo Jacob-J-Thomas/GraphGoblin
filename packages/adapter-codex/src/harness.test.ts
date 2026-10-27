@@ -220,12 +220,15 @@ describe('CodexHarness.start', () => {
     const session = harness.start(request(), new AbortController().signal);
     const events = await drain(session);
     expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted', 'error']);
-    expect(events.at(-1)).toMatchObject({
-      type: 'error',
-      code: 'HARNESS_TURN_FAILED',
+    // The provider's own refusal survives the CLI's exit error that follows it (#243).
+    const refusal = {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message:
+        "The provider refused the request (HTTP 400): The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
       retriable: false,
-    });
-    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TURN_FAILED' });
+    };
+    expect(events.at(-1)).toMatchObject({ type: 'error', ...refusal });
+    await expect(session.result).rejects.toMatchObject(refusal);
     await expect(session.sessionId).resolves.toMatch(/^01a0/);
     expect(log.warn).toHaveBeenCalledOnce();
   });

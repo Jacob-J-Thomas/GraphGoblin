@@ -288,10 +288,8 @@ for (const retriable of [false, true])
         events,
         throwCode: placement === 'throw' ? code : undefined,
         code,
-        expected:
-          code === 'HARNESS_ARGUMENTS_REJECTED'
-            ? 'HARNESS_TURN_FAILED'
-            : 'HARNESS_DELIVERY_UNCERTAIN',
+        // A pinned refusal keeps its own non-resumable cause even when delivery is uncertain (#243).
+        expected: 'HARNESS_TURN_FAILED',
         classification:
           code === 'HARNESS_ARGUMENTS_REJECTED' ? 'definitely-not-submitted' : 'delivery-uncertain',
         eligible: false,

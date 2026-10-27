@@ -173,15 +173,45 @@ describe('classifyCodexError', () => {
       retriable: false,
     });
   });
-  it('unwraps the JSON API error Codex reports', () => {
+  it('unwraps the JSON API error Codex reports and names the provider refusal', () => {
     const raw = loadFixture('failed-invalid-model').events.find((e) => e.type === 'turn.failed');
     const message = (raw as { error: { message: string } }).error.message;
     expect(classifyCodexError(message)).toEqual({
-      code: 'HARNESS_TURN_FAILED',
+      code: 'HARNESS_ARGUMENTS_REJECTED',
       message:
-        "The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
+        "The provider refused the request (HTTP 400): The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
       retriable: false,
     });
+  });
+
+  it('classifies the provider refusal of a request parameter as a pinned argument refusal (#243)', () => {
+    // The shape the real CLI reported for effort minimal on gpt-6-luna (F2 LP-5).
+    const refusal = JSON.stringify({
+      type: 'error',
+      error: {
+        message: "Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
+        type: 'invalid_request_error',
+        param: 'reasoning.effort',
+        code: 'unsupported_value',
+      },
+      status: 400,
+    });
+    expect(classifyCodexError(refusal)).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message:
+        "The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
+      retriable: false,
+    });
+    // Only an explicit invalid-request refusal is a refusal of the request; other errors keep
+    // their existing classes.
+    expect(
+      classifyCodexError(
+        JSON.stringify({ status: 404, error: { type: 'invalid_request_error', message: 'gone' } }),
+      ),
+    ).toEqual({ code: 'HARNESS_TURN_FAILED', message: 'gone', retriable: false });
+    expect(
+      classifyCodexError(JSON.stringify({ status: 400, error: { message: 'bad gateway text' } })),
+    ).toEqual({ code: 'HARNESS_TURN_FAILED', message: 'bad gateway text', retriable: false });
   });
 
   it('classifies quota, rate limits, auth, missing binaries, and transient failures', () => {
@@ -274,8 +304,41 @@ describe('TurnAccumulator', () => {
     expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted']);
     const outcome = acc.finish();
     expect(outcome.completed).toBe(false);
-    expect(outcome.failure?.code).toBe('HARNESS_TURN_FAILED');
+    expect(outcome.failure?.code).toBe('HARNESS_ARGUMENTS_REJECTED');
     expect(outcome.failure?.message).toContain('not supported');
+  });
+
+  it('never lets the generic process-exit error replace a failure the stream reported (#243)', () => {
+    const exit = new Error('Codex Exec exited with code 1: Reading prompt from stdin...\n');
+    const failed = new TurnAccumulator('fresh');
+    failed.push({ type: 'turn.started' });
+    failed.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    failed.fail(exit);
+    expect(failed.finish().failure).toEqual({
+      code: 'HARNESS_TURN_FAILED',
+      message: 'something odd',
+      retriable: false,
+    });
+    // A top-level error is the stream's own report of an unfinished turn, too.
+    const errored = new TurnAccumulator('fresh');
+    errored.push({ type: 'error', message: 'stream ended unexpectedly' });
+    errored.fail(exit);
+    expect(errored.finish().failure?.message).toBe('stream ended unexpectedly');
+    // Higher-ranked evidence from outside the stream still wins.
+    const outranked = new TurnAccumulator('fresh');
+    outranked.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    outranked.fail(new Error('Codex Exec exited with code 1: Error: Not logged in'));
+    expect(outranked.finish().failure?.code).toBe('HARNESS_NOT_AUTHENTICATED');
+    // With nothing reported by the stream, or after a completed turn, the exit error is the cause.
+    const silent = new TurnAccumulator('fresh');
+    silent.push({ type: 'turn.started' });
+    silent.fail(exit);
+    expect(silent.finish().failure?.message).toBe(exit.message);
+    const completed = new TurnAccumulator('fresh');
+    completed.push({ type: 'error', message: 'Reconnecting... 1/5' });
+    completed.push({ type: 'turn.completed', usage: { input_tokens: 1 } } as never);
+    completed.fail(exit);
+    expect(completed.finish().failure?.message).toBe(exit.message);
   });
 
   it('fails a stream that ends without completing, using the last stream error if any', () => {
