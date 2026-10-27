@@ -1,0 +1,78 @@
+COMMAND git rev-parse HEAD
+0c972119d51f68c4b16bcbae5e76b7e5adaf9a1c
+EXIT 0
+COMMAND git branch --show-current
+codex-wp-e3-187-322
+EXIT 0
+COMMAND git diff --check
+EXIT 0
+COMMAND git diff --cached --quiet
+EXIT 0
+COMMAND git diff --quiet -- tooling apps/api/src apps/web/src packages/infrastructure/src/sqlite/schema.ts
+EXIT 0
+COMMAND git diff --stat
+ CHANGELOG.md                                       |   4 +-
+ docs/03-domain-model.md                            |   4 +-
+ docs/05-execution-engine.md                        |   2 +-
+ docs/07-api-and-streaming.md                       |   2 +
+ docs/09-frontend-and-pwa.md                        |   2 +-
+ ...R-0060-explicit-history-deletion-eligibility.md |  14 +-
+ docs/guide/03-run-and-observe.md                   |   2 +
+ docs/qa/2026-10-26-wp-e3-412-fixes/NOT-KEPT.md     |  79 ++++++
+ docs/qa/2026-10-26-wp-e3-412-fixes/README.md       |   6 +
+ .../drizzle/0021_run_deletion_eligibility.sql      |  80 ------
+ .../drizzle/0022_run_resource_ownership.sql        | 118 ---------
+ .../infrastructure/drizzle/meta/0022_snapshot.json | 273 +++------------------
+ packages/infrastructure/drizzle/meta/_journal.json |  14 ++
+ .../src/sqlite/delivery-runs.test.ts               |   2 +-
+ .../src/sqlite/history-summaries.test.ts           |   2 +-
+ .../infrastructure/src/sqlite/readiness.test.ts    |  52 +++-
+ .../src/sqlite/testing/resource-ownership.ts       |   2 +-
+ 17 files changed, 201 insertions(+), 457 deletions(-)
+EXIT 0
+COMMAND git status --short
+ M CHANGELOG.md
+ M docs/03-domain-model.md
+ M docs/05-execution-engine.md
+ M docs/07-api-and-streaming.md
+ M docs/09-frontend-and-pwa.md
+ M docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md
+ M docs/guide/03-run-and-observe.md
+ M docs/qa/2026-10-26-wp-e3-412-fixes/NOT-KEPT.md
+ M docs/qa/2026-10-26-wp-e3-412-fixes/README.md
+ D packages/infrastructure/drizzle/0021_run_deletion_eligibility.sql
+ D packages/infrastructure/drizzle/0022_run_resource_ownership.sql
+ M packages/infrastructure/drizzle/meta/0022_snapshot.json
+ M packages/infrastructure/drizzle/meta/_journal.json
+ M packages/infrastructure/src/sqlite/delivery-runs.test.ts
+ M packages/infrastructure/src/sqlite/history-summaries.test.ts
+ M packages/infrastructure/src/sqlite/readiness.test.ts
+ M packages/infrastructure/src/sqlite/testing/resource-ownership.ts
+?? docs/qa/2026-10-26-wp-e3-412-fixes/I418-PERF-SOURCE-REVIEW.md
+?? docs/qa/2026-10-26-wp-e3-412-fixes/INTEGRATION-418.md
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-api-coverage.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-append-cost.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-build.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-check-deps.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-check-docs.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-check-layers.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-check-migrations.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-edge-full.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-environment.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-focused-storage.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-format-owned.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-infrastructure-coverage.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-lint.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-merge-review.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-migration-chain.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-migrations-before.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-typecheck.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/i418-upgrade-before.log.txt
+?? packages/infrastructure/drizzle/0022_run_deletion_eligibility.sql
+?? packages/infrastructure/drizzle/0023_run_resource_ownership.sql
+?? packages/infrastructure/drizzle/meta/0023_snapshot.json
+EXIT 0
+0022_run_deletion_eligibility: original worktree bytes and SQL content unchanged.
+0023_run_resource_ownership: original worktree bytes and SQL content unchanged.
+Final journal: 24 contiguous entries; monotonic times; both snapshot predecessors and observation indexes verified.
+NOT-KEPT: all 3 remaining integration oversize captures listed with matching hashes; none copied. The manifest also records 69 transient Playwright trace recordings inventoried before automatic teardown removed them.

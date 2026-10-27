@@ -1,0 +1,41 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/readiness.test.ts -t upgrades main observation --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/readiness.test.ts (23 tests | 1 failed | 22 skipped) 52ms
+   × upgrades main observation indexes through eligibility and ownership without losing history 51ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/readiness.test.ts > upgrades main observation indexes through eligibility and ownership without losing history
+AssertionError: expected +0 to be 2 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 2
++ 0
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/readiness.test.ts:167:44
+    165|     await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl…
+    166|   ).rows;
+    167|   expect(await handle.pendingMigrations()).toBe(2);
+       |                                            ^
+    168|   await handle.migrate();
+    169|   expect((await handle.client.execute('SELECT * FROM runs')).rows).toE…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)
+   Start at  20:03:43
+   Duration  2.83s (import 71%, transform 26%, tests 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

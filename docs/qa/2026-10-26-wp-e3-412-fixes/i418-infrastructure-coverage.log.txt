@@ -1,0 +1,143 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-i418-infrastructure-coverage
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-i418-infrastructure-coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 7090ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1252ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 7560ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 5255ms
+ ❯ src/claude/process.test.ts (6 tests | 3 failed) 1674ms
+   ❯ owned native Claude process transport (6)
+     × kills on deadline and output overflow 393ms
+     × does not spawn for an already aborted signal and cancels a running process 121ms
+     × kills the descendant that a long-lived child started 901ms
+ ❯ src/process/scripts.test.ts (46 tests | 1 failed) 5943ms
+   ❯ ProcessScripts (39)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 135ms
+ ❯ src/sqlite/history-cleanup.test.ts (38 tests | 2 failed) 55575ms
+   ❯ large retained stores (2)
+     × does not let 61 budget-protected artifact jobs hide removable workspaces in a later window 21951ms
+     × reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases 21249ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-U4hkKm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-LehK0c'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-HTqAVC'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxx' to be 'xxxx' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxx"
+Received: "xxxxxxxx"
+System.Management.Automation.RemoteException
+ ❯ src/claude/process.test.ts:199:46
+    197|       const stopped = await readFile(marker, 'utf8');
+    198|       await new Promise((resolve) => setTimeout(resolve, 100));
+    199|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    200|     } finally {
+    201|       controller.abort();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-xxZqN7'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:203:45
+    201|     if (pid === undefined) throw new Error('child did not start');
+    202|     const childPid = pid;
+    203|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    204|   });
+    205|
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > large retained stores > does not let 61 budget-protected artifact jobs hide removable workspaces in a later window
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/history-cleanup.test.ts:761:3
+    759|     store = new SqliteHistoryCleanup(handle.db, resources);
+    760|   });
+    761|   it('does not let 61 budget-protected artifact jobs hide removable wo…
+       |   ^
+    762|     await seed('retained');
+    763|     // Exceed the existing document proof budget without rereading a 2…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > large retained stores > reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/history-cleanup.test.ts:801:3
+    799|   });
+    800|
+    801|   it('reclaims unshared approved workspaces among 1000 retained fixed/…
+       |   ^
+    802|     const loops = new SqliteLoopRepository(handle.db, new FakeClock(),…
+    803|     const logged: { query: string; params: unknown[] }[] = [];
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  5 failed | 56 passed (61)
+      Tests  8 failed | 853 passed (861)
+   Start at  20:05:55
+   Duration  187.26s (tests 59%, import 38%, transform 2%, worker 1%)
+
+    Isolate  61 workers spawned · ~686ms startup each (spawn + environment, per file)
+             at least ~20.23s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.75% ( 2777/2870 )
+Branches     : 94.31% ( 2072/2197 )
+Functions    : 98.32% ( 587/597 )
+Lines        : 98.29% ( 2473/2516 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

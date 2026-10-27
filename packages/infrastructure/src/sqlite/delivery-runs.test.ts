@@ -48,7 +48,7 @@ afterEach(() => handle.close());
 
 async function migrateHistoricalReturns() {
   // Restore a pre-0015 ledger prefix and remove the later index before replaying it.
-  // Rewind migration 0021 together with the older ledger used by this historical fixture.
+  // Rewind migration 0022 together with the older ledger used by this historical fixture.
   for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
   await handle.client.execute('DROP TRIGGER runs_deletion_activity');
   await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');

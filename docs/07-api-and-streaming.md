@@ -760,6 +760,8 @@ Run list items, individual snapshots and MCP run summaries expose optional `dele
 
 ## Storage pressure observation
 
+Resource ownership and reference protection persist through migration 0023; explicit history approval persists through migration 0022.
+
 `GET /system/storage` requires `system:read` and returns the cached `StorageStatus`: `state` (`adequate`, `pressure`, `no-eligible`, `unavailable`), `checkedAt`, labeled data/database volume capacities, `cleaning`, `deletedRuns`, `removedFileBytes`, `reusableDatabaseBytes`, `pendingResources` and `preservedResources`. It never grants consent, measures capacity or triggers deletion. Local paths and identities are not exposed.
 
 `removedFileBytes` counts successfully unlinked file lengths in that pass, not guaranteed physical free blocks. `reusableDatabaseBytes` is SQLite `freelist_count * page_size`, which can grow without the OS file shrinking. Capacity is an observation at `checkedAt` and is not a claim that cleanup released that amount of disk space. Interrupted uncertain removals are not credited again. No eligible history or unprovable resource ownership means warn and retain; no reset or broad orphan sweep. See [ADR-0060](decisions/ADR-0060-explicit-history-deletion-eligibility.md) for thresholds, proof budgets and interruption handling.

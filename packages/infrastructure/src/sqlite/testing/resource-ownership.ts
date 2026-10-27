@@ -1,4 +1,4 @@
-/** Historical fixtures rewind all of unshipped 0022 before replaying an older ledger suffix. */
+/** Historical fixtures rewind all of unshipped 0023 before replaying an older ledger suffix. */
 export const RESOURCE_OWNERSHIP_REWIND_SQL = [
   'DROP TRIGGER workspace_version_insert',
   'DROP TRIGGER workspace_version_change',
