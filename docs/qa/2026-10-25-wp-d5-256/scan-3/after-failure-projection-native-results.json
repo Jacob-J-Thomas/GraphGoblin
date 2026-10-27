@@ -1,0 +1,455 @@
+{
+  "checks": [
+    {
+      "name": "projection gap refuses Replay; stable failure requires explicit consent; consent forks a distinct run",
+      "passed": true
+    }
+  ],
+  "evidence": {
+    "before": {
+      "event": {
+        "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+        "seq": 7,
+        "ts": "2026-10-27T08:13:50.380Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "effect",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5Y6REQ31X6N36RX88ZJZM9N:5",
+            "dispatchId": "01M5Y6RET6DSWP30S6QVN6ZA6C",
+            "state": "outcome-uncertain"
+          }
+        }
+      },
+      "snapshot": {
+        "id": "01M5Y6REQ31X6N36RX88ZJZM9N",
+        "ownerId": "local",
+        "loopId": "01M5Y6REP28V73SE5XAX4DG22N",
+        "versionId": "01M5Y6REP28V73SE5XAX4DG22P",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Failure projection interleaving",
+          "label": "Failure projection interleaving v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y6REQ31X6N36RX88ZJZM9P",
+        "status": "running",
+        "currentNodeId": "effect",
+        "iteration": 1,
+        "createdAt": "2026-10-27T08:13:50.179Z",
+        "startedAt": "2026-10-27T08:13:50.215Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "RECOVERY_STALE",
+            "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "RECOVERY_STALE",
+            "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "RECOVERY_STALE",
+                "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+              },
+              "effects": [
+                {
+                  "nodeId": "effect",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "effect",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "RECOVERY_STALE",
+                "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+              },
+              "effects": [
+                {
+                  "nodeId": "effect",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "RECOVERY_STALE",
+                "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "effects": 1
+    },
+    "after": {
+      "refusedDuringProjection": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+        }
+      },
+      "declined": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+        }
+      },
+      "consented": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5Y6RF4Y375QF68AA64V69PD",
+            "ownerId": "local",
+            "loopId": "01M5Y6REP28V73SE5XAX4DG22N",
+            "versionId": "01M5Y6REP28V73SE5XAX4DG22P",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Failure projection interleaving",
+              "label": "Failure projection interleaving v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y6RF4Y375QF68AA64V69PE",
+            "status": "queued",
+            "currentNodeId": "effect",
+            "iteration": 1,
+            "createdAt": "2026-10-27T08:13:50.622Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "source": {
+        "id": "01M5Y6REQ31X6N36RX88ZJZM9N",
+        "ownerId": "local",
+        "loopId": "01M5Y6REP28V73SE5XAX4DG22N",
+        "versionId": "01M5Y6REP28V73SE5XAX4DG22P",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Failure projection interleaving",
+          "label": "Failure projection interleaving v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y6REQ31X6N36RX88ZJZM9P",
+        "status": "failed",
+        "currentNodeId": "effect",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "effect",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5Y6REQ31X6N36RX88ZJZM9N:5",
+            "dispatchId": "01M5Y6RET6DSWP30S6QVN6ZA6C",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T08:13:50.179Z",
+        "startedAt": "2026-10-27T08:13:50.215Z",
+        "finishedAt": "2026-10-27T08:13:50.481Z",
+        "finalizedAt": "2026-10-27T08:13:50.487Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "effect",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "effect",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "effect",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ],
+          "scriptConsent": {
+            "failureSeq": 7,
+            "nodeId": "effect"
+          }
+        }
+      },
+      "effects": 2,
+      "events": [
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 1,
+          "ts": "2026-10-27T08:13:50.179Z",
+          "type": "run.queued",
+          "versionId": "01M5Y6REP28V73SE5XAX4DG22P",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Failure projection interleaving",
+            "label": "Failure projection interleaving v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5Y6REQ31X6N36RX88ZJZM9N",
+              "loopId": "01M5Y6REP28V73SE5XAX4DG22N",
+              "versionId": "01M5Y6REP28V73SE5XAX4DG22P",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5Y6REQ31X6N36RX88ZJZM9P",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T08:13:50.179Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 2,
+          "ts": "2026-10-27T08:13:50.220Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 3,
+          "ts": "2026-10-27T08:13:50.241Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 4,
+          "ts": "2026-10-27T08:13:50.250Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T08:13:50.247Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T08:13:50.247Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 5,
+          "ts": "2026-10-27T08:13:50.273Z",
+          "type": "node.started",
+          "nodeId": "effect",
+          "kind": "script",
+          "attempt": 1,
+          "configHash": "8413a80712f82b1f"
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 6,
+          "ts": "2026-10-27T08:13:50.278Z",
+          "type": "script.dispatched",
+          "nodeId": "effect",
+          "visitId": "01M5Y6REQ31X6N36RX88ZJZM9N:5",
+          "dispatchId": "01M5Y6RET6DSWP30S6QVN6ZA6C"
+        },
+        {
+          "runId": "01M5Y6REQ31X6N36RX88ZJZM9N",
+          "seq": 7,
+          "ts": "2026-10-27T08:13:50.380Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "effect",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5Y6REQ31X6N36RX88ZJZM9N:5",
+              "dispatchId": "01M5Y6RET6DSWP30S6QVN6ZA6C",
+              "state": "outcome-uncertain"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

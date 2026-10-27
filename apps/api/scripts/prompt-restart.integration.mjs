@@ -254,7 +254,8 @@ for (const policy of ['resume-previous', 'resume-named']) {
         const failed = await api(`/runs/${runId}`);
         assert.equal(failed.failure.code, 'HARNESS_DELIVERY_UNCERTAIN');
         assert.equal(failed.failure.resumable, false);
-        await api(`/runs/${runId}/resume`, {}, 409);
+        const reviewed = await api(`/runs/${runId}`);
+        await api(`/runs/${runId}/resume`, { observedSeq: reviewed.recovery.observedSeq }, 409);
         const calls = await inspect(child);
         assert.equal(calls.started.length + calls.resumed.length, 0);
         const thread = await api(`/runs/${runId}/thread`);

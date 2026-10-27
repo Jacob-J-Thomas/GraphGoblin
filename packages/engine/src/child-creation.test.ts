@@ -58,6 +58,9 @@ class DyingEvents implements EventStorePort {
     this.died = true;
     return new Promise<never>(() => undefined);
   }
+  recoveryFacts(runId: string, nodeIds: readonly string[]) {
+    return this.durable.recoveryFacts(runId, nodeIds);
+  }
   read(runId: string, afterSeq?: number, limit?: number) {
     return this.durable.read(runId, afterSeq, limit);
   }
@@ -156,11 +159,9 @@ describe('child creation and finish across a process death (#320)', () => {
     );
     expect(failed.status).toBe('failed');
     const [kid] = await e.ports.runs.listChildren(failed.id);
-    // The child is resumed on its own and succeeds while its parent stays failed; the parent's
-    // later resume maps that new outcome without running the child again.
-    await e.manager.resume(kid!.id);
-    await e.manager.waitForIdle();
-    expect((await e.ports.runs.get(kid!.id))?.status).toBe('succeeded');
+    await expect(e.manager.resume(kid!.id)).rejects.toMatchObject({
+      code: 'PARENT_RECOVERY_REQUIRED',
+    });
     await e.manager.resume(failed.id);
     const done = await e.settle(failed.id);
     expect(done.status).toBe('succeeded');

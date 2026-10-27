@@ -20,7 +20,9 @@ const scripts = [
   'sdk-sequences',
 ];
 async function freePort() {
-  for (let port = 5660; port <= 5669; port += 1) {
+  const start = Number(process.env.GG_TEST_PORT_START ?? 5660);
+  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 10);
+  for (let port = start; port < start + count; port += 1) {
     const available = await new Promise((resolve) => {
       const server = createServer();
       server.once('error', () => resolve(false));

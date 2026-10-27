@@ -16,12 +16,14 @@ import type {
   LoopVersionRecord,
   RunEvent,
   RunRecord,
+  RunRecovery,
   TemplateCatalogEntry,
   TemplateDraftRequest,
 } from '@graphgoblin/contracts';
 import {
   ClassifierModelPutSchema,
   LoopDefinitionSchema,
+  RunRecordSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
@@ -339,6 +341,56 @@ export class FakeApi {
     return run;
   }
 
+  recovery = new Map<string, RunRecovery>();
+  private recoveryFor(run: RunRecord): RunRecovery {
+    const observedSeq = this.events.get(run.id)?.at(-1)?.seq ?? run.lastEventSeq;
+    const uncertain = run.failure?.code === 'SCRIPT_OUTCOME_UNCERTAIN';
+    return (
+      this.recovery.get(run.id) ?? {
+        observedSeq,
+        replayDefault: {
+          allowed: false,
+          code: 'REPLAY_NODE_NOT_REACHED',
+          message: 'This run never reached this node.',
+        },
+        resume: uncertain
+          ? {
+              allowed: false,
+              code: 'SCRIPT_CONSENT_REQUIRED',
+              message: 'Choose Recover script to explicitly retry.',
+            }
+          : run.status === 'paused' || (run.status === 'failed' && run.failure?.resumable)
+            ? { allowed: true }
+            : { allowed: false, code: 'RUN_FINISHED', message: 'This run cannot be resumed.' },
+        replay: [
+          {
+            nodeId: run.failure?.nodeId ?? run.currentNodeId ?? 'start',
+            label: 'Node',
+            effects: [],
+            action: uncertain
+              ? {
+                  allowed: false,
+                  code: 'SCRIPT_CONSENT_REQUIRED',
+                  message: 'Choose Recover script.',
+                }
+              : { allowed: true },
+          },
+        ],
+        ...(uncertain
+          ? {
+              scriptConsent: {
+                failureSeq: observedSeq || 1,
+                nodeId: run.failure?.nodeId ?? 'script',
+              },
+            }
+          : {}),
+        ...(this.threads.get(run.id)?.invocation.replayOf
+          ? { replayOf: this.threads.get(run.id)!.invocation.replayOf }
+          : {}),
+      }
+    );
+  }
+
   /** Append an event to a run's log and to every open stream for it. */
   pushEvent(runId: string, event: RunEvent): void {
     this.events.get(runId)?.push(event);
@@ -440,7 +492,15 @@ export class FakeApi {
       return problem(401, 'UNAUTHORIZED', 'an API key is required');
     for (const [route, handler] of this.overrides) {
       const params = match(route, call);
-      if (params) return handler(call, params);
+      if (params) {
+        const response = await handler(call, params);
+        if (route === 'GET /runs/:id' && response.ok) {
+          const value: unknown = await response.clone().json();
+          const row = RunRecordSchema.safeParse(value);
+          if (row.success) return json({ ...row.data, recovery: this.recoveryFor(row.data) });
+        }
+        return response;
+      }
     }
     return this.builtIn(call);
   };
@@ -867,7 +927,9 @@ export class FakeApi {
       'GET /runs/:id',
       (_call, [runId]) => {
         const run = this.runs.get(runId!);
-        return run ? json(run) : problem(404, 'RUN_NOT_FOUND', 'run not found');
+        return run
+          ? json({ ...run, recovery: this.recoveryFor(run) })
+          : problem(404, 'RUN_NOT_FOUND', 'run not found');
       },
     ],
     ...(['cancel', 'pause', 'resume'] as const).map((action): [string, Handler] => [

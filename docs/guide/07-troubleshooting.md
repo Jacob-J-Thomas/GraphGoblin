@@ -362,3 +362,13 @@ A containing subloop run retains the original non-resumable failure in history.
 Recover the failed inference child via its child-run link, then use the API Resume
 on the containing run. The gateway verifies the same owned child's later durable
 resume and current absence of a runtime failure; before that recovery it rejects Resume.
+
+## Recovery eligibility and Replay (#256)
+
+Read the inspector's explanation for the current action. Resume retains the run ID and follows its next attempt. A completed `SCRIPT_EXIT_CODE` failure remains resumable: fix the program, then Resume. Non-resumable stop/deadline/unconfirmed-termination failures stay unavailable for Resume. A failed child directs recovery to its exact parent, which retries the same child.
+
+Replay is a deliberate new run at a reached node, including inference and subloop nodes, across source run statuses. It runs scripts, provider turns, child runs and deliveries on the new path again; the picker names knowable nodes on possible paths. It never undoes source effects or re-sends source-owned delivery records; the fork performs its own deliveries. A missing session does not prohibit Replay, although a named policy may look up the same missing session again. Use Start fresh session for #265's explicit same-run recovery. A path into the current uncertain script also needs explicit consent that its effect may already have happened.
+
+If `RECOVERY_STALE` names an existing replay ID, open that run. The admitted fork and its observed intent are one transaction; there is no separate consumed-intent-without-fork window. Otherwise refresh and review current eligibility. API/MCP commands send `observedSeq` from that read, and `retryUncertainScript: true` only after deliberate uncertain-script consent. See [ADR-0061](../decisions/ADR-0061-recovery-eligibility.md).
+
+If a child says recovery belongs to its parent, open that exact parent even while a previously accepted Resume is pending. A new uncertain child failure needs fresh review and consent. A `RECOVERY_STALE` response means read the current recovery choices again before submitting a new intent; do not automatically retry an earlier consent.

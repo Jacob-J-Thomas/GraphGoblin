@@ -1,12 +1,12 @@
-import type { RunRecord } from '@graphgoblin/contracts';
+import type { RunRecord, RunSnapshot } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { APIRequestContext } from '@playwright/test';
 import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
-async function snapshot(request: APIRequestContext, url: string, id: string): Promise<RunRecord> {
+async function snapshot(request: APIRequestContext, url: string, id: string): Promise<RunSnapshot> {
   const response = await request.get(`${url}/runs/${id}`);
   expect(response.status()).toBe(200);
-  return response.json() as Promise<RunRecord>;
+  return response.json() as Promise<RunSnapshot>;
 }
 async function start(request: APIRequestContext, url: string, loopId: string, terminal = true) {
   const response = await request.post(`${url}/loops/${loopId}/runs`, { data: {} });
@@ -107,7 +107,10 @@ test('protected history and a stale confirmation refuse visibly; invalid selecti
   await expect(
     dialog.getByRole('button', { name: 'Confirm delete-ready selection' }),
   ).toBeEnabled();
-  const replay = await request.post(`${url}/runs/${id}/replay`, { data: { nodeId: 'done' } });
+  const observedSeq = (await snapshot(request, url, id)).recovery.observedSeq;
+  const replay = await request.post(`${url}/runs/${id}/replay`, {
+    data: { nodeId: 'done', observedSeq },
+  });
   expect(replay.status()).toBe(202);
   await dialog.getByRole('button', { name: 'Confirm delete-ready selection' }).click();
   await expect(dialog.getByRole('alert')).toContainText('DELETION_SELECTION_STALE');

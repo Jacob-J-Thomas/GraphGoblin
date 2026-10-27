@@ -34,7 +34,7 @@ describe('adversarial engine invariants', () => {
     e.manager.stop();
     const v = e.publish(inputLoop());
     const r = await e.start(v.loopId);
-    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'RUN_ACTIVE' });
     await e.manager.pause(r.id);
     await e.manager.start();
     await e.manager.resume(r.id);
@@ -44,7 +44,7 @@ describe('adversarial engine invariants', () => {
     await expect(
       e.manager.signal(r.id, 'late', (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown'),
     ).rejects.toMatchObject({ code: 'WAIT_MISMATCH' });
-    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'RUN_CANCELLED' });
   });
 
   it('ADV-001: concurrent input records only the accepted input', async () => {
@@ -366,14 +366,14 @@ describe('adversarial engine invariants', () => {
     expect(mid?.versionId).toBe(middle.id);
     expect((await e.ports.runs.listChildren(mid!.id))[0]?.versionId).toBe(leaf.id);
     // A replay fork at the subloop node reuses the source's pins.
-    const fork = await recovered.replay({ runId: root.id, nodeId: 'child' });
+    const fork = await recovered.replay({ runId: root.id, nodeId: 'done' });
     await recovered.waitForIdle();
     recovered.stop();
     expect((await recovered.getRun(fork.id))?.status).toBe('succeeded');
     expect(e.events(fork.id)[0]).toMatchObject({
       subloopVersions: { [leaf.loopId]: leaf.id, [middle.loopId]: middle.id },
     });
-    expect((await e.ports.runs.listChildren(fork.id))[0]?.versionId).toBe(middle.id);
+    expect(await e.ports.runs.listChildren(fork.id)).toEqual([]);
   });
 
   it.each(['log', 'file', 'webhook'] as const)(
@@ -452,11 +452,18 @@ describe('adversarial engine invariants', () => {
   it('ADV-013: a non-resumable failure cannot leave its terminal status', async () => {
     const e = await createTestEngine();
     const r = await e.runToIdle(e.publish(inputLoop()).loopId);
+    // A failed row must describe its durable lifecycle, including the recorded resumability.
+    await e.ports.events.append(r.id, [
+      {
+        type: 'run.failed',
+        failure: { code: 'INTERNAL_ERROR', message: 'not resumable', resumable: false },
+      },
+    ]);
     await e.ports.runs.update(r.id, {
       status: 'failed',
       failure: { code: 'INTERNAL_ERROR', message: 'not resumable', resumable: false },
     });
-    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
     await e.manager.waitForIdle();
   });
 

@@ -1,0 +1,85 @@
+$ vitest run parked-resume.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/parked-resume.test.ts (5 tests | 4 failed) 243ms
+   × refuses a parked Resume without changing paused status when cancellation wins the append CAS 77ms
+   × keeps a timer park paused until the Resume intent commits, then reconciles the original wait once 31ms
+   × keeps a child park paused until the Resume intent commits, then reconciles the original wait once 60ms
+   × recovers an acknowledged-lost parked Resume, but preserves a later deliberate pause on another restart 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/parked-resume.test.ts > refuses a parked Resume without changing paused status when cancellation wins the append CAS
+AssertionError: expected { …(13) } to match object { status: 'paused', waiting: { …(5) } }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "status": "paused",
++   "status": "waiting",
+    "waiting": {
+      "kind": "input",
+      "nodeId": "park",
+      "prompt": "Continue",
+      "startedSeq": 5,
+
+ ❯ src/parked-resume.test.ts:47:46
+     45|   try {
+     46|     await expect(manager.resume(waiting.id, { kind: 'user', id: 'revie…
+     47|     expect(await manager.getRun(waiting.id)).toMatchObject({ status: '…
+       |                                              ^
+     48|     expect(e.events(waiting.id).filter((event) => event.type === 'run.…
+     49|     expect(e.events(waiting.id).filter((event) => event.type === 'run.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/parked-resume.test.ts > keeps a timer park paused until the Resume intent commits, then reconciles the original wait once
+ FAIL  src/parked-resume.test.ts > keeps a child park paused until the Resume intent commits, then reconciles the original wait once
+AssertionError: expected 'waiting' to be 'paused' // Object.is equality
+
+Expected: "paused"
+Received: "waiting"
+
+ ❯ src/parked-resume.test.ts:78:56
+     76|   await entering;
+     77|   try {
+     78|     expect((await manager.getRun(waiting.id))?.status).toBe('paused');
+       |                                                        ^
+     79|     expect(e.events(waiting.id).some((event) => event.type === 'run.re…
+     80|     if (kind === 'timer') {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/parked-resume.test.ts > recovers an acknowledged-lost parked Resume, but preserves a later deliberate pause on another restart
+AssertionError: expected 'waiting' to be 'paused' // Object.is equality
+
+Expected: "paused"
+Received: "waiting"
+
+ ❯ src/parked-resume.test.ts:112:56
+    110|   try {
+    111|     await expect(manager.resume(waiting.id, { kind: 'user', id: 'revie…
+    112|     expect((await manager.getRun(waiting.id))?.status).toBe('paused');
+       |                                                        ^
+    113|     expect(e.events(waiting.id).filter((event) => event.type === 'run.…
+    114|     manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  04:09:19
+   Duration  2.91s (import 53%, transform 37%, tests 9%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

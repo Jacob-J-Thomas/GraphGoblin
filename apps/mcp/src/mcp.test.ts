@@ -409,7 +409,14 @@ describe('MCP server against the in-process API', () => {
     const finished = body(await call('wait_for_run', { runId, timeoutSeconds: 5 }));
     expect(finished.run).toMatchObject({ status: 'succeeded', result: { value: true } });
 
-    const fork = body(await call('replay_run', { runId, nodeId: 'ask' }));
+    const fork = body(
+      await call('replay_run', {
+        runId,
+        nodeId: 'ask',
+        observedSeq: body<{ recovery: { observedSeq: number } }>(await call('get_run', { runId }))
+          .recovery.observedSeq,
+      }),
+    );
     expect(fork).toMatchObject({ currentNodeId: 'ask', replayOf: { runId, nodeId: 'ask' } });
     expect(fork.id).not.toBe(runId);
     expect(fork.next).toMatch(/wait_for_run/);
@@ -417,7 +424,12 @@ describe('MCP server against the in-process API', () => {
     expect(forkWaiting).toMatchObject({ finished: false, status: 'waiting' });
     const thread = body(await call('get_run_thread', { runId: fork.id }));
     expect(thread.invocation).toMatchObject({ source: 'manual.mcp', replayOf: { runId } });
-    const notReached = await call('replay_run', { runId, nodeId: 'nowhere' });
+    const notReached = await call('replay_run', {
+      runId,
+      nodeId: 'nowhere',
+      observedSeq: body<{ recovery: { observedSeq: number } }>(await call('get_run', { runId }))
+        .recovery.observedSeq,
+    });
     expect(text(notReached)).toMatch(/^GraphGoblin API error REPLAY_NODE_NOT_REACHED \(HTTP 409\)/);
 
     const again = await call('provide_input', {
@@ -464,7 +476,16 @@ describe('MCP server against the in-process API', () => {
     });
     expect(text(heldSignal)).toContain('GraphGoblin API error INVALID_STATE (HTTP 409)');
     expect(text(heldSignal)).toContain('paused');
-    expect(body(await call('resume_run', { runId: second })).status).toBe('waiting'); // paused while parked: back to its wait
+    expect(
+      body(
+        await call('resume_run', {
+          runId: second,
+          observedSeq: body<{ recovery: { observedSeq: number } }>(
+            await call('get_run', { runId: second }),
+          ).recovery.observedSeq,
+        }),
+      ).status,
+    ).toBe('waiting'); // paused while parked: back to its wait
     await until(async () => (await status(second)) === 'waiting');
     await call('cancel_run', { runId: second });
     expect(body(await call('wait_for_run', { runId: second })).run.status).toBe('cancelled');
@@ -504,7 +525,10 @@ describe('MCP server against the in-process API', () => {
       'resume_run',
       'wait_for_run',
     ]) {
-      const result = await call(name, { runId: MISSING_RUN });
+      const result = await call(name, {
+        runId: MISSING_RUN,
+        ...(name === 'resume_run' ? { observedSeq: 0 } : {}),
+      });
       expect(result.isError, name).toBe(true);
       expect(text(result)).toBe(
         `GraphGoblin API error RUN_NOT_FOUND (HTTP 404): run ${MISSING_RUN} not found`,

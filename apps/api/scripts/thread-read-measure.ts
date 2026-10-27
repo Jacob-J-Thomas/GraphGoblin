@@ -28,6 +28,7 @@ const reads: { afterSeq: number; rows: number }[] = [];
 const events: EventStorePort = {
   append: (...args) => container.ports.events.append(...args),
   subscribe: (...args) => container.ports.events.subscribe(...args),
+  recoveryFacts: (...args) => container.ports.events.recoveryFacts(...args),
   async read(runId, afterSeq = 0, limit) {
     const result = await container.ports.events.read(runId, afterSeq, limit);
     reads.push({ afterSeq, rows: result.length });

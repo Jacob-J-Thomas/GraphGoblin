@@ -1073,9 +1073,22 @@ describe('pins and timers (review probes)', () => {
   it('a replay fork copies pins and fails at the subloop when the pinned version is gone', async () => {
     const e = await createTestEngine();
     const cv = e.publish(minimalLoop());
-    const r = await e.runToIdle(e.publish(subLoop('fork-pins', cv.loopId)).loopId);
+    const r = await e.runToIdle(e.publish(parent('fork-pins', cv.loopId)).loopId);
+    const failure = {
+      code: 'INTERNAL_ERROR' as const,
+      message: 'constructed terminal checkpoint before child admission',
+      resumable: true,
+    };
+    await e.ports.runs.transition(r.id, ['waiting'], {
+      status: 'failed',
+      failure,
+      waiting: undefined,
+    });
+    await e.ports.events.append(r.id, [{ type: 'run.failed', failure }]);
     e.ports.loops.versions.delete(cv.id);
-    const fork = await e.manager.replay({ runId: r.id, nodeId: 'sub' });
+    const fork = await e.manager.replay({ runId: r.id, nodeId: 'wait' });
+    await e.settle(fork.id);
+    await e.manager.provideInput(fork.id, (await e.manager.getRun(fork.id))!.waiting!.waitId, null);
     const final = await e.settle(fork.id);
     expect(e.events(fork.id)[0]).toMatchObject({ subloopVersions: { [cv.loopId]: cv.id } });
     expect(final.failure?.code).toBe('SUBLOOP_NOT_FOUND');
@@ -1117,12 +1130,17 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     const child = e.publish(minimalLoop());
     const parent = e.publish(parentOf('replay-race', child.loopId));
     const source = await e.runToIdle(parent.loopId);
-    await e.manager.provideInput(
-      source.id,
-      (await e.manager.getRun(source.id))?.waiting?.waitId ?? 'unknown',
-      null,
-    );
-    expect((await e.settle(source.id)).status).toBe('succeeded');
+    const failure = {
+      code: 'INTERNAL_ERROR' as const,
+      message: 'constructed terminal checkpoint before child admission',
+      resumable: true,
+    };
+    await e.ports.runs.transition(source.id, ['waiting'], {
+      status: 'failed',
+      failure,
+      waiting: undefined,
+    });
+    await e.ports.events.append(source.id, [{ type: 'run.failed', failure }]);
     let fork: Promise<{ id: string }> | undefined;
     let registeredDuring = true;
     const deleted = await e.manager.deleteLoopUnlessInUse(child.loopId, async () => {
@@ -1151,12 +1169,17 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     const child = e.publish(minimalLoop());
     const parent = e.publish(parentOf('replay-first', child.loopId));
     const source = await e.runToIdle(parent.loopId);
-    await e.manager.provideInput(
-      source.id,
-      (await e.manager.getRun(source.id))?.waiting?.waitId ?? 'unknown',
-      null,
-    );
-    await e.settle(source.id);
+    const failure = {
+      code: 'INTERNAL_ERROR' as const,
+      message: 'constructed terminal checkpoint before child admission',
+      resumable: true,
+    };
+    await e.ports.runs.transition(source.id, ['waiting'], {
+      status: 'failed',
+      failure,
+      waiting: undefined,
+    });
+    await e.ports.events.append(source.id, [{ type: 'run.failed', failure }]);
     const forked = await e.manager.replay({ runId: source.id, nodeId: 'wait' });
     expect((await e.settle(forked.id)).status).toBe('waiting');
     const remove = vi.fn(() => Promise.resolve());

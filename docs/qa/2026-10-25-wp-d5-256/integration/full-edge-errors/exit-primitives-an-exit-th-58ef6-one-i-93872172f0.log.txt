@@ -1,0 +1,395 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: exit-primitives.spec.ts >> an exit that returns None is understandable: quiet
+- Location: e2e\exit-primitives.spec.ts:209:3
+
+# Error details
+
+```
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "recovery"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"recovery\""
+  }
+]
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - link "Loops" [ref=e33] [cursor=pointer]:
+        - /url: /app/loops
+      - generic [ref=e34]: /
+      - heading "Returns none quiet" [level=1] [ref=e35]
+      - generic [ref=e36]: published v1
+      - generic [ref=e38]: All changes saved
+      - generic [ref=e42]:
+        - button "Undo edit config of done" [ref=e43] [cursor=pointer]
+        - button "Redo" [disabled] [ref=e47]
+        - link "Open in Runs" [ref=e51] [cursor=pointer]:
+          - /url: /app/runs/new?loop=01M3Y7RKG0S8XTY95N6PFEKTRE
+        - generic [ref=e54]: Ready to publish
+        - button "Publish" [ref=e58] [cursor=pointer]
+    - status [ref=e63]:
+      - generic [ref=e68]:
+        - text: Published version 1.
+        - link "Open in Runs" [ref=e69] [cursor=pointer]:
+          - /url: /app/runs/new?loop=01M3Y7RKG0S8XTY95N6PFEKTRE
+    - generic [ref=e73]:
+      - complementary [ref=e74]:
+        - generic [ref=e75]:
+          - button "Hide palette" [expanded] [ref=e76] [cursor=pointer]
+          - heading "Palette" [level=2] [ref=e79]
+        - navigation "Node palette" [ref=e81]:
+          - button "Add Trigger node" [ref=e82]:
+            - generic [ref=e86]: Trigger
+            - generic [ref=e87]: Starts a run
+          - button "Add Decision node" [ref=e88]:
+            - generic [ref=e93]: Decision
+            - generic [ref=e94]: Chooses a route and can limit repeats
+          - button "Add Inference node" [ref=e95]:
+            - generic [ref=e100]: Inference
+            - generic [ref=e101]: Hands work to a harness
+          - button "Add Script node" [ref=e102]:
+            - generic [ref=e106]: Script
+            - generic [ref=e107]: Runs a program
+          - button "Add Mutate node" [ref=e108]:
+            - generic [ref=e113]: Mutate
+            - generic [ref=e114]: Changes the context thread
+          - button "Add Subloop node" [ref=e115]:
+            - generic [ref=e120]: Subloop
+            - generic [ref=e121]: Runs another loop
+          - button "Add Wait node" [ref=e122]:
+            - generic [ref=e126]: Wait
+            - generic [ref=e127]: Parks until input, time, or a signal
+          - button "Add Heartbeat node" [ref=e128]:
+            - generic [ref=e132]: Heartbeat
+            - generic [ref=e133]: Polls on an interval
+          - button "Add Exit node" [ref=e134]:
+            - generic [ref=e138]: Exit
+            - generic [ref=e139]: Finishes with an outcome and return value
+      - main [ref=e140]:
+        - application [ref=e142]:
+          - generic [ref=e144]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to done" [ref=e145] [cursor=pointer]
+              - generic:
+                - group "Trigger Start (start)" [ref=e148]:
+                  - generic [ref=e149]:
+                    - generic [ref=e150]: Trigger
+                    - generic [ref=e155]:
+                      - generic [ref=e156]: Start
+                      - generic [ref=e157]: start
+                      - generic [ref=e159]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e160]
+                - group "Exit Done (done)" [ref=e161]:
+                  - generic [ref=e162]:
+                    - generic "done input" [ref=e163]
+                    - generic [ref=e164]: Exit
+                    - generic [ref=e169]:
+                      - generic [ref=e170]: Done
+                      - generic [ref=e171]: done
+          - generic "Control Panel" [ref=e172]:
+            - button "Zoom In" [ref=e173] [cursor=pointer]
+            - button "Zoom Out" [ref=e176] [cursor=pointer]
+            - button "Fit View" [ref=e179] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e182] [cursor=pointer]
+          - link "React Flow attribution" [ref=e186] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary [ref=e189]:
+        - generic [ref=e190]:
+          - heading "Loop settings" [level=2] [ref=e191]
+          - button "Hide loop settings" [expanded] [ref=e192] [cursor=pointer]
+        - region "Loop settings" [ref=e196]:
+          - paragraph [aria-hidden] [ref=e197]: Required fields are marked *
+          - generic [ref=e198]:
+            - generic [ref=e199]:
+              - generic [ref=e200]: Name
+              - generic [aria-hidden] [ref=e201]: "*"
+            - textbox "Name" [ref=e202]: Returns none quiet
+          - generic [ref=e203]:
+            - generic [ref=e204]: Description
+            - textbox "Description" [ref=e205]
+          - heading "Settings" [level=3] [ref=e206]
+          - paragraph [ref=e207]: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision evaluation or output-transform repair through the structured port when Limited; it defaults to Unlimited. Same-session inference schema repairs follow the node timeout. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+          - form "Loop settings form" [ref=e208]:
+            - generic [ref=e210]:
+              - group "Working directory" [ref=e211]:
+                - generic [ref=e213]:
+                  - generic [ref=e214]: Kind
+                  - combobox "Kind" [ref=e216] [cursor=pointer]:
+                    - option "fixed"
+                    - option "template"
+                    - option "temp" [selected]
+              - group "Defaults" [ref=e217]:
+                - group "By harness" [ref=e219]:
+                  - paragraph [ref=e221]: Defaults keyed by their harness; omitted fields inherit only within that harness.
+                  - button "Add entry" [ref=e223] [cursor=pointer]
+                  - status [ref=e227]
+              - generic [ref=e228]:
+                - generic [ref=e229]: Maximum node visits
+                - generic [ref=e231]:
+                  - spinbutton "Maximum node visits" [ref=e232]: "10"
+                  - combobox "Maximum node visits mode" [ref=e234] [cursor=pointer]:
+                    - option "Limited" [selected]
+                    - option "Unlimited"
+                - paragraph [ref=e235]: Fresh entries per node. Default 10; unlimited removes this cutoff.
+              - generic [ref=e236]:
+                - generic [ref=e237]: Run deadline seconds
+                - combobox "Run deadline seconds mode" [ref=e241] [cursor=pointer]:
+                  - option "Limited"
+                  - option "No run deadline" [selected]
+                - paragraph [ref=e242]: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+                - paragraph [ref=e243]: No deadline; set one to stop a forgotten run.
+              - generic [ref=e244]:
+                - generic [ref=e245]: Structured completion milliseconds
+                - combobox "Structured completion milliseconds mode" [ref=e249] [cursor=pointer]:
+                  - option "Limited"
+                  - option "Unlimited" [selected]
+                - paragraph [ref=e250]: Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.
+                - paragraph [ref=e251]: No completion deadline; LLM decisions and repairs remain cancellable.
+              - generic [ref=e252]:
+                - generic [ref=e253]: Subloop depth limit
+                - spinbutton "Subloop depth limit" [ref=e255]: "8"
+          - generic [ref=e256]:
+            - heading "Variables" [level=3] [ref=e257]
+            - paragraph [ref=e258]: Each variable maps a name to a JSON Schema.
+          - form "Variables form" [ref=e259]:
+            - group "Variables" [ref=e262]:
+              - generic [ref=e263]: Variables *
+              - button "Add entry" [ref=e265] [cursor=pointer]
+              - status [ref=e269]
+```
+
+# Test source
+
+```ts
+  170 |     await expect(
+  171 |       page.getByText('Previous passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+  172 |     ).toHaveText('1');
+  173 |     await expect(
+  174 |       page.getByText('Current passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+  175 |     ).toHaveText('2');
+  176 |     await timeline.getByText('decision.made').last().click();
+  177 |     await expect(
+  178 |       page.getByText('Previous passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+  179 |     ).toContainText('3');
+  180 |     await expect(
+  181 |       page.getByText('Current passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+  182 |     ).toContainText('3');
+  183 |     await expect(
+  184 |       page
+  185 |         .getByText('Limit stopping repeat', { exact: true })
+  186 |         .locator('xpath=following-sibling::dd[1]'),
+  187 |     ).toContainText(finalChoice === 'repeat' ? 'Maximum passes' : 'None');
+  188 |     await expect(page.getByTestId('run-result')).toContainText('synthetic work');
+  189 |     // Where a loop-back exit said "iteration 3 of 3", the run's top keeps the last gate's pass and
+  190 |     // stopping limit beside the exit outcome; a returned value needs no configuration note (#129).
+  191 |     await expect(
+  192 |       page.getByText(
+  193 |         finalChoice === 'repeat'
+  194 |           ? 'Last gate decision: Gate (gate) chose Repeat (repeat) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
+  195 |           : 'Last gate decision: Gate (gate) chose Done (done) on pass 3 of 3.',
+  196 |         { exact: true },
+  197 |       ),
+  198 |     ).toBeVisible();
+  199 |     await expect(page.getByTestId('exit-returns')).toHaveCount(0);
+  200 |   });
+  201 | }
+  202 | 
+  203 | /**
+  204 |  * Exits that return nothing (#129, #258): while Returns is None, destinations receive nothing,
+  205 |  * and an exit without destinations is a valid quiet exit. The editor says so before publishing,
+  206 |  * and the finished run says it returned nothing by configuration, not by failure.
+  207 |  */
+  208 | for (const shape of ['suppressed', 'quiet'] as const) {
+  209 |   test(`an exit that returns None is understandable: ${shape}`, async ({ page, request }) => {
+  210 |     const instance = await control(request, '/apps');
+  211 |     const url = String(instance['url']);
+  212 |     const definition: LoopDefinitionInput = {
+  213 |       schemaVersion: CURRENT_DEFINITION_FORMAT,
+  214 |       name: `Returns none ${shape}`,
+  215 |       nodes: [
+  216 |         {
+  217 |           id: 'start',
+  218 |           kind: 'trigger',
+  219 |           label: 'Start',
+  220 |           config: { type: 'manual' },
+  221 |           ui: { x: 0, y: 80 },
+  222 |         },
+  223 |         {
+  224 |           id: 'done',
+  225 |           kind: 'exit',
+  226 |           label: 'Done',
+  227 |           config: { returns: 'none', destinations: [{ kind: 'caller' }, { kind: 'log' }] },
+  228 |           ui: { x: 300, y: 80 },
+  229 |         },
+  230 |       ],
+  231 |       edges: [{ id: 'start-done', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  232 |     };
+  233 |     const created = await request.post(url + '/loops', { data: { definition } });
+  234 |     expect(created.status()).toBe(201);
+  235 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  236 |     await page.goto(url + '/app/loops/' + loop.id + '/edit');
+  237 |     const dialog = await openNode(page, 'done');
+  238 |     await expect(
+  239 |       dialog.getByText(
+  240 |         'No returned value. The run finishes without a result, and destinations receive nothing.',
+  241 |       ),
+  242 |     ).toBeVisible();
+  243 |     const destinations = dialog.getByRole('group', { name: 'Destinations', exact: true });
+  244 |     await expect(destinations).toHaveAccessibleDescription(
+  245 |       'Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.',
+  246 |     );
+  247 |     if (shape === 'quiet') {
+  248 |       for (const row of [2, 1])
+  249 |         await destinations
+  250 |           .getByRole('button', { name: `Remove destinations ${row}`, exact: true })
+  251 |           .click();
+  252 |       await expect(destinations).toHaveAccessibleDescription(
+  253 |         'Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.',
+  254 |       );
+  255 |     }
+  256 |     await closeNode(page);
+  257 |     await expect(page.getByText('Ready to publish')).toBeVisible();
+  258 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  259 |     await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  260 |     await expect(page.getByText('Published version 1.')).toBeVisible();
+  261 | 
+  262 |     const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+  263 |       data: { input: {} },
+  264 |     });
+  265 |     expect(started.status()).toBe(202);
+  266 |     const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  267 |     await expect
+  268 |       .poll(
+  269 |         async () =>
+> 270 |           RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      |                           ^ ZodError: [
+  271 |       )
+  272 |       .toBe('succeeded');
+  273 |     const run = RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  274 |     expect(run.result).toBeUndefined();
+  275 |     const events = RunEventSchema.array().parse(
+  276 |       (
+  277 |         (await (await request.get(url + '/runs/' + runId + '/events')).json()) as {
+  278 |           items: unknown[];
+  279 |         }
+  280 |       ).items,
+  281 |     );
+  282 |     expect(events.filter((e) => e.type.startsWith('return.'))).toEqual([]);
+  283 | 
+  284 |     await page.goto(url + '/app/runs/' + runId);
+  285 |     const reason =
+  286 |       shape === 'quiet'
+  287 |         ? 'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.'
+  288 |         : 'No value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.';
+  289 |     await expect(page.getByTestId('exit-returns')).toHaveText(reason);
+  290 |     await expect(page.getByTestId('run-result')).toHaveCount(0);
+  291 |     await page.getByRole('list', { name: 'Timeline' }).getByText('exit.evaluated').click();
+  292 |     await expect(page.getByText(/^Exit outcome:/)).toHaveText(
+  293 |       `Exit outcome: success. This exit is terminal. ${reason}`,
+  294 |     );
+  295 |   });
+  296 | }
+  297 | 
+  298 | /**
+  299 |  * A chosen route's label can be 120 characters with no break opportunity. At 768 px the inspector
+  300 |  * keeps its width and wraps the whole label inside the details, instead of widening the page and
+  301 |  * squeezing the other detail rows (#129 review).
+  302 |  */
+  303 | test('a maximum-length route label wraps in the 768 px inspector', async ({ page, request }) => {
+  304 |   const instance = await control(request, '/apps');
+  305 |   const url = String(instance['url']);
+  306 |   const longLabel = 'L'.repeat(120);
+  307 |   const definition: LoopDefinitionInput = {
+  308 |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  309 |     name: 'Long route label',
+  310 |     nodes: [
+  311 |       { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+  312 |       {
+  313 |         id: 'pick',
+  314 |         kind: 'decision',
+  315 |         label: 'Pick',
+  316 |         config: {
+  317 |           kind: 'expression',
+  318 |           jsonata: '"long"',
+  319 |           routes: [
+  320 |             { id: 'long', label: longLabel },
+  321 |             { id: 'short', label: 'Short' },
+  322 |           ],
+  323 |         },
+  324 |       },
+  325 |       { id: 'done', kind: 'exit', label: 'Done', config: { returns: '"done"' } },
+  326 |       { id: 'other', kind: 'exit', label: 'Other', config: {} },
+  327 |     ],
+  328 |     edges: [
+  329 |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  330 |       { id: 'e2', from: { node: 'pick', port: 'long' }, to: { node: 'done' } },
+  331 |       { id: 'e3', from: { node: 'pick', port: 'short' }, to: { node: 'other' } },
+  332 |     ],
+  333 |   };
+  334 |   const created = await request.post(url + '/loops', { data: { definition } });
+  335 |   expect(created.status()).toBe(201);
+  336 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  337 |   expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  338 |   const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  339 |   expect(started.status()).toBe(202);
+  340 |   const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  341 |   await expect
+  342 |     .poll(
+  343 |       async () =>
+  344 |         RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+  345 |     )
+  346 |     .toBe('succeeded');
+  347 | 
+  348 |   await page.setViewportSize({ width: 768, height: 900 });
+  349 |   await page.goto(url + '/app/runs/' + runId);
+  350 |   await page.getByRole('list', { name: 'Timeline' }).getByText('decision.made').click();
+  351 |   const term = (name: string) =>
+  352 |     page.getByText(name, { exact: true }).locator('xpath=following-sibling::dd[1]');
+  353 |   const label = term('Label');
+  354 |   await expect(label).toBeVisible();
+  355 |   await expect(label).toHaveText(longLabel);
+  356 |   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(768);
+  357 |   const box = await label.boundingBox();
+  358 |   if (!box) throw new Error('The label has no box.');
+  359 |   expect(box.x + box.width).toBeLessThanOrEqual(768);
+  360 |   // Wrapped, not clipped: the whole label is laid out on several lines inside the details.
+  361 |   expect(await label.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  362 |   expect(box.height).toBeGreaterThan(30);
+  363 |   // The other rows keep readable widths: the selected port stays on one line.
+  364 |   const port = await term('Selected port').boundingBox();
+  365 |   if (!port) throw new Error('The selected port has no box.');
+  366 |   expect(port.height).toBeLessThan(30);
+  367 | });
+  368 | 
+```

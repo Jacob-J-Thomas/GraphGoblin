@@ -7,6 +7,7 @@ import type {
   LoopRecord,
   LoopVersionRecord,
   RunRecord,
+  RunRecovery,
 } from '@graphgoblin/contracts';
 import { decisionRouteDeclarations } from '@graphgoblin/domain';
 
@@ -123,9 +124,10 @@ export function describeLoop(detail: {
 }
 
 /** A run without the bulky fields, for listings. */
-export function summarizeRun(run: RunRecord) {
+export function summarizeRun(run: RunRecord & { recovery?: RunRecovery }) {
   return {
     id: run.id,
+    ...(run.recovery ? { recovery: run.recovery } : {}),
     loopId: run.loopId,
     /** The definition the run executes for its whole life, e.g. "Review v3" or "Review draft v4". */
     definition: run.pinned.label,

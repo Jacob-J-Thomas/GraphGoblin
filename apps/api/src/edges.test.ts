@@ -71,7 +71,11 @@ describe('scopes', () => {
       { method: 'POST', url: `/loops/${id}/runs`, payload: {} },
       { method: 'POST', url: `/runs/${run.id}/cancel` },
       { method: 'POST', url: `/runs/${run.id}/pause` },
-      { method: 'POST', url: `/runs/${run.id}/resume` },
+      {
+        method: 'POST',
+        url: `/runs/${run.id}/resume`,
+        payload: { observedSeq: (await t.container.manager.getRecovery(run.id)).observedSeq },
+      },
       {
         method: 'POST',
         url: `/runs/${run.id}/input`,

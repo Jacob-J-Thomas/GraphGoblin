@@ -491,6 +491,7 @@ describe('boot', () => {
           admission: {
             events: admission.events,
             create: (...args) => admission.create(...args),
+            findReplay: (...args) => admission.findReplay(...args),
             createPollItem: (...args) => admission.createPollItem(...args),
             get: (...args) => admission.get(...args),
             due: (...args) => admission.due(...args),

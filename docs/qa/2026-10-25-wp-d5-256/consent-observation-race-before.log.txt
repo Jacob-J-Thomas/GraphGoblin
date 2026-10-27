@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/run-recovery.test.ts (7 tests | 1 failed | 6 skipped) 109ms
+   ❯ recovery effect boundaries (#256) (7)
+     × does not attach a newer failure observation to an older script consent target 107ms
+pnpm.cmd : 
+At line:2 char:103
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > does not attach a newer failure observation to 
+an older script consent target
+AssertionError: expected 'a' to be 'b' // Object.is equality
+
+Expected: "b"
+Received: "a"
+
+ ❯ src/run-recovery.test.ts:58:46
+     56|       const recovery = await reader.getRecovery(source.id);
+     57|       expect((await e.ports.runs.get(source.id))?.failure?.nodeId).toB…
+     58|       expect(recovery.scriptConsent?.nodeId).toBe('b');
+       |                                              ^
+     59|       expect(recovery.observedSeq).toBe(e.events(source.id).at(-1)!.se…
+     60|     } finally { reader.stop(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  03:04:50
+   Duration  4.32s (import 56%, transform 42%, tests 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

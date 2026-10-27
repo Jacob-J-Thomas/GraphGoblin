@@ -87,7 +87,7 @@ it('resubmits the exact saved repair after a synchronous restorable refusal', as
     const resumed = await test.app.inject({
       method: 'POST',
       url: `/runs/${runId}/resume`,
-      payload: {},
+      payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
     });
     await test.idle();
     expect(resumed.statusCode).toBe(200);
@@ -123,7 +123,7 @@ it.each([
     const resumed = await test.app.inject({
       method: 'POST',
       url: `/runs/${runId}/resume`,
-      payload: {},
+      payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
     });
     await test.idle();
     expect(resumed.statusCode).toBe(409);

@@ -1,0 +1,54 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/script-recovery.test.ts (9 tests | 1 failed) 480ms
+   ❯ script dispatch recovery (#321) (9)
+     × recovers before-dispatch twice, preserving evidence and requiring consent for an unknown effect 61ms
+pnpm.cmd : 
+At line:2 char:103
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > recovers before-dispatch twice, preserving 
+evidence and requiring consent for an unknown effect
+AssertionError: expected { allowed: true } to match object { allowed: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "allowed": false,
+-   "code": "EXTERNAL_EFFECT_CONSUMED",
++   "allowed": true,
+  }
+
+ ❯ src/script-recovery.test.ts:154:85
+    152|           if (boundary === 'before-dispatch' || boundary === 'dispatch…
+    153|             const recovery = await resumed.getRecovery(run.id);
+    154|             expect(recovery.replay.find((node) => node.nodeId === 'sta…
+       |                                                                                     ^
+    155|               allowed: false,
+    156|               code: 'EXTERNAL_EFFECT_CONSUMED',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  00:29:57
+   Duration  8.84s (transform 63%, import 32%, tests 6%)
+
+  Transform  transforming modules took 5.29s · 63% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

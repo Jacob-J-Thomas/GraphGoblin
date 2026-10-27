@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/recovery.test.ts (69 tests | 1 failed) 16779ms
+   ❯ thread checkpoints (review finding 9) (5)
+     × a long log resumes from its checkpoint (10,000 completions) 7777ms
+pnpm.cmd : 
+At line:2 char:168
++ ... OUNT='100'; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery.test.ts > thread checkpoints (review finding 9) > a long log resumes from its checkpoint (10,000 
+completions)
+AssertionError: expected 5162.730200000002 to be less than 2000
+ ❯ src/recovery.test.ts:679:21
+    677|     );
+    678|     // Generous: the point is that it does not replay 10,000 patches (…
+    679|     expect(elapsed).toBeLessThan(2_000);
+       |                     ^
+    680|   }, 30_000);
+    681| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 122 passed (123)
+   Start at  22:30:31
+   Duration  59.00s (tests 55%, transform 27%, import 17%)
+
+  Transform  transforming modules took 14.60s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

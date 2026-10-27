@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/web
+
+ ❯ src/runs/recovery-controls.test.tsx (4 tests | 1 failed | 3 skipped) 526ms
+   ❯ server-owned recovery controls (#256) (4)
+     × keeps the second click in one intent even when a new eligible failure has already rendered 524ms
+pnpm.cmd : 
+At line:2 char:279
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ru ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > keeps the second click in one 
+intent even when a new eligible failure has already rendered
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/runs/recovery-controls.test.tsx:92:22
+     90|     await act(async () => { fireEvent.click(screen.getByRole('button',…
+     91|     await waitFor(() => expect(screen.getByRole('button', { name: 'Res…
+     92|     expect(accepted).toBe(1);
+       |                      ^
+     93|     expect(currentSeq).toBe(8);
+     94|     expect(screen.getByRole('heading', { level: 1 })).toHaveTextConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  01:33:17
+   Duration  9.84s (transform 34%, environment 31%, import 18%, setup 10%, tests 5%)
+
+  Transform  transforming modules took 3.32s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\web
+

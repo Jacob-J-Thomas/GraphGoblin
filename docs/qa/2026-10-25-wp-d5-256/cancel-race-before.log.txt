@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/run-recovery.test.ts (6 tests | 1 failed | 5 skipped) 100ms
+   ❯ recovery effect boundaries (#256) (6)
+     × returns the current typed cancellation reason when cancellation wins inside paused Resume 97ms
+pnpm.cmd : 
+At line:23 char:105
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > returns the current typed cancellation reason 
+when cancellation wins inside paused Resume
+AssertionError: expected EngineRequestError: cannot resume a run t… { …(2) } to match object { code: 'RUN_CANCELLED' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "RUN_CANCELLED",
++ EngineRequestError {
++   "code": "INVALID_STATE",
+  }
+
+ ❯ src/run-recovery.test.ts:130:113
+    128|       return transition(id, from, changes);
+    129|     });
+    130|     await expect(e.manager.resume(run.id, { kind: 'user', id: 'owner' …
+       |                                                                                                               
+  ^
+    131|     expect((await e.manager.getRun(run.id))?.status).toBe('cancelled')…
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  23:07:54
+   Duration  4.40s (import 53%, transform 44%, tests 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

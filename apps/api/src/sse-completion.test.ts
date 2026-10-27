@@ -57,8 +57,13 @@ describe('authoritative SSE completion', () => {
       await t.idle();
       expect((await t.container.manager.getRun(run.id))?.status).toBe('failed');
       expect(
-        (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume`, payload: {} }))
-          .statusCode,
+        (
+          await t.app.inject({
+            method: 'POST',
+            url: `/runs/${run.id}/resume`,
+            payload: { observedSeq: (await t.container.manager.getRecovery(run.id)).observedSeq },
+          })
+        ).statusCode,
       ).toBe(200);
       await t.idle();
       expect((await t.container.manager.getRun(run.id))?.status).toBe('succeeded');

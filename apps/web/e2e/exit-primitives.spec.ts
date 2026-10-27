@@ -3,6 +3,7 @@ import {
   LoopDefinitionSchema,
   RunEventSchema,
   RunRecordSchema,
+  RunSnapshotSchema,
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import { closeNode, control, expect, openNode, test } from './fixtures.js';
@@ -153,7 +154,7 @@ for (const finalChoice of ['repeat', 'done'] as const) {
     await expect
       .poll(
         async () =>
-          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+          RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
       )
       .toBe(finalChoice === 'repeat' ? 'exhausted' : 'succeeded');
     const eventsResponse = await request.get(url + '/runs/' + runId + '/events');
@@ -267,10 +268,10 @@ for (const shape of ['suppressed', 'quiet'] as const) {
     await expect
       .poll(
         async () =>
-          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+          RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
       )
       .toBe('succeeded');
-    const run = RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+    const run = RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
     expect(run.result).toBeUndefined();
     const events = RunEventSchema.array().parse(
       (
@@ -341,7 +342,7 @@ test('a maximum-length route label wraps in the 768 px inspector', async ({ page
   await expect
     .poll(
       async () =>
-        RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+        RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
     )
     .toBe('succeeded');
 

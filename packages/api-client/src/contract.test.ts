@@ -244,7 +244,9 @@ describe('against the in-process API (local trusted mode)', () => {
       status: 409,
       code: 'WAIT_MISMATCH',
     });
-    const fork = await runs.replay(client, first.id, 'start');
+    const fork = await runs.replay(client, first.id, 'start', {
+      observedSeq: (await runs.get(client, first.id)).recovery.observedSeq,
+    });
     expect(fork.id).not.toBe(first.id);
     await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
     expect((await runs.thread(client, fork.id)).invocation.replayOf).toEqual({
@@ -259,7 +261,13 @@ describe('against the in-process API (local trusted mode)', () => {
     await expect(
       runs.provideInput(client, second.id, paused.waiting!.waitId, { ok: true }),
     ).rejects.toMatchObject({ status: 409, code: 'INVALID_STATE' });
-    expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
+    expect(
+      (
+        await runs.resume(client, second.id, {
+          observedSeq: (await runs.get(client, second.id)).recovery.observedSeq,
+        })
+      ).status,
+    ).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
     expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(

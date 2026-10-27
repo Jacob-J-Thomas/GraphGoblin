@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, it } from 'vitest';
-import type { DeletionPreview, RunRecord } from '@graphgoblin/contracts';
+import type { DeletionPreview, RunRecord, RunSnapshot } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { singleNodeLoop } from '@graphgoblin/engine/testing';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -291,10 +291,11 @@ it('revokes the source when replay creates dependent history and leaves retained
   });
   expect(bytes.statusCode).toBe(200);
   expect((await confirm([source.id])).statusCode).toBe(200);
+  const snapshot = (await t.app.inject(`/runs/${source.id}`)).json<RunSnapshot>();
   const replay = await t.app.inject({
     method: 'POST',
     url: `/runs/${source.id}/replay`,
-    payload: { nodeId: 'infer' },
+    payload: { nodeId: 'infer', observedSeq: snapshot.recovery.observedSeq },
   });
   expect(replay.statusCode).toBe(202);
   await t.idle();

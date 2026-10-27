@@ -1,0 +1,696 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: live-follow.spec.ts >> following a fast run live refreshes bounded read models and reads no historical thread (#186)
+- Location: e2e\live-follow.spec.ts:58:1
+
+# Error details
+
+```
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "recovery"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"recovery\""
+  }
+]
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - generic [ref=e33]:
+        - heading "Run 01M3Y7RKG0QGFT8E321ZX0PB0B" [level=1] [ref=e34]:
+          - text: Run
+          - generic [ref=e35]: 01M3Y7RKG0QGFT8E321ZX0PB0B
+        - generic [ref=e36]: running
+      - generic [ref=e40]:
+        - generic [ref=e41]: at Grow (grow)
+        - link "loop" [ref=e42] [cursor=pointer]:
+          - /url: /app/loops/01M3Y7RKG0QGFT8E321ZX0PB09/edit
+        - link "child runs" [ref=e43] [cursor=pointer]:
+          - /url: /app/runs?parent=01M3Y7RKG0QGFT8E321ZX0PB0B
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - button "Pause" [ref=e47] [cursor=pointer]
+          - button "Resume" [disabled]
+          - button "Cancel run" [ref=e51] [cursor=pointer]
+          - button "Replay..." [ref=e56] [cursor=pointer]
+        - paragraph [ref=e58]: "Resume unavailable: This run is still active. Pause it before continuing with Resume."
+    - region [ref=e59]:
+      - heading "Execution limits" [level=2] [ref=e61]
+      - generic [ref=e62]:
+        - paragraph [ref=e63]: "Maximum node visits: Unlimited. Run deadline: none."
+        - paragraph [ref=e64]: "Structured completion: Unlimited."
+        - paragraph [ref=e65]: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+    - generic [ref=e66]:
+      - paragraph [ref=e67]: History retained.
+      - generic [ref=e68]:
+        - button "Review delete-ready history" [ref=e69] [cursor=pointer]
+        - button "Withdraw delete-ready mark" [ref=e71] [cursor=pointer]
+        - generic [ref=e73]: 1 selected
+    - region [ref=e74]:
+      - heading "Execution context" [level=2] [ref=e76]
+      - generic [ref=e77]:
+        - paragraph [ref=e78]:
+          - text: Live follow v1 · version ID
+          - code [ref=e79]: 01M3Y7RKG0QGFT8E321ZX0PB0A
+        - button "Exact run record" [ref=e81] [cursor=pointer]
+        - button "Pinned definition JSON" [ref=e87] [cursor=pointer]
+    - generic [ref=e92]:
+      - region [ref=e93]:
+        - heading "Timeline (133 events, complete)" [level=2] [ref=e95]
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - button "Load older" [disabled] [ref=e98]
+            - button "Previous rows" [ref=e100] [cursor=pointer]
+            - button "Next rows" [disabled] [ref=e102]
+            - button "Load newer" [disabled] [ref=e104]
+            - button "Follow live" [disabled] [ref=e106]
+            - generic [ref=e108]: Showing events 54–133 of the retained window.
+            - generic [ref=e109]: Following live.
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - text: Event sequence
+              - spinbutton "Event sequence" [ref=e112]
+            - button "Go to event" [ref=e113] [cursor=pointer]
+          - list "Timeline" [ref=e115]:
+            - listitem [ref=e116]:
+              - button "#54 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e117] [cursor=pointer]:
+                - generic [ref=e118]: "#54"
+                - code [ref=e119]: node.finished
+                - generic [ref=e120]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e121]:
+              - button "#55 node.started Grow (grow) (mutate) attempt 1" [ref=e122] [cursor=pointer]:
+                - generic [ref=e123]: "#55"
+                - code [ref=e124]: node.started
+                - generic [ref=e125]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e126]:
+              - button "#56 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e127] [cursor=pointer]:
+                - generic [ref=e128]: "#56"
+                - code [ref=e129]: node.finished
+                - generic [ref=e130]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e131]:
+              - button "#57 node.started Gate (gate) (decision) attempt 1" [ref=e132] [cursor=pointer]:
+                - generic [ref=e133]: "#57"
+                - code [ref=e134]: node.started
+                - generic [ref=e135]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e136]:
+              - button "#58 decision.made Chose Again (again) with expression; passes 11 → 12 (unlimited)" [ref=e137] [cursor=pointer]:
+                - generic [ref=e138]: "#58"
+                - code [ref=e139]: decision.made
+                - generic [ref=e140]: Chose Again (again) with expression; passes 11 → 12 (unlimited)
+            - listitem [ref=e141]:
+              - button "#59 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e142] [cursor=pointer]:
+                - generic [ref=e143]: "#59"
+                - code [ref=e144]: node.finished
+                - generic [ref=e145]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e146]:
+              - button "#60 node.started Grow (grow) (mutate) attempt 1" [ref=e147] [cursor=pointer]:
+                - generic [ref=e148]: "#60"
+                - code [ref=e149]: node.started
+                - generic [ref=e150]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e151]:
+              - button "#61 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e152] [cursor=pointer]:
+                - generic [ref=e153]: "#61"
+                - code [ref=e154]: node.finished
+                - generic [ref=e155]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e156]:
+              - button "#62 node.started Gate (gate) (decision) attempt 1" [ref=e157] [cursor=pointer]:
+                - generic [ref=e158]: "#62"
+                - code [ref=e159]: node.started
+                - generic [ref=e160]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e161]:
+              - button "#63 decision.made Chose Again (again) with expression; passes 12 → 13 (unlimited)" [ref=e162] [cursor=pointer]:
+                - generic [ref=e163]: "#63"
+                - code [ref=e164]: decision.made
+                - generic [ref=e165]: Chose Again (again) with expression; passes 12 → 13 (unlimited)
+            - listitem [ref=e166]:
+              - button "#64 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e167] [cursor=pointer]:
+                - generic [ref=e168]: "#64"
+                - code [ref=e169]: node.finished
+                - generic [ref=e170]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e171]:
+              - button "#65 node.started Grow (grow) (mutate) attempt 1" [ref=e172] [cursor=pointer]:
+                - generic [ref=e173]: "#65"
+                - code [ref=e174]: node.started
+                - generic [ref=e175]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e176]:
+              - button "#66 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e177] [cursor=pointer]:
+                - generic [ref=e178]: "#66"
+                - code [ref=e179]: node.finished
+                - generic [ref=e180]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e181]:
+              - button "#67 node.started Gate (gate) (decision) attempt 1" [ref=e182] [cursor=pointer]:
+                - generic [ref=e183]: "#67"
+                - code [ref=e184]: node.started
+                - generic [ref=e185]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e186]:
+              - button "#68 decision.made Chose Again (again) with expression; passes 13 → 14 (unlimited)" [ref=e187] [cursor=pointer]:
+                - generic [ref=e188]: "#68"
+                - code [ref=e189]: decision.made
+                - generic [ref=e190]: Chose Again (again) with expression; passes 13 → 14 (unlimited)
+            - listitem [ref=e191]:
+              - button "#69 node.finished Gate (gate) → Again (again), 2 changes, 3 ms" [ref=e192] [cursor=pointer]:
+                - generic [ref=e193]: "#69"
+                - code [ref=e194]: node.finished
+                - generic [ref=e195]: Gate (gate) → Again (again), 2 changes, 3 ms
+            - listitem [ref=e196]:
+              - button "#70 node.started Grow (grow) (mutate) attempt 1" [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]: "#70"
+                - code [ref=e199]: node.started
+                - generic [ref=e200]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e201]:
+              - button "#71 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e202] [cursor=pointer]:
+                - generic [ref=e203]: "#71"
+                - code [ref=e204]: node.finished
+                - generic [ref=e205]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e206]:
+              - button "#72 node.started Gate (gate) (decision) attempt 1" [ref=e207] [cursor=pointer]:
+                - generic [ref=e208]: "#72"
+                - code [ref=e209]: node.started
+                - generic [ref=e210]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e211]:
+              - button "#73 decision.made Chose Again (again) with expression; passes 14 → 15 (unlimited)" [ref=e212] [cursor=pointer]:
+                - generic [ref=e213]: "#73"
+                - code [ref=e214]: decision.made
+                - generic [ref=e215]: Chose Again (again) with expression; passes 14 → 15 (unlimited)
+            - listitem [ref=e216]:
+              - button "#74 node.finished Gate (gate) → Again (again), 2 changes, 0 ms" [ref=e217] [cursor=pointer]:
+                - generic [ref=e218]: "#74"
+                - code [ref=e219]: node.finished
+                - generic [ref=e220]: Gate (gate) → Again (again), 2 changes, 0 ms
+            - listitem [ref=e221]:
+              - button "#75 node.started Grow (grow) (mutate) attempt 1" [ref=e222] [cursor=pointer]:
+                - generic [ref=e223]: "#75"
+                - code [ref=e224]: node.started
+                - generic [ref=e225]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e226]:
+              - button "#76 node.finished Grow (grow) → out, 1 change, 0 ms" [ref=e227] [cursor=pointer]:
+                - generic [ref=e228]: "#76"
+                - code [ref=e229]: node.finished
+                - generic [ref=e230]: Grow (grow) → out, 1 change, 0 ms
+            - listitem [ref=e231]:
+              - button "#77 node.started Gate (gate) (decision) attempt 1" [ref=e232] [cursor=pointer]:
+                - generic [ref=e233]: "#77"
+                - code [ref=e234]: node.started
+                - generic [ref=e235]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e236]:
+              - button "#78 decision.made Chose Again (again) with expression; passes 15 → 16 (unlimited)" [ref=e237] [cursor=pointer]:
+                - generic [ref=e238]: "#78"
+                - code [ref=e239]: decision.made
+                - generic [ref=e240]: Chose Again (again) with expression; passes 15 → 16 (unlimited)
+            - listitem [ref=e241]:
+              - button "#79 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e242] [cursor=pointer]:
+                - generic [ref=e243]: "#79"
+                - code [ref=e244]: node.finished
+                - generic [ref=e245]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e246]:
+              - button "#80 node.started Grow (grow) (mutate) attempt 1" [ref=e247] [cursor=pointer]:
+                - generic [ref=e248]: "#80"
+                - code [ref=e249]: node.started
+                - generic [ref=e250]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e251]:
+              - button "#81 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e252] [cursor=pointer]:
+                - generic [ref=e253]: "#81"
+                - code [ref=e254]: node.finished
+                - generic [ref=e255]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e256]:
+              - button "#82 node.started Gate (gate) (decision) attempt 1" [ref=e257] [cursor=pointer]:
+                - generic [ref=e258]: "#82"
+                - code [ref=e259]: node.started
+                - generic [ref=e260]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e261]:
+              - button "#83 decision.made Chose Again (again) with expression; passes 16 → 17 (unlimited)" [ref=e262] [cursor=pointer]:
+                - generic [ref=e263]: "#83"
+                - code [ref=e264]: decision.made
+                - generic [ref=e265]: Chose Again (again) with expression; passes 16 → 17 (unlimited)
+            - listitem [ref=e266]:
+              - button "#84 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e267] [cursor=pointer]:
+                - generic [ref=e268]: "#84"
+                - code [ref=e269]: node.finished
+                - generic [ref=e270]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e271]:
+              - button "#85 node.started Grow (grow) (mutate) attempt 1" [ref=e272] [cursor=pointer]:
+                - generic [ref=e273]: "#85"
+                - code [ref=e274]: node.started
+                - generic [ref=e275]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e276]:
+              - button "#86 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e277] [cursor=pointer]:
+                - generic [ref=e278]: "#86"
+                - code [ref=e279]: node.finished
+                - generic [ref=e280]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e281]:
+              - button "#87 node.started Gate (gate) (decision) attempt 1" [ref=e282] [cursor=pointer]:
+                - generic [ref=e283]: "#87"
+                - code [ref=e284]: node.started
+                - generic [ref=e285]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e286]:
+              - button "#88 decision.made Chose Again (again) with expression; passes 17 → 18 (unlimited)" [ref=e287] [cursor=pointer]:
+                - generic [ref=e288]: "#88"
+                - code [ref=e289]: decision.made
+                - generic [ref=e290]: Chose Again (again) with expression; passes 17 → 18 (unlimited)
+            - listitem [ref=e291]:
+              - button "#89 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e292] [cursor=pointer]:
+                - generic [ref=e293]: "#89"
+                - code [ref=e294]: node.finished
+                - generic [ref=e295]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e296]:
+              - button "#90 node.started Grow (grow) (mutate) attempt 1" [ref=e297] [cursor=pointer]:
+                - generic [ref=e298]: "#90"
+                - code [ref=e299]: node.started
+                - generic [ref=e300]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e301]:
+              - button "#91 node.finished Grow (grow) → out, 1 change, 2 ms" [ref=e302] [cursor=pointer]:
+                - generic [ref=e303]: "#91"
+                - code [ref=e304]: node.finished
+                - generic [ref=e305]: Grow (grow) → out, 1 change, 2 ms
+            - listitem [ref=e306]:
+              - button "#92 node.started Gate (gate) (decision) attempt 1" [ref=e307] [cursor=pointer]:
+                - generic [ref=e308]: "#92"
+                - code [ref=e309]: node.started
+                - generic [ref=e310]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e311]:
+              - button "#93 decision.made Chose Again (again) with expression; passes 18 → 19 (unlimited)" [ref=e312] [cursor=pointer]:
+                - generic [ref=e313]: "#93"
+                - code [ref=e314]: decision.made
+                - generic [ref=e315]: Chose Again (again) with expression; passes 18 → 19 (unlimited)
+            - listitem [ref=e316]:
+              - button "#94 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e317] [cursor=pointer]:
+                - generic [ref=e318]: "#94"
+                - code [ref=e319]: node.finished
+                - generic [ref=e320]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e321]:
+              - button "#95 node.started Grow (grow) (mutate) attempt 1" [ref=e322] [cursor=pointer]:
+                - generic [ref=e323]: "#95"
+                - code [ref=e324]: node.started
+                - generic [ref=e325]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e326]:
+              - button "#96 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e327] [cursor=pointer]:
+                - generic [ref=e328]: "#96"
+                - code [ref=e329]: node.finished
+                - generic [ref=e330]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e331]:
+              - button "#97 node.started Gate (gate) (decision) attempt 1" [ref=e332] [cursor=pointer]:
+                - generic [ref=e333]: "#97"
+                - code [ref=e334]: node.started
+                - generic [ref=e335]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e336]:
+              - button "#98 decision.made Chose Again (again) with expression; passes 19 → 20 (unlimited)" [ref=e337] [cursor=pointer]:
+                - generic [ref=e338]: "#98"
+                - code [ref=e339]: decision.made
+                - generic [ref=e340]: Chose Again (again) with expression; passes 19 → 20 (unlimited)
+            - listitem [ref=e341]:
+              - button "#99 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e342] [cursor=pointer]:
+                - generic [ref=e343]: "#99"
+                - code [ref=e344]: node.finished
+                - generic [ref=e345]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e346]:
+              - button "#100 node.started Grow (grow) (mutate) attempt 1" [ref=e347] [cursor=pointer]:
+                - generic [ref=e348]: "#100"
+                - code [ref=e349]: node.started
+                - generic [ref=e350]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e351]:
+              - button "#101 node.finished Grow (grow) → out, 1 change, 2 ms" [ref=e352] [cursor=pointer]:
+                - generic [ref=e353]: "#101"
+                - code [ref=e354]: node.finished
+                - generic [ref=e355]: Grow (grow) → out, 1 change, 2 ms
+            - listitem [ref=e356]:
+              - button "#102 node.started Gate (gate) (decision) attempt 1" [ref=e357] [cursor=pointer]:
+                - generic [ref=e358]: "#102"
+                - code [ref=e359]: node.started
+                - generic [ref=e360]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e361]:
+              - button "#103 decision.made Chose Again (again) with expression; passes 20 → 21 (unlimited)" [ref=e362] [cursor=pointer]:
+                - generic [ref=e363]: "#103"
+                - code [ref=e364]: decision.made
+                - generic [ref=e365]: Chose Again (again) with expression; passes 20 → 21 (unlimited)
+            - listitem [ref=e366]:
+              - button "#104 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e367] [cursor=pointer]:
+                - generic [ref=e368]: "#104"
+                - code [ref=e369]: node.finished
+                - generic [ref=e370]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e371]:
+              - button "#105 node.started Grow (grow) (mutate) attempt 1" [ref=e372] [cursor=pointer]:
+                - generic [ref=e373]: "#105"
+                - code [ref=e374]: node.started
+                - generic [ref=e375]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e376]:
+              - button "#106 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e377] [cursor=pointer]:
+                - generic [ref=e378]: "#106"
+                - code [ref=e379]: node.finished
+                - generic [ref=e380]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e381]:
+              - button "#107 node.started Gate (gate) (decision) attempt 1" [ref=e382] [cursor=pointer]:
+                - generic [ref=e383]: "#107"
+                - code [ref=e384]: node.started
+                - generic [ref=e385]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e386]:
+              - button "#108 decision.made Chose Again (again) with expression; passes 21 → 22 (unlimited)" [ref=e387] [cursor=pointer]:
+                - generic [ref=e388]: "#108"
+                - code [ref=e389]: decision.made
+                - generic [ref=e390]: Chose Again (again) with expression; passes 21 → 22 (unlimited)
+            - listitem [ref=e391]:
+              - button "#109 node.finished Gate (gate) → Again (again), 2 changes, 2 ms" [ref=e392] [cursor=pointer]:
+                - generic [ref=e393]: "#109"
+                - code [ref=e394]: node.finished
+                - generic [ref=e395]: Gate (gate) → Again (again), 2 changes, 2 ms
+            - listitem [ref=e396]:
+              - button "#110 node.started Grow (grow) (mutate) attempt 1" [ref=e397] [cursor=pointer]:
+                - generic [ref=e398]: "#110"
+                - code [ref=e399]: node.started
+                - generic [ref=e400]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e401]:
+              - button "#111 node.finished Grow (grow) → out, 1 change, 4 ms" [ref=e402] [cursor=pointer]:
+                - generic [ref=e403]: "#111"
+                - code [ref=e404]: node.finished
+                - generic [ref=e405]: Grow (grow) → out, 1 change, 4 ms
+            - listitem [ref=e406]:
+              - button "#112 node.started Gate (gate) (decision) attempt 1" [ref=e407] [cursor=pointer]:
+                - generic [ref=e408]: "#112"
+                - code [ref=e409]: node.started
+                - generic [ref=e410]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e411]:
+              - button "#113 decision.made Chose Again (again) with expression; passes 22 → 23 (unlimited)" [ref=e412] [cursor=pointer]:
+                - generic [ref=e413]: "#113"
+                - code [ref=e414]: decision.made
+                - generic [ref=e415]: Chose Again (again) with expression; passes 22 → 23 (unlimited)
+            - listitem [ref=e416]:
+              - button "#114 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e417] [cursor=pointer]:
+                - generic [ref=e418]: "#114"
+                - code [ref=e419]: node.finished
+                - generic [ref=e420]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e421]:
+              - button "#115 node.started Grow (grow) (mutate) attempt 1" [ref=e422] [cursor=pointer]:
+                - generic [ref=e423]: "#115"
+                - code [ref=e424]: node.started
+                - generic [ref=e425]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e426]:
+              - button "#116 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e427] [cursor=pointer]:
+                - generic [ref=e428]: "#116"
+                - code [ref=e429]: node.finished
+                - generic [ref=e430]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e431]:
+              - button "#117 node.started Gate (gate) (decision) attempt 1" [ref=e432] [cursor=pointer]:
+                - generic [ref=e433]: "#117"
+                - code [ref=e434]: node.started
+                - generic [ref=e435]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e436]:
+              - button "#118 decision.made Chose Again (again) with expression; passes 23 → 24 (unlimited)" [ref=e437] [cursor=pointer]:
+                - generic [ref=e438]: "#118"
+                - code [ref=e439]: decision.made
+                - generic [ref=e440]: Chose Again (again) with expression; passes 23 → 24 (unlimited)
+            - listitem [ref=e441]:
+              - button "#119 node.finished Gate (gate) → Again (again), 2 changes, 1 ms" [ref=e442] [cursor=pointer]:
+                - generic [ref=e443]: "#119"
+                - code [ref=e444]: node.finished
+                - generic [ref=e445]: Gate (gate) → Again (again), 2 changes, 1 ms
+            - listitem [ref=e446]:
+              - button "#120 node.started Grow (grow) (mutate) attempt 1" [ref=e447] [cursor=pointer]:
+                - generic [ref=e448]: "#120"
+                - code [ref=e449]: node.started
+                - generic [ref=e450]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e451]:
+              - button "#121 node.finished Grow (grow) → out, 1 change, 2 ms" [ref=e452] [cursor=pointer]:
+                - generic [ref=e453]: "#121"
+                - code [ref=e454]: node.finished
+                - generic [ref=e455]: Grow (grow) → out, 1 change, 2 ms
+            - listitem [ref=e456]:
+              - button "#122 node.started Gate (gate) (decision) attempt 1" [ref=e457] [cursor=pointer]:
+                - generic [ref=e458]: "#122"
+                - code [ref=e459]: node.started
+                - generic [ref=e460]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e461]:
+              - button "#123 decision.made Chose Again (again) with expression; passes 24 → 25 (unlimited)" [ref=e462] [cursor=pointer]:
+                - generic [ref=e463]: "#123"
+                - code [ref=e464]: decision.made
+                - generic [ref=e465]: Chose Again (again) with expression; passes 24 → 25 (unlimited)
+            - listitem [ref=e466]:
+              - button "#124 node.finished Gate (gate) → Again (again), 2 changes, 2 ms" [ref=e467] [cursor=pointer]:
+                - generic [ref=e468]: "#124"
+                - code [ref=e469]: node.finished
+                - generic [ref=e470]: Gate (gate) → Again (again), 2 changes, 2 ms
+            - listitem [ref=e471]:
+              - button "#125 node.started Grow (grow) (mutate) attempt 1" [ref=e472] [cursor=pointer]:
+                - generic [ref=e473]: "#125"
+                - code [ref=e474]: node.started
+                - generic [ref=e475]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e476]:
+              - button "#126 node.finished Grow (grow) → out, 1 change, 1 ms" [ref=e477] [cursor=pointer]:
+                - generic [ref=e478]: "#126"
+                - code [ref=e479]: node.finished
+                - generic [ref=e480]: Grow (grow) → out, 1 change, 1 ms
+            - listitem [ref=e481]:
+              - button "#127 node.started Gate (gate) (decision) attempt 1" [ref=e482] [cursor=pointer]:
+                - generic [ref=e483]: "#127"
+                - code [ref=e484]: node.started
+                - generic [ref=e485]: Gate (gate) (decision) attempt 1
+            - listitem [ref=e486]:
+              - button "#128 decision.made Chose Again (again) with expression; passes 25 → 26 (unlimited)" [ref=e487] [cursor=pointer]:
+                - generic [ref=e488]: "#128"
+                - code [ref=e489]: decision.made
+                - generic [ref=e490]: Chose Again (again) with expression; passes 25 → 26 (unlimited)
+            - listitem [ref=e491]:
+              - button "#129 node.finished Gate (gate) → Again (again), 2 changes, 4 ms" [ref=e492] [cursor=pointer]:
+                - generic [ref=e493]: "#129"
+                - code [ref=e494]: node.finished
+                - generic [ref=e495]: Gate (gate) → Again (again), 2 changes, 4 ms
+            - listitem [ref=e496]:
+              - button "#130 node.started Grow (grow) (mutate) attempt 1" [ref=e497] [cursor=pointer]:
+                - generic [ref=e498]: "#130"
+                - code [ref=e499]: node.started
+                - generic [ref=e500]: Grow (grow) (mutate) attempt 1
+            - listitem [ref=e501]:
+              - button "#131 node.finished Grow (grow) → out, 1 change, 29 ms" [ref=e502] [cursor=pointer]:
+                - generic [ref=e503]: "#131"
+                - code [ref=e504]: node.finished
+                - generic [ref=e505]: Grow (grow) → out, 1 change, 29 ms
+            - listitem [ref=e506]:
+              - button "#132 run.cancel_requested by user local" [ref=e507] [cursor=pointer]:
+                - generic [ref=e508]: "#132"
+                - code [ref=e509]: run.cancel_requested
+                - generic [ref=e510]: by user local
+            - listitem [ref=e511]:
+              - button "#133 run.cancelled Cancelled" [ref=e512] [cursor=pointer]:
+                - generic [ref=e513]: "#133"
+                - code [ref=e514]: run.cancelled
+                - generic [ref=e515]: Cancelled
+      - generic [ref=e516]:
+        - 'button "Exact recorded event #133" [ref=e518] [cursor=pointer]'
+        - region [ref=e524]:
+          - heading "Current thread" [level=2] [ref=e526]
+          - generic [ref=e528]:
+            - generic [ref=e529]:
+              - heading "Messages (0)" [level=3] [ref=e530]
+              - list "Messages"
+            - generic [ref=e531]:
+              - heading "Variables" [level=3] [ref=e532]
+              - generic "Variables" [ref=e534]: "{ \"n\": 25 }"
+            - button "Full thread JSON" [ref=e536] [cursor=pointer]
+        - paragraph [ref=e541]: Activity below covers the retained history window. Earlier activity is available through Load older.
+        - button "Node progress (1 nodes)" [ref=e543] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  1   | import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
+  2   | import { LIVE_REFRESH_MS } from '../src/runs/live-refresh.js';
+  3   | import { expect, publishLoop, test } from './fixtures.js';
+  4   | 
+  5   | /** A cycle that never ends by itself: Grow increments `vars.n`, an uncapped gate repeats. */
+  6   | function endlessCycle(name: string) {
+  7   |   const edge = (from: string, port: string, to: string) => ({
+  8   |     id: `${from}-${port}-${to}`,
+  9   |     from: { node: from, port },
+  10  |     to: { node: to },
+  11  |   });
+  12  |   return {
+  13  |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  14  |     name,
+  15  |     settings: { maxNodeVisits: null },
+  16  |     nodes: [
+  17  |       { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+  18  |       {
+  19  |         id: 'grow',
+  20  |         kind: 'mutate',
+  21  |         label: 'Grow',
+  22  |         config: {
+  23  |           operations: [
+  24  |             {
+  25  |               op: 'set',
+  26  |               path: '/vars/n',
+  27  |               value: { kind: 'expression', jsonata: '($exists(vars.n) ? vars.n : 0) + 1' },
+  28  |             },
+  29  |           ],
+  30  |         },
+  31  |       },
+  32  |       {
+  33  |         id: 'gate',
+  34  |         kind: 'decision',
+  35  |         label: 'Gate',
+  36  |         config: {
+  37  |           kind: 'expression',
+  38  |           jsonata: '"again"',
+  39  |           maxPasses: null,
+  40  |           routes: [
+  41  |             { id: 'again', label: 'Again', repeat: true },
+  42  |             { id: 'done', label: 'Done' },
+  43  |           ],
+  44  |         },
+  45  |       },
+  46  |       { id: 'finish', kind: 'exit', label: 'Finish', config: { returns: 'vars.n' } },
+  47  |     ],
+  48  |     edges: [
+  49  |       edge('start', 'out', 'grow'),
+  50  |       edge('grow', 'out', 'gate'),
+  51  |       edge('gate', 'again', 'grow'),
+  52  |       edge('gate', 'done', 'finish'),
+  53  |       edge('gate', 'limit-reached', 'finish'),
+  54  |     ],
+  55  |   };
+  56  | }
+  57  | 
+  58  | test('following a fast run live refreshes bounded read models and reads no historical thread (#186)', async ({
+  59  |   page,
+  60  |   request,
+  61  | }) => {
+  62  |   const loopId = await publishLoop(request, endlessCycle('Live follow'));
+  63  |   const started = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  64  |   expect(started.status()).toBe(202);
+  65  |   const run = RunRecordSchema.parse((await started.json()).run);
+  66  |   try {
+  67  |     // Every read this page makes of the run, by route, with any `at` boundary.
+  68  |     const reads: { route: string; at: string | null }[] = [];
+  69  |     page.on('request', (sent) => {
+  70  |       const url = new URL(sent.url());
+  71  |       const prefix = `/runs/${run.id}`;
+  72  |       if (!url.pathname.startsWith(prefix)) return;
+  73  |       reads.push({ route: url.pathname.slice(prefix.length), at: url.searchParams.get('at') });
+  74  |     });
+  75  |     const lastEventSeq = async () =>
+> 76  |       RunRecordSchema.parse(await (await request.get(`/runs/${run.id}`)).json()).lastEventSeq;
+      |                       ^ ZodError: [
+  77  |     await page.goto(`/app/runs/${run.id}`);
+  78  |     await expect(
+  79  |       page.getByRole('heading', { name: /^Timeline \(\d+ events, live\)$/ }),
+  80  |     ).toBeVisible();
+  81  |     await expect(page.getByRole('heading', { name: 'Current thread' })).toBeVisible();
+  82  | 
+  83  |     // A window of live following: the run keeps appending completions throughout.
+  84  |     const from = await lastEventSeq();
+  85  |     const begin = Date.now();
+  86  |     const mark = reads.length;
+  87  |     await page.waitForTimeout(5_000);
+  88  |     const window = reads.slice(mark);
+  89  |     const elapsed = Date.now() - begin;
+  90  |     const to = await lastEventSeq();
+  91  |     const counts = Object.fromEntries(
+  92  |       ['', '/observation', '/thread', '/events'].map((route) => [
+  93  |         `GET /runs/{id}${route}`,
+  94  |         window.filter((read) => read.route === route).length,
+  95  |       ]),
+  96  |     );
+  97  |     console.log(
+  98  |       `Followed live for ${elapsed} ms while the run advanced from event ${from} to ${to}: ${JSON.stringify(counts)}, ${window.filter((read) => read.at !== null).length} thread?at reads`,
+  99  |     );
+  100 |     expect(to).toBeGreaterThan(from);
+  101 |     expect(window.filter((read) => read.at !== null)).toEqual([]);
+  102 |     // At most one refresh starts per interval, one at the window's start and one whose request
+  103 |     // was reported at its boundary; a slower machine starts fewer.
+  104 |     const bound = Math.floor(elapsed / LIVE_REFRESH_MS) + 2;
+  105 |     for (const route of ['', '/observation', '/thread']) {
+  106 |       const count = window.filter((read) => read.route === route).length;
+  107 |       expect(count, `GET /runs/{id}${route}`).toBeGreaterThan(0);
+  108 |       expect(count, `GET /runs/{id}${route}`).toBeLessThanOrEqual(bound);
+  109 |     }
+  110 |     await expect(page.getByRole('heading', { name: 'Current thread' })).toBeVisible();
+  111 | 
+  112 |     // Selecting a completion reads exactly its thread and the one before it, for the diff.
+  113 |     const timeline = page.getByRole('list', { name: 'Timeline', exact: true });
+  114 |     await timeline
+  115 |       .getByRole('button', { name: /node\.finished Grow \(grow\)/ })
+  116 |       .last()
+  117 |       .click();
+  118 |     const heading = page.getByRole('heading', { name: /^Thread at event \d+$/ });
+  119 |     await expect(heading).toBeVisible();
+  120 |     const selected = Number(/\d+/.exec((await heading.textContent()) ?? '')?.[0]);
+  121 |     await expect(page.getByRole('list', { name: 'Patch diff' })).toContainText('/vars/n');
+  122 |     const boundaries = () =>
+  123 |       reads
+  124 |         .filter((read) => read.at !== null)
+  125 |         .map((read) => Number(read.at))
+  126 |         .sort((a, b) => a - b);
+  127 |     expect(boundaries()).toEqual([selected - 1, selected]);
+  128 | 
+  129 |     // Following live again shows the current thread and reads no further boundaries.
+  130 |     await page.getByRole('button', { name: 'Follow live' }).click();
+  131 |     await expect(page.getByRole('heading', { name: 'Current thread' })).toBeVisible();
+  132 |     const resumed = await lastEventSeq();
+  133 |     await expect.poll(lastEventSeq).toBeGreaterThan(resumed);
+  134 |     expect(boundaries()).toEqual([selected - 1, selected]);
+  135 |   } finally {
+  136 |     await request.post(`/runs/${run.id}/cancel`);
+  137 |   }
+  138 | });
+  139 | 
+  140 | test('following live stays quiet for screen readers and keyboard focus can always leave (#186 QA)', async ({
+  141 |   page,
+  142 |   request,
+  143 | }) => {
+  144 |   const loopId = await publishLoop(request, endlessCycle('Live follow accessibility'));
+  145 |   const started = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  146 |   expect(started.status()).toBe(202);
+  147 |   const run = RunRecordSchema.parse((await started.json()).run);
+  148 |   try {
+  149 |     await page.goto(`/app/runs/${run.id}`);
+  150 |     const timeline = page.getByRole('list', { name: 'Timeline', exact: true });
+  151 |     await expect(timeline.getByRole('button').last()).toBeVisible();
+  152 |     // The announcement while following does not change as events stream in.
+  153 |     const announcement = page.getByText('Following live.', { exact: true });
+  154 |     await expect(announcement).toHaveAttribute('aria-live', 'polite');
+  155 |     await announcement.evaluate((node) => {
+  156 |       const changes = { count: 0 };
+  157 |       new MutationObserver((records) => (changes.count += records.length)).observe(node, {
+  158 |         childList: true,
+  159 |         characterData: true,
+  160 |         subtree: true,
+  161 |       });
+  162 |       Object.assign(window, { liveAnnouncementChanges: changes });
+  163 |     });
+  164 |     const rows = await page
+  165 |       .getByText(/^Showing events \d+–\d+ of the retained window\.$/)
+  166 |       .textContent();
+  167 |     await page.waitForTimeout(3_000);
+  168 |     expect(
+  169 |       await page.evaluate(
+  170 |         () =>
+  171 |           (window as unknown as { liveAnnouncementChanges: { count: number } })
+  172 |             .liveAnnouncementChanges.count,
+  173 |       ),
+  174 |     ).toBe(0);
+  175 |     // The visible window text kept following the tail meanwhile.
+  176 |     await expect(
+```

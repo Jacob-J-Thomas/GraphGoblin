@@ -1,6 +1,7 @@
+import type { RunRecord } from '@graphgoblin/contracts';
 import type { LoopDefinition } from '@graphgoblin/contracts';
 import { nodeName } from '../projections.js';
-import { runs, type RunSnapshot } from '@graphgoblin/api-client';
+import { runs } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
 import { keys } from '../../api/queries.js';
@@ -21,7 +22,7 @@ export function WaitPanel({
   run,
   definition,
 }: {
-  run: RunSnapshot;
+  run: RunRecord;
   definition?: LoopDefinition | undefined;
 }) {
   const client = useApi();

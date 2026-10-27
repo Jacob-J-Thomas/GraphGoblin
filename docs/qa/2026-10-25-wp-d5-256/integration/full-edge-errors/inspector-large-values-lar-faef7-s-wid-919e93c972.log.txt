@@ -1,0 +1,203 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: inspector-large-values.spec.ts >> large values stay bounded and the page keeps its width at 1440 px (#259, #380)
+- Location: e2e\inspector-large-values.spec.ts:50:3
+
+# Error details
+
+```
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "recovery"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"recovery\""
+  }
+]
+```
+
+# Test source
+
+```ts
+  1   | import { RunRecordSchema } from '@graphgoblin/contracts';
+  2   | import { minimalLoop } from '@graphgoblin/contracts/testing';
+  3   | import { approvalLoop, control, expect, test } from './fixtures.js';
+  4   | 
+  5   | /** One unbroken 20,000-character line: the shape that widened the inspector page (#380). */
+  6   | const LONG = 'v'.repeat(20_000);
+  7   | /** A wait prompt at most 10,000 characters long is what the run contract accepts. */
+  8   | const PROMPT = 'v'.repeat(9_000);
+  9   | /** A value that alone puts the run's recorded history above the large-history threshold. */
+  10  | const HUGE = 'v'.repeat(2_100_000);
+  11  | 
+  12  | function inferenceLoop(name: string, waitBeforeExit = false) {
+  13  |   const source = minimalLoop();
+  14  |   const nodes = [
+  15  |     source.nodes[0]!,
+  16  |     {
+  17  |       id: 'work',
+  18  |       kind: 'inference',
+  19  |       label: 'Work',
+  20  |       config: { prompt: { template: 'Produce one long single-line value.' } },
+  21  |     },
+  22  |     ...(waitBeforeExit
+  23  |       ? [
+  24  |           {
+  25  |             id: 'approve',
+  26  |             kind: 'wait',
+  27  |             label: 'Approve',
+  28  |             config: { mode: 'input', prompt: 'Approve?' },
+  29  |           },
+  30  |         ]
+  31  |       : []),
+  32  |     { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
+  33  |   ];
+  34  |   return {
+  35  |     ...source,
+  36  |     name,
+  37  |     nodes: nodes.map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
+  38  |     edges: nodes.slice(1).map((node, index) => ({
+  39  |       id: `e${index + 1}`,
+  40  |       from: { node: nodes[index]!.id, port: 'out' },
+  41  |       to: { node: node.id },
+  42  |     })),
+  43  |   };
+  44  | }
+  45  | 
+  46  | for (const viewport of [
+  47  |   { width: 1440, height: 900 },
+  48  |   { width: 390, height: 844 },
+  49  | ]) {
+  50  |   test(`large values stay bounded and the page keeps its width at ${viewport.width} px (#259, #380)`, async ({
+  51  |     page,
+  52  |     request,
+  53  |   }) => {
+  54  |     const instance = await control(request, '/apps');
+  55  |     const url = String(instance['url']);
+  56  |     const instanceId = instance['instanceId'];
+  57  |     const created = await request.post(url + '/loops', {
+  58  |       data: { definition: inferenceLoop(`Large values ${viewport.width}`) },
+  59  |     });
+  60  |     expect(created.status(), await created.text()).toBe(201);
+  61  |     const { loop } = (await created.json()) as { loop: { id: string } };
+  62  |     expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  63  |     await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
+  64  |     const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+  65  |       data: { input: {} },
+  66  |     });
+  67  |     expect(started.status()).toBe(202);
+  68  |     const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  69  |     await expect
+  70  |       .poll(
+  71  |         async () =>
+> 72  |           RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      |                           ^ ZodError: [
+  73  |         { timeout: 30_000, intervals: [250, 500, 1000] },
+  74  |       )
+  75  |       .toBe('succeeded');
+  76  | 
+  77  |     await page.setViewportSize(viewport);
+  78  |     await page.goto(url + '/app/runs/' + runId);
+  79  | 
+  80  |     // The result shows its first 4,096 characters (the opening quote and 4,095 of the value);
+  81  |     // the whole value and an exact download are one click away.
+  82  |     const result = page.getByTestId('run-result');
+  83  |     await expect(result).toHaveText(/^"v{4095}…$/);
+  84  |     await expect(
+  85  |       page.getByText('Showing the first 4,096 characters of a larger value.', { exact: true }),
+  86  |     ).toBeVisible();
+  87  |     await expect(page.getByRole('button', { name: 'Download Result as JSON' })).toBeVisible();
+  88  |     await page.getByRole('button', { name: 'Show all of Result' }).click();
+  89  |     await expect(result).toHaveText(`"${LONG}"`);
+  90  |     // Once it scrolls, the text is a named region the keyboard can reach.
+  91  |     await expect(result).toHaveAttribute('role', 'region');
+  92  |     await expect(result).toHaveAttribute('tabindex', '0');
+  93  | 
+  94  |     // The finished inference node's patch and the full thread carry the long value too, and the
+  95  |     // progress drawer shows the harness items: with everything open, nothing widens the document.
+  96  |     const timeline = page.getByRole('list', { name: 'Timeline' });
+  97  |     await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
+  98  |     const diff = page.getByRole('list', { name: 'Patch diff' });
+  99  |     await expect(diff).toBeVisible();
+  100 |     await expect(
+  101 |       diff.getByText('Showing the first 1,024 characters of a larger value.').first(),
+  102 |     ).toBeVisible();
+  103 |     await page.getByText('Full thread JSON', { exact: true }).click();
+  104 |     await expect(page.getByTestId('thread-json')).toHaveText(/…$/);
+  105 |     await page.getByRole('button', { name: /^Node progress/ }).click();
+  106 |     await expect(page.getByRole('button', { name: /^Node progress/ })).toHaveAttribute(
+  107 |       'aria-expanded',
+  108 |       'true',
+  109 |     );
+  110 |     const widths = await page.evaluate(() => ({
+  111 |       document: document.documentElement.scrollWidth,
+  112 |       window: window.innerWidth,
+  113 |     }));
+  114 |     expect(widths.document).toBeLessThanOrEqual(widths.window);
+  115 |   });
+  116 | 
+  117 |   test(`a long wait prompt stays bounded and keeps the page width at ${viewport.width} px (#259)`, async ({
+  118 |     page,
+  119 |     request,
+  120 |   }) => {
+  121 |     const instance = await control(request, '/apps');
+  122 |     const url = String(instance['url']);
+  123 |     const loopDefinition = approvalLoop(`Long prompt ${viewport.width}`);
+  124 |     const wait = loopDefinition.nodes.find((node) => node.id === 'approve')!;
+  125 |     wait.config = { mode: 'input', prompt: PROMPT };
+  126 |     const created = await request.post(url + '/loops', { data: { definition: loopDefinition } });
+  127 |     expect(created.status(), await created.text()).toBe(201);
+  128 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  129 |     expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  130 |     const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+  131 |       data: { input: {} },
+  132 |     });
+  133 |     expect(started.status()).toBe(202);
+  134 |     const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  135 |     await expect
+  136 |       .poll(
+  137 |         async () =>
+  138 |           RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+  139 |         { timeout: 30_000, intervals: [250, 500, 1000] },
+  140 |       )
+  141 |       .toBe('waiting');
+  142 | 
+  143 |     await page.setViewportSize(viewport);
+  144 |     await page.goto(url + '/app/runs/' + runId);
+  145 |     const prompt = page.getByLabel('Prompt', { exact: true });
+  146 |     await expect(prompt).toHaveText(/^v{4096}…$/);
+  147 |     await expect(
+  148 |       page.getByText('Showing the first 4,096 of 9,000 characters.', { exact: true }),
+  149 |     ).toBeVisible();
+  150 |     const before = await page.evaluate(() => ({
+  151 |       document: document.documentElement.scrollWidth,
+  152 |       window: window.innerWidth,
+  153 |     }));
+  154 |     expect(before.document).toBeLessThanOrEqual(before.window);
+  155 |     await page.getByRole('button', { name: 'Show all of Prompt' }).click();
+  156 |     await expect(page.getByRole('region', { name: 'Prompt' })).toHaveText(PROMPT);
+  157 |     const after = await page.evaluate(() => ({
+  158 |       document: document.documentElement.scrollWidth,
+  159 |       window: window.innerWidth,
+  160 |     }));
+  161 |     expect(after.document).toBeLessThanOrEqual(after.window);
+  162 |   });
+  163 | }
+  164 | 
+  165 | test('the keyboard stays inside an expanded value that a live event replaces (#259)', async ({
+  166 |   page,
+  167 |   request,
+  168 | }) => {
+  169 |   const instance = await control(request, '/apps');
+  170 |   const url = String(instance['url']);
+  171 |   const instanceId = instance['instanceId'];
+  172 |   const created = await request.post(url + '/loops', {
+```

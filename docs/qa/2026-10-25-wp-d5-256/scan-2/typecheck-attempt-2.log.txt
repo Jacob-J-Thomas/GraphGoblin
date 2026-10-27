@@ -1,0 +1,50 @@
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 3c68c40369a23841
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 117714e8e86a2c67
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 99ca1c11ef46b291
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 8f9511f09a8f4d6f
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing 823992a7fa30cf72
+@graphgoblin/engine:build: cache miss, executing 3c7c8e3265b026c5
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache miss, executing 3d67a8abd1494d58
+@graphgoblin/adapter-jev:typecheck: cache miss, executing d010b4b6d3a62daf
+@graphgoblin/infrastructure:typecheck: cache miss, executing d4c3aaa0b339946b
+@graphgoblin/adapter-jev:build: cache miss, executing f676754ac69c4b9b
+@graphgoblin/infrastructure:build: cache miss, executing 37868a5ed6823d71
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 749918f53b27383e
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:typecheck: src/handlers/inference-evidence-matrix.test.ts(137,9): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/handlers/inference-evidence-matrix.test.ts(220,9): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/prompt-recovery.test.ts(88,11): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (runId: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; }...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/prompt-recovery.test.ts(135,11): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/prompt-recovery.test.ts(226,9): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/run-recovery.test.ts(93,11): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (runId: string, drafts: readonly EventDraft[], options?: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; ...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/thread-read.test.ts(23,9): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (runId: string, drafts: readonly EventDraft[], options?: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; ...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/webhook-returns.test.ts(282,5): error TS2741: Property 'recoveryFacts' is missing in type '{ append: () => Promise<({ type: "delivery.queued"; delivery: { id: string; channel: { kind: "webhook"; url: string; secretRef?: string | undefined; }; status: "pending" | "delivered" | "failed"; attempts: number; ... 6 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: src/webhook-returns.test.ts(435,9): error TS2741: Property 'recoveryFacts' is missing in type '{ append: (id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined) => Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]...' but required in type 'EventStorePort'.
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/engine#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-256\packages\engine) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    7 successful, 12 total
+Cached:    4 cached, 12 total
+  Time:    16.26s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

@@ -1,0 +1,54 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/run-recovery.test.ts (6 tests | 1 failed | 5 skipped) 103ms
+   ❯ recovery effect boundaries (#256) (6)
+     × refuses a completed failed script instead of repeating consumed work 100ms
+pnpm.cmd : 
+At line:2 char:103
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > refuses a completed failed script instead of 
+repeating consumed work
+AssertionError: expected { allowed: true } to match object { allowed: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "allowed": false,
+-   "code": "EXTERNAL_EFFECT_CONSUMED",
++   "allowed": true,
+  }
+
+ ❯ src/run-recovery.test.ts:170:58
+    168|     const { script: _script, ...knownExit } = run.failure!;
+    169|     await e.ports.runs.transition(run.id, ['failed'], { failure: known…
+    170|     expect((await e.manager.getRecovery(run.id)).resume).toMatchObject…
+       |                                                          ^
+    171|       allowed: false,
+    172|       code: 'EXTERNAL_EFFECT_CONSUMED',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  01:15:07
+   Duration  7.81s (transform 56%, import 43%, tests 1%)
+
+  Transform  transforming modules took 3.89s · 56% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

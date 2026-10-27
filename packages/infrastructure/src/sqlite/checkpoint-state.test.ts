@@ -118,6 +118,7 @@ it('migrates shipped snapshots without inventing state, then persists checkpoint
     const events: EventStorePort = {
       append: (...args) => store.append(...args),
       subscribe: (...args) => store.subscribe(...args),
+      recoveryFacts: (...args) => store.recoveryFacts(...args),
       async read(runId, after = 0, limit) {
         const result = await store.read(runId, after, limit);
         reads.push({ after, rows: result.length });

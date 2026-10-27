@@ -29,12 +29,19 @@ import type {
   RunEvent,
   RunFailure,
   RunRecord,
+  RunSnapshot,
   RunStatus,
+  RunRecovery,
+  RecoveryCommand,
   TriggerKind,
   WaitSpec,
 } from '@graphgoblin/contracts';
 import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
-import { ContextThreadSchema, DecisionEmissionSchema } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  DecisionEmissionSchema,
+  LoopDefinitionSchema,
+} from '@graphgoblin/contracts';
 import {
   applyPatch,
   evaluatePredicate,
@@ -56,6 +63,7 @@ import {
   AppendConflictError,
   ChildCancelledError,
   RunFailureError,
+  RecoveryRefusedError,
   ShutdownCleanupError,
   UnreadableRunHistoryError,
   describeError,
@@ -81,6 +89,7 @@ import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-def
 import { finalizationHistory } from './finalization-history.js';
 import { FreshEntries } from './fresh-entries.js';
 import { visitTurn } from './handlers/inference-turn.js';
+import { runRecovery, replayAction, refused } from './run-recovery.js';
 import { childSessionRecovered } from './session-recovery.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
@@ -159,7 +168,9 @@ interface PreparedStart {
 }
 
 export interface ReplayRunInput {
-  /** The run to fork. It may be in any status. */
+  observedSeq?: number;
+  retryUncertainScript?: true;
+  /** Any source status is supported; the chosen node must have been reached. */
   runId: string;
   /** The node to start the fork at. The source run must have started it at least once. */
   nodeId: string;
@@ -245,12 +256,18 @@ function exitResult(
   };
 }
 
-/** Whether the log's last lifecycle event after a failure is a resume (a resume in progress). */
+/** A durable Resume not superseded by a later pause or terminal outcome. */
 function pendingResume(events: readonly RunEvent[]): boolean {
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const type = (events[i] as RunEvent).type;
     if (type === 'run.resumed') return true;
-    if (type === 'run.failed' || type === 'run.finished' || type === 'run.cancelled') return false;
+    if (
+      type === 'run.paused' ||
+      type === 'run.failed' ||
+      type === 'run.finished' ||
+      type === 'run.cancelled'
+    )
+      return false;
   }
   return false;
 }
@@ -321,7 +338,7 @@ export class RunManager {
   private readonly requeue = new Set<string>();
   /** Serializes subloop pinning in `startRun` with loop deletion. */
   private pinLock: Promise<unknown> = Promise.resolve();
-  /** Per-run serialization of finalization and failed-run resume (`withRunLock`). */
+  /** Per-run serialization of finalization and recovery (`withRunLock`). */
   private readonly runLocks = new Map<string, Promise<unknown>>();
   private readonly directories = new Map<string, string>();
   private idleWaiters: (() => void)[] = [];
@@ -1095,7 +1112,7 @@ export class RunManager {
   }
 
   /**
-   * Serializes the finalization of a run's terminal outcome with a resume of that run: a resume
+   * Serializes finalization and all Resume intents for a run: a resume
    * waits for an in-flight finalizer, so the finalizer of an earlier outcome can never set the
    * marker the resume clears for the next one.
    */
@@ -1158,35 +1175,250 @@ export class RunManager {
     return updated;
   }
 
-  async resume(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
-    return this.withWork(() => this.resumeRun(runId, actor));
+  private async recoveryState(
+    runId: string,
+    owningParent?: string,
+  ): Promise<{ run: RunRecord; recovery: RunRecovery }> {
+    let run: RunRecord | undefined;
+    try {
+      // Never attach a future history sequence to an older failure/consent target.
+      const before = await this.mustGet(runId);
+      const version = await this.ports.loops.getVersion(before.versionId);
+      const parsed = version ? LoopDefinitionSchema.safeParse(version.definition) : undefined;
+      const facts = await this.ports.events.recoveryFacts(
+        runId,
+        parsed?.success ? parsed.data.nodes.map((node) => node.id) : [],
+      );
+      run = await this.mustGet(runId);
+      const { observedSeq } = facts;
+      if (run.lastEventSeq > observedSeq) {
+        const action = refused(
+          'RECOVERY_STALE',
+          'The run changed while its recovery state was being read. Refresh and review its current recovery choices.',
+        );
+        return {
+          run,
+          recovery: { observedSeq, resume: action, replayDefault: action, replay: [] },
+        };
+      }
+      return { run, recovery: await runRecovery(this.ports, run, facts, owningParent) };
+    } catch (error) {
+      if (!(error instanceof UnreadableRunHistoryError)) throw error;
+      run ??= await this.mustGet(runId);
+      const action = {
+        allowed: false as const,
+        code: 'STATE_UNAVAILABLE' as const,
+        message:
+          'The recorded recovery state cannot be read. Repair or explicitly delete this history before recovering.',
+      };
+      return {
+        run,
+        recovery: {
+          observedSeq: run.lastEventSeq,
+          resume: action,
+          replayDefault: action,
+          replay: [],
+        },
+      };
+    }
   }
 
-  private async resumeRun(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
-    if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
-    if (this.forcing) this.assertAdmissionOpen();
-    const run = await this.mustGet(runId);
-    // Paused while parked (or while parking): go back to waiting rather than re-running the node,
-    // so a wait keeps its deadline and a subloop keeps its child. Anything that should have woken
-    // it meanwhile is delivered now: its timers are re-armed and a finished child reconciled.
-    if (run.status === 'paused' && run.waiting) {
-      const parked = parkedWait(await this.ports.events.read(runId));
-      if (parked) {
-        const waiting = await this.ports.runs.transition(runId, ['paused'], {
-          status: 'waiting',
-          pausedAt: undefined,
-        });
-        if (!waiting) {
-          throw new EngineRequestError(
-            'INVALID_STATE',
-            `cannot resume a run that is ${run.status}`,
+  async getSnapshot(runId: string): Promise<RunSnapshot> {
+    const { run, recovery } = await this.recoveryState(runId);
+    if (this.draining || this.forcing) {
+      const action = {
+        allowed: false as const,
+        code: 'SHUTTING_DOWN' as const,
+        message: 'The server is shutting down. Try recovery after it restarts.',
+      };
+      return {
+        ...run,
+        recovery: {
+          ...recovery,
+          resume: action,
+          replayDefault: action,
+          replay: recovery.replay.map((node) => ({ ...node, action })),
+          scriptConsent: undefined,
+        },
+      };
+    }
+    return { ...run, recovery };
+  }
+
+  async getRecovery(runId: string): Promise<RunRecovery> {
+    return (await this.getSnapshot(runId)).recovery;
+  }
+
+  private readonly recoveryLocks = new Map<string, Promise<unknown>>();
+  private recoveryLock<T>(id: string, work: () => Promise<T>): Promise<T> {
+    const next = (this.recoveryLocks.get(id) ?? Promise.resolve()).then(work);
+    const tail = next.catch(() => undefined);
+    this.recoveryLocks.set(id, tail);
+    void tail.then(() => {
+      if (this.recoveryLocks.get(id) === tail) this.recoveryLocks.delete(id);
+    });
+    return next;
+  }
+
+  async resume(
+    runId: string,
+    actor: Actor = SYSTEM_ACTOR,
+    command?: Partial<RecoveryCommand>,
+  ): Promise<RunRecord> {
+    if ((this.draining || this.forcing) && actor.kind !== 'run') this.assertAdmissionOpen();
+    // Capture the observation before queuing the command, so simultaneous callers share it.
+    const observedSeq =
+      command?.observedSeq ?? (await this.ports.events.recoveryFacts(runId, [])).observedSeq;
+    return this.withWork(() =>
+      this.recoveryLock(runId, async () => {
+        const { run: current, recovery } = await this.recoveryState(
+          runId,
+          actor.kind === 'run' ? actor.id : undefined,
+        );
+        if (recovery.observedSeq !== observedSeq)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+        if (actor.kind === 'run' && current.parentRunId === actor.id) {
+          const target = (await this.ports.events.recoveryFacts(actor.id, [])).resumed
+            ?.childRecovery;
+          if (target?.runId !== runId || target.observedSeq !== observedSeq)
+            throw new RecoveryRefusedError(
+              'RECOVERY_STALE',
+              'The parent recovery does not authorize this child observation. Review the current child failure through its parent.',
+            );
+        }
+        if (
+          !recovery.resume.allowed &&
+          !(
+            recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED' &&
+            command?.retryUncertainScript &&
+            recovery.scriptConsent
+          )
+        )
+          throw new RecoveryRefusedError(recovery.resume.code, recovery.resume.message);
+        try {
+          return await this.resumeRun(
+            current,
+            observedSeq,
+            actor,
+            command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
+            await this.reviewedChildRecovery(
+              current,
+              command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
+            ),
+          );
+        } catch (error) {
+          if (error instanceof UnreadableRunHistoryError)
+            throw new RecoveryRefusedError(
+              'STATE_UNAVAILABLE',
+              'The recorded recovery history cannot be read. Repair or explicitly delete this history before recovering.',
+            );
+          if (error instanceof AppendConflictError)
+            throw new RecoveryRefusedError(
+              'RECOVERY_STALE',
+              'The run changed since it was shown. Refresh and review its current recovery choices.',
+            );
+          if (!(error instanceof EngineRequestError) || error.code !== 'INVALID_STATE') throw error;
+          const latest = (await this.getRecovery(runId)).resume;
+          throw new RecoveryRefusedError(
+            latest.allowed ? 'RECOVERY_STALE' : latest.code,
+            latest.allowed
+              ? 'The run changed since it was shown. Refresh and review its current recovery choices.'
+              : latest.message,
           );
         }
-        await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
-        if (waiting.waiting) await this.rearmTimers(runId, waiting.waiting);
-        await this.reconcileChild(waiting);
-        return this.mustGet(runId);
-      }
+      }),
+    );
+  }
+
+  /** Persist the child outcome this parent actually observed, not a later child observation. */
+  private async reviewedChildRecovery(
+    parent: RunRecord,
+    retryUncertainScript?: true,
+  ): Promise<Extract<RunEvent, { type: 'run.resumed' }>['childRecovery']> {
+    const facts = await this.ports.events.recoveryFacts(parent.id, []);
+    if (parent.status !== 'failed') return facts.resumed?.childRecovery;
+    const details = parent.failure?.details;
+    const childRunId =
+      details && typeof details === 'object' && !Array.isArray(details)
+        ? details.childRunId
+        : undefined;
+    if (typeof childRunId !== 'string') return undefined;
+    const child = await this.ports.runs.get(childRunId);
+    if (!child) return undefined;
+    const childFacts = await this.ports.events.recoveryFacts(childRunId, []);
+    const events = await this.ports.events.read(parent.id);
+    const wake = events.findLast((event) => event.type === 'run.woken' && event.reason === 'child');
+    const payload = wake?.type === 'run.woken' ? wake.payload : undefined;
+    const failureSeq =
+      payload &&
+      typeof payload === 'object' &&
+      !Array.isArray(payload) &&
+      payload.childRunId === childRunId
+        ? payload.childFinishedSeq
+        : undefined;
+    if (typeof failureSeq !== 'number')
+      throw new RecoveryRefusedError(
+        'RECOVERY_STALE',
+        'The recorded child failure cannot be identified. Review its history before recovering this parent.',
+      );
+    return {
+      runId: childRunId,
+      failureSeq,
+      // Already-admitted child work may have advanced before this command. Bind the older
+      // failure the parent reviewed anyway; forwarding then refuses it and surfaces the newer
+      // outcome for fresh review. Capturing the newer sequence would authorize different work.
+      observedSeq:
+        childFacts.lifecycle?.type === 'run.failed' && childFacts.lifecycle.seq === failureSeq
+          ? childFacts.observedSeq
+          : failureSeq,
+      ...(retryUncertainScript ? { retryUncertainScript } : {}),
+    };
+  }
+
+  private async resumeRun(
+    run: RunRecord,
+    observedSeq: number,
+    actor: Actor = SYSTEM_ACTOR,
+    retryUncertainScript?: true,
+    childRecovery?: Extract<RunEvent, { type: 'run.resumed' }>['childRecovery'],
+  ): Promise<RunRecord> {
+    const runId = run.id;
+    if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
+    if (this.forcing) this.assertAdmissionOpen();
+    if (run.status === 'paused') {
+      return this.withRunLock(runId, async () => {
+        const current = await this.mustGet(runId);
+        const events = await this.ports.events.read(runId);
+        if (current.status !== 'paused' || (events.at(-1)?.seq ?? 0) !== observedSeq)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+        // The compare-and-set is the admission point. Keep the run paused until the intent
+        // commits, so wakes, timers and child completion cannot observe a half-claimed wait.
+        await this.ports.events.append(
+          runId,
+          [
+            {
+              type: 'run.resumed',
+              actor,
+              ...(childRecovery ? { childRecovery } : {}),
+              ...(retryUncertainScript ? { retryUncertainScript } : {}),
+            },
+          ],
+          { expectedLastSeq: observedSeq },
+        );
+        const resumed = await this.completePausedResume(runId);
+        if (!resumed)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+        return resumed;
+      });
     }
     if (
       run.status === 'failed' &&
@@ -1206,12 +1438,24 @@ export class RunManager {
         if (
           current.status !== 'failed' ||
           !(current.failure?.resumable || (await childSessionRecovered(this.ports, current))) ||
-          terminal?.seq !== observed
+          terminal?.seq !== observed ||
+          (await this.ports.events.recoveryFacts(runId, [])).observedSeq !== observedSeq
         ) {
           return undefined;
         }
         await this.ports.runs.clearFinalized(runId);
-        await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
+        await this.ports.events.append(
+          runId,
+          [
+            {
+              type: 'run.resumed',
+              actor,
+              ...(retryUncertainScript ? { retryUncertainScript } : {}),
+              ...(childRecovery ? { childRecovery } : {}),
+            },
+          ],
+          { expectedLastSeq: observedSeq },
+        );
         return this.completeResume(runId);
       });
       if (!resumed) {
@@ -1219,19 +1463,33 @@ export class RunManager {
       }
       return resumed;
     }
-    const expected: RunStatus[] = ['paused'];
-    const updated = await this.ports.runs.transition(runId, expected, {
-      status: 'running',
-      pausedAt: undefined,
-      failure: undefined,
-      finishedAt: undefined,
-    });
-    if (!updated) {
-      throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
-    }
-    await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
-    this.enqueue(runId);
-    return updated;
+    throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
+  }
+
+  /** Project an admitted paused Resume; the caller holds the run lock (also during startup). */
+  private async completePausedResume(runId: string): Promise<RunRecord | undefined> {
+    const events = await this.ports.events.read(runId);
+    if (!pendingResume(events)) return undefined;
+    const parked = parkedWait(events);
+    const updated = await this.ports.runs.transition(
+      runId,
+      ['paused'],
+      {
+        status: parked ? 'waiting' : 'running',
+        pausedAt: undefined,
+        ...(parked
+          ? { waiting: parked.wait, currentNodeId: parked.wait.nodeId }
+          : { failure: undefined, finishedAt: undefined }),
+      },
+      { observedSeq: events.at(-1)?.seq ?? 0 },
+    );
+    if (!updated) return undefined;
+    // No timer or child reconciliation is exposed before both the intent and status exist.
+    if (parked) {
+      await this.rearmTimers(runId, parked.wait);
+      await this.reconcileChild(updated);
+    } else this.enqueue(runId);
+    return this.mustGet(runId);
   }
 
   /** Explicitly abandon only the failed node's missing provider conversation (#265). */
@@ -1437,16 +1695,48 @@ export class RunManager {
   /**
    * Replay-at-node: fork a new run on the source's loop version and trigger envelope whose thread
    * is the source thread as it was just before `nodeId` first started, and which starts executing
-   * at `nodeId`. The fork has its own id and event log; the source is untouched, and its child
-   * runs are not copied (a subloop node in the fork starts a new child).
+   * at `nodeId`. The fork has its own id, log and effects; the source history is unchanged.
    */
   async replay(input: ReplayRunInput): Promise<RunRecord> {
-    return this.withIntake(undefined, () => this.replayAdmitted(input));
+    const observedSeq =
+      input.observedSeq ?? (await this.ports.events.recoveryFacts(input.runId, [])).observedSeq;
+    return this.withIntake(undefined, () =>
+      this.recoveryLock(input.runId, () => this.replayAdmitted({ ...input, observedSeq })),
+    );
   }
 
   private async replayAdmitted(input: ReplayRunInput): Promise<RunRecord> {
-    const source = await this.mustGet(input.runId);
-    const events = await this.ports.events.read(source.id);
+    const { run: source, recovery } = await this.recoveryState(input.runId);
+    if (recovery.observedSeq !== input.observedSeq)
+      throw new RecoveryRefusedError(
+        'RECOVERY_STALE',
+        'The run changed since it was shown. Refresh and review its current recovery choices.',
+      );
+    const eligibility = replayAction(recovery, input.nodeId);
+    if (
+      !eligibility.allowed &&
+      !(
+        eligibility.code === 'SCRIPT_CONSENT_REQUIRED' &&
+        input.retryUncertainScript &&
+        recovery.scriptConsent
+      )
+    )
+      throw new RecoveryRefusedError(
+        eligibility.code,
+        eligibility.message,
+        eligibility.replayRunId,
+      );
+    // Full reconstruction belongs only to an admitted, reviewed Replay, never a polling read.
+    let events: RunEvent[];
+    try {
+      events = await this.ports.events.read(source.id);
+    } catch (error) {
+      if (!(error instanceof UnreadableRunHistoryError)) throw error;
+      throw new RecoveryRefusedError(
+        'STATE_UNAVAILABLE',
+        'The recorded recovery history cannot be read. Repair or explicitly delete this history before recovering.',
+      );
+    }
     const firstStart = events.find(
       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
         e.type === 'node.started' && e.nodeId === input.nodeId,
@@ -1511,23 +1801,47 @@ export class RunManager {
     // Admitted in the same critical section as run creation and loop deletion: a fork either
     // registers (and pins) before a deletion checks, which then refuses, or after it, when the
     // version it would run must still exist.
+    const replayIntent = {
+      sourceRunId: source.id,
+      nodeId: input.nodeId,
+      observedSeq: recovery.observedSeq,
+    };
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(source.versionId, source.loopId);
 
-      return this.ports.admission.create({
-        run,
-        initialThread: thread,
-        pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
-        queued: {
-          type: 'run.queued',
-          versionId: run.versionId,
-          pinned: run.pinned,
-          replayOf,
+      try {
+        return await this.ports.admission.create({
+          run,
+          replayIntent,
           initialThread: thread,
-          ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
-        },
-      });
+          pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
+          queued: {
+            type: 'run.queued',
+            versionId: run.versionId,
+            pinned: run.pinned,
+            replayOf,
+            initialThread: thread,
+            ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
+          },
+        });
+      } catch (error) {
+        // The commit may have succeeded before its acknowledgement was lost. The unique
+        // admitted intent finds that exact fork; no source audit or second fork is needed.
+        const existing = await this.ports.admission.findReplay(
+          source.id,
+          input.nodeId,
+          recovery.observedSeq,
+        );
+        if (!existing) throw error;
+        return existing;
+      }
     });
+    if (admitted.id !== runId)
+      throw new RecoveryRefusedError(
+        'RECOVERY_STALE',
+        `This Replay intent already created run ${admitted.id}. Open that run instead of submitting the same intent again.`,
+        admitted.id,
+      );
     this.enqueue(runId);
     return admitted;
   }
@@ -1724,6 +2038,12 @@ export class RunManager {
         }
         await this.armRunDeadline(run);
         if (await this.expireRunDeadline(run.id)) continue;
+        // A paused Resume committed before its projection/acknowledgement was interrupted.
+        // A later explicit pause supersedes that intent and must remain paused on restart.
+        if (run.status === 'paused' && pendingResume(events)) {
+          await this.withRunLock(run.id, () => this.completePausedResume(run.id));
+          continue;
+        }
         // Complete an event-first park without executing its handler again. Its original
         // wall-clock deadlines survive an interruption before snapshot/status/timer writes.
         const parked = parkedWait(events);
@@ -2878,14 +3198,29 @@ export class RunManager {
   }
 
   /**
-   * An explicit resume of `parent` resumes its failed child in place (#251). A child that is no
-   * longer in a resumable failure (resumed or finished meanwhile) is left as it is.
+   * Resume only the child observation accepted with this parent's command (#251). A changed
+   * observation is refused by the shared policy; its outcome is surfaced without forwarding
+   * older consent, so the next parent failure can be reviewed instead of leaving it stuck.
    */
   private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
     try {
-      await this.resume(childRunId, { kind: 'run', id: parent.id });
+      const target = (await this.ports.events.recoveryFacts(parent.id, [])).resumed?.childRecovery;
+      if (target?.runId !== childRunId) return this.childOutcome(childRunId);
+      await this.resume(
+        childRunId,
+        { kind: 'run', id: parent.id },
+        {
+          observedSeq: target.observedSeq,
+          ...(target.retryUncertainScript ? { retryUncertainScript: true } : {}),
+        },
+      );
     } catch (error) {
-      if (!(error instanceof EngineRequestError)) throw error;
+      if (!(error instanceof EngineRequestError) && !(error instanceof RecoveryRefusedError))
+        throw error;
+      this.ports.logger.info(
+        { parentRunId: parent.id, childRunId, code: error.code },
+        'parent child recovery refused; observing current child outcome',
+      );
     }
     return this.childOutcome(childRunId);
   }

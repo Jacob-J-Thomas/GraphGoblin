@@ -216,6 +216,10 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
   const source = await seed('old-source');
   const fork = await seed('old-fork', 'failed', { replay: source });
   for (const statement of [
+    'DROP INDEX run_events_reached_idx',
+    'DROP INDEX runs_replay_intent_idx',
+    'ALTER TABLE runs DROP COLUMN replay_intent_observed_seq',
+    'ALTER TABLE runs DROP COLUMN replay_intent_node_id',
     ...RESOURCE_OWNERSHIP_REWIND_SQL,
     'DROP TRIGGER runs_deletion_activity',
     'DROP TRIGGER runs_deletion_relationship',
@@ -229,14 +233,16 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
     'ALTER TABLE runs DROP COLUMN deletion_revision',
   ])
     await handle.client.execute(statement);
-  const migration = readMigrationFiles({
+  const shipped = readMigrationFiles({
     migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
-  }).find((entry) => entry.sql.some((statement) => statement.includes('ADD `deletion_approval`')))!;
-  for (const statement of migration.sql) await handle.client.execute(statement);
-  const resources = readMigrationFiles({
-    migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
-  }).at(-1)!;
-  for (const statement of resources.sql) await handle.client.execute(statement);
+  });
+  const first = shipped.findIndex((entry) =>
+    entry.sql.some((statement) => statement.includes('ADD `deletion_approval`')),
+  );
+  expect(first).toBeGreaterThanOrEqual(0);
+  // Restore the whole suffix, including ownership and observed intents, in shipped order.
+  for (const entry of shipped.slice(first))
+    for (const statement of entry.sql) await handle.client.execute(statement);
   expect((await mark([source])).conflict).toBe('protected');
   expect((await mark([source, fork])).conflict).toBeNull();
   await runs.transition(fork, ['failed'], { status: 'queued' });

@@ -57,6 +57,9 @@ class DyingAdmission implements TriggerAdmissionPort {
   createPollItem(input: RunAdmission) {
     return this.inner.createPollItem(input);
   }
+  findReplay(...args: Parameters<TriggerAdmissionPort['findReplay']>) {
+    return this.inner.findReplay(...args);
+  }
   claim(input: WebhookClaim, intent: RunAdmission) {
     return this.inner.claim(input, intent);
   }
@@ -87,6 +90,9 @@ class DyingEvents implements EventStorePort {
       return never();
     }
     return this.inner.append(runId, drafts, options);
+  }
+  recoveryFacts(runId: string, nodeIds: readonly string[]) {
+    return this.inner.recoveryFacts(runId, nodeIds);
   }
   read(runId: string, afterSeq?: number, limit?: number) {
     return this.inner.read(runId, afterSeq, limit);

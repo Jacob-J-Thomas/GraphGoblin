@@ -27,7 +27,7 @@ You drive the loop through the `graphgoblin` MCP tools. Never call the REST API 
    - `finished: true`: go to step 4.
    - `status: "waiting"` with `waiting.kind: "input"`: the run is asking a question. Read `waiting.prompt` and `waiting.inputSchema`. If the answer is the user's to give, ask them; otherwise answer from context. Call `provide_input` with the observed `waiting.waitId` as `waitId` and a value that matches `waiting.inputSchema`, then wait again.
    - `status: "waiting"` with `waiting.kind: "signal"`: the run waits for `waiting.signalName`. Pass the observed `waiting.waitId` as `waitId` to `send_signal`. Call `send_signal` only if the user asked you to; otherwise keep waiting or report that it is parked.
-   - `status: "paused"`: ask the user whether to `resume_run`.
+   - `status: "paused"`: read `get_run.recovery`, explain any unavailable action, and ask the user whether to continue. If authorized, call `resume_run` with that reviewed `recovery.observedSeq`. Re-read and review after `RECOVERY_STALE`; never reuse a refusal as consent. `SCRIPT_CONSENT_REQUIRED` needs explicit permission to repeat the uncertain effect before passing `retryUncertainScript: true`. Recovery owned by a parent uses that exact parent run.
    - Still `queued` or `running`: call `wait_for_run` again. After several calls, give the user a short progress note (use `read_run_events` with `after` set to the last `cursor` to see new steps).
 
 ## 4. Report

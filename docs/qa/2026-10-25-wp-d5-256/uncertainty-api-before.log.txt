@@ -1,0 +1,57 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (16 tests | 1 failed | 15 skipped) 1335ms
+   ❯ server recovery eligibility (#256) (16)
+     × refuses Replay paths into an uncertain script even without a dispatch marker 1332ms
+pnpm.cmd : 
+At line:2 char:369
++ ... gg-wp-d5-'; pnpm.cmd --filter @graphgoblin/api exec vitest run src/re ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > refuses Replay paths into an uncertain 
+script even without a dispatch marker
+AssertionError: {"run":{"id":"01M3Y7RKG0C5DSE77N3MPB5YBM","ownerId":"local","loopId":"01M3Y7RKG0C5DSE77N3MPB5YBG","vers
+ionId":"01M3Y7RKG0C5DSE77N3MPB5YBH","pinned":{"source":"published","version":1,"name":"minimal","label":"minimal v1","d
+efaults":{"owner":{"byHarness":{}},"process":{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}},"limits":{"
+maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null},"classifiers":{}},"invocationId":"01M3Y7RKG0C5D
+SE77N3MPB5YBN","status":"queued","currentNodeId":"start","iteration":1,"createdAt":"2026-10-02T12:00:00.000Z","lastEven
+tSeq":1}}: expected 202 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 202
+
+ ❯ refusal src/recovery-eligibility.test.ts:59:46
+     57|     payload: { observedSeq: run.recovery.observedSeq, ...(action === '…
+     58|   });
+     59|   expect(response.statusCode, response.body).toBe(409);
+       |                                              ^
+     60|   expect(response.json()).toMatchObject({ code });
+     61| }
+ ❯ src/recovery-eligibility.test.ts:232:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  00:33:03
+   Duration  10.17s (import 50%, transform 36%, tests 14%)
+
+  Transform  transforming modules took 3.49s · 36% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

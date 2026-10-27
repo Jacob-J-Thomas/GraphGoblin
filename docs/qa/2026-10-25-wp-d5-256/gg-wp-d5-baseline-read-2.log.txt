@@ -1,0 +1,41 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (14 tests | 3 failed | 11 skipped) 1729ms
+   ❯ server recovery eligibility (#256) (14)
+     × refuses active queued runs using the read reason 1339ms
+     × refuses active running runs using the read reason 236ms
+     × refuses active waiting runs using the read reason 151ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > refuses active queued runs using the read reason
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > refuses active running runs using the read reason
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > refuses active waiting runs using the read reason
+TypeError: Cannot read properties of undefined (reading 'resume')
+ ❯ src/recovery-eligibility.test.ts:73:27
+     71|     async (status) => {
+     72|       const run = await seeded(status);
+     73|       expect(run.recovery.resume).toMatchObject({ allowed: false, code…
+       |                           ^
+     74|       await refusal(run, 'resume', 'RUN_ACTIVE');
+     75|       await refusal(run, 'replay', 'RUN_ACTIVE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 skipped (14)
+   Start at  22:47:41
+   Duration  14.41s (import 47%, transform 41%, tests 13%)
+
+  Transform  transforming modules took 5.60s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

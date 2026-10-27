@@ -1,4 +1,8 @@
-import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
+import {
+  CURRENT_DEFINITION_FORMAT,
+  RunRecordSchema,
+  RunSnapshotSchema,
+} from '@graphgoblin/contracts';
 import { LIVE_REFRESH_MS } from '../src/runs/live-refresh.js';
 import { expect, publishLoop, test } from './fixtures.js';
 
@@ -73,7 +77,7 @@ test('following a fast run live refreshes bounded read models and reads no histo
       reads.push({ route: url.pathname.slice(prefix.length), at: url.searchParams.get('at') });
     });
     const lastEventSeq = async () =>
-      RunRecordSchema.parse(await (await request.get(`/runs/${run.id}`)).json()).lastEventSeq;
+      RunSnapshotSchema.parse(await (await request.get(`/runs/${run.id}`)).json()).lastEventSeq;
     await page.goto(`/app/runs/${run.id}`);
     await expect(
       page.getByRole('heading', { name: /^Timeline \(\d+ events, live\)$/ }),

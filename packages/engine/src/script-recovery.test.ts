@@ -52,7 +52,7 @@ describe('script dispatch recovery (#321)', () => {
       await recovered.waitForIdle();
       expect(e.ports.scripts.calls).toHaveLength(1);
       e.ports.scripts.respondWith(() => completed);
-      await recovered.resume(run.id);
+      await recovered.resume(run.id, { kind: 'user', id: 'owner' }, { retryUncertainScript: true });
       await recovered.waitForIdle();
       expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
       expect(e.ports.scripts.calls).toHaveLength(2);
@@ -73,6 +73,7 @@ describe('script dispatch recovery (#321)', () => {
       });
       let blocked = false;
       const events: EventStorePort = {
+        recoveryFacts: (...args) => e.ports.events.recoveryFacts(...args),
         read: (...args) => e.ports.events.read(...args),
         subscribe: (...args) => e.ports.events.subscribe(...args),
         append: async (id, drafts, options) => {
@@ -149,7 +150,26 @@ describe('script dispatch recovery (#321)', () => {
         try {
           await resumed.start();
           expect(e.ports.scripts.calls).toHaveLength(callsAtCrash);
-          await resumed.resume(run.id);
+          if (boundary === 'before-dispatch' || boundary === 'dispatch-ack') {
+            const recovery = await resumed.getRecovery(run.id);
+            expect(recovery.replay.find((node) => node.nodeId === 'start')?.action).toMatchObject({
+              allowed: false,
+              code: 'SCRIPT_CONSENT_REQUIRED',
+            });
+            await expect(
+              resumed.replay({
+                runId: run.id,
+                nodeId: 'start',
+                observedSeq: recovery.observedSeq,
+              }),
+            ).rejects.toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
+            expect(e.ports.scripts.calls).toHaveLength(callsAtCrash);
+          }
+          await resumed.resume(
+            run.id,
+            { kind: 'user', id: 'owner' },
+            { retryUncertainScript: true },
+          );
           await resumed.waitForIdle();
           expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
           const dispatches = e.events(run.id).filter((event) => event.type === 'script.dispatched');

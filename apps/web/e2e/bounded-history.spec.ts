@@ -1,4 +1,9 @@
-import { ContextThreadSchema, RunRecordSchema, type RunEvent } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  RunRecordSchema,
+  RunSnapshotSchema,
+  type RunEvent,
+} from '@graphgoblin/contracts';
 import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
 import { expect, publishLoop, test } from './fixtures.js';
 
@@ -17,11 +22,12 @@ test('bounded Timeline browses a long run with keyboard focus, exact threads and
   const run = RunRecordSchema.parse((await started.json()).run);
   await expect
     .poll(
-      async () => RunRecordSchema.parse(await (await request.get(`/runs/${run.id}`)).json()).status,
+      async () =>
+        RunSnapshotSchema.parse(await (await request.get(`/runs/${run.id}`)).json()).status,
       { timeout: 90_000 },
     )
     .toBe('succeeded');
-  const record = RunRecordSchema.parse(await (await request.get(`/runs/${run.id}`)).json());
+  const record = RunSnapshotSchema.parse(await (await request.get(`/runs/${run.id}`)).json());
   expect(record.lastEventSeq).toBeGreaterThan(512);
   const current = ContextThreadSchema.parse(
     await (await request.get(`/runs/${run.id}/thread`)).json(),

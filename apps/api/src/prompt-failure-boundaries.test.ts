@@ -131,7 +131,7 @@ it.each(
       const resumed = await test.app.inject({
         method: 'POST',
         url: `/runs/${runId}/resume`,
-        payload: {},
+        payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
       });
       await test.idle();
       expect.soft(resumed.statusCode).toBe(409);
@@ -160,6 +160,7 @@ it.each(families)('retains the committed %s repair when its append then throws',
       }
       return stored;
     },
+    recoveryFacts: (...args) => events.recoveryFacts(...args),
     read: (...args) => events.read(...args),
     subscribe: (...args) => events.subscribe(...args),
   };
@@ -195,7 +196,7 @@ it.each(families)('retains the committed %s repair when its append then throws',
     const resumed = await test.app.inject({
       method: 'POST',
       url: `/runs/${runId}/resume`,
-      payload: {},
+      payload: { observedSeq: (await test.container.manager.getRecovery(runId)).observedSeq },
     });
     await test.idle();
     expect(resumed.statusCode).toBe(200);

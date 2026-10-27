@@ -1,0 +1,63 @@
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 3c68c40369a23841
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 117714e8e86a2c67
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 99ca1c11ef46b291
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 8f9511f09a8f4d6f
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing 50b3f141465b7cac
+@graphgoblin/engine:build: cache miss, executing d6ed4e5ce242aeba
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: cache miss, executing a63c55a04e894c8a
+@graphgoblin/adapter-jev:build: cache miss, executing dc26e7b6d10db188
+@graphgoblin/adapter-codex:build: cache miss, executing 5d9b0a027c7e8259
+@graphgoblin/infrastructure:build: cache miss, executing 682ac43fa446a307
+@graphgoblin/infrastructure:typecheck: cache miss, executing 92effadaf3ec7d32
+@graphgoblin/adapter-codex:typecheck: cache miss, executing b007d8fd612d5adc
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: cache miss, executing 8d6ea8c130b4c193
+@graphgoblin/api:build: cache miss, executing 1f49e2e042642dfa
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 3c87d4361a057743
+@graphgoblin/api-client:typecheck: cache miss, executing 47800f1ecf634a0d
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: cache miss, executing 5a2b27a819d9f45c
+@graphgoblin/mcp:typecheck: cache miss, executing 2526ac87802b31f6
+@graphgoblin/web:typecheck: cache miss, executing 8de8d7320efec172
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing c58b26de5e3a7bef
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/prompt-evidence-matrix.test.ts(29,5): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/api:typecheck: src/prompt-evidence-matrix.test.ts(99,5): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/api:typecheck: src/prompt-failure-boundaries.test.ts(151,3): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/api:typecheck: src/prompt-sdk-storage-matrix.test.ts(87,5): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/api:typecheck: src/recovery-eligibility.test.ts(86,70): error TS2345: Argument of type '{ defaults: { byHarness: Partial<Record<"codex" | "claude", { model?: string | undefined; effort?: "minimal" | "low" | "medium" | "high" | "xhigh" | "max" | undefined; }>>; }; }' is not assignable to parameter of type 'EngineSettings'.
+@graphgoblin/api:typecheck:   Property 'maxConcurrentRuns' is missing in type '{ defaults: { byHarness: Partial<Record<"codex" | "claude", { model?: string | undefined; effort?: "minimal" | "low" | "medium" | "high" | "xhigh" | "max" | undefined; }>>; }; }' but required in type 'EngineSettings'.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-256\apps\api) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    15 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    40.769s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

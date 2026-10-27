@@ -98,6 +98,7 @@ it.each(matrix)(
         }
         return events.append(id, drafts, options);
       },
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       subscribe: (...args) => events.subscribe(...args),
     };
@@ -124,7 +125,7 @@ it.each(matrix)(
       const resumed = await test.app.inject({
         method: 'POST',
         url: `/runs/${id}/resume`,
-        payload: {},
+        payload: { observedSeq: (await test.container.manager.getRecovery(id)).observedSeq },
       });
       await test.idle();
       expect.soft(resumed.statusCode).toBe(expected.resumable ? 200 : 409);

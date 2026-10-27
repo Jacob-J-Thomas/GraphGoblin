@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, readFile, unlink, copyFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, unlink, copyFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, URL } from 'node:url';
 import { join } from 'node:path';
@@ -43,9 +43,11 @@ for (const family of ['codex', 'claude'])
       `${family} ${policy}: removed on-disk session, declined restart, choice-commit crash, recovered fresh`,
       { timeout: 240000 },
       async () => {
-        const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f4-265-'));
+        const dataDir = await mkdtemp(
+          join(tmpdir(), process.env.GG_TEST_DATA_PREFIX ?? 'gg-wp-f4-265-'),
+        );
         const port = Number(process.env.GG_265_RESTART_PORT ?? 5992);
-        assert.ok(port >= 5990 && port <= 5999);
+        assert.ok(Number.isInteger(port) && port > 0 && port <= 65535);
         const env = Object.fromEntries(
           Object.entries(process.env).filter(
             ([key]) => !key.toUpperCase().startsWith('GG_') && key !== 'NODE_V8_COVERAGE',
@@ -181,7 +183,8 @@ for (const family of ['codex', 'claude'])
           child = start();
           await message(child, 'ready');
           assert.deepEqual((await api(`/runs/${run.id}`)).failure, failed.failure);
-          await api(`/runs/${run.id}/resume`, {}, 409);
+          const reviewed = await api(`/runs/${run.id}`);
+          await api(`/runs/${run.id}/resume`, { observedSeq: reviewed.recovery.observedSeq }, 409);
           let events = (await api(`/runs/${run.id}/events`)).items;
           const failureSeq = events.findLast((event) => event.type === 'run.failed').seq;
           const armed = message(child, 'armed');
@@ -217,13 +220,14 @@ for (const family of ['codex', 'claude'])
           assert.equal(calls[2].model, failed.failure.missingSession.model);
           assert.equal(calls[2].effort, failed.failure.missingSession.effort);
           assert.notEqual(calls[2].id, old);
-          const evidence = new URL('../../../docs/qa/2026-10-24-wp-f4-265/', import.meta.url);
+          const evidence = process.env.GG_265_EVIDENCE_DIR ?? join(dataDir, 'evidence');
+          await mkdir(evidence, { recursive: true });
           await copyFile(
             join(dataDir, 'provider-calls.jsonl'),
-            new URL(`restart-calls-${family}-${policy}.jsonl`, evidence),
+            join(evidence, `restart-calls-${family}-${policy}.jsonl`),
           );
           await writeFile(
-            new URL(`restart-events-${family}-${policy}.json`, evidence),
+            join(evidence, `restart-events-${family}-${policy}.json`),
             JSON.stringify(events),
           );
         } finally {

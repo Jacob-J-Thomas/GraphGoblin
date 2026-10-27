@@ -308,6 +308,7 @@ describe('model catalog source migration and repository', () => {
       ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
       await handle.client.execute('DROP TABLE event_receipts');
+      await handle.client.execute('DROP INDEX run_events_reached_idx');
       await handle.client.execute('DROP INDEX run_events_gate_idx');
       await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
       // Reconstruct this empty pre-0008 table before replaying historical SQL.
@@ -318,6 +319,9 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
       // Roll back the later schema too before replaying its shipped structural migrations.
       for (const statement of [
+        'DROP INDEX runs_replay_intent_idx',
+        'ALTER TABLE runs DROP COLUMN replay_intent_observed_seq',
+        'ALTER TABLE runs DROP COLUMN replay_intent_node_id',
         ...RESOURCE_OWNERSHIP_REWIND_SQL,
         'DROP TRIGGER runs_deletion_activity',
         'DROP TRIGGER runs_deletion_relationship',

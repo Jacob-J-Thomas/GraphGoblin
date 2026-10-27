@@ -1,0 +1,66 @@
+$ vitest run recovery-eligibility.test.ts pinned-run-restart.test.ts replay.test.ts script-recovery.test.ts script-persistence-restart.test.ts script-restart.test.ts missing-session.test.ts deletion-eligibility.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (28 tests | 1 failed) 6444ms
+   ❯ server recovery eligibility (#256) (28)
+     × keeps a readable run visible while damaged history refuses both recovery actions 135ms
+ ❯ src/missing-session.test.ts (6 tests | 1 failed) 2753ms
+   × allows an explicit parent Resume after its missing-session child was explicitly recovered (failure) 426ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/missing-session.test.ts > allows an explicit parent Resume after its missing-session child was explicitly recovered (failure)
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ src/missing-session.test.ts:238:9
+    236|           })
+    237|         ).statusCode,
+    238|       ).toBe(200);
+       |         ^
+    239|       await t.idle();
+    240|       expect((await t.container.repos.runs.get(parent.id))?.status).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > keeps a readable run visible while damaged history refuses both recovery actions
+AssertionError: expected { allowed: true } to match object { code: 'STATE_UNAVAILABLE' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "STATE_UNAVAILABLE",
++   "allowed": true,
+  }
+
+ ❯ src/recovery-eligibility.test.ts:388:37
+    386|     const damaged = response.json<Snapshot>();
+    387|     expect(damaged.status).toBe('failed');
+    388|     expect(damaged.recovery.resume).toMatchObject({ code: 'STATE_UNAVA…
+       |                                     ^
+    389|     await refusal(damaged, 'resume', 'STATE_UNAVAILABLE');
+    390|     await refusal(damaged, 'replay', 'STATE_UNAVAILABLE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 5 passed (7)
+      Tests  2 failed | 53 passed (55)
+   Start at  23:48:05
+   Duration  98.60s (tests 84%, import 13%, transform 2%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

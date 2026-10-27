@@ -129,7 +129,12 @@ describe('script outcomes survive storage failure and upgrade (#321)', () => {
         const recovered = await f.get();
         expect(await f.count()).toBe(1);
         await db.client.execute('DROP TRIGGER refuse_script_outcome');
-        await f.call('POST', `/runs/${f.run.id}/resume`);
+        await f.call('POST', `/runs/${f.run.id}/resume`, {
+          observedSeq: (
+            await f.call<{ recovery: { observedSeq: number } }>('GET', `/runs/${f.run.id}`)
+          ).recovery.observedSeq,
+          retryUncertainScript: true,
+        });
         await eventually(async () => (await f.get()).status === 'succeeded');
         console.warn(
           JSON.stringify({
@@ -210,7 +215,11 @@ describe('script outcomes survive storage failure and upgrade (#321)', () => {
     await f.boot();
     expect((await f.get()).failure).toEqual(recovered.failure);
     // The failed run is preserved across another restart, then an explicit choice retries it.
-    await f.call('POST', `/runs/${f.run.id}/resume`);
+    await f.call('POST', `/runs/${f.run.id}/resume`, {
+      observedSeq: (await f.call<{ recovery: { observedSeq: number } }>('GET', `/runs/${f.run.id}`))
+        .recovery.observedSeq,
+      retryUncertainScript: true,
+    });
     await eventually(async () => (await f.get()).status === 'succeeded');
     expect(await f.count()).toBe(2);
     const dispatches = (await f.events()).filter((event) => event.type === 'script.dispatched');

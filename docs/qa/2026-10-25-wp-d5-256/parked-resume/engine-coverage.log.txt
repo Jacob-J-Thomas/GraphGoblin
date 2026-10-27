@@ -1,0 +1,51 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/recovery.test.ts (69 tests | 1 failed) 10788ms
+   ❯ thread checkpoints (review finding 9) (5)
+     × a long log resumes from its checkpoint (10,000 completions) 4661ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery.test.ts > thread checkpoints (review finding 9) > a long log resumes from its checkpoint (10,000 completions)
+AssertionError: expected 2374.4542 to be less than 2000
+ ❯ src/recovery.test.ts:679:21
+    677|     );
+    678|     // Generous: the point is that it does not replay 10,000 patches (…
+    679|     expect(elapsed).toBeLessThan(2_000);
+       |                     ^
+    680|   }, 30_000);
+    681| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 61 passed (62)
+      Tests  1 failed | 1756 passed (1757)
+   Start at  04:21:39
+   Duration  203.42s (tests 68%, import 29%, transform 2%, worker 1%)
+
+     Import  153 modules were evaluated 236 times · 50.26s total, 29% of tracked time
+             ~17.68s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.64% ( 3583/3746 )
+Branches     : 91.19% ( 2972/3259 )
+Functions    : 97.76% ( 655/670 )
+Lines        : 96.94% ( 3266/3369 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

@@ -42,6 +42,7 @@ it.each(matrix)(
         }
         return events.append(id, drafts, options);
       },
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       subscribe: (...args) => events.subscribe(...args),
     };
@@ -67,7 +68,7 @@ it.each(matrix)(
       const resumed = await test.app.inject({
         method: 'POST',
         url: `/runs/${id}/resume`,
-        payload: {},
+        payload: { observedSeq: (await test.container.manager.getRecovery(id)).observedSeq },
       });
       await test.idle();
       expect.soft(resumed.statusCode).toBe(expected.resumable ? 200 : 409);
@@ -105,6 +106,7 @@ it.each(
         }
         return events.append(id, drafts, options);
       },
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read(...args) {
         if (fired && !readFailed) {
           readFailed = true;
@@ -130,8 +132,13 @@ it.each(
         details: { recording: expect.any(Array) },
       });
       expect(
-        (await test.app.inject({ method: 'POST', url: `/runs/${id}/resume`, payload: {} }))
-          .statusCode,
+        (
+          await test.app.inject({
+            method: 'POST',
+            url: `/runs/${id}/resume`,
+            payload: { observedSeq: (await test.container.manager.getRecovery(id)).observedSeq },
+          })
+        ).statusCode,
       ).toBe(200);
       await test.idle();
       expect(fake.resumed[0]?.request.turn.prompt).toBe('Repair exactly: "invalid"');

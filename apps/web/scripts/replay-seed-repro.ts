@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { FakeHarness } from '@graphgoblin/engine/testing';
-import { ContextThreadSchema, RunEventSchema, RunRecordSchema } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  RunEventSchema,
+  RunRecordSchema,
+  RunSnapshotSchema,
+} from '@graphgoblin/contracts';
 import { replayThread } from '@graphgoblin/domain';
 import { replaySeedLoop } from './replay-seed-fixture.js';
 
@@ -56,13 +61,23 @@ try {
   await api(`/loops/${loopId}/publish`, {});
   const source = RunRecordSchema.parse(wrapped(await api(`/loops/${loopId}/runs`, {}), 'run'));
   await container.manager.waitForIdle();
-  const frozenSource = async () =>
-    JSON.stringify({
-      record: await api(`/runs/${source.id}`),
-      events: await api(`/runs/${source.id}/events`),
+  const frozenSource = async () => {
+    const {
+      recovery: _recovery,
+      lastEventSeq: _seq,
+      ...record
+    } = RunSnapshotSchema.parse(await api(`/runs/${source.id}`));
+    const events = RunEventSchema.array().parse(
+      wrapped(await api(`/runs/${source.id}/events`), 'items'),
+    );
+    // The source records fork requests; execution state and all other history stay unchanged.
+    return JSON.stringify({
+      record,
+      events,
       snapshot: await container.repos.runs.getThreadCheckpoint(source.id),
       initial: await container.repos.runs.getInitialThread(source.id),
     });
+  };
   const beforeSource = await frozenSource();
   const comparisons = [];
   // Second node, then a deeper fork with inherited values, then a fork of that fork with passes 2.
@@ -70,7 +85,13 @@ try {
   for (const nodeId of ['prepare', 'gate', 'append']) {
     container.manager.stop();
     const fork = RunRecordSchema.parse(
-      wrapped(await api(`/runs/${parentId}/replay`, { nodeId }), 'run'),
+      wrapped(
+        await api(`/runs/${parentId}/replay`, {
+          nodeId,
+          observedSeq: (await container.manager.getRecovery(parentId)).observedSeq,
+        }),
+        'run',
+      ),
     );
     const queuedThread = ContextThreadSchema.parse(await api(`/runs/${fork.id}/thread`));
     const actualSeed = await container.repos.runs.getInitialThread(fork.id);

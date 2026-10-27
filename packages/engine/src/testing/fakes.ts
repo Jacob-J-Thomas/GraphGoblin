@@ -72,7 +72,8 @@ import type {
   TimerPort,
   WorkspacePort,
 } from '../ports.js';
-import { AppendConflictError } from '../errors.js';
+import { AppendConflictError, RecoveryRefusedError } from '../errors.js';
+import { EngineRequestError } from '../run-manager.js';
 import { validateGeneratedEvent } from '../event-validation.js';
 import {
   AdmissionConflictError,
@@ -178,6 +179,9 @@ export class InMemoryEventStore implements EventStorePort {
     );
     log.push(...stored);
     this.logs.set(runId, log);
+    // SQLite publishes the tail with the events, before a delayed status projection.
+    if (stored.length && (await this.runRepository?.get(runId)))
+      await this.runRepository?.update(runId, { lastEventSeq: log.at(-1)!.seq });
     for (const event of stored) {
       for (const listener of this.listeners.get(runId) ?? []) listener(event);
     }
@@ -187,6 +191,31 @@ export class InMemoryEventStore implements EventStorePort {
   read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
     const events = (this.logs.get(runId) ?? []).filter((e) => e.seq > afterSeq);
     return Promise.resolve(limit === undefined ? events : events.slice(0, limit));
+  }
+
+  recoveryFacts(
+    runId: string,
+    nodeIds: readonly string[],
+  ): ReturnType<EventStorePort['recoveryFacts']> {
+    const events = this.logs.get(runId) ?? [];
+    return Promise.resolve({
+      observedSeq: events.at(-1)?.seq ?? 0,
+      lifecycle: events.findLast((e) =>
+        [
+          'run.failed',
+          'run.finished',
+          'run.cancelled',
+          'run.started',
+          'run.resumed',
+          'run.paused',
+        ].includes(e.type),
+      ),
+      failed: events.findLast((e) => e.type === 'run.failed'),
+      resumed: events.findLast((e) => e.type === 'run.resumed'),
+      reachedNodeIds: nodeIds.filter((id) =>
+        events.some((e) => e.type === 'node.started' && e.nodeId === id),
+      ),
+    });
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {
@@ -273,11 +302,15 @@ export class InMemoryRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
-    guard?: { waitId: string },
+    guard?: { waitId?: string; observedSeq?: number },
   ): Promise<RunRecord | undefined> {
     const current = this.runs.get(runId);
     if (!current) return Promise.reject(new Error(`run ${runId} not found`));
-    if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+    if (
+      !from.includes(current.status) ||
+      (guard?.waitId !== undefined && current.waiting?.waitId !== guard.waitId) ||
+      (guard?.observedSeq !== undefined && current.lastEventSeq !== guard.observedSeq)
+    )
       return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
@@ -982,6 +1015,15 @@ export type AdmissionWrite =
   | 'create.parent';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  private readonly replayIntents = new Map<string, string>();
+  findReplay(
+    sourceRunId: string,
+    nodeId: string,
+    observedSeq: number,
+  ): Promise<RunRecord | undefined> {
+    const id = this.replayIntents.get(JSON.stringify([sourceRunId, nodeId, observedSeq]));
+    return id ? this.runs.get(id) : Promise.resolve(undefined);
+  }
   readonly events: InMemoryEventAdmission;
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
@@ -1015,6 +1057,22 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     onCommitted?: () => void,
   ): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
+    const replay = input.replayIntent;
+    const replayKey = replay
+      ? JSON.stringify([replay.sourceRunId, replay.nodeId, replay.observedSeq])
+      : undefined;
+    if (replay && replayKey) {
+      const existing = this.replayIntents.get(replayKey);
+      if (existing && this.runs.runs.has(existing)) return this.runs.runs.get(existing)!;
+      const source = this.runs.runs.get(replay.sourceRunId);
+      if (!source || source.ownerId !== input.run.ownerId)
+        throw new EngineRequestError('RUN_NOT_FOUND', `run ${replay.sourceRunId} not found`);
+      if ((this.eventStore.all(source.id).at(-1)?.seq ?? 0) !== replay.observedSeq)
+        throw new RecoveryRefusedError(
+          'RECOVERY_STALE',
+          'The run changed since it was shown. Refresh and review its current recovery choices.',
+        );
+    }
     const receipt = receiptId ? this.receipts.get(receiptId) : undefined;
     if (
       receiptId &&
@@ -1085,6 +1143,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (created) {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
+      if (replayKey) this.replayIntents.set(replayKey, run.id);
       this.eventStore.commitQueued(queuedEvent(input));
       if (parentLink) {
         this.eventStore.commitNext(parentLink);

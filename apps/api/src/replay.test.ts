@@ -106,7 +106,10 @@ describe('POST /runs/{id}/replay', () => {
     const response = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
     });
     expect(response.statusCode).toBe(202);
     const { run: fork } = response.json<{ run: RunRecord }>();
@@ -146,7 +149,10 @@ describe('POST /runs/{id}/replay', () => {
     const response = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
       headers: { 'x-graphgoblin-client': 'mcp' },
     });
     expect(response.statusCode).toBe(202);
@@ -196,7 +202,10 @@ describe('POST /runs/{id}/replay', () => {
     const notReached = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/replay`,
-      payload: { nodeId: 'done' },
+      payload: {
+        nodeId: 'done',
+        observedSeq: (await t.container.manager.getRecovery(run.id)).observedSeq,
+      },
     });
     expect(notReached.statusCode).toBe(409);
     expect(notReached.json()).toMatchObject({ code: 'REPLAY_NODE_NOT_REACHED' });
@@ -204,7 +213,7 @@ describe('POST /runs/{id}/replay', () => {
     const unknown = await t.app.inject({
       method: 'POST',
       url: `/runs/${fakeUlid('nope')}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: { nodeId: 'ask', observedSeq: 0 },
     });
     expect(unknown.statusCode).toBe(404);
     expect(unknown.json()).toMatchObject({ code: 'RUN_NOT_FOUND' });
@@ -229,7 +238,10 @@ describe('POST /runs/{id}/replay', () => {
     const forbidden = await t.app.inject({
       method: 'POST',
       url: `/runs/${source.id}/replay`,
-      payload: { nodeId: 'ask' },
+      payload: {
+        nodeId: 'ask',
+        observedSeq: (await t.container.manager.getRecovery(source.id)).observedSeq,
+      },
       headers: { authorization: `Bearer ${token}` },
     });
     expect(forbidden.statusCode).toBe(403);

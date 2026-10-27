@@ -1,0 +1,193 @@
+$ vitest run recovery-projection.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/recovery-projection.test.ts (5 tests | 5 failed) 542ms
+   × refuses running-replay while an uncertain failure is durable but its status projection is delayed 159ms
+   × refuses paused-replay while an uncertain failure is durable but its status projection is delayed 124ms
+   × refuses paused-resume while an uncertain failure is durable but its status projection is delayed 125ms
+   × atomically refuses a paused Resume claim after a durable failure (parked=false) 71ms
+   × atomically refuses a paused Resume claim after a durable failure (parked=true) 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-projection.test.ts > refuses running-replay while an uncertain failure is durable but its status projection is delayed
+AssertionError: expected { allowed: false, …(2) } to match object { allowed: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "allowed": false,
+-   "code": "RECOVERY_STALE",
++   "code": "RUN_ACTIVE",
+  }
+
+ ❯ src/recovery-projection.test.ts:55:40
+     53|       expect(failed).toMatchObject({ type: 'run.failed', failure: { co…
+     54|       expect(snapshot.recovery.observedSeq).toBe(failed.seq);
+     55|       expect(snapshot.recovery.resume).toMatchObject({ allowed: false,…
+       |                                        ^
+     56|       expect(snapshot.recovery.replayDefault).toMatchObject({ allowed:…
+     57|       expect(snapshot.recovery.scriptConsent).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/recovery-projection.test.ts > refuses paused-replay while an uncertain failure is durable but its status projection is delayed
+ FAIL  src/recovery-projection.test.ts > refuses paused-resume while an uncertain failure is durable but its status projection is delayed
+AssertionError: expected { allowed: true } to match object { allowed: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "allowed": false,
+-   "code": "RECOVERY_STALE",
++   "allowed": true,
+  }
+
+ ❯ src/recovery-projection.test.ts:55:40
+     53|       expect(failed).toMatchObject({ type: 'run.failed', failure: { co…
+     54|       expect(snapshot.recovery.observedSeq).toBe(failed.seq);
+     55|       expect(snapshot.recovery.resume).toMatchObject({ allowed: false,…
+       |                                        ^
+     56|       expect(snapshot.recovery.replayDefault).toMatchObject({ allowed:…
+     57|       expect(snapshot.recovery.scriptConsent).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/recovery-projection.test.ts > atomically refuses a paused Resume claim after a durable failure (parked=false)
+AssertionError: promise resolved "{ …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "node",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "5F4JA0AGMMN8QF2ZX0XC1ENJ1N",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "atomic review v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "atomic review",
++     "source": "published",
++     "version": 1,
++   },
++   "startedAt": "2026-10-02T12:00:00.000Z",
++   "status": "running",
++   "versionId": "5GG2PK3E948H71NK6CE9AFNEEF",
+  }
+
+ ❯ src/recovery-projection.test.ts:113:112
+    111|     expect(review.resume.allowed).toBe(true);
+    112|     armed = true;
+    113|     await expect(manager.resume(run.id, { kind: 'user', id: 'reviewer'…
+       |                                                                                                                ^
+    114|     expect(injected).toBe(true);
+    115|     expect((await e.ports.events.read(run.id)).some((event) => event.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/recovery-projection.test.ts > atomically refuses a paused Resume claim after a durable failure (parked=true)
+AssertionError: promise resolved "{ …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "node",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "5F4JA0AGMMN8QF2ZX0XC1ENJ1N",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "atomic review v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "atomic review",
++     "source": "published",
++     "version": 1,
++   },
++   "startedAt": "2026-10-02T12:00:00.000Z",
++   "status": "waiting",
++   "versionId": "5GG2PK3E948H71NK6CE9AFNEEF",
++   "waiting": {
++     "kind": "input",
++     "nodeId": "node",
++     "prompt": "Continue",
++     "startedSeq": 5,
++     "waitId": "00000000000000000000000001:5",
++   },
+  }
+
+ ❯ src/recovery-projection.test.ts:113:112
+    111|     expect(review.resume.allowed).toBe(true);
+    112|     armed = true;
+    113|     await expect(manager.resume(run.id, { kind: 'user', id: 'reviewer'…
+       |                                                                                                                ^
+    114|     expect(injected).toBe(true);
+    115|     expect((await e.ports.events.read(run.id)).some((event) => event.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  03:02:23
+   Duration  3.17s (import 48%, transform 34%, tests 18%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

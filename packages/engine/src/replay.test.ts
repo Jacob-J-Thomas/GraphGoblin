@@ -272,7 +272,7 @@ describe('replay-at-node', () => {
 
     const spy = vi.spyOn(engine.ports.runs, 'getInitialThread').mockResolvedValueOnce(undefined);
     await expect(engine.manager.replay({ runId: source.id, nodeId: 'b' })).rejects.toMatchObject({
-      code: 'INVALID_STATE',
+      code: 'STATE_UNAVAILABLE',
     });
     spy.mockRestore();
 
@@ -286,11 +286,11 @@ describe('replay-at-node', () => {
       },
     });
     await expect(engine.manager.replay({ runId: source.id, nodeId: 'b' })).rejects.toMatchObject({
-      code: 'INVALID_STATE',
+      code: 'REPLAY_NODE_NOT_REACHED',
     });
     engine.ports.loops.versions.delete(version.id);
     await expect(engine.manager.replay({ runId: source.id, nodeId: 'b' })).rejects.toMatchObject({
-      code: 'INVALID_STATE',
+      code: 'DEFINITION_UNAVAILABLE',
     });
   });
 });

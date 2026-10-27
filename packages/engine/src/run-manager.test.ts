@@ -278,7 +278,7 @@ describe('run control', () => {
     expect(engine.eventTypes(run.id)).toEqual(
       expect.arrayContaining(['run.paused', 'run.resumed', 'run.started']),
     );
-    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'RUN_FINISHED' });
   });
 
   it('pauses a running run after the current node and resumes from the next one', async () => {

@@ -4,7 +4,7 @@
  * resumes that child in place. A cancelled child cancels its parent.
  */
 import { afterEach, describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
+import type { LoopDefinitionInput, RunEvent, RunRecord, RunRecovery } from '@graphgoblin/contracts';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
@@ -80,8 +80,31 @@ describe('subloop child failures over the API (#251)', () => {
       },
     });
 
+    const childSnapshot = (await t.app.inject(`/runs/${child!.id}`)).json<
+      RunRecord & { recovery: RunRecovery }
+    >();
+    expect(childSnapshot.recovery.resume).toMatchObject({
+      code: 'PARENT_RECOVERY_REQUIRED',
+      parentRunId: parent.id,
+    });
+    for (const action of ['resume', 'replay']) {
+      const response = await t.app.inject({
+        method: 'POST',
+        url: `/runs/${child!.id}/${action}`,
+        payload: {
+          observedSeq: childSnapshot.recovery.observedSeq,
+          ...(action === 'replay' ? { nodeId: 'think' } : {}),
+        },
+      });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ code: 'PARENT_RECOVERY_REQUIRED' });
+    }
     t.harness.script([{ finalText: 'continued after quota' }]);
-    const resumed = await t.app.inject({ method: 'POST', url: `/runs/${parent.id}/resume` });
+    const resumed = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${parent.id}/resume`,
+      payload: { observedSeq: (await t.container.manager.getRecovery(parent.id)).observedSeq },
+    });
     expect(resumed.statusCode).toBe(200);
     await t.idle();
     const done = (await t.app.inject(`/runs/${parent.id}`)).json<RunRecord>();
@@ -124,7 +147,11 @@ describe('subloop child failures over the API (#251)', () => {
     ).toBe(200);
     await t.idle();
     expect((await t.app.inject(`/runs/${parent.id}`)).json<RunRecord>().status).toBe('cancelled');
-    const resume = await t.app.inject({ method: 'POST', url: `/runs/${parent.id}/resume` });
+    const resume = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${parent.id}/resume`,
+      payload: { observedSeq: (await t.container.manager.getRecovery(parent.id)).observedSeq },
+    });
     expect(resume.statusCode).toBe(409);
   });
 });

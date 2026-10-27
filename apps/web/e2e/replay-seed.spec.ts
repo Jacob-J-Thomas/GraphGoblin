@@ -3,6 +3,7 @@ import {
   LoopDefinitionSchema,
   RunEventSchema,
   RunRecordSchema,
+  RunSnapshotSchema,
 } from '@graphgoblin/contracts';
 import { replayThread } from '@graphgoblin/domain';
 import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
@@ -20,7 +21,7 @@ test('a replay inspector shows inherited counters and values at its first event'
   await expect
     .poll(
       async () =>
-        RunRecordSchema.parse(await (await request.get(`/runs/${source.id}`)).json()).status,
+        RunSnapshotSchema.parse(await (await request.get(`/runs/${source.id}`)).json()).status,
     )
     .toBe('succeeded');
   const sourceEvents = RunEventSchema.array().parse(
@@ -33,13 +34,19 @@ test('a replay inspector shows inherited counters and values at its first event'
   if (queued?.type !== 'run.queued' || !queued.initialThread || !gateStart)
     throw new Error('Missing source history');
   const expectedSeed = replayThread(queued.initialThread, sourceEvents, gateStart.seq - 1);
-  const replay = await request.post(`/runs/${source.id}/replay`, { data: { nodeId: 'gate' } });
+  const replay = await request.post(`/runs/${source.id}/replay`, {
+    data: {
+      nodeId: 'gate',
+      observedSeq: RunSnapshotSchema.parse(await (await request.get(`/runs/${source.id}`)).json())
+        .recovery.observedSeq,
+    },
+  });
   expect(replay.status()).toBe(202);
   const fork = RunRecordSchema.parse((await replay.json()).run);
   await expect
     .poll(
       async () =>
-        RunRecordSchema.parse(await (await request.get(`/runs/${fork.id}`)).json()).status,
+        RunSnapshotSchema.parse(await (await request.get(`/runs/${fork.id}`)).json()).status,
     )
     .toBe('succeeded');
   await page.goto(`/app/runs/${fork.id}`);

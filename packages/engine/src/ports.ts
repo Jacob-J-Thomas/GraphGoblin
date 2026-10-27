@@ -56,7 +56,18 @@ export interface Logger {
   error(obj: Record<string, unknown>, msg: string): void;
 }
 
+/** Indexed recovery evidence. At most three event payloads, plus definition-bounded identities. */
+export interface RecoveryFacts {
+  observedSeq: number;
+  lifecycle: RunEvent | undefined;
+  failed: Extract<RunEvent, { type: 'run.failed' }> | undefined;
+  resumed: Extract<RunEvent, { type: 'run.resumed' }> | undefined;
+  reachedNodeIds: string[];
+}
+
 export interface EventStorePort {
+  /** Independent of history length: indexed latest markers and one existence seek per node. */
+  recoveryFacts(runId: string, nodeIds: readonly string[]): Promise<RecoveryFacts>;
   /**
    * Append in order, atomically, assigning strictly increasing `seq` per run. Returns the stored
    * events. With `expectedLastSeq`, the append happens only if the run's last `seq` is exactly
@@ -87,7 +98,8 @@ export interface RunRepository {
   update(runId: string, changes: RunRecordChanges): Promise<RunRecord>;
   /**
    * Compare-and-set: apply `changes` only if the run's status is one of `from`.
-   * An optional wait guard also requires that exact recorded wait, atomically with the status.
+   * Optional guards require the exact recorded wait and/or durable event tail, atomically with
+   * the status. The observation guard prevents recovery from claiming past a new failure.
    * Returns the updated record, or undefined when either precondition did not match. Lifecycle
    * transitions go through this so delayed acknowledgements cannot clobber a later wait.
    */
@@ -95,7 +107,7 @@ export interface RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
-    guard?: { waitId: string },
+    guard?: { waitId?: string; observedSeq?: number },
   ): Promise<RunRecord | undefined>;
   /**
    * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is

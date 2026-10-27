@@ -1,0 +1,74 @@
+$ vitest run admission.test.ts admission-contract.test.ts catalog.test.ts definition-pins.test.ts delivery-runs.test.ts history-summaries.test.ts webhook-receipt-upgrade.test.ts evidence-index.test.ts deletion-eligibility.test.ts storage.test.ts history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/infrastructure
+
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/admission.test.ts (20 tests | 1 failed) 1721ms
+   ❯ SQLite atomic admission (20)
+     × migration 0024 preserves pre-existing rows, extra columns, indexes and triggers 277ms
+ ❯ src/sqlite/deletion-eligibility.test.ts (16 tests | 1 failed) 1317ms
+   × backfills indexed replay provenance from existing threads in the shipped migration 97ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/admission.test.ts > SQLite atomic admission > migration 0024 preserves pre-existing rows, extra columns, indexes and triggers
+AssertionError: expected [ …(55) ] to deeply equal [ …(54) ]
+
+- Expected
++ Received
+
+@@ -74,10 +74,14 @@
+    {
+      "name": "run_events_gate_idx",
+      "sql": "CREATE INDEX `run_events_gate_idx` ON `run_events` (`run_id`,`seq`) WHERE \"run_events\".\"type\" = 'decision.made' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.gate') is not null else 1 end",
+    },
+    {
++     "name": "run_events_reached_idx",
++     "sql": "CREATE INDEX `run_events_reached_idx` ON `run_events` (`run_id`,`node_id`,`seq`) WHERE \"run_events\".\"type\" = 'node.started'",
++   },
++   {
+      "name": "run_resource_uses_key_idx",
+      "sql": "CREATE INDEX `run_resource_uses_key_idx` ON `run_resource_uses` (`key`)",
+    },
+    {
+      "name": "run_resources_owner_idx",
+
+ ❯ src/sqlite/admission.test.ts:262:65
+    260|       await applyShippedSqlToHistoricalTestFixture(old);
+    261|       expect((await old.client.execute(preservedColumns)).rows).toEqua…
+    262|       expect((await old.client.execute(preservedObjects)).rows).toEqua…
+       |                                                                 ^
+    263|       expect(
+    264|         (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/sqlite/deletion-eligibility.test.ts > backfills indexed replay provenance from existing threads in the shipped migration
+LibsqlError: SQLITE_ERROR: index run_events_reached_idx already exists
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+Caused by: SqliteError: index run_events_reached_idx already exists
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  2 failed | 240 passed (242)
+   Start at  23:49:08
+   Duration  68.74s (tests 71%, import 26%, transform 3%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\infrastructure
+

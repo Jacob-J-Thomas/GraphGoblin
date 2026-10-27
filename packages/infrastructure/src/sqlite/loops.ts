@@ -85,10 +85,26 @@ export class SqliteLoopRepository implements LoopRepository {
   // ---------------------------------------------------------------------------
 
   async getVersion(versionId: string): Promise<LoopVersionRecord | undefined> {
-    const row = await this.db.query.loopVersions.findFirst({
-      where: eq(loopVersions.id, versionId),
-    });
-    return row ? loopVersionFromRow(row) : undefined;
+    // Decode only the stored definition here, outside Drizzle's JSON column decoder. A syntax
+    // error makes this definition unavailable; SQL/transport errors must still propagate.
+    const [row] = await this.db
+      .select({
+        ...getTableColumns(loopVersions),
+        definition: sql<string>`${loopVersions.definition}`,
+      })
+      .from(loopVersions)
+      .where(eq(loopVersions.id, versionId))
+      .limit(1);
+    if (!row) return undefined;
+    let definition: LoopDefinition;
+    try {
+      definition = JSON.parse(row.definition) as LoopDefinition;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      return undefined;
+    }
+    // Schema validation and retired-definition diagnostics remain with the engine's policy.
+    return loopVersionFromRow({ ...row, definition });
   }
 
   async getLatestPublished(loopId: string): Promise<LoopVersionRecord | undefined> {

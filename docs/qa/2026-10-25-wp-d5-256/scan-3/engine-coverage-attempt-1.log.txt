@@ -1,0 +1,62 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (42 tests | 1 failed) 2804ms
+   ❯ adversarial engine invariants (42)
+     × ADV-013: a non-resumable failure cannot leave its terminal status 43ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-013: a non-resumable failure cannot leave its terminal status
+AssertionError: expected RecoveryRefusedError: The recorded lifecy… { …(2) } to match object { code: 'FAILURE_NOT_RESUMABLE' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "FAILURE_NOT_RESUMABLE",
++ RecoveryRefusedError {
++   "code": "RECOVERY_STALE",
+  }
+
+ ❯ src/adversarial.test.ts:459:41
+    457|       failure: { code: 'INTERNAL_ERROR', message: 'not resumable', res…
+    458|     });
+    459|     await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code:…
+       |                                         ^
+    460|     await e.manager.waitForIdle();
+    461|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 60 passed (61)
+      Tests  1 failed | 1751 passed (1752)
+   Start at  03:10:41
+   Duration  209.47s (tests 64%, import 33%, transform 2%, worker 1%)
+
+     Import  152 modules were evaluated 235 times · 57.07s total, 33% of tracked time
+             ~20.16s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.71% ( 3576/3736 )
+Branches     : 91.24% ( 2960/3244 )
+Functions    : 97.75% ( 652/667 )
+Lines        : 97.02% ( 3260/3360 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

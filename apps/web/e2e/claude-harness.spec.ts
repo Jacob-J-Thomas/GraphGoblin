@@ -1,4 +1,4 @@
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, RunSnapshotSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { control, expect, openAdvanced, openNode, test } from './fixtures.js';
 
@@ -661,8 +661,14 @@ test('Claude inspector shows requested effort and policy artifact, and preserves
     code: 'HARNESS_TERMINATION_UNCONFIRMED',
     resumable: false,
   });
-  const resume = await request.post(instance.url + '/runs/' + failedRun.id + '/resume');
-  expect(resume.status()).not.toBe(200);
+  const observedSeq = RunSnapshotSchema.parse(
+    await (await request.get(instance.url + '/runs/' + failedRun.id)).json(),
+  ).recovery.observedSeq;
+  const resume = await request.post(instance.url + '/runs/' + failedRun.id + '/resume', {
+    data: { observedSeq },
+  });
+  expect(resume.status()).toBe(409);
+  expect(await resume.json()).toMatchObject({ code: 'RUN_CANCELLED' });
   await expect(
     page.getByText('Failed: HARNESS_TERMINATION_UNCONFIRMED', { exact: true }),
   ).toBeVisible();

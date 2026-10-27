@@ -25,6 +25,9 @@ describe('SQLite history queries', () => {
   });
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
+    await handle.client.execute('DROP INDEX runs_replay_intent_idx');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_observed_seq');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_node_id');
     // Rewind migration 0022 together with the older ledger used by this historical fixture.
     for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
     await handle.client.execute('DROP TRIGGER runs_deletion_activity');
@@ -47,6 +50,7 @@ describe('SQLite history queries', () => {
     if (!historyMigration) throw new Error('Missing shipped history-index migration');
     // Rewind structure as well as the ledger before replaying newer migrations.
     await handle.client.execute('DROP TABLE event_receipts');
+    await handle.client.execute('DROP INDEX run_events_reached_idx');
     await handle.client.execute('DROP INDEX run_events_gate_idx');
     await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
     const removed = await handle.client.execute({

@@ -4,6 +4,7 @@ import { resolve, join } from 'node:path';
 import {
   CURRENT_DEFINITION_FORMAT,
   RunRecordSchema,
+  RunSnapshotSchema,
   RunEventSchema,
   ContextThreadSchema,
   type RunEvent,
@@ -36,7 +37,7 @@ test('exact recorded execution evidence across inspector, list and API (#255)', 
   }
   const history = new Map<string, RunEvent[]>();
   for (const [name, started] of Object.entries(cases)) {
-    const run = RunRecordSchema.parse(await (await request.get('/runs/' + started.id)).json());
+    const run = RunSnapshotSchema.parse(await (await request.get('/runs/' + started.id)).json());
     const events = RunEventSchema.array().parse(
       ((await (await request.get('/runs/' + run.id + '/events')).json()) as { items: unknown })
         .items,

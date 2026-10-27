@@ -1,0 +1,59 @@
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 3c68c40369a23841
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 117714e8e86a2c67
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 99ca1c11ef46b291
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 8f9511f09a8f4d6f
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing ad38bec187e75bae
+@graphgoblin/engine:typecheck: cache miss, executing a07902edf33defad
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: cache miss, executing 724f18d13d48a710
+@graphgoblin/infrastructure:build: cache miss, executing f4424357a8cbf5d0
+@graphgoblin/adapter-codex:typecheck: cache miss, executing bf27b87ae9ad9b82
+@graphgoblin/adapter-jev:build: cache miss, executing 748d3022c326ce17
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 761f16715387df90
+@graphgoblin/infrastructure:typecheck: cache miss, executing 1fa1b1ad1f0c5dad
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: cache miss, executing c390a5a8b0698c7c
+@graphgoblin/api:typecheck: cache miss, executing 70508faacdb60687
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: cache miss, executing 72a251f91ab08750
+@graphgoblin/api-client:typecheck: cache miss, executing c6543328b99697ed
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: cache miss, executing 70a762d90e72a74d
+@graphgoblin/mcp:build: cache miss, executing a2631ef6e2b57ff5
+@graphgoblin/mcp:typecheck: cache miss, executing 33950bceda5b8772
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing cb0d1340bef51b1c
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/prompt-evidence-matrix.test.ts(100,5): error TS2741: Property 'recoveryFacts' is missing in type '{ append(id: string, drafts: readonly EventDraft[], options: { expectedLastSeq?: number; requireRun?: boolean; } | undefined): Promise<({ type: "delivery.queued"; delivery: { id: string; ... 9 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 30 more ... | { ...; })[]>; r...' but required in type 'EventStorePort'.
+@graphgoblin/api:typecheck: src/recovery-eligibility.test.ts(242,9): error TS1117: An object literal cannot have multiple properties with the same name.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-256\apps\api) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    16 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    32.705s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

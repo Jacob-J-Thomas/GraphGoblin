@@ -61,7 +61,9 @@ export const threadHistoryLoop: LoopDefinitionInput = {
 };
 /** Physical disposable store, retained for orchestrator inspection. No provider calls. */
 export async function createThreadHistoryFixture(webDist?: string) {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-'));
+  const dataDir = await mkdtemp(
+    join(tmpdir(), process.env['GG_TEST_DATA_PREFIX'] ?? 'gg-wp-g1-116-'),
+  );
   let calls = 0;
   let release!: () => void;
   let entered!: () => void;

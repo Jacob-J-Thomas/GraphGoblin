@@ -1,4 +1,4 @@
-import { RunRecordSchema } from '@graphgoblin/contracts';
+import { RunRecordSchema, RunSnapshotSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { approvalLoop, control, expect, test } from './fixtures.js';
 
@@ -69,7 +69,7 @@ for (const viewport of [
     await expect
       .poll(
         async () =>
-          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+          RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
         { timeout: 30_000, intervals: [250, 500, 1000] },
       )
       .toBe('succeeded');
@@ -135,7 +135,7 @@ for (const viewport of [
     await expect
       .poll(
         async () =>
-          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+          RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
         { timeout: 30_000, intervals: [250, 500, 1000] },
       )
       .toBe('waiting');
@@ -180,7 +180,7 @@ test('the keyboard stays inside an expanded value that a live event replaces (#2
   expect(started.status()).toBe(202);
   const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
   const run = async () =>
-    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+    RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
   await expect
     .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
     .toBe('waiting');
@@ -235,7 +235,7 @@ test('oversized history keeps bounded cached rows and loads exact event and thre
   await expect
     .poll(
       async () =>
-        RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+        RunSnapshotSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
       { timeout: 30_000 },
     )
     .toBe('waiting');

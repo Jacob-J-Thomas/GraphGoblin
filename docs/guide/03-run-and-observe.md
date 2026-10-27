@@ -120,7 +120,7 @@ Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; ha
 | `cancelled` | Inspect completed side effects before starting again.                                                              |
 | `exhausted` | The graph gave up repetition. Inspect the gate's stopping limit and returned work value.                           |
 
-The last four statuses are terminal for streaming and waiting. Only a node failure with `failure.resumable: true` can resume. A terminal Failure or Exhausted exit cannot resume. Each run pins its definition (its `versionId` and `pinned`), starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
+The last four statuses are terminal for streaming and waiting. Use the current server `recovery.resume` decision to determine whether Resume is available; the failure flag alone is not permission. A terminal Failure or Exhausted exit cannot resume. Each run pins its definition (its `versionId` and `pinned`), starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
 
 ## Use the inspector
 
@@ -136,15 +136,23 @@ Gate **Evaluation details** show previous/current passes, maximum passes, option
 
 When **Input requested** appears, answer the prompt using the generated form and click **Submit input**. Signal waits show **Send signal**. Timers, heartbeats, and child waits show the reason and any wake time.
 
-Use **Pause** to request a hold; an executing node can finish before the next node is held. **Resume** appears for paused runs. A run paused while it was waiting (for input, a signal, a timer, or a child run) goes back to that same wait with its deadlines intact; a timer that came due meanwhile fires right after the resume. **Cancel run** persists a cancellation request and stops work cooperatively; wait for cancelled status and remember that cancellation does not undo filesystem or external side effects.
+Use **Pause** to request a hold; an executing node can finish before the next node is held. **Resume** continues paused runs and eligible failures with the same run ID. Its visible explanation says why an unavailable action cannot run. A run paused while it was waiting (for input, a signal, a timer, or a child run) goes back to that same wait with its deadlines intact; a timer that came due meanwhile fires right after the resume. **Cancel run** persists a cancellation request and stops work cooperatively; wait for cancelled status and remember that cancellation does not undo filesystem or external side effects.
 
-On a failed run the inspector offers recovery only where it explains the choice: **Recover script** for an uncertain script (see [Act on failure reasons](#act-on-failure-reasons)) and **Start fresh session for <node>** for a missing provider session ([troubleshooting](07-troubleshooting.md)). For any other resumable failure, after fixing its external cause, use `resume_run` through MCP or this API request. In Bash:
+If recovery says the lifecycle and status are still being synchronized, refresh and review again. The run stays visible while that durable failure is projected; Resume and Replay cannot use the older status to bypass script consent. An unreadable pinned definition likewise keeps the run visible and explains why recovery is unavailable.
+
+After fixing an external cause, review the inspector's server eligibility. A pointer multi-click is one choice; review any new failure before resuming again. Resume retains this run and retries its failed child in place when the parent owns recovery; the child links the exact parent. That ownership stays with the parent while its accepted recovery is pending. Consent covers the reviewed child failure; a later uncertain failure needs fresh review and consent. Uncertain scripts require **Recover script** and explicit retry consent. Missing sessions use **Start fresh session** on the failed inference run. Opening or cancelling a recovery dialog runs nothing.
+
+API callers first read `recovery` from `GET /runs/{id}` and review its decisions, then send that `observedSeq`. A stale or repeated choice returns 409 `RECOVERY_STALE`. These examples perform the read; run the POST only after reviewing eligibility. In Bash:
 
 <!-- guide-example: resume-bash -->
 
 ```bash
 RUN_ID='<run-id>'
-curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/resume"
+SNAPSHOT=$(curl -sS "http://127.0.0.1:4747/runs/$RUN_ID")
+printf '%s\n' "$SNAPSHOT"
+SEQ=$(printf '%s' "$SNAPSHOT" | node -pe "JSON.parse(require('fs').readFileSync(0, 'utf8')).recovery.observedSeq")
+curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/resume" \
+  -H 'Content-Type: application/json' -d "{\"observedSeq\":$SEQ}"
 ```
 
 In PowerShell:
@@ -153,13 +161,16 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
+$snapshot = Invoke-RestMethod -Uri "http://127.0.0.1:4747/runs/$runId"
+$snapshot.recovery | Format-List
+$body = @{ observedSeq = $snapshot.recovery.observedSeq } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
-  -ContentType 'application/json' -Body '{}'
+  -ContentType 'application/json' -Body $body
 ```
 
-Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The example therefore sends an empty JSON object.
+Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The examples therefore send the observed JSON command.
 
-Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
+Pause and input retain their state-conflict errors. Resume and Replay return typed current eligibility refusals; see [ADR-0061](../decisions/ADR-0061-recovery-eligibility.md) for the complete list.
 
 Editing the loop does not change a failed run's pinned config. For a config or graph fix, publish a corrected version and start a new run. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.
 
@@ -167,14 +178,17 @@ Child runs reconstruct like any other run: their first event, `run.queued`, carr
 
 ## Replay from a node
 
-To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned definition (a draft run's snapshot included), and nothing before the node runs again. The source run is never changed and may be in any status. In Bash:
+To debug a node, fork a new run at it with the same input it had: the fork starts from the recorded thread just before that node first started, on the same pinned definition. The source may be in any status. Nothing before the chosen node runs again unless the graph routes back to it. **Replay runs the path again for a new run:** scripts, provider turns, child runs and deliveries after that node run again. The inspector's picker names the effectful nodes that can be reached. The source's effects, result, history and own recorded deliveries stay unchanged; the fork performs its own exit delivery. A path into the current uncertain script requires an additional explicit confirmation. This example replays **summarise**, so it calls the provider again. In Bash:
 
 <!-- guide-example: replay-bash -->
 
 ```bash
 RUN_ID='<run-id>'
+SNAPSHOT=$(curl -sS "http://127.0.0.1:4747/runs/$RUN_ID")
+printf '%s\n' "$SNAPSHOT"
+SEQ=$(printf '%s' "$SNAPSHOT" | node -pe "JSON.parse(require('fs').readFileSync(0, 'utf8')).recovery.observedSeq")
 curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/replay" \
-  -H 'Content-Type: application/json' -d '{"nodeId":"summarise"}'
+  -H 'Content-Type: application/json' -d "{\"nodeId\":\"summarise\",\"observedSeq\":$SEQ}"
 ```
 
 In PowerShell:
@@ -183,13 +197,16 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
+$snapshot = Invoke-RestMethod -Uri "http://127.0.0.1:4747/runs/$runId"
+$snapshot.recovery | Format-List
+$body = @{ nodeId = 'summarise'; observedSeq = $snapshot.recovery.observedSeq } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
-  -ContentType 'application/json' -Body '{"nodeId":"summarise"}'
+  -ContentType 'application/json' -Body $body
 ```
 
-The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId`, `nodeId` and the reviewed `observedSeq`, then `wait_for_run` using the new ID. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
-> The inspector offers **Replay** from the failed node inside **Recover script**. For any other run, replay through the API or MCP.
+The new inspector shows its exact run ID and links its source. Repeat clicks and stale tabs cannot create a second fork from the same observed intent. A repeated Replay returns `RECOVERY_STALE` with the existing fork ID; open that fork instead. Admission and intent deduplication commit together, and the source log stays unchanged.
 
 ## Stream events and reconnect
 

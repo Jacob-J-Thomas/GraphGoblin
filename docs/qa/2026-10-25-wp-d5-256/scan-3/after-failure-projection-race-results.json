@@ -1,0 +1,271 @@
+[
+  {
+    "scenario": "running-replay",
+    "snapshotStatus": "running",
+    "observedSeq": 7,
+    "durableFailureSeq": 7,
+    "resume": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "replay": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "refusal": {
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "after": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.failed",
+          "seq": 7
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "paused-replay",
+    "snapshotStatus": "paused",
+    "observedSeq": 8,
+    "durableFailureSeq": 8,
+    "resume": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "replay": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "refusal": {
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "after": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "paused-resume",
+    "snapshotStatus": "paused",
+    "observedSeq": 8,
+    "durableFailureSeq": 8,
+    "resume": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "replay": {
+      "allowed": false,
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "refusal": {
+      "code": "RECOVERY_STALE",
+      "message": "The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices."
+    },
+    "after": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        }
+      ]
+    },
+    "afterRestart": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        }
+      ],
+      "recovery": {
+        "observedSeq": 8,
+        "resume": {
+          "allowed": false,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "effects": [
+              {
+                "nodeId": "effect",
+                "label": "Effect",
+                "kind": "script"
+              }
+            ],
+            "action": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+            }
+          },
+          {
+            "nodeId": "effect",
+            "label": "Effect",
+            "effects": [
+              {
+                "nodeId": "effect",
+                "label": "Effect",
+                "kind": "script"
+              }
+            ],
+            "action": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+            }
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "effects": [],
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            }
+          }
+        ],
+        "scriptConsent": {
+          "failureSeq": 8,
+          "nodeId": "effect"
+        }
+      }
+    }
+  }
+]

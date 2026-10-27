@@ -13,6 +13,10 @@ import {
   GateEvidenceSchema,
   RunFailureSchema,
   RunRecordSchema,
+  RunSnapshotSchema,
+  RunRecoverySchema,
+  RecoveryRefusalCodeSchema,
+  UlidSchema,
   RunStatusSchema,
   WaitSpecSchema,
 } from '@graphgoblin/contracts';
@@ -44,6 +48,21 @@ export const WaitConflictSchema = z.object({
 });
 openApiRegistry.add(WaitConflictSchema, { id: 'WaitConflict' });
 
+export const RecoveryConflictSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.literal(409),
+  code: RecoveryRefusalCodeSchema,
+  detail: z.string(),
+  replayRunId: UlidSchema.optional(),
+});
+openApiRegistry.add(RecoveryConflictSchema, { id: 'RecoveryConflict' });
+export const RecoveryUnavailableSchema = RecoveryConflictSchema.extend({
+  status: z.literal(503),
+  code: z.literal('SHUTTING_DOWN'),
+});
+openApiRegistry.add(RecoveryUnavailableSchema, { id: 'RecoveryUnavailable' });
+
 const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [ClassifierModelSummarySchema, 'ClassifierModelSummary'],
   [ClassifierModelPutSchema, 'ClassifierModelPut'],
@@ -56,6 +75,8 @@ const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [RunFailureSchema, 'RunFailure'],
   [WaitSpecSchema, 'WaitSpec'],
   [RunRecordSchema, 'RunRecord'],
+  [RunSnapshotSchema, 'RunSnapshot'],
+  [RunRecoverySchema, 'RunRecovery'],
   [RunEventSchema, 'RunEvent'],
   [EvaluationDiagnosticSchema, 'EvaluationDiagnostic'],
   [GateEvidenceSchema, 'GateEvidence'],

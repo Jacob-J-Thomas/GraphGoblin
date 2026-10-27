@@ -1,0 +1,1 @@
+CREATE INDEX `run_events_reached_idx` ON `run_events` (`run_id`,`node_id`,`seq`) WHERE "run_events"."type" = 'node.started';

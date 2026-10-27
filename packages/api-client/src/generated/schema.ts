@@ -1032,7 +1032,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["RunRecord"];
+                        "application/json": components["schemas"]["RunSnapshot"];
                     };
                 };
             };
@@ -1265,7 +1265,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Resume a run */
+        /** Resume the observed eligible run in place */
         post: {
             parameters: {
                 query?: never;
@@ -1275,7 +1275,15 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": {
+                        observedSeq: number;
+                        /** @enum {boolean} */
+                        retryUncertainScript?: true | undefined;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -1284,6 +1292,24 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RecoveryConflict"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RecoveryUnavailable"];
                     };
                 };
             };
@@ -1460,7 +1486,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Fork a new run at a node, with the thread as it was just before that node */
+        /**
+         * Fork a new run at a node, with the thread as it was just before that node
+         * @description Replay runs again from the selected node as a new run. Scripts, provider turns, child runs and deliveries on its path run again for that new run. Review recovery.replay[].effects for knowable nodes. The source effects, results, history and own recorded deliveries remain unchanged. Paths into the current uncertain script require explicit retryUncertainScript consent. The observed intent is deduplicated atomically with fork admission.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -1473,6 +1502,9 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        observedSeq: number;
+                        /** @enum {boolean} */
+                        retryUncertainScript?: true | undefined;
                         nodeId: string;
                     };
                 };
@@ -1487,6 +1519,24 @@ export interface paths {
                         "application/json": {
                             run: components["schemas"]["RunRecord"];
                         };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RecoveryConflict"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RecoveryUnavailable"];
                     };
                 };
             };
@@ -2935,6 +2985,26 @@ export interface components {
             code: "WAIT_MISMATCH" | "INVALID_STATE";
             detail?: string | undefined;
         };
+        RecoveryConflictInput: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+            detail: string;
+            replayRunId?: string | undefined;
+        };
+        RecoveryUnavailableInput: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 503;
+            /** @constant */
+            code: "SHUTTING_DOWN";
+            detail: string;
+            replayRunId?: string | undefined;
+        };
         ClassifierModelSummaryInput: {
             id: string;
             displayName: string;
@@ -4250,6 +4320,180 @@ export interface components {
             finalizedAt?: string | undefined;
             lastEventSeq: number;
         };
+        RunSnapshotInput: {
+            id: string;
+            ownerId: string;
+            loopId: string;
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits?: (number | null) | undefined;
+                    /** @default null */
+                    runDeadlineSeconds?: (number | null) | undefined;
+                    /** @default null */
+                    structuredTimeoutMs?: (number | null) | undefined;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
+            parentRunId?: string | undefined;
+            invocationId: string;
+            status: components["schemas"]["RunStatusInput"];
+            currentNodeId?: string | undefined;
+            iteration: number;
+            waiting?: components["schemas"]["WaitSpecInput"] | undefined;
+            /** Format: date-time */
+            cancelRequestedAt?: string | undefined;
+            /** Format: date-time */
+            pausedAt?: string | undefined;
+            failure?: components["schemas"]["RunFailureInput"] | undefined;
+            /** @enum {string} */
+            outcome?: ("success" | "failure" | "exhausted") | undefined;
+            result?: components["schemas"]["JsonValueInput"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | undefined;
+            /** Format: date-time */
+            finishedAt?: string | undefined;
+            /** Format: date-time */
+            finalizedAt?: string | undefined;
+            lastEventSeq: number;
+            recovery: components["schemas"]["RunRecoveryInput"];
+        };
+        RunRecoveryInput: {
+            observedSeq: number;
+            resume: {
+                /** @constant */
+                allowed: true;
+            } | {
+                /** @constant */
+                allowed: false;
+                /** @enum {string} */
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                message: string;
+                parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
+            };
+            replayDefault: {
+                /** @constant */
+                allowed: true;
+            } | {
+                /** @constant */
+                allowed: false;
+                /** @enum {string} */
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                message: string;
+                parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
+            };
+            replay: {
+                nodeId: string;
+                label: string;
+                action: {
+                    /** @constant */
+                    allowed: true;
+                } | {
+                    /** @constant */
+                    allowed: false;
+                    /** @enum {string} */
+                    code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                    message: string;
+                    parentRunId?: string | undefined;
+                    replayRunId?: string | undefined;
+                };
+                effects: {
+                    nodeId: string;
+                    label: string;
+                    /** @enum {string} */
+                    kind: "script" | "inference" | "subloop" | "delivery";
+                }[];
+            }[];
+            scriptConsent?: {
+                failureSeq: number;
+                nodeId: string;
+            } | undefined;
+            replayOf?: {
+                runId: string;
+                nodeId: string;
+            } | undefined;
+        };
         RunEventInput: {
             runId: string;
             seq: number;
@@ -4509,6 +4753,15 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.resumed";
+            /** @constant */
+            retryUncertainScript?: true | undefined;
+            childRecovery?: {
+                runId: string;
+                failureSeq: number;
+                observedSeq: number;
+                /** @constant */
+                retryUncertainScript?: true | undefined;
+            } | undefined;
             actor: {
                 /** @enum {string} */
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
@@ -5093,6 +5346,26 @@ export interface components {
             /** @enum {string} */
             code: "WAIT_MISMATCH" | "INVALID_STATE";
             detail?: string | undefined;
+        };
+        RecoveryConflict: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+            detail: string;
+            replayRunId?: string | undefined;
+        };
+        RecoveryUnavailable: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 503;
+            /** @constant */
+            code: "SHUTTING_DOWN";
+            detail: string;
+            replayRunId?: string | undefined;
         };
         ClassifierModelSummary: {
             id: string;
@@ -6392,6 +6665,180 @@ export interface components {
             finalizedAt?: string | undefined;
             lastEventSeq: number;
         };
+        RunSnapshot: {
+            id: string;
+            ownerId: string;
+            loopId: string;
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits: number | null;
+                    /** @default null */
+                    runDeadlineSeconds: number | null;
+                    /** @default null */
+                    structuredTimeoutMs: number | null;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
+            parentRunId?: string | undefined;
+            invocationId: string;
+            status: components["schemas"]["RunStatus"];
+            currentNodeId?: string | undefined;
+            iteration: number;
+            waiting?: components["schemas"]["WaitSpec"] | undefined;
+            /** Format: date-time */
+            cancelRequestedAt?: string | undefined;
+            /** Format: date-time */
+            pausedAt?: string | undefined;
+            failure?: components["schemas"]["RunFailure"] | undefined;
+            /** @enum {string} */
+            outcome?: ("success" | "failure" | "exhausted") | undefined;
+            result?: components["schemas"]["JsonValue"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | undefined;
+            /** Format: date-time */
+            finishedAt?: string | undefined;
+            /** Format: date-time */
+            finalizedAt?: string | undefined;
+            lastEventSeq: number;
+            recovery: components["schemas"]["RunRecovery"];
+        };
+        RunRecovery: {
+            observedSeq: number;
+            resume: {
+                /** @constant */
+                allowed: true;
+            } | {
+                /** @constant */
+                allowed: false;
+                /** @enum {string} */
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                message: string;
+                parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
+            };
+            replayDefault: {
+                /** @constant */
+                allowed: true;
+            } | {
+                /** @constant */
+                allowed: false;
+                /** @enum {string} */
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                message: string;
+                parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
+            };
+            replay: {
+                nodeId: string;
+                label: string;
+                action: {
+                    /** @constant */
+                    allowed: true;
+                } | {
+                    /** @constant */
+                    allowed: false;
+                    /** @enum {string} */
+                    code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                    message: string;
+                    parentRunId?: string | undefined;
+                    replayRunId?: string | undefined;
+                };
+                effects: {
+                    nodeId: string;
+                    label: string;
+                    /** @enum {string} */
+                    kind: "script" | "inference" | "subloop" | "delivery";
+                }[];
+            }[];
+            scriptConsent?: {
+                failureSeq: number;
+                nodeId: string;
+            } | undefined;
+            replayOf?: {
+                runId: string;
+                nodeId: string;
+            } | undefined;
+        };
         RunEvent: {
             runId: string;
             seq: number;
@@ -6651,6 +7098,15 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.resumed";
+            /** @constant */
+            retryUncertainScript?: true | undefined;
+            childRecovery?: {
+                runId: string;
+                failureSeq: number;
+                observedSeq: number;
+                /** @constant */
+                retryUncertainScript?: true | undefined;
+            } | undefined;
             actor: {
                 /** @enum {string} */
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";

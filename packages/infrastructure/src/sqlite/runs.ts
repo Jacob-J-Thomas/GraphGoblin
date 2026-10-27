@@ -149,13 +149,17 @@ export class SqliteRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
-    guard?: { waitId: string },
+    guard?: { waitId?: string; observedSeq?: number },
   ): Promise<RunRecord | undefined> {
     return this.db.transaction(async (tx) => {
       const [row] = await tx.select(rawRunColumns).from(runs).where(eq(runs.id, runId)).limit(1);
       if (!row) throw new Error(`run ${runId} not found`);
       const current = decodeRunRecord(row);
-      if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+      if (
+        !from.includes(current.status) ||
+        (guard?.waitId !== undefined && current.waiting?.waitId !== guard.waitId) ||
+        (guard?.observedSeq !== undefined && current.lastEventSeq !== guard.observedSeq)
+      )
         return undefined;
       RunRecordSchema.parse({ ...current, ...changes });
       const columns = toColumns(changes, current);
@@ -167,7 +171,10 @@ export class SqliteRunRepository implements RunRepository {
           and(
             eq(runs.id, runId),
             inArray(runs.status, [...from]),
-            guard ? sql`json_extract(${runs.waiting}, '$.waitId') = ${guard.waitId}` : undefined,
+            guard?.waitId !== undefined
+              ? sql`json_extract(${runs.waiting}, '$.waitId') = ${guard.waitId}`
+              : undefined,
+            guard?.observedSeq !== undefined ? eq(runs.lastEventSeq, guard.observedSeq) : undefined,
           ),
         )
         .returning(rawRunColumns);

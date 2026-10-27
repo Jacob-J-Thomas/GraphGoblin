@@ -140,8 +140,9 @@ async function through(index: number) {
   });
   return handle;
 }
-it('upgrades main observation indexes through eligibility and ownership without losing history', async () => {
+it('upgrades main observation indexes through eligibility, ownership and Replay intents without losing history', async () => {
   const handle = await through(21);
+  const shippedCount = readMigrationFiles({ migrationsFolder: SHIPPED_MIGRATIONS }).length;
   const thread = sampleThread();
   await handle.client.execute({
     sql: `INSERT INTO runs
@@ -163,7 +164,7 @@ it('upgrades main observation indexes through eligibility and ownership without 
   const indexes = (
     await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")
   ).rows;
-  expect(await handle.pendingMigrations()).toBe(2);
+  expect(await handle.pendingMigrations()).toBe(shippedCount - 22);
   await handle.migrate();
   expect((await handle.client.execute('SELECT * FROM runs')).rows).toEqual([
     {
@@ -171,15 +172,19 @@ it('upgrades main observation indexes through eligibility and ownership without 
       deletion_approval: null,
       deletion_revision: 0,
       replay_source_run_id: null,
+      replay_intent_node_id: null,
+      replay_intent_observed_seq: null,
     },
   ]);
-  expect(
-    (await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")).rows,
-  ).toEqual(indexes);
+  const upgradedIndexes = (
+    await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")
+  ).rows;
+  expect(upgradedIndexes.filter((row) => row.name !== 'run_events_reached_idx')).toEqual(indexes);
+  expect(upgradedIndexes.some((row) => row.name === 'run_events_reached_idx')).toBe(true);
   expect((await handle.client.execute('SELECT * FROM run_resources')).rows).toEqual([]);
   expect((await handle.client.execute('SELECT * FROM workspace_references')).rows).toEqual([]);
   const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-  expect(ledger).toHaveLength(24);
+  expect(ledger).toHaveLength(shippedCount);
   await handle.migrate();
   expect(await handle.pendingMigrations()).toBe(0);
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(ledger);

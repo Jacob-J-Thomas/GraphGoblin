@@ -65,7 +65,19 @@ test('missing inherited session: decline, reload, choose fresh and follow it to 
   await expect(
     page.getByText(/prior provider conversation will not be carried over/),
   ).toBeVisible();
-  expect((await request.post(`/runs/${run.id}/resume`)).status()).toBe(409);
+  expect(
+    (
+      await request.post(`/runs/${run.id}/resume`, {
+        data: {
+          observedSeq: (
+            (await (await request.get(`/runs/${run.id}`)).json()) as {
+              recovery: { observedSeq: number };
+            }
+          ).recovery.observedSeq,
+        },
+      })
+    ).status(),
+  ).toBe(409);
   await page.reload();
   await expect(page.getByText('Failed: HARNESS_SESSION_MISSING')).toBeVisible();
   const choose = page.getByRole('button', { name: 'Start fresh session for worker' });

@@ -1,0 +1,133 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+      Coverage enabled with v8
+
+child admission kill: delay=0ms snapshots=20936 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 29.87750000000051ms
+child admission kill: delay=5ms snapshots=22144 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 23.244699999999284ms
+child admission kill: delay=25ms snapshots=22450 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 20.410400000000664ms
+ ❯ src/shutdown-console.test.ts (3 tests | 2 failed) 29126ms
+   × one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes 6489ms
+   × a later terminal Ctrl+C explicitly forces the running Codex turn 6920ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+[before-receipt] fixture
+[before-receipt] key
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+{"status":"draft","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"level":30,"time":1793070174204,"pid":32116,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5730"}
+{"level":30,"time":1793070174205,"pid":32116,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5730,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-DsJVbq","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793070174235,"pid":32116,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1793070174240,"pid":32116,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":4.647300000000087,"msg":"request completed"}
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-console.test.ts > one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes
+Error: The gateway exited with code 0 after one Ctrl+C instead of draining
+ ❯ src/shutdown-console.test.ts:268:19
+    266|           await Promise.race([exit, new Promise((resolve) => setTimeou…
+    267|           if (host.exitCode !== null)
+    268|             throw new Error(
+       |                   ^
+    269|               `The gateway exited with code ${host.exitCode} after one…
+    270|             );
+ ❯ src/shutdown-console.test.ts:265:23
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ Object.draining src/shutdown-console.test.ts:264:7
+ ❯ src/shutdown-console.test.ts:286:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/shutdown-console.test.ts > a later terminal Ctrl+C explicitly forces the running Codex turn
+Error: The gateway exited with code 0 after one Ctrl+C instead of draining
+ ❯ src/shutdown-console.test.ts:268:19
+    266|           await Promise.race([exit, new Promise((resolve) => setTimeou…
+    267|           if (host.exitCode !== null)
+    268|             throw new Error(
+       |                   ^
+    269|               `The gateway exited with code ${host.exitCode} after one…
+    270|             );
+ ❯ src/shutdown-console.test.ts:265:23
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ Object.draining src/shutdown-console.test.ts:264:7
+ ❯ src/shutdown-console.test.ts:311:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 101 passed | 2 skipped (104)
+      Tests  2 failed | 1668 passed | 12 skipped (1682)
+   Start at  21:57:03
+   Duration  528.39s (tests 82%, import 17%)
+
+    Isolate  104 workers spawned · ~243ms startup each (spawn + environment, per file)
+             at least ~12.37s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 94.74% ( 3103/3275 )
+Branches     : 90.79% ( 2023/2228 )
+Functions    : 91.7% ( 575/627 )
+Lines        : 96.22% ( 2831/2942 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

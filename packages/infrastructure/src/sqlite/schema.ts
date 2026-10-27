@@ -68,6 +68,9 @@ export const runs = sqliteTable(
     loopId: text('loop_id').notNull(),
     versionId: text('version_id').notNull(),
     parentRunId: text('parent_run_id'),
+    // #256 adds the observed intent to the canonical #412 replay-source relationship.
+    replayIntentNodeId: text('replay_intent_node_id'),
+    replayIntentObservedSeq: integer('replay_intent_observed_seq'),
     /** Indexed replay provenance; written with the initial thread at admission. */
     replaySourceRunId: text('replay_source_run_id'),
     invocationId: text('invocation_id').notNull(),
@@ -114,6 +117,15 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    uniqueIndex('runs_replay_intent_idx').on(
+      t.replaySourceRunId,
+      t.replayIntentNodeId,
+      t.replayIntentObservedSeq,
+    ),
+    check(
+      'runs_replay_intent_complete',
+      sql`(${t.replayIntentNodeId} IS NULL AND ${t.replayIntentObservedSeq} IS NULL) OR (${t.replaySourceRunId} IS NOT NULL AND ${t.replayIntentNodeId} IS NOT NULL AND ${t.replayIntentObservedSeq} IS NOT NULL AND ${t.replayIntentObservedSeq} >= 0)`,
+    ),
     index('runs_replay_source_idx').on(t.replaySourceRunId),
     index('runs_deletion_approval_idx').on(t.deletionApproval),
     // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
@@ -148,6 +160,9 @@ export const runEvents = sqliteTable(
   (t) => [
     primaryKey({ columns: [t.runId, t.seq] }),
     index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+    index('run_events_reached_idx')
+      .on(t.runId, t.nodeId, t.seq)
+      .where(sql`${t.type} = 'node.started'`),
     index('run_events_gate_idx').on(t.runId, t.seq).where(gateEvidenceCondition(t)),
     index('run_events_fresh_session_idx').on(t.runId, t.seq).where(freshSessionCondition(t)),
   ],
