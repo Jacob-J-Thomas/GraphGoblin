@@ -1,0 +1,224 @@
+{
+  "checks": [
+    {
+      "name": "while following live, live regions do not announce on every stream batch (at most one change per 2 s)",
+      "ok": false,
+      "detail": {
+        "windowSeconds": 10,
+        "changes": 85,
+        "byPattern": {
+          "Showing events # of the retained window.": 85
+        },
+        "sample": [
+          "Showing events 1802–1881 of the retained window.",
+          "Showing events 1815–1894 of the retained window.",
+          "Showing events 1832–1911 of the retained window.",
+          "Showing events 1847–1926 of the retained window.",
+          "Showing events 1862–1941 of the retained window."
+        ]
+      }
+    },
+    {
+      "name": "keyboard: Tab reaches the Timeline rows; Enter on a completion selects it and keeps focus on that row; its reading note is announced",
+      "ok": true,
+      "detail": {
+        "tabsToFirstRow": 15,
+        "firstFocusedRow": 3232,
+        "selected": 3234,
+        "focusAfterEnter": {
+          "tag": "BUTTON",
+          "seq": 3234,
+          "text": "#3234node.finishedGate (gate) → Again (again), 2 c"
+        },
+        "announcementsAfterEnter": [
+          "Reading the thread at event 3234…"
+        ]
+      }
+    },
+    {
+      "name": "keyboard: Shift+Tab from a Timeline row reaches Follow live within 200 presses",
+      "ok": false,
+      "detail": {
+        "shiftTabOnly": {
+          "presses": 200,
+          "reachedFollowLive": false,
+          "trail": [
+            {
+              "press": 1,
+              "tag": "BUTTON",
+              "seq": 3233,
+              "text": "#3233decision.madeChose Again (again) with express"
+            },
+            {
+              "press": 2,
+              "tag": "BUTTON",
+              "seq": 3232,
+              "text": "#3232node.startedGate (gate) (decision) attempt 1"
+            },
+            {
+              "press": 3,
+              "tag": "BUTTON",
+              "seq": 3231,
+              "text": "#3231node.finishedGrow (grow) → out, 1 change, 1 m"
+            },
+            {
+              "press": 4,
+              "tag": "BUTTON",
+              "seq": 3230,
+              "text": "#3230node.startedGrow (grow) (mutate) attempt 1"
+            },
+            {
+              "press": 5,
+              "tag": "BUTTON",
+              "seq": 3229,
+              "text": "#3229node.finishedGate (gate) → Again (again), 2 c"
+            },
+            {
+              "press": 50,
+              "tag": "BUTTON",
+              "seq": 3184,
+              "text": "#3184node.finishedGate (gate) → Again (again), 2 c"
+            },
+            {
+              "press": 100,
+              "tag": "BUTTON",
+              "seq": 3134,
+              "text": "#3134node.finishedGate (gate) → Again (again), 2 c"
+            },
+            {
+              "press": 150,
+              "tag": "BUTTON",
+              "seq": 3084,
+              "text": "#3084node.finishedGate (gate) → Again (again), 2 c"
+            },
+            {
+              "press": 200,
+              "tag": "BUTTON",
+              "seq": 3034,
+              "text": "#3034node.finishedGate (gate) → Again (again), 2 c"
+            }
+          ]
+        },
+        "viaHome": {
+          "atHome": {
+            "tag": "BUTTON",
+            "seq": 2800,
+            "text": "#2800node.startedGrow (grow) (mutate) attempt 1"
+          },
+          "shiftTabsAfterHome": 3,
+          "reachedFollowLive": true
+        }
+      }
+    },
+    {
+      "name": "keyboard: Follow live reached with Shift+Tab and activated with Enter keeps focus in the Timeline controls",
+      "ok": false,
+      "detail": {
+        "shiftTabsToFollowLive": 200,
+        "focusAfterFollowLive": {
+          "tag": "BODY",
+          "text": "GraphGoblinMenuLoopsRunsEventsSettingsRun 01M5W1D5"
+        }
+      }
+    }
+  ],
+  "liveRegionsWhileFollowing": {
+    "windowSeconds": 10,
+    "changes": 85,
+    "byPattern": {
+      "Showing events # of the retained window.": 85
+    },
+    "sample": [
+      "Showing events 1802–1881 of the retained window.",
+      "Showing events 1815–1894 of the retained window.",
+      "Showing events 1832–1911 of the retained window.",
+      "Showing events 1847–1926 of the retained window.",
+      "Showing events 1862–1941 of the retained window."
+    ]
+  },
+  "ariaFollowing": {
+    "thread": "- region \"Current thread\":\n  - heading \"Current thread\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 648 }\"\n  - button \"Full thread JSON\"",
+    "currentRow": "- button \"#3235 node.started Grow (grow) (mutate) attempt 1\":\n  - text: \"#3235\"\n  - code: node.started\n  - text: Grow (grow) (mutate) attempt 1",
+    "timelineHeading": "Timeline (3235 events, live)"
+  },
+  "ariaSelected": {
+    "thread": "- region \"Thread at event 3234\":\n  - heading \"Thread at event 3234\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 646 }\"\n  - button \"Full thread JSON\"",
+    "patch": "- list \"Patch diff\":\n  - listitem:\n    - text: replace\n    - code: /outputs/gate\n    - text: \"Before { \\\"nodeId\\\": \\\"gate\\\", \\\"value\\\": { \\\"provenance\\\": { \\\"kind\\\": \\\"expression\\\", \\\"provider\\\": null, \\\"classifierId\\\": null, \\\"model\\\": null, \\\"effort\\\": null }, \\\"observation\\\": { \\\"kind\\\": \\\"route\\\", \\\"routeId\\\": \\\"again\\\", \\\"confidence\\\": null, \\\"reasoning\\\": null }, \\\"portId\\\": \\\"again\\\", \\\"gate\\\": { \\\"previousPasses\\\": 645, \\\"passes\\\": 646, \\\"repeatRouteId\\\": \\\"again\\\", \\\"maxPasses\\\": null, \\\"elapsedSeconds\\\": 30.302, \\\"limit\\\": null } }, \\\"at\\\": \\\"2026-10-26T12:02:18.685Z\\\" } After { \\\"no",
+    "currentRow": "- button \"#3234 node.finished Gate (gate) → Again (again), 2 changes, 2 ms\":\n  - text: \"#3234\"\n  - code: node.finished\n  - text: Gate (gate) → Again (again), 2 changes, 2 ms"
+  },
+  "keyboardBackToFollowLive": {
+    "shiftTabOnly": {
+      "presses": 200,
+      "reachedFollowLive": false,
+      "trail": [
+        {
+          "press": 1,
+          "tag": "BUTTON",
+          "seq": 3233,
+          "text": "#3233decision.madeChose Again (again) with express"
+        },
+        {
+          "press": 2,
+          "tag": "BUTTON",
+          "seq": 3232,
+          "text": "#3232node.startedGate (gate) (decision) attempt 1"
+        },
+        {
+          "press": 3,
+          "tag": "BUTTON",
+          "seq": 3231,
+          "text": "#3231node.finishedGrow (grow) → out, 1 change, 1 m"
+        },
+        {
+          "press": 4,
+          "tag": "BUTTON",
+          "seq": 3230,
+          "text": "#3230node.startedGrow (grow) (mutate) attempt 1"
+        },
+        {
+          "press": 5,
+          "tag": "BUTTON",
+          "seq": 3229,
+          "text": "#3229node.finishedGate (gate) → Again (again), 2 c"
+        },
+        {
+          "press": 50,
+          "tag": "BUTTON",
+          "seq": 3184,
+          "text": "#3184node.finishedGate (gate) → Again (again), 2 c"
+        },
+        {
+          "press": 100,
+          "tag": "BUTTON",
+          "seq": 3134,
+          "text": "#3134node.finishedGate (gate) → Again (again), 2 c"
+        },
+        {
+          "press": 150,
+          "tag": "BUTTON",
+          "seq": 3084,
+          "text": "#3084node.finishedGate (gate) → Again (again), 2 c"
+        },
+        {
+          "press": 200,
+          "tag": "BUTTON",
+          "seq": 3034,
+          "text": "#3034node.finishedGate (gate) → Again (again), 2 c"
+        }
+      ]
+    },
+    "viaHome": {
+      "atHome": {
+        "tag": "BUTTON",
+        "seq": 2800,
+        "text": "#2800node.startedGrow (grow) (mutate) attempt 1"
+      },
+      "shiftTabsAfterHome": 3,
+      "reachedFollowLive": true
+    }
+  },
+  "focusAfterFollowLiveThenTab": {
+    "tag": "INPUT",
+    "text": ""
+  }
+}

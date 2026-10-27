@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "name": "SPA navigation from a parent with a selection to its running child: child follows live, current thread advances, no thread?at",
+      "ok": true,
+      "detail": {
+        "c1": {
+          "heading": "Current thread",
+          "n": 32,
+          "status": "running"
+        },
+        "c2": {
+          "heading": "Current thread",
+          "n": 42
+        },
+        "apiN": 44,
+        "childReads": {
+          "run": 10,
+          "observation": 10,
+          "thread": 10
+        }
+      }
+    },
+    {
+      "name": "back on the parent: its selection is restored with the exact thread; the header still tracks the run",
+      "ok": false,
+      "detail": {
+        "heading": "Current thread",
+        "uiVars": {},
+        "apiAt": {},
+        "uiStatus": "waiting",
+        "apiStatus": "waiting",
+        "readsSinceReturn": {
+          "run": 1,
+          "thread": 1,
+          "events-sse": 1,
+          "observation": 1
+        }
+      }
+    },
+    {
+      "name": "after a mid-run reload the parent inspector ends equal to the API (status, count, current thread with the child result)",
+      "ok": true,
+      "detail": {
+        "reloaded": {
+          "heading": "Current thread",
+          "status": "waiting",
+          "timeline": {
+            "total": 7,
+            "stream": "live"
+          }
+        },
+        "parentEnd": {
+          "status": "succeeded",
+          "result": null
+        },
+        "childEnd": {
+          "status": "succeeded",
+          "result": 1500
+        },
+        "settle": {
+          "ok": true,
+          "convergedMs": 132,
+          "ui": {
+            "status": "succeeded",
+            "timeline": {
+              "total": 16,
+              "stream": "complete"
+            },
+            "lastRow": 16,
+            "heading": "Current thread",
+            "vars": {}
+          },
+          "api": {
+            "status": "succeeded",
+            "lastEventSeq": 16,
+            "vars": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "finished child inspector equals the API",
+      "ok": true,
+      "detail": {
+        "settle": {
+          "ok": true,
+          "convergedMs": 1153,
+          "ui": {
+            "status": "succeeded",
+            "timeline": {
+              "total": 7509,
+              "stream": "complete"
+            },
+            "lastRow": 7509,
+            "heading": "Current thread",
+            "vars": {
+              "n": 1500
+            }
+          },
+          "api": {
+            "status": "succeeded",
+            "lastEventSeq": 7509,
+            "vars": {
+              "n": 1500
+            }
+          }
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "requests": {
+    "system": 11,
+    "run": 27,
+    "thread": 22,
+    "events-sse": 5,
+    "observation": 23,
+    "version": 5,
+    "thread?at": 1,
+    "events-page": 1
+  },
+  "threadAtReads": [
+    {
+      "runId": "parent",
+      "at": 6
+    }
+  ],
+  "ok": false
+}
