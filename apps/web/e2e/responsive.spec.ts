@@ -501,7 +501,8 @@ for (const theme of ['dark', 'light'] as const) {
             top: td.getBoundingClientRect().top,
           })),
         );
-        expect(cells.length).toBe(6);
+        // Selection and retention are two additional columns; every cell still stacks coherently.
+        expect(cells.length).toBe(8);
         for (const [i, cell] of cells.entries()) {
           expect(cell.display).not.toBe('table-cell');
           if (i > 0) expect(cell.top).toBeGreaterThan(cells[i - 1]!.top);

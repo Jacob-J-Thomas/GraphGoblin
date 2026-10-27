@@ -39,7 +39,13 @@ test('Runs appends a second page and preserves loop, status and parent filters',
   expect(await first.innerText()).toBe(firstText);
   expect(Math.abs((await page.evaluate(() => window.scrollY)) - readingY)).toBeLessThanOrEqual(1);
   await expect(more).toBeHidden();
-  const links = await page.locator('tbody tr td:first-child a').allTextContents();
+  // Select inspector links by their full run ID; selection and relationship columns may move.
+  const links = await page
+    .locator('tbody tr')
+    .getByRole('link', {
+      name: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+    })
+    .allTextContents();
   expect(new Set(links)).toEqual(new Set(ids));
   await expect(page.getByLabel('Loop')).toHaveValue(loopId);
   await expect(page.getByLabel('Status')).toHaveValue('succeeded');

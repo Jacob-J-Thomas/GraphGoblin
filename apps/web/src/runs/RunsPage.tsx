@@ -14,6 +14,7 @@ import {
   buttonStyles,
   Card,
   Checkbox,
+  CHECKBOX_LABEL,
   FieldGroup,
   FieldRow,
   Label,
@@ -171,7 +172,7 @@ export function RunsPage() {
               <Table stack="lg">
                 <thead>
                   <tr>
-                    <Th>Select history</Th>
+                    <Th className="whitespace-normal">Select history</Th>
                     <Th>Run</Th>
                     <Th>Loop</Th>
                     <Th>Status</Th>
@@ -185,19 +186,21 @@ export function RunsPage() {
                   {items.map((run) => (
                     <tr key={run.id}>
                       <Td label="Select history">
-                        <Checkbox
-                          aria-label={`Select history ${run.id}`}
-                          checked={selected.includes(run.id)}
-                          onChange={(event) =>
-                            setSelected((ids) =>
-                              event.target.checked
-                                ? [...ids, run.id]
-                                : ids.filter((id) => id !== run.id),
-                            )
-                          }
-                        />
+                        <label className={CHECKBOX_LABEL}>
+                          <Checkbox
+                            aria-label={`Select history ${run.id}`}
+                            checked={selected.includes(run.id)}
+                            onChange={(event) =>
+                              setSelected((ids) =>
+                                event.target.checked
+                                  ? [...ids, run.id]
+                                  : ids.filter((id) => id !== run.id),
+                              )
+                            }
+                          />
+                        </label>
                       </Td>
-                      <Td>
+                      <Td className="wrap-anywhere">
                         <Link className={ID_LINK} to={`/runs/${run.id}`}>
                           {run.id}
                         </Link>
@@ -216,7 +219,7 @@ export function RunsPage() {
                       <Td label="Retention">
                         {run.deletionApproval ? 'Delete-ready' : 'Retained'}
                       </Td>
-                      <Td label="Started" className="text-sm whitespace-nowrap text-muted">
+                      <Td label="Started" className="text-sm text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}
                       </Td>
                       <Td label="Parent">
