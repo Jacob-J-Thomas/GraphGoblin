@@ -1,0 +1,67 @@
+{
+  "scenario": "quota-readback",
+  "passed": 3,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "prior quota Resume returned HTTP 200, accepted exactly one resumed fake request",
+      "ok": true,
+      "detail": {
+        "before": 18,
+        "lastRequest": {
+          "harness": "codex",
+          "mode": "success",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "resume": true
+        }
+      }
+    },
+    {
+      "id": "already resumed quota run settled successfully",
+      "ok": false,
+      "detail": {
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+            "turnId": "01M5ZHA9V8C41ZY0RH4D0B19F6",
+            "submission": "session-missing",
+            "promptKind": "continuation",
+            "sessionId": "gg-qa-426f-native-thread"
+          },
+          "missingSession": {
+            "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+            "harness": "codex",
+            "sessionId": "gg-qa-426f-native-thread",
+            "origin": "current-visit",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        }
+      }
+    },
+    {
+      "id": "readback submitted zero additional turns",
+      "ok": true,
+      "detail": {
+        "before": 18,
+        "after": 18
+      }
+    },
+    {
+      "id": "readback gateway exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

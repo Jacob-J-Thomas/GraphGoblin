@@ -1,0 +1,10 @@
+import { spawn, spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { once } from 'node:events';
+const child=spawn(process.execPath,['-e','setTimeout(() => {}, 5000)'],{windowsHide:true,stdio:'ignore'});
+const closed=once(child,'close');await once(child,'spawn');
+const result=spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,encoding:'utf8'});
+const [exitCode,signal]=await closed;
+const record={ownedPid:child.pid,status:result.status,stdout:result.stdout,stderr:result.stderr,error:result.error?.message,ownedChildExited:true,exitCode,signal};
+writeFileSync(new URL('../termination-probe.log.txt',import.meta.url),JSON.stringify(record,null,2)+'\n');
+console.log(JSON.stringify(record));

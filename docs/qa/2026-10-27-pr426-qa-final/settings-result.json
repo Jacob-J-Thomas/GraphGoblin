@@ -1,0 +1,166 @@
+{
+  "scenario": "settings",
+  "passed": 15,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "process-luna: server-default list equals effective process model or intersection, without minimal",
+      "ok": true,
+      "detail": {
+        "processDefaults": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "expected": ["low", "medium", "high", "xhigh", "max"],
+        "offered": ["", "low", "medium", "high", "xhigh", "max"]
+      }
+    },
+    {
+      "id": "refusal (server default): real PUT 400 names minimal on the effort field",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid harness defaults",
+          "errors": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "text": "Not saved. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.",
+        "description": "Not saved. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "stored minimal (server default): kept and explained",
+      "ok": true,
+      "detail": {
+        "value": "minimal",
+        "text": "minimal (not supported by this model)",
+        "description": "Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "stored minimal (server default): selecting low saves and clears explanation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "refusal (explicit model): real PUT 400 names minimal on the effort field",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid harness defaults",
+          "errors": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "text": "Not saved. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.",
+        "description": "Not saved. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "stored minimal (explicit model): kept and explained",
+      "ok": true,
+      "detail": {
+        "value": "minimal",
+        "text": "minimal (not supported by this model)",
+        "description": "Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "stored minimal (explicit model): selecting low saves and clears explanation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "process-luna: no fake provider turns",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "process-luna: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "process-gpt55: server-default list equals effective process model or intersection, without minimal",
+      "ok": true,
+      "detail": {
+        "processDefaults": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-5.5",
+              "effort": "low"
+            }
+          }
+        },
+        "expected": ["low", "medium", "high", "xhigh"],
+        "offered": ["", "low", "medium", "high", "xhigh"]
+      }
+    },
+    {
+      "id": "process-gpt55: no fake provider turns",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "process-gpt55: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "process-unconfigured: server-default list equals effective process model or intersection, without minimal",
+      "ok": true,
+      "detail": {
+        "processDefaults": {
+          "byHarness": {}
+        },
+        "expected": ["low", "medium", "high", "xhigh"],
+        "offered": ["", "low", "medium", "high", "xhigh"]
+      }
+    },
+    {
+      "id": "process-unconfigured: no fake provider turns",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "process-unconfigured: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

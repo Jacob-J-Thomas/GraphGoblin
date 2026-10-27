@@ -1,0 +1,4465 @@
+{
+  "scenario": "native-durable",
+  "passed": 120,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "diagnostic-then-malformed: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9TV5DRWDF07KCD0MQHAZ:5",
+          "turnId": "01M5ZH9V3SCS11H60TT07VFBPR",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "diagnostic-then-malformed: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "structured-refusal-0: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9VER13VF5ZGTP8Z178W7:5",
+          "turnId": "01M5ZH9VR3N4M16NFTXNTJKRG1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9VER13VF5ZGTP8Z178W7:5",
+            "turnId": "01M5ZH9VR3N4M16NFTXNTJKRG1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "structured-refusal-0: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "structured-refusal-1: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6:5",
+          "turnId": "01M5ZH9WCM8ZH49M2CT70GXHNP",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-1: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6:5",
+            "turnId": "01M5ZH9WCM8ZH49M2CT70GXHNP",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-1: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "structured-refusal-1: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9WQR5V7P6HH6V50HRJ7F:5",
+          "turnId": "01M5ZH9WZGDE4D4Q4244VB7DW1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9WQR5V7P6HH6V50HRJ7F:5",
+            "turnId": "01M5ZH9WZGDE4D4Q4244VB7DW1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9XCVWWJ7FPSR458XMPKX:5",
+          "turnId": "01M5ZH9XMWH3K4A9NNTF3YD3X5",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9XCVWWJ7FPSR458XMPKX:5",
+            "turnId": "01M5ZH9XMWH3K4A9NNTF3YD3X5",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9Y1XMFNG7QFY7D7ANYV0:5",
+          "turnId": "01M5ZH9YB0C6MYR0ZMP2XJ0JRG",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9Y1XMFNG7QFY7D7ANYV0:5",
+            "turnId": "01M5ZH9YB0C6MYR0ZMP2XJ0JRG",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9YRJGCWJVFHKW3GEYXXJ:5",
+          "turnId": "01M5ZH9Z0TCPHP860021Y2Z1YM",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9YRJGCWJVFHKW3GEYXXJ:5",
+            "turnId": "01M5ZH9Z0TCPHP860021Y2Z1YM",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "repeat-new-refusal: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N:5",
+          "turnId": "01M5ZH9ZPQWCFTBAM3RYJRG7TW",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-refusal: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N:5",
+            "turnId": "01M5ZH9ZPQWCFTBAM3RYJRG7TW",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat-new-refusal: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "repeat-new-refusal: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "repeat-new-missing-json: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+          "turnId": "01M5ZHA0DHQPKMQX8F595A2V8T",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        },
+        "missingSession": {
+          "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+          "harness": "codex",
+          "sessionId": "gg-qa-426f-native-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-missing-json: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "repeat-new-missing-text: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+          "turnId": "01M5ZHA11XGAH5700ZVYVVZXKM",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        },
+        "missingSession": {
+          "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+          "harness": "codex",
+          "sessionId": "gg-qa-426f-native-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-missing-text: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "quota-repeat-auth: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA1C8PB76WXD5EM0H33AD:5",
+          "turnId": "01M5ZHA1N7GY5TMVB6KTE2HYFE",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "quota-repeat-auth: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA1ZT2FR3PYZNWYWZHR81:5",
+          "turnId": "01M5ZHA2AJEY62SRTM4D4M03SV",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: quota stays resumable",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA1ZT2FR3PYZNWYWZHR81:5",
+            "turnId": "01M5ZHA2AJEY62SRTM4D4M03SV",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+          "turnId": "01M5ZHA2Y29DPAX4MFE951X16M",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: quota stays resumable",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+            "turnId": "01M5ZHA2Y29DPAX4MFE951X16M",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed-0-SCF: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA381BFFJ5W8DBHD4MB2Q:5",
+          "turnId": "01M5ZHA3K01X6CZS5K6C7Z2HP3",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA381BFFJ5W8DBHD4MB2Q:5",
+            "turnId": "01M5ZHA3K01X6CZS5K6C7Z2HP3",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed-0-SCF: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-0-SFC: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA3XD7724SXE3CJHH3CZE:5",
+          "turnId": "01M5ZHA462VJQN3HQ63H476SE7",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-0-SFC: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA3XD7724SXE3CJHH3CZE:5",
+            "turnId": "01M5ZHA462VJQN3HQ63H476SE7",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SFC: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed-0-SFC: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-1-SCF: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA4HTCSGY4AXDSH5T3MKC:5",
+          "turnId": "01M5ZHA4WERX7HWGSM91M04M69",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-1-SCF: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA4HTCSGY4AXDSH5T3MKC:5",
+            "turnId": "01M5ZHA4WERX7HWGSM91M04M69",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SCF: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed-1-SCF: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-1-SFC: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA56SH3030DK3W5980B09:5",
+          "turnId": "01M5ZHA5FH7ACBEABQKBYJE5AA",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-1-SFC: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA56SH3030DK3W5980B09:5",
+            "turnId": "01M5ZHA5FH7ACBEABQKBYJE5AA",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SFC: exactly one native fake turn and retained authored prompt",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed-1-SFC: Resume 409 FAILURE_NOT_RESUMABLE without another turn",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "produce gateway exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "restart is a fresh gateway PID",
+      "ok": true,
+      "detail": {
+        "firstPid": 50184,
+        "reopenedPid": 57164
+      }
+    },
+    {
+      "id": "diagnostic-then-malformed: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9TV5DRWDF07KCD0MQHAZ:5",
+          "turnId": "01M5ZH9V3SCS11H60TT07VFBPR",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "diagnostic-then-malformed: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9TV5DRWDF07KCD0MQHAZ",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9TV5DRWDF07KCD0MQHAZ:5",
+            "turnId": "01M5ZH9V3SCS11H60TT07VFBPR",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9VER13VF5ZGTP8Z178W7:5",
+          "turnId": "01M5ZH9VR3N4M16NFTXNTJKRG1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9VER13VF5ZGTP8Z178W7:5",
+            "turnId": "01M5ZH9VR3N4M16NFTXNTJKRG1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9VER13VF5ZGTP8Z178W7",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9VER13VF5ZGTP8Z178W7:5",
+            "turnId": "01M5ZH9VR3N4M16NFTXNTJKRG1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-0: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "structured-refusal-1: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6:5",
+          "turnId": "01M5ZH9WCM8ZH49M2CT70GXHNP",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-1: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6:5",
+            "turnId": "01M5ZH9WCM8ZH49M2CT70GXHNP",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-1: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9W3FA5ZPY3Z8FYNXRVK6:5",
+            "turnId": "01M5ZH9WCM8ZH49M2CT70GXHNP",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "structured-refusal-1: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9WQR5V7P6HH6V50HRJ7F:5",
+          "turnId": "01M5ZH9WZGDE4D4Q4244VB7DW1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9WQR5V7P6HH6V50HRJ7F:5",
+            "turnId": "01M5ZH9WZGDE4D4Q4244VB7DW1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9WQR5V7P6HH6V50HRJ7F",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9WQR5V7P6HH6V50HRJ7F:5",
+            "turnId": "01M5ZH9WZGDE4D4Q4244VB7DW1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-false: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9XCVWWJ7FPSR458XMPKX:5",
+          "turnId": "01M5ZH9XMWH3K4A9NNTF3YD3X5",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9XCVWWJ7FPSR458XMPKX:5",
+            "turnId": "01M5ZH9XMWH3K4A9NNTF3YD3X5",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9XCVWWJ7FPSR458XMPKX",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9XCVWWJ7FPSR458XMPKX:5",
+            "turnId": "01M5ZH9XMWH3K4A9NNTF3YD3X5",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-0-true: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9Y1XMFNG7QFY7D7ANYV0:5",
+          "turnId": "01M5ZH9YB0C6MYR0ZMP2XJ0JRG",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9Y1XMFNG7QFY7D7ANYV0:5",
+            "turnId": "01M5ZH9YB0C6MYR0ZMP2XJ0JRG",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9Y1XMFNG7QFY7D7ANYV0",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9Y1XMFNG7QFY7D7ANYV0:5",
+            "turnId": "01M5ZH9YB0C6MYR0ZMP2XJ0JRG",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-false: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9YRJGCWJVFHKW3GEYXXJ:5",
+          "turnId": "01M5ZH9Z0TCPHP860021Y2Z1YM",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9YRJGCWJVFHKW3GEYXXJ:5",
+            "turnId": "01M5ZH9Z0TCPHP860021Y2Z1YM",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9YRJGCWJVFHKW3GEYXXJ",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9YRJGCWJVFHKW3GEYXXJ:5",
+            "turnId": "01M5ZH9Z0TCPHP860021Y2Z1YM",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sdk-repeat-1-true: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "repeat-new-refusal: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N:5",
+          "turnId": "01M5ZH9ZPQWCFTBAM3RYJRG7TW",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-refusal: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N:5",
+            "turnId": "01M5ZH9ZPQWCFTBAM3RYJRG7TW",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat-new-refusal: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZH9ZF2GAFZXZP4MQ9CNF3N:5",
+            "turnId": "01M5ZH9ZPQWCFTBAM3RYJRG7TW",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat-new-refusal: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "repeat-new-missing-json: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+          "turnId": "01M5ZHA0DHQPKMQX8F595A2V8T",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        },
+        "missingSession": {
+          "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+          "harness": "codex",
+          "sessionId": "gg-qa-426f-native-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-missing-json: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA0285JWC22AK7RRAE6Q5",
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+            "turnId": "01M5ZHA0DHQPKMQX8F595A2V8T",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          },
+          "missingSession": {
+            "visitId": "01M5ZHA0285JWC22AK7RRAE6Q5:5",
+            "harness": "codex",
+            "sessionId": "gg-qa-426f-native-thread",
+            "origin": "current-visit",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat-new-missing-text: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+          "turnId": "01M5ZHA11XGAH5700ZVYVVZXKM",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        },
+        "missingSession": {
+          "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+          "harness": "codex",
+          "sessionId": "gg-qa-426f-native-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "repeat-new-missing-text: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA0QEDR4BGAB7G666PRN3",
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"gg-qa-426f-native-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+            "turnId": "01M5ZHA11XGAH5700ZVYVVZXKM",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          },
+          "missingSession": {
+            "visitId": "01M5ZHA0QEDR4BGAB7G666PRN3:5",
+            "harness": "codex",
+            "sessionId": "gg-qa-426f-native-thread",
+            "origin": "current-visit",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quota-repeat-auth: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA1C8PB76WXD5EM0H33AD:5",
+          "turnId": "01M5ZHA1N7GY5TMVB6KTE2HYFE",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "quota-repeat-auth: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA1C8PB76WXD5EM0H33AD",
+        "failure": {
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "Credentials expired",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA1C8PB76WXD5EM0H33AD:5",
+            "turnId": "01M5ZHA1N7GY5TMVB6KTE2HYFE",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA1ZT2FR3PYZNWYWZHR81:5",
+          "turnId": "01M5ZHA2AJEY62SRTM4D4M03SV",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: quota stays resumable",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA1ZT2FR3PYZNWYWZHR81:5",
+            "turnId": "01M5ZHA2AJEY62SRTM4D4M03SV",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rate-new-quota-same-message: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA1ZT2FR3PYZNWYWZHR81",
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA1ZT2FR3PYZNWYWZHR81:5",
+            "turnId": "01M5ZHA2AJEY62SRTM4D4M03SV",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+          "turnId": "01M5ZHA2Y29DPAX4MFE951X16M",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: quota stays resumable",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+            "turnId": "01M5ZHA2Y29DPAX4MFE951X16M",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quota-new-rate-same-message: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA2MTZ8XBW41MR318KV91",
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHA2MTZ8XBW41MR318KV91:5",
+            "turnId": "01M5ZHA2Y29DPAX4MFE951X16M",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA381BFFJ5W8DBHD4MB2Q:5",
+          "turnId": "01M5ZHA3K01X6CZS5K6C7Z2HP3",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA381BFFJ5W8DBHD4MB2Q:5",
+            "turnId": "01M5ZHA3K01X6CZS5K6C7Z2HP3",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA381BFFJ5W8DBHD4MB2Q",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA381BFFJ5W8DBHD4MB2Q:5",
+            "turnId": "01M5ZHA3K01X6CZS5K6C7Z2HP3",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SCF: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-0-SFC: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA3XD7724SXE3CJHH3CZE:5",
+          "turnId": "01M5ZHA462VJQN3HQ63H476SE7",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-0-SFC: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA3XD7724SXE3CJHH3CZE:5",
+            "turnId": "01M5ZHA462VJQN3HQ63H476SE7",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SFC: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA3XD7724SXE3CJHH3CZE",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA3XD7724SXE3CJHH3CZE:5",
+            "turnId": "01M5ZHA462VJQN3HQ63H476SE7",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-0-SFC: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-1-SCF: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA4HTCSGY4AXDSH5T3MKC:5",
+          "turnId": "01M5ZHA4WERX7HWGSM91M04M69",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-1-SCF: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA4HTCSGY4AXDSH5T3MKC:5",
+            "turnId": "01M5ZHA4WERX7HWGSM91M04M69",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SCF: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA4HTCSGY4AXDSH5T3MKC",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA4HTCSGY4AXDSH5T3MKC:5",
+            "turnId": "01M5ZHA4WERX7HWGSM91M04M69",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SCF: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "completed-1-SFC: failed with expected cause",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZHA56SH3030DK3W5980B09:5",
+          "turnId": "01M5ZHA5FH7ACBEABQKBYJE5AA",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "gg-qa-426f-native-thread"
+        }
+      }
+    },
+    {
+      "id": "completed-1-SFC: pinned refusal, accepted provenance, Replay offered",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA56SH3030DK3W5980B09:5",
+            "turnId": "01M5ZHA5FH7ACBEABQKBYJE5AA",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SFC: failure, recovery and durable events identical after restart",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHA56SH3030DK3W5980B09",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZHA56SH3030DK3W5980B09:5",
+            "turnId": "01M5ZHA5FH7ACBEABQKBYJE5AA",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-native-thread"
+          }
+        },
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "completed-1-SFC: restarted Resume refused 409",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "restart and refused resumes made zero extra CLI turns",
+      "ok": true,
+      "detail": {
+        "requestsAtRestart": 17,
+        "after": 17
+      }
+    },
+    {
+      "id": "quota Resume is accepted and succeeds through fake CLI after restart",
+      "ok": false,
+      "detail": {
+        "resume": 200,
+        "status": "failed",
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "success",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "final gateway exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "caseCount": 17
+}

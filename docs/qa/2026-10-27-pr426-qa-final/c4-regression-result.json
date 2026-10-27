@@ -1,0 +1,327 @@
+{
+  "scenario": "c4-regression",
+  "passed": 5,
+  "failed": 0,
+  "observations": 2,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "main: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "pr: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "4-1 Codex HTTP 429 then exit 1: classified as before (HARNESS_QUOTA_EXHAUSTED, same resumability and provenance as main) with the stream message, never the exit banner",
+      "ok": true,
+      "detail": {
+        "main": {
+          "status": "failed",
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "QA fake: Rate limit reached for gpt-6-luna. Please try again in 20s.",
+          "resumable": true,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": true,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        },
+        "pr": {
+          "status": "failed",
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "QA fake: Rate limit reached for gpt-6-luna. Please try again in 20s.",
+          "resumable": true,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": true,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        }
+      }
+    },
+    {
+      "id": "4-2 Codex HTTP 500 then exit 1: classified as before (HARNESS_TRANSPORT_FAILED, same resumability and provenance as main) with the stream message, never the exit banner",
+      "ok": true,
+      "detail": {
+        "main": {
+          "status": "failed",
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "QA fake: The server had an error while processing your request.",
+          "resumable": true,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": true,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        },
+        "pr": {
+          "status": "failed",
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "QA fake: The server had an error while processing your request.",
+          "resumable": true,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": true,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        }
+      }
+    },
+    {
+      "id": "not observable here (D-015): 4-3 Claude rate_limit in the stream then exit 1: the stream failure is recorded (HARNESS_QUOTA_EXHAUSTED, as on main), no stderr banner or provider body",
+      "ok": null,
+      "detail": {
+        "main": {
+          "status": "failed",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "resumable": false,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": false,
+          "markers": ["delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        },
+        "pr": {
+          "status": "failed",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "resumable": false,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": false,
+          "markers": ["delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        }
+      }
+    },
+    {
+      "id": "not observable here (D-015): 4-4 Claude server_error in the stream then exit 1: the stream failure is recorded (HARNESS_TRANSPORT_FAILED, as on main), no stderr banner or provider body",
+      "ok": null,
+      "detail": {
+        "main": {
+          "status": "failed",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "resumable": false,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": false,
+          "markers": ["delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        },
+        "pr": {
+          "status": "failed",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "resumable": false,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": false,
+          "markers": ["delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        }
+      }
+    },
+    {
+      "id": "4-5 control: the fake F2 refusal stream reproduces D2 on main and the fix on the PR head",
+      "ok": true,
+      "detail": {
+        "main": {
+          "status": "failed",
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "adapterCode": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex Exec exited with code 1: Reading prompt from stdin...\r\n",
+          "resumable": true,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": true,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": true,
+          "privateBodyInRecord": false
+        },
+        "pr": {
+          "status": "failed",
+          "code": "HARNESS_TURN_FAILED",
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'low' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+          "resumable": false,
+          "submission": "delivery-uncertain",
+          "resumeAllowed": false,
+          "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+          "turns": 1,
+          "cliRequests": 1,
+          "bannerInRecord": false,
+          "privateBodyInRecord": false
+        }
+      }
+    }
+  ],
+  "results": {
+    "main": {
+      "codex-429": {
+        "status": "failed",
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "QA fake: Rate limit reached for gpt-6-luna. Please try again in 20s.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-500": {
+        "status": "failed",
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "QA fake: The server had an error while processing your request.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-400-refused": {
+        "status": "failed",
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Codex Exec exited with code 1: Reading prompt from stdin...\r\n",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": true,
+        "privateBodyInRecord": false
+      },
+      "claude-rate-limit": {
+        "status": "failed",
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+        "resumable": false,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": false,
+        "markers": ["delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "claude-server-error": {
+        "status": "failed",
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+        "resumable": false,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": false,
+        "markers": ["delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      }
+    },
+    "pr": {
+      "codex-429": {
+        "status": "failed",
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "QA fake: Rate limit reached for gpt-6-luna. Please try again in 20s.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-500": {
+        "status": "failed",
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "QA fake: The server had an error while processing your request.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-400-refused": {
+        "status": "failed",
+        "code": "HARNESS_TURN_FAILED",
+        "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'low' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+        "resumable": false,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": false,
+        "markers": ["submitted:codex.turn.started", "delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "claude-rate-limit": {
+        "status": "failed",
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+        "resumable": false,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": false,
+        "markers": ["delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "claude-server-error": {
+        "status": "failed",
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+        "resumable": false,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": false,
+        "markers": ["delivery-uncertain", "delivery-uncertain"],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      }
+    }
+  }
+}

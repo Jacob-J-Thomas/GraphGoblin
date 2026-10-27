@@ -1,0 +1,731 @@
+{
+  "scenario": "quota-recovery",
+  "passed": 5,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "quota failure is resumable",
+      "ok": true,
+      "detail": {
+        "id": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+        "ownerId": "local",
+        "loopId": "01M5ZHDC9X3PEQ1600T1R906QZ",
+        "versionId": "01M5ZHDC9X3PEQ1600T1R906R0",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Quota restart recovery",
+          "label": "Quota restart recovery v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5ZHDCKX2JXD567QX1Y4RA8K",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Recoverable quota failure",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-quota-session"
+          }
+        },
+        "createdAt": "2026-10-27T20:39:16.349Z",
+        "startedAt": "2026-10-27T20:39:16.602Z",
+        "finishedAt": "2026-10-27T20:39:16.926Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "first gateway exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "fresh gateway retains quota failure and Resume permission",
+      "ok": true,
+      "detail": {
+        "firstPid": 61276,
+        "reopenedPid": 36148,
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Recoverable quota failure",
+          "nodeId": "work",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "gg-qa-426f-quota-session"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quota Resume returns HTTP 200 and succeeds on its original provider session",
+      "ok": true,
+      "detail": {
+        "http": 200,
+        "body": {
+          "id": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+          "ownerId": "local",
+          "loopId": "01M5ZHDC9X3PEQ1600T1R906QZ",
+          "versionId": "01M5ZHDC9X3PEQ1600T1R906R0",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Quota restart recovery",
+            "label": "Quota restart recovery v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5ZHDCKX2JXD567QX1Y4RA8K",
+          "status": "running",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "createdAt": "2026-10-27T20:39:16.349Z",
+          "startedAt": "2026-10-27T20:39:16.602Z",
+          "lastEventSeq": 12
+        },
+        "finalRun": {
+          "id": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+          "ownerId": "local",
+          "loopId": "01M5ZHDC9X3PEQ1600T1R906QZ",
+          "versionId": "01M5ZHDC9X3PEQ1600T1R906R0",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Quota restart recovery",
+            "label": "Quota restart recovery v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5ZHDCKX2JXD567QX1Y4RA8K",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T20:39:16.349Z",
+          "startedAt": "2026-10-27T20:39:16.602Z",
+          "finishedAt": "2026-10-27T20:39:20.524Z",
+          "finalizedAt": "2026-10-27T20:39:20.531Z",
+          "lastEventSeq": 23,
+          "recovery": {
+            "observedSeq": 23,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "work",
+                "label": "work",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "events": [
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 1,
+            "ts": "2026-10-27T20:39:16.349Z",
+            "type": "run.queued",
+            "versionId": "01M5ZHDC9X3PEQ1600T1R906R0",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Quota restart recovery",
+              "label": "Quota restart recovery v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+                "loopId": "01M5ZHDC9X3PEQ1600T1R906QZ",
+                "versionId": "01M5ZHDC9X3PEQ1600T1R906R0",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5ZHDCKX2JXD567QX1Y4RA8K",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T20:39:16.349Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 2,
+            "ts": "2026-10-27T20:39:16.605Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 3,
+            "ts": "2026-10-27T20:39:16.629Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 4,
+            "ts": "2026-10-27T20:39:16.665Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T20:39:16.663Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T20:39:16.663Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 5,
+            "ts": "2026-10-27T20:39:16.677Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "e8097b9c75156154"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 6,
+            "ts": "2026-10-27T20:39:16.748Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Exact authored quota task"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 7,
+            "ts": "2026-10-27T20:39:16.840Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "gg-qa-426f-quota-session",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 8,
+            "ts": "2026-10-27T20:39:16.873Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 9,
+            "ts": "2026-10-27T20:39:16.877Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 10,
+            "ts": "2026-10-27T20:39:16.911Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 11,
+            "ts": "2026-10-27T20:39:16.923Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_QUOTA_EXHAUSTED",
+              "message": "Recoverable quota failure",
+              "nodeId": "work",
+              "resumable": true,
+              "inference": {
+                "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+                "turnId": "01M5ZHDD0C425X646Q6HGMWNZY",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "gg-qa-426f-quota-session"
+              }
+            }
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 12,
+            "ts": "2026-10-27T20:39:20.149Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 13,
+            "ts": "2026-10-27T20:39:20.177Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 2,
+            "configHash": "e8097b9c75156154"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 14,
+            "ts": "2026-10-27T20:39:20.212Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDGCKM6MCFN7CKSKX3XHZ",
+            "harness": "codex",
+            "promptKind": "continuation",
+            "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+            "resumeSessionId": "gg-qa-426f-quota-session"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 15,
+            "ts": "2026-10-27T20:39:20.312Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5ZHDCKX2JXD567QX1Y4RA8J:5",
+            "turnId": "01M5ZHDGCKM6MCFN7CKSKX3XHZ",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 16,
+            "ts": "2026-10-27T20:39:20.314Z",
+            "type": "node.progress",
+            "nodeId": "work",
+            "progress": {
+              "item": {
+                "id": "ready",
+                "summary": "READY",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 17,
+            "ts": "2026-10-27T20:39:20.360Z",
+            "type": "harness.usage",
+            "nodeId": "work",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 18,
+            "ts": "2026-10-27T20:39:20.365Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "gg-qa-426f-quota-session",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 19,
+            "ts": "2026-10-27T20:39:20.468Z",
+            "type": "node.finished",
+            "nodeId": "work",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M5ZHDGK82ENMN7JQEQHDTSEV",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/147922fdc6a35f388d3f6b6f219e9e5cb9d80ef20f08a1ccf21512b94173f3ef",
+                  "nodeId": "work",
+                  "bytes": 113,
+                  "label": "transcript work"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5ZHDGK82ENMN7JQEQHDTSEW",
+                  "role": "assistant",
+                  "content": "READY",
+                  "nodeId": "work",
+                  "ts": "2026-10-27T20:39:20.424Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/work",
+                "value": {
+                  "nodeId": "work",
+                  "value": "READY",
+                  "at": "2026-10-27T20:39:20.425Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "work",
+                  "value": "READY",
+                  "at": "2026-10-27T20:39:20.425Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 1,
+                  "outputTokens": 1,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 263
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 20,
+            "ts": "2026-10-27T20:39:20.484Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 21,
+            "ts": "2026-10-27T20:39:20.520Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 22,
+            "ts": "2026-10-27T20:39:20.520Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5ZHDCKX2JXD567QX1Y4RA8J",
+            "seq": 23,
+            "ts": "2026-10-27T20:39:20.520Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          },
+          {
+            "harness": "codex",
+            "mode": "spec",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "final gateway exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

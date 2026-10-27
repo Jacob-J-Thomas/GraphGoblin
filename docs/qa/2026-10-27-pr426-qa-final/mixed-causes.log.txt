@@ -1,0 +1,774 @@
+{
+  "rows": [
+    {
+      "name": "different-pinned-refusal-alone",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Schema B refused\",\"param\":\"response_format\"}}",
+      "expected": "Schema B refused",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "repeat-then-different-pinned-refusal",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}\n{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Schema B refused\",\"param\":\"response_format\"}}",
+      "expected": "Schema B refused",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "missing-session-alone",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "{\"status\":404,\"error\":{\"type\":\"not_found_error\",\"message\":\"No rollout found with id genuinely-new-session\"}}",
+      "expectedCode": "HARNESS_SESSION_MISSING",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The recorded Codex conversation was not found",
+          "retriable": false,
+          "submission": "session-missing"
+        }
+      ]
+    },
+    {
+      "name": "repeat-then-missing-session-json",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}\n{\"status\":404,\"error\":{\"type\":\"not_found_error\",\"message\":\"No rollout found with id genuinely-new-session\"}}",
+      "expectedCode": "HARNESS_SESSION_MISSING",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The recorded Codex conversation was not found",
+          "retriable": false,
+          "submission": "session-missing"
+        }
+      ]
+    },
+    {
+      "name": "repeat-then-missing-session-text",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Effort A refused\",\"param\":\"reasoning.effort\"}}\nNo rollout found with id genuinely-new-session",
+      "expectedCode": "HARNESS_SESSION_MISSING",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The recorded Codex conversation was not found",
+          "retriable": false,
+          "submission": "session-missing"
+        }
+      ]
+    },
+    {
+      "name": "quota-then-auth-alone",
+      "first": "{\"status\":429,\"error\":{\"type\":\"insufficient_quota\",\"message\":\"Capacity unavailable\"}}",
+      "stderr": "{\"status\":401,\"error\":{\"type\":\"authentication_error\",\"message\":\"Credentials expired\"}}",
+      "expectedCode": "HARNESS_NOT_AUTHENTICATED",
+      "actual": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "Credentials expired",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "quota-repeat-then-auth",
+      "first": "{\"status\":429,\"error\":{\"type\":\"insufficient_quota\",\"message\":\"Capacity unavailable\"}}",
+      "stderr": "{\"status\":429,\"error\":{\"type\":\"insufficient_quota\",\"message\":\"Capacity unavailable\"}}\n{\"status\":401,\"error\":{\"type\":\"authentication_error\",\"message\":\"Credentials expired\"}}",
+      "expectedCode": "HARNESS_NOT_AUTHENTICATED",
+      "actual": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "Credentials expired",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "rate-then-quota-same-message",
+      "first": "{\"status\":429,\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"Capacity unavailable\"}}",
+      "stderr": "{\"status\":429,\"error\":{\"type\":\"insufficient_quota\",\"message\":\"Capacity unavailable\"}}",
+      "expectedRetriable": false,
+      "actual": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "quota-then-rate-same-message",
+      "first": "{\"status\":429,\"error\":{\"type\":\"insufficient_quota\",\"message\":\"Capacity unavailable\"}}",
+      "stderr": "{\"status\":429,\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"Capacity unavailable\"}}",
+      "expectedRetriable": true,
+      "actual": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "retriable": true,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "Capacity unavailable",
+          "retriable": true,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "prefixed-repeat-without-completion",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "ERROR: {\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "expectedCode": "HARNESS_ARGUMENTS_REJECTED",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "prefixed-repeat-completion-before-failure",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "ERROR: {\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "order": "SCF",
+      "expectedCode": "HARNESS_ARGUMENTS_REJECTED",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "usage",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "type": "turn-complete"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "prefixed-repeat-completion-after-failure",
+      "first": "{\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "stderr": "ERROR: {\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Thread not found in referenced input.\",\"param\":\"reasoning.effort\"}}",
+      "order": "SFC",
+      "expectedCode": "HARNESS_ARGUMENTS_REJECTED",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true,
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "r3-thread",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "usage",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "type": "turn-complete"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    }
+  ],
+  "http": [
+    {
+      "name": "repeat-then-different-pinned-refusal",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0MH29W8G5C8D6Y3PV:5",
+          "turnId": "01M3Y7RKG0MH29W8G5C8D6Y3PX",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "repeat-then-missing-session-json",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"r3-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0VVJ166G9FBN55H78:5",
+          "turnId": "01M3Y7RKG0VVJ166G9FBN55H7A",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        },
+        "missingSession": {
+          "visitId": "01M3Y7RKG0VVJ166G9FBN55H78:5",
+          "harness": "codex",
+          "sessionId": "r3-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "SESSION_RECOVERY_REQUIRED",
+          "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "quota-repeat-then-auth",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M3Y7RKG01GJX1KX5A7PZ2XT7:5",
+          "turnId": "01M3Y7RKG01GJX1KX5A7PZ2XT9",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": true
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": {
+        "notInvoked": "would repeat the controlled error"
+      }
+    },
+    {
+      "name": "prefixed-repeat-completion-before-failure",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0EA2FWG7XG2EE0GRZ:5",
+          "turnId": "01M3Y7RKG0EA2FWG7XG2EE0GS1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "prefixed-repeat-completion-after-failure",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0ERV4FP62WMA7TPGM:5",
+          "turnId": "01M3Y7RKG0ERV4FP62WMA7TPGP",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    }
+  ]
+}
