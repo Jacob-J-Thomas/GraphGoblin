@@ -1,0 +1,51 @@
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache miss, executing 6fb60c5e966048f8
+@graphgoblin/contracts:build: cache hit, replaying logs 9f15ba0f6876ce80
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache miss, executing c81d948b9dfae867
+@graphgoblin/domain:build: cache hit, replaying logs a9798cfad48ec4fe
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 345f1fe606ff6bc3
+@graphgoblin/engine:typecheck: cache miss, executing 4b862ff960118460
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing f81335e530e87404
+@graphgoblin/adapter-jev:build: cache miss, executing 69ee2cf6bf21d43e
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 7575e11bae654e30
+@graphgoblin/adapter-codex:typecheck: cache miss, executing e2a86c28e03deb00
+@graphgoblin/adapter-codex:build: cache miss, executing 02a6d851d3e80555
+@graphgoblin/infrastructure:build: cache miss, executing aff4c84c5e007640
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: src/recovery-projection.test.ts(22,33): error TS2345: Argument of type '() => Promise<ScriptRunResult | { state: string; exitCode: null; terminationUnconfirmed?: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; timedOut: boolean; stdoutOverflow: boolean; stderrOverflow: boolean; }>' is not assignable to parameter of type '(request: ScriptRunRequest) => ScriptRunResult'.
+@graphgoblin/engine:typecheck:   Type 'Promise<ScriptRunResult | { state: string; exitCode: null; terminationUnconfirmed?: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; timedOut: boolean; stdoutOverflow: boolean; stderrOverflow: boolean; }>' is missing the following properties from type 'ScriptRunResult': state, exitCode, stdout, stderr, and 5 more.
+@graphgoblin/engine:typecheck: src/recovery-projection.test.ts(82,31): error TS2345: Argument of type '() => Promise<ScriptRunResult>' is not assignable to parameter of type '(request: ScriptRunRequest) => ScriptRunResult'.
+@graphgoblin/engine:typecheck:   Type 'Promise<ScriptRunResult>' is missing the following properties from type 'ScriptRunResult': state, exitCode, stdout, stderr, and 5 more.
+@graphgoblin/engine:typecheck: src/recovery-projection.test.ts(107,41): error TS2532: Object is possibly 'undefined'.
+@graphgoblin/engine:typecheck: src/recovery-projection.test.ts(116,12): error TS2532: Object is possibly 'undefined'.
+@graphgoblin/api:build: cache miss, executing 1d9b39912807b3f7
+@graphgoblin/api:typecheck: cache miss, executing eae4246a524685e1
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-256\packages\engine) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    8 successful, 14 total
+Cached:    2 cached, 14 total
+  Time:    20.012s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

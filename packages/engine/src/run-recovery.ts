@@ -1,4 +1,5 @@
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { stableStringify } from '@graphgoblin/domain';
 import type { RunRecord, RunRecovery, RecoveryAction } from '@graphgoblin/contracts';
 import type { EnginePorts, RecoveryFacts } from './ports.js';
 import { childSessionRecovered } from './session-recovery.js';
@@ -35,6 +36,25 @@ export async function runRecovery(
     common = refused(
       'STATE_UNAVAILABLE',
       'The recorded starting state or current node is unavailable.',
+    );
+
+  // Appending a lifecycle event and projecting its status are separate durable operations.
+  // An equal tail sequence does not prove that the projection includes the failure payload.
+  // Preserve the readable record, but authorize neither recovery action during that gap.
+  const lifecycle = facts.lifecycle;
+  if (
+    !common &&
+    ((lifecycle?.type === 'run.failed' &&
+      (run.status !== 'failed' ||
+        stableStringify(run.failure ?? null) !== stableStringify(lifecycle.failure))) ||
+      (lifecycle?.type === 'run.finished' && run.status !== lifecycle.status) ||
+      (lifecycle?.type === 'run.cancelled' && run.status !== 'cancelled') ||
+      ((lifecycle?.type === 'run.started' || lifecycle?.type === 'run.resumed') &&
+        ['failed', 'succeeded', 'exhausted', 'cancelled'].includes(run.status)))
+  )
+    common = refused(
+      'RECOVERY_STALE',
+      'The recorded lifecycle and run status are still being synchronized. Refresh and review its current recovery choices.',
     );
 
   if (!common && run.parentRunId && owningParent !== run.parentRunId) {

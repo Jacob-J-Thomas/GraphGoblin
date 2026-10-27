@@ -452,6 +452,13 @@ describe('adversarial engine invariants', () => {
   it('ADV-013: a non-resumable failure cannot leave its terminal status', async () => {
     const e = await createTestEngine();
     const r = await e.runToIdle(e.publish(inputLoop()).loopId);
+    // A failed row must describe its durable lifecycle, including the recorded resumability.
+    await e.ports.events.append(r.id, [
+      {
+        type: 'run.failed',
+        failure: { code: 'INTERNAL_ERROR', message: 'not resumable', resumable: false },
+      },
+    ]);
     await e.ports.runs.update(r.id, {
       status: 'failed',
       failure: { code: 'INTERNAL_ERROR', message: 'not resumable', resumable: false },

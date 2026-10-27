@@ -765,6 +765,8 @@ Resume returns the original ID. Replay returns a new ID linked by `replayOf`. Ad
 
 Recovery snapshots use indexed evidence bounded independently of event-history length (migration 0025). An accepted parent Resume durably binds the exact child failure and observation; pending parent recovery retains ownership. A changed child observation refuses `RECOVERY_STALE`, and a new uncertain child failure requires fresh parent review and consent. Maintained HTTP and MCP callers must read recovery before each new command intent and send its `observedSeq`.
 
+During lifecycle/status projection, `GET /runs/{id}` remains readable and all recovery actions can temporarily return `RECOVERY_STALE`, even when the row and observation sequences are equal. Refresh after projection completes. Unreadable or invalid pinned definitions similarly leave the run readable with `DEFINITION_UNAVAILABLE`; Resume and Replay return that same typed 409 refusal.
+
 ## Explicit deletion eligibility
 
 `POST /runs/deletion-eligibility/preview` accepts `{ runIds }` (1 to 500 unique IDs) and returns `{ token, items: [{ runId, approval?, reasons }] }` without changing history. It requires `runs:read`. `POST /runs/deletion-eligibility` requires `runs:write` and accepts the same IDs, token, `action: "mark" | "withdraw"` and `confirmed: true`. Confirmation is atomic: missing/foreign records, protection or a stale token return 409 `DELETION_SELECTION_MISSING`, `DELETION_SELECTION_PROTECTED` or `DELETION_SELECTION_STALE`, with per-run reasons in problem `errors`; nothing is silently omitted. Malformed selections return 400. The server records the authenticated actor and its own time. Neither route deletes history.

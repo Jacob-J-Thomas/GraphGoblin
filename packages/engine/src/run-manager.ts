@@ -1295,6 +1295,7 @@ export class RunManager {
         try {
           return await this.resumeRun(
             current,
+            observedSeq,
             actor,
             command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
             await this.reviewedChildRecovery(
@@ -1307,6 +1308,11 @@ export class RunManager {
             throw new RecoveryRefusedError(
               'STATE_UNAVAILABLE',
               'The recorded recovery history cannot be read. Repair or explicitly delete this history before recovering.',
+            );
+          if (error instanceof AppendConflictError)
+            throw new RecoveryRefusedError(
+              'RECOVERY_STALE',
+              'The run changed since it was shown. Refresh and review its current recovery choices.',
             );
           if (!(error instanceof EngineRequestError) || error.code !== 'INVALID_STATE') throw error;
           const latest = (await this.getRecovery(runId)).resume;
@@ -1368,6 +1374,7 @@ export class RunManager {
 
   private async resumeRun(
     run: RunRecord,
+    observedSeq: number,
     actor: Actor = SYSTEM_ACTOR,
     retryUncertainScript?: true,
     childRecovery?: Extract<RunEvent, { type: 'run.resumed' }>['childRecovery'],
@@ -1382,19 +1389,26 @@ export class RunManager {
     if (run.status === 'paused' && run.waiting) {
       const parked = parkedWait(await this.ports.events.read(runId));
       if (parked) {
-        const waiting = await this.ports.runs.transition(runId, ['paused'], {
-          status: 'waiting',
-          pausedAt: undefined,
-        });
+        const waiting = await this.ports.runs.transition(
+          runId,
+          ['paused'],
+          {
+            status: 'waiting',
+            pausedAt: undefined,
+          },
+          { observedSeq },
+        );
         if (!waiting) {
           throw new EngineRequestError(
             'INVALID_STATE',
             `cannot resume a run that is ${run.status}`,
           );
         }
-        await this.ports.events.append(runId, [
-          { type: 'run.resumed', actor, ...(childRecovery ? { childRecovery } : {}) },
-        ]);
+        await this.ports.events.append(
+          runId,
+          [{ type: 'run.resumed', actor, ...(childRecovery ? { childRecovery } : {}) }],
+          { expectedLastSeq: observedSeq },
+        );
         if (waiting.waiting) await this.rearmTimers(runId, waiting.waiting);
         await this.reconcileChild(waiting);
         return this.mustGet(runId);
@@ -1418,19 +1432,24 @@ export class RunManager {
         if (
           current.status !== 'failed' ||
           !(current.failure?.resumable || (await childSessionRecovered(this.ports, current))) ||
-          terminal?.seq !== observed
+          terminal?.seq !== observed ||
+          (await this.ports.events.recoveryFacts(runId, [])).observedSeq !== observedSeq
         ) {
           return undefined;
         }
         await this.ports.runs.clearFinalized(runId);
-        await this.ports.events.append(runId, [
-          {
-            type: 'run.resumed',
-            actor,
-            ...(retryUncertainScript ? { retryUncertainScript } : {}),
-            ...(childRecovery ? { childRecovery } : {}),
-          },
-        ]);
+        await this.ports.events.append(
+          runId,
+          [
+            {
+              type: 'run.resumed',
+              actor,
+              ...(retryUncertainScript ? { retryUncertainScript } : {}),
+              ...(childRecovery ? { childRecovery } : {}),
+            },
+          ],
+          { expectedLastSeq: observedSeq },
+        );
         return this.completeResume(runId);
       });
       if (!resumed) {
@@ -1439,23 +1458,32 @@ export class RunManager {
       return resumed;
     }
     const expected: RunStatus[] = ['paused'];
-    const updated = await this.ports.runs.transition(runId, expected, {
-      status: 'running',
-      pausedAt: undefined,
-      failure: undefined,
-      finishedAt: undefined,
-    });
+    const updated = await this.ports.runs.transition(
+      runId,
+      expected,
+      {
+        status: 'running',
+        pausedAt: undefined,
+        failure: undefined,
+        finishedAt: undefined,
+      },
+      { observedSeq },
+    );
     if (!updated) {
       throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
     }
-    await this.ports.events.append(runId, [
-      {
-        type: 'run.resumed',
-        actor,
-        ...(childRecovery ? { childRecovery } : {}),
-        ...(retryUncertainScript ? { retryUncertainScript } : {}),
-      },
-    ]);
+    await this.ports.events.append(
+      runId,
+      [
+        {
+          type: 'run.resumed',
+          actor,
+          ...(childRecovery ? { childRecovery } : {}),
+          ...(retryUncertainScript ? { retryUncertainScript } : {}),
+        },
+      ],
+      { expectedLastSeq: observedSeq },
+    );
     this.enqueue(runId);
     return updated;
   }

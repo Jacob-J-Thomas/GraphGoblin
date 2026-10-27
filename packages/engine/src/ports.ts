@@ -98,7 +98,8 @@ export interface RunRepository {
   update(runId: string, changes: RunRecordChanges): Promise<RunRecord>;
   /**
    * Compare-and-set: apply `changes` only if the run's status is one of `from`.
-   * An optional wait guard also requires that exact recorded wait, atomically with the status.
+   * Optional guards require the exact recorded wait and/or durable event tail, atomically with
+   * the status. The observation guard prevents recovery from claiming past a new failure.
    * Returns the updated record, or undefined when either precondition did not match. Lifecycle
    * transitions go through this so delayed acknowledgements cannot clobber a later wait.
    */
@@ -106,7 +107,7 @@ export interface RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
-    guard?: { waitId: string },
+    guard?: { waitId?: string; observedSeq?: number },
   ): Promise<RunRecord | undefined>;
   /**
    * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is

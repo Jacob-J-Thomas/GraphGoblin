@@ -883,6 +883,8 @@ drain, seal, force and recovery semantics (ADR-0049).
 
 ## Recovery controls (#256)
 
+During lifecycle/status projection the readable run can temporarily explain `RECOVERY_STALE`, even at an unchanged event sequence. Neither action is offered from inconsistent failure evidence, and no script-consent target appears until projection agrees. Refusal refreshes the snapshot. Damaged pinned-definition JSON keeps the inspector visible with `DEFINITION_UNAVAILABLE`.
+
 The inspector renders the server's Resume decision and explanation with `aria-describedby`; unavailable actions have visible text. Resume keeps the original ID and #116's attempt follower. A failed child links its exact owning parent; parent Resume retries that same child.
 
 Replay opens a labelled node picker with the server's per-node decisions. Its explanation says the fork runs again from the chosen node as a new run: scripts, provider turns, child runs and deliveries after it run again for the fork. It names knowable effectful nodes on possible paths, including loopbacks. The source's recorded effects/results and its own delivery records stay unchanged. A path into the current uncertain script additionally requires an explicit checkbox; the dedicated Recover script dialog also remains. Missing sessions retain #265's fresh-start Resume choice and may use deliberate Replay.

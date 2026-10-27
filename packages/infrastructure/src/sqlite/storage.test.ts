@@ -233,6 +233,47 @@ describe('SqliteRunRepository', () => {
     );
   });
 
+  it('claims a paused status only at the reviewed durable event tail', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const events = new SqliteEventStore(handle.db, clock);
+    const run = runRecord({ status: 'paused' });
+    await repo.create(run, sampleThread());
+    await events.append(run.id, [{ type: 'run.paused', actor: { kind: 'user', id: 'reviewer' } }]);
+    const reviewed = (await repo.get(run.id))!.lastEventSeq;
+    await events.append(run.id, [
+      {
+        type: 'run.failed',
+        failure: { code: 'SCRIPT_OUTCOME_UNCERTAIN', message: 'durable', resumable: true },
+      },
+    ]);
+    // The failure's status projection is deliberately still paused.
+    expect(
+      await repo.transition(run.id, ['paused'], { status: 'running' }, { observedSeq: reviewed }),
+    ).toBeUndefined();
+    expect((await repo.get(run.id))?.status).toBe('paused');
+    expect(
+      await repo.transition(
+        run.id,
+        ['paused'],
+        { status: 'running' },
+        { observedSeq: reviewed + 1 },
+      ),
+    ).toMatchObject({ status: 'running' });
+  });
+
+  it('only treats stored definition JSON decoding as definition unavailability', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const { draft } = await repo.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    await handle.client.execute({
+      sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
+      args: ['{', draft.id],
+    });
+    expect(await repo.getVersion(draft.id)).toBeUndefined();
+    // Real schema failure, outside the local JSON decoder; it must not become "missing".
+    await handle.client.execute('ALTER TABLE loop_versions RENAME TO unavailable_versions');
+    await expect(repo.getVersion(draft.id)).rejects.toThrow();
+  });
+
   it('fences a delayed transition by the observed waiting identity', async () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord({

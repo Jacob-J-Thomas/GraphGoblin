@@ -1,0 +1,42 @@
+$ vitest run recovery-eligibility.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (31 tests | 1 failed) 6230ms
+   ❯ server recovery eligibility (#256) (31)
+     × keeps a run readable with damaged pinned definition { 138ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > keeps a run readable with damaged pinned definition {
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ src/recovery-eligibility.test.ts:78:33
+     76|     });
+     77|     const response = await t.app.inject(`/runs/${run.id}`);
+     78|     expect(response.statusCode).toBe(200);
+       |                                 ^
+     79|     const snapshot = response.json<Snapshot>();
+     80|     expect(snapshot.id).toBe(run.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  03:02:37
+   Duration  12.51s (tests 51%, import 31%, transform 18%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

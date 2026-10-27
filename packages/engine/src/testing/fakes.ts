@@ -179,6 +179,9 @@ export class InMemoryEventStore implements EventStorePort {
     );
     log.push(...stored);
     this.logs.set(runId, log);
+    // SQLite publishes the tail with the events, before a delayed status projection.
+    if (stored.length && (await this.runRepository?.get(runId)))
+      await this.runRepository?.update(runId, { lastEventSeq: log.at(-1)!.seq });
     for (const event of stored) {
       for (const listener of this.listeners.get(runId) ?? []) listener(event);
     }
@@ -294,11 +297,15 @@ export class InMemoryRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
-    guard?: { waitId: string },
+    guard?: { waitId?: string; observedSeq?: number },
   ): Promise<RunRecord | undefined> {
     const current = this.runs.get(runId);
     if (!current) return Promise.reject(new Error(`run ${runId} not found`));
-    if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+    if (
+      !from.includes(current.status) ||
+      (guard?.waitId !== undefined && current.waiting?.waitId !== guard.waitId) ||
+      (guard?.observedSeq !== undefined && current.lastEventSeq !== guard.observedSeq)
+    )
       return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }

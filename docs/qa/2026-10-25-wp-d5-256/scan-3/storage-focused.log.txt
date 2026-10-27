@@ -1,0 +1,37 @@
+$ vitest run admission.test.ts admission-contract.test.ts catalog.test.ts definition-pins.test.ts delivery-runs.test.ts history-summaries.test.ts webhook-receipt-upgrade.test.ts evidence-index.test.ts deletion-eligibility.test.ts storage.test.ts history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/infrastructure
+
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/storage.test.ts (44 tests | 1 failed) 5325ms
+   ❯ SqliteRunRepository (10)
+     × only treats stored definition JSON decoding as definition unavailability 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/storage.test.ts > SqliteRunRepository > only treats stored definition JSON decoding as definition unavailability
+TypeError: Cannot read properties of undefined (reading 'workingDirectory')
+ ❯ SqliteLoopRepository.create src/sqlite/loops.ts:132:41
+    130|     definition: LoopDefinition,
+    131|   ): Promise<{ loop: LoopRecord; draft: LoopVersionRecord }> {
+    132|     const working = definition.settings.workingDirectory;
+       |                                         ^
+    133|     const physical = working.kind === 'fixed' ? await physicalDirector…
+    134|     const now = this.clock.now().toISOString();
+ ❯ src/sqlite/storage.test.ts:252:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 243 passed (244)
+   Start at  03:07:21
+   Duration  67.51s (tests 71%, import 26%, transform 3%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\infrastructure
+

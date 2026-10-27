@@ -68,6 +68,56 @@ const transient: RunFailure = {
   nodeId: 'start',
 };
 describe('server recovery eligibility (#256)', () => {
+  it('refuses a newer durable failure even when the row already has failed status and the same tail', async () => {
+    const run = await seeded('failed', transient);
+    const failure = { ...transient, code: 'SCRIPT_OUTCOME_UNCERTAIN' as const };
+    const [failed] = await t.container.repos.events.append(run.id, [
+      { type: 'run.failed', failure },
+    ]);
+    const response = await t.app.inject(`/runs/${run.id}`);
+    expect(response.statusCode).toBe(200);
+    const snapshot = response.json<Snapshot>();
+    expect(snapshot.lastEventSeq).toBe(failed!.seq);
+    expect(snapshot.lastEventSeq).toBe(snapshot.recovery.observedSeq);
+    expect(snapshot.failure).toEqual(transient);
+    expect(snapshot.recovery.resume).toMatchObject({ code: 'RECOVERY_STALE' });
+    expect(snapshot.recovery.scriptConsent).toBeUndefined();
+    await refusal(snapshot, 'resume', 'RECOVERY_STALE');
+    await refusal(snapshot, 'replay', 'RECOVERY_STALE');
+    const consent = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${run.id}/resume`,
+      payload: { observedSeq: snapshot.recovery.observedSeq, retryUncertainScript: true },
+    });
+    expect(consent.statusCode).toBe(409);
+    expect(consent.json()).toMatchObject({ code: 'RECOVERY_STALE' });
+    await t.container.repos.runs.update(run.id, { failure });
+    const refreshed = (await t.app.inject(`/runs/${run.id}`)).json<Snapshot>();
+    expect(refreshed.recovery.resume).toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
+    expect(refreshed.recovery.scriptConsent?.failureSeq).toBe(failed!.seq);
+  });
+  it.each(['{}', '{'])(
+    'keeps a run readable with damaged pinned definition %s',
+    async (definition) => {
+      const run = await seeded('failed', transient);
+      await t.container.handle.client.execute({
+        sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
+        args: [definition, run.versionId],
+      });
+      const response = await t.app.inject(`/runs/${run.id}`);
+      expect(response.statusCode).toBe(200);
+      const snapshot = response.json<Snapshot>();
+      expect(snapshot.id).toBe(run.id);
+      expect(snapshot.failure).toEqual(run.failure);
+      expect(snapshot.recovery.resume).toMatchObject({ code: 'DEFINITION_UNAVAILABLE' });
+      expect(snapshot.recovery.replayDefault).toMatchObject({ code: 'DEFINITION_UNAVAILABLE' });
+      await refusal(snapshot, 'resume', 'DEFINITION_UNAVAILABLE');
+      await refusal(snapshot, 'replay', 'DEFINITION_UNAVAILABLE');
+      expect(
+        (await t.container.repos.events.read(run.id)).some((e) => e.type === 'run.resumed'),
+      ).toBe(false);
+    },
+  );
   it('keeps GET recovery reads bounded as history grows by eleven thousand events', async () => {
     const run = await seeded('paused');
     let decoded = 0;
