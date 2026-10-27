@@ -1,0 +1,187 @@
+$ vitest run parked-resume.test.ts recovery.test.ts observed-waits.test.ts recovery-projection.test.ts parent-recovery.test.ts run-recovery.test.ts script-recovery.test.ts replay.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+
+ ❯ src/recovery-projection.test.ts (7 tests | 2 failed) 657ms
+   × atomically refuses a paused Resume after a durable failure (claim, parked=false) 82ms
+   × atomically refuses a paused Resume after a durable failure (claim, parked=true) 59ms
+ ❯ src/run-recovery.test.ts (8 tests | 2 failed) 5585ms
+   ❯ recovery effect boundaries (#256) (8)
+     × does not reinterpret paused Resume as consent when the active script fails during validation 173ms
+     × returns the current typed cancellation reason when cancellation wins inside paused Resume 5014ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-projection.test.ts > atomically refuses a paused Resume after a durable failure (claim, parked=false)
+AssertionError: promise resolved "{ …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "node",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 9,
++   "loopId": "5F4JA0AGMMN8QF2ZX0XC1ENJ1N",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "atomic review v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "atomic review",
++     "source": "published",
++     "version": 1,
++   },
++   "startedAt": "2026-10-02T12:00:00.000Z",
++   "status": "running",
++   "versionId": "5GG2PK3E948H71NK6CE9AFNEEF",
+  }
+
+ ❯ src/recovery-projection.test.ts:225:8
+    223|           { observedSeq: review.observedSeq },
+    224|         ),
+    225|       ).rejects.toMatchObject({ code: 'RECOVERY_STALE' });
+       |        ^
+    226|       expect(injected).toBe(true);
+    227|       expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/recovery-projection.test.ts > atomically refuses a paused Resume after a durable failure (claim, parked=true)
+AssertionError: promise resolved "{ …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "node",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 9,
++   "loopId": "5F4JA0AGMMN8QF2ZX0XC1ENJ1N",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "atomic review v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "atomic review",
++     "source": "published",
++     "version": 1,
++   },
++   "startedAt": "2026-10-02T12:00:00.000Z",
++   "status": "waiting",
++   "versionId": "5GG2PK3E948H71NK6CE9AFNEEF",
++   "waiting": {
++     "kind": "input",
++     "nodeId": "node",
++     "prompt": "Continue",
++     "startedSeq": 5,
++     "waitId": "00000000000000000000000001:5",
++   },
+  }
+
+ ❯ src/recovery-projection.test.ts:225:8
+    223|           { observedSeq: review.observedSeq },
+    224|         ),
+    225|       ).rejects.toMatchObject({ code: 'RECOVERY_STALE' });
+       |        ^
+    226|       expect(injected).toBe(true);
+    227|       expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > does not reinterpret paused Resume as consent when the active script fails during validation
+AssertionError: expected RecoveryRefusedError: The run changed sin… { …(2) } to match object { code: 'SCRIPT_CONSENT_REQUIRED' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "SCRIPT_CONSENT_REQUIRED",
++ RecoveryRefusedError {
++   "code": "RECOVERY_STALE",
+  }
+
+ ❯ src/run-recovery.test.ts:65:21
+     63|     await e.manager.waitForIdle();
+     64|     expect(e.ports.scripts.calls).toHaveLength(1);
+     65|     expect(refusal).toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
+       |                     ^
+     66|     e.manager.stop();
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/run-recovery.test.ts > recovery effect boundaries (#256) > returns the current typed cancellation reason when cancellation wins inside paused Resume
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/run-recovery.test.ts:234:3
+    232|     e.manager.stop();
+    233|   });
+    234|   it('returns the current typed cancellation reason when cancellation …
+       |   ^
+    235|     const e = await createTestEngine();
+    236|     const run = await e.runToIdle(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 7 passed (9)
+      Tests  4 failed | 123 passed (127)
+   Start at  04:10:59
+   Duration  25.76s (tests 73%, import 22%, transform 5%)
+
+    Isolate  9 workers spawned · ~208ms startup each (spawn + environment, per file)
+             at least ~1.66s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

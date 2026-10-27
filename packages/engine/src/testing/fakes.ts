@@ -201,9 +201,14 @@ export class InMemoryEventStore implements EventStorePort {
     return Promise.resolve({
       observedSeq: events.at(-1)?.seq ?? 0,
       lifecycle: events.findLast((e) =>
-        ['run.failed', 'run.finished', 'run.cancelled', 'run.started', 'run.resumed'].includes(
-          e.type,
-        ),
+        [
+          'run.failed',
+          'run.finished',
+          'run.cancelled',
+          'run.started',
+          'run.resumed',
+          'run.paused',
+        ].includes(e.type),
       ),
       failed: events.findLast((e) => e.type === 'run.failed'),
       resumed: events.findLast((e) => e.type === 'run.resumed'),

@@ -224,10 +224,16 @@ it.each([
         ),
       ).rejects.toMatchObject({ code: 'RECOVERY_STALE' });
       expect(injected).toBe(true);
-      expect(
-        (await e.ports.events.read(run.id)).some((event) => event.type === 'run.resumed'),
-      ).toBe(false);
-      if (point === 'claim') expect((await manager.getRun(run.id))?.status).toBe('paused');
+      const history = await e.ports.events.read(run.id);
+      const resumed = history.find((event) => event.type === 'run.resumed');
+      if (point === 'claim') {
+        // Status projection follows the durable intent now. A later failure wins the
+        // projection guard; its earlier accepted Resume remains factual history.
+        expect(resumed?.seq).toBeLessThan(
+          history.findLast((event) => event.type === 'run.failed')!.seq,
+        );
+      } else expect(resumed).toBeUndefined();
+      expect((await manager.getRun(run.id))?.status).toBe('paused');
       expect((await manager.getRecovery(run.id)).resume).toMatchObject({ code: 'RECOVERY_STALE' });
     } finally {
       release();

@@ -62,7 +62,10 @@ describe('recovery effect boundaries (#256)', () => {
     }
     await e.manager.waitForIdle();
     expect(e.ports.scripts.calls).toHaveLength(1);
-    expect(refusal).toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
+    expect(refusal).toMatchObject({ code: 'RECOVERY_STALE' });
+    expect((await e.manager.getRecovery(source.id)).resume).toMatchObject({
+      code: 'SCRIPT_CONSENT_REQUIRED',
+    });
     e.manager.stop();
   });
   it('does not attach a newer failure observation to an older script consent target', async () => {
@@ -231,7 +234,7 @@ describe('recovery effect boundaries (#256)', () => {
     expect((await e.settle(fork.id)).status).toBe('succeeded');
     e.manager.stop();
   });
-  it('returns the current typed cancellation reason when cancellation wins inside paused Resume', async () => {
+  it('refuses stale projection when cancellation follows a paused Resume intent without deadlocking', async () => {
     const e = await createTestEngine();
     const run = await e.runToIdle(
       e.publish(
@@ -247,14 +250,19 @@ describe('recovery effect boundaries (#256)', () => {
     const observed = await e.manager.getRecovery(run.id);
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let cancelled = false;
-    // A controlled port interleaving: cancellation commits after policy read, before Resume's CAS.
-    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
+    let cancellation: ReturnType<RunManager['cancel']> | undefined;
+    // Begin a real concurrent cancellation after the intent, before projection. Await only its
+    // journal, not finalization: finalization must wait for Resume's run lock to be released.
+    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes, guard) => {
       if (!cancelled && id === run.id && from.includes('paused') && changes.status === 'waiting') {
         cancelled = true;
-        await e.manager.cancel(id);
+        cancellation = e.manager.cancel(id);
+        await vi.waitFor(() =>
+          expect(e.events(id).some((event) => event.type === 'run.cancel_requested')).toBe(true),
+        );
         return undefined;
       }
-      return transition(id, from, changes);
+      return transition(id, from, changes, guard);
     });
     await expect(
       e.manager.resume(
@@ -262,7 +270,8 @@ describe('recovery effect boundaries (#256)', () => {
         { kind: 'user', id: 'owner' },
         { observedSeq: observed.observedSeq },
       ),
-    ).rejects.toMatchObject({ code: 'RUN_CANCELLED' });
+    ).rejects.toMatchObject({ code: 'RECOVERY_STALE' });
+    await cancellation;
     expect((await e.manager.getRun(run.id))?.status).toBe('cancelled');
     e.manager.stop();
   });

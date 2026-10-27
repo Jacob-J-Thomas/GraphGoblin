@@ -6,6 +6,29 @@ import { openMemoryDatabase } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { schema } from './schema.js';
 
+it('distinguishes an admitted Resume from a later deliberate pause with bounded markers', async () => {
+  const handle = await openMemoryDatabase();
+  try {
+    const store = new SqliteEventStore(handle.db, new FakeClock());
+    const id = fakeUlid('pause-resume-markers');
+    const actor = { kind: 'user', id: 'reviewer' } as const;
+    await store.append(id, [
+      { type: 'run.started', attempt: 1 },
+      { type: 'run.paused', actor },
+    ]);
+    expect((await store.recoveryFacts(id, [])).lifecycle?.type).toBe('run.paused');
+    await store.append(id, [{ type: 'run.resumed', actor }]);
+    expect((await store.recoveryFacts(id, [])).lifecycle?.type).toBe('run.resumed');
+    await store.append(id, [{ type: 'run.paused', actor }]);
+    const facts = await store.recoveryFacts(id, []);
+    expect(facts.lifecycle).toMatchObject({ type: 'run.paused', seq: 4 });
+    expect(facts.resumed?.seq).toBe(3);
+    expect(facts.observedSeq).toBe(4);
+  } finally {
+    handle.close();
+  }
+});
+
 it('bounds recovery evidence and SQL rows independently of old history', async () => {
   const handle = await openMemoryDatabase();
   try {

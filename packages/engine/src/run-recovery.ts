@@ -49,6 +49,7 @@ export async function runRecovery(
         stableStringify(run.failure ?? null) !== stableStringify(lifecycle.failure))) ||
       (lifecycle?.type === 'run.finished' && run.status !== lifecycle.status) ||
       (lifecycle?.type === 'run.cancelled' && run.status !== 'cancelled') ||
+      (lifecycle?.type === 'run.resumed' && run.status === 'paused') ||
       ((lifecycle?.type === 'run.started' || lifecycle?.type === 'run.resumed') &&
         ['failed', 'succeeded', 'exhausted', 'cancelled'].includes(run.status)))
   )

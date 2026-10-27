@@ -256,12 +256,18 @@ function exitResult(
   };
 }
 
-/** Whether the log's last lifecycle event after a failure is a resume (a resume in progress). */
+/** A durable Resume not superseded by a later pause or terminal outcome. */
 function pendingResume(events: readonly RunEvent[]): boolean {
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const type = (events[i] as RunEvent).type;
     if (type === 'run.resumed') return true;
-    if (type === 'run.failed' || type === 'run.finished' || type === 'run.cancelled') return false;
+    if (
+      type === 'run.paused' ||
+      type === 'run.failed' ||
+      type === 'run.finished' ||
+      type === 'run.cancelled'
+    )
+      return false;
   }
   return false;
 }
@@ -332,7 +338,7 @@ export class RunManager {
   private readonly requeue = new Set<string>();
   /** Serializes subloop pinning in `startRun` with loop deletion. */
   private pinLock: Promise<unknown> = Promise.resolve();
-  /** Per-run serialization of finalization and failed-run resume (`withRunLock`). */
+  /** Per-run serialization of finalization and recovery (`withRunLock`). */
   private readonly runLocks = new Map<string, Promise<unknown>>();
   private readonly directories = new Map<string, string>();
   private idleWaiters: (() => void)[] = [];
@@ -1106,7 +1112,7 @@ export class RunManager {
   }
 
   /**
-   * Serializes the finalization of a run's terminal outcome with a resume of that run: a resume
+   * Serializes finalization and all Resume intents for a run: a resume
    * waits for an in-flight finalizer, so the finalizer of an earlier outcome can never set the
    * marker the resume clears for the next one.
    */
@@ -1382,37 +1388,37 @@ export class RunManager {
     const runId = run.id;
     if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
     if (this.forcing) this.assertAdmissionOpen();
-    // Keep the validated status branch. A paused script failing now is not permission to retry it.
-    // Paused while parked (or while parking): go back to waiting rather than re-running the node,
-    // so a wait keeps its deadline and a subloop keeps its child. Anything that should have woken
-    // it meanwhile is delivered now: its timers are re-armed and a finished child reconciled.
-    if (run.status === 'paused' && run.waiting) {
-      const parked = parkedWait(await this.ports.events.read(runId));
-      if (parked) {
-        const waiting = await this.ports.runs.transition(
-          runId,
-          ['paused'],
-          {
-            status: 'waiting',
-            pausedAt: undefined,
-          },
-          { observedSeq },
-        );
-        if (!waiting) {
-          throw new EngineRequestError(
-            'INVALID_STATE',
-            `cannot resume a run that is ${run.status}`,
+    if (run.status === 'paused') {
+      return this.withRunLock(runId, async () => {
+        const current = await this.mustGet(runId);
+        const events = await this.ports.events.read(runId);
+        if (current.status !== 'paused' || (events.at(-1)?.seq ?? 0) !== observedSeq)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
           );
-        }
+        // The compare-and-set is the admission point. Keep the run paused until the intent
+        // commits, so wakes, timers and child completion cannot observe a half-claimed wait.
         await this.ports.events.append(
           runId,
-          [{ type: 'run.resumed', actor, ...(childRecovery ? { childRecovery } : {}) }],
+          [
+            {
+              type: 'run.resumed',
+              actor,
+              ...(childRecovery ? { childRecovery } : {}),
+              ...(retryUncertainScript ? { retryUncertainScript } : {}),
+            },
+          ],
           { expectedLastSeq: observedSeq },
         );
-        if (waiting.waiting) await this.rearmTimers(runId, waiting.waiting);
-        await this.reconcileChild(waiting);
-        return this.mustGet(runId);
-      }
+        const resumed = await this.completePausedResume(runId);
+        if (!resumed)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+        return resumed;
+      });
     }
     if (
       run.status === 'failed' &&
@@ -1457,35 +1463,33 @@ export class RunManager {
       }
       return resumed;
     }
-    const expected: RunStatus[] = ['paused'];
+    throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
+  }
+
+  /** Project an admitted paused Resume; the caller holds the run lock (also during startup). */
+  private async completePausedResume(runId: string): Promise<RunRecord | undefined> {
+    const events = await this.ports.events.read(runId);
+    if (!pendingResume(events)) return undefined;
+    const parked = parkedWait(events);
     const updated = await this.ports.runs.transition(
       runId,
-      expected,
+      ['paused'],
       {
-        status: 'running',
+        status: parked ? 'waiting' : 'running',
         pausedAt: undefined,
-        failure: undefined,
-        finishedAt: undefined,
+        ...(parked
+          ? { waiting: parked.wait, currentNodeId: parked.wait.nodeId }
+          : { failure: undefined, finishedAt: undefined }),
       },
-      { observedSeq },
+      { observedSeq: events.at(-1)?.seq ?? 0 },
     );
-    if (!updated) {
-      throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
-    }
-    await this.ports.events.append(
-      runId,
-      [
-        {
-          type: 'run.resumed',
-          actor,
-          ...(childRecovery ? { childRecovery } : {}),
-          ...(retryUncertainScript ? { retryUncertainScript } : {}),
-        },
-      ],
-      { expectedLastSeq: observedSeq },
-    );
-    this.enqueue(runId);
-    return updated;
+    if (!updated) return undefined;
+    // No timer or child reconciliation is exposed before both the intent and status exist.
+    if (parked) {
+      await this.rearmTimers(runId, parked.wait);
+      await this.reconcileChild(updated);
+    } else this.enqueue(runId);
+    return this.mustGet(runId);
   }
 
   /** Explicitly abandon only the failed node's missing provider conversation (#265). */
@@ -2034,6 +2038,12 @@ export class RunManager {
         }
         await this.armRunDeadline(run);
         if (await this.expireRunDeadline(run.id)) continue;
+        // A paused Resume committed before its projection/acknowledgement was interrupted.
+        // A later explicit pause supersedes that intent and must remain paused on restart.
+        if (run.status === 'paused' && pendingResume(events)) {
+          await this.withRunLock(run.id, () => this.completePausedResume(run.id));
+          continue;
+        }
         // Complete an event-first park without executing its handler again. Its original
         // wall-clock deadlines survive an interruption before snapshot/status/timer writes.
         const parked = parkedWait(events);

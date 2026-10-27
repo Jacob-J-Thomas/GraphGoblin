@@ -118,7 +118,14 @@ export class SqliteEventStore implements EventStorePort {
 
   async recoveryFacts(runId: string, nodeIds: readonly string[]) {
     // Each MAX is a seek of (run_id, type, seq). Do not decode progress, prompts or deliveries.
-    const markers = ['run.failed', 'run.finished', 'run.cancelled', 'run.started', 'run.resumed'];
+    const markers = [
+      'run.failed',
+      'run.finished',
+      'run.cancelled',
+      'run.started',
+      'run.resumed',
+      'run.paused',
+    ];
     const [tail] = await this.db
       .select({ seq: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
       .from(runEvents)

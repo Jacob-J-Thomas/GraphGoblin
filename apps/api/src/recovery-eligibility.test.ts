@@ -68,6 +68,62 @@ const transient: RunFailure = {
   nodeId: 'start',
 };
 describe('server recovery eligibility (#256)', () => {
+  it('refuses an interleaved parked Resume as typed stale without unpausing its recorded wait', async () => {
+    const definition = minimalLoop();
+    definition.nodes.splice(1, 0, {
+      id: 'ask',
+      kind: 'wait',
+      label: 'Ask',
+      config: { mode: 'input', prompt: 'Continue' },
+    });
+    definition.edges = [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'ask' } },
+      { id: 'b', from: { node: 'ask', port: 'out' }, to: { node: 'done' } },
+    ];
+    const loopId = await t.publishLoop(definition);
+    let armed = false;
+    const store = t.container.ports.events;
+    const events: EventStorePort = {
+      recoveryFacts: (...args) => store.recoveryFacts(...args),
+      read: (...args) => store.read(...args),
+      subscribe: (...args) => store.subscribe(...args),
+      append: async (...args) => {
+        if (armed && args[1].some((event) => event.type === 'run.resumed')) {
+          armed = false;
+          await store.append(args[0], [
+            { type: 'run.cancel_requested', actor: { kind: 'user', id: 'other-client' } },
+          ]);
+        }
+        return store.append(...args);
+      },
+    };
+    const manager = new RunManager(
+      { ...t.container.ports, events },
+      { maxConcurrentRuns: 1, defaults: t.container.config.defaults },
+    );
+    const api = await buildApp({ ...t.container, manager }, { logger: false });
+    try {
+      await manager.start();
+      const run = await manager.startRun({ ownerId: 'local', loopId, source: 'manual.api' });
+      await manager.waitForIdle();
+      const waiting = (await manager.getRun(run.id))!.waiting;
+      await manager.pause(run.id);
+      const snapshot = (await api.inject(`/runs/${run.id}`)).json<Snapshot>();
+      armed = true;
+      const response = await api.inject({
+        method: 'POST',
+        url: `/runs/${run.id}/resume`,
+        payload: { observedSeq: snapshot.recovery.observedSeq },
+      });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ code: 'RECOVERY_STALE' });
+      expect(await manager.getRun(run.id)).toMatchObject({ status: 'paused', waiting });
+      expect((await store.read(run.id)).some((event) => event.type === 'run.resumed')).toBe(false);
+    } finally {
+      manager.stop();
+      await api.close();
+    }
+  });
   it('refuses a newer durable failure even when the row already has failed status and the same tail', async () => {
     const run = await seeded('failed', transient);
     const failure = { ...transient, code: 'SCRIPT_OUTCOME_UNCERTAIN' as const };
