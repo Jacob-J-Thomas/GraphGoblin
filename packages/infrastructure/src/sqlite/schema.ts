@@ -1,5 +1,5 @@
 import type { ReplayState } from '@graphgoblin/domain';
-import { sql } from 'drizzle-orm';
+import { sql, type AnyColumn } from 'drizzle-orm';
 import type { RunAdmission, WebhookFailureCode, EventFailureCode } from '@graphgoblin/engine';
 import type {
   ClassifierModelEntry,
@@ -114,6 +114,20 @@ export const runs = sqliteTable(
   ],
 );
 
+/**
+ * The latest-evidence reads of `GET /runs/{id}/observation` select stored rows by a JSON property:
+ * decisions that carry gate evidence and resumes that record a fresh-session choice (#186, #265).
+ * A partial index holds exactly those rows, plus rows whose JSON is malformed so a read of the
+ * newest one reports the corruption instead of skipping it. Each read then seeks the index instead
+ * of scanning every decision or resume in the run's history. SQLite uses a partial index only when
+ * the query repeats its condition, so the reads use these same expressions and name the index.
+ */
+type RunEventColumns = { type: AnyColumn; payload: AnyColumn };
+export const gateEvidenceCondition = (t: RunEventColumns) =>
+  sql`${t.type} = 'decision.made' and case when json_valid(${t.payload}) then json_type(${t.payload}, '$.gate') is not null else 1 end`;
+export const freshSessionCondition = (t: RunEventColumns) =>
+  sql`${t.type} = 'run.resumed' and case when json_valid(${t.payload}) then json_type(${t.payload}, '$.freshSession') is not null else 1 end`;
+
 export const runEvents = sqliteTable(
   'run_events',
   {
@@ -127,6 +141,8 @@ export const runEvents = sqliteTable(
   (t) => [
     primaryKey({ columns: [t.runId, t.seq] }),
     index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+    index('run_events_gate_idx').on(t.runId, t.seq).where(gateEvidenceCondition(t)),
+    index('run_events_fresh_session_idx').on(t.runId, t.seq).where(freshSessionCondition(t)),
   ],
 );
 

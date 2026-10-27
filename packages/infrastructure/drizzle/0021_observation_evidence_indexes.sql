@@ -1,0 +1,2 @@
+CREATE INDEX `run_events_gate_idx` ON `run_events` (`run_id`,`seq`) WHERE "run_events"."type" = 'decision.made' and case when json_valid("run_events"."payload") then json_type("run_events"."payload", '$.gate') is not null else 1 end;--> statement-breakpoint
+CREATE INDEX `run_events_fresh_session_idx` ON `run_events` (`run_id`,`seq`) WHERE "run_events"."type" = 'run.resumed' and case when json_valid("run_events"."payload") then json_type("run_events"."payload", '$.freshSession') is not null else 1 end;

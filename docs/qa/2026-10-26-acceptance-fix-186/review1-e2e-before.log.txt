@@ -1,0 +1,44 @@
+
+Running 2 tests using 1 worker
+
+Followed live for 5014 ms while the run advanced from event 136 to 989: {"GET /runs/{id}":10,"GET /runs/{id}/observation":10,"GET /runs/{id}/thread":10,"GET /runs/{id}/events":0}, 0 thread?at reads
+  ok 1 [chromium] › e2e\live-follow.spec.ts:58:1 › following a fast run live refreshes bounded read models and reads no historical thread (#186) (7.2s)
+  x  2 [chromium] › e2e\live-follow.spec.ts:140:1 › following live stays quiet for screen readers and keyboard focus can always leave (#186 QA) (11.6s)
+
+
+  1) [chromium] › e2e\live-follow.spec.ts:140:1 › following live stays quiet for screen readers and keyboard focus can always leave (#186 QA) 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByText('Following live.', { exact: true })
+    Expected: "polite"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByText('Following live.', { exact: true }) with timeout 10000ms
+      - waiting for getByText('Following live.', { exact: true })
+
+
+      152 |     // The announcement while following does not change as events stream in.
+      153 |     const announcement = page.getByText('Following live.', { exact: true });
+    > 154 |     await expect(announcement).toHaveAttribute('aria-live', 'polite');
+          |                                ^
+      155 |     await announcement.evaluate((node) => {
+      156 |       const changes = { count: 0 };
+      157 |       new MutationObserver((records) => (changes.count += records.length)).observe(node, {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ae61ad15bb76ad037\apps\web\e2e\live-follow.spec.ts:154:32
+
+    Error Context: test-results\live-follow-following-live-df6ce-us-can-always-leave-186-QA--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\live-follow-following-live-df6ce-us-can-always-leave-186-QA--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\live-follow-following-live-df6ce-us-can-always-leave-186-QA--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\live-follow.spec.ts:140:1 › following live stays quiet for screen readers and keyboard focus can always leave (#186 QA) 
+  1 passed (26.6s)

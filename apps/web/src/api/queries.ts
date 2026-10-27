@@ -55,6 +55,8 @@ export const keys = {
   runs: (query: ListRunsQuery = {}) => ['runs', 'list', query] as const,
   run: (id: string) => ['runs', 'one', id] as const,
   thread: (id: string) => ['runs', 'thread', id] as const,
+  /** The run's latest durable inspector evidence (`GET /runs/{id}/observation`). */
+  observation: (id: string) => ['run-observation', id] as const,
   settings: ['settings'] as const,
   catalog: ['model-catalog'] as const,
   modelDefaults: ['process-model-defaults'] as const,

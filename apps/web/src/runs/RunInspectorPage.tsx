@@ -1,7 +1,8 @@
 import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
@@ -19,6 +20,7 @@ import { WaitPanel } from './inspector/WaitPanel.js';
 import { DeliveryPanel } from './inspector/DeliveryPanel.js';
 import { useRunEvents } from './useRunEvents.js';
 import { useRunHistory } from './useRunHistory.js';
+import { useLiveRefresh } from './useLiveRefresh.js';
 import { useApi } from '../api/context.js';
 import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
 
@@ -72,21 +74,17 @@ function FailedChildLink({ details }: { details: unknown }) {
  */
 export function RunInspectorPage() {
   const { runId = '' } = useParams();
-  const queryClient = useQueryClient();
   const runQuery = useRun(runId);
   const threadQuery = useRunThread(runId);
-  const log = useRunEvents(runId, () => {
-    void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
-    void queryClient.invalidateQueries({ queryKey: keys.thread(runId) });
-    void queryClient.invalidateQueries({ queryKey: ['run-observation', runId] });
-  });
+  const live = useLiveRefresh(runId);
+  const log = useRunEvents(runId, live.notify);
   const client = useApi();
   const history = useRunHistory(runId, log);
   const selectedSeq = history.selectedSeq;
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = history.selectedEvent;
   const observation = useQuery({
-    queryKey: ['run-observation', runId],
+    queryKey: keys.observation(runId),
     queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
   });
   const present = (events: (RunEvent | undefined)[]) =>
@@ -107,29 +105,47 @@ export function RunInspectorPage() {
     ...(observation.data?.freshSessionChoices ?? []),
     observation.data?.lifecycle?.type === 'run.failed' ? observation.data.lifecycle : undefined,
   ]);
-  const resolveSeq = selectedSeq ?? (selectedEvent?.type === 'node.finished' ? seq : undefined);
+  // Only a selected event reads a historical thread. Following live shows the current thread,
+  // whose read stays bounded however long the history grows; a completion's patch diff reads its
+  // exact boundaries once the reader selects it (#186).
+  const currentThreadShown = selectedSeq === undefined;
+  useEffect(() => {
+    live.showCurrentThread(currentThreadShown);
+  }, [live, currentThreadShown]);
   const selectedThread = useQuery({
-    queryKey: ['run-thread-at', runId, resolveSeq],
+    queryKey: ['run-thread-at', runId, selectedSeq],
     queryFn: async ({ signal }) => ({
-      thread: await runs.thread(client, runId, { at: resolveSeq! }, { signal }),
-      seq: resolveSeq!,
+      thread: await runs.thread(client, runId, { at: selectedSeq! }, { signal }),
+      seq: selectedSeq!,
     }),
-    placeholderData: (previous) => previous,
-    enabled: resolveSeq !== undefined,
+    enabled: selectedSeq !== undefined,
     gcTime: 0,
     staleTime: Infinity,
   });
   const beforeThread = useQuery({
-    queryKey: ['run-thread-before', runId, resolveSeq],
-    queryFn: ({ signal }) => runs.thread(client, runId, { at: Math.max(0, seq - 1) }, { signal }),
-    enabled: resolveSeq !== undefined && selectedEvent?.type === 'node.finished',
+    queryKey: ['run-thread-before', runId, selectedSeq],
+    queryFn: ({ signal }) =>
+      runs.thread(client, runId, { at: Math.max(0, selectedSeq! - 1) }, { signal }),
+    enabled: selectedSeq !== undefined && selectedEvent?.type === 'node.finished',
     gcTime: 0,
     staleTime: Infinity,
   });
-  const shownThread =
-    resolveSeq === undefined ? threadQuery.data : (selectedThread.data?.thread ?? threadQuery.data);
-  const shownSeq = resolveSeq === undefined ? undefined : selectedThread.data?.seq;
-  const threadError = resolveSeq === undefined ? threadQuery.error : selectedThread.error;
+  // The thread on screen: the current thread while following, or a selected event's exact thread
+  // once read. While a selection is read, the thread shown just before it stays with its own
+  // label, so leaving the current thread keeps showing it rather than an older selection's.
+  const resolved = currentThreadShown
+    ? threadQuery.data && { runId, thread: threadQuery.data, seq: undefined }
+    : selectedThread.data && { runId, ...selectedThread.data };
+  const [preceding, setPreceding] = useState(resolved);
+  if (resolved && (resolved.thread !== preceding?.thread || resolved.seq !== preceding?.seq))
+    setPreceding(resolved);
+  const shown =
+    resolved ??
+    (preceding?.runId === runId ? preceding : undefined) ??
+    (threadQuery.data && { thread: threadQuery.data, seq: undefined });
+  const shownThread = shown?.thread;
+  const shownSeq = shown?.seq;
+  const threadError = currentThreadShown ? threadQuery.error : selectedThread.error;
   // Node and route labels come from the pinned version, so it is always read (#255).
   const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
   const definition = versionQuery.data?.definition;
@@ -287,9 +303,9 @@ export function RunInspectorPage() {
           !(threadError instanceof GraphGoblinApiError && threadError.status === 404) ? (
             <Alert>Thread read failed: {threadError.message}</Alert>
           ) : null}
-          {resolveSeq !== undefined && (selectedThread.isFetching || shownSeq !== resolveSeq) ? (
+          {selectedSeq !== undefined && (selectedThread.isFetching || shownSeq !== selectedSeq) ? (
             <p className="text-sm text-muted" aria-live="polite">
-              Reading the thread at event {resolveSeq}…
+              Reading the thread at event {selectedSeq}…
             </p>
           ) : null}
           {beforeThread.error ? (
@@ -301,7 +317,7 @@ export function RunInspectorPage() {
               events={selectedEvent ? [selectedEvent] : []}
               seq={shownSeq ?? seq}
               live={shownSeq === undefined}
-              before={shownSeq === resolveSeq ? beforeThread.data : undefined}
+              before={shownSeq === selectedSeq ? beforeThread.data : undefined}
               definition={definition}
             />
           ) : (

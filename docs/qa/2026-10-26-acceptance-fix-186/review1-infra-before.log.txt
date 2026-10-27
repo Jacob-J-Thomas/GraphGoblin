@@ -1,0 +1,36 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-ae61ad15bb76ad037/packages/infrastructure
+
+ × src/sqlite/evidence-index.test.ts > finds the latest gate and fresh-session choices with one partial-index seek, however long the history (#186) 382ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+ ✓ src/sqlite/evidence-index.test.ts > still reports a malformed newest evidence row instead of skipping it (#186) 236ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/evidence-index.test.ts > finds the latest gate and fresh-session choices with one partial-index seek, however long the history (#186)
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "SEARCH run_events USING INDEX run_events_gate_idx (run_id=?)",
++   "SEARCH run_events USING INDEX run_events_delivery_idx (run_id=? AND type=?)",
+  ]
+
+ ❯ src/sqlite/evidence-index.test.ts:93:38
+     91|   expect(await store.latestGate(runId)).toEqual(first);
+     92|   expect(statements).toHaveLength(1);
+     93|   expect(await plan(statements[0]!)).toEqual([
+       |                                      ^
+     94|     'SEARCH run_events USING INDEX run_events_gate_idx (run_id=?)',
+     95|   ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  07:31:19
+   Duration  5.50s (import 52%, transform 36%, tests 12%)
+
