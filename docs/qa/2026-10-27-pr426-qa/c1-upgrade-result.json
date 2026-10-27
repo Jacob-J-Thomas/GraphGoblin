@@ -1,0 +1,310 @@
+{
+  "scenario": "c1-upgrade",
+  "passed": 21,
+  "failed": 1,
+  "observations": 2,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "A-1 the main build offers minimal for gpt-6-luna (the D1 baseline)",
+      "ok": true,
+      "detail": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "A-2 the main build accepts and publishes A, B, C and saves drafts E, F with minimal",
+      "ok": true,
+      "detail": {
+        "ids": {
+          "A": "01M5Z6MJHGG2XQQTCJQGNA0Z71",
+          "B": "01M5Z6MJWPMF1B092291503D4N",
+          "C": "01M5Z6MK541R01E6QGGTW4RECK",
+          "E": "01M5Z6MKEEV9YH3RTNX2DXMH0K",
+          "F": "01M5Z6MKEVA2H8W47TN0CQDYXA",
+          "D": "01M5Z6MPDPXN7RCDEEPHJVGWW1"
+        },
+        "e": 201,
+        "f": 201
+      }
+    },
+    {
+      "id": "A-3 main gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A-4 the main build saves the Settings default codex gpt-6-luna/minimal and publishes D",
+      "ok": true,
+      "detail": {
+        "put": 200,
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "minimal"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A-5 main gateway (U2) drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A-6 no turn reached a CLI on the main build",
+      "ok": true,
+      "detail": {
+        "u1": [],
+        "u2": []
+      }
+    },
+    {
+      "id": "B-1 reopened by the PR head, the catalog is refreshed: gpt-6-luna offers low to max, no minimal (API and stored row)",
+      "ok": true,
+      "detail": {
+        "api": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "stored": [
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+            "default_effort": "low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "B-2 A: the version published with a Codex inference at minimal is admitted and fails EVALUATION_INVALID_CONFIGURATION (EFFORT_UNSUPPORTED), not resumable, with no provider call",
+      "ok": true,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "code": "EFFORT_UNSUPPORTED",
+            "path": "effort"
+          }
+        },
+        "providerCalls": []
+      }
+    },
+    {
+      "id": "B-2 B: the version published with a Codex LLM decision at minimal is admitted and fails EVALUATION_INVALID_CONFIGURATION (EFFORT_UNSUPPORTED), not resumable, with no provider call",
+      "ok": true,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "code": "EFFORT_UNSUPPORTED",
+            "path": "effort"
+          }
+        },
+        "providerCalls": []
+      }
+    },
+    {
+      "id": "B-2 C: the version published with a Codex loop default at minimal is admitted and fails EVALUATION_INVALID_CONFIGURATION (EFFORT_UNSUPPORTED), not resumable, with no provider call",
+      "ok": false,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "loop",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "providerCalls": []
+      }
+    },
+    {
+      "id": "B-3 no codex exec process was started and no turn reached the CLI during runs A, B, C",
+      "ok": true,
+      "detail": {
+        "argv": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "B-4 E (inference): the editor keeps minimal, marks it \"not supported by this model\", names it on the field, and the node shows one issue",
+      "ok": true,
+      "detail": {
+        "value": "minimal",
+        "checkedText": "minimal (not supported by this model)",
+        "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: low. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.",
+        "nodeIssueButtons": [
+          ""
+        ],
+        "nodeIssueNames": [
+          "1 issue on work"
+        ]
+      }
+    },
+    {
+      "id": "B-5 E: Publish is refused and the refusal names the node and the reason",
+      "ok": true,
+      "detail": "Publish failed\n\nthe draft has structural errors (LOOP_INVALID)\nwork: The selected reasoning effort is not supported by this model"
+    },
+    {
+      "id": "B-6 E: after choosing low the node issue clears and Publish succeeds",
+      "ok": true,
+      "detail": {
+        "issuesLeft": 0,
+        "published": true
+      }
+    },
+    {
+      "id": "B-7 E: the next run's request reaches the (fake) CLI at gpt-6-luna/low",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "success",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ],
+        "runStatus": "succeeded",
+        "failure": null
+      }
+    },
+    {
+      "id": "B-4 F (LLM decision): the editor keeps minimal, marks it \"not supported by this model\", names it on the field, and the node shows one issue",
+      "ok": true,
+      "detail": {
+        "value": "minimal",
+        "checkedText": "minimal (not supported by this model)",
+        "description": "Inherit or explicitly select reasoning effort. Default effort: low. Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.",
+        "nodeIssueButtons": [
+          ""
+        ],
+        "nodeIssueNames": [
+          "1 issue on work"
+        ]
+      }
+    },
+    {
+      "id": "B-5 F: Publish is refused and the refusal names the node and the reason",
+      "ok": true,
+      "detail": "Publish failed\n\nthe draft has structural errors (LOOP_INVALID)\nwork: The selected reasoning effort is not supported by this model"
+    },
+    {
+      "id": "B-6 F: after choosing low the node issue clears and Publish succeeds",
+      "ok": true,
+      "detail": {
+        "issuesLeft": 0,
+        "published": true
+      }
+    },
+    {
+      "id": "B-7 F: the next run's request reaches the (fake) CLI at gpt-6-luna/low",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "harness": "codex",
+            "mode": "success",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "resume": false
+          }
+        ],
+        "runStatus": "failed",
+        "failure": "EVALUATION_INVALID_RESPONSE"
+      }
+    },
+    {
+      "id": "B-8 inspector of run A (text excerpt)",
+      "ok": null,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5Z6MTC4NBGTJGR2CWBF5Q60\nfailed\nat work (work)\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.\n\nFailed: EVALUATION_INVALID_CONFIGURATION\n\nThe selected reasoning effort is not supported by this model\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nQA upgrade A inference minimal v1 · version ID 01M5Z6MJHGG2XQQTCJQGNA0Z72\n\nExact run record\nPinned definition JSON\nFinalization\n\nFully finalized.\n\nExecution: failed. Delivery is tracked separately.\n\nTimeline (6 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–6 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 2 ms\n#5\nnode.started\nwork (work) (inference) attempt 1\n#6\nrun.failed\nEVALUATION_INVALID_CONFIGURATION: The selected reasoning effort is not supported by this model\nExact recorded event #6\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Loa"
+    },
+    {
+      "id": "B-9 PR gateway (U1) drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B-10 D (inherits the stored Settings default minimal) does not reach a provider: refused at admission or failed before any request with EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "start": 202,
+        "run": {
+          "status": "failed",
+          "failure": {
+            "code": "EVALUATION_INVALID_CONFIGURATION",
+            "message": "The default reasoning effort is not supported by its model",
+            "nodeId": "work",
+            "resumable": false,
+            "details": [
+              {
+                "level": "owner",
+                "harness": "codex",
+                "resolution": {
+                  "status": "invalid",
+                  "code": "EFFORT_UNSUPPORTED",
+                  "path": "effort",
+                  "message": "The default reasoning effort is not supported by its model"
+                }
+              }
+            ]
+          },
+          "providerCalls": []
+        },
+        "requests": []
+      }
+    },
+    {
+      "id": "B-11 Settings with the stored Codex default minimal (U2)",
+      "ok": null,
+      "detail": {
+        "value": "minimal",
+        "checkedText": "minimal (unavailable)",
+        "regionText": "Codex\nDefault model\n(server default)\nGPT-5.5\nGPT-5.6 Luna\nGPT-5.6 Sol\nGPT-5.6 Terra\nGPT-6 Astra\nGPT-6 Luna\nGPT-6 Sol\nGPT-6.1 Sol\nDefault effort\n(server default)\nminimal (unavailable)\nlow\nmedium\nhigh\nxhigh\nmax"
+      }
+    },
+    {
+      "id": "B-12 PR gateway (U2) drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}
