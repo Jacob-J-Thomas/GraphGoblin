@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+import * as L from './lib.mjs';
+const require=createRequire(path.join(L.PR_ROOT,'package.json'));
+const prettier=require('prettier');
+const started=fs.readFileSync(path.join(L.OUT,'pids.log.txt'),'utf8').trim().split('\n').map(JSON.parse);
+const exits=fs.readFileSync(path.join(L.OUT,'exits.log.txt'),'utf8').trim().split('\n').map(JSON.parse);
+const alive=pid=>{try{process.kill(pid,0);return true;}catch(error){return error.code!=='ESRCH';}};
+const processes=started.map(p=>({...p,exit:exits.find(e=>e.pid===p.pid),alive:alive(p.pid)}));
+const stores=[...new Set(started.map(p=>p.dir.replace('%USERPROFILE%',os.homedir())))];
+let fakeTurns=0;
+for(const dir of stores){const f=path.join(dir,'fake-cli/requests.jsonl');if(fs.existsSync(f))fakeTurns+=fs.readFileSync(f,'utf8').trim().split('\n').filter(Boolean).length;}
+const git=args=>execFileSync('git',args,{cwd:L.PR_ROOT,encoding:'utf8',windowsHide:true}).trim();
+const version=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','$ErrorActionPreference = "Stop"; (Get-Item -LiteralPath "${env:ProgramFiles(x86)}/Microsoft/Edge/Application/msedge.exe").VersionInfo.ProductVersion'],{encoding:'utf8',windowsHide:true}).trim();
+const result={head:git(['rev-parse','HEAD']),branch:git(['branch','--show-current']),status:git(['status','--short']),trackedDiff:git(['diff','--name-only']),stagedDiff:git(['diff','--cached','--name-only']),node:process.version,executable:process.execPath,os:os.version()+' '+os.release(),edge:version,fakeTurns,liveProviderCalls:0,gateways:processes,allGatewaysExited:processes.every(p=>p.exit && !p.alive),browserCleanup:'All launched browser instances awaited browser.close in scenario finally blocks; no native browser inventory is claimed',retainedTemporaryDirectories:[...stores,L.MAIN_ROOT,L.TOOLS],expectedInvalidStartup:exits.find(e=>e.label==='c1-gg-defaults')};
+fs.writeFileSync(path.join(L.OUT,'completion.log.txt'),L.redact(JSON.stringify(result,null,2))+'\n');
+const json=await prettier.format(L.redact(JSON.stringify(result)),{parser:'json'});
+fs.writeFileSync(path.join(L.OUT,'completion-result.json'),json);
+console.log(JSON.stringify({head:result.head,trackedDiff:result.trackedDiff,stagedDiff:result.stagedDiff,allGatewaysExited:result.allGatewaysExited,gatewayCount:processes.length,fakeTurns,os:result.os,edge:version}));
+if(!result.allGatewaysExited || result.trackedDiff || result.stagedDiff || result.head!=='ae88d7574ce90667664e82951970e68279355ff1')process.exitCode=1;

@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync,execFileSync} from 'node:child_process';
+import * as L from './lib.mjs';
+const env={...process.env,GG_TEST_PORT_START:'7170',GG_TEST_PORT_COUNT:'30'};
+const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','pnpm.cmd build --force'],{cwd:L.PR_ROOT,env,windowsHide:true,encoding:'utf8',maxBuffer:16_000_000});
+fs.writeFileSync(path.join(L.OUT,'build.log.txt'),L.redact(result.stdout+'\n'+result.stderr));
+fs.writeFileSync(path.join(L.OUT,'environment.log.txt'),L.redact(JSON.stringify({head:execFileSync('git',['rev-parse','HEAD'],{cwd:L.PR_ROOT,encoding:'utf8'}).trim(),branch:execFileSync('git',['branch','--show-current'],{cwd:L.PR_ROOT,encoding:'utf8'}).trim(),node:process.version,executable:process.execPath,pnpm:execFileSync('pnpm.cmd',['--version'],{shell:true,encoding:'utf8'}).trim(),os:process.platform,buildCommand:'pnpm.cmd build --force',buildExit:result.status,GG_TEST_PORT_START:env.GG_TEST_PORT_START,GG_TEST_PORT_COUNT:env.GG_TEST_PORT_COUNT},null,2))+'\n');
+console.log('Forced build exit',result.status);
+if(result.status) process.exitCode=1;

@@ -1,0 +1,458 @@
+{
+  "scenario": "review-runs",
+  "passed": 20,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "parse: exactly one fake turn with authored effort",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "parse",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "resume": false
+        }
+      ]
+    },
+    {
+      "id": "B1: durable failure names SDK parse failure",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5ZAXGTDVR2Z204YVZAHZ6MX:5",
+          "turnId": "01M5ZAXH87DFRRT54M7A3WTC6V",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "9e1f4915-5816-4b80-afbc-86ccfc2de0bd"
+        }
+      }
+    },
+    {
+      "id": "parse: startup banner absent from record and durable events",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "invalid-value: exactly one fake turn with authored effort",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "invalid-value",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "resume": false
+        }
+      ]
+    },
+    {
+      "id": "invalid-value: refusal remains HARNESS_TURN_FAILED / HARNESS_ARGUMENTS_REJECTED with exact provider reason",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZAXJ5CJY06WMR4KNNT7KKH:5",
+          "turnId": "01M5ZAXJY3PDVMQCHHW2QJCE7C",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "d228cae5-421d-4f94-bea0-b012cfa5538b"
+        }
+      }
+    },
+    {
+      "id": "invalid-value: no Resume; retained acceptance and delivery uncertainty",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZAXJ5CJY06WMR4KNNT7KKH:5",
+            "turnId": "01M5ZAXJY3PDVMQCHHW2QJCE7C",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "d228cae5-421d-4f94-bea0-b012cfa5538b"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "invalid-value: Resume is 409 and makes no further turn",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "id": "invalid-value: startup banner absent from record and durable events",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "missing-thread-text: exactly one fake turn with authored effort",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "missing-thread-text",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "resume": false
+        }
+      ]
+    },
+    {
+      "id": "missing-thread-text: refusal remains HARNESS_TURN_FAILED / HARNESS_ARGUMENTS_REJECTED with exact provider reason",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZAXKMYNZ348G1E2V6HGFPN:5",
+          "turnId": "01M5ZAXMY10NBQGCCHRZ1XA47P",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "951fd61a-05ab-44c9-ab5a-ed9975152095"
+        }
+      }
+    },
+    {
+      "id": "missing-thread-text: no Resume; retained acceptance and delivery uncertainty",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZAXKMYNZ348G1E2V6HGFPN:5",
+            "turnId": "01M5ZAXMY10NBQGCCHRZ1XA47P",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "951fd61a-05ab-44c9-ab5a-ed9975152095"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing-thread-text: Resume is 409 and makes no further turn",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "id": "missing-thread-text: startup banner absent from record and durable events",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "refused: exactly one fake turn with authored effort",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "refused",
+          "model": "gpt-6-luna",
+          "effort": "minimal",
+          "resume": false
+        }
+      ]
+    },
+    {
+      "id": "refused: refusal remains HARNESS_TURN_FAILED / HARNESS_ARGUMENTS_REJECTED with exact provider reason",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZAXP1G5JGR0S7Q9SXVPVG6:5",
+          "turnId": "01M5ZAXPG0901Q7XP5GEPH5N28",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "72a354b7-1793-4622-a5fb-225a0bf576d3"
+        }
+      }
+    },
+    {
+      "id": "refused: no Resume; retained acceptance and delivery uncertainty",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZAXP1G5JGR0S7Q9SXVPVG6:5",
+            "turnId": "01M5ZAXPG0901Q7XP5GEPH5N28",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "72a354b7-1793-4622-a5fb-225a0bf576d3"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "refused: Resume is 409 and makes no further turn",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "id": "refused: startup banner absent from record and durable events",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "ordinary minimal: original refusal prefix, Replay available",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZAXP1G5JGR0S7Q9SXVPVG6:5",
+          "turnId": "01M5ZAXPG0901Q7XP5GEPH5N28",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "72a354b7-1793-4622-a5fb-225a0bf576d3"
+        }
+      }
+    },
+    {
+      "id": "ordinary minimal: inspector names refusal, disables Resume, enables Replay",
+      "ok": false,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\n\nLoading run…\n\nTimeline (0 events, connecting…)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nNo events loaded.\nFollowing live.\nEvent sequence \nGo to event\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+    },
+    {
+      "id": "gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}
