@@ -1,0 +1,134 @@
+{
+  "scenario": "lp1-dryrun",
+  "passed": 10,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [
+    {
+      "check": "LP-1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YYWSNP54DSW801C2N1CV9Z",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "infer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "LP1-0 the run is running with a Codex CLI process in flight",
+      "ok": true,
+      "detail": {
+        "cli": 46420
+      }
+    },
+    {
+      "id": "LP1-0 the Codex CLI is not attached to the gateway console",
+      "ok": true,
+      "detail": [
+        "18932:node",
+        "19664:launcher2"
+      ]
+    },
+    {
+      "id": "LP1-1 the Ctrl+C starts a normal drain (phase draining) and the gateway keeps serving",
+      "ok": true,
+      "detail": [
+        "draining",
+        "draining",
+        "draining",
+        "draining",
+        "draining",
+        "draining",
+        "gone",
+        "gone"
+      ]
+    },
+    {
+      "id": "LP1-1 the turn keeps running after the Ctrl+C (CLI alive and run running/active while in flight)",
+      "ok": true,
+      "detail": [
+        {
+          "ms": 525,
+          "cli": true,
+          "cmd": null
+        },
+        {
+          "ms": 1225,
+          "cli": true,
+          "cmd": null
+        },
+        {
+          "ms": 1913,
+          "cli": true,
+          "cmd": null
+        },
+        {
+          "ms": 2596,
+          "cli": true,
+          "cmd": null
+        },
+        {
+          "ms": 3287,
+          "cli": true,
+          "cmd": null
+        },
+        {
+          "ms": 3975,
+          "cli": true,
+          "cmd": null
+        }
+      ]
+    },
+    {
+      "id": "LP1-1 no Codex turn failure or STATUS_CONTROL_C_EXIT in the gateway log",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "LP1-2 the drain completes when the turn finishes and the gateway exits 0",
+      "ok": true,
+      "detail": {
+        "code": 0,
+        "exitMs": 5528
+      }
+    },
+    {
+      "id": "LP1-2 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "LP1-3 the run completed successfully (the turn reached its result)",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "LP1-3 exactly one provider turn (no re-run after restart)",
+      "ok": true,
+      "detail": [
+        {
+          "kind": "turn",
+          "seq": 6,
+          "nodeId": "infer",
+          "harness": "codex",
+          "promptKind": "authored",
+          "resume": null
+        }
+      ]
+    },
+    {
+      "id": "LP1-4 the restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "marker": "ggf2lp1mvqtuxa1"
+}

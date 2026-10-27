@@ -1,0 +1,413 @@
+{
+  "scenario": "l1-own-session-dryrun",
+  "passed": 13,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [
+    {
+      "check": "L1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZGV1NS83PNEK1K6F81G31",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZGV1NS83PNEK1K6F81G31",
+      "kind": "turn",
+      "seq": 16,
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZGV1NS83PNEK1K6F81G31",
+      "kind": "turn",
+      "seq": 23,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": "fe5b2417-06d6-4d4c-abc8-b00b268263c2",
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZGV1NS83PNEK1K6F81G31",
+      "kind": "turn",
+      "seq": 33,
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": "d6de6068-0362-4598-ad04-e8bab5f08275",
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZGV1NS83PNEK1K6F81G31",
+      "kind": "turn",
+      "seq": 40,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZGWA8P2PW0XFY4PFHP67K",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZGWA8P2PW0XFY4PFHP67K",
+      "kind": "turn",
+      "seq": 16,
+      "nodeId": "reviewer",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZGWA8P2PW0XFY4PFHP67K",
+      "kind": "turn",
+      "seq": 23,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": "f69d79a0-8064-4677-bbcc-dc50ae1d8701",
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZGWA8P2PW0XFY4PFHP67K",
+      "kind": "turn",
+      "seq": 33,
+      "nodeId": "reviewer",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": "097fc48e-badf-4f5c-975c-f5b5c50a238a",
+      "fake": true
+    },
+    {
+      "check": "L1",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZGWA8P2PW0XFY4PFHP67K",
+      "kind": "turn",
+      "seq": 40,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "L1-codex-0 the run succeeds with 3 worker and 2 reviewer turns",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "worker": 3,
+        "reviewer": 2
+      }
+    },
+    {
+      "id": "L1-codex-1 only the worker's first prompt carries the nonce",
+      "ok": true,
+      "detail": [
+        {
+          "node": "worker",
+          "hasNonce": true
+        },
+        {
+          "node": "reviewer",
+          "hasNonce": false
+        },
+        {
+          "node": "worker",
+          "hasNonce": false
+        },
+        {
+          "node": "reviewer",
+          "hasNonce": false
+        },
+        {
+          "node": "worker",
+          "hasNonce": false
+        }
+      ]
+    },
+    {
+      "id": "L1-codex-2 worker visit 2 resumes the worker's own visit-1 conversation",
+      "ok": true,
+      "detail": {
+        "ws": [
+          {
+            "seq": 7,
+            "nodeId": "worker",
+            "sessionId": "fe5b2417-06d6-4d4c-abc8-b00b268263c2",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "seq": 27,
+            "nodeId": "worker",
+            "sessionId": "fe5b2417-06d6-4d4c-abc8-b00b268263c2",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "seq": 41,
+            "nodeId": "worker",
+            "sessionId": "cf6fad70-e6c5-4194-8524-947136b57889",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        ],
+        "resume2": "fe5b2417-06d6-4d4c-abc8-b00b268263c2"
+      }
+    },
+    {
+      "id": "L1-codex-5 the reviewer keeps its own separate conversation",
+      "ok": true,
+      "detail": {
+        "rs": [
+          {
+            "seq": 17,
+            "nodeId": "reviewer",
+            "sessionId": "d6de6068-0362-4598-ad04-e8bab5f08275",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "seq": 37,
+            "nodeId": "reviewer",
+            "sessionId": "d6de6068-0362-4598-ad04-e8bab5f08275",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        ],
+        "reviewerResumes": [
+          null,
+          "d6de6068-0362-4598-ad04-e8bab5f08275"
+        ]
+      }
+    },
+    {
+      "id": "L1-codex-6 after 2 visits the reset starts a fresh worker conversation on visit 3",
+      "ok": true,
+      "detail": {
+        "visit3": {
+          "seq": 40,
+          "nodeId": "worker",
+          "promptKind": "authored",
+          "resume": null,
+          "hasNonce": false,
+          "prompt": "What secret code did I ask you to remember earlier in this conversation? Reply with only the code, or exactly NONE if no code was given in this conversation."
+        },
+        "lastWorkerSession": {
+          "seq": 41,
+          "nodeId": "worker",
+          "sessionId": "cf6fad70-e6c5-4194-8524-947136b57889",
+          "mode": "fresh",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L1-codex-8 every turn used the selected model and effort",
+      "ok": true,
+      "detail": [
+        "gpt-6-luna/low",
+        "gpt-6-luna/low",
+        "gpt-6-luna/low",
+        "gpt-6-luna/low",
+        "gpt-6-luna/low"
+      ]
+    },
+    {
+      "id": "L1-claude-0 the run succeeds with 3 worker and 2 reviewer turns",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "worker": 3,
+        "reviewer": 2
+      }
+    },
+    {
+      "id": "L1-claude-1 only the worker's first prompt carries the nonce",
+      "ok": true,
+      "detail": [
+        {
+          "node": "worker",
+          "hasNonce": true
+        },
+        {
+          "node": "reviewer",
+          "hasNonce": false
+        },
+        {
+          "node": "worker",
+          "hasNonce": false
+        },
+        {
+          "node": "reviewer",
+          "hasNonce": false
+        },
+        {
+          "node": "worker",
+          "hasNonce": false
+        }
+      ]
+    },
+    {
+      "id": "L1-claude-2 worker visit 2 resumes the worker's own visit-1 conversation",
+      "ok": true,
+      "detail": {
+        "ws": [
+          {
+            "seq": 7,
+            "nodeId": "worker",
+            "sessionId": "f69d79a0-8064-4677-bbcc-dc50ae1d8701",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          },
+          {
+            "seq": 27,
+            "nodeId": "worker",
+            "sessionId": "f69d79a0-8064-4677-bbcc-dc50ae1d8701",
+            "mode": "resumed",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          },
+          {
+            "seq": 41,
+            "nodeId": "worker",
+            "sessionId": "dbb3eb8c-5e8b-4697-968e-b3094c54bd04",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          }
+        ],
+        "resume2": "f69d79a0-8064-4677-bbcc-dc50ae1d8701"
+      }
+    },
+    {
+      "id": "L1-claude-5 the reviewer keeps its own separate conversation",
+      "ok": true,
+      "detail": {
+        "rs": [
+          {
+            "seq": 17,
+            "nodeId": "reviewer",
+            "sessionId": "097fc48e-badf-4f5c-975c-f5b5c50a238a",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          },
+          {
+            "seq": 37,
+            "nodeId": "reviewer",
+            "sessionId": "097fc48e-badf-4f5c-975c-f5b5c50a238a",
+            "mode": "resumed",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          }
+        ],
+        "reviewerResumes": [
+          null,
+          "097fc48e-badf-4f5c-975c-f5b5c50a238a"
+        ]
+      }
+    },
+    {
+      "id": "L1-claude-6 after 2 visits the reset starts a fresh worker conversation on visit 3",
+      "ok": true,
+      "detail": {
+        "visit3": {
+          "seq": 40,
+          "nodeId": "worker",
+          "promptKind": "authored",
+          "resume": null,
+          "hasNonce": false,
+          "prompt": "What secret code did I ask you to remember earlier in this conversation? Reply with only the code, or exactly NONE if no code was given in this conversation."
+        },
+        "lastWorkerSession": {
+          "seq": 41,
+          "nodeId": "worker",
+          "sessionId": "dbb3eb8c-5e8b-4697-968e-b3094c54bd04",
+          "mode": "fresh",
+          "model": "claude-haiku-5-5",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L1-claude-8 every turn used the selected model and effort",
+      "ok": true,
+      "detail": [
+        "claude-haiku-5-5/low",
+        "claude-haiku-5-5/low",
+        "claude-haiku-5-5/low",
+        "claude-haiku-5-5/low",
+        "claude-haiku-5-5/low"
+      ]
+    },
+    {
+      "id": "L1-9 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

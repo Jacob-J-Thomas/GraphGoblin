@@ -1,0 +1,24 @@
+using System;
+using System.Runtime.InteropServices;
+// List every process attached to the console of the target PID (GetConsoleProcessList).
+public static class ConsList {
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool FreeConsole();
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool AttachConsole(uint pid);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern uint GetConsoleProcessList(uint[] list, uint count);
+  public static int Main(string[] args) {
+    uint pid = uint.Parse(args[0]);
+    FreeConsole();
+    if (!AttachConsole(pid)) { Console.Error.WriteLine("AttachConsole failed " + Marshal.GetLastWin32Error()); return 2; }
+    var list = new uint[256]; uint n = GetConsoleProcessList(list, 256);
+    int self = System.Diagnostics.Process.GetCurrentProcess().Id;
+    var parts = new System.Collections.Generic.List<string>();
+    for (int i = 0; i < n && i < 256; i++) {
+      if (list[i] == self) continue;
+      string name = "?"; try { name = System.Diagnostics.Process.GetProcessById((int)list[i]).ProcessName; } catch {}
+      parts.Add(list[i] + ":" + name);
+    }
+    FreeConsole();
+    System.IO.File.WriteAllText(args[1], string.Join(",", parts.ToArray()));
+    return 0;
+  }
+}

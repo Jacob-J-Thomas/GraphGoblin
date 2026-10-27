@@ -1,0 +1,318 @@
+{
+  "scenario": "f1b1-native-force",
+  "passed": 23,
+  "failed": 2,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "B1-0 the script root and its live descendant run under the gateway",
+      "ok": true,
+      "detail": [
+        {
+          "pid": 51644,
+          "ppid": 3620,
+          "name": "conhost.exe"
+        },
+        {
+          "pid": 46656,
+          "ppid": 3620,
+          "name": "node.exe"
+        },
+        {
+          "pid": 56180,
+          "ppid": 46656,
+          "name": "conhost.exe"
+        },
+        {
+          "pid": 21028,
+          "ppid": 46656,
+          "name": "node.exe"
+        }
+      ]
+    },
+    {
+      "id": "B1-0 SSE streams are open for parent and child",
+      "ok": true,
+      "detail": [
+        {
+          "runId": "01M5YYMYHHB61S0CW631X8YCYY",
+          "status": 200,
+          "open": true
+        },
+        {
+          "runId": "01M5YYMYK7TGKVB6JH15Y5Y937",
+          "status": 200,
+          "open": true
+        }
+      ]
+    },
+    {
+      "id": "B1-1 API drain starts a normal drain; the script tree keeps running",
+      "ok": true,
+      "detail": {
+        "phase": "draining",
+        "active": [
+          "01M5YYMYK7TGKVB6JH15Y5Y937"
+        ]
+      }
+    },
+    {
+      "id": "B1-1 active work lists the child run",
+      "ok": true,
+      "detail": [
+        "01M5YYMYK7TGKVB6JH15Y5Y937"
+      ]
+    },
+    {
+      "id": "B1-2 explicit force never reaches force-failed",
+      "ok": true,
+      "detail": [
+        "forcing",
+        "forcing",
+        "gone"
+      ]
+    },
+    {
+      "id": "B1-2 the gateway exits 0 after a successful force",
+      "ok": true,
+      "detail": {
+        "code": 0,
+        "exitMs": 343
+      }
+    },
+    {
+      "id": "B1-3 the script root is gone (tasklist and CIM)",
+      "ok": true,
+      "detail": "no process with PID 46656"
+    },
+    {
+      "id": "B1-3 the live descendant is gone (tasklist and CIM)",
+      "ok": true,
+      "detail": "no process with PID 21028"
+    },
+    {
+      "id": "B1-3 no process names the store any more",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "B1-4 the gateway released its lock",
+      "ok": true,
+      "detail": [
+        "effects.jsonl",
+        "fake-cli",
+        "gateway-f1b1-a.log",
+        "graphgoblin.db",
+        "graphgoblin.db-shm",
+        "graphgoblin.db-wal",
+        "master.key"
+      ]
+    },
+    {
+      "id": "B1-5 both SSE streams closed by the time the gateway exited",
+      "ok": true,
+      "detail": [
+        {
+          "runId": "01M5YYMYHHB61S0CW631X8YCYY",
+          "open": false,
+          "msOpen": 2877,
+          "closedMsAfterForce": 232,
+          "error": null,
+          "bytes": 2590,
+          "lastEvent": "event: run.waiting"
+        },
+        {
+          "runId": "01M5YYMYK7TGKVB6JH15Y5Y937",
+          "open": false,
+          "msOpen": 2877,
+          "closedMsAfterForce": 233,
+          "error": null,
+          "bytes": 3042,
+          "lastEvent": "event: run.failed"
+        }
+      ]
+    },
+    {
+      "id": "B1-6 the child records RUN_INTERRUPTED_BY_STOP, non-resumable, effects may have happened, at the script node",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "script",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5YYMYK7TGKVB6JH15Y5Y937:5",
+          "dispatchId": "01M5YYMYMP0GJSM8RCX95VZKCY",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "B1-6 no SCRIPT_TERMINATION_UNCONFIRMED anywhere in the child history",
+      "ok": true,
+      "detail": [
+        "RUN_INTERRUPTED_BY_STOP"
+      ]
+    },
+    {
+      "id": "B1-6 the script ran exactly once (one root, one descendant effect line)",
+      "ok": true,
+      "detail": [
+        {
+          "role": "root",
+          "pid": 46656,
+          "at": 1793113881302
+        },
+        {
+          "role": "descendant",
+          "pid": 21028,
+          "at": 1793113881346
+        }
+      ]
+    },
+    {
+      "id": "B1-7 the parent records the child interruption and is not resumable",
+      "ok": true,
+      "detail": {
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "subloop child 01M5YYMYK7TGKVB6JH15Y5Y937 failed: Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5YYMYK7TGKVB6JH15Y5Y937",
+            "childNodeId": "script",
+            "childDetails": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            }
+          },
+          "script": {
+            "visitId": "01M5YYMYK7TGKVB6JH15Y5Y937:5",
+            "dispatchId": "01M5YYMYMP0GJSM8RCX95VZKCY",
+            "state": "outcome-uncertain"
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "id": "B1-7 parent Resume is refused (409)",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "B1-7 child Resume is refused (409)",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+        "title": "parent recovery required",
+        "status": 409,
+        "code": "PARENT_RECOVERY_REQUIRED",
+        "detail": "Recovery belongs to parent run 01M5YYMYHHB61S0CW631X8YCYY. Open that parent to review its recovery choices."
+      }
+    },
+    {
+      "id": "B1-8 direct child Replay is refused: recovery belongs to the parent",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+        "title": "parent recovery required",
+        "status": 409,
+        "code": "PARENT_RECOVERY_REQUIRED",
+        "detail": "Recovery belongs to parent run 01M5YYMYHHB61S0CW631X8YCYY. Open that parent to review its recovery choices."
+      }
+    },
+    {
+      "id": "B1-8 two identical parent Replay requests admit exactly one fork (202 + 409)",
+      "ok": false,
+      "detail": [
+        409,
+        409
+      ]
+    },
+    {
+      "id": "B1-8 the second request names the existing fork",
+      "ok": false,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/script-consent-required",
+        "title": "script consent required",
+        "status": 409,
+        "code": "SCRIPT_CONSENT_REQUIRED",
+        "detail": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+      }
+    },
+    {
+      "id": "B1-9 exactly one replay fork of the parent exists",
+      "ok": true,
+      "detail": [
+        {
+          "id": "01M5YYMYK7TGKVB6JH15Y5Y937",
+          "parent": "01M5YYMYHHB61S0CW631X8YCYY"
+        },
+        {
+          "id": "01M5YYMYHHB61S0CW631X8YCYY"
+        }
+      ]
+    },
+    {
+      "id": "B1-10 the source parent history is unchanged by the Replay",
+      "ok": true,
+      "detail": {
+        "before": 11,
+        "after": 11
+      }
+    },
+    {
+      "id": "B1-10 the source child history is unchanged by the Replay",
+      "ok": true,
+      "detail": {
+        "before": 7,
+        "after": 7
+      }
+    },
+    {
+      "id": "B1-10 the source parent stays failed with its interruption",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "subloop child 01M5YYMYK7TGKVB6JH15Y5Y937 failed: Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "sub",
+        "resumable": false,
+        "details": {
+          "childRunId": "01M5YYMYK7TGKVB6JH15Y5Y937",
+          "childNodeId": "script",
+          "childDetails": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "script": {
+          "visitId": "01M5YYMYK7TGKVB6JH15Y5Y937:5",
+          "dispatchId": "01M5YYMYMP0GJSM8RCX95VZKCY",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "B1-11 the restarted gateway drains to exit 0 and releases its lock",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

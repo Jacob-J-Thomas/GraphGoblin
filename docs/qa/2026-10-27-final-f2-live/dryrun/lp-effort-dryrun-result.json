@@ -1,0 +1,116 @@
+{
+  "scenario": "lp-effort-dryrun",
+  "passed": 4,
+  "failed": 0,
+  "observations": 1,
+  "realTurns": [
+    {
+      "check": "LP-4",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "max",
+      "run": "01M5YZARPJ7026R9SG8DHABN88",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "infer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    },
+    {
+      "check": "LP-4",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "max",
+      "run": "01M5YZARPJ7026R9SG8DHABN88",
+      "kind": "llm-decision",
+      "seq": 13,
+      "nodeId": "pick",
+      "provenance": {
+        "kind": "llm",
+        "provider": "codex",
+        "classifierId": null,
+        "model": "gpt-6-luna",
+        "effort": "max"
+      },
+      "fake": true
+    },
+    {
+      "check": "LP-5",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "minimal",
+      "run": "01M5YZAVBJXHZZFFN2RSZJ2BKR",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "infer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "LP4-1 the max run succeeds (inference turn and LLM decision complete)",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "LP4-2 the run records max: session row and harness.session say gpt-6-luna / max",
+      "ok": true,
+      "detail": {
+        "sessions4": [
+          {
+            "runId": "01M5YZARPJ7026R9SG8DHABN88",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "sessionId": "581a9f3d-56bf-47d2-8686-d09f42d74c34",
+            "status": "finished",
+            "model": "gpt-6-luna",
+            "effort": "max",
+            "updatedAt": "2026-10-27T15:23:16.529Z"
+          }
+        ],
+        "hs4": [
+          {
+            "sessionId": "581a9f3d-56bf-47d2-8686-d09f42d74c34",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "max"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LP4-3 the LLM decision records provider codex, gpt-6-luna, max and routes finish",
+      "ok": true,
+      "detail": {
+        "kind": "llm",
+        "provider": "codex",
+        "classifierId": null,
+        "model": "gpt-6-luna",
+        "effort": "max"
+      }
+    },
+    {
+      "id": "LP5-1 what happens for a real Codex turn at minimal on gpt-6-luna",
+      "ok": null,
+      "detail": {
+        "status": "succeeded",
+        "failure": null,
+        "cliReceived": [],
+        "cliRecorded": null
+      }
+    },
+    {
+      "id": "LP4-6 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

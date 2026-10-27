@@ -1,0 +1,19 @@
+2026-10-27T15:15:37.895Z +3.1s gateway lp1 listening {"pid":18932,"launcherPid":19664,"port":6641,"viaConsole":true}
+2026-10-27T15:15:41.807Z +7.0s before Ctrl+C {"gatewayPid":18932,"cliPid":46420,"gatewayConsole":{"status":0,"entries":["18932:node","19664:launcher2"]}}
+2026-10-27T15:15:41.822Z +7.0s CHECK PASS LP1-0 the run is running with a Codex CLI process in flight {"cli":46420}
+2026-10-27T15:15:41.823Z +7.0s CHECK PASS LP1-0 the Codex CLI is not attached to the gateway console ["18932:node","19664:launcher2"]
+2026-10-27T15:15:42.226Z +7.5s one real console Ctrl+C delivered to the gateway console {"status":0,"stderr":""}
+2026-10-27T15:15:47.742Z +13.0s samples for 4 s after the Ctrl+C [{"ms":525,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":1225,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":1913,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":2596,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":3287,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":3975,"phase":"draining","active":["01M5YYWSNP54DSW801C2N1CV9Z"],"cliAlive":true,"commandAlive":null,"status":"running","gatewayExit":null},{"ms":4667,"phase":"gone","cliAlive":false,"commandAlive":null,"gatewayExit":0},{"ms":5357,"phase":"gone","cliAlive":false,"commandAlive":null,"gatewayExit":0}]
+2026-10-27T15:15:47.743Z +13.0s CHECK PASS LP1-1 the Ctrl+C starts a normal drain (phase draining) and the gateway keeps serving ["draining","draining","draining","draining","draining","draining","gone","gone"]
+2026-10-27T15:15:47.743Z +13.0s CHECK PASS LP1-1 the turn keeps running after the Ctrl+C (CLI alive and run running/active while in flight) [{"ms":525,"cli":true,"cmd":null},{"ms":1225,"cli":true,"cmd":null},{"ms":1913,"cli":true,"cmd":null},{"ms":2596,"cli":true,"cmd":null},{"ms":3287,"cli":true,"cmd":null},{"ms":3975,"cli":true,"cmd":null}]
+2026-10-27T15:15:47.753Z +13.0s CHECK PASS LP1-1 no Codex turn failure or STATUS_CONTROL_C_EXIT in the gateway log []
+2026-10-27T15:15:47.754Z +13.0s gateway exit after the drain {"code":0,"msAfterCtrlC":5528}
+2026-10-27T15:15:47.754Z +13.0s CHECK PASS LP1-2 the drain completes when the turn finishes and the gateway exits 0 {"code":0,"exitMs":5528}
+2026-10-27T15:15:47.755Z +13.0s CHECK PASS LP1-2 lock released null
+2026-10-27T15:15:50.291Z +15.5s gateway lp1-r listening {"pid":60620,"port":6641,"viaConsole":false}
+2026-10-27T15:15:50.347Z +15.6s REAL TURN {"check":"LP-1","provider":"codex","model":"gpt-6-luna","effort":"low","run":"01M5YYWSNP54DSW801C2N1CV9Z","kind":"turn","seq":6,"nodeId":"infer","harness":"codex","promptKind":"authored","resume":null,"fake":true}
+2026-10-27T15:15:50.348Z +15.6s run after restart {"status":"succeeded","outputs":[null,null,null],"commands":[],"lastOutput":null}
+2026-10-27T15:15:50.348Z +15.6s CHECK PASS LP1-3 the run completed successfully (the turn reached its result) {"status":"succeeded"}
+2026-10-27T15:15:50.349Z +15.6s CHECK PASS LP1-3 exactly one provider turn (no re-run after restart) [{"kind":"turn","seq":6,"nodeId":"infer","harness":"codex","promptKind":"authored","resume":null}]
+2026-10-27T15:15:50.469Z +15.7s CHECK PASS LP1-4 the restarted gateway drains to exit 0 0
+2026-10-27T15:15:50.479Z +15.7s DONE passed=10 failed=0 observations=0 realTurns=1

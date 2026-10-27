@@ -1,0 +1,36 @@
+{
+  "scenario": "lp5-cli-diagnostic",
+  "passed": 0,
+  "failed": 0,
+  "observations": 1,
+  "realTurns": [
+    {
+      "check": "LP-5 diagnostic",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "minimal",
+      "kind": "direct-cli",
+      "fake": false
+    }
+  ],
+  "checks": [
+    {
+      "id": "the JSON event stream carries the provider refusal",
+      "ok": null,
+      "detail": {
+        "turnFailed": [
+          {
+            "type": "turn.failed",
+            "message": "{\"type\":\"error\",\"error\":{\"message\":\"Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.\",\"type\":\"invalid_request_error\",\"param\":\"reasoning.effort\",\"code\":\"unsupported_value\"},\"status\":400}"
+          }
+        ],
+        "errors": [
+          {
+            "type": "error",
+            "message": "{\"type\":\"error\",\"error\":{\"message\":\"Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.\",\"type\":\"invalid_request_error\",\"param\":\"reasoning.effort\",\"code\":\"unsupported_value\"},\"status\":400}"
+          }
+        ]
+      }
+    }
+  ]
+}

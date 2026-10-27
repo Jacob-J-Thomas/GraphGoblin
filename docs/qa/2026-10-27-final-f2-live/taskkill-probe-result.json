@@ -1,0 +1,38 @@
+{
+  "scenario": "taskkill-probe",
+  "passed": 4,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "both alive before taskkill",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "taskkill /T /F exits 0",
+      "ok": true,
+      "detail": {
+        "code": 0,
+        "stdout": "SUCCESS: The process with PID 39200 (child process of PID 14260) has been terminated.\r\nSUCCESS: The process with PID 60580 (child process of PID 14260) has been terminated.\r\nSUCCESS: The process with PID 14260 (child process of PID 46648) has been terminated.",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "child exited",
+      "ok": true,
+      "detail": {
+        "code": 1,
+        "signal": null
+      }
+    },
+    {
+      "id": "grandchild gone (tree kill)",
+      "ok": true,
+      "detail": {
+        "grandchild": 60580
+      }
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "scenario": "lp2-dryrun",
+  "passed": 9,
+  "failed": 0,
+  "observations": 2,
+  "realTurns": [
+    {
+      "check": "LP-2/LP-3",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YYYBZ03G63YX9YZPTMY54A",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "infer",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "LP2-0 a real Codex turn is running its long command",
+      "ok": true
+    },
+    {
+      "id": "LP2-1 API drain: phase draining with the Codex run active, command still running",
+      "ok": true,
+      "detail": {
+        "phase": "draining",
+        "active": [
+          "01M5YYYBZ03G63YX9YZPTMY54A"
+        ]
+      }
+    },
+    {
+      "id": "LP2-2 the phase leaves forcing within a few seconds (<= 7 s)",
+      "ok": true,
+      "detail": {
+        "leftForcingMs": 109,
+        "phases": [
+          "forcing",
+          "gone"
+        ]
+      }
+    },
+    {
+      "id": "LP2-2 force outcome",
+      "ok": null,
+      "detail": {
+        "outcome": "released",
+        "state": {
+          "phase": "gone",
+          "error": "ECONNREFUSED"
+        }
+      }
+    },
+    {
+      "id": "LP2-3 the Codex CLI process is gone after force",
+      "ok": true,
+      "detail": 49872
+    },
+    {
+      "id": "LP2-3 did the command process survive the force?",
+      "ok": null,
+      "detail": {
+        "survived": null,
+        "markerProcesses": []
+      }
+    },
+    {
+      "id": "LP2-4 the gateway exits 0 after a successful force and releases its lock",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "LP2-5 the run records the interruption truthfully (RUN_INTERRUPTED_BY_STOP if released, HARNESS_TERMINATION_UNCONFIRMED if force-failed), non-resumable",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "LP3-2 no further output arrived for the run after the force",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "LP2-5 exactly one provider turn (nothing re-ran after restart)",
+      "ok": true,
+      "detail": [
+        {
+          "kind": "turn",
+          "seq": 6,
+          "nodeId": "infer",
+          "harness": "codex",
+          "promptKind": "authored",
+          "resume": null
+        }
+      ]
+    },
+    {
+      "id": "LP2-6 the restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "marker": "ggf2lp2mvqtw1hy"
+}

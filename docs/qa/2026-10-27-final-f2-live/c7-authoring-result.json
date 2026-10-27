@@ -1,0 +1,463 @@
+{
+  "scenario": "c7-authoring",
+  "passed": 15,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [
+    {
+      "check": "C7",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5Z00WNX8JZVKGX4NTPYG2KN",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "inference",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5Z00WNX8JZVKGX4NTPYG2KN",
+      "kind": "turn",
+      "seq": 22,
+      "nodeId": "inference",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5Z01M70SKPDR49RPY9Z06ZA",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "inference",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5Z01M70SKPDR49RPY9Z06ZA",
+      "kind": "turn",
+      "seq": 23,
+      "nodeId": "inference",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5Z0240RGBD3G95T55ECJKVH",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "inference",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5Z01WXB11VHJ51X0S04P65H",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "inference",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "C7",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5Z01WXB11VHJ51X0S04P65H",
+      "kind": "turn",
+      "seq": 23,
+      "nodeId": "inference",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    }
+  ],
+  "checks": [
+    {
+      "id": "C7-1 the inference node opens on its Settings tab with Codex selected",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C7-2 after save and reload the draft keeps all six connections",
+      "ok": true,
+      "detail": {
+        "edges": [
+          "decision:again->wait",
+          "decision:finish->done",
+          "decision:limit-reached->done",
+          "inference:out->decision",
+          "start:out->inference",
+          "wait:out->inference"
+        ],
+        "canvasEdges": 6
+      }
+    },
+    {
+      "id": "C7-2 after reload the inference inputs are intact (model, effort, template) in the editor and the draft",
+      "ok": true,
+      "detail": {
+        "ui": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "template": "Reply with exactly the word ALPHA and nothing else."
+        },
+        "infCfg": {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Reply with exactly the word ALPHA and nothing else."
+          },
+          "input": [],
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never"
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "transforms": []
+          }
+        }
+      }
+    },
+    {
+      "id": "C7-2 after reload the decision inputs are intact (expression, routes, repeat, passes)",
+      "ok": true,
+      "detail": {
+        "dui": {
+          "jsonata": "\"again\"",
+          "route0": "again",
+          "route1": "finish",
+          "repeat": "true"
+        },
+        "decCfg": {
+          "kind": "expression",
+          "jsonata": "\"again\"",
+          "maxPasses": 2,
+          "routes": [
+            {
+              "id": "again",
+              "label": "Again",
+              "repeat": true
+            },
+            {
+              "id": "finish",
+              "label": "Finish"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "C7-3 R1 (v1, Codex) succeeds with two Codex turns at gpt-6-luna/low using the v1 prompt",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "pinned": {
+          "version": 1,
+          "label": "F2 authoring v1",
+          "versionId": "01M5Z00KJQG2A4PZTZ2SWRNQ9B"
+        },
+        "turns": [
+          {
+            "harness": "codex",
+            "prompt": "Reply with exactly the word ALPHA and nothing else."
+          },
+          {
+            "harness": "codex",
+            "prompt": "Reply with exactly the word ALPHA and nothing else."
+          }
+        ],
+        "sessions": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        ],
+        "replies": [
+          "{\"nodeId\":\"inference\",\"value\":\"ALPHA\",\"at\":\"2026-10-27T15:35:31.701Z\"}",
+          "{\"nodeId\":\"inference\",\"value\":\"ALPHA\",\"at\":\"2026-10-27T15:35:40.992Z\"}"
+        ],
+        "calls": [
+          {
+            "kind": "turn",
+            "seq": 6,
+            "nodeId": "inference",
+            "harness": "codex",
+            "promptKind": "authored",
+            "resume": null
+          },
+          {
+            "kind": "turn",
+            "seq": 22,
+            "nodeId": "inference",
+            "harness": "codex",
+            "promptKind": "authored",
+            "resume": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "C7-3 R1 replies ALPHA",
+      "ok": true,
+      "detail": [
+        "{\"nodeId\":\"inference\",\"value\":\"ALPHA\",\"at\":\"2026-10-27T15:35:31.701Z\"}",
+        "{\"nodeId\":\"inference\",\"value\":\"ALPHA\",\"at\":\"2026-10-27T15:35:40.992Z\"}"
+      ]
+    },
+    {
+      "id": "C7-4 choosing claude selects the Claude harness",
+      "ok": false,
+      "detail": null
+    },
+    {
+      "id": "C7-4 v2 keeps the six connections after the harness switch",
+      "ok": true,
+      "detail": [
+        "decision:again->wait",
+        "decision:finish->done",
+        "decision:limit-reached->done",
+        "inference:out->decision",
+        "start:out->inference",
+        "wait:out->inference"
+      ]
+    },
+    {
+      "id": "C7-5 R2 (v2, Claude) succeeds with two Claude turns at claude-haiku-5-5/low using the v2 prompt",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "pinned": {
+          "version": 2,
+          "label": "F2 authoring v2",
+          "versionId": "01M5Z01JCFQFMT1GQZ64B7KXFT"
+        },
+        "turns": [
+          {
+            "harness": "claude",
+            "prompt": "Reply with exactly the word BRAVO and nothing else."
+          },
+          {
+            "harness": "claude",
+            "prompt": "Reply with exactly the word BRAVO and nothing else."
+          }
+        ],
+        "sessions": [
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          },
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          }
+        ],
+        "replies": [
+          "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:48.254Z\"}",
+          "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:53.553Z\"}"
+        ],
+        "calls": [
+          {
+            "kind": "turn",
+            "seq": 6,
+            "nodeId": "inference",
+            "harness": "claude",
+            "promptKind": "authored",
+            "resume": null
+          },
+          {
+            "kind": "turn",
+            "seq": 23,
+            "nodeId": "inference",
+            "harness": "claude",
+            "promptKind": "authored",
+            "resume": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "C7-5 R2 replies BRAVO",
+      "ok": true,
+      "detail": [
+        "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:48.254Z\"}",
+        "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:53.553Z\"}"
+      ]
+    },
+    {
+      "id": "C7-6 R3 (v2) parks at the wait after its first turn",
+      "ok": true,
+      "detail": {
+        "status": "waiting",
+        "pinned": 2
+      }
+    },
+    {
+      "id": "C7-7 R4 is pinned to v3 and its turn uses the v3 prompt",
+      "ok": true,
+      "detail": {
+        "status": "waiting",
+        "f4": {
+          "status": "cancelled",
+          "pinned": {
+            "version": 3,
+            "label": "F2 authoring v3",
+            "versionId": "01M5Z0224ME9VHBZZ4X0BKXE2K"
+          },
+          "turns": [
+            {
+              "harness": "claude",
+              "prompt": "Reply with exactly the word CHARLIE and nothing else."
+            }
+          ],
+          "sessions": [
+            {
+              "harness": "claude",
+              "mode": "fresh",
+              "model": "claude-haiku-5-5",
+              "effort": "low"
+            }
+          ],
+          "replies": [
+            "{\"nodeId\":\"inference\",\"value\":\"CHARLIE\",\"at\":\"2026-10-27T15:36:04.431Z\"}"
+          ],
+          "calls": [
+            {
+              "kind": "turn",
+              "seq": 6,
+              "nodeId": "inference",
+              "harness": "claude",
+              "promptKind": "authored",
+              "resume": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "C7-8 R3 keeps its pinned v2 definition after v3 was published: both turns use the v2 prompt",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "pinned": {
+          "version": 2,
+          "label": "F2 authoring v2",
+          "versionId": "01M5Z01JCFQFMT1GQZ64B7KXFT"
+        },
+        "turns": [
+          {
+            "harness": "claude",
+            "prompt": "Reply with exactly the word BRAVO and nothing else."
+          },
+          {
+            "harness": "claude",
+            "prompt": "Reply with exactly the word BRAVO and nothing else."
+          }
+        ],
+        "sessions": [
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          },
+          {
+            "harness": "claude",
+            "mode": "fresh",
+            "model": "claude-haiku-5-5",
+            "effort": "low"
+          }
+        ],
+        "replies": [
+          "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:57.945Z\"}",
+          "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:36:07.737Z\"}"
+        ],
+        "calls": [
+          {
+            "kind": "turn",
+            "seq": 6,
+            "nodeId": "inference",
+            "harness": "claude",
+            "promptKind": "authored",
+            "resume": null
+          },
+          {
+            "kind": "turn",
+            "seq": 23,
+            "nodeId": "inference",
+            "harness": "claude",
+            "promptKind": "authored",
+            "resume": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "C7-8 the R3 inspector names the pinned version v2",
+      "ok": true,
+      "detail": "F2 authoring v2 · version ID 01M5Z01JCFQFMT1GQZ64B7KXFT"
+    },
+    {
+      "id": "C7-8 R3 replies BRAVO on both visits",
+      "ok": true,
+      "detail": [
+        "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:35:57.945Z\"}",
+        "{\"nodeId\":\"inference\",\"value\":\"BRAVO\",\"at\":\"2026-10-27T15:36:07.737Z\"}"
+      ]
+    },
+    {
+      "id": "C7-9 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

@@ -1,0 +1,406 @@
+{
+  "scenario": "l2-missing-session",
+  "passed": 27,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [
+    {
+      "check": "L2",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZP365MX64Q3JVQ5KWCWRV",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "L2",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZP365MX64Q3JVQ5KWCWRV",
+      "kind": "turn",
+      "seq": 22,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": "c9b6feea-4cf5-42c4-93a7-610002591afd",
+      "fake": false
+    },
+    {
+      "check": "L2",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "run": "01M5YZP365MX64Q3JVQ5KWCWRV",
+      "kind": "turn",
+      "seq": 28,
+      "nodeId": "worker",
+      "harness": "codex",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "L2",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZPD1HH96SS4E2FHAF1EZX",
+      "kind": "turn",
+      "seq": 6,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    },
+    {
+      "check": "L2",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZPD1HH96SS4E2FHAF1EZX",
+      "kind": "turn",
+      "seq": 23,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": "e7cd4673-cbb4-491d-9510-50fe0c2819e3",
+      "fake": false
+    },
+    {
+      "check": "L2",
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "run": "01M5YZPD1HH96SS4E2FHAF1EZX",
+      "kind": "turn",
+      "seq": 29,
+      "nodeId": "worker",
+      "harness": "claude",
+      "promptKind": "authored",
+      "resume": null,
+      "fake": false
+    }
+  ],
+  "checks": [
+    {
+      "id": "L2-codex-0 visit 1 ran fresh and the run parked at the input wait",
+      "ok": true,
+      "detail": {
+        "status": "waiting",
+        "waiting": "hold"
+      }
+    },
+    {
+      "id": "L2-claude-0 visit 1 ran fresh and the run parked at the input wait",
+      "ok": true,
+      "detail": {
+        "status": "waiting",
+        "waiting": "hold"
+      }
+    },
+    {
+      "id": "L2-1 the gateway drains to exit 0 with both runs parked",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "L2-codex-2 the run stops with HARNESS_SESSION_MISSING",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"c9b6feea-4cf5-42c4-93a7-610002591afd\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5YZP365MX64Q3JVQ5KWCWRV:21",
+          "turnId": "01M5YZPMEB6J3P8MV3S13G3JX1",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "c9b6feea-4cf5-42c4-93a7-610002591afd"
+        },
+        "missingSession": {
+          "visitId": "01M5YZP365MX64Q3JVQ5KWCWRV:21",
+          "harness": "codex",
+          "sessionId": "c9b6feea-4cf5-42c4-93a7-610002591afd",
+          "origin": "resume-own",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L2-codex-3 the failure names the unknown handle and its origin (resume-own) with model and effort",
+      "ok": true,
+      "detail": {
+        "visitId": "01M5YZP365MX64Q3JVQ5KWCWRV:21",
+        "harness": "codex",
+        "sessionId": "c9b6feea-4cf5-42c4-93a7-610002591afd",
+        "origin": "resume-own",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      }
+    },
+    {
+      "id": "L2-codex-4 exactly one provider invocation for the refused visit, resuming the unknown handle",
+      "ok": true,
+      "detail": [
+        "c9b6feea-4cf5-42c4-93a7-610002591afd"
+      ]
+    },
+    {
+      "id": "L2-codex-5 no \"resumed\" session record for the refused visit",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "L2-codex-6 plain Resume is refused (SESSION_RECOVERY_REQUIRED)",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "SESSION_RECOVERY_REQUIRED",
+        "read": "SESSION_RECOVERY_REQUIRED"
+      }
+    },
+    {
+      "id": "L2-codex-7 the inspector names the handle and origin and offers the fresh-session choice",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "L2-codex-8 the explicit fresh-session choice is accepted (API)",
+      "ok": true,
+      "detail": {
+        "id": "01M5YZP365MX64Q3JVQ5KWCWRV",
+        "ownerId": "local",
+        "loopId": "01M5YZP2GFWNG4Y9AAQNJYSKHV",
+        "versionId": "01M5YZP2GFWNG4Y9AAQNJYSKHW",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "F2 L2 missing session codex",
+          "label": "F2 L2 missing session codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YZP365MX64Q3JVQ5KWCWRW",
+        "status": "running",
+        "currentNodeId": "worker",
+        "iteration": 1,
+        "createdAt": "2026-10-27T15:29:27.237Z",
+        "startedAt": "2026-10-27T15:29:28.055Z",
+        "lastEventSeq": 26
+      }
+    },
+    {
+      "id": "L2-codex-9 one durable run.resumed records the fresh-session choice (node, prior handle, origin, model, effort, no carried context)",
+      "ok": true,
+      "detail": {
+        "visitId": "01M5YZP365MX64Q3JVQ5KWCWRV:21",
+        "harness": "codex",
+        "sessionId": "c9b6feea-4cf5-42c4-93a7-610002591afd",
+        "origin": "resume-own",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 25,
+        "priorContextCarried": false,
+        "prompt": "Reply with exactly the word VISIT2 and nothing else."
+      }
+    },
+    {
+      "id": "L2-codex-10 exactly one fresh turn followed, with the original prompt, model and effort",
+      "ok": true,
+      "detail": {
+        "refused": "Reply with exactly the word VISIT2 and nothing else.",
+        "fresh": "Reply with exactly the word VISIT2 and nothing else.",
+        "freshSession": {
+          "runId": "01M5YZP365MX64Q3JVQ5KWCWRV",
+          "seq": 29,
+          "ts": "2026-10-27T15:29:46.770Z",
+          "type": "harness.session",
+          "nodeId": "worker",
+          "harness": "codex",
+          "sessionId": "01a17dfb-5790-79a1-af92-a597b0c25391",
+          "mode": "fresh",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L2-codex-11 the run completes after the fresh turn",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "L2-codex-12 the fresh turn answered the visit-2 task",
+      "ok": true,
+      "detail": [
+        "{\"nodeId\":\"worker\",\"value\":\"VISIT1\",\"at\":\"2026-10-27T15:29:36.566Z\"}",
+        "{\"nodeId\":\"worker\",\"value\":\"VISIT2\",\"at\":\"2026-10-27T15:30:14.802Z\"}"
+      ]
+    },
+    {
+      "id": "L2-codex-13 the inspector keeps a durable note of the choice",
+      "ok": true,
+      "detail": "10/27/2026, 10:29:46 AM: user local chose a fresh session for worker; prior provider context was not carried over (resume-own, c9b6feea-4cf5-42c4-93a7-610002591afd)."
+    },
+    {
+      "id": "L2-claude-2 the run stops with HARNESS_SESSION_MISSING",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The claude session \"e7cd4673-cbb4-491d-9510-50fe0c2819e3\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5YZPD1HH96SS4E2FHAF1EZX:22",
+          "turnId": "01M5YZQJ9HP62ZK31KNCSM6DM5",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "e7cd4673-cbb4-491d-9510-50fe0c2819e3"
+        },
+        "missingSession": {
+          "visitId": "01M5YZPD1HH96SS4E2FHAF1EZX:22",
+          "harness": "claude",
+          "sessionId": "e7cd4673-cbb4-491d-9510-50fe0c2819e3",
+          "origin": "resume-own",
+          "model": "claude-haiku-5-5",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L2-claude-3 the failure names the unknown handle and its origin (resume-own) with model and effort",
+      "ok": true,
+      "detail": {
+        "visitId": "01M5YZPD1HH96SS4E2FHAF1EZX:22",
+        "harness": "claude",
+        "sessionId": "e7cd4673-cbb4-491d-9510-50fe0c2819e3",
+        "origin": "resume-own",
+        "model": "claude-haiku-5-5",
+        "effort": "low"
+      }
+    },
+    {
+      "id": "L2-claude-4 exactly one provider invocation for the refused visit, resuming the unknown handle",
+      "ok": true,
+      "detail": [
+        "e7cd4673-cbb4-491d-9510-50fe0c2819e3"
+      ]
+    },
+    {
+      "id": "L2-claude-5 no \"resumed\" session record for the refused visit",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "L2-claude-6 plain Resume is refused (SESSION_RECOVERY_REQUIRED)",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "SESSION_RECOVERY_REQUIRED",
+        "read": "SESSION_RECOVERY_REQUIRED"
+      }
+    },
+    {
+      "id": "L2-claude-7 the inspector names the handle and origin and offers the fresh-session choice",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "L2-claude-9 one durable run.resumed records the fresh-session choice (node, prior handle, origin, model, effort, no carried context)",
+      "ok": true,
+      "detail": {
+        "visitId": "01M5YZPD1HH96SS4E2FHAF1EZX:22",
+        "harness": "claude",
+        "sessionId": "e7cd4673-cbb4-491d-9510-50fe0c2819e3",
+        "origin": "resume-own",
+        "model": "claude-haiku-5-5",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 26,
+        "priorContextCarried": false,
+        "prompt": "Reply with exactly the word VISIT2 and nothing else."
+      }
+    },
+    {
+      "id": "L2-claude-10 exactly one fresh turn followed, with the original prompt, model and effort",
+      "ok": true,
+      "detail": {
+        "refused": "Reply with exactly the word VISIT2 and nothing else.",
+        "fresh": "Reply with exactly the word VISIT2 and nothing else.",
+        "freshSession": {
+          "runId": "01M5YZPD1HH96SS4E2FHAF1EZX",
+          "seq": 30,
+          "ts": "2026-10-27T15:30:18.762Z",
+          "type": "harness.session",
+          "nodeId": "worker",
+          "harness": "claude",
+          "sessionId": "a02a27bb-c45c-41e2-b0d8-2aeeea13854d",
+          "mode": "fresh",
+          "model": "claude-haiku-5-5",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "L2-claude-11 the run completes after the fresh turn",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "L2-claude-12 the fresh turn answered the visit-2 task",
+      "ok": true,
+      "detail": [
+        "{\"nodeId\":\"worker\",\"value\":\"VISIT1\",\"at\":\"2026-10-27T15:29:41.366Z\"}",
+        "{\"nodeId\":\"worker\",\"value\":\"VISIT2\",\"at\":\"2026-10-27T15:30:20.094Z\"}"
+      ]
+    },
+    {
+      "id": "L2-claude-13 the inspector keeps a durable note of the choice",
+      "ok": true,
+      "detail": "10/27/2026, 10:30:17 AM: user local chose a fresh session for worker; prior provider context was not carried over (resume-own, e7cd4673-cbb4-491d-9510-50fe0c2819e3)."
+    },
+    {
+      "id": "L2-14 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}
