@@ -386,13 +386,16 @@ errors and `turn.failed`, cleanup and cancellation. Unconfirmed termination over
 cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
 The Codex SDK's own process-exit error (a plain `Error` reading `Codex Exec exited with code <n>:`
 or `… with signal <name>:`, then the CLI's stderr) is a generic final wrapper of a failure the CLI's
-event stream already reported: after the stream reports an error or `turn.failed` for an
-unfinished turn, that wrapper never replaces the stream's evidence while it classifies as generic
-or merely repeats it (the same classified cause, or stderr containing the stream's structured
-provider error), whatever rank its text would get. When the wrapper's stderr is itself a
-structured provider error, it is classified from that structure, not from the prefixed text.
-A wrapper whose stderr names a distinct typed cause still outranks the stream, and every other
-thrown error, such as the SDK's protocol parse failure, joins the fold as usual (#243).
+event stream already reported. Its stderr is read piece by piece: a stderr that is one
+structured provider error as a whole, or else each line, read from the structured provider
+error it holds (also after a prefix such as `ERROR: `) and as text otherwise. A piece that
+exactly repeats evidence the stream reported (code, message, retry flag and submission
+metadata) adds nothing, whatever rank its text would get; every other typed piece joins the fold
+in order, so a distinct cause beside a repeat is ranked like any other evidence. When nothing
+new and typed remains, the wrapper adds nothing if the stream reported the turn's failure:
+fatal evidence (`turn.failed`, or a terminal or pinned error) even after `turn.completed`, or any
+reported error of an unfinished turn. Otherwise the wrapper is the cause. Every other thrown
+error, such as the SDK's protocol parse failure, joins the fold as usual (#243).
 Acceptance cannot be downgraded to safe non-submission by later metadata.
 
 Classification is decided independently of persistence. A failed classification/status write

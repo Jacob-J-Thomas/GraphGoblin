@@ -254,6 +254,31 @@ function wrappedProviderError(error: unknown): Unwrapped | undefined {
   return undefined;
 }
 
+/** A structured provider error on one stderr line, whole or after a prefix such as `ERROR: `. */
+function lineProviderError(line: string): string | undefined {
+  if (unwrap(line).structured) return line;
+  const start = line.indexOf('{');
+  const end = line.lastIndexOf('}');
+  const inner = start > 0 && end > start ? line.slice(start, end + 1) : '';
+  return inner && unwrap(inner).structured ? inner : undefined;
+}
+
+/**
+ * Each piece of evidence in the stderr the SDK's exit error carries, classified on its own (PR #426
+ * audit scan 3): a stderr that is one structured provider error as a whole, or else every line,
+ * read from the structured provider error it holds when it holds one and as text otherwise. A
+ * repeat of the stream's failure and a distinct cause beside it can then be told apart.
+ */
+function stderrEvidence(error: Error): ClassifiedError[] {
+  const payload = exitWrapperPayload(error).trim();
+  if (payload && unwrap(payload).structured) return [classifyCodexError(payload)];
+  return payload
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .map((line) => classifyCodexError(lineProviderError(line) ?? line));
+}
+
 /** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
 export function classifyCodexError(error: unknown): ClassifiedError {
   const metadata = harnessFailureEvidence(error);
@@ -364,11 +389,12 @@ export interface TurnOutcome {
  *   the stream already reported, and the CLI's stderr is usually just its startup banner. Once the
  *   stream has reported an error or `turn.failed` for an unfinished turn, that exact wrapper never
  *   replaces the stream's evidence while it classifies as generic (lowest rank). Every other
- *   thrown error, such as a protocol parse failure, joins the fold as usual, and a wrapper whose
- *   stderr names a typed cause of its own (for example `Not logged in`) still outranks the stream.
- *   A wrapper that merely repeats what the stream reported (the same classified cause, or stderr
- *   that contains the stream's structured provider error) never replaces it, whatever rank its
- *   text would get (PR #426 audit scan 2).
+ *   thrown error, such as a protocol parse failure, joins the fold as usual. The wrapper's stderr
+ *   is compared piece by piece (each line, read from the provider error it holds when it holds
+ *   one): a piece that exactly repeats evidence the stream reported (code, message, retry and
+ *   submission) adds nothing, while every other typed piece joins the fold in order, so a
+ *   distinct cause beside a repeat still counts (PR #426 audit scans 2 and 3). This holds while
+ *   the stream's evidence is fatal, even after `turn.completed`.
  */
 export class TurnAccumulator {
   private submitted = false;
@@ -380,7 +406,8 @@ export class TurnAccumulator {
   private completed = false;
   /** What the stream itself reported as failing: each classification and structured text. */
   private readonly streamReports: ClassifiedError[] = [];
-  private readonly streamProviderErrors: string[] = [];
+  /** The stream reported `turn.failed` or a terminal/pinned error, so the turn failed. */
+  private streamFatal = false;
   sessionId: string | undefined;
 
   constructor(private readonly mode: 'fresh' | 'resumed') {}
@@ -406,12 +433,12 @@ export class TurnAccumulator {
         this.usage = mapUsage(ev.usage);
         return [{ type: 'usage', usage: this.usage }, { type: 'turn-complete' }];
       case 'turn.failed':
-        this.add(this.report(ev.error), false);
+        this.add(this.report(ev.error, true), false);
         return [];
       case 'error':
         // Native top-level errors and turn.failed use the same evidence fold. A completed
         // turn may tolerate diagnostics, but terminal/pinned refusals are not diagnostics.
-        this.add(this.report(ev), true);
+        this.add(this.report(ev, false), true);
         return [];
       default:
         return [];
@@ -419,40 +446,54 @@ export class TurnAccumulator {
   }
 
   /** Classify a failure the stream reported and remember it, to recognise a later repeat. */
-  private report(error: unknown): ClassifiedError {
+  private report(error: unknown, failed: boolean): ClassifiedError {
     const classified = classifyCodexError(error);
     this.streamReports.push(classified);
-    const text = describeError(error).trim();
-    if (unwrap(text).structured) this.streamProviderErrors.push(text);
+    this.streamFatal ||= failed || harnessFailureRank(classified) >= 4;
     return classified;
   }
 
-  /** The SDK's exit error that only repeats a failure the stream already reported. */
-  private repeatsStream(error: Error, next: ClassifiedError): boolean {
-    const payload = exitWrapperPayload(error);
-    return (
-      this.streamReports.some(
-        (reported) => reported.code === next.code && reported.message === next.message,
-      ) || this.streamProviderErrors.some((text) => payload.includes(text))
+  /** Exactly the evidence the stream already reported: code, message, retry and submission. */
+  private repeatsStream(piece: ClassifiedError): boolean {
+    return this.streamReports.some(
+      (reported) =>
+        reported.code === piece.code &&
+        reported.message === piece.message &&
+        reported.retriable === piece.retriable &&
+        reported.submission === piece.submission,
     );
+  }
+
+  /**
+   * Whether the stream itself reported this turn's failure: fatal evidence such as `turn.failed`
+   * or a pinned refusal, whatever the completion flag says, or any reported error of an unfinished
+   * turn.
+   */
+  private streamFailed(): boolean {
+    return this.streamFatal || (!this.completed && this.streamReports.length > 0);
   }
 
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
   fail(error: unknown): void {
-    const next = classifyCodexError(error);
-    if (
-      this.streamReports.length > 0 &&
-      !this.completed &&
-      isProcessExitWrapper(error) &&
-      (harnessFailureRank(next) === 1 || this.repeatsStream(error, next))
-    ) {
-      // The SDK's exit error only wraps the failure the stream already reported (#243): a
-      // generic wrapper or a repeat adds nothing. Any other thrown error, such as a protocol
-      // parse failure or a distinct typed cause on stderr, is evidence of its own.
+    if (!isProcessExitWrapper(error)) {
+      // Any other thrown error, such as a protocol parse failure, is evidence of its own.
+      this.add(classifyCodexError(error), false);
+      return;
+    }
+    // The SDK's exit error carries the CLI's stderr. Each typed cause there that the stream did
+    // not already report joins the fold in order, so ranking and the later-observation rule
+    // apply to it; an exact repeat of the stream's evidence adds nothing (#243).
+    const fresh = stderrEvidence(error).filter(
+      (piece) => harnessFailureRank(piece) > 1 && !this.repeatsStream(piece),
+    );
+    for (const piece of fresh) this.add(piece, false);
+    if (fresh.length) return;
+    if (this.streamFailed()) {
+      // A generic wrapper of the failure the stream reported: the process failed, nothing more.
       this.fatal = true;
       return;
     }
-    this.add(next, false);
+    this.add(classifyCodexError(error), false);
   }
 
   private add(next: ClassifiedError, diagnostic: boolean): void {

@@ -459,7 +459,8 @@ describe('TurnAccumulator', () => {
     const acc = new TurnAccumulator('fresh');
     acc.push({ type: 'turn.started' });
     acc.push({ type: 'turn.failed', error: { message: providerError(text) } });
-    // Not parseable as a whole or by line, so the heuristics would call it a missing session.
+    // The JSON after a prefix on the line is read as the same provider error, so it is a repeat;
+    // read as text, the heuristics would call it a missing session.
     acc.fail(new Error(`Codex Exec exited with code 1: ERROR: ${providerError(text)}`));
     expect(acc.finish().failure).toEqual({
       code: 'HARNESS_ARGUMENTS_REJECTED',
@@ -471,6 +472,50 @@ describe('TurnAccumulator', () => {
     distinct.push({ type: 'turn.failed', error: { message: providerError(text) } });
     distinct.fail(new Error('Codex Exec exited with code 1: No rollout found for thread abc'));
     expect(distinct.finish().failure?.code).toBe('HARNESS_SESSION_MISSING');
+  });
+
+  // PR #426 audit scan 3: stderr is compared piece by piece, and a fatal stream failure keeps the
+  // protection after turn.completed.
+  it('folds each distinct stderr piece and keeps repeats out, also after completion', () => {
+    const usage = {
+      input_tokens: 1,
+      cached_input_tokens: 0,
+      cache_write_input_tokens: 0,
+      output_tokens: 1,
+      reasoning_output_tokens: 0,
+    };
+    const repeat = providerError('Effort A refused');
+    const completed = new TurnAccumulator('fresh');
+    completed.push({ type: 'turn.started' });
+    completed.push({ type: 'turn.completed', usage });
+    completed.push({ type: 'turn.failed', error: { message: repeat } });
+    completed.fail(new Error(`Codex Exec exited with code 1: ERROR: ${repeat}\n{this is not JSON`));
+    expect(completed.finish().failure).toMatchObject({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: 'The provider refused the request (HTTP 400, reasoning.effort): Effort A refused',
+    });
+    // Stderr that is one provider error over several lines is read as a whole.
+    const pretty = new TurnAccumulator('fresh');
+    pretty.push({ type: 'turn.failed', error: { message: repeat } });
+    pretty.fail(
+      new Error(
+        `Codex Exec exited with code 1: ${JSON.stringify(JSON.parse(providerError('Effort B refused')), null, 2)}`,
+      ),
+    );
+    expect(pretty.finish().failure?.message).toBe(
+      'The provider refused the request (HTTP 400, reasoning.effort): Effort B refused',
+    );
+    // Without stream evidence, a typed stderr piece is the cause, read without the prefix.
+    const alone = new TurnAccumulator('fresh');
+    alone.push({ type: 'turn.started' });
+    alone.fail(
+      new Error('Codex Exec exited with code 1: Reading prompt from stdin...\nNot logged in'),
+    );
+    expect(alone.finish().failure).toEqual({
+      code: 'HARNESS_NOT_AUTHENTICATED',
+      message: 'Not logged in',
+      retriable: false,
+    });
   });
 
   it('fails a stream that ends without completing, using the last stream error if any', () => {
