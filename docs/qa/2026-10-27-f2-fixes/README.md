@@ -275,6 +275,62 @@ The second audit returned CHANGES REQUIRED with one P2 in `packages/adapter-code
 
 **Not changed.** Structured errors other than the 400 refusal still go through the existing rules in their existing order; the status checks for 429, 401/403 and 5xx come after the text heuristics, as before. The audit's N1 (local Windows termination checks blocked by `taskkill` Access denied, D-015) is environmental and outside this change.
 
+## Scan 3 (capped path)
+
+The third and last audit, at `732dba52`, returned CHANGES REQUIRED with two P2 findings in `packages/adapter-codex/src/events.ts`. Its record is kept outside this branch. PR #426 is at the D-035 cap, so this fix goes through the capped path: the orchestrator's review, an independent behaviour QA and green CI, with no further scan.
+
+**Finding 1: the repeat detector discarded new stderr evidence.**
+
+- **Cause.** Scan 2 treated the whole exit error as a repeat when its stderr contained any structured error the stream had reported, or when its single classification had the stream's code and message.
+- **Effect.** Stderr holding the stream's refusal followed by a different cause lost that cause:
+  - a later refusal with another parameter;
+  - a genuine missing session, as JSON or as text;
+  - an authentication failure after a repeated quota error.
+- **Retry flag.** Comparing code and message alone also merged an exhausted quota with a rate limit of the same message, and kept the wrong retry flag.
+
+**Finding 2: completion disabled the protection.** With `turn.completed` before or after a pinned `turn.failed`, the scan 2 rule (unfinished turns only) let a decorated repeat (`ERROR: <the same refusal JSON>`) through to the text heuristics. "Thread not found in referenced input." became a false missing session with Start-fresh guidance. "Error: invalid value …" lost its provider text and parameter. The audit's 1,200-case ordering matrix had 46 such failures.
+
+**Fix** (`TurnAccumulator.fail`, with `stderrEvidence` and `lineProviderError`):
+
+- **Pieces.** The exit error's stderr is split into pieces of evidence. A stderr that is one structured provider error as a whole (also pretty-printed over several lines) is one piece. Otherwise each line is a piece, read from the structured provider error it holds, also after a prefix such as `ERROR: `, and as text otherwise. Each piece is classified on its own.
+- **Repeats.** A piece is a repeat only when it equals evidence the stream reported in code, message, retry flag and submission metadata. Repeats add nothing.
+- **Distinct causes.** Every other typed piece joins the fold in stderr order, so the shared ranking and the later-observation rule decide.
+- **Nothing new and typed.** The wrapper then adds nothing if the stream reported the turn's failure: fatal stream evidence (`turn.failed`, or an error of pinned or terminal rank) whatever the completion flag says, or any reported error of an unfinished turn. Otherwise the whole exit error is the cause, as before (for example a crash with only the banner on stderr).
+- **Kept.** Other thrown errors and the shared ranking are unchanged. A successful turn with only diagnostics, followed by a distinct exit error, still fails with that exit error.
+
+**Regression tests.** 13 cases failed against `732dba52`, with only `events.ts` restored for the run ([tests-scan3-adapter-before.log.txt](tests-scan3-adapter-before.log.txt)). Five more pass before and after: the audit's three controls, and the two decorated-repeat cases without completion, which scan 2 already fixed.
+
+- **`packages/adapter-codex/src/stderr-evidence.test.ts`** (new), through the public `CodexHarness` and the real SDK with the spec-driven fake CLI [`fixtures/spec-cli.mjs`](../../../packages/adapter-codex/src/fixtures/spec-cli.mjs), the audit's fixture shape. Each case asserts the exact harness error: code, message, retry flag and submission.
+  - The audit's 9 mixed-cause rows: a different refusal, repeat then a different refusal, missing session alone, repeat then missing session as JSON and as text, authentication after quota, repeat then authentication, and the two same-message quota/rate rows.
+  - Both misleading provider texts with a decorated repeat in orders `SF`, `SCF` and `SFC`.
+  - Two engine-level runs for `SCF` and `SFC`. The run fails `HARNESS_TURN_FAILED` with `details.adapterCode: HARNESS_ARGUMENTS_REJECTED`, the provider's message and `delivery-uncertain`, with no `missingSession`; Resume is refused.
+- **`packages/adapter-codex/src/events.test.ts`:** `folds each distinct stderr piece and keeps repeats out, also after completion`:
+  - completion plus a decorated repeat and a non-JSON line;
+  - a pretty-printed provider error read as a whole;
+  - a typed piece without stream evidence, read without the prefix.
+- **The audit's drivers, copied** to `scripts/scan3-*.mjs`. Only the fixture name, the output paths, the temporary prefixes and, for the durable driver, the port were changed; the port is 6671, inside this work's range. All were run on the built fix:
+  - **`scan3-mixed-causes.mjs`: 12/12 rows pass**, exit 0 ([log](scan3-mixed-causes.log.txt), [console](scan3-mixed-causes-console.log.txt)). Over HTTP:
+    - the new refusal and both completion orders give `HARNESS_TURN_FAILED`/`HARNESS_ARGUMENTS_REJECTED` with Resume 409;
+    - the new missing session gives `HARNESS_SESSION_MISSING` with Resume 409;
+    - repeat then authentication gives resumable `HARNESS_NOT_AUTHENTICATED`.
+  - **`scan3-durable-http.mjs`: all 4 rows** over actual HTTP on port 6671, on-disk SQLite and fresh gateway processes, identical after restart ([log](scan3-durable-http.log.txt), [console](scan3-durable-http-console.log.txt)):
+    - the new refusal is kept, `FAILURE_NOT_RESUMABLE`;
+    - the genuine new missing session gives `SESSION_RECOVERY_REQUIRED`;
+    - both completion orders keep the refusal, `FAILURE_NOT_RESUMABLE`.
+  - **`scan3-extended-order-matrix.mjs`: 1,200 of 1,200 cases pass** (audit: 46 failures) ([log](scan3-extended-order-matrix.log.txt), [console](scan3-extended-order-matrix-console.log.txt)). This ran on the build before the final comment-only edit and Prettier pass of `events.ts`; the runtime code is the same.
+
+**Docs.** docs/05 (evidence fold), docs/06 (Codex failure mapping) and the #243 CHANGELOG bullet describe the piece-by-piece comparison and the completion rule.
+
+**Checks**, Node `v22.23.4`, logs `gates/s3-*`:
+
+| Check                                                                                                                              | Result                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `pnpm build`                                                                                                                       | pass                                                                                                  |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                                                                           | pass: 586 passed, 4 skipped (live); statements 98.12%, branches 95.38%, functions 99.11%, lines 99.3% |
+| `pnpm --filter @graphgoblin/engine exec vitest run src/handlers/inference-refusal.test.ts`                                         | pass, 20/20                                                                                           |
+| `pnpm --filter @graphgoblin/api exec vitest run src/provider-refusal.test.ts` (`GG_TEST_PORT_START=7000`, `GG_TEST_PORT_COUNT=40`) | pass, 3/3                                                                                             |
+| `pnpm typecheck`, `pnpm lint`, `pnpm format:check`                                                                                 | pass                                                                                                  |
+
 ## Live check for the QA to repeat
 
 The fixes were verified only with fake CLIs. The independent behaviour QA should repeat one real Codex turn, as follows:
@@ -292,7 +348,7 @@ The fixes were verified only with fake CLIs. The independent behaviour QA should
 
 ## Files
 
-- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) and [settings-kept-minimal.png](settings-kept-minimal.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt` (`gates/r1-*` after review round 1); [tests-review-r1-before.log.txt](tests-review-r1-before.log.txt), [review-r1-error-probes.log.txt](review-r1-error-probes.log.txt) and the copied review probe in `scripts/review-r1-*.mjs`; `tests-scan2-*-before.log.txt`, `scan2-wrapper-http*.log.txt` and the copied audit driver in `scripts/scan2-*.mjs` (scan 2); [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
+- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) and [settings-kept-minimal.png](settings-kept-minimal.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt` (`gates/r1-*` after review round 1); [tests-review-r1-before.log.txt](tests-review-r1-before.log.txt), [review-r1-error-probes.log.txt](review-r1-error-probes.log.txt) and the copied review probe in `scripts/review-r1-*.mjs`; `tests-scan2-*-before.log.txt`, `scan2-wrapper-http*.log.txt` and the copied audit driver in `scripts/scan2-*.mjs` (scan 2); `tests-scan3-adapter-before.log.txt`, `scan3-*.log.txt` and the copied audit drivers in `scripts/scan3-*.mjs` (scan 3); [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
 - Paths, the user name, the machine name and SIDs are redacted. Every file is UTF-8 without a byte-order mark and under 1,000,000 bytes, so there is no `NOT-KEPT.md`.
 
 ## Cleanup

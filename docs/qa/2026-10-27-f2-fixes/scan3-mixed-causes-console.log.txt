@@ -1,0 +1,496 @@
+{
+  "rows": [
+    {
+      "name": "different-pinned-refusal-alone",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "repeat-then-different-pinned-refusal",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "missing-session-alone",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true
+    },
+    {
+      "name": "repeat-then-missing-session-json",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true
+    },
+    {
+      "name": "repeat-then-missing-session-text",
+      "actual": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The recorded Codex conversation was not found",
+        "retriable": false,
+        "submission": "session-missing"
+      },
+      "pass": true
+    },
+    {
+      "name": "quota-then-auth-alone",
+      "actual": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "quota-repeat-then-auth",
+      "actual": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "rate-then-quota-same-message",
+      "actual": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "quota-then-rate-same-message",
+      "actual": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Capacity unavailable",
+        "retriable": true,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "prefixed-repeat-without-completion",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "prefixed-repeat-completion-before-failure",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    },
+    {
+      "name": "prefixed-repeat-completion-after-failure",
+      "actual": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "pass": true
+    }
+  ],
+  "http": [
+    {
+      "name": "repeat-then-different-pinned-refusal",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0GEMYJXRBNW88NJ3E:5",
+          "turnId": "01M3Y7RKG0GEMYJXRBNW88NJ3G",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "repeat-then-missing-session-json",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"r3-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0EZ2C38QP3QBNFPTW:5",
+          "turnId": "01M3Y7RKG0EZ2C38QP3QBNFPTY",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        },
+        "missingSession": {
+          "visitId": "01M3Y7RKG0EZ2C38QP3QBNFPTW:5",
+          "harness": "codex",
+          "sessionId": "r3-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "SESSION_RECOVERY_REQUIRED",
+          "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "quota-repeat-then-auth",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Credentials expired",
+        "nodeId": "work",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M3Y7RKG0ND40PRQPA7YXJWDG:5",
+          "turnId": "01M3Y7RKG0ND40PRQPA7YXJWDJ",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": true
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": {
+        "notInvoked": "would repeat the controlled error"
+      }
+    },
+    {
+      "name": "prefixed-repeat-completion-before-failure",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG063Q8RSAEQ6Q4TNBK:5",
+          "turnId": "01M3Y7RKG063Q8RSAEQ6Q4TNBN",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    },
+    {
+      "name": "prefixed-repeat-completion-after-failure",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0HEBWATXM6QV45RSZ:5",
+          "turnId": "01M3Y7RKG0HEBWATXM6QV45RT1",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resume": 409
+    }
+  ]
+}

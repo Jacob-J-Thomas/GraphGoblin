@@ -1,0 +1,328 @@
+{
+  "rows": [
+    {
+      "name": "repeat-then-new-refusal",
+      "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-f2fix-scan3-durable-gLqgXQ",
+      "producedPid": 27656,
+      "id": "01M5ZGA6YJGBTHS0WHC53GJ2YA",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, response_format): Schema B refused",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZGA6YJGBTHS0WHC53GJ2YA:5",
+          "turnId": "01M5ZGA71KBSBSMF57XDJHDNT6",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "durable-r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resumeStatus": 409,
+      "resumeCode": "FAILURE_NOT_RESUMABLE",
+      "reopenedPid": 30060,
+      "identicalAfterRestart": true
+    },
+    {
+      "name": "repeat-then-new-missing",
+      "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-f2fix-scan3-durable-bk0Mq7",
+      "producedPid": 20600,
+      "id": "01M5ZGACNJ9H6901TW795D4DW4",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"durable-r3-thread\" from current-visit is missing. Choose Start fresh session for node \"work\" to continue without its prior provider conversation.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5ZGACNJ9H6901TW795D4DW4:5",
+          "turnId": "01M5ZGACRA9DRSY4587Y1B3YR7",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "durable-r3-thread"
+        },
+        "missingSession": {
+          "visitId": "01M5ZGACNJ9H6901TW795D4DW4:5",
+          "harness": "codex",
+          "sessionId": "durable-r3-thread",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      },
+      "recovery": {
+        "observedSeq": 11,
+        "resume": {
+          "allowed": false,
+          "code": "SESSION_RECOVERY_REQUIRED",
+          "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resumeStatus": 409,
+      "resumeCode": "SESSION_RECOVERY_REQUIRED",
+      "reopenedPid": 51432,
+      "identicalAfterRestart": true
+    },
+    {
+      "name": "completed-before-refusal",
+      "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-f2fix-scan3-durable-yx7z6Y",
+      "producedPid": 50416,
+      "id": "01M5ZGAJ6F1JG3G375NZ5WGQW0",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZGAJ6F1JG3G375NZ5WGQW0:5",
+          "turnId": "01M5ZGAJ9DEWETCTPGNZKC8J67",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "durable-r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resumeStatus": 409,
+      "resumeCode": "FAILURE_NOT_RESUMABLE",
+      "reopenedPid": 42448,
+      "identicalAfterRestart": true
+    },
+    {
+      "name": "completed-after-refusal",
+      "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-f2fix-scan3-durable-MmJaHQ",
+      "producedPid": 23116,
+      "id": "01M5ZGAQWSBD35399VX3KRWX1B",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5ZGAQWSBD35399VX3KRWX1B:5",
+          "turnId": "01M5ZGAR01JCGF7GZN3EXYSQPC",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "durable-r3-thread"
+        }
+      },
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      },
+      "resumeStatus": 409,
+      "resumeCode": "FAILURE_NOT_RESUMABLE",
+      "reopenedPid": 38244,
+      "identicalAfterRestart": true
+    }
+  ]
+}
