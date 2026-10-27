@@ -68,6 +68,61 @@ const transient: RunFailure = {
   nodeId: 'start',
 };
 describe('server recovery eligibility (#256)', () => {
+  it('keeps GET recovery reads bounded as history grows by eleven thousand events', async () => {
+    const run = await seeded('paused');
+    let decoded = 0;
+    let fullReads = 0;
+    const store = t.container.ports.events;
+    const events: EventStorePort = {
+      append: (...args) => store.append(...args),
+      subscribe: (...args) => store.subscribe(...args),
+      read: (...args) => {
+        fullReads++;
+        return store.read(...args);
+      },
+      recoveryFacts: async (...args) => {
+        const facts = await store.recoveryFacts(...args);
+        decoded += new Set(
+          [facts.lifecycle?.seq, facts.failed?.seq, facts.resumed?.seq].filter(
+            (seq) => seq !== undefined,
+          ),
+        ).size;
+        return facts;
+      },
+    };
+    const manager = new RunManager(
+      { ...t.container.ports, events },
+      { maxConcurrentRuns: 1, defaults: t.container.config.defaults },
+    );
+    const api = await buildApp({ ...t.container, manager }, { logger: false });
+    try {
+      for (const count of [0, 1000, 10000]) {
+        for (let i = 0; i < count; i += 100)
+          await store.append(
+            run.id,
+            Array.from(
+              { length: 100 },
+              () =>
+                ({
+                  type: 'signal.received',
+                  name: 'unrelated',
+                  payload: 'x'.repeat(1024),
+                }) as const,
+            ),
+          );
+        decoded = 0;
+        fullReads = 0;
+        const snapshot = await api.inject(`/runs/${run.id}`);
+        expect(snapshot.statusCode, snapshot.body).toBe(200);
+        expect(snapshot.json<Snapshot>().recovery.resume.allowed).toBe(true);
+        expect(fullReads).toBe(0);
+        expect(decoded).toBeLessThanOrEqual(3);
+      }
+    } finally {
+      await api.close();
+      manager.stop();
+    }
+  });
   it('Replay records the canonical source and revokes deletion consent without changing execution history', async () => {
     await t.container.manager.start();
     const loopId = await t.publishLoop(minimalLoop());
@@ -206,8 +261,9 @@ describe('server recovery eligibility (#256)', () => {
       const events: EventStorePort = {
         append: (...args) => t.container.ports.events.append(...args),
         subscribe: (...args) => t.container.ports.events.subscribe(...args),
-        read: async (...args) => {
-          const captured = await t.container.ports.events.read(...args);
+        read: (...args) => t.container.ports.events.read(...args),
+        recoveryFacts: async (...args) => {
+          const captured = await t.container.ports.events.recoveryFacts(...args);
           if (armed && !interleaved) {
             interleaved = true;
             await manager.resume(
@@ -216,7 +272,7 @@ describe('server recovery eligibility (#256)', () => {
               { retryUncertainScript: true },
             );
             await manager.waitForIdle();
-            return timing === 'latest' ? t.container.ports.events.read(...args) : captured;
+            return timing === 'latest' ? t.container.ports.events.recoveryFacts(...args) : captured;
           }
           return captured;
         },
@@ -343,10 +399,10 @@ describe('server recovery eligibility (#256)', () => {
       await api.close();
     }
   });
-  it('keeps a readable run visible while damaged history refuses both recovery actions', async () => {
+  it('keeps a readable run visible while damaged recovery evidence refuses both actions', async () => {
     const run = await seeded('failed', transient);
     await t.container.handle.client.execute({
-      sql: "UPDATE run_events SET payload = '{}' WHERE run_id = ? AND type = 'node.started'",
+      sql: "UPDATE run_events SET payload = '{}' WHERE run_id = ? AND type = 'run.failed'",
       args: [run.id],
     });
     const response = await t.app.inject(`/runs/${run.id}`);
@@ -356,6 +412,17 @@ describe('server recovery eligibility (#256)', () => {
     expect(damaged.recovery.resume).toMatchObject({ code: 'STATE_UNAVAILABLE' });
     await refusal(damaged, 'resume', 'STATE_UNAVAILABLE');
     await refusal(damaged, 'replay', 'STATE_UNAVAILABLE');
+  });
+  it('diagnoses unrelated historical corruption when a command reconstructs history', async () => {
+    const run = await seeded('failed', transient);
+    await t.container.handle.client.execute({
+      sql: "UPDATE run_events SET payload = '{}' WHERE run_id = ? AND type = 'node.started'",
+      args: [run.id],
+    });
+    const snapshot = (await t.app.inject(`/runs/${run.id}`)).json<Snapshot>();
+    expect(snapshot.recovery.resume.allowed).toBe(true);
+    await refusal(snapshot, 'resume', 'STATE_UNAVAILABLE');
+    await refusal(snapshot, 'replay', 'STATE_UNAVAILABLE');
   });
   it('reports shutdown and refuses both commands without creating work', async () => {
     const run = await seeded('succeeded');

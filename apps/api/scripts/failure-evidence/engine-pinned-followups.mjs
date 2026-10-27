@@ -366,7 +366,9 @@ try {
       assert.equal(record.turn.promptKind, 'repair');
 
       const beforeCount = h.calls.length;
-      const resume = await api('/runs/' + id + '/resume', {});
+      const resume = await api('/runs/' + id + '/resume', {
+        observedSeq: (await api('/runs/' + id)).value.recovery.observedSeq,
+      });
       record.resumeStatus = resume.status;
 
       if (resume.status === 200) record.afterResume = (await stopped(id)).status;

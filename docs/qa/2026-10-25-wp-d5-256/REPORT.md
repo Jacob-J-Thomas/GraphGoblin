@@ -1,5 +1,7 @@
 # WP-D5 (#256): integration review round
 
+> Historical integration round below. Current scan 2 fixes target `438329a5`; see [the current eight-part report](scan-2/REPORT.md). Earlier outcomes are not current qualification.
+
 ## 1. Branch and worktree
 
 Branch `codex-wp-d5-256`; worktree `%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-256`. Verified HEAD `a435b890cca77c3746ed2e76121df17bf733c9ef` and the orchestrator-started MERGE_HEAD `aa3b461130944b2f3d246a79aa9edc62617d0be5`. Uncommitted; ready for orchestrator commit after its review and any outstanding qualification below. No index, commit, push, merge, rebase, stash or branch-switch command was issued. All 13 file contents are resolved; the read-only index remains unmerged for the orchestrator to stage.
@@ -153,3 +155,9 @@ There is one source column, no synthetic observed intent for old forks, and no c
 ## 8. Caveats and open items
 
 The full Edge suite ran once: exit 1, final counts `{'failed': 13, 'skipped': 1, 'passed': 422}`; see [browser case results](integration/edge-summary.json). Engine, web and API-client full coverage pass. Infrastructure and API full coverage remain nonzero despite measured percentages above the thresholds. Infrastructure has six sandbox-blocked native shutdown qualifications (NOT RUN under D-015), plus the migration-count fixture corrected and verified 23/23 separately. API has the two observed native console failures; their cause is not isolated, and its installed SDK still lacks the required merged patch. See [exact failures, file/line references and limits](integration/EXECUTION-NOTES.md), [current permission proof](integration/native-permission.json), [coverage totals](integration/coverage-totals.json), [generator no-diff proof](integration/generated-idempotence.json) and [excluded captures](integration/NOT-KEPT.md). The corrected affected-spec run exited 0, counts `{'passed': 24}`; [current cases](integration/edge-consumers-summary.json). No live-provider qualification is claimed. No owner eligibility or wording decision is needed: the supplied integration choices are implemented. Independent audit and integrated acceptance remain separate. The orchestrator must stage the resolved contents and renamed migration because `.git` is read-only here. Historical outcomes never substitute for this round's results.
+
+## Scan 2 fixes
+
+Parent consent is durably bound to the exact child failure/visit and observation, with pending parent ownership and fresh review for newer failures. Recovery reads use indexed evidence (migration 0025): all three histories now decode one 113-byte marker per GET. All nine stale script callers are updated, and N1/N2 are corrected.
+
+[Current COMMON section 5 report](scan-2/REPORT.md) contains criteria, every refusal reason, file inventory, exact gates, measurements, coverage and limits. Infrastructure native assertions remain NOT RUN under D-015; current API coverage passes after the binding correction, and final Edge passed 435 tests with one live-provider skip. Tooling coverage also passes; its earlier timeout, the earlier API worker crash and the six extra SDK-driver mismatches remain recorded. No commit or publication occurred.

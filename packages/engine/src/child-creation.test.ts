@@ -58,6 +58,9 @@ class DyingEvents implements EventStorePort {
     this.died = true;
     return new Promise<never>(() => undefined);
   }
+  recoveryFacts(runId: string, nodeIds: readonly string[]) {
+    return this.durable.recoveryFacts(runId, nodeIds);
+  }
   read(runId: string, afterSeq?: number, limit?: number) {
     return this.durable.read(runId, afterSeq, limit);
   }

@@ -143,6 +143,15 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     ...Base,
     type: z.literal('run.resumed'),
     retryUncertainScript: z.literal(true).optional(),
+    // Consent is for this immutable child failure, never the child's later current failure.
+    childRecovery: z
+      .strictObject({
+        runId: UlidSchema,
+        failureSeq: z.number().int().positive(),
+        observedSeq: z.number().int().nonnegative(),
+        retryUncertainScript: z.literal(true).optional(),
+      })
+      .optional(),
     actor: Actor,
     freshSession: FreshSessionChoiceSchema.optional(),
   }),

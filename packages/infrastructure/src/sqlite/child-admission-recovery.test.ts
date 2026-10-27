@@ -91,6 +91,9 @@ class DyingEvents implements EventStorePort {
     }
     return this.inner.append(runId, drafts, options);
   }
+  recoveryFacts(runId: string, nodeIds: readonly string[]) {
+    return this.inner.recoveryFacts(runId, nodeIds);
+  }
   read(runId: string, afterSeq?: number, limit?: number) {
     return this.inner.read(runId, afterSeq, limit);
   }

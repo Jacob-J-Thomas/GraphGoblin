@@ -34,7 +34,9 @@ const environment = (dir, port) => ({
 });
 
 async function freePort() {
-  for (let port = 6300; port <= 6309; port++) {
+  const start = Number(process.env.GG_TEST_PORT_START ?? 6300);
+  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 10);
+  for (let port = start; port < start + count; port++) {
     const server = createServer();
     const available = await new Promise((resolve) => {
       server.once('error', () => resolve(false));
@@ -42,7 +44,7 @@ async function freePort() {
     });
     if (available) return port;
   }
-  throw new Error('No disposable WP-B3 port is free in 6300..6309');
+  throw new Error(`No disposable upgrade port is free in ${start}..${start + count - 1}`);
 }
 
 async function start(dir) {

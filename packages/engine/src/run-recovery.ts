@@ -1,6 +1,6 @@
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
-import type { RunEvent, RunRecord, RunRecovery, RecoveryAction } from '@graphgoblin/contracts';
-import type { EnginePorts } from './ports.js';
+import type { RunRecord, RunRecovery, RecoveryAction } from '@graphgoblin/contracts';
+import type { EnginePorts, RecoveryFacts } from './ports.js';
 import { childSessionRecovered } from './session-recovery.js';
 import { definitionUpgradeRequired } from './stored-definition.js';
 
@@ -14,10 +14,10 @@ export const refused = (
 export async function runRecovery(
   ports: EnginePorts,
   run: RunRecord,
-  events: readonly RunEvent[],
+  facts: RecoveryFacts,
   owningParent?: string,
 ): Promise<RunRecovery> {
-  const observedSeq = events.at(-1)?.seq ?? 0;
+  const { observedSeq } = facts;
   const version = await ports.loops.getVersion(run.versionId);
   const parsed = version ? LoopDefinitionSchema.safeParse(version.definition) : undefined;
   const definition = parsed?.success ? parsed.data : undefined;
@@ -44,7 +44,14 @@ export async function runRecovery(
       typeof details === 'object' && details !== null && !Array.isArray(details)
         ? details.childRunId
         : undefined;
-    if (parent?.status === 'failed' && child === run.id)
+    const pending =
+      parent &&
+      ['queued', 'running', 'waiting', 'paused'].includes(parent.status) &&
+      (['queued', 'running', 'waiting', 'paused'].includes(run.status) ||
+        (run.status === 'failed' && run.failure !== undefined))
+        ? (await ports.events.recoveryFacts(parent.id, [])).resumed?.childRecovery
+        : undefined;
+    if ((parent?.status === 'failed' && child === run.id) || pending?.runId === run.id)
       common = {
         ...refused(
           'PARENT_RECOVERY_REQUIRED',
@@ -65,10 +72,7 @@ export async function runRecovery(
     !(await childSessionRecovered(ports, run));
   const active =
     ['queued', 'running', 'waiting'].includes(run.status) ||
-    (run.status === 'failed' &&
-      events.findLast((event) =>
-        ['run.resumed', 'run.failed', 'run.finished', 'run.cancelled'].includes(event.type),
-      )?.type === 'run.resumed');
+    (run.status === 'failed' && facts.lifecycle?.type === 'run.resumed');
   const resume =
     common ??
     (run.cancelRequestedAt || run.status === 'cancelled'
@@ -122,10 +126,7 @@ export async function runRecovery(
           effects.push({ nodeId: target.id, label: target.label, kind: 'delivery' });
       }
       let action = common;
-      if (
-        !action &&
-        !events.some((event) => event.type === 'node.started' && event.nodeId === node.id)
-      )
+      if (!action && !facts.reachedNodeIds.includes(node.id))
         action = refused('REPLAY_NODE_NOT_REACHED', 'This run never reached this node.');
       if (!action) {
         const existing = await ports.admission.findReplay(run.id, node.id, observedSeq);
@@ -146,7 +147,7 @@ export async function runRecovery(
       return { nodeId: node.id, label: node.label, effects, action: action ?? allowed };
     }),
   );
-  const failed = events.findLast((event) => event.type === 'run.failed');
+  const failed = facts.failed;
   return {
     observedSeq,
     resume,

@@ -40,6 +40,7 @@ describe('durable SSE catch-up', () => {
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
+        recoveryFacts: (...args) => events.recoveryFacts(...args),
         read: async (id, after, limit) => {
           const page = await events.read(id, after, limit);
           if (!finished && limit !== undefined) {
@@ -109,6 +110,7 @@ describe('durable SSE catch-up', () => {
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
+        recoveryFacts: (...args) => events.recoveryFacts(...args),
         read: async (...args) => {
           const page = await events.read(...args);
           if (++reads === 1 && fault === 'query') {
@@ -165,6 +167,7 @@ describe('durable SSE catch-up', () => {
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
+        recoveryFacts: (...args) => events.recoveryFacts(...args),
         read: async (id, after, limit) => {
           const page = await events.read(id, after, limit);
           reads.push({ after: after ?? 0, limit, rows: page.length });
@@ -223,6 +226,7 @@ describe('durable SSE catch-up', () => {
     const store: EventStorePort = {
       append: (...args) => events.append(...args),
       subscribe: (...args) => events.subscribe(...args),
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: async (...args) => {
         reads++;
         const page = await events.read(...args);
@@ -313,6 +317,7 @@ describe('durable SSE catch-up', () => {
     });
     const store: EventStorePort = {
       append: (...args) => events.append(...args),
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       subscribe: (id, listener) => {
         const stop = events.subscribe(id, listener);

@@ -43,9 +43,11 @@ for (const family of ['codex', 'claude'])
       `${family} ${policy}: removed on-disk session, declined restart, choice-commit crash, recovered fresh`,
       { timeout: 240000 },
       async () => {
-        const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f4-265-'));
+        const dataDir = await mkdtemp(
+          join(tmpdir(), process.env.GG_TEST_DATA_PREFIX ?? 'gg-wp-f4-265-'),
+        );
         const port = Number(process.env.GG_265_RESTART_PORT ?? 5992);
-        assert.ok(port >= 5990 && port <= 5999);
+        assert.ok(Number.isInteger(port) && port > 0 && port <= 65535);
         const env = Object.fromEntries(
           Object.entries(process.env).filter(
             ([key]) => !key.toUpperCase().startsWith('GG_') && key !== 'NODE_V8_COVERAGE',
@@ -181,7 +183,8 @@ for (const family of ['codex', 'claude'])
           child = start();
           await message(child, 'ready');
           assert.deepEqual((await api(`/runs/${run.id}`)).failure, failed.failure);
-          await api(`/runs/${run.id}/resume`, {}, 409);
+          const reviewed = await api(`/runs/${run.id}`);
+          await api(`/runs/${run.id}/resume`, { observedSeq: reviewed.recovery.observedSeq }, 409);
           let events = (await api(`/runs/${run.id}/events`)).items;
           const failureSeq = events.findLast((event) => event.type === 'run.failed').seq;
           const armed = message(child, 'armed');

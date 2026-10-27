@@ -216,6 +216,7 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
   const source = await seed('old-source');
   const fork = await seed('old-fork', 'failed', { replay: source });
   for (const statement of [
+    'DROP INDEX run_events_reached_idx',
     'DROP INDEX runs_replay_intent_idx',
     'ALTER TABLE runs DROP COLUMN replay_intent_observed_seq',
     'ALTER TABLE runs DROP COLUMN replay_intent_node_id',

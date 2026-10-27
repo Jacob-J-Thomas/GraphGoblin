@@ -3,6 +3,33 @@ import { RunEventSchema, RunFailureSchema } from './index.js';
 import { fakeUlid } from './testing/index.js';
 
 describe('script provenance (#321)', () => {
+  it('round-trips strict parent consent bound to an immutable child failure (#256)', () => {
+    const event = {
+      runId: fakeUlid('parent'),
+      seq: 19,
+      ts: '2026-10-27T00:00:00.000Z',
+      type: 'run.resumed',
+      actor: { kind: 'user', id: 'reviewer' },
+      childRecovery: {
+        runId: fakeUlid('child'),
+        failureSeq: 8,
+        observedSeq: 9,
+        retryUncertainScript: true,
+      },
+    };
+    expect(RunEventSchema.parse(event)).toEqual(event);
+    for (const change of [
+      { runId: 'invalid' },
+      { failureSeq: 0 },
+      { observedSeq: -1 },
+      { retryUncertainScript: false },
+      { extra: true },
+    ])
+      expect(
+        RunEventSchema.safeParse({ ...event, childRecovery: { ...event.childRecovery, ...change } })
+          .success,
+      ).toBe(false);
+  });
   const dispatchId = fakeUlid('dispatch');
   it.each(['definitely-not-started', 'outcome-uncertain', 'completed'] as const)(
     'accepts %s failure provenance',

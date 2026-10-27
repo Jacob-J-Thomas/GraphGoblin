@@ -1,0 +1,169 @@
+docs\03-domain-model.md:352:A run may carry `deletionApproval: { confirmedAt, confirmedBy: { ownerId, kind, id } }`. It records explicit confirmation of this history only; absence means retain. New runs, including children and replay forks, never inherit approval. Success, failure, age and terminal status do not grant consent. Active/paused runs, incomplete finalization, and required retained parent/child/replay history stay protected. Shared artifacts referenced by retained history remain protected. See [ADR-0060](decisions/ADR-0060-explicit-history-deletion-eligibility.md) for the atomic selection and revocation rules. SQLite migration 0022 adds nullable approval, an internal consent revision and indexed replay-source identities backfilled once from existing threads; existing records remain retained.
+docs\05-execution-engine.md:343:retains its original fresh/resume selection and exact prompt, and uncertain accepted
+docs\06-harness-integration.md:350:Adapter tests replay recorded JSONL event streams captured from real sessions, stored under `packages/adapter-codex/fixtures`, through a fake SDK client (`src/__fixtures__/replay.ts`), so they need no CLI or network. Record a new one with `pnpm --filter @graphgoblin/adapter-codex record -- <name> "<prompt>" [--schema file] [--sandbox workspace-write] [--seed file=text]`; it uses `gpt-6-luna` at `low`, `--ephemeral`, a fresh temporary directory, and scrubs home and temporary paths. Current fixtures: `message`, `command-and-file-change`, `structured`, `failed-invalid-model`. `LIVE=1 pnpm --filter @graphgoblin/adapter-codex test -- src/live.test.ts` runs the live smoke suite (preflight, start plus resume, cancellation on Windows, one decision); a nightly CI job behind the same flag detects SDK drift. The SDK version is pinned exactly and bumped deliberately.
+docs\06-harness-integration.md:435:| `claude-opus-5-5`   | Claude Opus 5.5   | `low`, `medium`, `high`, `xhigh`, `max` | Bounded native fresh/resume turns on CLI 2.1.285 ([#26 QA report](qa/2026-10-07-issue-26.md))          |
+docs\06-harness-integration.md:490:the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and bounded native fresh/resume evidence are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
+docs\06-harness-integration.md:509:`2.1.285` init. Bounded native fresh and same-session resume schema turns at source `3349212` verified correlated carrier calls/settlements, final structured candidates, and exact Opus 5.5 model usage. The resume returned the exact remembered synthetic nonce without that nonce in its prompt. This establishes the tested fresh/resume path, not general recall or prompt-delivery acknowledgment; safe evidence and remaining acceptance are in the
+tooling\scripts\api-reference.test.mjs:18:    '/runs/{id}/replay': {
+tooling\scripts\api-reference.test.mjs:67:  assert.equal(groups.get('runs')?.[0]?.path, '/runs/{id}/replay');
+tooling\scripts\api-reference.test.mjs:78:    /\| POST \| `\/runs\/\{id\}\/replay` \| Fork \\\| replay \| `id`: string \(path, required\) \| `\{ nodeId \}` \| 202, 409 \|/,
+docs\10-testing-and-quality.md:19:Maintained auxiliary generators are measured explicitly: API-client `scripts/codegen.ts` and `scripts/generate.ts`, web `scripts/generate-icons.mjs`, API `scripts/check-templates.mjs`, and the API's `src/templates/copy-catalog.ts` build entry. Optional output directories let their tests generate into disposable destinations, check exact output and refuse malformed inputs or blocked paths without touching committed outputs. The web's `scripts/**/*.test.ts` include also runs integration assertions over the engine; it does not imply that one-off QA drivers are product source. `scripts/replay-seed-fixture.ts` is an integration corpus, and `scripts/replay-seed-repro.ts` is a historical disposable investigation driver; neither is maintained runtime. The adapter's `packages/adapter-codex/scripts/record.mjs` is a manually invoked provider recorder (`pnpm --filter @graphgoblin/adapter-codex record`), outside ordinary coverage because it requires an authenticated installed provider and spends usage. It is not a provider-free regression gate. No converter or recorder is silently represented as tested runtime.
+docs\07-api-and-streaming.md:31:  POST   /runs/{id}/resume              body: { observedSeq, retryUncertainScript?: true }; same run ID, typed eligibility refusal
+docs\07-api-and-streaming.md:34:  POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId, observedSeq, retryUncertainScript?: true }; 202 { run }; typed eligibility refusal (ADR-0061)
+docs\07-api-and-streaming.md:381:| `cancel_run`, `pause_run`, `resume_run` | `runId`; Resume also requires reviewed `observedSeq`, with explicit `retryUncertainScript?: true` | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                                                              |
+docs\07-api-and-streaming.md:384:| `replay_run`                            | `runId`, `nodeId`, reviewed `observedSeq`, explicit `retryUncertainScript?: true`                 | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                                                              |
+docs\07-api-and-streaming.md:482:The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation, import and saving allow unresolved inherited model or effort defaults, returning catalog/configuration issues for later repair. They never probe harness readiness. Explicit validate, publish and manual API/MCP trigger start probe once per referenced harness per request, concurrently across harnesses; `/harness/preflight` supplies editor readiness separately. Manual trigger start returns 422 `HARNESS_NOT_READY` with typed readiness issues before a turn starts when prerequisites fail. Replay (`POST /runs/{id}/replay`) has a separate admission policy and does not perform this preflight: it can return 202, execute preceding mutations and then fail at an unready harness. Scheduled/webhook starts, internal subloops and resumes also retain their existing execution checks; see [no-turn readiness](06-harness-integration.md#no-turn-readiness-179). Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
+docs\07-api-and-streaming.md:580:The start responses (`POST /loops/{id}/runs`, `POST /runs/{id}/replay`, MCP `start_run`) return it,
+docs\07-api-and-streaming.md:593:`POST /loops/{id}/publish`, `POST /loops/{id}/runs` and `POST /runs/{id}/replay` answer 409
+docs\07-api-and-streaming.md:753:resume. No request leaves the failure unchanged; `/resume` still refuses it.
+docs\12-implementation-plan.md:108:M4 extension (#26): the API also registers the owner-installed Claude Code CLI adapter on native Windows. It requires CLI 2.1.285 or newer, required capabilities and `claude.ai` login, uses no Anthropic SDK dependency, and admits the exact supported `claude-opus-5-5` and `claude-fable-5-1` models (Sonnet 5.5 and Haiku 5.5 followed in #206). Claude-specific defaults use `defaults.byHarness.claude`. The accepted policy pairs are read-only/never and explicitly selected danger-full-access/never; this read-only mode is tool-restricted, not OS or filesystem-read confinement. Both models use ordinary technical admission and owner enable switches (ADR-0029). The adapter implementation and focused web gates are recorded in [the #26 QA report](qa/2026-10-07-issue-26.md); full coverage, Edge E2E, the live hostile-config canary, live fresh/resume, and review remain pending.
+docs\12-implementation-plan.md:197:- **Replay-at-node** (task 2) is done: `POST /runs/{id}/replay` with `{ nodeId }`, `runs.replay` in the client, and the MCP tool `replay_run` fork a new run at a node the source reached, with the thread replayed to just before that node first started. Provenance is `invocation.replayOf` and `run.queued.replayOf`. Rules and limits (no session or working-directory carry-over, children not copied) are in 05.
+docs\12-implementation-plan.md:230:- Run inspector: no replay button; replay is `POST /runs/{id}/replay` and the MCP tool `replay_run`.
+docs\11-security-and-distribution.md:122:Step 06 is complete with steps 07 and 08 folded into the same child. Configured services, the temporary configured-catalogue fixture and their tests are deleted. The engine has no template execution/resume policies or private script execution identity. Run transitions and trigger admission have no template callback; their transactions, compare-and-swap, identity validation, pins and post-commit notifications remain. Ordinary script environments, stdin/stdout, cancellation, timeouts and output bounds remain unchanged. The API build and image have no private template support entries; generic GitHub polling remains an ordinary recipe.
+docs\14-work-packages.md:85:Read: 07, `research/codex-sdk.md` (plugins). Depends on: WP-A merged. Deliver `apps/mcp` over `@modelcontextprotocol/sdk` using the API client: tools `list_loops`, `describe_loop`, `start_run`, `wait_for_run`, `get_run`, `get_run_thread`, `list_runs`, `cancel_run`, `pause_run`, `resume_run`, `provide_input`, `send_signal`, `read_run_events`; resources for a run's events and thread; stdio and Streamable HTTP transports; API-key auth to the gateway. Deliver `apps/plugin-codex`: plugin manifest registering the MCP server plus skills `run-loop`, `design-loop`, `inspect-run`, following the pinned Codex plugin layout.
+docs\14-work-packages.md:117:Delivered: `RunManager.replay` with `POST /runs/{id}/replay`, `runs.replay`, and the MCP tool `replay_run` (provenance `invocation.replayOf` and `run.queued.replayOf`, 409 `REPLAY_NODE_NOT_REACHED`); `apps/api/src/preflight.ts` behind `GET /system/preflight` and `--preflight`, with `DatabaseHandle.pendingMigrations()`; `typecheck` runs `tsc -p tsconfig.json` too; `apps/api/src/perf.test.ts` and the numbers in 10, plus a fix for event-loop starvation in the serialised database client; `pnpm docs:generate` and `pnpm check:docs` over `docs/reference/`. See the M8 notes in 12.
+docs\architecture\README.md:59:| `packages/domain`         | contracts, `ajv`, `jsonata`, `liquidjs`                                             | Graph validation (`packages/domain/src/graph.ts:79`), replay (`packages/domain/src/replay.ts:25`), expressions, exit matching, frozen upgrade stages                   |
+docs\architecture\README.md:190:- **Replay into memory**: `loadThread` uses the checkpoint only if its sequence exists in the log, then replays later events; otherwise it replays from the initial thread (`packages/engine/src/run-manager.ts:1929`, `packages/domain/src/replay.ts:25`).
+docs\architecture\README.md:191:- **Replay as a feature**: `POST /runs/:id/replay` forks a new run on the same version using the thread immediately before the selected node first started (`apps/api/src/routes/runs.ts:305`, `packages/engine/src/run-manager.ts:785`, `packages/engine/src/run-manager.ts:809`).
+docs\architecture\README.md:232:| Runs      | `POST /loops/:id/runs`, `GET /runs` (cursor paging), get, thread, events (JSON or SSE), cancel/pause/resume, input, signals, replay, sessions, artifacts (`apps/api/src/routes/runs.ts:59` to `apps/api/src/routes/runs.ts:334`)                                                      |
+tooling\perf\measure.mjs:12:import { readReplay } from './replay.mjs';
+tooling\perf\observers.test.mjs:6:import { HttpBody } from './replay.mjs';
+tooling\perf\observers.test.mjs:149:test('portable summaries bound sparse browser/replay samples and strip external CPU paths', () => {
+docs\delivery\2026-10-18-i01-i07-register.md:522:As ADR-0046 and #278 require: the script handler appends a durable `script.dispatched { nodeId, visitId, dispatchId }` before calling the runner (after the workspace and secrets are prepared, with a cancel check), and on every entry `scriptVisit` reads the run's events: a dispatch for this node with no later `node.finished` of the node and no later `run.failed` fails the run with the resumable `SCRIPT_OUTCOME_UNCERTAIN` and the dispatch's provenance, so recovery never reruns it; `run.failed` disposes the attempt without ending the visit (the visit is the first `node.started` since the node last finished), so only an explicit resume runs the script again, with a fresh dispatch id, and a crash during that dispatch is uncertain again. The process runner reports a typed state: `definitely-not-started` for a synchronous spawn error (the Windows `.cmd` `EINVAL`), an `error` before `spawn` or a request already aborted; `outcome-uncertain` for an error after `spawn` (the tree is killed); `completed` on close. The handler maps them to `SCRIPT_START_FAILED` (resumable) and `SCRIPT_OUTCOME_UNCERTAIN`, keeps `SCRIPT_EXIT_CODE` and `SCRIPT_TIMEOUT` for completed runs, and treats an unclassified runner rejection as uncertain rather than `INTERNAL_ERROR`. `RunFailure.script` is optional and additive; the MCP summary adds `script` and `resumable` for script failures only, and `resume_run` states the explicit-choice rule. In the web the consent dialog is the only resume path for a failed run (`RunControls` renders nothing for terminal statuses); Cancel dispatches nothing; Replay forks at the node; `useRunEvents` re-arms a closed terminal tail from the saved cursor when the run snapshot's `lastEventSeq` passes it, so the resumed run is followed without a reload. `run-manager.ts` is unchanged; no migration. Non-blocking note: the unclassified runner rejection is reported without its error text in `details`; to be folded into any QA fix round. Evidence curated from 78 to 26 referenced files; local paths stripped.
+tooling\perf\runtime.test.mjs:13:import { readReplay } from './replay.mjs';
+tooling\perf\README.md:60:uses shared port/CPU-location dictionaries and root case/page/replay arrays, specification/correctness row columns, primary port spans plus other-port
+docs\guide\05-mcp-and-codex-plugin.md:62:| `resume_run`      | Continue a paused run (back to `waiting` if it was paused in a wait) or retry a failed run.     |
+docs\guide\03-run-and-observe.md:152:curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/resume" \
+docs\guide\03-run-and-observe.md:165:Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
+docs\guide\03-run-and-observe.md:188:curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/replay" \
+docs\guide\03-run-and-observe.md:201:Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
+docs\guide\03-run-and-observe.md:205:The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId`, `nodeId` and the reviewed `observedSeq`, then `wait_for_run` using the new ID. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+docs\guide\07-troubleshooting.md:359:deliberate new run/replay; upgrading does not rewrite historical failures.
+packages\api-client\src\resources.ts:167:    unwrap(await client.POST('/runs/{id}/resume', { ...id(runId), body: command })),
+packages\api-client\src\resources.ts:204:    unwrap(await client.POST('/runs/{id}/replay', { ...id(runId), body: { nodeId, ...command } }))
+packages\adapter-codex\src\structured.test.ts:8:import { ReplayCodex } from './__fixtures__/replay.js';
+packages\contracts\src\thread.ts:74: * Provenance of a run forked by `POST /runs/{id}/replay`: the source run and the node the fork
+packages\api-client\src\generated\schema.ts:1259:    "/runs/{id}/resume": {
+packages\api-client\src\generated\schema.ts:1480:    "/runs/{id}/replay": {
+docs\decisions\ADR-0023-installed-claude-code.md:29:Focused UI evidence and remaining acceptance work are recorded in [the #26 QA report](../qa/2026-10-07-issue-26.md). This ADR records architecture approval and the bounded native fresh/resume evidence; it does not declare broader runtime verification or owner integrated product acceptance complete.
+packages\adapter-codex\src\harness.test.ts:3:import { ReplayCodex, loadFixture } from './__fixtures__/replay.js';
+docs\decisions\ADR-0034-retire-template-runtime-authority.md:33:Configured services, their tests and the temporary configured-catalogue fixture are deleted. Configured allocation/remapping, script execution identity, engine execution/resume hooks, the SQLite transition callback and the SQLite admission callback are removed. Ordinary lifecycle, environments, stdin/stdout, cancellation, timeouts, output bounds, transactions, compare-and-swap, admission identity, pins and post-commit notifications remain. The API build and image no longer contain private support entry modules, and CI checks installed draft loading and independent copies without running support commands. The generic GitHub poll-items recipe remains.
+docs\decisions\ADR-0036-decision-gates-terminal-exits.md:15:The chosen actual port and absolute count are appended atomically in `decision.made` with `node.finished`. `gate` evidence records previous/current passes, repeat route, configured limits, elapsed seconds and stopping limit. Raw observation retains the evaluator's choice; `portId` may instead be `limit-reached`. Recovery/resume follow durable routes without recounting. Replay forks retain checkpoint counts and get a new run clock. `/gates` is engine-owned.
+docs\decisions\ADR-0049-deliberate-shutdown.md:63:During force, timer delivery and child-result wakes defer to restart, and input/signal/resume
+docs\decisions\ADR-0050-bounded-sse-replay.md:31:  types plus started/resumed), followed by one primary-key row read. The existing
+docs\decisions\ADR-0050-bounded-sse-replay.md:37:- Never close on an individual terminal event: it can be superseded by a later started/resumed
+docs\decisions\ADR-0052-node-own-session-continuity.md:70:retry rows, selected loop input, and #244 failure provenance. Bounded real start/resume
+docs\decisions\ADR-0055-explicit-missing-session-recovery.md:56:recovery eligibility. Start a deliberate new run/replay for those records. No owner
+packages\adapter-codex\src\events.test.ts:2:import { loadFixture } from './__fixtures__/replay.js';
+docs\decisions\ADR-0060-explicit-history-deletion-eligibility.md:23:| Resume, new child/replay dependency, changed relationship, new event or finalization change | SQLite triggers revoke approvals in the affected component in the same transaction, including the former parent/source when links change. No old consent returns when execution finishes again.                            |
+docs\decisions\ADR-0060-explicit-history-deletion-eligibility.md:55:| Run record and dependent rows            | Recheck owner, durable approval, terminal/finalized state and the entire parent/child/replay component inside the write transaction. Delete only those IDs, their events, sessions, timers, webhook receipts and usage rows. Prune their links from shared inbound deliveries; keep surviving deliveries. Remove only their now-unpinned draft snapshots, never unrelated orphan snapshots or published definitions. |
+packages\infrastructure\src\sqlite\events.ts:181:   * Latest lifecycle marker, including the started/resumed markers that invalidate an older
+packages\domain\src\gates.test.ts:11:import { replayThread, replayStateAt, type ThreadReplayEvent } from './replay.js';
+packages\domain\src\index.ts:20:export * from './replay.js';
+packages\domain\src\reconcile-thread.test.ts:4:import { replayStateAt, type ThreadReplayEvent } from './replay.js';
+packages\domain\src\reconcile-thread.ts:2:import { replayStateAt, replayThread, type ThreadReplayEvent, type ReplayState } from './replay.js';
+packages\domain\src\replay.test.ts:10:} from './replay.js';
+apps\web\scripts\replay-seed-repro.ts:14:import { replaySeedLoop } from './replay-seed-fixture.js';
+apps\web\scripts\replay-seed-repro.ts:89:        await api(`/runs/${parentId}/replay`, {
+apps\web\scripts\replay-seed-repro.ts:136:    process.argv[2] ?? '../../docs/qa/2026-10-24-wp-e1-186-r2/replay-seed-check.json',
+apps\web\scripts\projections.test.ts:6:import { replaySeedLoop } from './replay-seed-fixture.js';
+apps\web\e2e\bounded-history.spec.ts:7:import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
+apps\web\e2e\claude-harness.spec.ts:667:  const resume = await request.post(instance.url + '/runs/' + failedRun.id + '/resume', {
+apps\web\e2e\deletion-eligibility.spec.ts:111:  const replay = await request.post(`${url}/runs/${id}/replay`, {
+apps\plugin-codex\src\plugin.test.ts:36:  'resume_run',
+apps\api\scripts\missing-session.integration.mjs:187:          await api(`/runs/${run.id}/resume`, { observedSeq: reviewed.recovery.observedSeq }, 409);
+apps\plugin-codex\plugin\graphgoblin\skills\run-loop\SKILL.md:30:   - `status: "paused"`: read `get_run.recovery`, explain any unavailable action, and ask the user whether to continue. If authorized, call `resume_run` with that reviewed `recovery.observedSeq`. Re-read and review after `RECOVERY_STALE`; never reuse a refusal as consent. `SCRIPT_CONSENT_REQUIRED` needs explicit permission to repeat the uncertain effect before passing `retryUncertainScript: true`. Recovery owned by a parent uses that exact parent run.
+apps\api\scripts\failure-evidence\classification-storage.mjs:408:      const resume = await api('/runs/' + id + '/resume', {
+apps\api\scripts\prompt-restart.integration.mjs:258:        await api(`/runs/${runId}/resume`, { observedSeq: reviewed.recovery.observedSeq }, 409);
+apps\api\scripts\failure-evidence\classification-storage-followups.mjs:410:      const resume = await api('/runs/' + id + '/resume', {
+apps\api\scripts\failure-evidence\sdk-pinned-followups.mjs:346:      const resume = await api('/runs/' + id + '/resume', {
+apps\api\scripts\failure-evidence\storage-outages.mjs:317:          const resumed = await api('/runs/' + id + '/resume', {
+apps\api\scripts\failure-evidence\engine-pinned-followups.mjs:369:      const resume = await api('/runs/' + id + '/resume', {
+apps\api\scripts\failure-evidence\sdk-sequences.mjs:388:      const resume = await api('/runs/' + id + '/resume', {
+apps\api\scripts\wait-restart.acceptance.mjs:241:    const resumed = await request('/runs/' + paused.id + '/resume', {
+apps\mcp\src\mcp.test.ts:38:  'resume_run',
+apps\mcp\src\mcp.test.ts:41:  'replay_run',
+apps\mcp\src\mcp.test.ts:413:      await call('replay_run', {
+apps\mcp\src\mcp.test.ts:427:    const notReached = await call('replay_run', {
+apps\mcp\src\mcp.test.ts:471:    expect(paused.next).toMatch(/resume_run/);
+apps\mcp\src\mcp.test.ts:481:        await call('resume_run', {
+apps\mcp\src\mcp.test.ts:525:      'resume_run',
+apps\mcp\src\mcp.test.ts:530:        ...(name === 'resume_run' ? { observedSeq: 0 } : {}),
+apps\mcp\src\thread-history.test.ts:39:          url: '/runs/' + run.id + '/resume',
+apps\web\e2e\missing-session.spec.ts:70:      await request.post(`/runs/${run.id}/resume`, {
+apps\mcp\src\tools.ts:80:    return 'The run is paused. Review recovery and call resume_run with recovery.observedSeq to continue the same run.';
+apps\mcp\src\tools.ts:186:      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). The finished flag requires terminal execution and run.finalizedAt. Delivery failure is final too: inspect run.deliveries and return.failed events separately from execution status. When fully finalized it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
+apps\mcp\src\tools.ts:359:      'Pause a run at the next node boundary when the user asks to hold it. It keeps its state; call resume_run to continue it.',
+apps\mcp\src\tools.ts:378:    'resume_run',
+apps\mcp\src\tools.ts:402:    'replay_run',
+apps\api\src\api.test.ts:449:          url: `/runs/${run.id}/resume`,
+apps\api\src\adversarial.test.ts:152:    'POST /runs/{id}/resume': 'runs:write',
+apps\api\src\adversarial.test.ts:156:    'POST /runs/{id}/replay': 'runs:write',
+apps\api\src\adversarial.test.ts:311:        else if (path.endsWith('/replay')) payload = { nodeId: 'scope-test' };
+apps\web\e2e\recovery-eligibility.spec.ts:85:    await tab.route(`**/runs/${parent.id}/resume`, async (route) => {
+apps\web\e2e\recovery-eligibility.spec.ts:92:    tab.waitForResponse((response) => response.url().endsWith(`/runs/${parent.id}/resume`)),
+apps\web\e2e\recovery-eligibility.spec.ts:134:  const response = await request.post(`/runs/${run.id}/resume`, {
+apps\web\e2e\recovery-eligibility.spec.ts:139:  const refused = page.waitForResponse((r) => r.url().endsWith(`/runs/${run.id}/resume`));
+apps\web\e2e\recovery-eligibility.spec.ts:180:    await tab.route(`**/runs/${run.id}/replay`, async (route) => {
+apps\web\e2e\recovery-eligibility.spec.ts:186:    tab.waitForResponse((r) => r.url().endsWith(`/runs/${run.id}/replay`)),
+apps\web\e2e\recovery-eligibility.spec.ts:209:  const stale = await request.post(`/runs/${run.id}/replay`, {
+apps\web\e2e\recovery-eligibility.spec.ts:230:    if (response.url().endsWith(`/runs/${source.id}/resume`)) resumeResponses.push(response);
+apps\web\e2e\recovery-eligibility.spec.ts:236:  await page.route(`**/runs/${source.id}/resume`, async (route) => {
+apps\web\e2e\recovery-eligibility.spec.ts:260:    if (response.url().endsWith(`/runs/${source.id}/replay`)) replayResponses.push(response);
+apps\web\e2e\recovery-eligibility.spec.ts:266:  await page.route(`**/runs/${source.id}/replay`, async (route) => {
+apps\web\e2e\replay-seed.spec.ts:9:import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
+apps\web\e2e\replay-seed.spec.ts:37:  const replay = await request.post(`/runs/${source.id}/replay`, {
+apps\web\e2e\script-recovery.spec.ts:223:      response.url().endsWith(`/runs/${run.id}/replay`),
+apps\api\src\deletion-eligibility.test.ts:297:    url: `/runs/${source.id}/replay`,
+apps\api\src\definition-pins.test.ts:282:          `/runs/${drafted.id}/replay`,
+apps\api\src\edges.test.ts:76:        url: `/runs/${run.id}/resume`,
+apps\web\e2e\thread-history.spec.ts:105:        await request.post(ready.url + '/runs/' + run.id + '/resume', {
+apps\api\src\guide-examples.test.ts:151:    if (path.pathname.endsWith('/replay')) {
+apps\web\e2e\webhook-delivery.spec.ts:196:        await request.post('/runs/' + run.id + '/resume', {
+apps\api\src\missing-session.test.ts:60:            url: `/runs/${runId}/resume`,
+apps\api\src\missing-session.test.ts:208:            url: `/runs/${parent.id}/resume`,
+apps\api\src\missing-session.test.ts:232:            url: `/runs/${parent.id}/resume`,
+apps\api\src\pinned-run-restart.test.ts:106:        const replay = await app.inject({ method: 'POST', url: '/runs/' + runId + '/replay', payload: { nodeId: 'infer', observedSeq: (await app.inject('/runs/' + runId)).json().recovery.observedSeq } });
+apps\api\src\pinned-run-restart.test.ts:253:        `/runs/${original.id}/replay`,
+apps\api\src\prompt-evidence-matrix.test.ts:70:        url: `/runs/${id}/resume`,
+apps\api\src\prompt-evidence-matrix.test.ts:138:            url: `/runs/${id}/resume`,
+apps\api\src\prompt-provenance.test.ts:133:          url: `/runs/${runId}/resume`,
+apps\api\src\prompt-provenance.test.ts:187:          url: `/runs/${runId}/resume`,
+apps\api\src\prompt-failure-boundaries.test.ts:133:        url: `/runs/${runId}/resume`,
+apps\api\src\prompt-failure-boundaries.test.ts:198:      url: `/runs/${runId}/resume`,
+apps\api\src\prompt-sdk-storage-matrix.test.ts:127:        url: `/runs/${id}/resume`,
+apps\api\src\recovery-eligibility.test.ts:154:      url: `/runs/${source.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:184:        url: `/runs/${source.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:200:      url: `/runs/${source.id}/resume`,
+apps\api\src\recovery-eligibility.test.ts:220:      url: `/runs/${source.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:308:            url: `/runs/${run.id}/resume`,
+apps\api\src\recovery-eligibility.test.ts:465:      url: `/runs/${uncertain.id}/resume`,
+apps\api\src\recovery-eligibility.test.ts:536:      url: `/runs/${run.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:551:        url: `/runs/${run.id}/resume`,
+apps\api\src\recovery-eligibility.test.ts:569:      url: `/runs/${source.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:575:      url: `/runs/${source.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:588:        url: `/runs/${run.id}/replay`,
+apps\api\src\recovery-eligibility.test.ts:618:      url: `/runs/${run.id}/resume`,
+apps\api\src\replay.test.ts:85:describe('POST /runs/{id}/replay', () => {
+apps\api\src\replay.test.ts:108:      url: `/runs/${source.id}/replay`,
+apps\api\src\replay.test.ts:151:      url: `/runs/${source.id}/replay`,
+apps\api\src\replay.test.ts:204:      url: `/runs/${run.id}/replay`,
+apps\api\src\replay.test.ts:215:      url: `/runs/${fakeUlid('nope')}/replay`,
+apps\api\src\replay.test.ts:223:      url: `/runs/${run.id}/replay`,
+apps\api\src\replay.test.ts:240:      url: `/runs/${source.id}/replay`,
+apps\api\src\repair-start.test.ts:89:      url: `/runs/${runId}/resume`,
+apps\api\src\repair-start.test.ts:125:      url: `/runs/${runId}/resume`,
+apps\api\src\script-restart.test.ts:162:        await call('POST', `/runs/${run.id}/resume`, {
+apps\api\src\routes\runs.ts:366:    '/runs/:id/resume',
+apps\api\src\routes\runs.ts:458:    '/runs/:id/replay',
+apps\api\src\script-persistence-restart.test.ts:132:        await f.call('POST', `/runs/${f.run.id}/resume`, {
+apps\api\src\script-persistence-restart.test.ts:218:    await f.call('POST', `/runs/${f.run.id}/resume`, {
+apps\api\src\shutdown-process.test.ts:559:            await a.call('POST', `/runs/${run.id}/resume`, {
+apps\api\src\sse-completion.test.ts:63:            url: `/runs/${run.id}/resume`,
+apps\api\src\sse.ts:31:  /** Bounded lookup of the latest terminal/started/resumed marker; absent marker uses grace. */
+apps\api\src\sse.ts:321:    // be last: finalization appends delivery audits. A started/resumed marker invalidates an
+apps\api\src\subloop-failure.test.ts:3: * code and resumability, names the child, and an explicit `POST /runs/{id}/resume` of the parent
+apps\api\src\subloop-failure.test.ts:105:      url: `/runs/${parent.id}/resume`,
+apps\api\src\subloop-failure.test.ts:152:      url: `/runs/${parent.id}/resume`,
+apps\api\src\thread-history.test.ts:33:          url: '/runs/' + run.id + '/resume',
+apps\api\src\thread-history.test.ts:64:      url: '/runs/' + run.id + '/resume',

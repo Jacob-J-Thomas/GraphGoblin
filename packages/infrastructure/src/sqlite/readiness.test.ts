@@ -176,9 +176,11 @@ it('upgrades main observation indexes through eligibility, ownership and Replay 
       replay_intent_observed_seq: null,
     },
   ]);
-  expect(
-    (await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")).rows,
-  ).toEqual(indexes);
+  const upgradedIndexes = (
+    await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl_name='run_events'")
+  ).rows;
+  expect(upgradedIndexes.filter((row) => row.name !== 'run_events_reached_idx')).toEqual(indexes);
+  expect(upgradedIndexes.some((row) => row.name === 'run_events_reached_idx')).toBe(true);
   expect((await handle.client.execute('SELECT * FROM run_resources')).rows).toEqual([]);
   expect((await handle.client.execute('SELECT * FROM workspace_references')).rows).toEqual([]);
   const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;

@@ -20,14 +20,8 @@ export async function childSessionRecovered(ports: EnginePorts, run: RunRecord):
     child.failure !== undefined
   )
     return false;
-  const events = await ports.events.read(child.id);
-  const failed = events.findLast(
-    (event) => event.type === 'run.failed' && event.failure.code === 'HARNESS_SESSION_MISSING',
-  );
+  const { failed, resumed } = await ports.events.recoveryFacts(child.id, []);
   // A direct fresh-session choice or an explicitly resumed containing child is durable proof.
   // Plain Resume cannot produce either before the missing conversation has been dealt with.
-  return (
-    failed !== undefined &&
-    events.some((event) => event.type === 'run.resumed' && event.seq > failed.seq)
-  );
+  return failed !== undefined && resumed !== undefined && resumed.seq > failed.seq;
 }

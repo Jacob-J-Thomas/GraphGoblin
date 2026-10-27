@@ -308,6 +308,7 @@ describe('model catalog source migration and repository', () => {
       ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
       await handle.client.execute('DROP TABLE event_receipts');
+      await handle.client.execute('DROP INDEX run_events_reached_idx');
       await handle.client.execute('DROP INDEX run_events_gate_idx');
       await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
       // Reconstruct this empty pre-0008 table before replaying historical SQL.

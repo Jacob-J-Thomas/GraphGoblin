@@ -21,6 +21,7 @@ describe('bounded SSE transport', () => {
     await events.append(runId, [draft]);
     const store: EventStorePort = {
       append: (...args) => events.append(...args),
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       // A public-port fault fixture: durable append is ordered, live notification 2 is absent.
       subscribe: (id, listener) =>
@@ -58,6 +59,7 @@ describe('bounded SSE transport', () => {
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
+        recoveryFacts: (...args) => events.recoveryFacts(...args),
         read: async (id, after = 0, limit) => {
           reads.push({ after, limit });
           const page = await events.read(id, after, limit);
@@ -94,6 +96,7 @@ describe('bounded SSE transport', () => {
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
+        recoveryFacts: (...args) => events.recoveryFacts(...args),
         read: async (id, after, limit) => {
           reads.push(after ?? 0);
           return events.read(id, after, limit);
@@ -180,6 +183,7 @@ describe('bounded SSE transport', () => {
     });
     const transportStore: EventStorePort = {
       append: (...args) => events.append(...args),
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       subscribe: (id, listener) => {
         const stop = events.subscribe(id, listener);

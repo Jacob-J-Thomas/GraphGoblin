@@ -160,6 +160,7 @@ it.each(families)('retains the committed %s repair when its append then throws',
       }
       return stored;
     },
+    recoveryFacts: (...args) => events.recoveryFacts(...args),
     read: (...args) => events.read(...args),
     subscribe: (...args) => events.subscribe(...args),
   };

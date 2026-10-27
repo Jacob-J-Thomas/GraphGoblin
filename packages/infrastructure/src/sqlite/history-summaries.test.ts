@@ -50,6 +50,7 @@ describe('SQLite history queries', () => {
     if (!historyMigration) throw new Error('Missing shipped history-index migration');
     // Rewind structure as well as the ledger before replaying newer migrations.
     await handle.client.execute('DROP TABLE event_receipts');
+    await handle.client.execute('DROP INDEX run_events_reached_idx');
     await handle.client.execute('DROP INDEX run_events_gate_idx');
     await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
     const removed = await handle.client.execute({

@@ -67,6 +67,7 @@ beforeEach(async () => {
   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
   // A pre-0015 fixture must not retain the later targeted Event ledger.
   await handle.client.execute('DROP TABLE event_receipts');
+  await handle.client.execute('DROP INDEX run_events_reached_idx');
   await handle.client.execute('DROP INDEX run_events_gate_idx');
   await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
 

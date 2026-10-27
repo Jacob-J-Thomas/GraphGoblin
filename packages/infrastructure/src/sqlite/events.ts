@@ -116,6 +116,67 @@ export class SqliteEventStore implements EventStorePort {
     return (await this.readRows(runId, afterSeq, limit)).map(toEvent);
   }
 
+  async recoveryFacts(runId: string, nodeIds: readonly string[]) {
+    // Each MAX is a seek of (run_id, type, seq). Do not decode progress, prompts or deliveries.
+    const markers = ['run.failed', 'run.finished', 'run.cancelled', 'run.started', 'run.resumed'];
+    const [tail] = await this.db
+      .select({ seq: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
+      .from(runEvents)
+      .where(eq(runEvents.runId, runId));
+    const observedSeq = Number(tail?.seq ?? 0);
+    const markerSeq = (type: string) =>
+      sql`coalesce((select max(seq) from run_events where run_id = ${runId} and type = ${type} and seq <= ${observedSeq}), 0)`;
+    const latestSeq = sql`max(${sql.join(markers.map(markerSeq), sql`, `)})`;
+    const rows = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          sql`${runEvents.seq} in (${sql.join(
+            [latestSeq, markerSeq('run.failed'), markerSeq('run.resumed')],
+            sql`, `,
+          )})`,
+        ),
+      )
+      .orderBy(asc(runEvents.seq));
+    const latest = rows.at(-1);
+    // Only these payloads are needed; older started/finished markers are identities, not evidence.
+    const evidence = rows
+      .filter((row) => row === latest || row.type === 'run.failed' || row.type === 'run.resumed')
+      .map(toEvent);
+    const reachedNodeIds: string[] = [];
+    for (const nodeId of nodeIds) {
+      const [found] = await this.db
+        .select({ seq: runEvents.seq })
+        .from(runEvents)
+        .where(
+          and(
+            eq(runEvents.runId, runId),
+            eq(runEvents.type, 'node.started'),
+            eq(runEvents.nodeId, nodeId),
+            sql`${runEvents.seq} <= ${observedSeq}`,
+          ),
+        )
+        .limit(1);
+      if (found) reachedNodeIds.push(nodeId);
+    }
+    return {
+      observedSeq,
+      lifecycle: evidence.find((event) => event.seq === latest?.seq),
+      failed: evidence.find((event) => event.type === 'run.failed'),
+      resumed: evidence.find((event) => event.type === 'run.resumed'),
+      reachedNodeIds,
+    };
+  }
+
   /**
    * Latest lifecycle marker, including the started/resumed markers that invalidate an older
    * terminal outcome (RunManager's terminalEvent rule). Finalization can append delivery audit

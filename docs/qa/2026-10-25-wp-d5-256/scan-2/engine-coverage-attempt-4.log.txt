@@ -1,0 +1,26 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+      Coverage enabled with v8
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  60 passed (60)
+      Tests  1744 passed (1744)
+   Start at  00:26:08
+   Duration  160.01s (tests 71%, import 26%, transform 2%, worker 1%)
+
+     Import  151 modules were evaluated 234 times · 36.62s total, 26% of tracked time
+             ~12.99s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.7% ( 3569/3729 )
+Branches     : 91.16% ( 2940/3225 )
+Functions    : 97.75% ( 652/667 )
+Lines        : 96.98% ( 3253/3354 )
+================================================================================

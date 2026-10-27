@@ -238,7 +238,11 @@ for (const poll of [50, 1000]) {
     const held = (await request('/runs/' + paused.id)).json;
     assert.equal(held.status, 'paused');
     assert.equal(held.waiting.waitId, paused.waiting.waitId);
-    await request('/runs/' + paused.id + '/resume', {});
+    const resumed = await request('/runs/' + paused.id + '/resume', {
+      observedSeq: held.recovery.observedSeq,
+    });
+    assert.equal(resumed.status, 200);
+    assert.equal(resumed.json.id, paused.id);
     await finished(paused.id);
     assert.equal((await wakes(paused.id)).length, 1);
     const heartbeat = (await request('/runs/' + hb.id)).json;

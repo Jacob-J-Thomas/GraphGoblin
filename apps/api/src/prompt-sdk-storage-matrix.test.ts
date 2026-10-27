@@ -98,6 +98,7 @@ it.each(matrix)(
         }
         return events.append(id, drafts, options);
       },
+      recoveryFacts: (...args) => events.recoveryFacts(...args),
       read: (...args) => events.read(...args),
       subscribe: (...args) => events.subscribe(...args),
     };

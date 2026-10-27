@@ -1,0 +1,598 @@
+{
+  "summary": [
+    {
+      "name": "classification-storage",
+      "port": 5700,
+      "code": 0,
+      "passed": 72,
+      "total": 72
+    },
+    {
+      "name": "classification-storage-followups",
+      "port": 5700,
+      "code": 0,
+      "passed": 32,
+      "total": 32
+    },
+    {
+      "name": "storage-outages",
+      "port": 5700,
+      "code": 0,
+      "passed": 16,
+      "total": 16
+    },
+    {
+      "name": "engine-pinned-followups",
+      "port": 5700,
+      "code": 0,
+      "passed": 36,
+      "total": 36
+    },
+    {
+      "name": "sdk-pinned-followups",
+      "port": 5700,
+      "code": 0,
+      "passed": 24,
+      "total": 24
+    },
+    {
+      "name": "sdk-sequences",
+      "port": 5700,
+      "code": 1,
+      "passed": 140,
+      "total": 146
+    }
+  ],
+  "failedSDKSequences": [
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": false,
+      "boundary": "sync",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-0-sync-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSMBGRBKB7WYNB8W6ZA5B",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": false,
+        "inference": {
+          "visitId": "01M5XVSMBGRBKB7WYNB8W6ZA5B:5",
+          "turnId": "01M5XVSMFYDRAXWFSB3ZQ6W9AJ",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSMBGRBKB7WYNB8W6ZA5B",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:14.526Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSMBGRBKB7WYNB8W6ZA5B:5",
+        "turnId": "01M5XVSMFYDRAXWFSB3ZQ6W9AJ",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSMBGRBKB7WYNB8W6ZA5B",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:14.531Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSMBGRBKB7WYNB8W6ZA5B:5",
+          "turnId": "01M5XVSMFYDRAXWFSB3ZQ6W9AJ",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "extraCalls": 0,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        },
+        {
+          "label": "resumable",
+          "actual": false,
+          "expected": true
+        },
+        {
+          "label": "resume",
+          "actual": 409,
+          "expected": 200
+        },
+        {
+          "label": "extra calls",
+          "actual": 0,
+          "expected": 1
+        },
+        {
+          "label": "success",
+          "expected": "succeeded"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"},{\"label\":\"resumable\",\"actual\":false,\"expected\":true},{\"label\":\"resume\",\"actual\":409,\"expected\":200},{\"label\":\"extra calls\",\"actual\":0,\"expected\":1},{\"label\":\"success\",\"expected\":\"succeeded\"}]\n\n5 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    },
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": false,
+      "boundary": "promise",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-4-promise-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSN26W75QET4WDQKJ1REM",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": false,
+        "inference": {
+          "visitId": "01M5XVSN26W75QET4WDQKJ1REM:5",
+          "turnId": "01M5XVSN3VDY9HNSEKCAZRWWK4",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSN26W75QET4WDQKJ1REM",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:15.163Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSN26W75QET4WDQKJ1REM:5",
+        "turnId": "01M5XVSN3VDY9HNSEKCAZRWWK4",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSN26W75QET4WDQKJ1REM",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:15.166Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSN26W75QET4WDQKJ1REM:5",
+          "turnId": "01M5XVSN3VDY9HNSEKCAZRWWK4",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "01M5XVSN26W75QET4WDQKJ1REM",
+          "seq": 13,
+          "ts": "2026-10-27T05:02:15.168Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSN26W75QET4WDQKJ1REM:5",
+          "turnId": "01M5XVSN3VDY9HNSEKCAZRWWK4",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "extraCalls": 0,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        },
+        {
+          "label": "resumable",
+          "actual": false,
+          "expected": true
+        },
+        {
+          "label": "resume",
+          "actual": 409,
+          "expected": 200
+        },
+        {
+          "label": "extra calls",
+          "actual": 0,
+          "expected": 1
+        },
+        {
+          "label": "success",
+          "expected": "succeeded"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"},{\"label\":\"resumable\",\"actual\":false,\"expected\":true},{\"label\":\"resume\",\"actual\":409,\"expected\":200},{\"label\":\"extra calls\",\"actual\":0,\"expected\":1},{\"label\":\"success\",\"expected\":\"succeeded\"}]\n\n5 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    },
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": false,
+      "boundary": "iterator",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-8-iterator-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSNJTT8B00MG3R274VMGG",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": false,
+        "inference": {
+          "visitId": "01M5XVSNJTT8B00MG3R274VMGG:5",
+          "turnId": "01M5XVSNMW4G7GRF678EX9QN5B",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSNJTT8B00MG3R274VMGG",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:15.708Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSNJTT8B00MG3R274VMGG:5",
+        "turnId": "01M5XVSNMW4G7GRF678EX9QN5B",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSNJTT8B00MG3R274VMGG",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:15.710Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSNJTT8B00MG3R274VMGG:5",
+          "turnId": "01M5XVSNMW4G7GRF678EX9QN5B",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "01M5XVSNJTT8B00MG3R274VMGG",
+          "seq": 13,
+          "ts": "2026-10-27T05:02:15.711Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSNJTT8B00MG3R274VMGG:5",
+          "turnId": "01M5XVSNMW4G7GRF678EX9QN5B",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "extraCalls": 0,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        },
+        {
+          "label": "resumable",
+          "actual": false,
+          "expected": true
+        },
+        {
+          "label": "resume",
+          "actual": 409,
+          "expected": 200
+        },
+        {
+          "label": "extra calls",
+          "actual": 0,
+          "expected": 1
+        },
+        {
+          "label": "success",
+          "expected": "succeeded"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"},{\"label\":\"resumable\",\"actual\":false,\"expected\":true},{\"label\":\"resume\",\"actual\":409,\"expected\":200},{\"label\":\"extra calls\",\"actual\":0,\"expected\":1},{\"label\":\"success\",\"expected\":\"succeeded\"}]\n\n5 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    },
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": true,
+      "boundary": "sync",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-73-sync-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSWY3WC5TPWP935EFKGCQ",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5XVSWY3WC5TPWP935EFKGCQ:5",
+          "turnId": "01M5XVSWZMCX1085Q8DZZPC88S",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSWY3WC5TPWP935EFKGCQ",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:23.220Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSWY3WC5TPWP935EFKGCQ:5",
+        "turnId": "01M5XVSWZMCX1085Q8DZZPC88S",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSWY3WC5TPWP935EFKGCQ",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:23.222Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSWY3WC5TPWP935EFKGCQ:5",
+          "turnId": "01M5XVSWZMCX1085Q8DZZPC88S",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "afterResume": "succeeded",
+      "extraCalls": 1,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"}]\n\n1 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    },
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": true,
+      "boundary": "promise",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-77-promise-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1:5",
+          "turnId": "01M5XVSXJK39A85H4XKN9RXB98",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:23.827Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1:5",
+        "turnId": "01M5XVSXJK39A85H4XKN9RXB98",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:23.829Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1:5",
+          "turnId": "01M5XVSXJK39A85H4XKN9RXB98",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1",
+          "seq": 13,
+          "ts": "2026-10-27T05:02:23.833Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSXH0Z3G2A54SF1ZCZPZ1:5",
+          "turnId": "01M5XVSXJK39A85H4XKN9RXB98",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "afterResume": "succeeded",
+      "extraCalls": 1,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"}]\n\n1 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    },
+    {
+      "family": "codex",
+      "policy": "fresh",
+      "mode": "sdk-sequence",
+      "expected": "HARNESS_TURN_FAILED",
+      "classification": "definitely-not-submitted",
+      "eligible": true,
+      "retriable": true,
+      "boundary": "iterator",
+      "code": "HARNESS_TRANSPORT_FAILED",
+      "explicitState": "definitely-not-submitted",
+      "name": "sdk-81-iterator-HARNESS_TRANSPORT_FAILED",
+      "runId": "01M5XVSY387R9QPH2GMFKSPPVD",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Transport failed",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5XVSY387R9QPH2GMFKSPPVD:5",
+          "turnId": "01M5XVSY4P9B0NBTMXV47GHT1H",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "turn": {
+        "runId": "01M5XVSY387R9QPH2GMFKSPPVD",
+        "seq": 11,
+        "ts": "2026-10-27T05:02:24.406Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M5XVSY387R9QPH2GMFKSPPVD:5",
+        "turnId": "01M5XVSY4P9B0NBTMXV47GHT1H",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂",
+        "resumeSessionId": "fake-session-1"
+      },
+      "submissions": [
+        {
+          "runId": "01M5XVSY387R9QPH2GMFKSPPVD",
+          "seq": 12,
+          "ts": "2026-10-27T05:02:24.407Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSY387R9QPH2GMFKSPPVD:5",
+          "turnId": "01M5XVSY4P9B0NBTMXV47GHT1H",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "01M5XVSY387R9QPH2GMFKSPPVD",
+          "seq": 13,
+          "ts": "2026-10-27T05:02:24.409Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "01M5XVSY387R9QPH2GMFKSPPVD:5",
+          "turnId": "01M5XVSY4P9B0NBTMXV47GHT1H",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "afterResume": "succeeded",
+      "extraCalls": 1,
+      "mismatches": [
+        {
+          "label": "code",
+          "actual": "HARNESS_TRANSPORT_FAILED",
+          "expected": "HARNESS_TURN_FAILED"
+        }
+      ],
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"label\":\"code\",\"actual\":\"HARNESS_TRANSPORT_FAILED\",\"expected\":\"HARNESS_TURN_FAILED\"}]\n\n1 !== 0\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api/scripts/failure-evidence/sdk-sequences.mjs:427:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+      "calls": [
+        {
+          "prompt": "Original task"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        },
+        {
+          "id": "fake-session-1",
+          "prompt": "Repair exactly: \"invalid first\"\nquote \" slash \\ NUL \u0000 LS   PS   emoji 🙂"
+        }
+      ]
+    }
+  ]
+}

@@ -23,6 +23,7 @@ async function setup(waiting = false) {
   const events: EventStorePort = {
     append: (...args) => engine.ports.events.append(...args),
     subscribe: (...args) => engine.ports.events.subscribe(...args),
+    recoveryFacts: (...args) => engine.ports.events.recoveryFacts(...args),
     async read(runId, after = 0, limit) {
       const result = await engine.ports.events.read(runId, after, limit);
       reads.push({ after, seqs: result.map((e) => e.seq) });

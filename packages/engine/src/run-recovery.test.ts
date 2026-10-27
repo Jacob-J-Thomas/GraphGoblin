@@ -93,7 +93,8 @@ describe('recovery effect boundaries (#256)', () => {
     const events: EventStorePort = {
       append: (...args) => e.ports.events.append(...args),
       subscribe: (...args) => e.ports.events.subscribe(...args),
-      read: async (...args) => {
+      read: (...args) => e.ports.events.read(...args),
+      recoveryFacts: async (...args) => {
         if (armed && !interleaved && args[0] === source.id) {
           interleaved = true;
           await reader.resume(
@@ -103,7 +104,7 @@ describe('recovery effect boundaries (#256)', () => {
           );
           await reader.waitForIdle();
         }
-        return e.ports.events.read(...args);
+        return e.ports.events.recoveryFacts(...args);
       },
     };
     const reader = new RunManager({ ...e.ports, events }, e.settings);

@@ -94,6 +94,7 @@ describe('D-022 inherited-session recovery', () => {
               }
               return stored;
             },
+            recoveryFacts: (...args) => events.recoveryFacts(...args),
             read: (id, after, limit) => events.read(id, after, limit),
             subscribe: (id, listener) => events.subscribe(id, listener),
           },
@@ -145,6 +146,7 @@ describe('D-022 inherited-session recovery', () => {
                 return Promise.reject(new Error('acceptance record not durable'));
               return events.append(id, drafts, options);
             },
+            recoveryFacts: (...args) => events.recoveryFacts(...args),
             read: (id, after, limit) => events.read(id, after, limit),
             subscribe: (id, listener) => events.subscribe(id, listener),
           },
@@ -236,6 +238,7 @@ describe('D-022 inherited-session recovery', () => {
             }
             return stored;
           },
+          recoveryFacts: (...args) => events.recoveryFacts(...args),
           read: (id, after, limit) => events.read(id, after, limit),
           subscribe: (id, listener) => events.subscribe(id, listener),
         },

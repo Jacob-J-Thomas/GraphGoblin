@@ -160,6 +160,9 @@ export const runEvents = sqliteTable(
   (t) => [
     primaryKey({ columns: [t.runId, t.seq] }),
     index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+    index('run_events_reached_idx')
+      .on(t.runId, t.nodeId, t.seq)
+      .where(sql`${t.type} = 'node.started'`),
     index('run_events_gate_idx').on(t.runId, t.seq).where(gateEvidenceCondition(t)),
     index('run_events_fresh_session_idx').on(t.runId, t.seq).where(freshSessionCondition(t)),
   ],

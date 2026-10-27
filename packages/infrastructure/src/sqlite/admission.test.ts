@@ -255,7 +255,7 @@ describe('SQLite atomic admission', () => {
         'SELECT id,initial_thread,pinned,replay_source_run_id,future_relationship FROM runs ORDER BY id';
       const before = await old.client.execute(preservedColumns);
       const preservedObjects =
-        "SELECT name,sql FROM sqlite_master WHERE type IN ('trigger','index') AND name NOT LIKE 'sqlite_%' AND name != 'runs_replay_intent_idx' ORDER BY name";
+        "SELECT name,sql FROM sqlite_master WHERE type IN ('trigger','index') AND name NOT LIKE 'sqlite_%' AND name NOT IN ('runs_replay_intent_idx','run_events_reached_idx') ORDER BY name";
       const objectsBefore = await old.client.execute(preservedObjects);
       await applyShippedSqlToHistoricalTestFixture(old);
       expect((await old.client.execute(preservedColumns)).rows).toEqual(before.rows);

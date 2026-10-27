@@ -100,6 +100,7 @@ c.ports.events = {
 
     return originalEvents.append(id, drafts, options);
   },
+  recoveryFacts: (...args) => originalEvents.recoveryFacts(...args),
   read: (...a) => {
     if (injection?.fired && injection.readDown) {
       injection.readFailures++;
@@ -313,7 +314,9 @@ try {
           assert.ok(injection.fired);
           assert.equal(calls.length, 1);
 
-          const resumed = await api('/runs/' + id + '/resume', {});
+          const resumed = await api('/runs/' + id + '/resume', {
+            observedSeq: (await api('/runs/' + id)).value.recovery.observedSeq,
+          });
           record.resumeStatus = resumed.status;
           record.afterStatus = resumed.status === 200 ? (await stopped(id)).status : undefined;
 

@@ -4755,6 +4755,13 @@ export interface components {
             type: "run.resumed";
             /** @constant */
             retryUncertainScript?: true | undefined;
+            childRecovery?: {
+                runId: string;
+                failureSeq: number;
+                observedSeq: number;
+                /** @constant */
+                retryUncertainScript?: true | undefined;
+            } | undefined;
             actor: {
                 /** @enum {string} */
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
@@ -7093,6 +7100,13 @@ export interface components {
             type: "run.resumed";
             /** @constant */
             retryUncertainScript?: true | undefined;
+            childRecovery?: {
+                runId: string;
+                failureSeq: number;
+                observedSeq: number;
+                /** @constant */
+                retryUncertainScript?: true | undefined;
+            } | undefined;
             actor: {
                 /** @enum {string} */
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";

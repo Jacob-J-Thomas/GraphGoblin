@@ -190,6 +190,26 @@ export class InMemoryEventStore implements EventStorePort {
     return Promise.resolve(limit === undefined ? events : events.slice(0, limit));
   }
 
+  recoveryFacts(
+    runId: string,
+    nodeIds: readonly string[],
+  ): ReturnType<EventStorePort['recoveryFacts']> {
+    const events = this.logs.get(runId) ?? [];
+    return Promise.resolve({
+      observedSeq: events.at(-1)?.seq ?? 0,
+      lifecycle: events.findLast((e) =>
+        ['run.failed', 'run.finished', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+          e.type,
+        ),
+      ),
+      failed: events.findLast((e) => e.type === 'run.failed'),
+      resumed: events.findLast((e) => e.type === 'run.resumed'),
+      reachedNodeIds: nodeIds.filter((id) =>
+        events.some((e) => e.type === 'node.started' && e.nodeId === id),
+      ),
+    });
+  }
+
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {
     const set = this.listeners.get(runId) ?? new Set();
     set.add(listener);

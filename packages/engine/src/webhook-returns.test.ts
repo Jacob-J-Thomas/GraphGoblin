@@ -281,6 +281,7 @@ it('reports persistence failure distinctly, sends nothing, and leaves recovery p
     ...engine.ports,
     events: {
       append: () => Promise.reject(Error('disk full')),
+      recoveryFacts: (...args) => engine.ports.events.recoveryFacts(...args),
       read: (id, after, limit) => engine.ports.events.read(id, after, limit),
       subscribe: (id, listener) => engine.ports.events.subscribe(id, listener),
     },
@@ -437,6 +438,7 @@ it.each([
       if (phase === 'at journal append') remove();
       return events.append(id, drafts, options);
     },
+    recoveryFacts: (...args) => events.recoveryFacts(...args),
     read: (id, after, limit) => events.read(id, after, limit),
     subscribe: (id, listener) => events.subscribe(id, listener),
   };

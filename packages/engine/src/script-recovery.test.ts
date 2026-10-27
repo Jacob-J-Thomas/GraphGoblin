@@ -73,6 +73,7 @@ describe('script dispatch recovery (#321)', () => {
       });
       let blocked = false;
       const events: EventStorePort = {
+        recoveryFacts: (...args) => e.ports.events.recoveryFacts(...args),
         read: (...args) => e.ports.events.read(...args),
         subscribe: (...args) => e.ports.events.subscribe(...args),
         append: async (id, drafts, options) => {
