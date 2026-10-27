@@ -1,0 +1,748 @@
+{
+  "checks": [
+    {
+      "name": "explicit force exits with truthful native interruption",
+      "passed": false,
+      "detail": {
+        "forced": {
+          "phase": "forcing",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:33:23.405Z",
+          "choiceAt": "2026-10-27T10:33:24.405Z",
+          "activeRunIds": ["01M5YEQXZ63GX0RPMS3C272WVZ"],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "controlToken": "65a4adae-6c86-43d8-91c8-790d96e4a615:3:forcing"
+        },
+        "exited": {
+          "timeout": true
+        }
+      }
+    },
+    {
+      "name": "parent SSE closes without fabricated force failure of parked parent",
+      "passed": false
+    },
+    {
+      "name": "forced child records effect uncertainty and cannot Resume",
+      "passed": false,
+      "detail": {
+        "id": "01M5YEQXZ63GX0RPMS3C272WVZ",
+        "ownerId": "local",
+        "loopId": "01M5YEQXTBSYHE8ATJK6BNXA9P",
+        "versionId": "01M5YEQXTBSYHE8ATJK6BNXA9Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force child",
+          "label": "Force child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+        "invocationId": "01M5YEQXZ63GX0RPMS3C272WW0",
+        "status": "failed",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+          "message": "Script process tree termination was not confirmed; stop the process before restarting",
+          "nodeId": "script",
+          "resumable": false,
+          "details": {
+            "interruptedByStop": true
+          },
+          "script": {
+            "visitId": "01M5YEQXZ63GX0RPMS3C272WVZ:5",
+            "dispatchId": "01M5YEQY1KJ4PYXM0D9Z02ZVX3",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T10:33:21.638Z",
+        "startedAt": "2026-10-27T10:33:21.663Z",
+        "finishedAt": "2026-10-27T10:33:26.157Z",
+        "finalizedAt": "2026-10-27T10:33:26.165Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "forced child never silently duplicated",
+      "passed": true,
+      "detail": {
+        "count": 1,
+        "parentFailed": {
+          "id": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+          "ownerId": "local",
+          "loopId": "01M5YEQXVGM18S8KTKKZ8VYQS5",
+          "versionId": "01M5YEQXVGM18S8KTKKZ8VYQS6",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force parent",
+            "label": "Force parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEQXWB1GA5ZSC1FXTPQTZS",
+          "status": "failed",
+          "currentNodeId": "sub",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YEQXWB1GA5ZSC1FXTPQTZR:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5YEQXZ63GX0RPMS3C272WVZ",
+            "startedSeq": 5
+          },
+          "failure": {
+            "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+            "message": "subloop child 01M5YEQXZ63GX0RPMS3C272WVZ failed: Script process tree termination was not confirmed; stop the process before restarting",
+            "nodeId": "sub",
+            "resumable": false,
+            "details": {
+              "childRunId": "01M5YEQXZ63GX0RPMS3C272WVZ",
+              "childNodeId": "script",
+              "childDetails": {
+                "interruptedByStop": true
+              }
+            },
+            "script": {
+              "visitId": "01M5YEQXZ63GX0RPMS3C272WVZ:5",
+              "dispatchId": "01M5YEQY1KJ4PYXM0D9Z02ZVX3",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T10:33:21.547Z",
+          "startedAt": "2026-10-27T10:33:21.577Z",
+          "finishedAt": "2026-10-27T10:33:48.714Z",
+          "finalizedAt": "2026-10-27T10:33:48.732Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Await child",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 11,
+              "nodeId": "sub"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "parent recovery refuses nonresumable child",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "forced child inspector refuses Resume",
+      "passed": true
+    },
+    {
+      "name": "explicit Replay of forced script admits exactly one fork",
+      "passed": false,
+      "detail": {
+        "replies": [
+          {
+            "status": 409,
+            "body": {
+              "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+              "title": "parent recovery required",
+              "status": 409,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "detail": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices."
+            }
+          },
+          {
+            "status": 409,
+            "body": {
+              "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+              "title": "parent recovery required",
+              "status": 409,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "detail": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "only explicit fork repeats effect; source history preserved",
+      "passed": false,
+      "detail": {
+        "count": 1
+      }
+    }
+  ],
+  "evidence": {
+    "confirmText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nGateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\n\nForce child — 01M5YEQXZ63GX0RPMS3C272WVZ\nKeep waiting\nForce stop\nForce stop active work?\n\nInterrupt the active executors and queued family work listed below, including required children. Already saved waits and paused runs stay saved.\n\nForce child — 01M5YEQXZ63GX0RPMS3C272WVZ\n\nExternal effects may be uncertain. Interrupted work does not automatically resume; inspect the run evidence before an explicit replay. Work may finish or a required child may start while you decide.\n\nGo back\nConfirm force stop\nRun\n01M5YEQXWB1GA5ZSC1FXTPQTZR\nwaiting\nat Await child (sub)\nloop\nchild runs\nPause\nResume\nCancel run\nReplay...\n\nResume unavailable: The server is shutting down. Try recovery after it restarts.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nForce parent v1 · version ID 01M5YEQXVGM18S8KTKKZ8VYQS6\n\nExact run record\nPinned definition JSON\nWaiting for child at Await child (sub).\nTimeline (7 events, live)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 2 ms\n#5\nnode.started\nAwait child (sub) (subloop) attempt 1\n#6\nchild_run.started\nAwait child (sub)\n#7\nrun.waiting\nAwait child (sub) waits for child\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)",
+    "details": {
+      "parent": {
+        "id": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+        "ownerId": "local",
+        "loopId": "01M5YEQXVGM18S8KTKKZ8VYQS5",
+        "versionId": "01M5YEQXVGM18S8KTKKZ8VYQS6",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force parent",
+          "label": "Force parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEQXWB1GA5ZSC1FXTPQTZS",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:33:21.547Z",
+        "lastEventSeq": 1
+      },
+      "child": {
+        "id": "01M5YEQXZ63GX0RPMS3C272WVZ",
+        "ownerId": "local",
+        "loopId": "01M5YEQXTBSYHE8ATJK6BNXA9P",
+        "versionId": "01M5YEQXTBSYHE8ATJK6BNXA9Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force child",
+          "label": "Force child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+        "invocationId": "01M5YEQXZ63GX0RPMS3C272WW0",
+        "status": "running",
+        "currentNodeId": "start",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:33:21.638Z",
+        "startedAt": "2026-10-27T10:33:21.663Z",
+        "lastEventSeq": 4
+      },
+      "queued": {
+        "id": "01M5YEQY5PJJ1D2NKDWVR3MH6E",
+        "ownerId": "local",
+        "loopId": "01M5YEQY4YF83ASKSSZNCKXZMJ",
+        "versionId": "01M5YEQY4ZA575B5M36XNCJTMZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force independent queued",
+          "label": "Force independent queued v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEQY5PJJ1D2NKDWVR3MH6F",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:33:21.846Z",
+        "lastEventSeq": 1
+      },
+      "drain": {
+        "phase": "draining",
+        "graceMs": 1000,
+        "startedAt": "2026-10-27T10:33:23.405Z",
+        "choiceAt": "2026-10-27T10:33:24.405Z",
+        "activeRunIds": ["01M5YEQXZ63GX0RPMS3C272WVZ"],
+        "unconfirmedRunIds": [],
+        "choices": ["wait", "force"],
+        "controlToken": "65a4adae-6c86-43d8-91c8-790d96e4a615:1:draining"
+      },
+      "forced": {
+        "phase": "forcing",
+        "graceMs": 1000,
+        "startedAt": "2026-10-27T10:33:23.405Z",
+        "choiceAt": "2026-10-27T10:33:24.405Z",
+        "activeRunIds": ["01M5YEQXZ63GX0RPMS3C272WVZ"],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "controlToken": "65a4adae-6c86-43d8-91c8-790d96e4a615:3:forcing"
+      },
+      "exited": {
+        "timeout": true
+      },
+      "parentFailed": {
+        "id": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+        "ownerId": "local",
+        "loopId": "01M5YEQXVGM18S8KTKKZ8VYQS5",
+        "versionId": "01M5YEQXVGM18S8KTKKZ8VYQS6",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force parent",
+          "label": "Force parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEQXWB1GA5ZSC1FXTPQTZS",
+        "status": "failed",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YEQXWB1GA5ZSC1FXTPQTZR:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5YEQXZ63GX0RPMS3C272WVZ",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+          "message": "subloop child 01M5YEQXZ63GX0RPMS3C272WVZ failed: Script process tree termination was not confirmed; stop the process before restarting",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5YEQXZ63GX0RPMS3C272WVZ",
+            "childNodeId": "script",
+            "childDetails": {
+              "interruptedByStop": true
+            }
+          },
+          "script": {
+            "visitId": "01M5YEQXZ63GX0RPMS3C272WVZ:5",
+            "dispatchId": "01M5YEQY1KJ4PYXM0D9Z02ZVX3",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T10:33:21.547Z",
+        "startedAt": "2026-10-27T10:33:21.577Z",
+        "finishedAt": "2026-10-27T10:33:48.714Z",
+        "finalizedAt": "2026-10-27T10:33:48.732Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Await child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Await child",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Await child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ],
+          "scriptConsent": {
+            "failureSeq": 11,
+            "nodeId": "sub"
+          }
+        }
+      },
+      "childFailed": {
+        "id": "01M5YEQXZ63GX0RPMS3C272WVZ",
+        "ownerId": "local",
+        "loopId": "01M5YEQXTBSYHE8ATJK6BNXA9P",
+        "versionId": "01M5YEQXTBSYHE8ATJK6BNXA9Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force child",
+          "label": "Force child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR",
+        "invocationId": "01M5YEQXZ63GX0RPMS3C272WW0",
+        "status": "failed",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+          "message": "Script process tree termination was not confirmed; stop the process before restarting",
+          "nodeId": "script",
+          "resumable": false,
+          "details": {
+            "interruptedByStop": true
+          },
+          "script": {
+            "visitId": "01M5YEQXZ63GX0RPMS3C272WVZ:5",
+            "dispatchId": "01M5YEQY1KJ4PYXM0D9Z02ZVX3",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T10:33:21.638Z",
+        "startedAt": "2026-10-27T10:33:21.663Z",
+        "finishedAt": "2026-10-27T10:33:26.157Z",
+        "finalizedAt": "2026-10-27T10:33:26.165Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YEQXWB1GA5ZSC1FXTPQTZR"
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "denied": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      },
+      "replies": [
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+            "title": "parent recovery required",
+            "status": 409,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "detail": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices."
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+            "title": "parent recovery required",
+            "status": 409,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "detail": "Recovery belongs to parent run 01M5YEQXWB1GA5ZSC1FXTPQTZR. Open that parent to review its recovery choices."
+          }
+        }
+      ]
+    }
+  }
+}

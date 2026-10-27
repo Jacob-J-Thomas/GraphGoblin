@@ -1,0 +1,18 @@
+Get-CimInstance : Access denied 
+At line:1 char:1
++ Get-CimInstance Win32_Process | Where-Object { @(41556) -contains $_. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : PermissionDenied: (root\cimv2:Win32_Process:String) [Get-CimInstance], CimException
+    + FullyQualifiedErrorId : HRESULT 0x80041003,Microsoft.Management.Infrastructure.CimCmdlets.GetCimInstanceCommand
+ 
+file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/finalize.mjs:29
+if(alive.length)throw Error('Live PID candidates require identity review: '+alive.map(a=>a.pid));
+                      ^
+
+Error: Live PID candidates require identity review: 41556
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/finalize.mjs:29:23
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.4

@@ -1,0 +1,68 @@
+{
+  "checks": [
+    {
+      "name": "required child prevents isolated parent approval",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/deletion-selection-protected",
+          "title": "deletion selection protected",
+          "status": 409,
+          "code": "DELETION_SELECTION_PROTECTED",
+          "detail": "No history changed. Review the selection again; protected or stale records cannot be silently omitted.",
+          "errors": [
+            {
+              "runId": "01M5YEDQAJWWFZDYCS1J7V5FTN",
+              "reasons": [
+                "Required retained history 01M5YEDQBSXMGWYXRNWF333WCY must be selected together."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "waiting history stays protected",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/deletion-selection-protected",
+          "title": "deletion selection protected",
+          "status": 409,
+          "code": "DELETION_SELECTION_PROTECTED",
+          "detail": "No history changed. Review the selection again; protected or stale records cannot be silently omitted.",
+          "errors": [
+            {
+              "runId": "01M5YEDQKQQXNKY0JJ3SWGEACF",
+              "reasons": [
+                "Run is waiting; active and paused history is protected.",
+                "Run finalization is incomplete."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "retention driver completed",
+      "passed": false,
+      "detail": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText(/Deletion eligibility|History retention|Delete-ready|Retained/).first() to be visible\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-final-f1-integrated\\docs\\qa\\2026-10-27-final-f1-integrated\\retention.mjs:37:95"
+    }
+  ],
+  "evidence": {
+    "pairPreview": {
+      "token": "fdbfa052a19ee94350f725918dec70698e91bac2f428812913c198395f92bb6e",
+      "items": [
+        {
+          "runId": "01M5YEDQAJWWFZDYCS1J7V5FTN",
+          "reasons": [
+            "Required retained history 01M5YEDQBSXMGWYXRNWF333WCY must be selected together."
+          ]
+        }
+      ]
+    },
+    "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText(/Deletion eligibility|History retention|Delete-ready|Retained/).first() to be visible\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-final-f1-integrated\\docs\\qa\\2026-10-27-final-f1-integrated\\retention.mjs:37:95"
+  }
+}

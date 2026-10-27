@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = fs.readFileSync(path.join(os.tmpdir(), 'gg-final-f1-active-root.txt'), 'utf8');
+const redact = s => s.replaceAll(os.homedir().replaceAll('\\', '\\\\'), '%USERPROFILE%').replaceAll(os.homedir(), '%USERPROFILE%').replaceAll(os.homedir().replaceAll('\\', '/'), '%USERPROFILE%').replaceAll(os.hostname(), '%COMPUTERNAME%').replace(/S-1-\d+(?:-\d+)+/g, '<SID>');
+const name = process.argv[2];
+if (!/^[a-z0-9-]+$/.test(name)) throw Error('script name');
+const child = spawn(process.execPath, [path.join(here, name + '.mjs')], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, GG_QA_ROOT: root, GG_TEST_PORT_START: '6850', GG_TEST_PORT_COUNT: '40' } });
+fs.appendFileSync(path.join(here, 'driver-ledger.log.txt'), `START ${name} pid=${child.pid}\n`);
+const file = path.join(here, name + '-console.log.txt');
+fs.writeFileSync(file, '');
+for (const stream of [child.stdout, child.stderr]) stream.on('data', b => { const s = redact(String(b)); fs.appendFileSync(file, s); process.stdout.write(s); });
+child.on('exit', (code, signal) => { fs.appendFileSync(path.join(here, 'driver-ledger.log.txt'), `EXIT ${name} pid=${child.pid} code=${code} signal=${signal}\n`); process.exitCode = code ?? 1; });

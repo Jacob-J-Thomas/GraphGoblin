@@ -1,0 +1,183 @@
+{
+  "checks": [
+    {
+      "name": "required child prevents isolated parent approval",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/deletion-selection-protected",
+          "title": "deletion selection protected",
+          "status": 409,
+          "code": "DELETION_SELECTION_PROTECTED",
+          "detail": "No history changed. Review the selection again; protected or stale records cannot be silently omitted.",
+          "errors": [
+            {
+              "runId": "01M5YEJ4ZKNA2N8XW88VA5C8Z2",
+              "reasons": [
+                "Required retained history 01M5YEJ514027C5FZGF3ESNMHN must be selected together."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "waiting history stays protected",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/deletion-selection-protected",
+          "title": "deletion selection protected",
+          "status": 409,
+          "code": "DELETION_SELECTION_PROTECTED",
+          "detail": "No history changed. Review the selection again; protected or stale records cannot be silently omitted.",
+          "errors": [
+            {
+              "runId": "01M5YEJ58SJX2S09QCKWBBWSC4",
+              "reasons": [
+                "Run is waiting; active and paused history is protected.",
+                "Run finalization is incomplete."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "exact reviewed six-run selection approved",
+      "passed": true,
+      "detail": {
+        "token": "c5d38cf52be8cc9a154b0fbba59f892eb5893d34b0ebd9ae2878c70b6b7b19c8",
+        "items": [
+          {
+            "runId": "01M5YEHPYJR37EZ2T9QBF2J3YB",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          },
+          {
+            "runId": "01M5YEHRZTEWF1V4TG9QQNNACJ",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          },
+          {
+            "runId": "01M5YEHTW8466WC7J31P43X7KV",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          },
+          {
+            "runId": "01M5YEHWTHDT7CBNXNQWJ1N4AW",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          },
+          {
+            "runId": "01M5YEHYSKSNMMY32F1HSWEWH9",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          },
+          {
+            "runId": "01M5YEJ0SE22086Y2FX2KP317W",
+            "approval": {
+              "confirmedAt": "2026-10-27T10:30:14.343Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "adequate storage and approval do not delete history",
+      "passed": true,
+      "detail": {
+        "beforeList": [
+          "01M5YEJ58SJX2S09QCKWBBWSC4",
+          "01M5YEJ514027C5FZGF3ESNMHN",
+          "01M5YEJ4ZKNA2N8XW88VA5C8Z2",
+          "01M5YEJ47SFNX7A4N6MXXCT84F",
+          "01M5YEJ3H0HCD0V9JJ978JBHNN",
+          "01M5YEJ2RNR6DHEZFZ295C6M7A",
+          "01M5YEJ0SE22086Y2FX2KP317W",
+          "01M5YEHYSKSNMMY32F1HSWEWH9",
+          "01M5YEHWTHDT7CBNXNQWJ1N4AW",
+          "01M5YEHTW8466WC7J31P43X7KV",
+          "01M5YEHRZTEWF1V4TG9QQNNACJ",
+          "01M5YEHPYJR37EZ2T9QBF2J3YB"
+        ],
+        "approvedBefore": [
+          "01M5YEJ58SJX2S09QCKWBBWSC4",
+          "01M5YEJ514027C5FZGF3ESNMHN",
+          "01M5YEJ4ZKNA2N8XW88VA5C8Z2",
+          "01M5YEJ47SFNX7A4N6MXXCT84F",
+          "01M5YEJ3H0HCD0V9JJ978JBHNN",
+          "01M5YEJ2RNR6DHEZFZ295C6M7A",
+          "01M5YEJ0SE22086Y2FX2KP317W",
+          "01M5YEHYSKSNMMY32F1HSWEWH9",
+          "01M5YEHWTHDT7CBNXNQWJ1N4AW",
+          "01M5YEHTW8466WC7J31P43X7KV",
+          "01M5YEHRZTEWF1V4TG9QQNNACJ",
+          "01M5YEHPYJR37EZ2T9QBF2J3YB"
+        ]
+      }
+    },
+    {
+      "name": "retention driver completed",
+      "passed": false,
+      "detail": "Error: Timed out: ()=>{if(!fs.existsSync(quarantine))return false;const names=fs.readdirSync(quarantine);for(const n of names){const p=path.join(quarantine,n);let entries;try{entries=Object.keys(tree(p)).length;}catch{continue;}if(entries>0)return {name:n,entries};}return false;} last=false\n    at Module.until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/lib.mjs:51:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/retention.mjs:46:15"
+    }
+  ],
+  "evidence": {
+    "pairPreview": {
+      "token": "c71a37c0dca73ffcc37dbb7d0ddf4eef1e0fbf8be125c464b8847cec0f2d2bd7",
+      "items": [
+        {
+          "runId": "01M5YEJ4ZKNA2N8XW88VA5C8Z2",
+          "reasons": [
+            "Required retained history 01M5YEJ514027C5FZGF3ESNMHN must be selected together."
+          ]
+        }
+      ]
+    },
+    "error": "Error: Timed out: ()=>{if(!fs.existsSync(quarantine))return false;const names=fs.readdirSync(quarantine);for(const n of names){const p=path.join(quarantine,n);let entries;try{entries=Object.keys(tree(p)).length;}catch{continue;}if(entries>0)return {name:n,entries};}return false;} last=false\n    at Module.until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/lib.mjs:51:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/retention.mjs:46:15"
+  }
+}

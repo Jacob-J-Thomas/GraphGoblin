@@ -1,0 +1,1462 @@
+{
+  "checks": [
+    {
+      "name": "live run deletion panel refuses protected work",
+      "passed": true,
+      "detail": "Mark selected history delete-ready?\n\nOnly the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.\n\nActive, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.\n\n01M5YEW8C0Z4A0NKEVEY7Z5BWP\n\nRun is running; active and paused history is protected.\n\nRun finalization is incomplete.\n\nNo history will be marked. Resolve every protected record and review the selection again.\nCancel\nConfirm delete-ready selection"
+    },
+    {
+      "name": "Edge followed at least 10000 additional events",
+      "passed": true,
+      "detail": 11813
+    },
+    {
+      "name": "both cyclic runs naturally succeed at authored count",
+      "passed": true,
+      "detail": {
+        "A": {
+          "id": "01M5YEW8C0Z4A0NKEVEY7Z5BWP",
+          "ownerId": "local",
+          "loopId": "01M5YEW85VY32G7N2VEEYNCER7",
+          "versionId": "01M5YEW85VY32G7N2VEEYNCER8",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Observed cyclic A",
+            "label": "Observed cyclic A v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": null,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEW8C0Z4A0NKEVEY7Z5BWQ",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": 4000,
+          "createdAt": "2026-10-27T10:35:43.360Z",
+          "startedAt": "2026-10-27T10:35:43.546Z",
+          "finishedAt": "2026-10-27T10:38:48.960Z",
+          "finalizedAt": "2026-10-27T10:38:49.979Z",
+          "lastEventSeq": 20016,
+          "recovery": {
+            "observedSeq": 20016,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "provider",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "provider",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "provider",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "grow",
+                "label": "Grow",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "finish",
+                "label": "Finish",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "B": {
+          "id": "01M5YEW8S08RMVQ751JS7RYVWK",
+          "ownerId": "local",
+          "loopId": "01M5YEW8J5PBESDDDA4CTJCDNT",
+          "versionId": "01M5YEW8J5PBESDDDA4CTJCDNV",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Concurrent cyclic B",
+            "label": "Concurrent cyclic B v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": null,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEW8S08RMVQ751JS7RYVWM",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": 4000,
+          "createdAt": "2026-10-27T10:35:43.776Z",
+          "startedAt": "2026-10-27T10:35:43.960Z",
+          "finishedAt": "2026-10-27T10:38:49.968Z",
+          "lastEventSeq": 20015,
+          "recovery": {
+            "observedSeq": 20015,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "provider",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "provider",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "provider",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "grow",
+                "label": "Grow",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "finish",
+                "label": "Finish",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "finish",
+                    "label": "Finish",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "view": {
+          "status": "succeeded",
+          "timeline": {
+            "total": 20016,
+            "stream": "complete"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 4000
+          },
+          "rowsMounted": 80,
+          "firstRow": 19937,
+          "lastRow": 20016,
+          "contiguous": true,
+          "currentRow": 20016,
+          "followLiveEnabled": false,
+          "result": "4000",
+          "exitCard": "Exit evaluationFinish (finish): Exited: successLast gate decision: Gate (gate) chose Done (done) on pass 4000 (unlimited passes).",
+          "reading": ["This run never reached this node."],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        },
+        "vars": {
+          "n": 4000
+        },
+        "heapMiB": 10.09,
+        "cacheBytes": 420372,
+        "requests": {
+          "system": 27,
+          "run": 308,
+          "thread": 305,
+          "events-sse": 2,
+          "observation": 306,
+          "version": 2,
+          "other POST /runs/deletion-eligibility/preview": 1
+        },
+        "latency": {
+          "system": {
+            "n": 27,
+            "medianMs": 9.6,
+            "p95Ms": 13.5,
+            "maxMs": 15.5
+          },
+          "run": {
+            "n": 308,
+            "medianMs": 40.4,
+            "p95Ms": 58.4,
+            "maxMs": 92.7
+          },
+          "thread": {
+            "n": 305,
+            "medianMs": 19.1,
+            "p95Ms": 28.8,
+            "maxMs": 40.4
+          },
+          "observation": {
+            "n": 306,
+            "medianMs": 27.7,
+            "p95Ms": 41.9,
+            "maxMs": 64.6
+          },
+          "version": {
+            "n": 2,
+            "medianMs": 24.6,
+            "p95Ms": 24.6,
+            "maxMs": 24.6
+          },
+          "other POST /runs/deletion-eligibility/preview": {
+            "n": 1,
+            "medianMs": 18.1,
+            "p95Ms": 18.1,
+            "maxMs": 18.1
+          }
+        }
+      }
+    },
+    {
+      "name": "browser row count and cache stay bounded",
+      "passed": true,
+      "detail": [
+        {
+          "seq": 3792,
+          "heap": 10.13,
+          "cache": 419812,
+          "rows": 80
+        },
+        {
+          "seq": 5501,
+          "heap": 10.55,
+          "cache": 419026,
+          "rows": 80
+        },
+        {
+          "seq": 7187,
+          "heap": 10.61,
+          "cache": 419026,
+          "rows": 80
+        },
+        {
+          "seq": 8841,
+          "heap": 10.67,
+          "cache": 419080,
+          "rows": 80
+        },
+        {
+          "seq": 10511,
+          "heap": 10.64,
+          "cache": 422256,
+          "rows": 80
+        },
+        {
+          "seq": 12214,
+          "heap": 11.01,
+          "cache": 422892,
+          "rows": 80
+        },
+        {
+          "seq": 13886,
+          "heap": 10.7,
+          "cache": 422290,
+          "rows": 80
+        }
+      ]
+    },
+    {
+      "name": "live following issued no historical thread reads",
+      "passed": true,
+      "detail": {
+        "system": 27,
+        "run": 308,
+        "thread": 305,
+        "events-sse": 2,
+        "observation": 306,
+        "version": 2,
+        "other POST /runs/deletion-eligibility/preview": 1
+      }
+    },
+    {
+      "name": "SSE contiguous through authoritative final completion",
+      "passed": true,
+      "detail": {
+        "count": 20016,
+        "last": 20016,
+        "gaps": [],
+        "complete": {
+          "after": 20016
+        },
+        "bytes": 8947380,
+        "sha256": "fdc5f488e38717b3d1dc999a563526f74f3406f1a4e195fd36e6a8082386399f"
+      }
+    }
+  ],
+  "evidence": {
+    "samples": [
+      {
+        "label": "baseline without inspector",
+        "elapsed": 15.123,
+        "A": {
+          "from": 71,
+          "to": 1878,
+          "rate": 119.48687429742776,
+          "status": "running"
+        },
+        "B": {
+          "from": 10,
+          "to": 1816,
+          "rate": 119.42074985122,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 143.3,
+          "workingSetMiB": 137.7
+        },
+        "requests": {},
+        "latency": {}
+      },
+      {
+        "label": "live 0",
+        "elapsed": 15.133,
+        "A": {
+          "from": 2158,
+          "to": 3792,
+          "rate": 107.97594660675345,
+          "status": "running"
+        },
+        "B": {
+          "from": 2096,
+          "to": 3728,
+          "rate": 107.84378510539881,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 150.1,
+          "workingSetMiB": 145.1
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 2
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 38.5,
+            "p95Ms": 52.5,
+            "maxMs": 52.8
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 25.9,
+            "p95Ms": 41.2,
+            "maxMs": 44.8
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 18.9,
+            "p95Ms": 27.4,
+            "maxMs": 30.2
+          },
+          "system": {
+            "n": 2,
+            "medianMs": 11.4,
+            "p95Ms": 11.4,
+            "maxMs": 11.4
+          }
+        },
+        "heapMiB": 10.13,
+        "sessionStorageBytes": 419812,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 3826,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 758
+          },
+          "rowsMounted": 80,
+          "firstRow": 3747,
+          "lastRow": 3826,
+          "contiguous": true,
+          "currentRow": 3826,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 1",
+        "elapsed": 15.128,
+        "A": {
+          "from": 3841,
+          "to": 5501,
+          "rate": 109.73030142781597,
+          "status": "running"
+        },
+        "B": {
+          "from": 3776,
+          "to": 5436,
+          "rate": 109.73030142781597,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 153.8,
+          "workingSetMiB": 148.1
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 3
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 41.7,
+            "p95Ms": 51.7,
+            "maxMs": 52.5
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 26.7,
+            "p95Ms": 38.4,
+            "maxMs": 39.5
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 18.2,
+            "p95Ms": 24.3,
+            "maxMs": 28.8
+          },
+          "system": {
+            "n": 3,
+            "medianMs": 11,
+            "p95Ms": 11.3,
+            "maxMs": 11.3
+          }
+        },
+        "heapMiB": 10.55,
+        "sessionStorageBytes": 419026,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 5543,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 1100
+          },
+          "rowsMounted": 80,
+          "firstRow": 5464,
+          "lastRow": 5543,
+          "contiguous": true,
+          "currentRow": 5543,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 2",
+        "elapsed": 15.142,
+        "A": {
+          "from": 5551,
+          "to": 7187,
+          "rate": 108.04385153876635,
+          "status": "running"
+        },
+        "B": {
+          "from": 5488,
+          "to": 7123,
+          "rate": 107.97781006472064,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 154.9,
+          "workingSetMiB": 150.6
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 2
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 40.4,
+            "p95Ms": 51.9,
+            "maxMs": 56.5
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 29.2,
+            "p95Ms": 40.7,
+            "maxMs": 43
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 19.9,
+            "p95Ms": 28.4,
+            "maxMs": 30.6
+          },
+          "system": {
+            "n": 2,
+            "medianMs": 12.2,
+            "p95Ms": 12.2,
+            "maxMs": 12.2
+          }
+        },
+        "heapMiB": 10.61,
+        "sessionStorageBytes": 419026,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 7223,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 1437
+          },
+          "rowsMounted": 80,
+          "firstRow": 7144,
+          "lastRow": 7223,
+          "contiguous": true,
+          "currentRow": 7223,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 3",
+        "elapsed": 15.136,
+        "A": {
+          "from": 7234,
+          "to": 8841,
+          "rate": 106.17071881606766,
+          "status": "running"
+        },
+        "B": {
+          "from": 7171,
+          "to": 8777,
+          "rate": 106.1046511627907,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 156.4,
+          "workingSetMiB": 151.6
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 3
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 38.9,
+            "p95Ms": 58.4,
+            "maxMs": 60
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 27.4,
+            "p95Ms": 37.1,
+            "maxMs": 41.2
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 19.4,
+            "p95Ms": 26.8,
+            "maxMs": 27
+          },
+          "system": {
+            "n": 3,
+            "medianMs": 3.9,
+            "p95Ms": 11.2,
+            "maxMs": 11.2
+          }
+        },
+        "heapMiB": 10.67,
+        "sessionStorageBytes": 419080,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 8878,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 1769
+          },
+          "rowsMounted": 80,
+          "firstRow": 8799,
+          "lastRow": 8878,
+          "contiguous": true,
+          "currentRow": 8878,
+          "followLiveEnabled": false,
+          "reading": ["This run never reached this node."],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 4",
+        "elapsed": 15.16,
+        "A": {
+          "from": 8888,
+          "to": 10511,
+          "rate": 107.05804749340369,
+          "status": "running"
+        },
+        "B": {
+          "from": 8826,
+          "to": 10447,
+          "rate": 106.92612137203166,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 158,
+          "workingSetMiB": 153.5
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 2
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 40.1,
+            "p95Ms": 60.9,
+            "maxMs": 62.8
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 29.8,
+            "p95Ms": 45.1,
+            "maxMs": 47.4
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 18.8,
+            "p95Ms": 27.2,
+            "maxMs": 33.4
+          },
+          "system": {
+            "n": 2,
+            "medianMs": 12.2,
+            "p95Ms": 12.2,
+            "maxMs": 12.2
+          }
+        },
+        "heapMiB": 10.64,
+        "sessionStorageBytes": 422256,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 10551,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 2102
+          },
+          "rowsMounted": 80,
+          "firstRow": 10472,
+          "lastRow": 10551,
+          "contiguous": true,
+          "currentRow": 10551,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 5",
+        "elapsed": 15.111,
+        "A": {
+          "from": 10561,
+          "to": 12214,
+          "rate": 109.39051022433988,
+          "status": "running"
+        },
+        "B": {
+          "from": 10497,
+          "to": 12151,
+          "rate": 109.45668718152339,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 140.3,
+          "workingSetMiB": 132.9
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 3
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 39.7,
+            "p95Ms": 48.1,
+            "maxMs": 59.7
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 25.6,
+            "p95Ms": 39.6,
+            "maxMs": 43.6
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 17.6,
+            "p95Ms": 31.3,
+            "maxMs": 31.9
+          },
+          "system": {
+            "n": 3,
+            "medianMs": 3,
+            "p95Ms": 3.1,
+            "maxMs": 3.1
+          }
+        },
+        "heapMiB": 11.01,
+        "sessionStorageBytes": 422892,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 12261,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 2443
+          },
+          "rowsMounted": 80,
+          "firstRow": 12182,
+          "lastRow": 12261,
+          "contiguous": true,
+          "currentRow": 12261,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "live 6",
+        "elapsed": 15.125,
+        "A": {
+          "from": 12266,
+          "to": 13886,
+          "rate": 107.10743801652893,
+          "status": "running"
+        },
+        "B": {
+          "from": 12202,
+          "to": 13822,
+          "rate": 107.10743801652893,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 155,
+          "workingSetMiB": 146.7
+        },
+        "requests": {
+          "run": 30,
+          "observation": 30,
+          "thread": 30,
+          "system": 2
+        },
+        "latency": {
+          "run": {
+            "n": 30,
+            "medianMs": 39.6,
+            "p95Ms": 57,
+            "maxMs": 62.8
+          },
+          "observation": {
+            "n": 30,
+            "medianMs": 26.1,
+            "p95Ms": 42.1,
+            "maxMs": 44.2
+          },
+          "thread": {
+            "n": 30,
+            "medianMs": 15.5,
+            "p95Ms": 27.4,
+            "maxMs": 27.5
+          },
+          "system": {
+            "n": 2,
+            "medianMs": 9.5,
+            "p95Ms": 9.5,
+            "maxMs": 9.5
+          }
+        },
+        "heapMiB": 10.7,
+        "sessionStorageBytes": 422290,
+        "view": {
+          "status": "running",
+          "timeline": {
+            "total": 13932,
+            "stream": "live"
+          },
+          "threadHeading": "Current thread",
+          "vars": {
+            "n": 2778
+          },
+          "rowsMounted": 80,
+          "firstRow": 13853,
+          "lastRow": 13932,
+          "contiguous": true,
+          "currentRow": 13932,
+          "followLiveEnabled": false,
+          "reading": [
+            "The run changed while its recovery state was being read. Refresh and review its current recovery choices."
+          ],
+          "alerts": [],
+          "bodyHasFellBehind": false,
+          "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+        }
+      },
+      {
+        "label": "late baseline without inspector",
+        "elapsed": 15.135,
+        "A": {
+          "from": 13951,
+          "to": 15833,
+          "rate": 124.34753881731088,
+          "status": "running"
+        },
+        "B": {
+          "from": 13888,
+          "to": 15771,
+          "rate": 124.41361083581104,
+          "status": "running"
+        },
+        "apiMemory": {
+          "privateMiB": 156.7,
+          "workingSetMiB": 149.6
+        },
+        "requests": {},
+        "latency": {}
+      }
+    ],
+    "runs": {
+      "a": {
+        "id": "01M5YEW8C0Z4A0NKEVEY7Z5BWP",
+        "ownerId": "local",
+        "loopId": "01M5YEW85VY32G7N2VEEYNCER7",
+        "versionId": "01M5YEW85VY32G7N2VEEYNCER8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Observed cyclic A",
+          "label": "Observed cyclic A v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": null,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEW8C0Z4A0NKEVEY7Z5BWQ",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:35:43.360Z",
+        "lastEventSeq": 1
+      },
+      "b": {
+        "id": "01M5YEW8S08RMVQ751JS7RYVWK",
+        "ownerId": "local",
+        "loopId": "01M5YEW8J5PBESDDDA4CTJCDNT",
+        "versionId": "01M5YEW8J5PBESDDDA4CTJCDNV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Concurrent cyclic B",
+          "label": "Concurrent cyclic B v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": null,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEW8S08RMVQ751JS7RYVWM",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:35:43.776Z",
+        "lastEventSeq": 1
+      }
+    },
+    "edge": "156.0.4314.42",
+    "openedSeq": 2129,
+    "eligibilityDialog": "Mark selected history delete-ready?\n\nOnly the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.\n\nActive, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.\n\n01M5YEW8C0Z4A0NKEVEY7Z5BWP\n\nRun is running; active and paused history is protected.\n\nRun finalization is incomplete.\n\nNo history will be marked. Resolve every protected record and review the selection again.\nCancel\nConfirm delete-ready selection",
+    "followedEvents": 11813,
+    "final": {
+      "A": {
+        "id": "01M5YEW8C0Z4A0NKEVEY7Z5BWP",
+        "ownerId": "local",
+        "loopId": "01M5YEW85VY32G7N2VEEYNCER7",
+        "versionId": "01M5YEW85VY32G7N2VEEYNCER8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Observed cyclic A",
+          "label": "Observed cyclic A v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": null,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEW8C0Z4A0NKEVEY7Z5BWQ",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": 4000,
+        "createdAt": "2026-10-27T10:35:43.360Z",
+        "startedAt": "2026-10-27T10:35:43.546Z",
+        "finishedAt": "2026-10-27T10:38:48.960Z",
+        "finalizedAt": "2026-10-27T10:38:49.979Z",
+        "lastEventSeq": 20016,
+        "recovery": {
+          "observedSeq": 20016,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "provider",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "provider",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "provider",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "grow",
+              "label": "Grow",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "finish",
+              "label": "Finish",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "B": {
+        "id": "01M5YEW8S08RMVQ751JS7RYVWK",
+        "ownerId": "local",
+        "loopId": "01M5YEW8J5PBESDDDA4CTJCDNT",
+        "versionId": "01M5YEW8J5PBESDDDA4CTJCDNV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Concurrent cyclic B",
+          "label": "Concurrent cyclic B v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": null,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEW8S08RMVQ751JS7RYVWM",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": 4000,
+        "createdAt": "2026-10-27T10:35:43.776Z",
+        "startedAt": "2026-10-27T10:35:43.960Z",
+        "finishedAt": "2026-10-27T10:38:49.968Z",
+        "lastEventSeq": 20015,
+        "recovery": {
+          "observedSeq": 20015,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "provider",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "provider",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "provider",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "grow",
+              "label": "Grow",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "finish",
+              "label": "Finish",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finish",
+                  "label": "Finish",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "view": {
+        "status": "succeeded",
+        "timeline": {
+          "total": 20016,
+          "stream": "complete"
+        },
+        "threadHeading": "Current thread",
+        "vars": {
+          "n": 4000
+        },
+        "rowsMounted": 80,
+        "firstRow": 19937,
+        "lastRow": 20016,
+        "contiguous": true,
+        "currentRow": 20016,
+        "followLiveEnabled": false,
+        "result": "4000",
+        "exitCard": "Exit evaluationFinish (finish): Exited: successLast gate decision: Gate (gate) chose Done (done) on pass 4000 (unlimited passes).",
+        "reading": ["This run never reached this node."],
+        "alerts": [],
+        "bodyHasFellBehind": false,
+        "executionContext": "Execution contextObserved cyclic A v1 · version ID 01M5YEW85VY32G7N2VEEYNCER8Exact run recordPinned definition JSON"
+      },
+      "vars": {
+        "n": 4000
+      },
+      "heapMiB": 10.09,
+      "cacheBytes": 420372,
+      "requests": {
+        "system": 27,
+        "run": 308,
+        "thread": 305,
+        "events-sse": 2,
+        "observation": 306,
+        "version": 2,
+        "other POST /runs/deletion-eligibility/preview": 1
+      },
+      "latency": {
+        "system": {
+          "n": 27,
+          "medianMs": 9.6,
+          "p95Ms": 13.5,
+          "maxMs": 15.5
+        },
+        "run": {
+          "n": 308,
+          "medianMs": 40.4,
+          "p95Ms": 58.4,
+          "maxMs": 92.7
+        },
+        "thread": {
+          "n": 305,
+          "medianMs": 19.1,
+          "p95Ms": 28.8,
+          "maxMs": 40.4
+        },
+        "observation": {
+          "n": 306,
+          "medianMs": 27.7,
+          "p95Ms": 41.9,
+          "maxMs": 64.6
+        },
+        "version": {
+          "n": 2,
+          "medianMs": 24.6,
+          "p95Ms": 24.6,
+          "maxMs": 24.6
+        },
+        "other POST /runs/deletion-eligibility/preview": {
+          "n": 1,
+          "medianMs": 18.1,
+          "p95Ms": 18.1,
+          "maxMs": 18.1
+        }
+      }
+    },
+    "sse": {
+      "count": 20016,
+      "last": 20016,
+      "gaps": [],
+      "complete": {
+        "after": 20016
+      },
+      "bytes": 8947380,
+      "sha256": "fdc5f488e38717b3d1dc999a563526f74f3406f1a4e195fd36e6a8082386399f"
+    }
+  }
+}

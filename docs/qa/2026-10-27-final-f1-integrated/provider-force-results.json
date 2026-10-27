@@ -1,0 +1,818 @@
+{
+  "checks": [
+    {
+      "name": "first real console Ctrl+C preserves fake Codex turn",
+      "passed": true,
+      "detail": {
+        "id": "01M5YF5K64Y2KS5FN9Z2HASY39",
+        "ownerId": "local",
+        "loopId": "01M5YF5JKQ1YZQ3CB2RA86E1V9",
+        "versionId": "01M5YF5JKQ1YZQ3CB2RA86E1VA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held fake Codex child",
+          "label": "Held fake Codex child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "invocationId": "01M5YF5K64Y2KS5FN9Z2HASY3A",
+        "status": "running",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:40:49.348Z",
+        "startedAt": "2026-10-27T10:40:49.366Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "SHUTTING_DOWN",
+            "message": "The server is shutting down. Try recovery after it restarts."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "SHUTTING_DOWN",
+            "message": "The server is shutting down. Try recovery after it restarts."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "later real console Ctrl+C explicitly forces fake CLI and exits zero",
+      "passed": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "forced fake provider has truthful nonresumable interruption",
+      "passed": true,
+      "detail": {
+        "id": "01M5YF5K64Y2KS5FN9Z2HASY39",
+        "ownerId": "local",
+        "loopId": "01M5YF5JKQ1YZQ3CB2RA86E1V9",
+        "versionId": "01M5YF5JKQ1YZQ3CB2RA86E1VA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held fake Codex child",
+          "label": "Held fake Codex child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "invocationId": "01M5YF5K64Y2KS5FN9Z2HASY3A",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "think",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "createdAt": "2026-10-27T10:40:49.348Z",
+        "startedAt": "2026-10-27T10:40:49.366Z",
+        "finishedAt": "2026-10-27T10:40:52.010Z",
+        "finalizedAt": "2026-10-27T10:40:52.016Z",
+        "lastEventSeq": 10,
+        "recovery": {
+          "observedSeq": 10,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "explicit parent Replay after provider force produces one fork",
+      "passed": true,
+      "detail": [
+        {
+          "status": 202,
+          "body": {
+            "run": {
+              "id": "01M5YF5S0BXKVXKDVR7NS4ZSAB",
+              "ownerId": "local",
+              "loopId": "01M5YF5JWCNFMR2J0KBQ4FTJTT",
+              "versionId": "01M5YF5JWCNFMR2J0KBQ4FTJTV",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Force fake provider parent",
+                "label": "Force fake provider parent v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "invocationId": "01M5YF5S0BXKVXKDVR7NS4ZSAC",
+              "status": "queued",
+              "currentNodeId": "sub",
+              "iteration": 1,
+              "createdAt": "2026-10-27T10:40:55.307Z",
+              "lastEventSeq": 1
+            }
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "This Replay intent already created run 01M5YF5S0BXKVXKDVR7NS4ZSAB. Open that run instead of submitting the same intent again.",
+            "replayRunId": "01M5YF5S0BXKVXKDVR7NS4ZSAB"
+          }
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "details": {
+      "parent": {
+        "id": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "ownerId": "local",
+        "loopId": "01M5YF5JWCNFMR2J0KBQ4FTJTT",
+        "versionId": "01M5YF5JWCNFMR2J0KBQ4FTJTV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force fake provider parent",
+          "label": "Force fake provider parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YF5JX7G9WRX4JBEM6B70TA",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:40:49.063Z",
+        "lastEventSeq": 1
+      },
+      "child": {
+        "id": "01M5YF5K64Y2KS5FN9Z2HASY39",
+        "ownerId": "local",
+        "loopId": "01M5YF5JKQ1YZQ3CB2RA86E1V9",
+        "versionId": "01M5YF5JKQ1YZQ3CB2RA86E1VA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held fake Codex child",
+          "label": "Held fake Codex child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "invocationId": "01M5YF5K64Y2KS5FN9Z2HASY3A",
+        "status": "running",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:40:49.348Z",
+        "startedAt": "2026-10-27T10:40:49.366Z",
+        "lastEventSeq": 6
+      },
+      "request": {
+        "ts": "2026-10-27T10:40:49.4851834Z",
+        "harness": "codex",
+        "pid": 29476,
+        "mode": "fresh",
+        "outcome": "answered",
+        "resumeId": null,
+        "sessionId": "a647aa37-f6e0-426a-bda6-0da32638eebf",
+        "conversationTurn": 1,
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "F1 force provider 01M5YF5K64Y2KS5FN9Z2HASY39",
+        "argv": [
+          "exec",
+          "--experimental-json",
+          "--model",
+          "gpt-6-luna",
+          "--sandbox",
+          "read-only",
+          "--cd",
+          "%USERPROFILE%\\AppData\\Local\\Temp\\gg-final-f1-5cf669d876474adf849eec53d33c30f3\\provider-force\\workspaces\\01M5YF5K64Y2KS5FN9Z2HASY39",
+          "--skip-git-repo-check",
+          "--config",
+          "model_reasoning_effort=\"low\"",
+          "--config",
+          "sandbox_workspace_write.network_access=false",
+          "--config",
+          "web_search=\"disabled\"",
+          "--config",
+          "approval_policy=\"never\""
+        ]
+      },
+      "draining": {
+        "id": "01M5YF5K64Y2KS5FN9Z2HASY39",
+        "ownerId": "local",
+        "loopId": "01M5YF5JKQ1YZQ3CB2RA86E1V9",
+        "versionId": "01M5YF5JKQ1YZQ3CB2RA86E1VA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held fake Codex child",
+          "label": "Held fake Codex child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "invocationId": "01M5YF5K64Y2KS5FN9Z2HASY3A",
+        "status": "running",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:40:49.348Z",
+        "startedAt": "2026-10-27T10:40:49.366Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "SHUTTING_DOWN",
+            "message": "The server is shutting down. Try recovery after it restarts."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "SHUTTING_DOWN",
+            "message": "The server is shutting down. Try recovery after it restarts."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "exited": {
+        "code": 0,
+        "signal": null
+      },
+      "failed": {
+        "id": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "ownerId": "local",
+        "loopId": "01M5YF5JWCNFMR2J0KBQ4FTJTT",
+        "versionId": "01M5YF5JWCNFMR2J0KBQ4FTJTV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force fake provider parent",
+          "label": "Force fake provider parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YF5JX7G9WRX4JBEM6B70TA",
+        "status": "failed",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YF5JX7G9WRX4JBEM6B70T9:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5YF5K64Y2KS5FN9Z2HASY39",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "subloop child 01M5YF5K64Y2KS5FN9Z2HASY39 failed: Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5YF5K64Y2KS5FN9Z2HASY39",
+            "childNodeId": "think",
+            "childDetails": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            }
+          }
+        },
+        "createdAt": "2026-10-27T10:40:49.063Z",
+        "startedAt": "2026-10-27T10:40:49.312Z",
+        "finishedAt": "2026-10-27T10:40:55.125Z",
+        "finalizedAt": "2026-10-27T10:40:55.131Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Await fake CLI",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Await fake CLI",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Await fake CLI",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "childFailed": {
+        "id": "01M5YF5K64Y2KS5FN9Z2HASY39",
+        "ownerId": "local",
+        "loopId": "01M5YF5JKQ1YZQ3CB2RA86E1V9",
+        "versionId": "01M5YF5JKQ1YZQ3CB2RA86E1VA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held fake Codex child",
+          "label": "Held fake Codex child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9",
+        "invocationId": "01M5YF5K64Y2KS5FN9Z2HASY3A",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "think",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "createdAt": "2026-10-27T10:40:49.348Z",
+        "startedAt": "2026-10-27T10:40:49.366Z",
+        "finishedAt": "2026-10-27T10:40:52.010Z",
+        "finalizedAt": "2026-10-27T10:40:52.016Z",
+        "lastEventSeq": 10,
+        "recovery": {
+          "observedSeq": 10,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5YF5JX7G9WRX4JBEM6B70T9. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5YF5JX7G9WRX4JBEM6B70T9"
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "replies": [
+        {
+          "status": 202,
+          "body": {
+            "run": {
+              "id": "01M5YF5S0BXKVXKDVR7NS4ZSAB",
+              "ownerId": "local",
+              "loopId": "01M5YF5JWCNFMR2J0KBQ4FTJTT",
+              "versionId": "01M5YF5JWCNFMR2J0KBQ4FTJTV",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Force fake provider parent",
+                "label": "Force fake provider parent v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "invocationId": "01M5YF5S0BXKVXKDVR7NS4ZSAC",
+              "status": "queued",
+              "currentNodeId": "sub",
+              "iteration": 1,
+              "createdAt": "2026-10-27T10:40:55.307Z",
+              "lastEventSeq": 1
+            }
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "This Replay intent already created run 01M5YF5S0BXKVXKDVR7NS4ZSAB. Open that run instead of submitting the same intent again.",
+            "replayRunId": "01M5YF5S0BXKVXKDVR7NS4ZSAB"
+          }
+        }
+      ],
+      "fork": {
+        "id": "01M5YF5S0BXKVXKDVR7NS4ZSAB",
+        "ownerId": "local",
+        "loopId": "01M5YF5JWCNFMR2J0KBQ4FTJTT",
+        "versionId": "01M5YF5JWCNFMR2J0KBQ4FTJTV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force fake provider parent",
+          "label": "Force fake provider parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YF5S0BXKVXKDVR7NS4ZSAC",
+        "status": "queued",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:40:55.307Z",
+        "lastEventSeq": 1
+      }
+    }
+  }
+}

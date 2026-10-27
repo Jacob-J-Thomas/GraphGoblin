@@ -1,0 +1,3290 @@
+{
+  "checks": [
+    {
+      "name": "nested-api independent is queued before drain",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEAK80SHDCMTTB9696PPGV",
+        "ownerId": "local",
+        "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+        "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-api independent queue",
+          "label": "nested-api independent queue v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEAK80SHDCMTTB9696PPGW",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:26:04.672Z",
+        "lastEventSeq": 1,
+        "recovery": {
+          "observedSeq": 1,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-api notice explains drain and active work",
+      "passed": true,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nGateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\n\nnested-api child — 01M5YEAJ74KPNYCZJWF1ZKEFAR\nnested-api fake Codex — 01M5YEAJSQPPZES4R4H9P09E6M\nKeep waiting\nForce stop\nRun\n01M5YEAJ5Q2DEZ3PDJSVCW37WN\nwaiting\nat Await child (sub)\nloop\nchild runs\nPause\nResume\nCancel run\nReplay...\n\nResume unavailable: The server is shutting down. Try recovery after it restarts.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nnested-api parent v1 · version ID 01M5YEAJ559BD4SDBN3YYMM637\n\nExact run record\nPinned definition JSON\nWaiting for child at Await child (sub).\nTimeline (7 events, live)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 4 ms\n#5\nnode.started\nAwait child (sub) (subloop) attempt 1\n#6\nchild_run.started\nAwait child (sub)\n#7\nrun.waiting\nAwait child (sub) waits for child\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+    },
+    {
+      "name": "nested-api keep waiting has no new countdown",
+      "passed": true,
+      "detail": {
+        "phase": "draining",
+        "graceMs": 1000,
+        "startedAt": "2026-10-27T10:26:05.128Z",
+        "choiceAt": "2026-10-27T10:26:06.128Z",
+        "activeRunIds": ["01M5YEAJ74KPNYCZJWF1ZKEFAR", "01M5YEAJSQPPZES4R4H9P09E6M"],
+        "unconfirmedRunIds": [],
+        "choices": ["wait", "force"],
+        "controlToken": "7aeb71d4-03b8-408d-b093-8bb09826a4cc:3:draining"
+      }
+    },
+    {
+      "name": "nested-api nested script continues and independent queue stays closed",
+      "passed": true,
+      "detail": {
+        "stillActive": {
+          "id": "01M5YEAJ74KPNYCZJWF1ZKEFAR",
+          "ownerId": "local",
+          "loopId": "01M5YEAJ4FKN79KF7P8R96CDW4",
+          "versionId": "01M5YEAJ4FKN79KF7P8R96CDW5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api child",
+            "label": "nested-api child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "invocationId": "01M5YEAJ74KPNYCZJWF1ZKEFAS",
+          "status": "running",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:03.620Z",
+          "startedAt": "2026-10-27T10:26:03.633Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "stillQueued": {
+          "id": "01M5YEAK80SHDCMTTB9696PPGV",
+          "ownerId": "local",
+          "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+          "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api independent queue",
+            "label": "nested-api independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAK80SHDCMTTB9696PPGW",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:04.672Z",
+          "lastEventSeq": 1,
+          "recovery": {
+            "observedSeq": 1,
+            "resume": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "nested-api drains to process exit zero",
+      "passed": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "nested-api fake Codex finishes successfully through drain",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEAJSQPPZES4R4H9P09E6M",
+        "ownerId": "local",
+        "loopId": "01M5YEAJDF9MY7ZFBNAW2XC8M2",
+        "versionId": "01M5YEAJDF9MY7ZFBNAW2XC8M3",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-api fake Codex",
+          "label": "nested-api fake Codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEAJSQPPZES4R4H9P09E6N",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T10:26:04.215Z",
+        "startedAt": "2026-10-27T10:26:04.627Z",
+        "finishedAt": "2026-10-27T10:26:16.875Z",
+        "finalizedAt": "2026-10-27T10:26:16.879Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-api exact awaited child completes once",
+      "passed": true,
+      "detail": [
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 1,
+          "ts": "2026-10-27T10:26:03.575Z",
+          "type": "run.queued",
+          "versionId": "01M5YEAJ559BD4SDBN3YYMM637",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api parent",
+            "label": "nested-api parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+              "loopId": "01M5YEAJ559BD4SDBN3YYMM636",
+              "versionId": "01M5YEAJ559BD4SDBN3YYMM637",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YEAJ5Q2DEZ3PDJSVCW37WP",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T10:26:03.575Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "01M5YEAJ4FKN79KF7P8R96CDW4": "01M5YEAJ4FKN79KF7P8R96CDW5"
+          }
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 2,
+          "ts": "2026-10-27T10:26:03.588Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 3,
+          "ts": "2026-10-27T10:26:03.596Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 4,
+          "ts": "2026-10-27T10:26:03.603Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:03.599Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:03.599Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 4
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 5,
+          "ts": "2026-10-27T10:26:03.615Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "5e6be5b16e1b6ca5"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 6,
+          "ts": "2026-10-27T10:26:03.620Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 7,
+          "ts": "2026-10-27T10:26:03.628Z",
+          "type": "run.waiting",
+          "nodeId": "sub",
+          "wait": {
+            "waitId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 8,
+          "ts": "2026-10-27T10:26:10.942Z",
+          "type": "run.woken",
+          "nodeId": "sub",
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR",
+            "childFinishedSeq": 12,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 9,
+          "ts": "2026-10-27T10:26:10.960Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "5e6be5b16e1b6ca5"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 10,
+          "ts": "2026-10-27T10:26:10.969Z",
+          "type": "child_run.finished",
+          "nodeId": "sub",
+          "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 11,
+          "ts": "2026-10-27T10:26:10.969Z",
+          "type": "node.finished",
+          "nodeId": "sub",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/sub",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR"
+                },
+                "at": "2026-10-27T10:26:10.968Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YEAJ74KPNYCZJWF1ZKEFAR"
+                },
+                "at": "2026-10-27T10:26:10.968Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 5
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 12,
+          "ts": "2026-10-27T10:26:10.980Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 13,
+          "ts": "2026-10-27T10:26:10.985Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 14,
+          "ts": "2026-10-27T10:26:10.985Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "seq": 15,
+          "ts": "2026-10-27T10:26:10.985Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    {
+      "name": "nested-api durable wait keeps identity on restart",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEAHYY8DTYBGMPKVA9BQBT",
+        "ownerId": "local",
+        "loopId": "01M5YEAHY1HPDMY59DZVYP8NH4",
+        "versionId": "01M5YEAHY1HPDMY59DZVYP8NH5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-api durable park",
+          "label": "nested-api durable park v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEAHYY8DTYBGMPKVA9BQBV",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YEAHYY8DTYBGMPKVA9BQBT:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T10:26:03.358Z",
+        "startedAt": "2026-10-27T10:26:03.381Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-api independent starts only after restart",
+      "passed": false,
+      "detail": [
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 1,
+          "ts": "2026-10-27T10:26:04.672Z",
+          "type": "run.queued",
+          "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api independent queue",
+            "label": "nested-api independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YEAK80SHDCMTTB9696PPGV",
+              "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+              "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YEAK80SHDCMTTB9696PPGW",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T10:26:04.672Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 2,
+          "ts": "2026-10-27T10:26:19.391Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 3,
+          "ts": "2026-10-27T10:26:19.407Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 4,
+          "ts": "2026-10-27T10:26:19.415Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:19.412Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:19.412Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 5,
+          "ts": "2026-10-27T10:26:19.428Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 6,
+          "ts": "2026-10-27T10:26:19.766Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 7,
+          "ts": "2026-10-27T10:26:19.766Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+          "seq": 8,
+          "ts": "2026-10-27T10:26:19.766Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    {
+      "name": "nested-console independent is queued before drain",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEB64DBT59T457TVNY2GMS",
+        "ownerId": "local",
+        "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+        "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-console independent queue",
+          "label": "nested-console independent queue v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEB64DBT59T457TVNY2GMT",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T10:26:24.013Z",
+        "lastEventSeq": 1,
+        "recovery": {
+          "observedSeq": 1,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-console notice explains drain and active work",
+      "passed": true,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nGateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\n\nnested-console child — 01M5YEB5DR9X0FQMTE8X0GCR92\nnested-console fake Codex — 01M5YEB5VHJQ33ZD87KR6E4XTM\nKeep waiting\nForce stop\nRun\n01M5YEB5CD0VWS0Q2Q8RS0M85T\nwaiting\nat Await child (sub)\nloop\nchild runs\nPause\nResume\nCancel run\nReplay...\n\nResume unavailable: This run is still active. Pause it before continuing with Resume.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nnested-console parent v1 · version ID 01M5YEB5BV1T72P1S19YV6PGV8\n\nExact run record\nPinned definition JSON\nWaiting for child at Await child (sub).\nTimeline (7 events, live)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 1 ms\n#5\nnode.started\nAwait child (sub) (subloop) attempt 1\n#6\nchild_run.started\nAwait child (sub)\n#7\nrun.waiting\nAwait child (sub) waits for child\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+    },
+    {
+      "name": "nested-console keep waiting has no new countdown",
+      "passed": true,
+      "detail": {
+        "phase": "draining",
+        "graceMs": 1000,
+        "startedAt": "2026-10-27T10:26:25.231Z",
+        "choiceAt": "2026-10-27T10:26:26.231Z",
+        "activeRunIds": ["01M5YEB5DR9X0FQMTE8X0GCR92"],
+        "unconfirmedRunIds": [],
+        "choices": ["wait", "force"],
+        "controlToken": "e915095c-afdc-4315-aaf8-6f5115940acb:3:draining"
+      }
+    },
+    {
+      "name": "nested-console nested script continues and independent queue stays closed",
+      "passed": true,
+      "detail": {
+        "stillActive": {
+          "id": "01M5YEB5DR9X0FQMTE8X0GCR92",
+          "ownerId": "local",
+          "loopId": "01M5YEB5B5RVH6J981YHR6DRXB",
+          "versionId": "01M5YEB5B5RVH6J981YHR6DRXC",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console child",
+            "label": "nested-console child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "invocationId": "01M5YEB5DR9X0FQMTE8X0GCR93",
+          "status": "running",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:23.288Z",
+          "startedAt": "2026-10-27T10:26:23.300Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "stillQueued": {
+          "id": "01M5YEB64DBT59T457TVNY2GMS",
+          "ownerId": "local",
+          "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+          "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console independent queue",
+            "label": "nested-console independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB64DBT59T457TVNY2GMT",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:24.013Z",
+          "lastEventSeq": 1,
+          "recovery": {
+            "observedSeq": 1,
+            "resume": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "SHUTTING_DOWN",
+              "message": "The server is shutting down. Try recovery after it restarts."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "SHUTTING_DOWN",
+                  "message": "The server is shutting down. Try recovery after it restarts."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "nested-console drains to process exit zero",
+      "passed": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "nested-console fake Codex finishes successfully through drain",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEB5VHJQ33ZD87KR6E4XTM",
+        "ownerId": "local",
+        "loopId": "01M5YEB5M4H3Y0DEBK2AP0HKBC",
+        "versionId": "01M5YEB5M4H3Y0DEBK2AP0HKBD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-console fake Codex",
+          "label": "nested-console fake Codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEB5VHJQ33ZD87KR6E4XTN",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T10:26:23.729Z",
+        "startedAt": "2026-10-27T10:26:23.967Z",
+        "finishedAt": "2026-10-27T10:26:36.176Z",
+        "finalizedAt": "2026-10-27T10:26:36.182Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-console exact awaited child completes once",
+      "passed": true,
+      "detail": [
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 1,
+          "ts": "2026-10-27T10:26:23.245Z",
+          "type": "run.queued",
+          "versionId": "01M5YEB5BV1T72P1S19YV6PGV8",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console parent",
+            "label": "nested-console parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+              "loopId": "01M5YEB5BV1T72P1S19YV6PGV7",
+              "versionId": "01M5YEB5BV1T72P1S19YV6PGV8",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YEB5CD0VWS0Q2Q8RS0M85V",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T10:26:23.245Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "01M5YEB5B5RVH6J981YHR6DRXB": "01M5YEB5B5RVH6J981YHR6DRXC"
+          }
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 2,
+          "ts": "2026-10-27T10:26:23.258Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 3,
+          "ts": "2026-10-27T10:26:23.268Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 4,
+          "ts": "2026-10-27T10:26:23.273Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:23.272Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:23.272Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 5,
+          "ts": "2026-10-27T10:26:23.284Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "a7d506bd26942e67"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 6,
+          "ts": "2026-10-27T10:26:23.288Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 7,
+          "ts": "2026-10-27T10:26:23.296Z",
+          "type": "run.waiting",
+          "nodeId": "sub",
+          "wait": {
+            "waitId": "01M5YEB5CD0VWS0Q2Q8RS0M85T:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 8,
+          "ts": "2026-10-27T10:26:38.210Z",
+          "type": "run.woken",
+          "nodeId": "sub",
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92",
+            "childFinishedSeq": 12,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 9,
+          "ts": "2026-10-27T10:26:38.226Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "a7d506bd26942e67"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 10,
+          "ts": "2026-10-27T10:26:38.233Z",
+          "type": "child_run.finished",
+          "nodeId": "sub",
+          "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 11,
+          "ts": "2026-10-27T10:26:38.233Z",
+          "type": "node.finished",
+          "nodeId": "sub",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/sub",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92"
+                },
+                "at": "2026-10-27T10:26:38.232Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YEB5DR9X0FQMTE8X0GCR92"
+                },
+                "at": "2026-10-27T10:26:38.232Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 4
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 12,
+          "ts": "2026-10-27T10:26:38.245Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 13,
+          "ts": "2026-10-27T10:26:38.249Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 14,
+          "ts": "2026-10-27T10:26:38.249Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "seq": 15,
+          "ts": "2026-10-27T10:26:38.249Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    {
+      "name": "nested-console durable wait keeps identity on restart",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEB55JT9K8AN193R4DJ12C",
+        "ownerId": "local",
+        "loopId": "01M5YEB54KKKAPBTSYBY7X7JBG",
+        "versionId": "01M5YEB54KKKAPBTSYBY7X7JBH",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "nested-console durable park",
+          "label": "nested-console durable park v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YEB55JT9K8AN193R4DJ12D",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YEB55JT9K8AN193R4DJ12C:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T10:26:23.026Z",
+        "startedAt": "2026-10-27T10:26:23.055Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested-console independent starts only after restart",
+      "passed": false,
+      "detail": [
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 1,
+          "ts": "2026-10-27T10:26:24.013Z",
+          "type": "run.queued",
+          "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console independent queue",
+            "label": "nested-console independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YEB64DBT59T457TVNY2GMS",
+              "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+              "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YEB64DBT59T457TVNY2GMT",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T10:26:24.013Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 2,
+          "ts": "2026-10-27T10:26:40.780Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 3,
+          "ts": "2026-10-27T10:26:40.790Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 4,
+          "ts": "2026-10-27T10:26:40.800Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:40.797Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T10:26:40.797Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 5,
+          "ts": "2026-10-27T10:26:41.155Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 6,
+          "ts": "2026-10-27T10:26:41.161Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 7,
+          "ts": "2026-10-27T10:26:41.161Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YEB64DBT59T457TVNY2GMS",
+          "seq": 8,
+          "ts": "2026-10-27T10:26:41.161Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    {
+      "name": "hard kill mid-child reuses child and wait",
+      "passed": true,
+      "detail": {
+        "id": "01M5YEBT4Q38RFE3VA4A5H686T",
+        "ownerId": "local",
+        "loopId": "01M5YEBT0HS1D4DZSAS6AA75EA",
+        "versionId": "01M5YEBT0HS1D4DZSAS6AA75EB",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "revisited child wait",
+          "label": "revisited child wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5YEBT27Q9CRXJ1W55GYVZWK",
+        "invocationId": "01M5YEBT4Q38RFE3VA4A5H686V",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YEBT4Q38RFE3VA4A5H686T:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T10:26:44.503Z",
+        "startedAt": "2026-10-27T10:26:44.519Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "gate",
+              "label": "Two visits",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nested shutdown driver completed",
+      "passed": false,
+      "detail": "Error: Timed out: async()=>{const s=await api.get('/runs/'+child.id);return s.status==='waiting' && s.waiting.waitId!==first.waiting.waitId ? s : false;} last=false\n    at Module.until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/lib.mjs:51:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/nested-shutdown.mjs:84:16"
+    }
+  ],
+  "evidence": {
+    "phases": [
+      {
+        "mode": "api",
+        "signal": {
+          "phase": "draining",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:05.128Z",
+          "choiceAt": "2026-10-27T10:26:06.128Z",
+          "activeRunIds": ["01M5YEAJ74KPNYCZJWF1ZKEFAR", "01M5YEAJSQPPZES4R4H9P09E6M"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "7aeb71d4-03b8-408d-b093-8bb09826a4cc:1:draining"
+        },
+        "choice": {
+          "phase": "awaiting-choice",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:05.128Z",
+          "choiceAt": "2026-10-27T10:26:06.128Z",
+          "activeRunIds": ["01M5YEAJ74KPNYCZJWF1ZKEFAR", "01M5YEAJSQPPZES4R4H9P09E6M"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "7aeb71d4-03b8-408d-b093-8bb09826a4cc:2:awaiting-choice"
+        },
+        "waitingChoice": {
+          "phase": "draining",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:05.128Z",
+          "choiceAt": "2026-10-27T10:26:06.128Z",
+          "activeRunIds": ["01M5YEAJ74KPNYCZJWF1ZKEFAR", "01M5YEAJSQPPZES4R4H9P09E6M"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "7aeb71d4-03b8-408d-b093-8bb09826a4cc:3:draining"
+        },
+        "afterWait": {
+          "phase": "draining",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:05.128Z",
+          "choiceAt": "2026-10-27T10:26:06.128Z",
+          "activeRunIds": ["01M5YEAJ74KPNYCZJWF1ZKEFAR", "01M5YEAJSQPPZES4R4H9P09E6M"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "7aeb71d4-03b8-408d-b093-8bb09826a4cc:3:draining"
+        },
+        "queuedBefore": {
+          "id": "01M5YEAK80SHDCMTTB9696PPGV",
+          "ownerId": "local",
+          "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+          "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api independent queue",
+            "label": "nested-api independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAK80SHDCMTTB9696PPGW",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:04.672Z",
+          "lastEventSeq": 1,
+          "recovery": {
+            "observedSeq": 1,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "ended": {
+          "code": 0,
+          "signal": null
+        },
+        "parentDone": {
+          "id": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "ownerId": "local",
+          "loopId": "01M5YEAJ559BD4SDBN3YYMM636",
+          "versionId": "01M5YEAJ559BD4SDBN3YYMM637",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api parent",
+            "label": "nested-api parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAJ5Q2DEZ3PDJSVCW37WP",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:03.575Z",
+          "startedAt": "2026-10-27T10:26:03.585Z",
+          "finishedAt": "2026-10-27T10:26:10.989Z",
+          "finalizedAt": "2026-10-27T10:26:10.996Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Await child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "childDone": {
+          "id": "01M5YEAJ74KPNYCZJWF1ZKEFAR",
+          "ownerId": "local",
+          "loopId": "01M5YEAJ4FKN79KF7P8R96CDW4",
+          "versionId": "01M5YEAJ4FKN79KF7P8R96CDW5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api child",
+            "label": "nested-api child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YEAJ5Q2DEZ3PDJSVCW37WN",
+          "invocationId": "01M5YEAJ74KPNYCZJWF1ZKEFAS",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:03.620Z",
+          "startedAt": "2026-10-27T10:26:03.633Z",
+          "finishedAt": "2026-10-27T10:26:10.933Z",
+          "finalizedAt": "2026-10-27T10:26:10.948Z",
+          "lastEventSeq": 12,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "providerDone": {
+          "id": "01M5YEAJSQPPZES4R4H9P09E6M",
+          "ownerId": "local",
+          "loopId": "01M5YEAJDF9MY7ZFBNAW2XC8M2",
+          "versionId": "01M5YEAJDF9MY7ZFBNAW2XC8M3",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api fake Codex",
+            "label": "nested-api fake Codex v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAJSQPPZES4R4H9P09E6N",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:04.215Z",
+          "startedAt": "2026-10-27T10:26:04.627Z",
+          "finishedAt": "2026-10-27T10:26:16.875Z",
+          "finalizedAt": "2026-10-27T10:26:16.879Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "queuedDone": {
+          "id": "01M5YEAK80SHDCMTTB9696PPGV",
+          "ownerId": "local",
+          "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+          "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api independent queue",
+            "label": "nested-api independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAK80SHDCMTTB9696PPGW",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:04.672Z",
+          "startedAt": "2026-10-27T10:26:19.387Z",
+          "finishedAt": "2026-10-27T10:26:19.771Z",
+          "finalizedAt": "2026-10-27T10:26:19.777Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "parkAfter": {
+          "id": "01M5YEAHYY8DTYBGMPKVA9BQBT",
+          "ownerId": "local",
+          "loopId": "01M5YEAHY1HPDMY59DZVYP8NH4",
+          "versionId": "01M5YEAHY1HPDMY59DZVYP8NH5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-api durable park",
+            "label": "nested-api durable park v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEAHYY8DTYBGMPKVA9BQBV",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YEAHYY8DTYBGMPKVA9BQBT:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T10:26:03.358Z",
+          "startedAt": "2026-10-27T10:26:03.381Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "queueEvents": [
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 1,
+            "ts": "2026-10-27T10:26:04.672Z",
+            "type": "run.queued",
+            "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "nested-api independent queue",
+              "label": "nested-api independent queue v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YEAK80SHDCMTTB9696PPGV",
+                "loopId": "01M5YEAK7DEHAFTZ6D5H5VQ217",
+                "versionId": "01M5YEAK7DEHAFTZ6D5H5VQ218",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YEAK80SHDCMTTB9696PPGW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T10:26:04.672Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 2,
+            "ts": "2026-10-27T10:26:19.391Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 3,
+            "ts": "2026-10-27T10:26:19.407Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 4,
+            "ts": "2026-10-27T10:26:19.415Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T10:26:19.412Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T10:26:19.412Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 5,
+            "ts": "2026-10-27T10:26:19.428Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 6,
+            "ts": "2026-10-27T10:26:19.766Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 7,
+            "ts": "2026-10-27T10:26:19.766Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YEAK80SHDCMTTB9696PPGV",
+            "seq": 8,
+            "ts": "2026-10-27T10:26:19.766Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "notice": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nGateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\n\nnested-api child — 01M5YEAJ74KPNYCZJWF1ZKEFAR\nnested-api fake Codex — 01M5YEAJSQPPZES4R4H9P09E6M\nKeep waiting\nForce stop\nRun\n01M5YEAJ5Q2DEZ3PDJSVCW37WN\nwaiting\nat Await child (sub)\nloop\nchild runs\nPause\nResume\nCancel run\nReplay...\n\nResume unavailable: The server is shutting down. Try recovery after it restarts.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nnested-api parent v1 · version ID 01M5YEAJ559BD4SDBN3YYMM637\n\nExact run record\nPinned definition JSON\nWaiting for child at Await child (sub).\nTimeline (7 events, live)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 4 ms\n#5\nnode.started\nAwait child (sub) (subloop) attempt 1\n#6\nchild_run.started\nAwait child (sub)\n#7\nrun.waiting\nAwait child (sub) waits for child\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+      },
+      {
+        "mode": "console",
+        "signal": {
+          "delivered": true,
+          "output": ""
+        },
+        "choice": {
+          "phase": "awaiting-choice",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:25.231Z",
+          "choiceAt": "2026-10-27T10:26:26.231Z",
+          "activeRunIds": ["01M5YEB5DR9X0FQMTE8X0GCR92", "01M5YEB5VHJQ33ZD87KR6E4XTM"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "e915095c-afdc-4315-aaf8-6f5115940acb:2:awaiting-choice"
+        },
+        "waitingChoice": {
+          "phase": "draining",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:25.231Z",
+          "choiceAt": "2026-10-27T10:26:26.231Z",
+          "activeRunIds": ["01M5YEB5DR9X0FQMTE8X0GCR92", "01M5YEB5VHJQ33ZD87KR6E4XTM"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "e915095c-afdc-4315-aaf8-6f5115940acb:3:draining"
+        },
+        "afterWait": {
+          "phase": "draining",
+          "graceMs": 1000,
+          "startedAt": "2026-10-27T10:26:25.231Z",
+          "choiceAt": "2026-10-27T10:26:26.231Z",
+          "activeRunIds": ["01M5YEB5DR9X0FQMTE8X0GCR92"],
+          "unconfirmedRunIds": [],
+          "choices": ["wait", "force"],
+          "controlToken": "e915095c-afdc-4315-aaf8-6f5115940acb:3:draining"
+        },
+        "queuedBefore": {
+          "id": "01M5YEB64DBT59T457TVNY2GMS",
+          "ownerId": "local",
+          "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+          "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console independent queue",
+            "label": "nested-console independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB64DBT59T457TVNY2GMT",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-27T10:26:24.013Z",
+          "lastEventSeq": 1,
+          "recovery": {
+            "observedSeq": 1,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "ended": {
+          "code": 0,
+          "signal": null
+        },
+        "parentDone": {
+          "id": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "ownerId": "local",
+          "loopId": "01M5YEB5BV1T72P1S19YV6PGV7",
+          "versionId": "01M5YEB5BV1T72P1S19YV6PGV8",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console parent",
+            "label": "nested-console parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB5CD0VWS0Q2Q8RS0M85V",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:23.245Z",
+          "startedAt": "2026-10-27T10:26:23.255Z",
+          "finishedAt": "2026-10-27T10:26:38.252Z",
+          "finalizedAt": "2026-10-27T10:26:38.259Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Await child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Await child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "childDone": {
+          "id": "01M5YEB5DR9X0FQMTE8X0GCR92",
+          "ownerId": "local",
+          "loopId": "01M5YEB5B5RVH6J981YHR6DRXB",
+          "versionId": "01M5YEB5B5RVH6J981YHR6DRXC",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console child",
+            "label": "nested-console child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YEB5CD0VWS0Q2Q8RS0M85T",
+          "invocationId": "01M5YEB5DR9X0FQMTE8X0GCR93",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:23.288Z",
+          "startedAt": "2026-10-27T10:26:23.300Z",
+          "finishedAt": "2026-10-27T10:26:38.202Z",
+          "finalizedAt": "2026-10-27T10:26:38.215Z",
+          "lastEventSeq": 12,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "providerDone": {
+          "id": "01M5YEB5VHJQ33ZD87KR6E4XTM",
+          "ownerId": "local",
+          "loopId": "01M5YEB5M4H3Y0DEBK2AP0HKBC",
+          "versionId": "01M5YEB5M4H3Y0DEBK2AP0HKBD",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console fake Codex",
+            "label": "nested-console fake Codex v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB5VHJQ33ZD87KR6E4XTN",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:23.729Z",
+          "startedAt": "2026-10-27T10:26:23.967Z",
+          "finishedAt": "2026-10-27T10:26:36.176Z",
+          "finalizedAt": "2026-10-27T10:26:36.182Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "queuedDone": {
+          "id": "01M5YEB64DBT59T457TVNY2GMS",
+          "ownerId": "local",
+          "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+          "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console independent queue",
+            "label": "nested-console independent queue v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB64DBT59T457TVNY2GMT",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T10:26:24.013Z",
+          "startedAt": "2026-10-27T10:26:40.775Z",
+          "finishedAt": "2026-10-27T10:26:41.165Z",
+          "finalizedAt": "2026-10-27T10:26:41.171Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "parkAfter": {
+          "id": "01M5YEB55JT9K8AN193R4DJ12C",
+          "ownerId": "local",
+          "loopId": "01M5YEB54KKKAPBTSYBY7X7JBG",
+          "versionId": "01M5YEB54KKKAPBTSYBY7X7JBH",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "nested-console durable park",
+            "label": "nested-console durable park v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YEB55JT9K8AN193R4DJ12D",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YEB55JT9K8AN193R4DJ12C:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T10:26:23.026Z",
+          "startedAt": "2026-10-27T10:26:23.055Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "queueEvents": [
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 1,
+            "ts": "2026-10-27T10:26:24.013Z",
+            "type": "run.queued",
+            "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "nested-console independent queue",
+              "label": "nested-console independent queue v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YEB64DBT59T457TVNY2GMS",
+                "loopId": "01M5YEB63PDZ7TFXB1ZSEYS6YE",
+                "versionId": "01M5YEB63PDZ7TFXB1ZSEYS6YF",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YEB64DBT59T457TVNY2GMT",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T10:26:24.013Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 2,
+            "ts": "2026-10-27T10:26:40.780Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 3,
+            "ts": "2026-10-27T10:26:40.790Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 4,
+            "ts": "2026-10-27T10:26:40.800Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T10:26:40.797Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T10:26:40.797Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 5,
+            "ts": "2026-10-27T10:26:41.155Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 6,
+            "ts": "2026-10-27T10:26:41.161Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 7,
+            "ts": "2026-10-27T10:26:41.161Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5YEB64DBT59T457TVNY2GMS",
+            "seq": 8,
+            "ts": "2026-10-27T10:26:41.161Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "notice": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nGateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\n\nnested-console child — 01M5YEB5DR9X0FQMTE8X0GCR92\nnested-console fake Codex — 01M5YEB5VHJQ33ZD87KR6E4XTM\nKeep waiting\nForce stop\nRun\n01M5YEB5CD0VWS0Q2Q8RS0M85T\nwaiting\nat Await child (sub)\nloop\nchild runs\nPause\nResume\nCancel run\nReplay...\n\nResume unavailable: This run is still active. Pause it before continuing with Resume.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nnested-console parent v1 · version ID 01M5YEB5BV1T72P1S19YV6PGV8\n\nExact run record\nPinned definition JSON\nWaiting for child at Await child (sub).\nTimeline (7 events, live)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 1 ms\n#5\nnode.started\nAwait child (sub) (subloop) attempt 1\n#6\nchild_run.started\nAwait child (sub)\n#7\nrun.waiting\nAwait child (sub) waits for child\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+      }
+    ],
+    "edge": "156.0.4314.42",
+    "error": "Error: Timed out: async()=>{const s=await api.get('/runs/'+child.id);return s.status==='waiting' && s.waiting.waitId!==first.waiting.waitId ? s : false;} last=false\n    at Module.until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/lib.mjs:51:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-final-f1-integrated/docs/qa/2026-10-27-final-f1-integrated/nested-shutdown.mjs:84:16"
+  }
+}
