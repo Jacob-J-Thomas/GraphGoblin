@@ -1,0 +1,81 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/apps/api
+
+ ❯ src/provider-refusal.test.ts (3 tests | 2 failed) 1328ms
+   × records the refusal "Error: invalid value for reasoning.effort: 'minimal'." repeated on stderr as the refusal, with Resume refused and Replay allowed 294ms
+   × records the refusal "Thread not found in referenced input." repeated on stderr as the refusal, with Resume refused and Replay allowed 266ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/provider-refusal.test.ts > records the refusal "Error: invalid value for reasoning.effort: 'minimal'." repeated on stderr as the refusal, with Resume refused and Replay allowed
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -5,8 +5,8 @@
+    },
+    "inference": {
+      "sessionId": "refused-thread",
+      "submission": "delivery-uncertain",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "harness turn failed: Codex rejected the turn arguments",
+    "resumable": false,
+  }
+
+ ❯ src/provider-refusal.test.ts:108:25
+    106|       };
+    107|     }>();
+    108|     expect(run.failure).toMatchObject({
+       |                         ^
+    109|       code: 'HARNESS_TURN_FAILED',
+    110|       message: `harness turn failed: The provider refused the request …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/provider-refusal.test.ts > records the refusal "Thread not found in referenced input." repeated on stderr as the refusal, with Resume refused and Replay allowed
+AssertionError: expected { …(7) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_SESSION_MISSING",
+    "details": {
+-     "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
++     "adapterCode": "HARNESS_SESSION_MISSING",
+    },
+    "inference": {
+      "sessionId": "refused-thread",
+-     "submission": "delivery-uncertain",
++     "submission": "session-missing",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "message": "The codex session \"refused-thread\" from current-visit is missing. Choose Start fresh session for node \"infer\" to continue without its prior provider conversation.",
+    "resumable": false,
+  }
+
+ ❯ src/provider-refusal.test.ts:108:25
+    106|       };
+    107|     }>();
+    108|     expect(run.failure).toMatchObject({
+       |                         ^
+    109|       code: 'HARNESS_TURN_FAILED',
+    110|       message: `harness turn failed: The provider refused the request …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  14:30:34
+   Duration  7.27s (import 50%, transform 31%, tests 19%)
+
+  Transform  transforming modules took 2.16s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

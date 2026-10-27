@@ -1,24 +1,27 @@
-import { settings } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, settings } from '@graphgoblin/api-client';
 import {
   EffortSchema,
   HarnessIdSchema,
   JsonValueSchema,
+  type HarnessId,
   type ModelCatalogEntry,
 } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { useApi } from '../../api/context.js';
 import {
   keys,
   refreshModelDefaults,
   useModelCatalog,
   usePreflight,
+  useProcessModelDefaults,
   useSettings,
 } from '../../api/queries.js';
 import { harnessReadiness, readinessLine, type HarnessReadiness } from '../../api/readiness.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import { Card, FieldGroup, FieldRow, HelpText, Label, Select } from '../../components/ui/index.js';
-import { inheritedClaudeEfforts } from '../../forms/fields/model.js';
+import { inheritedClaudeEfforts, unsupportedEffortMessage } from '../../forms/fields/model.js';
 import { MutationError } from '../shared.js';
 
 interface HarnessDefaults {
@@ -85,6 +88,33 @@ function defaultsHelp({
   return undefined;
 }
 
+/** Efforts every listed model accepts: the only safe choices while the model is unknown. */
+function sharedEfforts(entries: readonly ModelCatalogEntry[]): readonly string[] {
+  return (
+    entries[0]?.efforts.filter((effort) =>
+      entries.every((entry) => entry.efforts.includes(effort)),
+    ) ?? []
+  );
+}
+
+/** `PUT /settings` refuses invalid defaults with each problem's harness and resolution. */
+const DefaultsRefusalSchema = z.array(
+  z.looseObject({ harness: z.string(), resolution: z.looseObject({ code: z.string() }) }),
+);
+
+/** The harness whose default effort the server refused as unsupported, if that was the refusal. */
+function refusedEffort(error: unknown, attempted: SaveDefaults | undefined): string | undefined {
+  if (!(error instanceof GraphGoblinApiError) || !attempted?.values.effort) return undefined;
+  const problems = DefaultsRefusalSchema.safeParse(error.errors);
+  return problems.success &&
+    problems.data.some(
+      (problem) =>
+        problem.harness === attempted.harness && problem.resolution.code === 'EFFORT_UNSUPPORTED',
+    )
+    ? attempted.harness
+    : undefined;
+}
+
 /** Owner defaults are independent for each harness; changing one preserves every other entry. */
 export function DefaultsSection() {
   const client = useApi();
@@ -92,6 +122,7 @@ export function DefaultsSection() {
   const settingsQuery = useSettings();
   const catalogQuery = useModelCatalog();
   const preflightQuery = usePreflight();
+  const processDefaults = useProcessModelDefaults();
   const save = useMutation({
     mutationFn: async ({ harness, values }: SaveDefaults) => {
       const saved =
@@ -119,6 +150,8 @@ export function DefaultsSection() {
       await refreshModelDefaults(queryClient);
     },
   });
+  // An unsupported effort is named on its own field, as the editor does, not only in the footer.
+  const refusedHarness = refusedEffort(save.error, save.variables);
   return (
     <Card title="Defaults">
       <QueryState query={settingsQuery} what="Settings">
@@ -132,7 +165,7 @@ export function DefaultsSection() {
           for (const entry of catalogQuery.data ?? []) known.add(entry.harness);
           for (const harness of Object.keys(valuesByHarness)) known.add(harness);
           const harnesses = [...known]
-            .filter((harness) => HarnessIdSchema.safeParse(harness).success)
+            .filter((harness): harness is HarnessId => HarnessIdSchema.safeParse(harness).success)
             .sort((left, right) =>
               left === 'codex' ? -1 : right === 'codex' ? 1 : left.localeCompare(right),
             );
@@ -175,11 +208,50 @@ export function DefaultsSection() {
                   harness === 'codex' ? 'Default model' : `Default model (${harness})`;
                 const effortLabel =
                   harness === 'codex' ? 'Default effort' : `Default effort (${harness})`;
+                // Without a model here the effort applies to the server default model. Offer its
+                // efforts when it resolves; otherwise only those every model of the harness lists.
+                const processModel = processDefaults.data?.byHarness[harness]?.model;
+                const inheritedEntry = selectedModel
+                  ? undefined
+                  : entries.find((entry) => entry.model === processModel);
+                const effortEntry = selectedEntry ?? inheritedEntry;
                 const effortOptions =
                   selectedEntry?.efforts ??
                   (harness === 'claude'
                     ? inheritedClaudeEfforts(availableEntries, listed)
-                    : EffortSchema.options);
+                    : !catalogKnown
+                      ? EffortSchema.options
+                      : (inheritedEntry?.efforts ?? sharedEfforts(entries)));
+                const keptUnsupported =
+                  selectedEffort !== '' &&
+                  !effortOptions.some((effort) => effort === selectedEffort);
+                // A kept effort the effective model does not offer is explained, as in the editor.
+                const effortProblem =
+                  keptUnsupported &&
+                  effortEntry &&
+                  !effortEntry.efforts.some((effort) => effort === selectedEffort)
+                    ? unsupportedEffortMessage(selectedEffort, effortEntry.displayName)
+                    : undefined;
+                const attempted = save.variables?.values;
+                const attemptedModel = attempted?.model || processModel;
+                const refusal =
+                  refusedHarness === harness && attempted?.effort
+                    ? unsupportedEffortMessage(
+                        attempted.effort,
+                        entries.find((entry) => entry.model === attemptedModel)?.displayName ??
+                          attemptedModel ??
+                          'the default model',
+                      )
+                    : undefined;
+                const effortProblemId = `default-effort-${harness}-problem`;
+                const effortRefusalId = `default-effort-${harness}-refusal`;
+                const effortDescription = [
+                  harness === 'claude' ? effortHelpId : undefined,
+                  effortProblem ? effortProblemId : undefined,
+                  refusal ? effortRefusalId : undefined,
+                ]
+                  .filter((id) => id !== undefined)
+                  .join(' ');
                 return (
                   <section key={harness} aria-label={`${harness} defaults`} className="grid gap-2">
                     <h3 className="text-sm font-semibold capitalize">{harness}</h3>
@@ -216,7 +288,7 @@ export function DefaultsSection() {
                           id={`default-effort-${harness}`}
                           value={selectedEffort}
                           disabled={save.isPending}
-                          aria-describedby={harness === 'claude' ? effortHelpId : undefined}
+                          aria-describedby={effortDescription || undefined}
                           onChange={(e) =>
                             save.mutate({
                               harness,
@@ -225,10 +297,9 @@ export function DefaultsSection() {
                           }
                         >
                           <option value="">(server default)</option>
-                          {selectedEffort &&
-                          !effortOptions.some((effort) => effort === selectedEffort) ? (
+                          {keptUnsupported ? (
                             <option value={selectedEffort} disabled>
-                              {selectedEffort} (unavailable)
+                              {`${selectedEffort} (${effortProblem ? 'not supported by this model' : 'unavailable'})`}
                             </option>
                           ) : null}
                           {effortOptions.map((value) => (
@@ -243,6 +314,18 @@ export function DefaultsSection() {
                         ) : null}
                       </FieldGroup>
                     </FieldRow>
+                    {/* Below the row, like the model's line, so both fields stay aligned. */}
+                    {effortProblem ? (
+                      <HelpText id={effortProblemId} tone="warn">
+                        <Icon name="alert" className="mr-1 inline size-3.5 align-text-bottom" />
+                        {effortProblem}
+                      </HelpText>
+                    ) : null}
+                    {refusal ? (
+                      <HelpText id={effortRefusalId} tone="bad" role="alert">
+                        Not saved. {refusal}
+                      </HelpText>
+                    ) : null}
                     {help ? (
                       <HelpText id={helpId} tone={help.tone}>
                         {help.tone === 'warn' ? (
@@ -258,7 +341,7 @@ export function DefaultsSection() {
           );
         }}
       </QueryState>
-      <MutationError error={save.error} />
+      <MutationError error={refusedHarness ? null : save.error} />
     </Card>
   );
 }

@@ -2418,10 +2418,21 @@ export class RunManager {
           const restorable = issues.every(
             (issue) => issue.resolution.code === 'MODEL_NOT_IN_CATALOG',
           );
+          // The same details shape as a node's own selection ({code, path}), naming where the
+          // default lives as well, so every source reads the same way (#205).
+          const { level, harness: defaultHarness, resolution } = issues[0]!;
           throw new RunFailureError(
             restorable ? 'EVALUATION_UNAVAILABLE' : 'EVALUATION_INVALID_CONFIGURATION',
-            issues[0]!.resolution.message,
-            { resumable: restorable, details: issues },
+            resolution.message,
+            {
+              resumable: restorable,
+              details: {
+                code: resolution.code,
+                path: resolution.path,
+                level,
+                harness: defaultHarness,
+              },
+            },
           );
         }
         const resolution = resolveHarnessModel({

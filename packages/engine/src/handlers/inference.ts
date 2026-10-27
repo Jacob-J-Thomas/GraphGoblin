@@ -42,6 +42,7 @@ import {
   harnessFailureEvidence,
   harnessFailureRank,
   harnessFailureSubmission,
+  isPinnedRefusal,
   mergeHarnessFailure,
   type HarnessFailureEvidence,
 } from './inference-failure.js';
@@ -732,9 +733,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       if (failure instanceof RunFailureError) {
         const uncertain = pending.submission === 'delivery-uncertain';
         const missing = pending.submission === 'session-missing';
+        // Only a generic turn failure becomes delivery uncertainty. A pinned argument,
+        // configuration or policy refusal is a specific cause and keeps its own non-resumable
+        // code after acceptance too, for example a request the provider refused (#243, #244).
         const code = missing
           ? 'HARNESS_SESSION_MISSING'
-          : uncertain && failure.code === 'HARNESS_TURN_FAILED'
+          : uncertain &&
+              failure.code === 'HARNESS_TURN_FAILED' &&
+              !isPinnedRefusal(failures.evidence)
             ? 'HARNESS_DELIVERY_UNCERTAIN'
             : failure.code;
         const details = failure.options.details;

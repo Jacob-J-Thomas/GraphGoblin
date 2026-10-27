@@ -41,6 +41,15 @@ else {
     });
     if (scenario === 'assistant')
       print({ type: 'assistant', message: { content: [{ type: 'text', text: 'working' }] } });
+    // A provider failure reported in the stream, then a non-zero exit with only a banner on stderr.
+    if (scenario === 'provider-failure') {
+      print({
+        type: 'assistant',
+        error: 'rate_limit',
+        message: { content: [{ type: 'text', text: 'API Error: 429 PRIVATE_PROVIDER_BODY' }] },
+      });
+      process.stderr.write('PRIVATE_STDERR_BANNER\n');
+    }
   }
   process.exitCode = 1;
 }

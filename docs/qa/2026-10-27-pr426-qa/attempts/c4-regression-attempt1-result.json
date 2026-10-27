@@ -1,0 +1,108 @@
+{
+  "scenario": "c4-regression",
+  "passed": 1,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "main: gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "c4-regression completed without exception",
+      "ok": false,
+      "detail": "TypeError: fetch failed\n    at node:internal/deps/undici/undici:15456:13\n    at async Object.call (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a56b702ab66fef837/docs/qa/2026-10-27-pr426-qa/scripts/lib.mjs:219:22)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a56b702ab66fef837/docs/qa/2026-10-27-pr426-qa/scripts/c4-regression.mjs:29:45"
+    }
+  ],
+  "results": {
+    "main": {
+      "codex-429": {
+        "status": "failed",
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "QA fake: Rate limit reached for gpt-6-luna. Please try again in 20s.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": [
+          "submitted:codex.turn.started",
+          "delivery-uncertain",
+          "delivery-uncertain"
+        ],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-500": {
+        "status": "failed",
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "QA fake: The server had an error while processing your request.",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": [
+          "submitted:codex.turn.started",
+          "delivery-uncertain",
+          "delivery-uncertain"
+        ],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "codex-400-refused": {
+        "status": "failed",
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Codex Exec exited with code 1: Reading prompt from stdin...\r\n",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": [
+          "submitted:codex.turn.started",
+          "delivery-uncertain",
+          "delivery-uncertain"
+        ],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": true,
+        "privateBodyInRecord": false
+      },
+      "claude-rate-limit": {
+        "status": "failed",
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Claude account rate limit reached",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": [
+          "delivery-uncertain",
+          "delivery-uncertain"
+        ],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      },
+      "claude-server-error": {
+        "status": "failed",
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "Claude connection or provider service failed; check connectivity and retry",
+        "resumable": true,
+        "submission": "delivery-uncertain",
+        "resumeAllowed": true,
+        "markers": [
+          "delivery-uncertain",
+          "delivery-uncertain"
+        ],
+        "turns": 1,
+        "cliRequests": 1,
+        "bannerInRecord": false,
+        "privateBodyInRecord": false
+      }
+    },
+    "pr": {}
+  }
+}

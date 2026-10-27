@@ -165,11 +165,21 @@ export interface ClassifiedError extends HarnessFailureEvidence {
  * `{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"..."}}`.
  * Unwrap it so the code and message are useful.
  */
-function unwrap(raw: string): { status?: number; type?: string; message: string } {
+interface Unwrapped {
+  status?: number;
+  type?: string;
+  param?: string;
+  refused?: true;
+  /** The text was a JSON provider error: an object with an `error` object or a numeric `status`. */
+  structured?: true;
+  message: string;
+}
+
+function unwrap(raw: string): Unwrapped {
   try {
     const parsed = JSON.parse(raw) as {
       status?: unknown;
-      error?: { type?: unknown; message?: unknown; code?: unknown };
+      error?: { type?: unknown; message?: unknown; code?: unknown; param?: unknown };
       message?: unknown;
     };
     if (parsed && typeof parsed === 'object') {
@@ -187,6 +197,15 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
           : typeof inner.code === 'string'
             ? { type: inner.code }
             : {}),
+        ...(typeof inner.param === 'string' && inner.param ? { param: inner.param } : {}),
+        // The provider's explicit refusal of the request itself: HTTP 400 `invalid_request_error`.
+        ...(parsed.status === 400 && inner.type === 'invalid_request_error'
+          ? { refused: true as const }
+          : {}),
+        ...((typeof parsed.error === 'object' && parsed.error !== null) ||
+        typeof parsed.status === 'number'
+          ? { structured: true as const }
+          : {}),
         message,
       };
     }
@@ -194,6 +213,70 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
     // not JSON
   }
   return { message: raw };
+}
+
+/**
+ * The error `@openai/codex-sdk` 0.160.0 throws when the CLI exits non-zero or on a signal, after
+ * the event stream has ended (`CodexExec.run`): a plain `Error`, without typed metadata, whose
+ * message is `Codex Exec exited with code <n>: <stderr>` or `… with signal <name>: <stderr>`.
+ */
+const PROCESS_EXIT_MESSAGE = /^Codex Exec exited with (?:code -?\d+|signal [A-Z0-9]+): /;
+
+function isProcessExitWrapper(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    Object.getPrototypeOf(error) === Error.prototype &&
+    !('code' in error) &&
+    PROCESS_EXIT_MESSAGE.test(error.message)
+  );
+}
+
+/** The CLI's stderr that the SDK's process-exit error carries after its fixed prefix. */
+function exitWrapperPayload(error: Error): string {
+  return error.message.replace(PROCESS_EXIT_MESSAGE, '');
+}
+
+/**
+ * A structured provider error the CLI repeated on stderr, which the SDK's exit error carries after
+ * its prefix (PR #426 audit scan 2). The whole payload is tried first, then each line from the last,
+ * so a startup banner before the JSON does not hide it. Classifying from this structure, not from
+ * the prefixed text, keeps a provider refusal from reaching the message heuristics.
+ */
+function wrappedProviderError(error: unknown): Unwrapped | undefined {
+  if (!isProcessExitWrapper(error)) return undefined;
+  const payload = exitWrapperPayload(error);
+  for (const candidate of [payload, ...payload.split(/\r?\n/).reverse()]) {
+    const text = candidate.trim();
+    if (!text) continue;
+    const unwrapped = unwrap(text);
+    if (unwrapped.structured) return unwrapped;
+  }
+  return undefined;
+}
+
+/** A structured provider error on one stderr line, whole or after a prefix such as `ERROR: `. */
+function lineProviderError(line: string): string | undefined {
+  if (unwrap(line).structured) return line;
+  const start = line.indexOf('{');
+  const end = line.lastIndexOf('}');
+  const inner = start > 0 && end > start ? line.slice(start, end + 1) : '';
+  return inner && unwrap(inner).structured ? inner : undefined;
+}
+
+/**
+ * Each piece of evidence in the stderr the SDK's exit error carries, classified on its own (PR #426
+ * audit scan 3): a stderr that is one structured provider error as a whole, or else every line,
+ * read from the structured provider error it holds when it holds one and as text otherwise. A
+ * repeat of the stream's failure and a distinct cause beside it can then be told apart.
+ */
+function stderrEvidence(error: Error): ClassifiedError[] {
+  const payload = exitWrapperPayload(error).trim();
+  if (payload && unwrap(payload).structured) return [classifyCodexError(payload)];
+  return payload
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .map((line) => classifyCodexError(lineProviderError(line) ?? line));
 }
 
 /** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
@@ -222,7 +305,18 @@ function classifyNativeError(error: unknown): ClassifiedError {
     };
   }
   const raw = describeError(error);
-  const { status, type, message } = unwrap(raw);
+  const { status, type, param, refused, message } = wrappedProviderError(error) ?? unwrap(raw);
+  // The provider refused the turn's request as invalid, for example an effort the model does not
+  // accept (final integrated check F2, LP-5). Model, effort, options, schema and prompt all come
+  // from the run's pinned definition, so the same request is refused again: a pinned argument
+  // refusal, never resumable (#243, #244). The structured status and type decide this before any
+  // message heuristic below, whatever the provider's text says, and its message is kept.
+  if (refused)
+    return {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400${param ? `, ${param}` : ''}): ${message}`,
+      retriable: false,
+    };
   const text = `${type ?? ''} ${message}`.toLowerCase();
   if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
     return {
@@ -291,6 +385,16 @@ export interface TurnOutcome {
  * - An `error` item (for example a configuration deprecation warning) is a normal item, not a
  *   failure. `turn.failed` is the failure signal. Top-level errors, `turn.failed` and thrown failures share the evidence precedence;
  *   successful turns tolerate nonfatal top-level diagnostics.
+ * - The SDK's process-exit error (`Codex Exec exited with code 1: <stderr>`) only wraps a failure
+ *   the stream already reported, and the CLI's stderr is usually just its startup banner. Once the
+ *   stream has reported an error or `turn.failed` for an unfinished turn, that exact wrapper never
+ *   replaces the stream's evidence while it classifies as generic (lowest rank). Every other
+ *   thrown error, such as a protocol parse failure, joins the fold as usual. The wrapper's stderr
+ *   is compared piece by piece (each line, read from the provider error it holds when it holds
+ *   one): a piece that exactly repeats evidence the stream reported (code, message, retry and
+ *   submission) adds nothing, while every other typed piece joins the fold in order, so a
+ *   distinct cause beside a repeat still counts (PR #426 audit scans 2 and 3). This holds while
+ *   the stream's evidence is fatal, even after `turn.completed`.
  */
 export class TurnAccumulator {
   private submitted = false;
@@ -300,6 +404,10 @@ export class TurnAccumulator {
   private failure: ClassifiedError | undefined;
   private fatal = false;
   private completed = false;
+  /** What the stream itself reported as failing: each classification and structured text. */
+  private readonly streamReports: ClassifiedError[] = [];
+  /** The stream reported `turn.failed` or a terminal/pinned error, so the turn failed. */
+  private streamFatal = false;
   sessionId: string | undefined;
 
   constructor(private readonly mode: 'fresh' | 'resumed') {}
@@ -325,20 +433,66 @@ export class TurnAccumulator {
         this.usage = mapUsage(ev.usage);
         return [{ type: 'usage', usage: this.usage }, { type: 'turn-complete' }];
       case 'turn.failed':
-        this.fail(ev.error);
+        this.add(this.report(ev.error, true), false);
         return [];
       case 'error':
         // Native top-level errors and turn.failed use the same evidence fold. A completed
         // turn may tolerate diagnostics, but terminal/pinned refusals are not diagnostics.
-        this.add(classifyCodexError(ev), true);
+        this.add(this.report(ev, false), true);
         return [];
       default:
         return [];
     }
   }
 
+  /** Classify a failure the stream reported and remember it, to recognise a later repeat. */
+  private report(error: unknown, failed: boolean): ClassifiedError {
+    const classified = classifyCodexError(error);
+    this.streamReports.push(classified);
+    this.streamFatal ||= failed || harnessFailureRank(classified) >= 4;
+    return classified;
+  }
+
+  /** Exactly the evidence the stream already reported: code, message, retry and submission. */
+  private repeatsStream(piece: ClassifiedError): boolean {
+    return this.streamReports.some(
+      (reported) =>
+        reported.code === piece.code &&
+        reported.message === piece.message &&
+        reported.retriable === piece.retriable &&
+        reported.submission === piece.submission,
+    );
+  }
+
+  /**
+   * Whether the stream itself reported this turn's failure: fatal evidence such as `turn.failed`
+   * or a pinned refusal, whatever the completion flag says, or any reported error of an unfinished
+   * turn.
+   */
+  private streamFailed(): boolean {
+    return this.streamFatal || (!this.completed && this.streamReports.length > 0);
+  }
+
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
   fail(error: unknown): void {
+    if (!isProcessExitWrapper(error)) {
+      // Any other thrown error, such as a protocol parse failure, is evidence of its own.
+      this.add(classifyCodexError(error), false);
+      return;
+    }
+    // The SDK's exit error carries the CLI's stderr. Each typed cause there that the stream did
+    // not already report joins the fold in order, so ranking and the later-observation rule
+    // apply to it; an exact repeat of the stream's evidence adds nothing (#243).
+    const fresh = stderrEvidence(error).filter(
+      (piece) => harnessFailureRank(piece) > 1 && !this.repeatsStream(piece),
+    );
+    for (const piece of fresh) this.add(piece, false);
+    if (fresh.length) return;
+    if (this.streamFailed()) {
+      // A generic wrapper of the failure the stream reported: the process failed, nothing more.
+      this.fatal = true;
+      return;
+    }
     this.add(classifyCodexError(error), false);
   }
 

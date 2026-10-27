@@ -30,6 +30,11 @@ const ORDINARY = new Set([
   'RATE_LIMIT_EXCEEDED',
 ]);
 
+/** A pinned argument, configuration or policy refusal: the pinned definition cannot run as sent. */
+export function isPinnedRefusal(evidence: HarnessFailureEvidence | undefined): boolean {
+  return evidence !== undefined && PINNED.has(evidence.code.toUpperCase());
+}
+
 /** Recognized adapter metadata is preserved before message-based classification. */
 export function isHarnessFailureCode(code: string): boolean {
   const value = code.toUpperCase();

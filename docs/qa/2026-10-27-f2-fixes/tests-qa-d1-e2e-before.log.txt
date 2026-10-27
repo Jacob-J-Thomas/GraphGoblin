@@ -1,0 +1,47 @@
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\model-effort.spec.ts:547:1 › Settings Codex default effort follows the server default model and names an unsupported effort (10.5s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:547:1 › Settings Codex default effort follows the server default model and names an unsupported effort 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+    @@ -1,7 +1,8 @@
+      Array [
+        "",
+    +   "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+
+    Call Log:
+    - Timeout 10000ms exceeded while waiting on the predicate
+
+      568 |   // Default model "(server default)" is the process default, GPT-6 Luna (PR #426 QA D-1).
+      569 |   await expect(page.getByLabel('Default model', { exact: true })).toHaveValue('');
+    > 570 |   await expect.poll(offered).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+          |                              ^
+      571 |
+      572 |   // A catalog this page read before the server stopped offering minimal: the refusal names the
+      573 |   // effort and model on the field, not only a generic footer.
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a028ffe9642f999a3\apps\web\e2e\model-effort.spec.ts:570:30
+
+    Error Context: test-results\model-effort-Settings-Code-1eb70-names-an-unsupported-effort-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-Settings-Code-1eb70-names-an-unsupported-effort-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-Settings-Code-1eb70-names-an-unsupported-effort-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\model-effort.spec.ts:547:1 › Settings Codex default effort follows the server default model and names an unsupported effort 

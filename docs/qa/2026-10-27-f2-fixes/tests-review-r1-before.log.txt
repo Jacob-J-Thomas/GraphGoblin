@@ -1,0 +1,439 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/adapter-codex
+
+ ❯ src/events.test.ts (48 tests | 14 failed) 52ms
+   ❯ classifyCodexError (34)
+     × keeps a 400 invalid-request refusal saying "Error: unexpected argument in reasoning.effort" a refusal with its text 14ms
+     × keeps a 400 invalid-request refusal saying "Error: unknown option reasoning.effort" a refusal with its text 2ms
+     × keeps a 400 invalid-request refusal saying "Error: invalid value for reasoning.effort: 'minimal'." a refusal with its text 2ms
+     × keeps a 400 invalid-request refusal saying "No rollout found for this request." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Session not found in referenced input." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Session does not exist for this request." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Thread not found in referenced input." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Thread does not exist for this request." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Failed to load session settings for this model." a refusal with its text 1ms
+     × keeps a 400 invalid-request refusal saying "Failed to find rollout settings for this model." a refusal with its text 1ms
+   ❯ TurnAccumulator (11)
+     × records an SDK parse failure thrown after a stream failure as evidence of its own 1ms
+     × records an exit-shaped message that is not an Error thrown after a stream failure as evidence of its own 0ms
+     × records an Error subclass thrown after a stream failure as evidence of its own 0ms
+     × records an error with its own code thrown after a stream failure as evidence of its own 0ms
+ ❯ src/refusal.test.ts (6 tests | 3 failed) 718ms
+   ❯ a failure the Codex event stream reports before the CLI exits non-zero (#243) (6)
+     × records the SDK parse failure that follows an earlier stream diagnostic 104ms
+     × keeps a invalid-value provider refusal as a refusal with its own text 116ms
+     × keeps a missing-thread provider refusal as a refusal with its own text 97ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Error: unexpected argument in reasoning.effort" a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: unexpected argument in reasoning.effort",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Error: unknown option reasoning.effort" a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: unknown option reasoning.effort",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Error: invalid value for reasoning.effort: 'minimal'." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "No rollout found for this request." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): No rollout found for this request.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Session not found in referenced input." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Session not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Session does not exist for this request." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Session does not exist for this request.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Thread not found in referenced input." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Thread does not exist for this request." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread does not exist for this request.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Failed to load session settings for this model." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Failed to load session settings for this model.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > keeps a 400 invalid-request refusal saying "Failed to find rollout settings for this model." a refusal with its text
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Failed to find rollout settings for this model.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:255:41
+    253|       status: 400,
+    254|     });
+    255|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    256|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    257|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > records an SDK parse failure thrown after a stream failure as evidence of its own
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM",
++   "message": "An earlier generic diagnostic",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:423:34
+    421|     acc.push({ type: 'error', message: 'An earlier generic diagnostic'…
+    422|     acc.fail(error);
+    423|     expect(acc.finish().failure).toEqual(classifyCodexError(error));
+       |                                  ^
+    424|   });
+    425|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > records an exit-shaped message that is not an Error thrown after a stream failure as evidence of its own
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex Exec exited with code 1: text",
++   "message": "An earlier generic diagnostic",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:423:34
+    421|     acc.push({ type: 'error', message: 'An earlier generic diagnostic'…
+    422|     acc.fail(error);
+    423|     expect(acc.finish().failure).toEqual(classifyCodexError(error));
+       |                                  ^
+    424|   });
+    425|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > records an Error subclass thrown after a stream failure as evidence of its own
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex Exec exited with code 1: from elsewhere",
++   "message": "An earlier generic diagnostic",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:423:34
+    421|     acc.push({ type: 'error', message: 'An earlier generic diagnostic'…
+    422|     acc.fail(error);
+    423|     expect(acc.finish().failure).toEqual(classifyCodexError(error));
+       |                                  ^
+    424|   });
+    425|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > records an error with its own code thrown after a stream failure as evidence of its own
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex Exec exited with code 1: pipe",
++   "message": "An earlier generic diagnostic",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:423:34
+    421|     acc.push({ type: 'error', message: 'An earlier generic diagnostic'…
+    422|     acc.fail(error);
+    423|     expect(acc.finish().failure).toEqual(classifyCodexError(error));
+       |                                  ^
+    424|   });
+    425|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > records the SDK parse failure that follows an earlier stream diagnostic
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM",
++   "message": "An earlier generic diagnostic",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:119:27
+    117|       message: 'Failed to parse item: MALFORMED_PROTOCOL_ITEM',
+    118|     };
+    119|     expect(events.at(-1)).toMatchObject({ type: 'error', ...failure });
+       |                           ^
+    120|     await expect(session.result).rejects.toMatchObject(failure);
+    121|   }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps a invalid-value provider refusal as a refusal with its own text
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:148:29
+    146|         message: `The provider refused the request (HTTP 400, reasonin…
+    147|       };
+    148|       expect(events.at(-1)).toEqual({
+       |                             ^
+    149|         type: 'error',
+    150|         ...refusal,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps a missing-thread provider refusal as a refusal with its own text
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+-   "submission": "delivery-uncertain",
++   "submission": "session-missing",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:148:29
+    146|         message: `The provider refused the request (HTTP 400, reasonin…
+    147|       };
+    148|       expect(events.at(-1)).toEqual({
+       |                             ^
+    149|         type: 'error',
+    150|         ...refusal,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  17 failed | 37 passed (54)
+   Start at  12:44:01
+   Duration  3.51s (import 50%, transform 35%, tests 14%)
+

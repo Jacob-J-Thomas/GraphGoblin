@@ -83,13 +83,14 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   await expect
     .poll(async () => (await savedConfig(request, id))?.['harnessOptions'])
     .not.toHaveProperty('networkAccess');
-  // A select (more than four options) by keyboard: "Not set", then the first effort.
+  // A select (more than four options) by keyboard: "Not set", then the first effort. Every Codex
+  // catalog model starts at low (#205).
   const effort = dialog.getByLabel('Effort', { exact: true });
   await expect(effort).toHaveValue('');
   await effort.focus();
   await page.keyboard.press('ArrowDown');
-  await expect(effort).toHaveValue('minimal');
-  await expect.poll(async () => (await savedConfig(request, id))?.['effort']).toBe('minimal');
+  await expect(effort).toHaveValue('low');
+  await expect.poll(async () => (await savedConfig(request, id))?.['effort']).toBe('low');
 
   const decisionId = await createLoop(request, 'decision', {
     kind: 'classifier',

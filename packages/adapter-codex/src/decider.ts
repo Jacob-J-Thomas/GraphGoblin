@@ -19,6 +19,8 @@ function completionFailure(error: unknown): unknown {
     HARNESS_NOT_INSTALLED: 'DECIDER_UNAVAILABLE',
     HARNESS_NOT_AUTHENTICATED: 'DECIDER_NOT_AUTHENTICATED',
     HARNESS_QUOTA_EXHAUSTED: 'DECIDER_RATE_LIMITED',
+    // The provider refused the route request itself (HTTP 400): a failed, non-resumable request.
+    HARNESS_ARGUMENTS_REJECTED: 'DECIDER_HTTP_ERROR',
   };
   const selected =
     typeof code === 'string' && Object.hasOwn(mapping, code)

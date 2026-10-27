@@ -153,9 +153,15 @@ export class SqliteApiKeys {
 
 export type { ModelCatalogEntry } from '@graphgoblin/contracts';
 
-const CODEX_EFFORTS: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
-/** Codex sends efforts unchanged; CLI 0.160.0's own model catalog tops GPT-5.5 out at `xhigh`. */
-const CODEX_EFFORTS_TO_XHIGH: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh'];
+/**
+ * Codex sends the effort unchanged, so each seeded model offers exactly the canonical efforts that
+ * the model catalog compiled into the pinned Codex CLI (0.160.0) lists for it: `low` to `max`, and
+ * `low` to `xhigh` for GPT-5.5. That catalog lists `minimal` for no model, and the provider refuses
+ * `minimal` for GPT-6 Luna (docs/qa/2026-10-27-f2-fixes). Its levels outside the canonical scale
+ * (`ultra`) are not offered.
+ */
+const CODEX_EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+const CODEX_EFFORTS_TO_XHIGH: Effort[] = ['low', 'medium', 'high', 'xhigh'];
 
 /** Harness-owned metadata; Settings may only change enabled. */
 export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [

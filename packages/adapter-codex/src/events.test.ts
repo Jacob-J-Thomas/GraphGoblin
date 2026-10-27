@@ -173,15 +173,96 @@ describe('classifyCodexError', () => {
       retriable: false,
     });
   });
-  it('unwraps the JSON API error Codex reports', () => {
+  it('unwraps the JSON API error Codex reports and names the provider refusal', () => {
     const raw = loadFixture('failed-invalid-model').events.find((e) => e.type === 'turn.failed');
     const message = (raw as { error: { message: string } }).error.message;
     expect(classifyCodexError(message)).toEqual({
-      code: 'HARNESS_TURN_FAILED',
+      code: 'HARNESS_ARGUMENTS_REJECTED',
       message:
-        "The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
+        "The provider refused the request (HTTP 400): The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
       retriable: false,
     });
+  });
+
+  it('classifies the provider refusal of a request parameter as a pinned argument refusal (#243)', () => {
+    // The shape the real CLI reported for effort minimal on gpt-6-luna (F2 LP-5).
+    const refusal = JSON.stringify({
+      type: 'error',
+      error: {
+        message: "Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
+        type: 'invalid_request_error',
+        param: 'reasoning.effort',
+        code: 'unsupported_value',
+      },
+      status: 400,
+    });
+    expect(classifyCodexError(refusal)).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message:
+        "The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
+      retriable: false,
+    });
+    // Only an explicit invalid-request refusal is a refusal of the request; other errors keep
+    // their existing classes.
+    expect(
+      classifyCodexError(
+        JSON.stringify({ status: 404, error: { type: 'invalid_request_error', message: 'gone' } }),
+      ),
+    ).toEqual({ code: 'HARNESS_TURN_FAILED', message: 'gone', retriable: false });
+    expect(
+      classifyCodexError(JSON.stringify({ status: 400, error: { message: 'bad gateway text' } })),
+    ).toEqual({ code: 'HARNESS_TURN_FAILED', message: 'bad gateway text', retriable: false });
+  });
+
+  // PR #426 review B2: the parsed status and type decide before any CLI-message heuristic.
+  it.each([
+    'Error: unexpected argument in reasoning.effort',
+    'Error: unknown option reasoning.effort',
+    "Error: invalid value for reasoning.effort: 'minimal'.",
+    'No rollout found for this request.',
+    'Session not found in referenced input.',
+    'Session does not exist for this request.',
+    'Thread not found in referenced input.',
+    'Thread does not exist for this request.',
+    'Failed to load session settings for this model.',
+    'Failed to find rollout settings for this model.',
+    'This would exceed the usage limit for the model.',
+    'The quota for this parameter is fixed.',
+    'The rate limit parameter is not supported.',
+    'Too many requests in one batch.',
+    'insufficient_quota is not a valid value.',
+    'Not logged in users cannot set this value.',
+    'Unauthorized value for reasoning.effort.',
+    'Authentication parameters are not accepted here.',
+    'login is not a valid value.',
+    'Invalid API key format in metadata.',
+    'Token has expired is not a valid value.',
+    'ENOENT is not a valid value.',
+    'not recognized as an internal value.',
+    'unable to locate codex tool definition.',
+    'stream disconnected is not a valid value.',
+    'timed out is not a valid value.',
+    'ECONNRESET is not a valid value.',
+    'network is not a valid value.',
+    'overloaded is not a valid value.',
+    'temporarily unavailable is not a valid value.',
+  ])('keeps a 400 invalid-request refusal saying %j a refusal with its text', (text) => {
+    const refusal = JSON.stringify({
+      type: 'error',
+      error: { message: text, type: 'invalid_request_error', param: 'reasoning.effort' },
+      status: 400,
+    });
+    expect(classifyCodexError(refusal)).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      retriable: false,
+    });
+    // Typed metadata keeps its earlier boundary.
+    expect(
+      classifyCodexError(
+        Object.assign(new Error(refusal), { code: 'HARNESS_SESSION_MISSING', retriable: false }),
+      ),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
   });
 
   it('classifies quota, rate limits, auth, missing binaries, and transient failures', () => {
@@ -274,8 +355,167 @@ describe('TurnAccumulator', () => {
     expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted']);
     const outcome = acc.finish();
     expect(outcome.completed).toBe(false);
-    expect(outcome.failure?.code).toBe('HARNESS_TURN_FAILED');
+    expect(outcome.failure?.code).toBe('HARNESS_ARGUMENTS_REJECTED');
     expect(outcome.failure?.message).toContain('not supported');
+  });
+
+  it('never lets the generic process-exit error replace a failure the stream reported (#243)', () => {
+    const exit = new Error('Codex Exec exited with code 1: Reading prompt from stdin...\n');
+    const failed = new TurnAccumulator('fresh');
+    failed.push({ type: 'turn.started' });
+    failed.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    failed.fail(exit);
+    expect(failed.finish().failure).toEqual({
+      code: 'HARNESS_TURN_FAILED',
+      message: 'something odd',
+      retriable: false,
+    });
+    // A top-level error is the stream's own report of an unfinished turn, too.
+    const errored = new TurnAccumulator('fresh');
+    errored.push({ type: 'error', message: 'stream ended unexpectedly' });
+    errored.fail(exit);
+    expect(errored.finish().failure?.message).toBe('stream ended unexpectedly');
+    // Higher-ranked evidence from outside the stream still wins.
+    const outranked = new TurnAccumulator('fresh');
+    outranked.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    outranked.fail(new Error('Codex Exec exited with code 1: Error: Not logged in'));
+    expect(outranked.finish().failure?.code).toBe('HARNESS_NOT_AUTHENTICATED');
+    // With nothing reported by the stream, or after a completed turn, the exit error is the cause.
+    const silent = new TurnAccumulator('fresh');
+    silent.push({ type: 'turn.started' });
+    silent.fail(exit);
+    expect(silent.finish().failure?.message).toBe(exit.message);
+    const completed = new TurnAccumulator('fresh');
+    completed.push({ type: 'error', message: 'Reconnecting... 1/5' });
+    completed.push({
+      type: 'turn.completed',
+      usage: {
+        input_tokens: 1,
+        cached_input_tokens: 0,
+        cache_write_input_tokens: 0,
+        output_tokens: 1,
+        reasoning_output_tokens: 0,
+      },
+    });
+    completed.fail(exit);
+    expect(completed.finish().failure?.message).toBe(exit.message);
+    // The SDK reports a signal the same way.
+    const signalled = new TurnAccumulator('fresh');
+    signalled.push({ type: 'turn.failed', error: { message: 'something odd' } });
+    signalled.fail(new Error('Codex Exec exited with signal SIGTERM: '));
+    expect(signalled.finish().failure?.message).toBe('something odd');
+  });
+
+  // PR #426 review B1: only the SDK's own process-exit error wraps the stream's failure.
+  it.each([
+    ['an SDK parse failure', new Error('Failed to parse item: MALFORMED_PROTOCOL_ITEM')],
+    ['an exit-shaped message that is not an Error', 'Codex Exec exited with code 1: text'],
+    ['an Error subclass', new TypeError('Codex Exec exited with code 1: from elsewhere')],
+    [
+      'an error with its own code',
+      Object.assign(new Error('Codex Exec exited with code 1: pipe'), { code: 'EPIPE' }),
+    ],
+  ] as const)('records %s thrown after a stream failure as evidence of its own', (_, error) => {
+    const acc = new TurnAccumulator('fresh');
+    acc.push({ type: 'turn.started' });
+    acc.push({ type: 'error', message: 'An earlier generic diagnostic' });
+    acc.fail(error);
+    expect(acc.finish().failure).toEqual(classifyCodexError(error));
+  });
+
+  // PR #426 audit scan 2: the SDK's exit error can carry the structured refusal from stderr.
+  const providerError = (text: string, status = 400, type = 'invalid_request_error') =>
+    JSON.stringify({ status, error: { type, param: 'reasoning.effort', message: text } });
+  it.each([
+    ["Error: invalid value for reasoning.effort: 'minimal'.", ''],
+    ['Thread not found in referenced input.', ''],
+    ['Thread not found in referenced input.', 'Reading prompt from stdin...\n'],
+  ])(
+    'classifies the structured refusal %j inside the SDK exit error before any heuristic',
+    (text, banner) => {
+      const wrapper = new Error(`Codex Exec exited with code 1: ${banner}${providerError(text)}\n`);
+      expect(classifyCodexError(wrapper)).toEqual({
+        code: 'HARNESS_ARGUMENTS_REJECTED',
+        message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+        retriable: false,
+      });
+    },
+  );
+
+  it('reads other structured provider errors inside the SDK exit error from their structure', () => {
+    expect(
+      classifyCodexError(
+        new Error(`Codex Exec exited with code 1: ${providerError('Slow down', 429, 'requests')}`),
+      ),
+    ).toEqual({ code: 'HARNESS_QUOTA_EXHAUSTED', message: 'Slow down', retriable: true });
+    // Only the SDK's own exit error is unwrapped; other errors keep the whole-text rules.
+    expect(
+      classifyCodexError(new Error(`Something else: ${providerError('Thread not found.')}`)),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
+  });
+
+  it('never lets an exit error that repeats the stream failure replace it, whatever its text ranks', () => {
+    const text = 'Thread not found in referenced input.';
+    const acc = new TurnAccumulator('fresh');
+    acc.push({ type: 'turn.started' });
+    acc.push({ type: 'turn.failed', error: { message: providerError(text) } });
+    // The JSON after a prefix on the line is read as the same provider error, so it is a repeat;
+    // read as text, the heuristics would call it a missing session.
+    acc.fail(new Error(`Codex Exec exited with code 1: ERROR: ${providerError(text)}`));
+    expect(acc.finish().failure).toEqual({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: `The provider refused the request (HTTP 400, reasoning.effort): ${text}`,
+      retriable: false,
+    });
+    // A distinct typed cause on stderr is still evidence of its own.
+    const distinct = new TurnAccumulator('fresh');
+    distinct.push({ type: 'turn.failed', error: { message: providerError(text) } });
+    distinct.fail(new Error('Codex Exec exited with code 1: No rollout found for thread abc'));
+    expect(distinct.finish().failure?.code).toBe('HARNESS_SESSION_MISSING');
+  });
+
+  // PR #426 audit scan 3: stderr is compared piece by piece, and a fatal stream failure keeps the
+  // protection after turn.completed.
+  it('folds each distinct stderr piece and keeps repeats out, also after completion', () => {
+    const usage = {
+      input_tokens: 1,
+      cached_input_tokens: 0,
+      cache_write_input_tokens: 0,
+      output_tokens: 1,
+      reasoning_output_tokens: 0,
+    };
+    const repeat = providerError('Effort A refused');
+    const completed = new TurnAccumulator('fresh');
+    completed.push({ type: 'turn.started' });
+    completed.push({ type: 'turn.completed', usage });
+    completed.push({ type: 'turn.failed', error: { message: repeat } });
+    completed.fail(new Error(`Codex Exec exited with code 1: ERROR: ${repeat}\n{this is not JSON`));
+    expect(completed.finish().failure).toMatchObject({
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: 'The provider refused the request (HTTP 400, reasoning.effort): Effort A refused',
+    });
+    // Stderr that is one provider error over several lines is read as a whole.
+    const pretty = new TurnAccumulator('fresh');
+    pretty.push({ type: 'turn.failed', error: { message: repeat } });
+    pretty.fail(
+      new Error(
+        `Codex Exec exited with code 1: ${JSON.stringify(JSON.parse(providerError('Effort B refused')), null, 2)}`,
+      ),
+    );
+    expect(pretty.finish().failure?.message).toBe(
+      'The provider refused the request (HTTP 400, reasoning.effort): Effort B refused',
+    );
+    // Without stream evidence, a typed stderr piece is the cause, read without the prefix.
+    const alone = new TurnAccumulator('fresh');
+    alone.push({ type: 'turn.started' });
+    alone.fail(
+      new Error('Codex Exec exited with code 1: Reading prompt from stdin...\nNot logged in'),
+    );
+    expect(alone.finish().failure).toEqual({
+      code: 'HARNESS_NOT_AUTHENTICATED',
+      message: 'Not logged in',
+      retriable: false,
+    });
   });
 
   it('fails a stream that ends without completing, using the last stream error if any', () => {

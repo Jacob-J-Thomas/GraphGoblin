@@ -1,0 +1,255 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/adapter-codex
+
+ ❯ src/events.test.ts (53 tests | 5 failed) 39ms
+   ❯ TurnAccumulator (16)
+     × classifies the structured refusal "Error: invalid value for reasoning.effort: 'minimal'." inside the SDK exit error before any heuristic 11ms
+     × classifies the structured refusal "Thread not found in referenced input." inside the SDK exit error before any heuristic 1ms
+     × classifies the structured refusal "Thread not found in referenced input." inside the SDK exit error before any heuristic 2ms
+     × reads other structured provider errors inside the SDK exit error from their structure 1ms
+     × never lets an exit error that repeats the stream failure replace it, whatever its text ranks 1ms
+ ❯ src/refusal.test.ts (14 tests | 8 failed) 1384ms
+   ❯ a failure the Codex event stream reports before the CLI exits non-zero (#243) (14)
+     × keeps the invalid-value refusal when stderr is repeat and the stream reports report 98ms
+     × keeps the invalid-value refusal when stderr is banner-repeat and the stream reports report 132ms
+     × keeps the invalid-value refusal when stderr is repeat and the stream reports none 84ms
+     × keeps the missing-thread refusal when stderr is repeat and the stream reports report 91ms
+     × keeps the missing-thread refusal when stderr is banner-repeat and the stream reports report 95ms
+     × keeps the missing-thread refusal when stderr is repeat and the stream reports none 90ms
+     × fails the run on a invalid-value refusal repeated on stderr as a refusal, never a missing session 94ms
+     × fails the run on a missing-thread refusal repeated on stderr as a refusal, never a missing session 112ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > classifies the structured refusal "Error: invalid value for reasoning.effort: 'minimal'." inside the SDK exit error before any heuristic
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:439:43
+    437|         `Codex Exec exited with code 1: ${banner}${providerError(text)…
+    438|       );
+    439|       expect(classifyCodexError(wrapper)).toEqual({
+       |                                           ^
+    440|         code: 'HARNESS_ARGUMENTS_REJECTED',
+    441|         message: `The provider refused the request (HTTP 400, reasonin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > classifies the structured refusal "Thread not found in referenced input." inside the SDK exit error before any heuristic
+ FAIL  src/events.test.ts > TurnAccumulator > classifies the structured refusal "Thread not found in referenced input." inside the SDK exit error before any heuristic
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:439:43
+    437|         `Codex Exec exited with code 1: ${banner}${providerError(text)…
+    438|       );
+    439|       expect(classifyCodexError(wrapper)).toEqual({
+       |                                           ^
+    440|         code: 'HARNESS_ARGUMENTS_REJECTED',
+    441|         message: `The provider refused the request (HTTP 400, reasonin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > reads other structured provider errors inside the SDK exit error from their structure
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_QUOTA_EXHAUSTED",
+-   "message": "Slow down",
+-   "retriable": true,
++   "code": "HARNESS_TURN_FAILED",
++   "message": "Codex Exec exited with code 1: {\"status\":429,\"error\":{\"type\":\"requests\",\"param\":\"reasoning.effort\",\"message\":\"Slow down\"}}",
++   "retriable": false,
+  }
+
+ ❯ src/events.test.ts:452:7
+    450|         new Error(`Codex Exec exited with code 1: ${providerError('Slo…
+    451|       ),
+    452|     ).toEqual({ code: 'HARNESS_QUOTA_EXHAUSTED', message: 'Slow down',…
+       |       ^
+    453|     // Only the SDK's own exit error is unwrapped; other errors keep t…
+    454|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > never lets an exit error that repeats the stream failure replace it, whatever its text ranks
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:466:34
+    464|     // Not parseable as a whole or by line, so the heuristics would ca…
+    465|     acc.fail(new Error(`Codex Exec exited with code 1: ERROR: ${provid…
+    466|     expect(acc.finish().failure).toEqual({
+       |                                  ^
+    467|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    468|       message: `The provider refused the request (HTTP 400, reasoning.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the invalid-value refusal when stderr is repeat and the stream reports report
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the invalid-value refusal when stderr is banner-repeat and the stream reports report
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the invalid-value refusal when stderr is repeat and the stream reports none
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:239:29
+    237|         message: `The provider refused the request (HTTP 400, reasonin…
+    238|       };
+    239|       expect(events.at(-1)).toEqual({ type: 'error', ...refusal, submi…
+       |                             ^
+    240|       await expect(session.result).rejects.toMatchObject(refusal);
+    241|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the missing-thread refusal when stderr is repeat and the stream reports report
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the missing-thread refusal when stderr is banner-repeat and the stream reports report
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps the missing-thread refusal when stderr is repeat and the stream reports none
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+-   "submission": "delivery-uncertain",
++   "submission": "session-missing",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:239:29
+    237|         message: `The provider refused the request (HTTP 400, reasonin…
+    238|       };
+    239|       expect(events.at(-1)).toEqual({ type: 'error', ...refusal, submi…
+       |                             ^
+    240|       await expect(session.result).rejects.toMatchObject(refusal);
+    241|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > fails the run on a invalid-value refusal repeated on stderr as a refusal, never a missing session
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(5) }
+
+- Expected
++ Received
+
+@@ -8,9 +8,9 @@
+      "sessionId": "refused-thread",
+      "submission": "delivery-uncertain",
+      "turnId": "00000000000000000000000003",
+      "visitId": "00000000000000000000000001:5",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "harness turn failed: Codex rejected the turn arguments",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/refusal.test.ts:267:29
+    265|         );
+    266|         const run = await e.runToIdle(version.loopId);
+    267|         expect(run.failure).toEqual({
+       |                             ^
+    268|           code: 'HARNESS_TURN_FAILED',
+    269|           message: `harness turn failed: The provider refused the requ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > fails the run on a missing-thread refusal repeated on stderr as a refusal, never a missing session
+AssertionError: expected { …(7) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_SESSION_MISSING",
+    "details": {
+-     "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
++     "adapterCode": "HARNESS_SESSION_MISSING",
+    },
+    "inference": {
++     "promptKind": "authored",
+      "sessionId": "refused-thread",
+-     "submission": "delivery-uncertain",
++     "submission": "session-missing",
++     "turnId": "00000000000000000000000003",
++     "visitId": "00000000000000000000000001:5",
++   },
++   "message": "The codex session \"refused-thread\" from current-visit is missing. Choose Start fresh session for node \"infer\" to continue without its prior provider conversation.",
++   "missingSession": {
++     "effort": "minimal",
++     "harness": "codex",
++     "model": "gpt-6-luna",
++     "origin": "current-visit",
++     "sessionId": "refused-thread",
++     "visitId": "00000000000000000000000001:5",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/refusal.test.ts:267:29
+    265|         );
+    266|         const run = await e.runToIdle(version.loopId);
+    267|         expect(run.failure).toEqual({
+       |                             ^
+    268|           code: 'HARNESS_TURN_FAILED',
+    269|           message: `harness turn failed: The provider refused the requ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 54 passed (67)
+   Start at  14:30:29
+   Duration  3.75s (import 42%, transform 32%, tests 26%)
+

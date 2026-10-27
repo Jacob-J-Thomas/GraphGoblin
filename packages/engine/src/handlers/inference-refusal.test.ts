@@ -146,3 +146,69 @@ it.each(cases)(
     }
   },
 );
+
+// A pinned argument, configuration or policy refusal is a specific cause: after acceptance the turn
+// stays accepted (delivery-uncertain provenance), but the failure keeps its own non-resumable code
+// instead of becoming generic delivery uncertainty (#243, #244; final integrated check F2, LP-5).
+it.each(
+  (['codex', 'claude'] as const).flatMap((family) =>
+    [
+      'HARNESS_ARGUMENTS_REJECTED',
+      'HARNESS_INVALID_CONFIGURATION',
+      'HARNESS_UNSUPPORTED_POLICY',
+    ].map((code) => ({ family, code })),
+  ),
+)(
+  'keeps an accepted $family $code refusal as its own non-resumable cause',
+  async ({ family, code }) => {
+    const e = await createTestEngine();
+    e.ports.modelCatalog.entries.push({
+      harness: 'claude',
+      model: 'claude-opus-5-5',
+      source: 'harness',
+      displayName: 'Opus',
+      efforts: ['low'],
+      defaultEffort: 'low',
+      enabled: true,
+    });
+    const fake = new FakeHarness(
+      [
+        {
+          accepted: true,
+          items: [],
+          error: { code, message: 'The provider refused the request (HTTP 400): refused' },
+        },
+      ],
+      family,
+    );
+    e.ports.harnesses[family] = fake;
+    const version = e.publish(
+      singleNodeLoop('accepted pinned refusal ' + family + ' ' + code, {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          harness: family,
+          model: family === 'claude' ? 'claude-opus-5-5' : 'gpt-6-luna',
+          effort: 'low',
+          harnessOptions: { sandbox: 'read-only', approval: 'never' },
+          prompt: { template: 'Original task' },
+        },
+      }),
+    );
+    try {
+      const run = await e.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'HARNESS_TURN_FAILED',
+        message: 'harness turn failed: The provider refused the request (HTTP 400): refused',
+        resumable: false,
+        details: { adapterCode: code },
+        inference: { submission: 'delivery-uncertain' },
+      });
+      await expect(e.manager.resume(run.id)).rejects.toThrow();
+      expect(fake.started).toHaveLength(1);
+    } finally {
+      e.manager.stop();
+    }
+  },
+);

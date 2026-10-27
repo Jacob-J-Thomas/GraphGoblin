@@ -1,0 +1,282 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/adapter-codex
+
+ ❯ src/events.test.ts (54 tests | 1 failed) 42ms
+   ❯ TurnAccumulator (17)
+     × folds each distinct stderr piece and keeps repeats out, also after completion 11ms
+ ❯ src/stderr-evidence.test.ts (17 tests | 12 failed) 1691ms
+   ❯ stderr evidence beside the stream failure (PR #426 audit scan 3) (17)
+     × folds the repeated refusal, then a different one 98ms
+     × folds the repeated refusal, then a missing session as JSON 90ms
+     × folds the repeated refusal, then a missing session as text 84ms
+     × folds the repeated quota, then an authentication failure 85ms
+     × folds an exhausted quota after a rate limit with the same message 92ms
+     × folds a rate limit after an exhausted quota with the same message 96ms
+     × keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SCF 87ms
+     × keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SFC 98ms
+     × keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SCF 99ms
+     × keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SFC 94ms
+     × fails the run with the refusal, not a missing session, when the order is SCF 185ms
+     × fails the run with the refusal, not a missing session, when the order is SFC 89ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > folds each distinct stderr piece and keeps repeats out, also after completion
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_NOT_AUTHENTICATED",
+-   "message": "Not logged in",
++   "message": "Codex Exec exited with code 1: Reading prompt from stdin...
++ Not logged in",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:512:36
+    510|     alone.push({ type: 'turn.started' });
+    511|     alone.fail(new Error('Codex Exec exited with code 1: Reading promp…
+    512|     expect(alone.finish().failure).toEqual({
+       |                                    ^
+    513|       code: 'HARNESS_NOT_AUTHENTICATED',
+    514|       message: 'Not logged in',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds the repeated refusal, then a different one
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, response_format): Schema B refused",
++   "message": "The provider refused the request (HTTP 400, reasoning.effort): Effort A refused",
+    "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:124:56
+    122|     ['a rate limit after an exhausted quota with the same message', qu…
+    123|   ] as const)('folds %s', async (_, failure, stderr, expected) => {
+    124|     expect(await outcome(spec('SF', failure, stderr))).toEqual({ type:…
+       |                                                        ^
+    125|   }, 30_000);
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds the repeated refusal, then a missing session as JSON
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds the repeated refusal, then a missing session as text
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_SESSION_MISSING",
+-   "message": "The recorded Codex conversation was not found",
++   "code": "HARNESS_ARGUMENTS_REJECTED",
++   "message": "The provider refused the request (HTTP 400, reasoning.effort): Effort A refused",
+    "retriable": false,
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:124:56
+    122|     ['a rate limit after an exhausted quota with the same message', qu…
+    123|   ] as const)('folds %s', async (_, failure, stderr, expected) => {
+    124|     expect(await outcome(spec('SF', failure, stderr))).toEqual({ type:…
+       |                                                        ^
+    125|   }, 30_000);
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds the repeated quota, then an authentication failure
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_NOT_AUTHENTICATED",
+-   "message": "Credentials expired",
++   "code": "HARNESS_QUOTA_EXHAUSTED",
++   "message": "Capacity unavailable",
+    "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:124:56
+    122|     ['a rate limit after an exhausted quota with the same message', qu…
+    123|   ] as const)('folds %s', async (_, failure, stderr, expected) => {
+    124|     expect(await outcome(spec('SF', failure, stderr))).toEqual({ type:…
+       |                                                        ^
+    125|   }, 30_000);
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds an exhausted quota after a rate limit with the same message
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_QUOTA_EXHAUSTED",
+    "message": "Capacity unavailable",
+-   "retriable": false,
++   "retriable": true,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:124:56
+    122|     ['a rate limit after an exhausted quota with the same message', qu…
+    123|   ] as const)('folds %s', async (_, failure, stderr, expected) => {
+    124|     expect(await outcome(spec('SF', failure, stderr))).toEqual({ type:…
+       |                                                        ^
+    125|   }, 30_000);
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > folds a rate limit after an exhausted quota with the same message
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_QUOTA_EXHAUSTED",
+    "message": "Capacity unavailable",
+-   "retriable": true,
++   "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:124:56
+    122|     ['a rate limit after an exhausted quota with the same message', qu…
+    123|   ] as const)('folds %s', async (_, failure, stderr, expected) => {
+    124|     expect(await outcome(spec('SF', failure, stderr))).toEqual({ type:…
+       |                                                        ^
+    125|   }, 30_000);
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SCF
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SFC
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
++   "code": "HARNESS_SESSION_MISSING",
++   "message": "The recorded Codex conversation was not found",
+    "retriable": false,
+-   "submission": "delivery-uncertain",
++   "submission": "session-missing",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:134:90
+    132|     'keeps the refusal $text when stderr decorates it and the order is…
+    133|     async ({ text, order }) => {
+    134|       expect(await outcome(spec(order, misleading(text), `ERROR: ${mis…
+       |                                                                                          ^
+    135|         type: 'error',
+    136|         ...refused('reasoning.effort', text),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SCF
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SFC
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
++   "message": "Codex rejected the turn arguments",
+    "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/stderr-evidence.test.ts:134:90
+    132|     'keeps the refusal $text when stderr decorates it and the order is…
+    133|     async ({ text, order }) => {
+    134|       expect(await outcome(spec(order, misleading(text), `ERROR: ${mis…
+       |                                                                                          ^
+    135|         type: 'error',
+    136|         ...refused('reasoning.effort', text),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > fails the run with the refusal, not a missing session, when the order is SCF
+ FAIL  src/stderr-evidence.test.ts > stderr evidence beside the stream failure (PR #426 audit scan 3) > fails the run with the refusal, not a missing session, when the order is SFC
+AssertionError: expected { …(7) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_SESSION_MISSING",
+    "details": {
+-     "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
++     "adapterCode": "HARNESS_SESSION_MISSING",
+    },
+    "inference": {
+-     "submission": "delivery-uncertain",
++     "promptKind": "authored",
++     "sessionId": "stderr-thread",
++     "submission": "session-missing",
++     "turnId": "00000000000000000000000003",
++     "visitId": "00000000000000000000000001:5",
++   },
++   "message": "The codex session \"stderr-thread\" from current-visit is missing. Choose Start fresh session for node \"infer\" to continue without its prior provider conversation.",
++   "missingSession": {
++     "effort": "low",
++     "harness": "codex",
++     "model": "gpt-6-luna",
++     "origin": "current-visit",
++     "sessionId": "stderr-thread",
++     "visitId": "00000000000000000000000001:5",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/stderr-evidence.test.ts:158:29
+    156|         );
+    157|         const run = await e.runToIdle(version.loopId);
+    158|         expect(run.failure).toEqual({
+       |                             ^
+    159|           code: 'HARNESS_TURN_FAILED',
+    160|           message: `harness turn failed: The provider refused the requ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 58 passed (71)
+   Start at  15:18:29
+   Duration  4.23s (import 39%, transform 31%, tests 29%)
+

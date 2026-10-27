@@ -315,7 +315,7 @@ for (const kind of ['inference', 'llm'] as const) {
   }
 }
 
-test('Codex effort choices follow the model: max is offered and requested unchanged, but not for GPT-5.5', async ({
+test('Codex effort choices follow the model: no minimal, max is offered and requested unchanged, but not for GPT-5.5', async ({
   page,
   request,
 }) => {
@@ -335,14 +335,16 @@ test('Codex effort choices follow the model: max is offered and requested unchan
     effort
       .locator('option')
       .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
-  expect(await offered()).toEqual(['', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+  // The Codex CLI's own model catalog lists no minimal for any model, and the provider refuses it
+  // for GPT-6 Luna (F2 LP-5), so it is never offered.
+  expect(await offered()).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
   await effort.selectOption('max');
   // GPT-5.5 tops out at xhigh in the Codex CLI's own model catalog, so max is not a choice there.
   await model.selectOption('gpt-5.5');
   await expect(effort.locator('option:checked')).toHaveText('max (not supported by this model)');
   await expect(effort).toHaveAccessibleDescription(/not supported/);
   await effort.selectOption('xhigh');
-  expect(await offered()).toEqual(['', 'minimal', 'low', 'medium', 'high', 'xhigh']);
+  expect(await offered()).toEqual(['', 'low', 'medium', 'high', 'xhigh']);
   await model.selectOption('gpt-6-luna');
   await effort.selectOption('max');
   await closeNode(page);
@@ -437,6 +439,184 @@ for (const kind of ['inference', 'llm'] as const) {
     await expect(page.getByText('Published version 1.')).toBeVisible();
   });
 }
+
+for (const kind of ['inference', 'llm'] as const) {
+  test(`${kind}: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const instanceId = String(instance['instanceId']);
+    const catalog = (await (await request.get(url + '/model-catalog')).json()) as {
+      items: Record<string, unknown>[];
+    };
+    const { ecosystemDefault: _, ...luna } = catalog.items.find(
+      (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+    )!;
+    expect(luna['efforts']).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+    // A draft saved while the shipped catalog still offered minimal (before #205's F2 fix); the next
+    // start restores the shipped efforts.
+    await control(request, '/catalog/upsert', {
+      ...luna,
+      instanceId,
+      efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+    });
+    const source = minimalLoop();
+    const definition = LoopDefinitionSchema.parse({
+      ...source,
+      name: `205 kept minimal ${kind}`,
+      nodes: [
+        source.nodes[0],
+        {
+          id: 'work',
+          label: 'Work',
+          kind: kind === 'inference' ? kind : 'decision',
+          ui: { x: 260, y: 80 },
+          config:
+            kind === 'inference'
+              ? { prompt: { template: 'Choose' }, model: 'gpt-6-luna', effort: 'minimal' }
+              : {
+                  kind: 'llm',
+                  harness: 'codex',
+                  instructions: 'Choose',
+                  model: { mode: 'explicit', value: 'gpt-6-luna' },
+                  effort: { mode: 'explicit', value: 'minimal' },
+                  routes: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                },
+        },
+        source.nodes[1],
+      ],
+      edges: [
+        { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+        ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map((port) => ({
+          id: port,
+          from: { node: 'work', port },
+          to: { node: 'done' },
+        })),
+      ],
+    });
+    const created = await request.post(url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await control(request, '/catalog/upsert', { ...luna, instanceId });
+    await page.goto(url + `/app/loops/${loop.id}/edit`);
+    const dialog = await openNode(page, 'work');
+    const effort = dialog.getByLabel('Effort', { exact: true });
+    // The saved choice is kept, never changed for the user, and explained on the field and node.
+    await expect(effort).toHaveValue('minimal');
+    await expect(effort.locator('option:checked')).toHaveText(
+      'minimal (not supported by this model)',
+    );
+    await expect(effort).toHaveAccessibleDescription(
+      /Effort minimal is not supported by GPT-6 Luna\. Choose a supported effort or Default\./,
+    );
+    await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+    await page.screenshot({ path: test.info().outputPath(`kept-minimal-${kind}.png`) });
+    await closeNode(page);
+    // The saved draft cannot be published; the refusal names the node and the reason.
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Publish failed' })).toContainText(
+      'work: The selected reasoning effort is not supported by this model',
+    );
+    const reopened = await openNode(page, 'work');
+    await reopened.getByLabel('Effort', { exact: true }).selectOption('low');
+    await expect(reopened.getByRole('button', { name: /issues? on work/ })).toHaveCount(0);
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+    expect(
+      (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        const result = await control(
+          request,
+          kind === 'llm' ? '/deciders/requests' : '/harness/requests',
+          { instanceId },
+        );
+        return result[kind === 'llm' ? 'routes' : 'started'];
+      })
+      .toMatchObject([{ model: 'gpt-6-luna', effort: 'low' }]);
+  });
+}
+
+test('Settings Codex default effort follows the server default model and names an unsupported effort', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  const catalog = (await (await request.get(url + '/model-catalog')).json()) as {
+    items: Record<string, unknown>[];
+  };
+  const { ecosystemDefault: _, ...luna } = catalog.items.find(
+    (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+  )!;
+  const withMinimal = {
+    ...luna,
+    instanceId,
+    efforts: ['minimal', ...(luna['efforts'] as string[])],
+  };
+  const message =
+    'Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.';
+  await page.goto(url + '/app/settings');
+  const effort = page.getByLabel('Default effort', { exact: true });
+  const offered = () =>
+    effort
+      .locator('option')
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  // Default model "(server default)" is the process default, GPT-6 Luna (PR #426 QA D-1).
+  await expect(page.getByLabel('Default model', { exact: true })).toHaveValue('');
+  await expect.poll(offered).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+
+  // A catalog this page read before the server stopped offering minimal: the refusal names the
+  // effort and model on the field, not only a generic footer.
+  await control(request, '/catalog/upsert', withMinimal);
+  await page.reload();
+  await expect.poll(offered).toContain('minimal');
+  await control(request, '/catalog/upsert', { ...luna, instanceId });
+  await effort.selectOption('minimal');
+  await expect(page.getByRole('alert').filter({ hasText: 'Not saved.' })).toHaveText(
+    `Not saved. ${message}`,
+  );
+  await expect(effort).toHaveAccessibleDescription(new RegExp(message));
+  await expect(page.getByText(/invalid harness defaults/)).toHaveCount(0);
+
+  // A minimal default stored before the upgrade is kept and explained (QA O-2).
+  await control(request, '/catalog/upsert', withMinimal);
+  expect(
+    (
+      await request.put(url + '/settings', {
+        data: { defaults: { byHarness: { codex: { effort: 'minimal' } } } },
+      })
+    ).status(),
+  ).toBe(200);
+  await control(request, '/catalog/upsert', { ...luna, instanceId });
+  await page.reload();
+  await expect(effort).toHaveValue('minimal');
+  await expect(effort.locator('option:checked')).toHaveText(
+    'minimal (not supported by this model)',
+  );
+  await expect(effort).toHaveAccessibleDescription(message);
+  await page
+    .getByRole('region', { name: 'codex defaults' })
+    .screenshot({ path: test.info().outputPath('settings-kept-minimal.png') });
+  await effort.selectOption('low');
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get(url + '/settings')).json()) as Record<string, unknown>)[
+          'defaults'
+        ],
+    )
+    .toEqual({ byHarness: { codex: { effort: 'low' } } });
+  await expect(effort).not.toHaveAccessibleDescription(/not supported/);
+});
 
 test('classifier keeps Question, Model, Answer visible and has no effort', async ({
   page,

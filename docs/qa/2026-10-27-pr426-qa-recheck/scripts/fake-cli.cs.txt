@@ -1,0 +1,83 @@
+// PR #426 QA fixture: a controlled fake Codex and Claude CLI. No network access, no provider call.
+// Compiled twice by prepare.ps1 (as codex.exe and claude.exe); the file name selects the harness.
+// The mode file beside the executable (codex-mode.txt or claude-mode.txt) selects what a turn
+// reports, so a running gateway can be switched between scenarios. Every turn is appended to
+// requests.jsonl beside the executable (harness, mode, model, effort, resume), so "no provider
+// request" can be shown as "no turn reached the CLI".
+//
+// Codex modes (stderr carries only the CLI's startup banner, as Codex CLI 0.160.0 prints it):
+//   success    thread.started, turn.started, one agent_message "READY", turn.completed; exit 0
+//   refused    the F2 LP-5 stream: error + turn.failed with the provider's HTTP 400 body; exit 1
+//   quota429   error + turn.failed with an HTTP 429 rate-limit body; exit 1
+//   server500  error + turn.failed with an HTTP 500 server_error body; exit 1
+// Claude modes:
+//   success    init, then a successful result; exit 0
+//   ratelimit  init, then an assistant record with error "rate_limit"; a stderr banner; exit 1
+//   server     init, then an assistant record with error "server_error"; a stderr banner; exit 1
+using System;
+using System.IO;
+public static class QaFakeCli {
+  static string Q(string value) { return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n") + "\""; }
+  static string After(string[] args, string flag) { var i = Array.IndexOf(args, flag); return i >= 0 && i + 1 < args.Length ? args[i + 1] : ""; }
+  static string Mode(string dir, bool claude) {
+    var file = Path.Combine(dir, claude ? "claude-mode.txt" : "codex-mode.txt");
+    return File.Exists(file) ? File.ReadAllText(file).Trim() : "success";
+  }
+  static void Out(string line) { Console.Out.WriteLine(line); Console.Out.Flush(); }
+  static string ProviderBody(int status, string type, string code, string message, string param) {
+    var inner = "{\"message\":" + Q(message) + ",\"type\":" + Q(type) + (param == null ? ",\"param\":null" : ",\"param\":" + Q(param)) + (code == null ? ",\"code\":null" : ",\"code\":" + Q(code)) + "}";
+    return "{\"type\":\"error\",\"error\":" + inner + ",\"status\":" + status + "}";
+  }
+  public static int Main(string[] args) {
+    var dir = AppDomain.CurrentDomain.BaseDirectory;
+    var claude = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]).ToLowerInvariant() == "claude";
+    if (Array.IndexOf(args, "--version") >= 0) { Out(claude ? "2.1.287" : "codex-cli 0.160.0"); return 0; }
+    if (Array.IndexOf(args, "--help") >= 0) { Out("--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume --json --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
+    if (Array.IndexOf(args, "status") >= 0) { Out(claude ? "{\"authMethod\":\"claude.ai\"}" : "Logged in using ChatGPT"); return 0; }
+    var model = After(args, "--model");
+    var effort = After(args, "--effort");
+    if (!claude) foreach (var arg in args) if (arg.StartsWith("model_reasoning_effort=")) effort = arg.Substring(arg.IndexOf('=') + 1).Trim('"');
+    var mode = Mode(dir, claude);
+    var resume = Array.IndexOf(args, "resume") >= 0 || Array.IndexOf(args, "--resume") >= 0;
+    if (!claude) { Console.Error.WriteLine("Reading prompt from stdin..."); Console.Error.Flush(); }
+    try { Console.In.ReadToEnd(); } catch (Exception) { }
+    // Optional: stay alive for delay-ms.txt milliseconds, so a dry run can watch the process.
+    var delayFile = Path.Combine(dir, "delay-ms.txt");
+    if (File.Exists(delayFile)) System.Threading.Thread.Sleep(int.Parse(File.ReadAllText(delayFile).Trim()));
+    File.AppendAllText(Path.Combine(dir, "requests.jsonl"), "{\"harness\":" + Q(claude ? "claude" : "codex") + ",\"mode\":" + Q(mode) + ",\"model\":" + Q(model) + ",\"effort\":" + Q(effort) + ",\"resume\":" + (resume ? "true" : "false") + "}" + Environment.NewLine);
+    var session = Guid.NewGuid().ToString();
+    if (claude) {
+      Out("{\"type\":\"system\",\"subtype\":\"init\",\"session_id\":" + Q(session) + ",\"model\":" + Q(model) + ",\"tools\":[\"Read\",\"Glob\",\"Grep\"],\"mcp_servers\":[],\"plugins\":[],\"skills\":[],\"permissionMode\":\"dontAsk\",\"apiKeySource\":\"none\",\"claude_code_version\":\"2.1.287\"}");
+      if (mode == "ratelimit" || mode == "server") {
+        var category = mode == "ratelimit" ? "rate_limit" : "server_error";
+        var text = mode == "ratelimit" ? "API Error: 429 QA_FAKE_PROVIDER_BODY" : "API Error: 500 QA_FAKE_PROVIDER_BODY";
+        Out("{\"type\":\"assistant\",\"session_id\":" + Q(session) + ",\"error\":" + Q(category) + ",\"message\":{\"content\":[{\"type\":\"text\",\"text\":" + Q(text) + "}]}}");
+        Console.Error.WriteLine("QA_FAKE_STDERR_BANNER"); Console.Error.Flush();
+        return 1;
+      }
+      Out("{\"type\":\"result\",\"subtype\":\"success\",\"session_id\":" + Q(session) + ",\"is_error\":false,\"result\":\"READY\",\"num_turns\":1,\"usage\":{\"input_tokens\":1,\"output_tokens\":1},\"modelUsage\":{" + Q(model) + ":{\"inputTokens\":1,\"outputTokens\":1}}}");
+      return 0;
+    }
+    Out("{\"type\":\"thread.started\",\"thread_id\":" + Q(session) + "}");
+    Out("{\"type\":\"turn.started\"}");
+    if (mode == "parse") {
+      Out("{\"type\":\"error\",\"message\":\"An earlier generic diagnostic\"}");
+      Out("MALFORMED_PROTOCOL_ITEM");
+      return 0;
+    }
+    string body = null;
+    if (mode == "invalid-value") body = ProviderBody(400, "invalid_request_error", null, "Error: invalid value for reasoning.effort: 'minimal'.", "reasoning.effort");
+    if (mode == "missing-thread-text") body = ProviderBody(400, "invalid_request_error", null, "Thread not found in referenced input.", "reasoning.effort");
+    if (mode == "refused") body = ProviderBody(400, "invalid_request_error", "unsupported_value", "Unsupported value: '" + effort + "' is not supported with the '" + model + "' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.", "reasoning.effort");
+    if (mode == "quota429") body = ProviderBody(429, "requests", "rate_limit_exceeded", "QA fake: Rate limit reached for " + model + ". Please try again in 20s.", null);
+    if (mode == "server500") body = ProviderBody(500, "server_error", null, "QA fake: The server had an error while processing your request.", null);
+    if (body != null) {
+      Out("{\"type\":\"error\",\"message\":" + Q(body) + "}");
+      Out("{\"type\":\"turn.failed\",\"error\":{\"message\":" + Q(body) + "}}");
+      return 1;
+    }
+    Out("{\"type\":\"item.completed\",\"item\":{\"id\":\"qa\",\"type\":\"agent_message\",\"text\":\"READY\"}}");
+    Out("{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":1,\"cached_input_tokens\":0,\"output_tokens\":1}}");
+    return 0;
+  }
+}

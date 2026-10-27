@@ -1,0 +1,117 @@
+$ vitest run --coverage -- --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/apps/api
+      Coverage enabled with v8
+
+[before-receipt] fixture
+[before-receipt] key
+{"level":30,"time":1793119065184,"pid":60364,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:7012"}
+{"level":30,"time":1793119065185,"pid":60364,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":7012,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-YGGEEN","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793119065262,"pid":60364,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1793119065270,"pid":60364,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":6.555200000000696,"msg":"request completed"}
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+child admission kill: delay=0ms snapshots=44541 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 33.68880000000354ms
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+child admission kill: delay=5ms snapshots=37272 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 24.772400000001653ms
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+child admission kill: delay=25ms snapshots=27386 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission disposal after observer close: 18.66919999998936ms
+{"status":"draft","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+ ❯ src/retired-event-startup.test.ts (2 tests | 1 failed) 21459ms
+   ❯ cold start over a stored retired Event destination (#242) (2)
+     × starts with a published version holding one, refuses that loop per loop and serves the rest 11005ms
+{"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+{"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 127.0.0.1:7013
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 7013
+}
+
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:186:7
+ ❯ src/retired-event-startup.test.ts:135:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 102 passed | 2 skipped (105)
+      Tests  1 failed | 1678 passed | 14 skipped (1693)
+   Start at  11:37:34
+   Duration  204.53s (tests 82%, import 17%, transform 1%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a028ffe9642f999a3\apps\api
+

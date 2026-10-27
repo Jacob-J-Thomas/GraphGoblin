@@ -1,0 +1,129 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/engine
+
+ ❯ src/handlers/inference-refusal.test.ts (20 tests | 6 failed | 14 skipped) 212ms
+   × keeps an accepted codex HARNESS_ARGUMENTS_REJECTED refusal as its own non-resumable cause 76ms
+   × keeps an accepted codex HARNESS_INVALID_CONFIGURATION refusal as its own non-resumable cause 26ms
+   × keeps an accepted codex HARNESS_UNSUPPORTED_POLICY refusal as its own non-resumable cause 18ms
+   × keeps an accepted claude HARNESS_ARGUMENTS_REJECTED refusal as its own non-resumable cause 28ms
+   × keeps an accepted claude HARNESS_INVALID_CONFIGURATION refusal as its own non-resumable cause 31ms
+   × keeps an accepted claude HARNESS_UNSUPPORTED_POLICY refusal as its own non-resumable cause 31ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted codex HARNESS_ARGUMENTS_REJECTED refusal as its own non-resumable cause
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted claude HARNESS_ARGUMENTS_REJECTED refusal as its own non-resumable cause
+AssertionError: expected { …(6) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+      "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
+    },
+    "inference": {
+      "submission": "delivery-uncertain",
+
+ ❯ src/handlers/inference-refusal.test.ts:201:27
+    199|     try {
+    200|       const run = await e.runToIdle(version.loopId);
+    201|       expect(run.failure).toMatchObject({
+       |                           ^
+    202|         code: 'HARNESS_TURN_FAILED',
+    203|         message: 'harness turn failed: The provider refused the reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted codex HARNESS_INVALID_CONFIGURATION refusal as its own non-resumable cause
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted claude HARNESS_INVALID_CONFIGURATION refusal as its own non-resumable cause
+AssertionError: expected { …(6) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+      "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+    },
+    "inference": {
+      "submission": "delivery-uncertain",
+
+ ❯ src/handlers/inference-refusal.test.ts:201:27
+    199|     try {
+    200|       const run = await e.runToIdle(version.loopId);
+    201|       expect(run.failure).toMatchObject({
+       |                           ^
+    202|         code: 'HARNESS_TURN_FAILED',
+    203|         message: 'harness turn failed: The provider refused the reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted codex HARNESS_UNSUPPORTED_POLICY refusal as its own non-resumable cause
+AssertionError: expected { …(6) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+      "adapterCode": "HARNESS_UNSUPPORTED_POLICY",
+    },
+    "inference": {
+      "submission": "delivery-uncertain",
+
+ ❯ src/handlers/inference-refusal.test.ts:201:27
+    199|     try {
+    200|       const run = await e.runToIdle(version.loopId);
+    201|       expect(run.failure).toMatchObject({
+       |                           ^
+    202|         code: 'HARNESS_TURN_FAILED',
+    203|         message: 'harness turn failed: The provider refused the reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/handlers/inference-refusal.test.ts > keeps an accepted claude HARNESS_UNSUPPORTED_POLICY refusal as its own non-resumable cause
+AssertionError: expected { …(6) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+      "adapterCode": "HARNESS_UNSUPPORTED_POLICY",
+    },
+    "inference": {
+      "submission": "delivery-uncertain",
+
+ ❯ src/handlers/inference-refusal.test.ts:201:27
+    199|     try {
+    200|       const run = await e.runToIdle(version.loopId);
+    201|       expect(run.failure).toMatchObject({
+       |                           ^
+    202|         code: 'HARNESS_TURN_FAILED',
+    203|         message: 'harness turn failed: The provider refused the reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 14 skipped (20)
+   Start at  11:19:22
+   Duration  2.70s (import 53%, transform 38%, tests 9%)
+

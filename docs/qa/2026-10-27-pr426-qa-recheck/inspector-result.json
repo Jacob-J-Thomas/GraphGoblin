@@ -1,0 +1,114 @@
+{
+  "scenario": "inspector",
+  "passed": 5,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "after restart: seed removes minimal and pinned refusal is unchanged",
+      "ok": true,
+      "detail": {
+        "efforts": ["low", "medium", "high", "xhigh", "max"],
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M5ZAXP1G5JGR0S7Q9SXVPVG6:5",
+            "turnId": "01M5ZAXPG0901Q7XP5GEPH5N28",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "72a354b7-1793-4622-a5fb-225a0bf576d3"
+          }
+        },
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "work",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "loaded inspector: exact refusal, disabled Resume with reason, enabled Replay",
+      "ok": true,
+      "detail": {
+        "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5ZAXP1G5JGR0S7Q9SXVPVG6\nfailed\nat work (work)\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.\n\nFailed: HARNESS_TURN_FAILED\n\nharness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nQA recheck refused v1 · version ID 01M5ZAXNQKHZ1CQ2197VFW418F\n\nExact run record\nPinned definition JSON\nFinalization\n\nFully finalized.\n\nExecution: failed. Delivery is tracked separately.\n\nTimeline (11 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–11 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 1 ms\n#5\nnode.started\nwork (work) (inference) attempt 1\n#6\nharness.turn\nwork (work)\n#7\nharness.session\nwork (work)\n#8\nharness.submission\nwork (work)\n#9\nharness.submission\nwork (work)\n#10\nharness.submission\nwork (work)\n#11\nrun.failed\nHARNESS_TURN_FAILED: harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.\nExact recorded event #11\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (1 nodes)",
+        "reason": "Resume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    {
+      "id": "Replay dialog offers reached work node and permits creating a replay",
+      "ok": true,
+      "detail": {
+        "node": "work",
+        "reason": "Replay is available at this node."
+      }
+    },
+    {
+      "id": "inspector and restart made zero additional fake turns",
+      "ok": true,
+      "detail": {
+        "before": 4,
+        "after": 4
+      }
+    },
+    {
+      "id": "gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

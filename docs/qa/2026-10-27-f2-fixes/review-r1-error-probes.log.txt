@@ -1,0 +1,164 @@
+[
+  {
+    "mode": "wrapper",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "An earlier generic diagnostic",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "An earlier generic diagnostic"
+    }
+  },
+  {
+    "mode": "parse",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM"
+    }
+  },
+  {
+    "mode": "completed",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "usage",
+        "usage": {
+          "inputTokens": 1,
+          "outputTokens": 1,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      {
+        "type": "turn-complete"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "Failed to parse item: MALFORMED_PROTOCOL_ITEM"
+    }
+  },
+  {
+    "mode": "auth",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Codex Exec exited with code 1: Error: Not logged in\n",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_NOT_AUTHENTICATED",
+      "message": "Codex Exec exited with code 1: Error: Not logged in\n"
+    }
+  },
+  {
+    "mode": "invalid-value",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_ARGUMENTS_REJECTED",
+      "message": "The provider refused the request (HTTP 400, reasoning.effort): Error: invalid value for reasoning.effort: 'minimal'."
+    }
+  },
+  {
+    "mode": "missing-thread-text",
+    "events": [
+      {
+        "type": "session",
+        "sessionId": "audit-thread",
+        "mode": "fresh"
+      },
+      {
+        "type": "submitted",
+        "marker": "codex.turn.started"
+      },
+      {
+        "type": "error",
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      }
+    ],
+    "failure": {
+      "code": "HARNESS_ARGUMENTS_REJECTED",
+      "message": "The provider refused the request (HTTP 400, reasoning.effort): Thread not found in referenced input."
+    }
+  }
+]

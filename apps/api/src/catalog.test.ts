@@ -400,20 +400,123 @@ describe('Codex efforts are sent unchanged and offered per model (#205)', () => 
     return { ...definition, nodes: [definition.nodes[0]!, node, definition.nodes[2]!] };
   }
 
-  it('lists max for every Codex model the CLI catalog gives it, and not for GPT-5.5', async () => {
+  it('lists exactly the efforts the Codex CLI catalog gives each model: no minimal, no max for GPT-5.5', async () => {
     const { items } = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>();
     const codex = items.filter((entry) => entry.harness === 'codex');
-    expect(codex.find((entry) => entry.model === 'gpt-5.5')?.efforts).toEqual([
-      'minimal',
-      'low',
-      'medium',
-      'high',
-      'xhigh',
-    ]);
-    expect(
-      codex.filter((entry) => entry.model !== 'gpt-5.5').every((e) => e.efforts.includes('max')),
-    ).toBe(true);
+    const toMax: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+    expect(Object.fromEntries(codex.map((entry) => [entry.model, entry.efforts]))).toEqual({
+      'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+      'gpt-5.6-luna': toMax,
+      'gpt-5.6-sol': toMax,
+      'gpt-5.6-terra': toMax,
+      'gpt-6-astra': toMax,
+      'gpt-6-luna': toMax,
+      'gpt-6-sol': toMax,
+      'gpt-6.1-sol': toMax,
+    });
   });
+
+  it.each(['inference', 'decision'] as const)(
+    'refuses minimal for every seeded Codex model (%s, and as a default) before any request',
+    async (place) => {
+      const { items } = (await t.app.inject('/model-catalog')).json<{
+        items: ModelCatalogEntry[];
+      }>();
+      const models = items.filter((entry) => entry.harness === 'codex').map((e) => e.model);
+      expect(models).toHaveLength(8);
+      for (const model of models) {
+        const refused = await t.app.inject({
+          method: 'POST',
+          url: '/loops',
+          payload: { definition: withEffort(place, model, 'minimal') },
+        });
+        expect(refused.statusCode, model).toBe(400);
+        expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+        const defaults = await t.app.inject({
+          method: 'PUT',
+          url: '/settings',
+          payload: { defaults: { byHarness: { codex: { model, effort: 'minimal' } } } },
+        });
+        expect(defaults.statusCode, model).toBe(400);
+        expect(defaults.body).toContain('EFFORT_UNSUPPORTED');
+      }
+      expect(t.harness.started).toEqual([]);
+      expect(t.codex.routes).toEqual([]);
+    },
+  );
+
+  it.each(['inference', 'decision'] as const)(
+    'fails a stored minimal (%s) from before this catalog without any provider request',
+    async (place) => {
+      // A store from before this change: its seeded GPT-6 Luna row still listed minimal when the
+      // loop was published. The next start refreshes the harness rows from the shipped catalog.
+      const luna = await t.container.repos.catalog.findOne('codex', 'gpt-6-luna');
+      await t.container.repos.catalog.upsert({ ...luna!, efforts: ['minimal', ...luna!.efforts] });
+      const loopId = await t.publishLoop(withEffort(place, 'gpt-6-luna', 'minimal'));
+      await t.container.repos.catalog.seed();
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      const run = (
+        await t.app.inject(`/runs/${started.json<{ run: { id: string } }>().run.id}`)
+      ).json();
+      expect(run).toMatchObject({
+        status: 'failed',
+        failure: {
+          code: 'EVALUATION_INVALID_CONFIGURATION',
+          resumable: false,
+          details: { code: 'EFFORT_UNSUPPORTED', path: 'effort' },
+        },
+      });
+      expect(t.harness.started).toEqual([]);
+      expect(t.codex.routes).toEqual([]);
+    },
+  );
+
+  it.each(['loop', 'owner'] as const)(
+    'fails a run inheriting a stored %s-default minimal with the same details shape, without any request',
+    async (level) => {
+      // Defaults saved while the seeded GPT-6 Luna row still listed minimal (PR #426 QA O-1).
+      const luna = await t.container.repos.catalog.findOne('codex', 'gpt-6-luna');
+      await t.container.repos.catalog.upsert({ ...luna!, efforts: ['minimal', ...luna!.efforts] });
+      const minimal = { byHarness: { codex: { model: 'gpt-6-luna', effort: 'minimal' as const } } };
+      const inference = modelLoop('inference');
+      const loopId = await t.publishLoop(
+        level === 'loop' ? { ...inference, settings: { defaults: minimal } } : inference,
+      );
+      if (level === 'owner')
+        expect(
+          (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaults: minimal } }))
+            .statusCode,
+        ).toBe(200);
+      await t.container.repos.catalog.seed();
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      const run = (
+        await t.app.inject(`/runs/${started.json<{ run: { id: string } }>().run.id}`)
+      ).json<{ status: string; failure: { details: unknown } }>();
+      expect(run).toMatchObject({
+        status: 'failed',
+        failure: { code: 'EVALUATION_INVALID_CONFIGURATION', resumable: false },
+      });
+      expect(run.failure.details).toEqual({
+        code: 'EFFORT_UNSUPPORTED',
+        path: 'effort',
+        level,
+        harness: 'codex',
+      });
+      expect(t.harness.started).toEqual([]);
+    },
+  );
 
   it.each(['inference', 'decision'] as const)(
     'refuses max for a GPT-5.5 %s before any request and runs max on GPT-6 Luna unchanged',
