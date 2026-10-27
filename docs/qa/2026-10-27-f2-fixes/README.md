@@ -66,8 +66,8 @@ A real `@openai/codex-sdk` run against a fake CLI with exactly that stream, stde
 
 **Fix.**
 
-- `packages/adapter-codex/src/events.ts`, classification. A JSON error with `status: 400` and `error.type: invalid_request_error` is the provider's refusal of the request itself. It becomes `HARNESS_ARGUMENTS_REJECTED`, non-retriable, with the message `The provider refused the request (HTTP 400, <param>): <provider message>`. Other statuses, and a 400 without that type, keep their classes.
-- `packages/adapter-codex/src/events.ts`, the exit wrapper. `TurnAccumulator.fail` no longer lets a thrown generic wrapper (rank 1) replace evidence once the stream has reported an `error` or `turn.failed` for an unfinished turn. Typed or higher-ranked thrown evidence still wins as before, for example `Not logged in` on stderr. With no stream report, or after `turn.completed`, the exit error is still the cause.
+- `packages/adapter-codex/src/events.ts`, classification. A JSON error with `status: 400` and `error.type: invalid_request_error` is the provider's refusal of the request itself. It becomes `HARNESS_ARGUMENTS_REJECTED`, non-retriable, with the message `The provider refused the request (HTTP 400, <param>): <provider message>`. Other statuses, and a 400 without that type, keep their classes. Since review round 1 this check runs before every message heuristic, right after typed metadata.
+- `packages/adapter-codex/src/events.ts`, the exit wrapper. `TurnAccumulator.fail` no longer lets the SDK's process-exit error replace evidence once the stream has reported an `error` or `turn.failed` for an unfinished turn, while that error classifies as generic (rank 1). Since review round 1 only that exact SDK error counts: a plain `Error` reading `Codex Exec exited with code <n>:` or `… with signal <name>:`. Any other thrown error joins the fold. Typed or higher-ranked thrown evidence still wins as before, for example `Not logged in` on stderr. With no stream report, or after `turn.completed`, the exit error is still the cause.
 - `packages/engine/src/handlers/inference.ts` and `inference-failure.ts` (`isPinnedRefusal`). Only a generic turn failure becomes `HARNESS_DELIVERY_UNCERTAIN`. A pinned argument, configuration or policy refusal keeps `HARNESS_TURN_FAILED`, with its cause in `details.adapterCode`, also after acceptance. docs/05 already listed specific causes as staying intact under `delivery-uncertain`, and a pinned refusal is one (rank "pinned" in the evidence fold).
 - `packages/adapter-codex/src/decider.ts`. A refused LLM-decision request maps to `DECIDER_HTTP_ERROR`, the class it had before through the generic code, so decisions still fail `EVALUATION_PROVIDER_FAILED` without provider text.
 
@@ -118,6 +118,115 @@ Caveats on the gates:
 1. **API port collisions and one load-sensitive timeout, outside this change.** `createApiProcessFixture` probes a free port in the `GG_TEST_PORT_*` range and the child binds it later, so parallel subprocess tests can race for the same port in a 40-port range. The 1,000-user cleanup case can exceed 20 s under full load. The PR #417 record saw the same kinds of failures. No product or test file involved was changed here.
 2. `tests-api-before.log.txt` is the first before-fix API run. One assertion of `fails a stored minimal (decision) …` was tightened after it, to the exact `details`. [tests-api-d1-final-before.log.txt](tests-api-d1-final-before.log.txt) re-runs the final D1 API tests against the original seed, restored by hand for that run only and then put back: all 6 fail.
 
+## Review round 1 (PR #426 scan 1)
+
+The independent review of `4eabfb86` returned CHANGES REQUIRED with two P2 blockers in `packages/adapter-codex/src/events.ts`, both reproduced through the public harness and the real SDK, plus one non-blocking finding. The review record is kept outside this branch.
+
+**B1: the exit-wrapper suppression discarded distinct SDK errors.** `TurnAccumulator.fail` dropped every thrown error of rank 1 after an unfinished stream failure, not only the SDK's process-exit error. With a fake CLI that emits a generic diagnostic, then a line that is not JSON, and exits 0, the SDK throws `Failed to parse item: MALFORMED_PROTOCOL_ITEM`, and the record kept the earlier diagnostic instead.
+
+- **Fix.** Only the SDK's own process-exit error is suppressed, matched by its structure: a plain `Error` (prototype `Error.prototype`, no own `code`) whose message reads `Codex Exec exited with code <n>: ` or `Codex Exec exited with signal <name>: ` (the SDK 0.160.0 `CodexExec.run` shape). The unfinished-turn check and the rank-1 check stay. Every other thrown error joins the fold as before, so the parse failure, being later at the same rank, is recorded.
+
+**B2: message heuristics overrode the structured refusal.** `classifyCodexError` ran the CLI-message regexes before the HTTP 400 `invalid_request_error` check. A refusal whose provider text contained `Error: invalid value` became the fixed `Codex rejected the turn arguments`, losing the provider's reason. Text containing `Thread not found` became a false `HARNESS_SESSION_MISSING` / `session-missing`.
+
+- **Fix.** The structured refusal, decided from the parsed `status` and `error.type`, is now checked right after recognized typed metadata (which keeps its earlier boundary) and before every message heuristic.
+
+**N1: a fixture bypassed type checking.** The completed-turn control in `events.test.ts` cast its event `as never`. It now passes a complete typed `usage` (`input_tokens`, `cached_input_tokens`, `cache_write_input_tokens`, `output_tokens`, `reasoning_output_tokens`).
+
+**Regression tests.** All 17 new cases failed against the reviewed `events.ts` ([tests-review-r1-before.log.txt](tests-review-r1-before.log.txt)), run with that file restored from `4eabfb86` for the run only.
+
+- `packages/adapter-codex/src/refusal.test.ts`, through the public `CodexHarness`, the real SDK and the fake CLI (`fixtures/refusal-cli.mjs` gained the `malformed`, `invalid-value` and `missing-thread` scenarios):
+  - `records the SDK parse failure that follows an earlier stream diagnostic`. Before: the message was `An earlier generic diagnostic`.
+  - `keeps the invalid-value provider refusal as a refusal with its own text` and `keeps the missing-thread provider refusal as a refusal with its own text`. Both expect `HARNESS_ARGUMENTS_REJECTED`, the provider's text and `delivery-uncertain`. Before: `Codex rejected the turn arguments`, and `HARNESS_SESSION_MISSING` with `session-missing`. In that run they were titled `keeps a … provider refusal …`.
+- `packages/adapter-codex/src/events.test.ts`:
+  - `keeps a 400 invalid-request refusal saying … a refusal with its text`, for each of the 30 trigger phrases of every message heuristic (arguments, missing session, quota, authentication, installation, transport). The 10 phrases of the two heuristics that ran first failed before. The cases also check that typed metadata keeps its earlier boundary.
+  - `records … thrown after a stream failure as evidence of its own`, for a parse failure, an exit-shaped string that is not an `Error`, an `Error` subclass, and an error with its own `code`. All 4 failed before.
+  - The wrapper test also covers the signal form.
+- **The reviewer's probe, copied.** [scripts/review-r1-probe-errors.mjs](scripts/review-r1-probe-errors.mjs) and [scripts/review-r1-fake-codex.mjs](scripts/review-r1-fake-codex.mjs) are the reviewer's driver, with only the import, fake CLI and output paths changed. Run on the built fix, all six cases come out as required ([review-r1-error-probes.log.txt](review-r1-error-probes.log.txt)):
+  - `wrapper` keeps the stream's failure;
+  - `parse` and `completed` record `Failed to parse item: MALFORMED_PROTOCOL_ITEM`;
+  - `auth` records `HARNESS_NOT_AUTHENTICATED`;
+  - `invalid-value` and `missing-thread-text` record `HARNESS_ARGUMENTS_REJECTED` with the provider's text and `delivery-uncertain`.
+
+**Docs.** docs/05 (evidence fold) and docs/06 (Codex failure mapping) now name the exact SDK error treated as a wrapper. docs/06 also says the provider refusal is recognised before any message heuristic.
+
+### Behaviour QA findings added to this round
+
+The independent behaviour QA of PR #426 at `4eabfb86` passed, with two real turns:
+
+- the live refused turn recorded `HARNESS_TURN_FAILED` / `HARNESS_ARGUMENTS_REJECTED`, non-resumable, with the provider's message;
+- a real `low` turn succeeded.
+
+Its record is kept outside this branch. Three of its findings are fixed here.
+
+**D-1 (Low): Settings still offered Codex `minimal` with Default model "(server default)".**
+
+- **Cause.** `DefaultsSection` offered the full effort scale when no default model was selected. A refusal then showed only "invalid harness defaults (EVALUATION_INVALID_CONFIGURATION)" in the card footer.
+- **Fix.** The Codex Default effort now lists the efforts of the model it applies to, in this order:
+  1. the selected default model;
+  2. otherwise the process default model from `GET /system/model-defaults`, which is GPT-6 Luna unless `GG_DEFAULTS` names another;
+  3. while that is unknown, only the efforts every Codex catalog entry shares;
+  4. the full scale only while the catalog itself is unavailable.
+- **Refusals.** A `PUT /settings` refusal whose problems name `EFFORT_UNSUPPORTED` for that harness is shown below the field as "Not saved. Effort <e> is not supported by <model>. Choose a supported effort or Default.", with `role="alert"` and in the field's accessible description, instead of the footer. The model named is the attempted one or the server default.
+
+**O-2: a stored Settings default of `minimal` showed "minimal (unavailable)" with no reason.** The kept value now reads "minimal (not supported by this model)", with the editor's sentence (`unsupportedEffortMessage`) below the field and in its description ([settings-kept-minimal.png](settings-kept-minimal.png)). "(unavailable)" remains only when the effective model is unknown.
+
+**O-1: one `details` shape for every source.**
+
+- **Before.** A run whose unsupported effort came from loop, owner or process defaults reported `failure.details` as the array of `validateHarnessDefaults` resolutions, so `details.code` was absent, although the CHANGELOG and docs/06 promised it.
+- **Fix.** `RunManager`'s `resolveModel` now reports the first problem as `{code, path, level, harness}`. That is the node-level `{code, path}` shape plus where the default lives; the message is unchanged.
+- **Test changed.** The engine test `claude-effort.test.ts` encoded the array and was updated.
+
+**Regression tests**, failing on the code before this change (logs `tests-qa-*-before.log.txt`, each run with only the changed product file restored for the run):
+
+- `apps/web/src/settings/sections/DefaultsSection.test.tsx` (`Codex default effort follows the model it applies to`):
+  - `offers the server default model efforts with no model selected, never minimal`;
+  - `offers only the efforts every model shares while the server default model is unknown`;
+  - `explains a stored minimal default its model does not offer`, with and without a saved model;
+  - `names an effort the server refuses on its field instead of a generic footer`;
+  - `names the server default model when no model is selected`.
+  - Before: 6 of these 7 failed; the guard `keeps the generic footer for any other refusal` passes before and after.
+- `apps/web/e2e/model-effort.spec.ts` (Edge), `Settings Codex default effort follows the server default model and names an unsupported effort`:
+  - the list with "(server default)" is `low` to `max`;
+  - a refusal from a stale catalog shows "Not saved. Effort minimal is not supported by GPT-6 Luna. …" on the field, with no footer;
+  - a stored `minimal` default is explained, and choosing `low` saves.
+  - Before, against the previous web build: the list held `minimal`.
+- `apps/api/src/catalog.test.ts`, `fails a run inheriting a stored loop-default|owner-default minimal with the same details shape, without any request`. Before: `details` was the array. `packages/engine/src/claude-effort.test.ts` likewise expects the object for a process default.
+
+**Docs.**
+
+- CHANGELOG #205 bullet: Settings choices and the `details` shape.
+- docs/06 "Model catalog": the `details` shape and the Settings effort source.
+- docs/09: Settings effort derivation and on-field refusal.
+- Settings guide 06: Codex Default effort.
+
+**Checks after the fixes**, Node `v22.23.4`, logs `gates/r1-*` (typecheck, lint and format logs are from the final run of this round):
+
+| Check                                                                                                                                                                                        | Result                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                                                                                                                                     | pass: 555 passed, 4 skipped (live); statements 97.95%, branches 95.16%, functions 99%, lines 99.24%                                                                                                     |
+| `pnpm --filter @graphgoblin/engine exec vitest run src/handlers/inference-refusal.test.ts`                                                                                                   | pass, 20/20, including the 6 accepted pinned-refusal cases                                                                                                                                              |
+| `pnpm --filter @graphgoblin/engine test:coverage`                                                                                                                                            | pass: 1,763 passed; statements 95.65%, branches 91.2%, functions 97.76%, lines 96.94%                                                                                                                   |
+| `pnpm --filter @graphgoblin/web test:coverage`                                                                                                                                               | pass: 1,817 passed; statements 98.09%, branches 94.78%, functions 98.1%, lines 98.93% (run before the type-only fix below)                                                                              |
+| `pnpm --filter @graphgoblin/api exec vitest run src/provider-refusal.test.ts` (`GG_TEST_PORT_START=7000`, `GG_TEST_PORT_COUNT=40`)                                                           | pass, 1/1                                                                                                                                                                                               |
+| `pnpm --filter @graphgoblin/api exec vitest run src/catalog.test.ts src/provider-refusal.test.ts src/claude-effort-readiness.test.ts src/stored-loop-defaults.test.ts`                       | pass, 44/44                                                                                                                                                                                             |
+| `pnpm typecheck`                                                                                                                                                                             | First run failed in `DefaultsSection.tsx`, which indexed the process defaults by a plain string. The harness list now narrows to `HarnessId` with a type guard; no cast. Second run passed, 20/20 tasks |
+| `pnpm lint`                                                                                                                                                                                  | Same first failure and cause; pass after the fix, 12/12 tasks                                                                                                                                           |
+| `pnpm format:check`, `pnpm check:layers`, `pnpm check:tokens`                                                                                                                                | pass                                                                                                                                                                                                    |
+| `pnpm check:deps`                                                                                                                                                                            | pass: 0 errors, the same 3 pre-existing orphan warnings                                                                                                                                                 |
+| `pnpm docs:generate`                                                                                                                                                                         | pass, no diff                                                                                                                                                                                           |
+| `pnpm build`, then from `apps/web`: `pnpm exec playwright test e2e/model-effort.spec.ts e2e/model-picker.spec.ts e2e/claude-harness.spec.ts e2e/form-controls.spec.ts e2e/qa.spec.ts` (Edge) | pass, 57/57                                                                                                                                                                                             |
+
+**Not addressed here.**
+
+- QA O-3: an invalid `GG_DEFAULTS` stops the API at start with a clear message. The CHANGELOG upgrade note already says to change `GG_DEFAULTS` before starting.
+- QA O-4: Replay preselects the first node; that is the #256 area.
+- QA O-5: provider-side session files are the owner's to remove.
+- QA O-6 is a note for briefs.
+- HQ-1, whether to add `none` or drop `minimal` from the scale, remains the owner's decision.
+
+- The reviewer's N2 (unchanged API tests unreliable in the combined suite, with the port collision under #407) is outside this change.
+- The reviewer's sandbox could not confirm process-tree termination, so the Claude guard test failed there on unconfirmed termination (D-015). It passed in this environment in the earlier gates.
+
 ## Live check for the QA to repeat
 
 The fixes were verified only with fake CLIs. The independent behaviour QA should repeat one real Codex turn, as follows:
@@ -135,10 +244,10 @@ The fixes were verified only with fake CLIs. The independent behaviour QA should
 
 ## Files
 
-- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt`; [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
+- `README.md`; [codex-catalog-efforts.log.txt](codex-catalog-efforts.log.txt) and [scripts/codex-catalog-efforts.mjs](scripts/codex-catalog-efforts.mjs) (D1 source); `tests-*-before.log.txt` (the regression tests run against the original product code, after the tests were written and before any product change); [kept-minimal-inference.png](kept-minimal-inference.png), [kept-minimal-llm.png](kept-minimal-llm.png) and [settings-kept-minimal.png](settings-kept-minimal.png) (Edge, from the `model-effort` spec after the fix); `gates/*.log.txt` (`gates/r1-*` after review round 1); [tests-review-r1-before.log.txt](tests-review-r1-before.log.txt), [review-r1-error-probes.log.txt](review-r1-error-probes.log.txt) and the copied review probe in `scripts/review-r1-*.mjs`; [scripts/redact-copy.mjs](scripts/redact-copy.mjs), which copied captured output here.
 - Paths, the user name, the machine name and SIDs are redacted. Every file is UTF-8 without a byte-order mark and under 1,000,000 bytes, so there is no `NOT-KEPT.md`.
 
 ## Cleanup
 
 - The tests remove their own temporary directories. The 16 `gg-f2fix-api-*` stores that the API runs left in `%TEMP%` (the Windows libsql handle leak that predates this change) and this session's captured outputs (`%TEMP%\gg-f2fix-*.txt`) were deleted after copying.
-- No process from these checks is left running, and nothing listens on ports 7000 to 7039 or 6670 to 6679. The owner's ports 4747/4748, `~/.graphgoblin`, the main checkout and other worktrees were not touched. Nothing was pushed or merged.
+- No process from these checks is left running, and nothing listens on ports 7000 to 7039 or 6670 to 6679. The owner's ports 4747/4748, `~/.graphgoblin`, the main checkout and other worktrees were not touched; review round 1 only read and copied the review folder. This work pushed and merged nothing (the orchestrator pushes the branch).

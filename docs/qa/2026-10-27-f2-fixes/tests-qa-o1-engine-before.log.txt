@@ -1,0 +1,53 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/engine
+
+ ❯ src/claude-effort.test.ts (2 tests | 1 failed) 118ms
+   × resolves a Claude request against the catalog without probing the harness: unsupported 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude-effort.test.ts > resolves a Claude request against the catalog without probing the harness: unsupported
+AssertionError: expected { …(15) } to match object { status: 'failed', failure: { …(3) } }
+(22 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+-     "details": {
+-       "code": "EFFORT_UNSUPPORTED",
++     "details": [
++       {
+          "harness": "claude",
+          "level": "process",
++         "resolution": {
++           "code": "EFFORT_UNSUPPORTED",
++           "message": "The default reasoning effort is not supported by its model",
+            "path": "effort",
++           "status": "invalid",
++         },
+        },
++     ],
+      "nodeId": "work",
+    },
+    "status": "failed",
+  }
+
+ ❯ src/claude-effort.test.ts:49:19
+     47|     const run = await engine.runToIdle(version.loopId);
+     48|     if (state === 'unsupported') {
+     49|       expect(run).toMatchObject({
+       |                   ^
+     50|         status: 'failed',
+     51|         failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  12:52:40
+   Duration  3.06s (import 53%, transform 42%, tests 4%)
+

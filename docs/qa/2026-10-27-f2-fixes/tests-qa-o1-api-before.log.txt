@@ -1,0 +1,90 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/apps/api
+
+ ❯ src/catalog.test.ts (34 tests | 2 failed | 32 skipped) 931ms
+   ❯ Codex efforts are sent unchanged and offered per model (#205) (9)
+     × fails a run inheriting a stored loop-default minimal with the same details shape, without any request 745ms
+     × fails a run inheriting a stored owner-default minimal with the same details shape, without any request 184ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > fails a run inheriting a stored loop-default minimal with the same details shape, without any request
+AssertionError: expected [ { level: 'loop', …(2) } ] to deeply equal { code: 'EFFORT_UNSUPPORTED', …(3) }
+
+- Expected:
+{
+  "code": "EFFORT_UNSUPPORTED",
+  "harness": "codex",
+  "level": "loop",
+  "path": "effort",
+}
+
++ Received:
+[
+  {
+    "harness": "codex",
+    "level": "loop",
+    "resolution": {
+      "code": "EFFORT_UNSUPPORTED",
+      "message": "The default reasoning effort is not supported by its model",
+      "path": "effort",
+      "status": "invalid",
+    },
+  },
+]
+
+ ❯ src/catalog.test.ts:512:35
+    510|         failure: { code: 'EVALUATION_INVALID_CONFIGURATION', resumable…
+    511|       });
+    512|       expect(run.failure.details).toEqual({
+       |                                   ^
+    513|         code: 'EFFORT_UNSUPPORTED',
+    514|         path: 'effort',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > fails a run inheriting a stored owner-default minimal with the same details shape, without any request
+AssertionError: expected [ { level: 'owner', …(2) } ] to deeply equal { code: 'EFFORT_UNSUPPORTED', …(3) }
+
+- Expected:
+{
+  "code": "EFFORT_UNSUPPORTED",
+  "harness": "codex",
+  "level": "owner",
+  "path": "effort",
+}
+
++ Received:
+[
+  {
+    "harness": "codex",
+    "level": "owner",
+    "resolution": {
+      "code": "EFFORT_UNSUPPORTED",
+      "message": "The default reasoning effort is not supported by its model",
+      "path": "effort",
+      "status": "invalid",
+    },
+  },
+]
+
+ ❯ src/catalog.test.ts:512:35
+    510|         failure: { code: 'EVALUATION_INVALID_CONFIGURATION', resumable…
+    511|       });
+    512|       expect(run.failure.details).toEqual({
+       |                                   ^
+    513|         code: 'EFFORT_UNSUPPORTED',
+    514|         path: 'effort',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 32 skipped (34)
+   Start at  12:52:31
+   Duration  7.38s (import 56%, transform 31%, tests 13%)
+
+  Transform  transforming modules took 2.19s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

@@ -1,0 +1,2165 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/apps/web
+
+ ❯ src/settings/sections/DefaultsSection.test.tsx (13 tests | 6 failed) 30796ms
+   ❯ Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) (7)
+     × offers the server default model efforts with no model selected, never minimal 5018ms
+     × offers only the efforts every model shares while the server default model is unknown 5019ms
+     × explains a stored minimal default its model does not offer ({"model":"gpt-6-luna"}) 5016ms
+     × explains a stored minimal default its model does not offer ({}) 5011ms
+     × names an effort the server refuses on its field instead of a generic footer 5123ms
+     × names the server default model when no model is selected 5020ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > offers the server default model efforts with no model selected, never minimal
+AssertionError: expected [ Array(7) ] to deeply equal [ '', 'low', 'medium', 'high', …(2) ]
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="_r_6_"
+        class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+      >
+        <header
+          class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+        >
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-heading"
+            id="_r_6_"
+          >
+            Defaults
+          </h2>
+        </header>
+        <div
+          class="p-5"
+        >
+          <div
+            class="grid gap-5"
+          >
+            <section
+              aria-label="codex defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                codex
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-codex"
+                  >
+                    Default model
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        value="gpt-6-luna"
+                      >
+                        Luna
+                      </option>
+                      <option
+                        value="gpt-5.5"
+                      >
+                        GPT-5.5
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-codex"
+                  >
+                    Default effort
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option>
+                        minimal
+                      </option>
+                      <option>
+                        low
+                      </option>
+                      <option>
+                        medium
+                      </option>
+                      <option>
+                        high
+                      </option>
+                      <option>
+                        xhigh
+                      </option>
+                      <option>
+                        max
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-label="claude defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                claude
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-claude"
+                  >
+                    Default model (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-model-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-claude"
+                  >
+                    Default effort (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-effort-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                  <p
+                    class="text-xs leading-snug text-muted"
+                    id="default-effort-claude-help"
+                  >
+                    This is the requested effort; Claude does not report the effective effort.
+                  </p>
+                </div>
+              </div>
+              <p
+                class="text-xs leading-snug text-status-warn-fg"
+                id="default-model-claude-help"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                  data-icon="alert"
+                  fill="none"
+                  focusable="false"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                  />
+                  <path
+                    d="M12 10v4M12 17.2h.01"
+                  />
+                </svg>
+                Claude readiness: Unknown. See Harness preflight below.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+      <output
+        data-testid="location"
+      >
+        /
+      </output>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+@@ -1,7 +1,8 @@
+  [
+    "",
++   "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+
+ ❯ src/settings/sections/DefaultsSection.test.tsx:201:43
+    199|   it('offers the server default model efforts with no model selected, …
+    200|     renderWith(<DefaultsSection />, '/', codexOnly());
+    201|     await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+       |                                           ^
+    202|   });
+    203|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > offers only the efforts every model shares while the server default model is unknown
+AssertionError: expected [ Array(7) ] to deeply equal [ Array(5) ]
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="_r_7_"
+        class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+      >
+        <header
+          class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+        >
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-heading"
+            id="_r_7_"
+          >
+            Defaults
+          </h2>
+        </header>
+        <div
+          class="p-5"
+        >
+          <div
+            class="grid gap-5"
+          >
+            <section
+              aria-label="codex defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                codex
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-codex"
+                  >
+                    Default model
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        value="gpt-6-luna"
+                      >
+                        Luna
+                      </option>
+                      <option
+                        value="gpt-5.5"
+                      >
+                        GPT-5.5
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-codex"
+                  >
+                    Default effort
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option>
+                        minimal
+                      </option>
+                      <option>
+                        low
+                      </option>
+                      <option>
+                        medium
+                      </option>
+                      <option>
+                        high
+                      </option>
+                      <option>
+                        xhigh
+                      </option>
+                      <option>
+                        max
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-label="claude defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                claude
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-claude"
+                  >
+                    Default model (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-model-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-claude"
+                  >
+                    Default effort (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-effort-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                  <p
+                    class="text-xs leading-snug text-muted"
+                    id="default-effort-claude-help"
+                  >
+                    This is the requested effort; Claude does not report the effective effort.
+                  </p>
+                </div>
+              </div>
+              <p
+                class="text-xs leading-snug text-status-warn-fg"
+                id="default-model-claude-help"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                  data-icon="alert"
+                  fill="none"
+                  focusable="false"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                  />
+                  <path
+                    d="M12 10v4M12 17.2h.01"
+                  />
+                </svg>
+                Claude readiness: Unknown. See Harness preflight below.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+      <output
+        data-testid="location"
+      >
+        /
+      </output>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+  [
+    "",
++   "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
++   "max",
+  ]
+
+ ❯ src/settings/sections/DefaultsSection.test.tsx:214:43
+    212|     );
+    213|     renderWith(<DefaultsSection />, '/', api);
+    214|     await waitFor(() => expect(offered()).toEqual(['', 'low', 'medium'…
+       |                                           ^
+    215|   });
+    216|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > explains a stored minimal default its model does not offer ({"model":"gpt-6-luna"})
+Error: expect(element).toHaveAccessibleDescription()
+
+Expected element to have accessible description:
+  Effort minimal is not supported by Luna. Choose a supported effort or Default.
+Received:
+
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="_r_8_"
+        class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+      >
+        <header
+          class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+        >
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-heading"
+            id="_r_8_"
+          >
+            Defaults
+          </h2>
+        </header>
+        <div
+          class="p-5"
+        >
+          <div
+            class="grid gap-5"
+          >
+            <section
+              aria-label="codex defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                codex
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-codex"
+                  >
+                    Default model
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        value="gpt-6-luna"
+                      >
+                        Luna
+                      </option>
+                      <option
+                        value="gpt-5.5"
+                      >
+                        GPT-5.5
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-codex"
+                  >
+                    Default effort
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        disabled=""
+                        value="minimal"
+                      >
+                        minimal
+                         (unavailable)
+                      </option>
+                      <option>
+                        low
+                      </option>
+                      <option>
+                        medium
+                      </option>
+                      <option>
+                        high
+                      </option>
+                      <option>
+                        xhigh
+                      </option>
+                      <option>
+                        max
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-label="claude defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                claude
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-claude"
+                  >
+                    Default model (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-model-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-claude"
+                  >
+                    Default effort (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-effort-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                  <p
+                    class="text-xs leading-snug text-muted"
+                    id="default-effort-claude-help"
+                  >
+                    This is the requested effort; Claude does not report the effective effort.
+                  </p>
+                </div>
+              </div>
+              <p
+                class="text-xs leading-snug text-status-warn-fg"
+                id="default-model-claude-help"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                  data-icon="alert"
+                  fill="none"
+                  focusable="false"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                  />
+                  <path
+                    d="M12 10v4M12 17.2h.01"
+                  />
+                </svg>
+                Claude readiness: Unknown. See Harness preflight below.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+      <output
+        data-testid="location"
+      >
+        /
+      </output>
+    </div>
+  </body>
+</html>
+ ❯ src/settings/sections/DefaultsSection.test.tsx:223:49
+    221|       const message =
+    222|         'Effort minimal is not supported by Luna. Choose a supported e…
+    223|       await waitFor(() => expect(codexEffort()).toHaveAccessibleDescri…
+       |                                                 ^
+    224|       expect(codexEffort()).toHaveValue('minimal');
+    225|       expect(
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > explains a stored minimal default its model does not offer ({})
+Error: expect(element).toHaveAccessibleDescription()
+
+Expected element to have accessible description:
+  Effort minimal is not supported by Luna. Choose a supported effort or Default.
+Received:
+
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="_r_9_"
+        class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+      >
+        <header
+          class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+        >
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-heading"
+            id="_r_9_"
+          >
+            Defaults
+          </h2>
+        </header>
+        <div
+          class="p-5"
+        >
+          <div
+            class="grid gap-5"
+          >
+            <section
+              aria-label="codex defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                codex
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-codex"
+                  >
+                    Default model
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        value="gpt-6-luna"
+                      >
+                        Luna
+                      </option>
+                      <option
+                        value="gpt-5.5"
+                      >
+                        GPT-5.5
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-codex"
+                  >
+                    Default effort
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option>
+                        minimal
+                      </option>
+                      <option>
+                        low
+                      </option>
+                      <option>
+                        medium
+                      </option>
+                      <option>
+                        high
+                      </option>
+                      <option>
+                        xhigh
+                      </option>
+                      <option>
+                        max
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-label="claude defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                claude
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-claude"
+                  >
+                    Default model (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-model-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-claude"
+                  >
+                    Default effort (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-effort-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                  <p
+                    class="text-xs leading-snug text-muted"
+                    id="default-effort-claude-help"
+                  >
+                    This is the requested effort; Claude does not report the effective effort.
+                  </p>
+                </div>
+              </div>
+              <p
+                class="text-xs leading-snug text-status-warn-fg"
+                id="default-model-claude-help"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                  data-icon="alert"
+                  fill="none"
+                  focusable="false"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                  />
+                  <path
+                    d="M12 10v4M12 17.2h.01"
+                  />
+                </svg>
+                Claude readiness: Unknown. See Harness preflight below.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+      <output
+        data-testid="location"
+      >
+        /
+      </output>
+    </div>
+  </body>
+</html>
+ ❯ src/settings/sections/DefaultsSection.test.tsx:223:49
+    221|       const message =
+    222|         'Effort minimal is not supported by Luna. Choose a supported e…
+    223|       await waitFor(() => expect(codexEffort()).toHaveAccessibleDescri…
+       |                                                 ^
+    224|       expect(codexEffort()).toHaveValue('minimal');
+    225|       expect(
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > names an effort the server refuses on its field instead of a generic footer
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      aria-labelledby="_r_a_"
+      class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+    >
+      <header
+        class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+      >
+        <h2
+          class="flex items-center gap-2 text-md font-semibold text-heading"
+          id="_r_a_"
+        >
+          Defaults
+        </h2>
+      </header>
+      <div
+        class="p-5"
+      >
+        <div
+          class="grid gap-5"
+        >
+          <section
+            aria-label="codex defaults"
+            class="grid gap-2"
+          >
+            <h3
+              class="text-sm font-semibold capitalize"
+            >
+              codex
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+            >
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[240px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-model-codex"
+                >
+                  Default model
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-model-codex"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                    <option
+                      value="gpt-6-luna"
+                    >
+                      Luna
+                    </option>
+                    <option
+                      value="gpt-5.5"
+                    >
+                      GPT-5.5
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[200px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-effort-codex"
+                >
+                  Default effort
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-effort-codex"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                    <option>
+                      low
+                    </option>
+                    <option>
+                      medium
+                    </option>
+                    <option>
+                      high
+                    </option>
+                    <option>
+                      xhigh
+                    </option>
+                    <option>
+                      max
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </section>
+          <section
+            aria-label="claude defaults"
+            class="grid gap-2"
+          >
+            <h3
+              class="text-sm font-semibold capitalize"
+            >
+              claude
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+            >
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[240px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-model-claude"
+                >
+                  Default model (claude)
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    aria-describedby="default-model-claude-help"
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-model-claude"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[200px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-effort-claude"
+                >
+                  Default effort (claude)
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    aria-describedby="default-effort-claude-help"
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-effort-claude"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+                <p
+                  class="text-xs leading-snug text-muted"
+                  id="default-effort-claude-help"
+                >
+                  This is the requested effort; Claude does not report the effective effort.
+                </p>
+              </div>
+            </div>
+            <p
+              class="text-xs leading-snug text-status-warn-fg"
+              id="default-model-claude-help"
+            >
+              <svg
+                aria-hidden="true"
+                class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                data-icon="alert"
+                fill="none"
+                focusable="false"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                />
+                <path
+                  d="M12 10v4M12 17.2h.01"
+                />
+              </svg>
+              Claude readiness: Unknown. See Harness preflight below.
+            </p>
+          </section>
+        </div>
+        <p
+          class="text-xs leading-snug font-medium text-status-bad-fg"
+        >
+          invalid harness defaults (EVALUATION_INVALID_CONFIGURATION)
+        </p>
+      </div>
+    </section>
+    <output
+      data-testid="location"
+    >
+      /
+    </output>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      aria-labelledby="_r_a_"
+      class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+    >
+      <header
+        class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+      >
+        <h2
+          class="flex items-center gap-2 text-md font-semibold text-heading"
+          id="_r_a_"
+        >
+          Defaults
+        </h2>
+      </header>
+      <div
+        class="p-5"
+      >
+        <div
+          class="grid gap-5"
+        >
+          <section
+            aria-label="codex defaults"
+            class="grid gap-2"
+          >
+            <h3
+              class="text-sm font-semibold capitalize"
+            >
+              codex
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+            >
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[240px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-model-codex"
+                >
+                  Default model
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-model-codex"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                    <option
+                      value="gpt-6-luna"
+                    >
+                      Luna
+                    </option>
+                    <option
+                      value="gpt-5.5"
+                    >
+                      GPT-5.5
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[200px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-effort-codex"
+                >
+                  Default effort
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-effort-codex"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                    <option>
+                      low
+                    </option>
+                    <option>
+                      medium
+                    </option>
+                    <option>
+                      high
+                    </option>
+                    <option>
+                      xhigh
+                    </option>
+                    <option>
+                      max
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </section>
+          <section
+            aria-label="claude defaults"
+            class="grid gap-2"
+          >
+            <h3
+              class="text-sm font-semibold capitalize"
+            >
+              claude
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+            >
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[240px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-model-claude"
+                >
+                  Default model (claude)
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    aria-describedby="default-model-claude-help"
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-model-claude"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div
+                class="grid min-w-0 content-start gap-1.5 w-[200px]"
+              >
+                <label
+                  class="block text-sm leading-[1.3] font-medium text-default"
+                  for="default-effort-claude"
+                >
+                  Default effort (claude)
+                </label>
+                <span
+                  class="relative block min-w-0"
+                >
+                  <select
+                    aria-describedby="default-effort-claude-help"
+                    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                    id="default-effort-claude"
+                  >
+                    <option
+                      value=""
+                    >
+                      (server default)
+                    </option>
+                  </select>
+                  <svg
+                    aria-hidden="true"
+                    class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                    data-icon="chevron"
+                    fill="none"
+                    focusable="false"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
+                <p
+                  class="text-xs leading-snug text-muted"
+                  id="default-effort-claude-help"
+                >
+                  This is the requested effort; Claude does not report the effective effort.
+                </p>
+              </div>
+            </div>
+            <p
+              class="text-xs leading-snug text-status-warn-fg"
+              id="default-model-claude-help"
+            >
+              <svg
+                aria-hidden="true"
+                class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                data-icon="alert"
+                fill="none"
+                focusable="false"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                />
+                <path
+                  d="M12 10v4M12 17.2h.01"
+                />
+              </svg>
+              Claude readiness: Unknown. See Harness preflight below.
+            </p>
+          </section>
+        </div>
+        <p
+          class="text-xs leading-snug font-medium text-status-bad-fg"
+        >
+          invalid harness defaults (EVALUATION_INVALID_CONFIGURATION)
+        </p>
+      </div>
+    </section>
+    <output
+      data-testid="location"
+    >
+      /
+    </output>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/settings/sections/DefaultsSection.test.tsx:243:25
+    241|     const message =
+    242|       'Not saved. Effort max is not supported by Luna. Choose a suppor…
+    243|     expect(await screen.findByRole('alert')).toHaveTextContent(message…
+       |                         ^
+    244|     expect(codexEffort()).toHaveAccessibleDescription(message);
+    245|     expect(codexEffort()).toHaveValue('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > names the server default model when no model is selected
+AssertionError: expected [ Array(7) ] to deeply equal [ '', 'low', 'medium', 'high', …(2) ]
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="_r_b_"
+        class="min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"
+      >
+        <header
+          class="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"
+        >
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-heading"
+            id="_r_b_"
+          >
+            Defaults
+          </h2>
+        </header>
+        <div
+          class="p-5"
+        >
+          <div
+            class="grid gap-5"
+          >
+            <section
+              aria-label="codex defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                codex
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-codex"
+                  >
+                    Default model
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option
+                        value="gpt-6-luna"
+                      >
+                        Luna
+                      </option>
+                      <option
+                        value="gpt-5.5"
+                      >
+                        GPT-5.5
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-codex"
+                  >
+                    Default effort
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-codex"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                      <option>
+                        minimal
+                      </option>
+                      <option>
+                        low
+                      </option>
+                      <option>
+                        medium
+                      </option>
+                      <option>
+                        high
+                      </option>
+                      <option>
+                        xhigh
+                      </option>
+                      <option>
+                        max
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-label="claude defaults"
+              class="grid gap-2"
+            >
+              <h3
+                class="text-sm font-semibold capitalize"
+              >
+                claude
+              </h3>
+              <div
+                class="flex flex-wrap gap-3 max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto max-sm:[&>button]:w-auto max-sm:[&>button]:self-start items-end"
+              >
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[240px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-model-claude"
+                  >
+                    Default model (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-model-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-model-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="grid min-w-0 content-start gap-1.5 w-[200px]"
+                >
+                  <label
+                    class="block text-sm leading-[1.3] font-medium text-default"
+                    for="default-effort-claude"
+                  >
+                    Default effort (claude)
+                  </label>
+                  <span
+                    class="relative block min-w-0"
+                  >
+                    <select
+                      aria-describedby="default-effort-claude-help"
+                      class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+                      id="default-effort-claude"
+                    >
+                      <option
+                        value=""
+                      >
+                        (server default)
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+                      data-icon="chevron"
+                      fill="none"
+                      focusable="false"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
+                  <p
+                    class="text-xs leading-snug text-muted"
+                    id="default-effort-claude-help"
+                  >
+                    This is the requested effort; Claude does not report the effective effort.
+                  </p>
+                </div>
+              </div>
+              <p
+                class="text-xs leading-snug text-status-warn-fg"
+                id="default-model-claude-help"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-4 shrink-0 mr-1 inline size-3.5 align-text-bottom"
+                  data-icon="alert"
+                  fill="none"
+                  focusable="false"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+                  />
+                  <path
+                    d="M12 10v4M12 17.2h.01"
+                  />
+                </svg>
+                Claude readiness: Unknown. See Harness preflight below.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+      <output
+        data-testid="location"
+      >
+        /
+      </output>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+@@ -1,7 +1,8 @@
+  [
+    "",
++   "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+
+ ❯ src/settings/sections/DefaultsSection.test.tsx:254:43
+    252|     api.override('PUT /settings', () => refusal('EFFORT_UNSUPPORTED', …
+    253|     renderWith(<DefaultsSection />, '/', api);
+    254|     await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+       |                                           ^
+    255|     await user.selectOptions(codexEffort(), 'xhigh');
+    256|     expect(await screen.findByRole('alert')).toHaveTextContent(
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)
+   Start at  12:55:42
+   Duration  38.35s (tests 81%, environment 7%, transform 6%, import 4%, setup 2%)
+
