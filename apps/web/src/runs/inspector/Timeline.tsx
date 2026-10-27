@@ -14,6 +14,36 @@ const STREAM_LABEL: Record<StreamStatus, string> = {
 };
 // Count-based row windowing avoids fixed-height assumptions for wrapped, accessible names.
 export const TIMELINE_ROWS = 80;
+
+/**
+ * A paging control that stays focusable while it cannot act (`aria-disabled`, not `disabled`), so
+ * activating it never drops keyboard focus to the page when it disables itself (#186).
+ */
+function PagingButton({
+  off,
+  onActivate,
+  children,
+  type = 'button',
+}: {
+  off: boolean;
+  onActivate?: () => void;
+  children: string;
+  type?: 'button' | 'submit';
+}) {
+  return (
+    <Button
+      size="sm"
+      type={type}
+      aria-disabled={off ? true : undefined}
+      onClick={(event) => {
+        if (off) event.preventDefault();
+        else onActivate?.();
+      }}
+    >
+      {children}
+    </Button>
+  );
+}
 export function Timeline({
   events,
   status,
@@ -48,6 +78,7 @@ export function Timeline({
   onPause?: () => void;
 }) {
   const [anchor, setAnchor] = useState<number>();
+  const [active, setActive] = useState<number>();
   const [jump, setJump] = useState('');
   const listRef = useRef<HTMLOListElement>(null);
   const focusRef = useRef<number | undefined>(undefined);
@@ -71,6 +102,13 @@ export function Timeline({
   const start = following || anchor === undefined ? tail : Math.max(0, Math.min(tail, anchorIndex));
   const shown = events.slice(start, start + TIMELINE_ROWS);
   const end = start + shown.length;
+  // One row is in the Tab order (the last focused, else the selected, else the newest shown), so
+  // Tab and Shift+Tab leave the list in one step; arrows, Page Up/Down and Home/End move within.
+  const mounted = (seq: number | undefined) => shown.some((event) => event.seq === seq);
+  const tabStop = mounted(active) ? active : mounted(selected) ? selected : shown.at(-1)?.seq;
+  const windowText = events.length
+    ? `Showing events ${shown[0]?.seq}–${shown.at(-1)?.seq} of the retained window.`
+    : 'No events loaded.';
   useLayoutEffect(() => {
     if (focusRef.current !== undefined) {
       listRef.current
@@ -106,57 +144,55 @@ export function Timeline({
         </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-2 px-4 pt-3 text-xs text-muted">
-        <Button
-          size="sm"
-          disabled={!hasOlder || busy}
-          onClick={() => {
+        <PagingButton
+          off={!hasOlder || busy}
+          onActivate={() => {
             onPause?.();
             setAnchor(0);
             onOlder?.();
           }}
         >
           Load older
-        </Button>
-        <Button
-          size="sm"
-          disabled={start === 0 || busy}
-          onClick={() => move(Math.max(0, start - TIMELINE_ROWS))}
+        </PagingButton>
+        <PagingButton
+          off={start === 0 || busy}
+          onActivate={() => move(Math.max(0, start - TIMELINE_ROWS))}
         >
           Previous rows
-        </Button>
-        <Button size="sm" disabled={end >= events.length || busy} onClick={() => move(end)}>
+        </PagingButton>
+        <PagingButton off={end >= events.length || busy} onActivate={() => move(end)}>
           Next rows
-        </Button>
-        <Button
-          size="sm"
-          disabled={!hasNewer || busy}
-          onClick={() => {
+        </PagingButton>
+        <PagingButton
+          off={!hasNewer || busy}
+          onActivate={() => {
             setAnchor(undefined);
             onNewer?.();
           }}
         >
           Load newer
-        </Button>
-        <Button
-          size="sm"
-          disabled={following || busy}
-          onClick={() => {
+        </PagingButton>
+        <PagingButton
+          off={following || busy}
+          onActivate={() => {
             setAnchor(undefined);
             onLive?.();
           }}
         >
           Follow live
-        </Button>
-        <span aria-live="polite">
-          {events.length
-            ? `Showing events ${shown[0]?.seq}–${shown.at(-1)?.seq} of the retained window.`
-            : 'No events loaded.'}
+        </PagingButton>
+        <span>{windowText}</span>
+        {/* Announces what the reader changes (pausing, browsing, returning live), never each live
+            append, which would repeat several times a second while following (#186). */}
+        <span className="sr-only" aria-live="polite">
+          {following ? 'Following live.' : `Following paused. ${windowText}`}
         </span>
       </div>
       <form
         className="flex items-center gap-2 px-4 py-2 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
+          if (busy) return;
           const seq = Number(jump);
           if (Number.isSafeInteger(seq) && seq > 0) {
             setAnchor(seq);
@@ -175,9 +211,9 @@ export function Timeline({
             onChange={(event) => setJump(event.target.value)}
           />
         </label>
-        <Button size="sm" type="submit" disabled={busy}>
+        <PagingButton type="submit" off={busy}>
           Go to event
-        </Button>
+        </PagingButton>
       </form>
       <ol
         ref={listRef}
@@ -219,10 +255,6 @@ export function Timeline({
           if (event.key === 'End') next = events.length - 1;
           if (event.key === 'PageDown') next = Math.min(events.length - 1, index + TIMELINE_ROWS);
           if (event.key === 'PageUp') next = Math.max(0, index - TIMELINE_ROWS);
-          if (event.key === 'Tab' && !event.shiftKey && index === end - 1 && end < events.length)
-            next = index + 1;
-          if (event.key === 'Tab' && event.shiftKey && index === start && start > 0)
-            next = index - 1;
           if (next !== undefined && next >= 0 && next < events.length) {
             event.preventDefault();
             move(next);
@@ -234,6 +266,7 @@ export function Timeline({
             <button
               type="button"
               data-seq={event.seq}
+              tabIndex={event.seq === tabStop ? 0 : -1}
               aria-current={event.seq === selected ? 'true' : undefined}
               aria-description={
                 'uncached' in event
@@ -247,6 +280,7 @@ export function Timeline({
                 'forced-colors:aria-[current=true]:outline',
               )}
               onFocus={() => {
+                setActive(event.seq);
                 setAnchor(shown[0]?.seq);
                 onPause?.();
               }}

@@ -1,0 +1,39 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure test src/sqlite/history-cleanup.test.ts src/sqlite/deletion-eligibility.test.ts src/fs/artifacts.test.ts src/fs/workspace.test.ts
+$ vitest run src/sqlite/history-cleanup.test.ts src/sqlite/deletion-eligibility.test.ts src/fs/artifacts.test.ts src/fs/workspace.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/history-cleanup.test.ts (38 tests | 1 failed) 49404ms
+   ❯ large retained stores (2)
+     × does not let 61 budget-protected artifact jobs hide removable workspaces in a later window 20322ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > large retained stores > does not let 61 budget-protected artifact jobs hide removable workspaces in a later window
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/history-cleanup.test.ts:715:3
+    713|     store = new SqliteHistoryCleanup(handle.db, resources);
+    714|   });
+    715|   it('does not let 61 budget-protected artifact jobs hide removable wo…
+       |   ^
+    716|     const retained = await seed('retained');
+    717|     await handle.client.execute({
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 53 passed (54)
+   Start at  07:53:42
+   Duration  57.64s (tests 78%, import 12%, transform 10%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

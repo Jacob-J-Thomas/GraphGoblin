@@ -21,8 +21,8 @@
     "build": "tsc -b tsconfig.build.json",
     "typecheck": "tsc -b tsconfig.build.json && tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "pnpm build && vitest run",
+    "test:coverage": "pnpm build && vitest run --coverage",
     "start": "node dist/main.js"
   },
   "dependencies": {

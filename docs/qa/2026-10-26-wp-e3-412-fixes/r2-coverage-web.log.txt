@@ -1,0 +1,39 @@
+﻿pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r2-web-coverage
+$ vitest run --coverage --maxWorkers=2 '--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r2-web-coverage'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+      Coverage enabled with v8
+
+ ❯ src/runs/history-browsing.test.tsx (5 tests | 1 failed) 37083ms
+   × browses older history during execution, reloads at the live acknowledgement and selects an evicted sequence with full projections intact 20536ms
+Not implemented: navigation to another Document
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/runs/history-browsing.test.tsx > browses older history during execution, reloads at the live acknowledgement and selects an evicted sequence with full projections intact
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/runs/history-browsing.test.tsx:70:1
+     68| });
+     69|
+     70| it('browses older history during execution, reloads at the live acknow…
+       | ^
+     71|   const user = userEvent.setup();
+     72|   const api = new FakeApi();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 147 passed (148)
+      Tests  1 failed | 1782 passed (1783)
+   Start at  04:28:45
+   Duration  1621.43s (tests 41%, environment 29%, import 11%, setup 10%, transform 9%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+System.Management.Automation.RemoteException
+EXIT 1

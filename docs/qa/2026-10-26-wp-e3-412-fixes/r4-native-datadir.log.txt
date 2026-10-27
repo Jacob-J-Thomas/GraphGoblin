@@ -1,0 +1,31 @@
+﻿pnpm.cmd exec node docs/qa/2026-10-26-wp-e3-412-fixes/r4-datadir-alias.mjs
+variant plain path (control): GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r4-datadir-2g40bZ\physical-data-root
+PASS plain path (control): a run with a temp workspace and a transcript succeeds
+PASS plain path (control): workspace contains the script output
+PASS plain path (control): transcript is retrievable
+PASS plain path (control): explicit approval
+plain path (control): cleanup {"state":"pressure","checkedAt":"2026-10-26T13:01:22.651Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":1,"removedFileBytes":77,"reusableDatabaseBytes":8192,"pendingResources":0,"preservedResources":0}
+PASS plain path (control): approved workspace and transcript reclaimed
+variant different letter case: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r4-datadir-2g40bZ\PHYSICAL-Data-Root
+PASS different letter case: a run with a temp workspace and a transcript succeeds
+PASS different letter case: workspace contains the script output
+PASS different letter case: transcript is retrievable
+PASS different letter case: explicit approval
+different letter case: cleanup {"state":"pressure","checkedAt":"2026-10-26T13:02:28.662Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":1,"removedFileBytes":78,"reusableDatabaseBytes":8192,"pendingResources":0,"preservedResources":0}
+PASS different letter case: approved workspace and transcript reclaimed
+variant 8.3 short name: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\GGAD6E~3\PHYSIC~1
+PASS 8.3 short name: a run with a temp workspace and a transcript succeeds
+PASS 8.3 short name: workspace contains the script output
+PASS 8.3 short name: transcript is retrievable
+PASS 8.3 short name: explicit approval
+8.3 short name: cleanup {"state":"pressure","checkedAt":"2026-10-26T13:03:34.087Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":1,"removedFileBytes":71,"reusableDatabaseBytes":8192,"pendingResources":0,"preservedResources":0}
+PASS 8.3 short name: approved workspace and transcript reclaimed
+variant junction: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-wp-e3-r4-datadir-2g40bZ\junction-to-data
+PASS junction: a run with a temp workspace and a transcript succeeds
+PASS junction: workspace contains the script output
+PASS junction: transcript is retrievable
+PASS junction: explicit approval
+junction: cleanup {"state":"pressure","checkedAt":"2026-10-26T13:04:44.685Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":1,"removedFileBytes":65,"reusableDatabaseBytes":8192,"pendingResources":0,"preservedResources":0}
+PASS junction: approved workspace and transcript reclaimed
+failures 0
+EXIT 0

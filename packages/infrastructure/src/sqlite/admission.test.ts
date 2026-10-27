@@ -123,31 +123,90 @@ describe('SQLite atomic admission', () => {
       store = new SqliteEventStore(persisted.db, new FakeClock());
       service = new SqliteTriggerAdmission(persisted.db, store);
       expect((await service.findReplay(source.run.id, 'start', 1))?.id).toBe(fork.run.id);
+      expect(
+        (
+          await persisted.client.execute({
+            sql: 'SELECT replay_source_run_id,replay_intent_node_id,replay_intent_observed_seq FROM runs WHERE id=?',
+            args: [fork.run.id],
+          })
+        ).rows,
+      ).toEqual([
+        {
+          replay_source_run_id: source.run.id,
+          replay_intent_node_id: 'start',
+          replay_intent_observed_seq: 1,
+        },
+      ]);
+      expect(
+        (await persisted.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
+      ).not.toContain('replay_intent_source_run_id');
       expect((await service.create(fork)).id).toBe(fork.run.id);
       expect(await store.read(source.run.id)).toEqual(before);
       expect(await store.read(fork.run.id)).toHaveLength(1);
       await expect(
         persisted.client.execute({
-          sql: 'UPDATE runs SET replay_intent_source_run_id=? WHERE id=?',
-          args: [source.run.id, source.run.id],
+          sql: 'UPDATE runs SET replay_intent_node_id=? WHERE id=?',
+          args: ['start', source.run.id],
         }),
       ).rejects.toThrow(/CHECK/);
       await expect(
         persisted.client.execute({
-          sql: 'UPDATE runs SET replay_intent_source_run_id=?,replay_intent_node_id=?,replay_intent_observed_seq=? WHERE id=?',
+          sql: 'UPDATE runs SET replay_source_run_id=?,replay_intent_node_id=?,replay_intent_observed_seq=? WHERE id=?',
           args: [source.run.id, 'start', 1, source.run.id],
         }),
       ).rejects.toThrow(/UNIQUE/);
+      for (const assignment of [
+        'replay_source_run_id=NULL',
+        'replay_intent_node_id=NULL',
+        'replay_intent_observed_seq=NULL',
+        'replay_intent_observed_seq=-1',
+      ])
+        await expect(
+          persisted.client.execute({
+            sql: `UPDATE runs SET ${assignment} WHERE id=?`,
+            args: [fork.run.id],
+          }),
+        ).rejects.toThrow(/CHECK/);
       expect(await store.read(source.run.id)).toEqual(before);
     } finally {
       persisted.close();
       for (const suffix of ['', '-wal', '-shm']) await unlink(file + suffix).catch(() => undefined);
     }
   });
-  it('migration 0023 preserves pre-existing rows, extra columns, indexes and triggers', async () => {
+  it('admits source-only forks without inventing an observed intent', async () => {
+    const source = intent();
+    await admission.create(source);
+    const before = await events.read(source.run.id);
+    const fork = structuredClone(source);
+    fork.run.id = fakeUlid('source-only-fork');
+    fork.run.invocationId = fakeUlid('source-only-invocation');
+    fork.initialThread.run.id = fork.run.id;
+    fork.initialThread.invocation.id = fork.run.invocationId;
+    const replayOf = { runId: source.run.id, nodeId: 'start' };
+    fork.initialThread.invocation.replayOf = replayOf;
+    fork.queued = { ...fork.queued, initialThread: fork.initialThread, replayOf };
+    await admission.create(fork);
+    expect(
+      (
+        await handle.client.execute({
+          sql: 'SELECT replay_source_run_id,replay_intent_node_id,replay_intent_observed_seq FROM runs WHERE id=?',
+          args: [fork.run.id],
+        })
+      ).rows,
+    ).toEqual([
+      {
+        replay_source_run_id: source.run.id,
+        replay_intent_node_id: null,
+        replay_intent_observed_seq: null,
+      },
+    ]);
+    expect(await admission.findReplay(source.run.id, 'start', 1)).toBeUndefined();
+    expect(await events.read(source.run.id)).toEqual(before);
+  });
+  it('migration 0024 preserves pre-existing rows, extra columns, indexes and triggers', async () => {
     const file = join(tmpdir(), `gg-wp-d5-scan1-migration-${randomUUID()}.db`);
     // SQL-only fixture: deliberately incomplete execution history, not a startup qualification.
-    const old = await openStoreBefore(pathToFileURL(file).href, '0023_replay_intent');
+    const old = await openStoreBefore(pathToFileURL(file).href, '0024_replay_intent');
     try {
       const source = intent();
       await old.client.execute('ALTER TABLE runs ADD future_relationship text');
@@ -172,14 +231,35 @@ describe('SQLite atomic admission', () => {
           'keep',
         ],
       });
-      const before = await old.client.execute(
-        'SELECT id,initial_thread,pinned,future_relationship FROM runs',
-      );
+      const historicalThread = structuredClone(source.initialThread);
+      historicalThread.run.id = fakeUlid('pre-observation-fork');
+      historicalThread.invocation.replayOf = { runId: source.run.id, nodeId: 'start' };
+      await old.client.execute({
+        sql: 'INSERT INTO runs(id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,initial_thread,pinned,replay_source_run_id,future_relationship) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+        args: [
+          historicalThread.run.id,
+          source.run.ownerId,
+          source.run.loopId,
+          source.run.versionId,
+          historicalThread.invocation.id,
+          'queued',
+          1,
+          source.run.createdAt,
+          JSON.stringify(historicalThread),
+          JSON.stringify(source.run.pinned),
+          source.run.id,
+          'keep-fork',
+        ],
+      });
+      const preservedColumns =
+        'SELECT id,initial_thread,pinned,replay_source_run_id,future_relationship FROM runs ORDER BY id';
+      const before = await old.client.execute(preservedColumns);
+      const preservedObjects =
+        "SELECT name,sql FROM sqlite_master WHERE type IN ('trigger','index') AND name NOT LIKE 'sqlite_%' AND name != 'runs_replay_intent_idx' ORDER BY name";
+      const objectsBefore = await old.client.execute(preservedObjects);
       await applyShippedSqlToHistoricalTestFixture(old);
-      expect(
-        (await old.client.execute('SELECT id,initial_thread,pinned,future_relationship FROM runs'))
-          .rows,
-      ).toEqual(before.rows);
+      expect((await old.client.execute(preservedColumns)).rows).toEqual(before.rows);
+      expect((await old.client.execute(preservedObjects)).rows).toEqual(objectsBefore.rows);
       expect(
         (
           await old.client.execute(
@@ -188,7 +268,10 @@ describe('SQLite atomic admission', () => {
         ).rows,
       ).toHaveLength(2);
       expect((await old.client.execute('SELECT * FROM future_audit')).rows).toHaveLength(0);
-      await old.client.execute("UPDATE runs SET status='failed'");
+      await old.client.execute({
+        sql: "UPDATE runs SET status='failed' WHERE id=?",
+        args: [source.run.id],
+      });
       expect((await old.client.execute('SELECT * FROM future_audit')).rows).toHaveLength(1);
     } finally {
       old.close();

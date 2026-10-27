@@ -1,0 +1,374 @@
+{
+  "scenario": "s8-regression",
+  "passed": 30,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "R1-1 API drain: both runs active, the Codex CLI and the script alive",
+      "ok": true,
+      "detail": {
+        "drain": 202,
+        "phase": "draining",
+        "active": [
+          "01M5VW992C5Z94DM83J1KG5MZ9",
+          "01M5VW99C3BMZQZDGBG2TJGK84"
+        ]
+      }
+    },
+    {
+      "id": "R1-1 no Codex turn failure during the API drain",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R1-2 after Keep waiting no second expiry and nothing is killed for 5 graces",
+      "ok": true,
+      "detail": {
+        "ms": 26541,
+        "phase": "draining",
+        "cli": true,
+        "script": true
+      }
+    },
+    {
+      "id": "R1-2 the browser sent exactly one POST (Keep waiting)",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T10:32:27.943Z",
+          "method": "POST",
+          "tab": "r1"
+        }
+      ]
+    },
+    {
+      "id": "R1-3 releasing the work completes the drain with exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "R1-4 both runs succeeded",
+      "ok": true,
+      "detail": {
+        "codex": "succeeded",
+        "script": "succeeded"
+      }
+    },
+    {
+      "id": "R1-5 restarted gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "R2-0 OS tree shows the script root, its grandchild, the Codex CLI and the child script under the gateway",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R2-0 the independent run beyond capacity is queued",
+      "ok": true,
+      "detail": "queued"
+    },
+    {
+      "id": "R2-1 active work lists the script, Codex and child runs; not the wait or the queued run",
+      "ok": true,
+      "detail": [
+        "01M5VWAMK2D8JB3WF4FD6ZJP3R",
+        "01M5VWAMKPETV5YJCHA4B0A84P",
+        "01M5VWAMZ9AY2X2F5JC3ZTFVP8"
+      ]
+    },
+    {
+      "id": "R2-2 the notice names each active run with its loop name",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R2-3 Go back sends nothing",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R2-4 force completes and the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "R2-4 tasklist: script root, grandchild, Codex CLI, child script and gateway are gone; lock released",
+      "ok": true,
+      "detail": {
+        "treeRoot": false,
+        "grandchild": false,
+        "codexCli": false,
+        "childScript": false,
+        "gateway": false
+      }
+    },
+    {
+      "id": "R2-4 CIM: no process names the store",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "R2-5 script, Codex and child runs record RUN_INTERRUPTED_BY_STOP at their nodes (attempt 1, non-resumable, effects may have happened)",
+      "ok": true,
+      "detail": {
+        "tree": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "hold",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          },
+          "script": {
+            "visitId": "01M5VWAMK2D8JB3WF4FD6ZJP3R:5",
+            "dispatchId": "01M5VWAMN5NKC7WQCW7Z6BGFD3",
+            "state": "outcome-uncertain"
+          }
+        },
+        "codex": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "child": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "hold",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          },
+          "script": {
+            "visitId": "01M5VWAMZ9AY2X2F5JC3ZTFVP8:5",
+            "dispatchId": "01M5VWAN1P14V0ZXKCQ6AQ4N6V",
+            "state": "outcome-uncertain"
+          }
+        }
+      }
+    },
+    {
+      "id": "R2-5 the durable wait is unchanged (waiting)",
+      "ok": true,
+      "detail": "waiting"
+    },
+    {
+      "id": "R2-6 the queued independent run was not interrupted and ran after restart",
+      "ok": true,
+      "detail": "succeeded"
+    },
+    {
+      "id": "R2-6 the parent did not succeed with fabricated child output",
+      "ok": true,
+      "detail": "failed"
+    },
+    {
+      "id": "R2-7 no blind replay: the Codex CLI did not run again and no script re-ran",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "R2-7 Resume of the interrupted Codex run is refused",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "R2-8 the inspector shows the interruption and possible external effects for the Codex run",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R2-9 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "R3-1 API force exits 0; the Codex CLI and the script are gone",
+      "ok": true,
+      "detail": {
+        "forced": 202,
+        "code": 0
+      }
+    },
+    {
+      "id": "R3-2 after restart both stay failed RUN_INTERRUPTED_BY_STOP and nothing re-ran",
+      "ok": true,
+      "detail": {
+        "codex": "RUN_INTERRUPTED_BY_STOP",
+        "script": "RUN_INTERRUPTED_BY_STOP"
+      }
+    },
+    {
+      "id": "R3-3 Resume is refused for both",
+      "ok": true,
+      "detail": [
+        409,
+        409
+      ]
+    },
+    {
+      "id": "R3-4 explicit Replay from the interrupted node is accepted for both (202, new runs)",
+      "ok": true,
+      "detail": {
+        "codex": 202,
+        "script": 202
+      }
+    },
+    {
+      "id": "R3-5 both replayed runs succeed",
+      "ok": true,
+      "detail": {
+        "codex": "succeeded",
+        "script": "succeeded"
+      }
+    },
+    {
+      "id": "R3-5 the source runs keep their interruption record",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "R3-6 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T10:32:21.380Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:23.389Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:25.402Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:27.412Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:27.943Z",
+      "method": "POST",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:29.953Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:31.965Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:34.014Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:35.979Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:37.984Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:40.032Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:42.004Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:44.009Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:46.021Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:48.031Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:50.038Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:52.042Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:32:54.045Z",
+      "method": "GET",
+      "tab": "r1"
+    },
+    {
+      "at": "2026-10-26T10:33:05.589Z",
+      "method": "GET",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:07.593Z",
+      "method": "GET",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:09.600Z",
+      "method": "GET",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:11.611Z",
+      "method": "GET",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:13.617Z",
+      "method": "GET",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:14.801Z",
+      "method": "POST",
+      "tab": "r2"
+    },
+    {
+      "at": "2026-10-26T10:33:18.068Z",
+      "method": "GET",
+      "tab": "r2"
+    }
+  ]
+}

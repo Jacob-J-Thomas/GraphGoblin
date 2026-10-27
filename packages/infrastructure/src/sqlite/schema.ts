@@ -1,5 +1,5 @@
 import type { ReplayState } from '@graphgoblin/domain';
-import { sql } from 'drizzle-orm';
+import { sql, type AnyColumn } from 'drizzle-orm';
 import type { RunAdmission, WebhookFailureCode, EventFailureCode } from '@graphgoblin/engine';
 import type {
   ClassifierModelEntry,
@@ -8,6 +8,7 @@ import type {
   LoopDefinition,
   LoopVersionStatus,
   RunFailure,
+  DeletionApproval,
   RunPin,
   WaitSpec,
 } from '@graphgoblin/contracts';
@@ -67,10 +68,11 @@ export const runs = sqliteTable(
     loopId: text('loop_id').notNull(),
     versionId: text('version_id').notNull(),
     parentRunId: text('parent_run_id'),
-    // #256 intent identity; independent of #412's general replay-source relationship columns.
-    replayIntentSourceRunId: text('replay_intent_source_run_id'),
+    // #256 adds the observed intent to the canonical #412 replay-source relationship.
     replayIntentNodeId: text('replay_intent_node_id'),
     replayIntentObservedSeq: integer('replay_intent_observed_seq'),
+    /** Indexed replay provenance; written with the initial thread at admission. */
+    replaySourceRunId: text('replay_source_run_id'),
     invocationId: text('invocation_id').notNull(),
     status: text('status').notNull(),
     currentNodeId: text('current_node_id'),
@@ -96,6 +98,8 @@ export const runs = sqliteTable(
     }).$type<ReplayState>(),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
+    deletionApproval: text('deletion_approval', { mode: 'json' }).$type<DeletionApproval>(),
+    deletionRevision: integer('deletion_revision').notNull().default(0),
     /**
      * What `version_id` pins (ADR-0041). Nullable only because SQLite cannot add a NOT NULL column
      * without a default; every run is written with one and migration 0014 pinned the runs before it.
@@ -114,18 +118,34 @@ export const runs = sqliteTable(
     ),
     index('runs_parent_idx').on(t.parentRunId),
     uniqueIndex('runs_replay_intent_idx').on(
-      t.replayIntentSourceRunId,
+      t.replaySourceRunId,
       t.replayIntentNodeId,
       t.replayIntentObservedSeq,
     ),
     check(
       'runs_replay_intent_complete',
-      sql`(${t.replayIntentSourceRunId} IS NULL AND ${t.replayIntentNodeId} IS NULL AND ${t.replayIntentObservedSeq} IS NULL) OR (${t.replayIntentSourceRunId} IS NOT NULL AND ${t.replayIntentNodeId} IS NOT NULL AND ${t.replayIntentObservedSeq} IS NOT NULL AND ${t.replayIntentObservedSeq} >= 0)`,
+      sql`(${t.replayIntentNodeId} IS NULL AND ${t.replayIntentObservedSeq} IS NULL) OR (${t.replaySourceRunId} IS NOT NULL AND ${t.replayIntentNodeId} IS NOT NULL AND ${t.replayIntentObservedSeq} IS NOT NULL AND ${t.replayIntentObservedSeq} >= 0)`,
     ),
+    index('runs_replay_source_idx').on(t.replaySourceRunId),
+    index('runs_deletion_approval_idx').on(t.deletionApproval),
     // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
     index('runs_version_idx').on(t.versionId),
   ],
 );
+
+/**
+ * The latest-evidence reads of `GET /runs/{id}/observation` select stored rows by a JSON property:
+ * decisions that carry gate evidence and resumes that record a fresh-session choice (#186, #265).
+ * A partial index holds exactly those rows, plus rows whose JSON is malformed so a read of the
+ * newest one reports the corruption instead of skipping it. Each read then seeks the index instead
+ * of scanning every decision or resume in the run's history. SQLite uses a partial index only when
+ * the query repeats its condition, so the reads use these same expressions and name the index.
+ */
+type RunEventColumns = { type: AnyColumn; payload: AnyColumn };
+export const gateEvidenceCondition = (t: RunEventColumns) =>
+  sql`${t.type} = 'decision.made' and case when json_valid(${t.payload}) then json_type(${t.payload}, '$.gate') is not null else 1 end`;
+export const freshSessionCondition = (t: RunEventColumns) =>
+  sql`${t.type} = 'run.resumed' and case when json_valid(${t.payload}) then json_type(${t.payload}, '$.freshSession') is not null else 1 end`;
 
 export const runEvents = sqliteTable(
   'run_events',
@@ -140,6 +160,8 @@ export const runEvents = sqliteTable(
   (t) => [
     primaryKey({ columns: [t.runId, t.seq] }),
     index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+    index('run_events_gate_idx').on(t.runId, t.seq).where(gateEvidenceCondition(t)),
+    index('run_events_fresh_session_idx').on(t.runId, t.seq).where(freshSessionCondition(t)),
   ],
 );
 
@@ -394,7 +416,66 @@ export const eventReceipts = sqliteTable(
   ],
 );
 
+/** Positive creation proof; pending rows survive removal of their owner's history. */
+export const runResources = sqliteTable(
+  'run_resources',
+  {
+    key: text('key').primaryKey(),
+    ownerRunId: text('owner_run_id').notNull(),
+    kind: text('kind', { enum: ['workspace', 'artifact'] }).notNull(),
+    path: text('path').notNull(),
+    identity: text('identity').notNull(),
+    physicalPath: text('physical_path'),
+    approval: text('approval', { mode: 'json' }).$type<DeletionApproval>(),
+    pending: integer('pending', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    index('run_resources_owner_idx').on(t.ownerRunId),
+    index('run_resources_pending_idx').on(t.pending, t.key),
+  ],
+);
+
+export const runResourceUses = sqliteTable(
+  'run_resource_uses',
+  {
+    runId: text('run_id').notNull(),
+    key: text('key').notNull(),
+    path: text('path').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.runId, t.key] }), index('run_resource_uses_key_idx').on(t.key)],
+);
+
+/** Live workspace obligations, maintained only by admission/version/use changes, never events. */
+export const workspaceReferences = sqliteTable(
+  'workspace_references',
+  {
+    id: text('id').primaryKey(),
+    runId: text('run_id'),
+    versionId: text('version_id'),
+    path: text('path'),
+    physicalPath: text('physical_path'),
+    checkedEpoch: integer('checked_epoch').notNull().default(0),
+  },
+  (t) => [
+    index('workspace_references_physical_idx').on(t.physicalPath),
+    index('workspace_references_run_idx').on(t.runId),
+    index('workspace_references_version_idx').on(t.versionId),
+    index('workspace_references_epoch_idx').on(t.checkedEpoch, t.id),
+  ],
+);
+
+/** A bounded refresh sweep must finish before any workspace can be staged. */
+export const workspaceReferenceState = sqliteTable('workspace_reference_state', {
+  id: integer('id').primaryKey(),
+  epoch: integer('epoch').notNull().default(0),
+  sweeping: integer('sweeping', { mode: 'boolean' }).notNull().default(false),
+});
+
 export const schema = {
+  workspaceReferences,
+  workspaceReferenceState,
+  runResources,
+  runResourceUses,
   webhookReceipts,
   eventReceipts,
   classifierModels,

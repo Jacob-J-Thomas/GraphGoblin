@@ -812,11 +812,17 @@ describe('settings, api keys, model catalog', () => {
     expect(await catalog.seed()).toBe(0);
     const entries = await catalog.list();
     expect(entries.map((m) => m.model)).toContain('gpt-6-luna');
+    // Codex CLI 0.160.0's own model catalog tops GPT-5.5 out at xhigh (#205).
     for (const entry of entries.filter((m) => m.harness === 'codex')) {
-      expect(entry.efforts).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+      expect(entry.efforts).toEqual(
+        entry.model === 'gpt-5.5'
+          ? ['minimal', 'low', 'medium', 'high', 'xhigh']
+          : ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+      );
     }
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'low')).toBe(true);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(true);
+    expect(await catalog.isAllowed('codex', 'gpt-5.5', 'max')).toBe(false);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna')).toBe(true);
     expect(await catalog.isAllowed('codex', 'nope')).toBe(false);
     await catalog.upsert({

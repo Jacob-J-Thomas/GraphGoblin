@@ -1,0 +1,94 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure test src/sqlite/history-cleanup.test.ts -t reclaims approved workspaces beside|backfills only live|data directory
+$ vitest run src/sqlite/history-cleanup.test.ts -t 'reclaims approved workspaces beside|backfills only live|data directory'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (37 tests | 7 failed | 30 skipped) 937ms
+   × reclaims approved workspaces beside a retained succeeded template run that never used a directory 249ms
+   × reclaims approved workspaces beside a retained failed template run that never used a directory 115ms
+   × reclaims approved workspaces beside a retained cancelled template run that never used a directory 109ms
+   × reclaims approved workspaces beside a retained exhausted template run that never used a directory 116ms
+   × backfills only live unused template obligations and restores them on Resume 136ms
+   × publishes and reclaims owned workspaces/transcripts through a junction data directory 94ms
+   × publishes and reclaims owned workspaces/transcripts through a short-name data directory 116ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims approved workspaces beside a retained succeeded template run that never used a directory
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims approved workspaces beside a retained failed template run that never used a directory
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims approved workspaces beside a retained cancelled template run that never used a directory
+ FAIL  src/sqlite/history-cleanup.test.ts > reclaims approved workspaces beside a retained exhausted template run that never used a directory
+AssertionError: expected { bytes: +0, preserved: 1, …(2) } to match object { bytes: 7, pending: +0 }
+(2 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "bytes": 7,
+-   "pending": 0,
++   "bytes": 0,
++   "pending": 1,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:111:37
+    109|     await mark([owner]);
+    110|     expect(await store.prepareBatch('local')).toBe(1);
+    111|     expect(await store.reapBatch()).toMatchObject({ bytes: 7, pending:…
+       |                                     ^
+    112|     await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOE…
+    113|     expect((await repo.get(retained))?.status).toBe(status);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > backfills only live unused template obligations and restores them on Resume
+AssertionError: expected [ 'B4DSC5D1DJJ9NY0YHK924WJXM9', …(1) ] to deeply equal [ 'VEE4NEFXNZD3NSBZYCEB166CP1' ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
++   "B4DSC5D1DJJ9NY0YHK924WJXM9",
+    "VEE4NEFXNZD3NSBZYCEB166CP1",
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:135:27
+    133|     "SELECT run_id FROM workspace_references WHERE path IS NULL ORDER …
+    134|   )).rows.map((row) => row['run_id']);
+    135|   expect(await pending()).toEqual([active]);
+       |                           ^
+    136|   await repo.transition(active, ['waiting'], { status: 'failed' });
+    137|   expect(await pending()).toEqual([]);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > publishes and reclaims owned workspaces/transcripts through a junction data directory
+ FAIL  src/sqlite/history-cleanup.test.ts > publishes and reclaims owned workspaces/transcripts through a short-name data directory
+Error: Managed resource root is a link
+ ❯ OwnedRunResources.directory src/fs/owned-resources.ts:204:13
+    202|       canonical(await realpath(this.dataDir)) !== canonical(this.dataD…
+    203|     )
+    204|       throw new Error('Managed resource root is a link');
+       |             ^
+    205|     return root;
+    206|   }
+ ❯ src/fs/owned-resources.ts:98:26
+ ❯ Mutex.run src/sqlite/db.ts:77:14
+ ❯ src/sqlite/history-cleanup.test.ts:171:23
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 30 skipped (37)
+   Start at  07:48:00
+   Duration  5.56s (import 53%, transform 29%, tests 18%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

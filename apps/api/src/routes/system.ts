@@ -6,6 +6,7 @@ import {
   HarnessPreflightSchema,
   HarnessIdSchema,
   HarnessDefaultsSchema,
+  StorageStatusSchema,
 } from '@graphgoblin/contracts';
 import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
@@ -16,6 +17,19 @@ const ShutdownSnapshotSchema = ShutdownStateSchema.extend({ controlToken: z.stri
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
+  app.get(
+    '/system/storage',
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Cached capacity, bounded cleanup and reusable SQLite storage',
+        description:
+          'Observation only; never grants consent or starts cleanup. File-byte counts describe removed file lengths, not promised physical free space. SQLite reusable bytes are internal free pages, not OS-reclaimed storage.',
+        response: { 200: StorageStatusSchema },
+      },
+    },
+    () => container.historyCleanup.status(),
+  );
   const incarnation = randomUUID();
   const snapshot = (state: ReturnType<Container['shutdown']['state']>) => ({
     ...state,

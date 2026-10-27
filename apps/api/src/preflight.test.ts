@@ -3,7 +3,7 @@ import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import {
   DEFAULT_MODEL_CATALOG,
@@ -30,7 +30,7 @@ const KEY = Buffer.alloc(32, 7).toString('base64');
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'gg-preflight-'));
+  dir = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-preflight-'));
 });
 
 afterEach(async () => {
@@ -163,6 +163,9 @@ describe('individual checks', () => {
     await writeFile(file, 'x');
     await expect(assertCreatable(join(file, 'sub', 'gg.db'))).rejects.toThrow(/not a directory/);
     await expect(assertCreatable(join(dir, 'gg.db'), () => '.')).rejects.toThrow(/not writable/);
+    await expect(assertCreatable(join(dir, '\0bad', 'gg.db'))).rejects.toMatchObject({
+      code: 'ERR_INVALID_ARG_VALUE',
+    });
   });
 });
 
@@ -279,6 +282,93 @@ describe('runPreflight', () => {
     expect(byId(broken, 'default-model')).toMatchObject({ status: 'fail', message: /io/ });
   });
 
+  it.each([
+    {
+      model: 'missing-claude-model',
+      effort: 'low',
+      enabled: true,
+      message: 'The configured Claude model is not in the catalog',
+    },
+    {
+      model: 'claude-fixture',
+      effort: undefined,
+      enabled: true,
+      message: 'Configure an explicit supported Claude reasoning effort',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'high',
+      enabled: true,
+      message: 'Configure an explicit supported Claude reasoning effort',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'low',
+      enabled: false,
+      message: 'The configured Claude model is disabled',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'low',
+      enabled: true,
+      message: 'Exact Claude model and effort are configured',
+    },
+  ] as const)(
+    'checks Claude defaults against the catalogue: $message ($effort)',
+    async ({ model, effort, enabled, message }) => {
+      const report = await runPreflight(
+        sources({
+          config: config({
+            defaults: {
+              byHarness: {
+                codex: { model: 'gpt-6-luna' },
+                claude: { model, ...(effort ? { effort } : {}) },
+              },
+            },
+          }),
+          harnesses: { codex: new FakeHarness(), claude: new FakeHarness([], 'claude') },
+          catalog: () =>
+            Promise.resolve([
+              ...DEFAULT_MODEL_CATALOG,
+              {
+                harness: 'claude',
+                source: 'harness',
+                model: 'claude-fixture',
+                displayName: 'Claude fixture',
+                efforts: ['low'],
+                defaultEffort: 'low',
+                enabled,
+              },
+            ]),
+        }),
+      );
+      expect(byId(report, 'default-model.claude')).toMatchObject({
+        status: message.startsWith('Exact') ? 'ok' : 'fail',
+        message,
+      });
+      expect(report.ok).toBe(message.startsWith('Exact'));
+    },
+  );
+
+  it('reports a configured Claude default whose harness is absent', async () => {
+    const report = await runPreflight(
+      sources({
+        config: config({
+          defaults: { byHarness: { claude: { model: 'claude-fixture', effort: 'low' } } },
+        }),
+      }),
+    );
+    expect(report.ok).toBe(false);
+    expect(byId(report, 'harness.claude')).toMatchObject({
+      status: 'fail',
+      message: 'The configured Claude harness is unavailable',
+    });
+    expect(byId(report, 'default-model')).toMatchObject({
+      status: 'fail',
+      message: expect.stringContaining('"undefined" is not in the model catalog'),
+    });
+  });
+
   it('formats a readable table', async () => {
     const report = await runPreflight(sources({ jevKey: () => Promise.resolve(undefined) }));
     const text = formatPreflight(report);
@@ -291,6 +381,20 @@ describe('runPreflight', () => {
 });
 
 describe('graphgoblin-api --preflight', () => {
+  it('prints configuration refusal to stdout using the process environment defaults', async () => {
+    vi.stubEnv('GG_PORT', 'invalid');
+    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    try {
+      expect(await runPreflightCli()).toBe(1);
+      expect(output).toHaveBeenCalledWith(
+        expect.stringMatching(/FAIL {2}configuration {2}invalid configuration/),
+      );
+    } finally {
+      output.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   function cli(env: Record<string, string>, harness = new FakeHarness()) {
     let out = '';
     return runPreflightCli({

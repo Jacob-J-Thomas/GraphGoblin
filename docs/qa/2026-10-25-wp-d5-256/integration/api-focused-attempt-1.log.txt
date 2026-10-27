@@ -1,0 +1,41 @@
+$ vitest run recovery-eligibility.test.ts pinned-run-restart.test.ts replay.test.ts script-recovery.test.ts script-persistence-restart.test.ts script-restart.test.ts missing-session.test.ts deletion-eligibility.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/deletion-eligibility.test.ts (9 tests | 1 failed) 2974ms
+   × revokes the source when replay creates dependent history and leaves retained artifact bytes retrievable 301ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/deletion-eligibility.test.ts > revokes the source when replay creates dependent history and leaves retained artifact bytes retrievable
+AssertionError: expected 400 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 400
+
+ ❯ src/deletion-eligibility.test.ts:299:29
+    298|     payload: { nodeId: 'infer', observedSeq: snapshot.recovery.observe…
+    299|   });
+    300|   expect(replay.statusCode).toBe(202);
+       |                       ^
+    301|   await t.idle();
+    302|   expect((await t.container.repos.runs.get(source.id))?.deletionApprov…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 53 passed (54)
+   Start at  21:45:15
+   Duration  97.05s (tests 84%, import 13%, transform 2%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

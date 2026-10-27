@@ -1,0 +1,96 @@
+{
+  "checks": [
+    {
+      "name": "10 s following: no append announcements while event count grows",
+      "ok": true,
+      "detail": {
+        "seconds": 10,
+        "from": 591,
+        "to": 1976,
+        "changes": 0,
+        "announcements": []
+      }
+    },
+    {
+      "name": "one Shift+Tab and one Tab each leave Timeline rows",
+      "ok": true,
+      "detail": {
+        "seq": 1916,
+        "selectedFocus": {
+          "tag": "BUTTON",
+          "seq": "1916",
+          "name": "#1916node.finishedGrow (grow) → out, 1 change, 1 ms",
+          "label": null
+        },
+        "backwards": {
+          "tag": "BUTTON",
+          "seq": null,
+          "name": "Go to event",
+          "label": null
+        },
+        "forwards": {
+          "tag": "BUTTON",
+          "seq": null,
+          "name": "Exact recorded event #1916",
+          "label": null
+        }
+      }
+    },
+    {
+      "name": "keyboard selection retains row focus and announces pause",
+      "ok": false,
+      "detail": {
+        "selectedFocus": {
+          "tag": "BUTTON",
+          "seq": "1916",
+          "name": "#1916node.finishedGrow (grow) → out, 1 change, 1 ms",
+          "label": null
+        },
+        "pauseAnnouncements": ["Reading the thread at event 1916…"]
+      }
+    },
+    {
+      "name": "Follow live retains keyboard focus after Enter",
+      "ok": true,
+      "detail": {
+        "afterFollow": {
+          "tag": "BUTTON",
+          "seq": null,
+          "name": "Follow live",
+          "label": null
+        },
+        "ariaDisabled": "true"
+      }
+    },
+    {
+      "name": "names identify current thread, selected boundary, patch before/after and current row",
+      "ok": true,
+      "detail": {
+        "selectedBoundary": 1916,
+        "patchTitle": "Patch from Grow (grow)",
+        "ariaFollowing": {
+          "thread": "- region \"Current thread\":\n  - heading \"Current thread\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 424 }\"\n  - button \"Full thread JSON\"",
+          "currentRow": "- button \"#2137 node.started Gate (gate) (decision) attempt 1\":\n  - text: \"#2137\"\n  - code: node.started\n  - text: Gate (gate) (decision) attempt 1",
+          "controls": "- button \"Follow live\" [disabled]"
+        },
+        "ariaSelected": {
+          "thread": "- region \"Thread at event 1916\":\n  - heading \"Thread at event 1916\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 383 }\"\n  - button \"Full thread JSON\"",
+          "patch": "- list \"Patch diff\":\n  - listitem:\n    - text: replace\n    - code: /vars/n\n    - text: Before 382 After 383",
+          "row": "- button \"#1916 node.finished Grow (grow) → out, 1 change, 1 ms\":\n  - text: \"#1916\"\n  - code: node.finished\n  - text: Grow (grow) → out, 1 change, 1 ms"
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "ariaSelected": {
+    "thread": "- region \"Thread at event 1916\":\n  - heading \"Thread at event 1916\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 383 }\"\n  - button \"Full thread JSON\"",
+    "patch": "- list \"Patch diff\":\n  - listitem:\n    - text: replace\n    - code: /vars/n\n    - text: Before 382 After 383",
+    "row": "- button \"#1916 node.finished Grow (grow) → out, 1 change, 1 ms\":\n  - text: \"#1916\"\n  - code: node.finished\n  - text: Grow (grow) → out, 1 change, 1 ms"
+  },
+  "ariaFollowing": {
+    "thread": "- region \"Current thread\":\n  - heading \"Current thread\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 424 }\"\n  - button \"Full thread JSON\"",
+    "currentRow": "- button \"#2137 node.started Gate (gate) (decision) attempt 1\":\n  - text: \"#2137\"\n  - code: node.started\n  - text: Gate (gate) (decision) attempt 1",
+    "controls": "- button \"Follow live\" [disabled]"
+  },
+  "ok": false
+}

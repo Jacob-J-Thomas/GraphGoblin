@@ -1,0 +1,46 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=4 --coverage.reportOnFailure
+At line:2 char:164
++ ... OUNT='300'; pnpm.cmd --filter @graphgoblin/web test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+      Coverage enabled with v8
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: The coverage report directory 
+"%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web/coverage" is already in use by 
+another Vitest process (pid 3440). Running coverage for multiple Vitest processes in the same directory at the same 
+time is not supported, because they would delete each other's reports.
+Give each run its own "coverage.reportsDirectory" (e.g. --coverage.reportsDirectory=coverage-36936) or run them 
+sequentially.
+ ❯ ReportsDirectoryLock.inUseError ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed5
+3/node_modules/vitest/dist/chunks/index.DpLw24bj.js:15508:26
+ ❯ ReportsDirectoryLock.acquire ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/n
+ode_modules/vitest/dist/chunks/index.DpLw24bj.js:15477:54
+ ❯ V8CoverageProvider.clean ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_
+modules/vitest/dist/chunks/index.DpLw24bj.js:15062:3
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:20975:6
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:20973:5
+ ❯ startVitest ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vites
+t/dist/chunks/cli-api.C4x4GGip.js:369:8
+ ❯ start ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist
+/chunks/cac.DfDGTQ9W.js:2370:15
+ ❯ CAC.run ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/di
+st/chunks/cac.DfDGTQ9W.js:2346:2
+
+
+
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+

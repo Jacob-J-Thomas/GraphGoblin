@@ -1,0 +1,360 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: claude-harness.spec.ts >> Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure
+- Location: e2e\claude-harness.spec.ts:531:1
+
+# Error details
+
+```
+Error: expect(received).toMatchObject(expected)
+
+- Expected  - 1
++ Received  + 1
+
+  Object {
+-   "code": "FAILURE_NOT_RESUMABLE",
++   "code": "RUN_CANCELLED",
+  }
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]: GraphGoblin
+    - navigation "Main" [ref=f1e22]:
+      - link "Loops" [ref=f1e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=f1e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=f1e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=f1e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=f1e31]:
+    - banner [ref=f1e32]:
+      - generic [ref=f1e33]:
+        - heading "Run 01M3Y7RKG0M9W321SC6NVCGNPX" [level=1] [ref=f1e34]:
+          - text: Run
+          - generic [ref=f1e35]: 01M3Y7RKG0M9W321SC6NVCGNPX
+        - generic [ref=f1e36]: failed
+      - generic [ref=f1e40]:
+        - generic [ref=f1e41]: at Infer (infer)
+        - link "loop" [ref=f1e42] [cursor=pointer]:
+          - /url: /app/loops/01M3Y7RKG0M9W321SC6NVCGNPV/edit
+        - link "child runs" [ref=f1e43] [cursor=pointer]:
+          - /url: /app/runs?parent=01M3Y7RKG0M9W321SC6NVCGNPX
+      - generic [ref=f1e45]:
+        - generic [ref=f1e46]:
+          - button "Resume" [disabled]
+          - button "Replay..." [ref=f1e47] [cursor=pointer]
+        - paragraph [ref=f1e49]: "Resume unavailable: This run was cancelled; Resume is unavailable."
+    - alert [ref=f1e50]:
+      - paragraph [ref=f1e53]: "Failed: HARNESS_TERMINATION_UNCONFIRMED"
+      - generic [ref=f1e54]: Termination not confirmed; stop the E2E fake before retrying.
+    - region [ref=f1e55]:
+      - heading "Execution limits" [level=2] [ref=f1e57]
+      - generic [ref=f1e58]:
+        - paragraph [ref=f1e59]: "Maximum node visits: 10. Run deadline: none."
+        - paragraph [ref=f1e60]: "Structured completion: Unlimited."
+        - paragraph [ref=f1e61]: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+    - generic [ref=f1e62]:
+      - paragraph [ref=f1e63]: History retained.
+      - generic [ref=f1e64]:
+        - button "Review delete-ready history" [ref=f1e65] [cursor=pointer]
+        - button "Withdraw delete-ready mark" [ref=f1e67] [cursor=pointer]
+        - generic [ref=f1e69]: 1 selected
+    - region [ref=f1e70]:
+      - heading "Execution context" [level=2] [ref=f1e72]
+      - generic [ref=f1e73]:
+        - paragraph [ref=f1e74]:
+          - text: Claude unconfirmed stop v1 · version ID
+          - code [ref=f1e75]: 01M3Y7RKG0M9W321SC6NVCGNPW
+        - button "Exact run record" [ref=f1e77] [cursor=pointer]
+        - button "Pinned definition JSON" [ref=f1e83] [cursor=pointer]
+    - region [ref=f1e88]:
+      - heading "Finalization" [level=2] [ref=f1e90]
+      - generic [ref=f1e91]:
+        - status [ref=f1e92]: Fully finalized.
+        - paragraph [ref=f1e93]: "Execution: failed. Delivery is tracked separately."
+    - generic [ref=f1e94]:
+      - region [ref=f1e95]:
+        - heading "Timeline (11 events, complete)" [level=2] [ref=f1e97]
+        - generic [ref=f1e98]:
+          - generic [ref=f1e99]:
+            - button "Load older" [disabled] [ref=f1e100]
+            - button "Previous rows" [disabled] [ref=f1e102]
+            - button "Next rows" [disabled] [ref=f1e104]
+            - button "Load newer" [disabled] [ref=f1e106]
+            - button "Follow live" [disabled] [ref=f1e108]
+            - generic [ref=f1e110]: Showing events 1–11 of the retained window.
+            - generic [ref=f1e111]: Following live.
+          - generic [ref=f1e112]:
+            - generic [ref=f1e113]:
+              - text: Event sequence
+              - spinbutton "Event sequence" [ref=f1e114]
+            - button "Go to event" [ref=f1e115] [cursor=pointer]
+          - list "Timeline" [ref=f1e117]:
+            - listitem [ref=f1e118]:
+              - button "#1 run.queued" [ref=f1e119] [cursor=pointer]:
+                - generic [ref=f1e120]: "#1"
+                - code [ref=f1e121]: run.queued
+            - listitem [ref=f1e122]:
+              - button "#2 run.started attempt 1" [ref=f1e123] [cursor=pointer]:
+                - generic [ref=f1e124]: "#2"
+                - code [ref=f1e125]: run.started
+                - generic [ref=f1e126]: attempt 1
+            - listitem [ref=f1e127]:
+              - button "#3 node.started Start (start) (trigger) attempt 1" [ref=f1e128] [cursor=pointer]:
+                - generic [ref=f1e129]: "#3"
+                - code [ref=f1e130]: node.started
+                - generic [ref=f1e131]: Start (start) (trigger) attempt 1
+            - listitem [ref=f1e132]:
+              - button "#4 node.finished Start (start) → out, 2 changes, 1 ms" [ref=f1e133] [cursor=pointer]:
+                - generic [ref=f1e134]: "#4"
+                - code [ref=f1e135]: node.finished
+                - generic [ref=f1e136]: Start (start) → out, 2 changes, 1 ms
+            - listitem [ref=f1e137]:
+              - button "#5 node.started Infer (infer) (inference) attempt 1" [ref=f1e138] [cursor=pointer]:
+                - generic [ref=f1e139]: "#5"
+                - code [ref=f1e140]: node.started
+                - generic [ref=f1e141]: Infer (infer) (inference) attempt 1
+            - listitem [ref=f1e142]:
+              - button "#6 harness.turn Infer (infer)" [ref=f1e143] [cursor=pointer]:
+                - generic [ref=f1e144]: "#6"
+                - code [ref=f1e145]: harness.turn
+                - generic [ref=f1e146]: Infer (infer)
+            - listitem [ref=f1e147]:
+              - button "#7 harness.session Infer (infer)" [ref=f1e148] [cursor=pointer]:
+                - generic [ref=f1e149]: "#7"
+                - code [ref=f1e150]: harness.session
+                - generic [ref=f1e151]: Infer (infer)
+            - listitem [ref=f1e152]:
+              - button "#8 run.cancel_requested by user local" [ref=f1e153] [cursor=pointer]:
+                - generic [ref=f1e154]: "#8"
+                - code [ref=f1e155]: run.cancel_requested
+                - generic [ref=f1e156]: by user local
+            - listitem [ref=f1e157]:
+              - button "#9 harness.submission Infer (infer)" [ref=f1e158] [cursor=pointer]:
+                - generic [ref=f1e159]: "#9"
+                - code [ref=f1e160]: harness.submission
+                - generic [ref=f1e161]: Infer (infer)
+            - listitem [ref=f1e162]:
+              - button "#10 harness.submission Infer (infer)" [ref=f1e163] [cursor=pointer]:
+                - generic [ref=f1e164]: "#10"
+                - code [ref=f1e165]: harness.submission
+                - generic [ref=f1e166]: Infer (infer)
+            - listitem [ref=f1e167]:
+              - 'button "#11 run.failed HARNESS_TERMINATION_UNCONFIRMED: Termination not confirmed; stop the E2E fake before retrying." [ref=f1e168] [cursor=pointer]':
+                - generic [ref=f1e169]: "#11"
+                - code [ref=f1e170]: run.failed
+                - generic [ref=f1e171]: "HARNESS_TERMINATION_UNCONFIRMED: Termination not confirmed; stop the E2E fake before retrying."
+      - generic [ref=f1e172]:
+        - 'button "Exact recorded event #11" [ref=f1e174] [cursor=pointer]'
+        - region [ref=f1e180]:
+          - heading "Current thread" [level=2] [ref=f1e182]
+          - generic [ref=f1e184]:
+            - generic [ref=f1e185]:
+              - heading "Messages (0)" [level=3] [ref=f1e186]
+              - list "Messages"
+            - generic [ref=f1e187]:
+              - heading "Variables" [level=3] [ref=f1e188]
+              - generic "Variables" [ref=f1e190]: "{}"
+            - button "Full thread JSON" [ref=f1e192] [cursor=pointer]
+        - paragraph [ref=f1e197]: Activity below covers the retained history window. Earlier activity is available through Load older.
+        - button "Node progress (1 nodes)" [ref=f1e199] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  571 |           { id: 'answer', type: 'message', summary: 'Synthetic final answer.' },
+  572 |         ],
+  573 |       },
+  574 |     ],
+  575 |   });
+  576 |   const start = await request.post(instance.url + '/loops/' + loopId + '/runs', {
+  577 |     data: { input: null },
+  578 |   });
+  579 |   expect(start.status()).toBe(202);
+  580 |   const { run } = (await start.json()) as { run: { id: string } };
+  581 |   await waitForTerminal(request, instance.url, run.id, 'succeeded');
+  582 |   const thread = (await (
+  583 |     await request.get(instance.url + '/runs/' + run.id + '/thread')
+  584 |   ).json()) as { artifacts: { id: string; kind: string }[] };
+  585 |   const transcript = thread.artifacts.find((artifact) => artifact.kind === 'transcript');
+  586 |   expect(transcript).toBeDefined();
+  587 |   const downloaded = await request.get(
+  588 |     instance.url + '/runs/' + run.id + '/artifacts/' + transcript!.id,
+  589 |   );
+  590 |   expect(downloaded.headers()['content-type']).toContain('application/json');
+  591 |   expect(JSON.parse(await downloaded.text()) as unknown).toEqual([
+  592 |     {
+  593 |       id: 'claude-policy',
+  594 |       type: 'other',
+  595 |       summary: 'Claude policy',
+  596 |       detail: policyDetail,
+  597 |     },
+  598 |     { id: 'answer', type: 'message', summary: 'Synthetic final answer.' },
+  599 |   ]);
+  600 | 
+  601 |   await page.goto(instance.url + '/app/runs/' + run.id);
+  602 |   const execution = (await (
+  603 |     await request.get(instance.url + '/runs/' + run.id + '/events')
+  604 |   ).json()) as {
+  605 |     items: { type: string; visitId?: string; turnId?: string; submission?: string }[];
+  606 |   };
+  607 |   const turn = execution.items.find((event) => event.type === 'harness.turn');
+  608 |   const acceptance = execution.items.find((event) => event.type === 'harness.submission');
+  609 |   expect(turn?.visitId).toBeTruthy();
+  610 |   expect(turn?.turnId).toBeTruthy();
+  611 |   expect(acceptance).toMatchObject({
+  612 |     visitId: turn!.visitId,
+  613 |     turnId: turn!.turnId,
+  614 |     submission: 'submitted',
+  615 |   });
+  616 |   const timeline = page.getByRole('list', { name: 'Timeline' });
+  617 |   const turnRow = timeline.getByRole('button', { name: /harness\.turn/ });
+  618 |   await turnRow.click();
+  619 |   await expect(turnRow).toHaveAttribute('aria-current', 'true');
+  620 |   const acceptanceRow = timeline.getByRole('button', { name: /harness\.submission/ });
+  621 |   await acceptanceRow.click();
+  622 |   await expect(acceptanceRow).toHaveAttribute('aria-current', 'true');
+  623 |   const progress = page.getByRole('button', { name: /Node progress/ });
+  624 |   await progress.click();
+  625 |   await expect(
+  626 |     page.getByRole('listitem').filter({
+  627 |       hasText:
+  628 |         'claude session fresh; model claude-opus-5-5; requested effort xhigh; effective effort not reported',
+  629 |     }),
+  630 |   ).toBeVisible();
+  631 | 
+  632 |   await control(request, '/harness/termination', {
+  633 |     instanceId: instance.id,
+  634 |     harness: 'claude',
+  635 |     mode: 'unconfirmed',
+  636 |   });
+  637 |   const failedLoop = await publishAt(
+  638 |     request,
+  639 |     instance.url,
+  640 |     inferenceLoop('Claude unconfirmed stop', 'claude'),
+  641 |   );
+  642 |   const failedStart = await request.post(instance.url + '/loops/' + failedLoop + '/runs', {
+  643 |     data: { input: null },
+  644 |   });
+  645 |   expect(failedStart.status()).toBe(202);
+  646 |   const { run: failedRun } = (await failedStart.json()) as { run: { id: string } };
+  647 |   await expect
+  648 |     .poll(async () => {
+  649 |       const eventsResponse = await request.get(instance.url + '/runs/' + failedRun.id + '/events');
+  650 |       const events = (await eventsResponse.json()) as { items: { type: string }[] };
+  651 |       return events.items.some((event) => event.type === 'harness.session');
+  652 |     })
+  653 |     .toBe(true);
+  654 |   await page.goto(instance.url + '/app/runs/' + failedRun.id);
+  655 |   await page.getByRole('button', { name: 'Cancel run' }).click();
+  656 |   await waitForTerminal(request, instance.url, failedRun.id, 'failed');
+  657 |   const failed = (await (await request.get(instance.url + '/runs/' + failedRun.id)).json()) as {
+  658 |     failure?: { code: string; resumable: boolean };
+  659 |   };
+  660 |   expect(failed.failure).toMatchObject({
+  661 |     code: 'HARNESS_TERMINATION_UNCONFIRMED',
+  662 |     resumable: false,
+  663 |   });
+  664 |   const observedSeq = RunSnapshotSchema.parse(
+  665 |     await (await request.get(instance.url + '/runs/' + failedRun.id)).json(),
+  666 |   ).recovery.observedSeq;
+  667 |   const resume = await request.post(instance.url + '/runs/' + failedRun.id + '/resume', {
+  668 |     data: { observedSeq },
+  669 |   });
+  670 |   expect(resume.status()).toBe(409);
+> 671 |   expect(await resume.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+      |                               ^ Error: expect(received).toMatchObject(expected)
+  672 |   await expect(
+  673 |     page.getByText('Failed: HARNESS_TERMINATION_UNCONFIRMED', { exact: true }),
+  674 |   ).toBeVisible();
+  675 | 
+  676 |   await control(request, '/harness/termination', {
+  677 |     instanceId: instance.id,
+  678 |     harness: 'claude',
+  679 |     mode: 'confirmed',
+  680 |   });
+  681 |   await control(request, '/harness/script', {
+  682 |     instanceId: instance.id,
+  683 |     harness: 'claude',
+  684 |     turns: [{ delayMs: 30_000, finalText: 'Cancelled synthetic result.' }],
+  685 |   });
+  686 |   const cancelLoop = await publishAt(
+  687 |     request,
+  688 |     instance.url,
+  689 |     inferenceLoop('Claude confirmed cancel', 'claude'),
+  690 |   );
+  691 |   const cancelStart = await request.post(instance.url + '/loops/' + cancelLoop + '/runs', {
+  692 |     data: { input: null },
+  693 |   });
+  694 |   expect(cancelStart.status()).toBe(202);
+  695 |   const { run: cancelRun } = (await cancelStart.json()) as { run: { id: string } };
+  696 |   await expect
+  697 |     .poll(async () => {
+  698 |       const eventsResponse = await request.get(instance.url + '/runs/' + cancelRun.id + '/events');
+  699 |       const events = (await eventsResponse.json()) as { items: { type: string }[] };
+  700 |       return events.items.some((event) => event.type === 'harness.session');
+  701 |     })
+  702 |     .toBe(true);
+  703 |   await page.goto(instance.url + '/app/runs/' + cancelRun.id);
+  704 |   await page.getByRole('button', { name: 'Cancel run' }).click();
+  705 |   await waitForTerminal(request, instance.url, cancelRun.id, 'cancelled');
+  706 |   await expect(page.locator('[data-status="cancelled"]').first()).toBeVisible();
+  707 | });
+  708 | 
+  709 | for (const ready of [false, true]) {
+  710 |   test(`loaded saved incompatible model is retained without a switch, readiness ${ready}`, async ({
+  711 |     page,
+  712 |     request,
+  713 |   }) => {
+  714 |     const instance = await claudeInstance(request);
+  715 |     if (!ready)
+  716 |       await control(request, '/harness/preflight', {
+  717 |         instanceId: instance.id,
+  718 |         harness: 'claude',
+  719 |         state: 'not-ready',
+  720 |       });
+  721 |     const definition = inferenceLoop('Loaded incompatible');
+  722 |     const inference = definition.nodes.find((node) => node.id === 'infer')!;
+  723 |     Object.assign(inference.config, { model: 'gpt-6-astra', effort: 'high' });
+  724 |     const created = await request.post(instance.url + '/loops', { data: { definition } });
+  725 |     expect(created.status()).toBe(201);
+  726 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  727 |     await page.route(`**/loops/${loop.id}`, async (route) => {
+  728 |       const response = await route.fetch();
+  729 |       const body = (await response.json()) as {
+  730 |         draft?: { definition: unknown };
+  731 |         current?: { definition: unknown };
+  732 |       };
+  733 |       const version = body.draft ?? body.current;
+  734 |       if (!version) throw new Error('Missing loaded version fixture');
+  735 |       const definition = LoopDefinitionSchema.parse(version.definition);
+  736 |       const loaded = definition.nodes.find((node) => node.id === 'infer');
+  737 |       if (loaded?.kind !== 'inference') throw new Error('Missing loaded inference fixture');
+  738 |       loaded.config.harness = 'claude';
+  739 |       version.definition = definition;
+  740 |       await route.fulfill({ response, json: body });
+  741 |     });
+  742 |     await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+  743 |     const dialog = await openNode(page, 'infer');
+  744 |     await openAdvanced(dialog);
+  745 |     const model = dialog.getByLabel('Model', { exact: true });
+  746 |     await expect(model).toHaveValue('gpt-6-astra');
+  747 |     await expect(model.locator('option:checked')).toHaveText(/Saved model belongs to Codex/);
+  748 |     await expect(model.locator('option:checked')).toBeDisabled();
+  749 |   });
+  750 | }
+  751 | 
+```

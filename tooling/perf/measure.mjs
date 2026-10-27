@@ -1,4 +1,3 @@
-/* global process, performance, fetch, setInterval, clearInterval, setTimeout, clearTimeout, URL, AbortSignal */
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { spawn, fork, spawnSync } from 'node:child_process';
@@ -484,7 +483,8 @@ try {
         result.correctness.recoveryOk = result.recovery.ok;
       }
       const threadAt = performance.now();
-      const threadResponse = await fetch(started.base + '/runs/' + started.runId + '/thread', {
+      const threadBase = result.recovery?.base ?? started.base;
+      const threadResponse = await fetch(threadBase + '/runs/' + started.runId + '/thread', {
         signal: AbortSignal.timeout(120_000),
       });
       const threadBody = await threadResponse.arrayBuffer();

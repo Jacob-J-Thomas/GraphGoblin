@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/packages/adapter-codex
+
+ ❯ src/harness.test.ts (33 tests | 2 failed) 5145ms
+   ❯ cancellation (8)
+     × cancel() reports unconfirmed termination when the turn does not end within the grace period 23ms
+     × stops waiting for an event stream that outlives an abort, even one it cannot close 5015ms
+ ❯ src/termination.test.ts (2 tests | 1 failed) 10333ms
+   × reports unconfirmed termination within the acknowledgement when a CLI descendant keeps its output open after abort 10138ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/harness.test.ts > cancellation > cancel() reports unconfirmed termination when the turn does not end within the grace period
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/harness.test.ts:444:35
+    442|       logger: log,
+    443|     }).start(request(), new AbortController().signal);
+    444|     await expect(session.cancel()).rejects.toMatchObject({
+       |                                   ^
+    445|       code: 'HARNESS_TERMINATION_UNCONFIRMED',
+    446|       retriable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/harness.test.ts > cancellation > stops waiting for an event stream that outlives an abort, even one it cannot close
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/harness.test.ts:460:3
+    458|   });
+    459|
+    460|   it('stops waiting for an event stream that outlives an abort, even o…
+       |   ^
+    461|     const accepted = loadFixture('message').events.slice(0, 1);
+    462|     const factory: CodexClientFactory = () => ({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/termination.test.ts > reports unconfirmed termination within the acknowledgement when a CLI descendant keeps its output open after abort
+AssertionError: expected 'still waiting for the CLI output' to match object { …(2) }
+
+- Expected:
+{
+  "code": "HARNESS_TERMINATION_UNCONFIRMED",
+  "retriable": false,
+}
+
++ Received:
+"still waiting for the CLI output"
+
+ ❯ src/termination.test.ts:107:19
+    105|   ]);
+    106|
+    107|   expect(outcome).toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRM…
+       |                   ^
+    108|   for (let step = await events.next(); !step.done; step = await events…
+    109|   expect(seen.at(-1)).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 32 passed (35)
+   Start at  02:49:40
+   Duration  13.13s (tests 75%, import 14%, transform 11%)
+

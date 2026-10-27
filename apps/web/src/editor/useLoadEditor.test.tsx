@@ -84,7 +84,9 @@ it.each([false, true])(
       { wrapper },
     );
     await waitFor(() => expect(useEditorStore.getState().definition?.name).toBe('device work'));
-    await act(() => new Promise((resolve) => setTimeout(resolve, 150)));
+    await waitFor(() => expect(events.some((e) => e.event === 'render device work')).toBe(true));
+    expect(view.result.current.serverReconciled).toBe(false);
+    expect(events.some((e) => e.event === 'server response')).toBe(false);
     const renderedBeforeServer = events.some((e) => e.event === 'render device work');
     await act(async () => {
       server.resolve();
@@ -280,7 +282,9 @@ it.each([0, Infinity])(
     queryClient.setQueryData(keys.loop(loop.id), detail);
     const server = slowServer(api);
     const view = mount(api, loop.id, queryClient);
-    await act(() => new Promise((resolve) => setTimeout(resolve, 40)));
+    await waitFor(() => expect(api.callsTo('GET', `/loops/${loop.id}`)).toHaveLength(2));
+    await waitFor(() => expect(view.result.current.deviceInspected).toBe(true));
+    expect(view.result.current.query.isFetching).toBe(true);
     expect(view.result.current.serverReconciled).toBe(false);
     act(() => {
       server.resolve();

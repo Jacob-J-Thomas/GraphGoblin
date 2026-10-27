@@ -1,0 +1,54 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (24 tests | 2 failed) 6725ms
+   × does not let 61 budget-protected artifact jobs hide removable workspaces in a later window 1937ms
+   × reports every preserved resource across repeated passes instead of alternating by cursor 143ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > does not let 61 budget-protected artifact jobs hide removable workspaces in a later window
+AssertionError: expected 0 to be greater than 0
+ ❯ src/sqlite/history-cleanup.test.ts:423:24
+    421|   while (await store.prepareBatch('local')) { /* Consume only the conf…
+    422|   const result = await store.reapBatch();
+    423|   expect(result.bytes).toBeGreaterThan(0);
+       |                        ^
+    424|   for (let i = 0; i < 4; i++) await store.reapBatch();
+    425|   expect((await store.reapBatch()).preserved).toBe(61);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > reports every preserved resource across repeated passes instead of alternating by cursor
+AssertionError: expected +0 to be 3 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 3
++ 0
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:436:75
+    434|   await mark([owner]);
+    435|   await store.prepareBatch('local');
+    436|   for (let i = 0; i < 3; i++) expect((await store.reapBatch()).preserv…
+       |                                                                           ^
+    437| });
+    438|
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 passed (24)
+   Start at  03:32:25
+   Duration  11.47s (tests 60%, import 26%, transform 14%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

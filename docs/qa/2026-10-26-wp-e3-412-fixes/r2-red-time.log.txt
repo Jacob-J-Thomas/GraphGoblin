@@ -1,0 +1,43 @@
+﻿pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/HistoryEligibility.test.tsx -t formats deletion --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+
+ ❯ src/runs/HistoryEligibility.test.tsx (8 tests | 1 failed | 7 skipped) 236ms
+   × formats deletion confirmation time using the inspector local date convention 234ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/runs/HistoryEligibility.test.tsx > formats deletion confirmation time using the inspector local date convention
+Error: expect(element).toHaveTextContent()
+System.Management.Automation.RemoteException
+Expected element to have text content:
+  10/26/2026, 2:15:09 AM
+Received:
+  Delete-ready: confirmed by local at 2026-10-26T07:15:09.424Z.
+ ❯ src/runs/HistoryEligibility.test.tsx:93:17
+     91|   renderApp(`/runs/${run.id}`, api);
+     92|   const label = await screen.findByText(/Delete-ready: confirmed by/);
+     93|   expect(label).toHaveTextContent(new Date(ts).toLocaleString());
+       |                 ^
+     94|   expect(label).not.toHaveTextContent(ts);
+     95| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  03:34:19
+   Duration  12.83s (transform 36%, environment 35%, import 18%, setup 10%, tests 2%)
+
+  Transform  transforming modules took 4.48s · 36% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+System.Management.Automation.RemoteException
+EXIT 1

@@ -101,8 +101,9 @@ uses actual process death. Operator controls always use the drain/force sequence
 - Drain observation: 50 ms. It observes runnable quiescence and delivers already-due family wakes without spinning and bounds
   local notification latency. Actual work retains the configured timer poll interval.
 - Script cleanup acknowledgement: five seconds after explicit termination. This is a
-  failure-reporting deadline, never an automatic normal-shutdown deadline. Existing
-  harness cleanup uses its own five-second bound.
+  failure-reporting deadline, never an automatic normal-shutdown deadline. Harness cleanup
+  uses its own five-second bound: the Claude process must close, and the Codex CLI's output
+  must end after its turn is aborted (`cancelGraceMs`).
 - Signal coalescing: 1,000 ms from each accepted signal. This covers duplicated forwarding of
   each foreground keypress, including force, without letting a forwarded duplicate
   acknowledge failed cleanup. A signal after an API-initiated stop requests force.
@@ -124,12 +125,23 @@ This change adds no browser prompt, launcher or interactive UI. It does not impl
 
 ## Residual risks
 
-- N10: Codex descendant cleanup on Windows depends on the SDK cancellation contract;
-  this bolt does not establish a stronger installed-provider process-tree guarantee.
+- N10: Codex descendant cleanup depends on the SDK cancellation contract and, on Windows, on
+  the CLI's own job object. The SDK keeps the CLI's process private, so GraphGoblin cannot end
+  a process the CLI started. When such a process keeps the CLI's output open after the abort,
+  force reports `HARNESS_TERMINATION_UNCONFIRMED` after five seconds and enters `force-failed`;
+  that process survives **Force exit** as well (it is outside Node's kill-on-close job) and must
+  be ended by hand. Whether the installed CLI can leave such a process is a live-provider check.
 - N11: cron advances a slot before listener admission. The admission gate prevents ordinary
   stopped polling from consuming slots, but closing admission between the gate and the
   asynchronous store write retains the pre-existing slot/admission race. Atomic cron-slot
   admission remains outside this bolt.
+- N12: on POSIX the SDK starts the Codex CLI in the gateway's process group, unlike scripts and
+  the Claude CLI, which start in their own. A terminal Ctrl+C signals the whole foreground group,
+  so the CLI may receive it too. This is unverified (no POSIX host in the 2026-10-26 checks) and
+  the SDK patch below is limited to `windowsHide`.
+- N13: Windows `taskkill` addresses a PID. A root that exits on its own between the decision to
+  kill it and taskkill opening it frees its PID, which Windows may reuse. A root Node has already
+  seen exit is never signalled (below); the remaining window is the taskkill start-up time.
 
 ## Browser implementation amendment (2026-10-24, #319)
 
@@ -156,3 +168,30 @@ explicit check. Ready/exiting continue observing until HTTP closes, so the last 
 permanently at stopping after a confirmed control response.
 A disconnected gateway is labelled stopped or disconnected, not fabricated as an
 observed `stopped` response. No new architecture decision is introduced.
+
+## Acceptance fixes amendment (2026-10-26, #319)
+
+Independent acceptance found three gaps in the shutdown model the browser choice relies on
+([record](../qa/2026-10-26-acceptance-fixes-319-205/README.md)).
+
+- **Provider CLIs get their own console on Windows.** `@openai/codex-sdk` 0.160.0 spawned the
+  Codex CLI without `windowsHide`, so the CLI shared the gateway's console. A terminal Ctrl+C
+  reached it directly and it exited with `STATUS_CONTROL_C_EXIT` (`0xC000013A`) during what
+  should have been a normal drain. No SDK release up to 0.164.0 sets the option, so a pnpm
+  patch (`patches/@openai__codex-sdk@0.160.0.patch`, `patchedDependencies` in
+  `pnpm-workspace.yaml`) adds `windowsHide: true` to that one spawn and changes nothing else.
+  With every stdio stream piped, libuv then starts the CLI with its own hidden console, as the
+  script runner and the Claude runner already did. A terminal Ctrl+C reaches only the gateway,
+  which drains, and a running Codex turn keeps running until it finishes or the operator forces.
+  Re-check the patch whenever the SDK version changes.
+- **A Codex turn has a bounded termination acknowledgement.** The SDK's event stream ends only
+  when the CLI's stdout closes, and a process the CLI started can hold that pipe after the abort
+  kills the CLI. The harness now stops waiting `cancelGraceMs` (five seconds) after the abort
+  and fails the turn with `HARNESS_TERMINATION_UNCONFIRMED`; `cancel()` reports the same. Force
+  then concludes as `force-failed` with the run in `unconfirmedRunIds` and offers Force exit, as
+  for script trees. GraphGoblin still cannot end that process itself (N10).
+- **A process that already exited counts as released on Windows.** `taskkill /T /F` exits 128
+  when no process has the PID. A root Node has already seen exit is no longer signalled; for a
+  128, the root is released once Node reports its exit. Any other taskkill failure stays
+  unconfirmed. Callers still confirm release only when the root's output closes, so a
+  descendant that inherited it still yields an unconfirmed termination after five seconds.

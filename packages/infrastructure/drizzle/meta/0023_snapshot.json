@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0f84617f-7e7a-4d7f-9891-2aca293dc014",
-  "prevId": "3b37d9f9-4bb0-455f-8563-16dd57a9544c",
+  "id": "2e050d36-96c7-44ae-94f2-8566a89239c3",
+  "prevId": "f6151b73-c6ea-41ce-9b02-c804b3cd2f84",
   "tables": {
     "api_keys": {
       "name": "api_keys",
@@ -728,6 +728,18 @@
           "name": "run_events_delivery_idx",
           "columns": ["run_id", "type", "seq"],
           "isUnique": false
+        },
+        "run_events_gate_idx": {
+          "name": "run_events_gate_idx",
+          "columns": ["run_id", "seq"],
+          "isUnique": false,
+          "where": "\"run_events\".\"type\" = 'decision.made' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.gate') is not null else 1 end"
+        },
+        "run_events_fresh_session_idx": {
+          "name": "run_events_fresh_session_idx",
+          "columns": ["run_id", "seq"],
+          "isUnique": false,
+          "where": "\"run_events\".\"type\" = 'run.resumed' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.freshSession') is not null else 1 end"
         }
       },
       "foreignKeys": {},
@@ -737,6 +749,126 @@
           "name": "run_events_run_id_seq_pk"
         }
       },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "run_resource_uses": {
+      "name": "run_resource_uses",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "run_resource_uses_key_idx": {
+          "name": "run_resource_uses_key_idx",
+          "columns": ["key"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "run_resource_uses_run_id_key_pk": {
+          "columns": ["run_id", "key"],
+          "name": "run_resource_uses_run_id_key_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "run_resources": {
+      "name": "run_resources",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_run_id": {
+          "name": "owner_run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity": {
+          "name": "identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "physical_path": {
+          "name": "physical_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "approval": {
+          "name": "approval",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pending": {
+          "name": "pending",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "run_resources_owner_idx": {
+          "name": "run_resources_owner_idx",
+          "columns": ["owner_run_id"],
+          "isUnique": false
+        },
+        "run_resources_pending_idx": {
+          "name": "run_resources_pending_idx",
+          "columns": ["pending", "key"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -778,23 +910,9 @@
           "notNull": false,
           "autoincrement": false
         },
-        "replay_intent_source_run_id": {
-          "name": "replay_intent_source_run_id",
+        "replay_source_run_id": {
+          "name": "replay_source_run_id",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "replay_intent_node_id": {
-          "name": "replay_intent_node_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "replay_intent_observed_seq": {
-          "name": "replay_intent_observed_seq",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -933,6 +1051,21 @@
           "notNull": false,
           "autoincrement": false
         },
+        "deletion_approval": {
+          "name": "deletion_approval",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "deletion_revision": {
+          "name": "deletion_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
         "pinned": {
           "name": "pinned",
           "type": "text",
@@ -971,14 +1104,15 @@
           "columns": ["parent_run_id"],
           "isUnique": false
         },
-        "runs_replay_intent_idx": {
-          "name": "runs_replay_intent_idx",
-          "columns": [
-            "replay_intent_source_run_id",
-            "replay_intent_node_id",
-            "replay_intent_observed_seq"
-          ],
-          "isUnique": true
+        "runs_replay_source_idx": {
+          "name": "runs_replay_source_idx",
+          "columns": ["replay_source_run_id"],
+          "isUnique": false
+        },
+        "runs_deletion_approval_idx": {
+          "name": "runs_deletion_approval_idx",
+          "columns": ["deletion_approval"],
+          "isUnique": false
         },
         "runs_version_idx": {
           "name": "runs_version_idx",
@@ -989,12 +1123,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "runs_replay_intent_complete": {
-          "name": "runs_replay_intent_complete",
-          "value": "(\"runs\".\"replay_intent_source_run_id\" IS NULL AND \"runs\".\"replay_intent_node_id\" IS NULL AND \"runs\".\"replay_intent_observed_seq\" IS NULL) OR (\"runs\".\"replay_intent_source_run_id\" IS NOT NULL AND \"runs\".\"replay_intent_node_id\" IS NOT NULL AND \"runs\".\"replay_intent_observed_seq\" IS NOT NULL AND \"runs\".\"replay_intent_observed_seq\" >= 0)"
-        }
-      }
+      "checkConstraints": {}
     },
     "schedules": {
       "name": "schedules",
@@ -1465,6 +1594,113 @@
           "value": "(\"webhook_receipts\".\"status\" IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NULL) OR (\"webhook_receipts\".\"status\" NOT IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NOT NULL)"
         }
       }
+    },
+    "workspace_reference_state": {
+      "name": "workspace_reference_state",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "epoch": {
+          "name": "epoch",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "sweeping": {
+          "name": "sweeping",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "workspace_references": {
+      "name": "workspace_references",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "physical_path": {
+          "name": "physical_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checked_epoch": {
+          "name": "checked_epoch",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "workspace_references_physical_idx": {
+          "name": "workspace_references_physical_idx",
+          "columns": ["physical_path"],
+          "isUnique": false
+        },
+        "workspace_references_run_idx": {
+          "name": "workspace_references_run_idx",
+          "columns": ["run_id"],
+          "isUnique": false
+        },
+        "workspace_references_version_idx": {
+          "name": "workspace_references_version_idx",
+          "columns": ["version_id"],
+          "isUnique": false
+        },
+        "workspace_references_epoch_idx": {
+          "name": "workspace_references_epoch_idx",
+          "columns": ["checked_epoch", "id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
   "views": {},

@@ -143,8 +143,9 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   expect(count('node.progress')).toBe(1200);
   for (const type of ['harness.session', 'harness.usage', 'harness.turn', 'harness.submission'])
     expect(count(type)).toBe(1);
-  // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
-  // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
+  // The inspector coalesces live refreshes (at most one per 500 ms, #186; e2e/live-follow.spec.ts
+  // bounds them exactly). Load can stretch the stream beyond five seconds, so this loose budget
+  // allows one per 100 ms of elapsed time plus initial/final reads, still rejecting one per item.
   const liveRunGets = runGets;
   expect(liveRunGets).toBeLessThanOrEqual(5 + Math.ceil(live / 100));
   expect(liveRunGets).toBeLessThan(1200);

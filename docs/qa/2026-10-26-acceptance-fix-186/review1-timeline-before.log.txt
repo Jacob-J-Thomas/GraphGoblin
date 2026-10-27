@@ -1,0 +1,148 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-ae61ad15bb76ad037/apps/web
+
+ ✓ src/runs/inspector/Timeline.test.tsx > preserves the ordinary accessible event name for an oversized payload marker 226ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names an oversized marker with the pinned labels, not only its recorded IDs (#255) 40ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names oversized markers of many small values with the pinned labels (#186 round 2 audit round 2 B1) 196ms
+ ✓ src/runs/inspector/Timeline.test.tsx > windows rows and carries keyboard focus across row boundaries, preserving selection and names 1429ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps live rows at the end and exposes a sequence seek independently of loaded rows 529ms
+ × src/runs/inspector/Timeline.test.tsx > announces pausing and browsing, not every live append (#186 QA) 430ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+ × src/runs/inspector/Timeline.test.tsx > leaves the row list in one Tab or Shift+Tab from any row (#186 QA) 564ms
+   → [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+
+Expected element with focus:
+  [32m<button
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"
+  type="submit"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Go to event
+  </span>
+</button>[39m
+Received element with focus:
+  [31m<button
+  class="grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline"
+  data-seq="499"
+  type="button"
+>
+  <span
+    class="text-right font-mono text-xs text-subtle"
+  >
+    #
+    499
+  </span>
+  <code
+    class="text-[12.5px] font-medium"
+  >
+    run.started
+  </code>
+  <span
+    class="min-w-0 break-words text-muted"
+  >
+    attempt 1
+  </span>
+</button>[39m
+ × src/runs/inspector/Timeline.test.tsx > keeps keyboard focus on Follow live once it resumes following (#186 QA) 426ms
+   → [2mexpect([22m[31melement[39m[2m).toHaveAttribute([22m[32m[32m"aria-disabled"[32m[39m[2m, [22m[32m[32m"true"[32m[39m[2m) // element.getAttribute("aria-disabled") === "true"[22m
+
+Expected the element to have attribute:
+[32m  aria-disabled="true"[39m
+Received:
+[31m  null[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/inspector/Timeline.test.tsx > announces pausing and browsing, not every live append (#186 QA)
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Showing events 321–400 of the retained window.",
++   "Showing events 361–440 of the retained window.",
+  ]
+
+ ❯ src/runs/inspector/Timeline.test.tsx:251:23
+    249|   // The visible window text follows the tail; the announcement does n…
+    250|   expect(screen.getByText('Showing events 361–440 of the retained wind…
+    251|   expect(announced()).toEqual(before);
+       |                       ^
+    252|   expect(announced()).toContain('Following live.');
+    253|   await user.click(screen.getByRole('button', { name: 'Previous rows' …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/runs/inspector/Timeline.test.tsx > leaves the row list in one Tab or Shift+Tab from any row (#186 QA)
+Error: [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+
+Expected element with focus:
+  [32m<button
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"
+  type="submit"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Go to event
+  </span>
+</button>[39m
+Received element with focus:
+  [31m<button
+  class="grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline"
+  data-seq="499"
+  type="button"
+>
+  <span
+    class="text-right font-mono text-xs text-subtle"
+  >
+    #
+    499
+  </span>
+  <code
+    class="text-[12.5px] font-medium"
+  >
+    run.started
+  </code>
+  <span
+    class="min-w-0 break-words text-muted"
+  >
+    attempt 1
+  </span>
+</button>[39m
+ ❯ src/runs/inspector/Timeline.test.tsx:266:63
+    264|   act(() => row.focus());
+    265|   await user.tab({ shift: true });
+    266|   expect(screen.getByRole('button', { name: 'Go to event' })).toHaveFo…
+       |                                                               ^
+    267|   // Back into the list lands on the row last focused, and Tab leaves …
+    268|   await user.tab();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/runs/inspector/Timeline.test.tsx > keeps keyboard focus on Follow live once it resumes following (#186 QA)
+Error: [2mexpect([22m[31melement[39m[2m).toHaveAttribute([22m[32m[32m"aria-disabled"[32m[39m[2m, [22m[32m[32m"true"[32m[39m[2m) // element.getAttribute("aria-disabled") === "true"[22m
+
+Expected the element to have attribute:
+[32m  aria-disabled="true"[39m
+Received:
+[31m  null[39m
+ ❯ src/runs/inspector/Timeline.test.tsx:287:18
+    285|   await user.keyboard('{Enter}');
+    286|   // It cannot act while following, but stays focusable so focus does …
+    287|   expect(follow).toHaveAttribute('aria-disabled', 'true');
+       |                  ^
+    288|   expect(follow).not.toBeDisabled();
+    289|   expect(follow).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  07:28:35
+   Duration  16.22s (environment 38%, tests 24%, transform 19%, setup 11%, import 8%)
+

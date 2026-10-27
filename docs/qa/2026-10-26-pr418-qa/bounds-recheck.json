@@ -1,0 +1,100 @@
+{
+  "checks": [
+    {
+      "name": "normal reader: paged replay delivers 1..last in order, then stream.complete",
+      "ok": true,
+      "detail": {
+        "last": 609,
+        "delivered": 609,
+        "bytes": 23865984,
+        "controls": [
+          "stream.complete"
+        ]
+      }
+    },
+    {
+      "name": "reader stalled 2 s (under the 5 s drain limit): completes with no failure control",
+      "ok": true,
+      "detail": {
+        "delivered": 609,
+        "controls": [
+          "stream.complete"
+        ]
+      }
+    },
+    {
+      "name": "reader stalled 6 s: explicit SSE_SLOW_CONSUMER, no completion; Last-Event-ID resume completes 1..last with no gap or duplicate",
+      "ok": true,
+      "detail": {
+        "beforeFailure": 20,
+        "explicit": true,
+        "errorControl": {
+          "event": "stream.error",
+          "data": "{\"type\":\"urn:graphgoblin:problem:SSE_SLOW_CONSUMER\",\"title\":\"Event stream reader fell behind\",\"status\":503,\"code\":\"SSE_SLOW_CONSUMER\",\"detail\":\"The reader fell behind; reconnecting from the last received event.\"}"
+        },
+        "resumedFrom": 20,
+        "afterResume": 589,
+        "last": 609,
+        "apiPrivateMiB": {
+          "before": 214.4,
+          "after": 216.5
+        }
+      }
+    },
+    {
+      "name": "reader stalled 15 s: explicit failure or severed connection, no completion; Last-Event-ID resume completes 1..last with no gap or duplicate",
+      "ok": true,
+      "detail": {
+        "beforeFailure": 20,
+        "explicit": false,
+        "fetchError": "UND_ERR_SOCKET",
+        "resumedFrom": 20,
+        "afterResume": 589,
+        "last": 609,
+        "apiPrivateMiB": {
+          "before": 163.2,
+          "after": 101.6
+        }
+      }
+    },
+    {
+      "name": "inspector stalled 9 s during replay: reopens from its cursor, completes, contiguous rows, status and count equal the API",
+      "ok": true,
+      "detail": {
+        "atPause": {
+          "total": 15,
+          "stream": "live"
+        },
+        "final": {
+          "timeline": {
+            "total": 609,
+            "stream": "complete"
+          },
+          "lastRow": 609,
+          "rows": 18,
+          "status": "succeeded",
+          "threadHeading": "Current thread"
+        },
+        "sseRequests": [
+          "?after=0",
+          "?after=80"
+        ],
+        "sawFellBehind": [],
+        "requests": {
+          "system": 2,
+          "run": 9,
+          "thread": 5,
+          "events-sse": 2,
+          "observation": 7,
+          "version": 1
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "history": {
+    "last": 609,
+    "bytes": 23865984
+  },
+  "ok": true
+}

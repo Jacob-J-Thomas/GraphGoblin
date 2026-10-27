@@ -68,6 +68,57 @@ const transient: RunFailure = {
   nodeId: 'start',
 };
 describe('server recovery eligibility (#256)', () => {
+  it('Replay records the canonical source and revokes deletion consent without changing execution history', async () => {
+    await t.container.manager.start();
+    const loopId = await t.publishLoop(minimalLoop());
+    const source = await t.container.manager.startRun({
+      ownerId: 'local',
+      loopId,
+      source: 'manual.api',
+    });
+    await t.idle();
+    const before = await t.container.ports.events.read(source.id);
+    const runIds = [source.id];
+    const preview = (
+      await t.app.inject({
+        method: 'POST',
+        url: '/runs/deletion-eligibility/preview',
+        payload: { runIds },
+      })
+    ).json<{ token: string }>();
+    const marked = await t.app.inject({
+      method: 'POST',
+      url: '/runs/deletion-eligibility',
+      payload: { runIds, token: preview.token, action: 'mark', confirmed: true },
+    });
+    expect(marked.statusCode, marked.body).toBe(200);
+    expect((await t.container.ports.runs.get(source.id))?.deletionApproval).toBeDefined();
+    const snapshot = (await t.app.inject(`/runs/${source.id}`)).json<Snapshot>();
+    const response = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${source.id}/replay`,
+      payload: { nodeId: 'start', observedSeq: snapshot.recovery.observedSeq },
+    });
+    expect(response.statusCode, response.body).toBe(202);
+    const fork = response.json<{ run: RunRecord }>().run;
+    expect(fork.id).not.toBe(source.id);
+    expect(
+      (
+        await t.container.handle.client.execute({
+          sql: 'SELECT replay_source_run_id,replay_intent_node_id,replay_intent_observed_seq FROM runs WHERE id=?',
+          args: [fork.id],
+        })
+      ).rows,
+    ).toEqual([
+      {
+        replay_source_run_id: source.id,
+        replay_intent_node_id: 'start',
+        replay_intent_observed_seq: snapshot.recovery.observedSeq,
+      },
+    ]);
+    expect((await t.container.ports.runs.get(source.id))?.deletionApproval).toBeUndefined();
+    expect(await t.container.ports.events.read(source.id)).toEqual(before);
+  });
   it.each(['queued', 'running', 'waiting', 'paused', 'cancelled', 'succeeded'] as const)(
     'scan1: Replay retains main eligibility for a reached node on a %s source',
     async (status) => {

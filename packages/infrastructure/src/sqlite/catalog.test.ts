@@ -1,3 +1,4 @@
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import {
   applyShippedSqlToHistoricalTestFixture,
   shippedSqlMigrationCount,
@@ -307,6 +308,8 @@ describe('model catalog source migration and repository', () => {
       ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
       await handle.client.execute('DROP TABLE event_receipts');
+      await handle.client.execute('DROP INDEX run_events_gate_idx');
+      await handle.client.execute('DROP INDEX run_events_fresh_session_idx');
       // Reconstruct this empty pre-0008 table before replaying historical SQL.
       await handle.client.execute('DROP TABLE webhook_endpoints');
       await handle.client.execute(
@@ -318,7 +321,17 @@ describe('model catalog source migration and repository', () => {
         'DROP INDEX runs_replay_intent_idx',
         'ALTER TABLE runs DROP COLUMN replay_intent_observed_seq',
         'ALTER TABLE runs DROP COLUMN replay_intent_node_id',
-        'ALTER TABLE runs DROP COLUMN replay_intent_source_run_id',
+        ...RESOURCE_OWNERSHIP_REWIND_SQL,
+        'DROP TRIGGER runs_deletion_activity',
+        'DROP TRIGGER runs_deletion_relationship',
+        'DROP TRIGGER runs_replay_source_update',
+        'DROP TRIGGER runs_deletion_dependency_insert',
+        'DROP TRIGGER runs_deletion_revision',
+        'DROP INDEX runs_replay_source_idx',
+        'ALTER TABLE runs DROP COLUMN replay_source_run_id',
+        'DROP INDEX runs_deletion_approval_idx',
+        'ALTER TABLE runs DROP COLUMN deletion_approval',
+        'ALTER TABLE runs DROP COLUMN deletion_revision',
         'DROP INDEX runs_loop_owner_history_idx',
         'DROP TRIGGER loop_versions_snapshot_immutable',
         'DROP TRIGGER loop_versions_snapshot_pinned',

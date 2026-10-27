@@ -9,7 +9,10 @@ import { fileURLToPath } from 'node:url';
 import { evaluateLayers, collectDependencies } from './layers.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, '..', '..');
+const args = process.argv.slice(2);
+if (args.length && !(args.length === 2 && args[0] === '--root'))
+  throw new Error('Usage: check-layers.mjs [--root <repository>]');
+const root = args.length ? resolve(args[1]) : resolve(here, '..', '..');
 const policy = JSON.parse(readFileSync(join(root, 'tooling', 'layers.json'), 'utf8'));
 
 /** @returns {import('./layers.mjs').WorkspacePackage[]} */

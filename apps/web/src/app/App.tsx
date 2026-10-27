@@ -13,6 +13,7 @@ import { RunInspectorPage } from '../runs/RunInspectorPage.js';
 import { RunsPage } from '../runs/RunsPage.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
 import { ShutdownNotice } from './ShutdownNotice.js';
+import { StorageNotice } from './StorageNotice.js';
 
 const NAV: readonly NavItem[] = [
   { to: '/loops', label: 'Loops' },
@@ -32,6 +33,7 @@ function Layout() {
     >
       <ApiKeyPanel />
       <ShutdownNotice />
+      <StorageNotice />
       <ErrorBoundary key={location.pathname}>
         <Outlet />
       </ErrorBoundary>

@@ -507,6 +507,18 @@ export class FakeApi {
 
   /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
   builtIn(call: RecordedCall): Response | Promise<Response> {
+    if (call.method === 'GET' && call.path === '/system/storage')
+      return json({
+        state: 'adequate',
+        checkedAt: null,
+        volumes: [],
+        cleaning: false,
+        deletedRuns: 0,
+        removedFileBytes: 0,
+        reusableDatabaseBytes: 0,
+        pendingResources: 0,
+        preservedResources: 0,
+      });
     if (call.method === 'GET' && call.path === '/system/shutdown')
       return json({
         phase: 'running',
@@ -1207,4 +1219,57 @@ export function event<T extends RunEvent['type']>(
   fields: Omit<Extract<RunEvent, { type: T }>, 'runId' | 'seq' | 'ts' | 'type'>,
 ): RunEvent {
   return { runId, seq, ts: TS, type, ...fields } as RunEvent;
+}
+
+/**
+ * One pass of a mutate-and-gate cycle starting at `seq` (#186): Grow sets `vars.n` to `pass`, then
+ * the expression gate records its next pass and repeats. Five events; the last is a completion.
+ */
+export function cyclePass(runId: string, seq: number, pass: number): RunEvent[] {
+  return [
+    event(runId, seq, 'node.started', {
+      nodeId: 'grow',
+      kind: 'mutate',
+      attempt: 1,
+      configHash: 'h',
+    }),
+    event(runId, seq + 1, 'node.finished', {
+      nodeId: 'grow',
+      durationMs: 1,
+      patch: [{ op: 'add', path: '/vars/n', value: pass }],
+    }),
+    event(runId, seq + 2, 'node.started', {
+      nodeId: 'gate',
+      kind: 'decision',
+      attempt: 1,
+      configHash: 'h',
+    }),
+    event(runId, seq + 3, 'decision.made', {
+      nodeId: 'gate',
+      portId: 'again',
+      provenance: {
+        kind: 'expression',
+        provider: null,
+        model: null,
+        effort: null,
+        classifierId: null,
+      },
+      diagnostics: [],
+      observation: { kind: 'route', routeId: 'again', confidence: null, reasoning: null },
+      gate: {
+        previousPasses: pass,
+        passes: pass + 1,
+        repeatRouteId: 'again',
+        maxPasses: null,
+        elapsedSeconds: 0,
+        limit: null,
+      },
+    }),
+    event(runId, seq + 4, 'node.finished', {
+      nodeId: 'gate',
+      durationMs: 1,
+      patch: [],
+      route: 'again',
+    }),
+  ];
 }

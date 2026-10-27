@@ -1,0 +1,134 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 7098ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1254ms
+ ❯ src/process/scripts.test.ts (46 tests | 1 failed) 5878ms
+   ❯ ProcessScripts (39)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 159ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 7600ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 5270ms
+ ❯ src/claude/process.test.ts (6 tests | 3 failed) 1449ms
+   ❯ owned native Claude process transport (6)
+     × kills on deadline and output overflow 386ms
+     × does not spawn for an already aborted signal and cancels a running process 126ms
+     × kills the descendant that a long-lived child started 682ms
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/readiness.test.ts (23 tests | 1 failed) 1598ms
+   × upgrades main observation indexes through eligibility and ownership without losing history 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-hC4juI'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-SGiDKi'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-JRWgUx'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxx' to be 'xxx' // Object.is equality
+
+Expected: "xxx"
+Received: "xxxxxx"
+
+ ❯ src/claude/process.test.ts:199:46
+    197|       const stopped = await readFile(marker, 'utf8');
+    198|       await new Promise((resolve) => setTimeout(resolve, 100));
+    199|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    200|     } finally {
+    201|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-Fdme0h'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:203:45
+    201|     if (pid === undefined) throw new Error('child did not start');
+    202|     const childPid = pid;
+    203|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    204|   });
+    205|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/sqlite/readiness.test.ts > upgrades main observation indexes through eligibility and ownership without losing history
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/sqlite/readiness.test.ts:166:44
+    165|     await handle.client.execute("SELECT * FROM sqlite_master WHERE tbl…
+    166|   ).rows;
+    167|   expect(await handle.pendingMigrations()).toBe(shippedCount - 22);
+       |                                  ^
+    168|   await handle.migrate();
+    169|   expect((await handle.client.execute('SELECT * FROM runs')).rows).toE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  5 failed | 56 passed (61)
+      Tests  7 failed | 859 passed (866)
+   Start at  21:53:55
+   Duration  187.49s (tests 64%, import 33%, transform 2%, worker 1%)
+
+     Import  207 modules were evaluated 304 times · 56.34s total, 33% of tracked time
+             ~17.98s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.61% ( 2793/2891 )
+Branches     : 94.32% ( 2093/2219 )
+Functions    : 98.32% ( 588/598 )
+Lines        : 98.1% ( 2488/2536 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\infrastructure
+

@@ -1,0 +1,36 @@
+pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts src/sqlite/deletion-eligibility.test.ts src/sqlite/loop-deletion.test.ts src/sqlite/catalog.test.ts src/sqlite/definition-pins.test.ts src/sqlite/delivery-runs.test.ts src/sqlite/history-summaries.test.ts src/sqlite/webhook-receipt-upgrade.test.ts --maxWorkers=2
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (7 tests | 3 failed) 20992ms
+   × deletes only approved whole components and their rows, leaving stable page cursors and reusable SQLite pages 5749ms
+   × rechecks revocation and never deletes an active member or a foreign/missing dependency 5577ms
+   × retains journal state when a transaction fails after file removal, then finishes after reopen 5627ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > deletes only approved whole components and their rows, leaving stable page cursors and reusable SQLite pages
+Error: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-LCCd7x\history.db-shm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > rechecks revocation and never deletes an active member or a foreign/missing dependency
+Error: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-uxWu4Z\history.db-wal'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > retains journal state when a transaction fails after file removal, then finishes after reopen
+Error: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-ASxBAZ\history.db-shm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  3 failed | 126 passed (129)
+   Start at  00:03:14
+   Duration  44.86s (tests 72%, import 24%, transform 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+
+EXIT 1

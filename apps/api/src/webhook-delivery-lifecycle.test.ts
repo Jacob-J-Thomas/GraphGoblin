@@ -33,7 +33,7 @@ it.each(['in-flight', 'backoff'])(
   'loop deletion stops a webhook during %s without orphan events',
   { timeout: 20_000 },
   async (phase) => {
-    const api = await createTestApp();
+    const api = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
     try {
       const loopId = await api.publishLoop({
         schemaVersion: 4,

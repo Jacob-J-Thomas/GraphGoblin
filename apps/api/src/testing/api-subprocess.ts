@@ -33,7 +33,7 @@ export function listening(port: number): Promise<boolean> {
   });
 }
 
-async function freePort(start = 5600, count = 100): Promise<number> {
+export async function freePort(start = 5600, count = 100): Promise<number> {
   const offset = Math.floor(Math.random() * count);
   for (let index = 0; index < count; index++) {
     const port = start + ((offset + index) % count);

@@ -1,0 +1,72 @@
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts src/sqlite/deletion-eligibility.test.ts src/fs/fs.test.ts src/fs/artifact-references.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (21 tests | 1 failed) 6341ms
+   × keeps owned workspaces when a recorded retained use resolves through error 181ms
+ ❯ src/fs/fs.test.ts (11 tests | 1 failed) 1004ms
+   ❯ FsArtifactStore (9)
+     × ignores interrupted temporary writes and converges under identical and different concurrent puts 70ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/fs/fs.test.ts > FsArtifactStore > ignores interrupted temporary writes and converges under identical and different concurrent puts
+AssertionError: expected undefined to be '' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected:
+""
+System.Management.Automation.RemoteException
++ Received:
+undefined
+System.Management.Automation.RemoteException
+ ❯ src/fs/fs.test.ts:151:52
+    149|       expect(stored[i * 2 + 1]).toEqual(a);
+    150|       expect(a.bytes).toBe(Buffer.byteLength(content));
+    151|       expect(await store.get(a.ref.toUpperCase())).toBe(content);
+       |                                                    ^
+    152|       expect(readFileSync(join(dir, a.ref.split('/')[1]!)).equals(Buff…
+    153|     }
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > keeps owned workspaces when a recorded retained use resolves through error
+AssertionError: expected { bytes: 14, preserved: +0, …(1) } to match object { bytes: +0, pending: 1, preserved: 1 }
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "bytes": 0,
+-   "pending": 1,
+-   "preserved": 1,
++   "bytes": 14,
++   "pending": 0,
++   "preserved": 0,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:393:37
+    391|     await mark([owner]);
+    392|     expect(await store.prepareBatch('local')).toBe(1);
+    393|     expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending:…
+       |                                     ^
+    394|     expect(await readFile(join(workspace, 'keep.txt'), 'utf8')).toBe('…
+    395|     expect(await repo.get(retained)).toBeDefined();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 47 passed (49)
+   Start at  02:32:52
+   Duration  20.72s (tests 48%, import 41%, transform 11%)
+
+    Isolate  4 workers spawned · ~488ms startup each (spawn + environment, per file)
+             at least ~1.47s faster with isolate: false — reuses workers across files instead of one per file
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

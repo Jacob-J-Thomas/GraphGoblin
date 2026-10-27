@@ -40,6 +40,7 @@ function isPublic(url: string): boolean {
  * `METHOD route-pattern`, as Fastify registers the route.
  */
 const SCOPE_OVERRIDES: Record<string, string> = {
+  'POST /runs/deletion-eligibility/preview': 'runs:read',
   // Starting a run is a run command, even though it is addressed through its loop.
   'POST /loops/:id/runs': 'runs:write',
   // Validation reads the loop and saves nothing.

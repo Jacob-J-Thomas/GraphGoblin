@@ -1,0 +1,64 @@
+﻿pnpm.cmd build
+$ turbo run build
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs dfc9bfd76ab5a193
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache miss, executing aad044294d6182a9
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 8421d9eecff14e3c
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing 3ba949cc17a46151
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:build: cache miss, executing 0e6ca42b7ede39be
+@graphgoblin/adapter-jev:build: cache miss, executing a0ab93fd0040f78f
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing a9cc633a8e63f5c3
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing f133ff96af2f3e94
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: cache miss, executing 3b70efadfd12d65d
+@graphgoblin/mcp:build: cache miss, executing 653fc5e0d4393617
+@graphgoblin/web:build: $ vite build
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 717 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest           0.47 kB
+@graphgoblin/web:build: dist/index.html                     2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-C-KqImEs.css     88.45 kB │ gzip:  16.83 kB
+@graphgoblin/web:build: dist/assets/index-D0QM0NH4.js   1,878.58 kB │ gzip: 588.56 kB │ map: 8,559.80 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 1.91s
+@graphgoblin/plugin-codex:build: cache miss, executing cd7718655d81e74e
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  20 entries (2391.15 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+
+ Tasks:    11 successful, 11 total
+Cached:    1 cached, 11 total
+  Time:    25.997s 
+
+EXIT 0

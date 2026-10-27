@@ -1,0 +1,51 @@
+pnpm --filter @graphgoblin/web test:coverage --maxWorkers=4 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-322-web-coverage
+$ vitest run --coverage --maxWorkers=4 --coverage.reportOnFailure --coverage.reportsDirectory=%USERPROFILE%/AppData/Local/Temp/gg-wp-e3-322-web-coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+      Coverage enabled with v8
+
+ ❯ src/runs/HistoryEligibility.test.tsx (6 tests | 1 failed) 2445ms
+   × cancels without confirmation, freezes an explicit bulk selection while new history arrives, and shows persisted marks 883ms
+Not implemented: navigation to another Document
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/HistoryEligibility.test.tsx > cancels without confirmation, freezes an explicit bulk selection while new history arrives, and shows persisted marks
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  This does not delete anything now
+Received:
+  Mark selected history delete-ready?Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.RW4P4H47R2T1DPFW86GVBS2AM60JHGFQ0EMQTREM9CVYPS3CWDPTCancelConfirm delete-ready selection
+ ❯ src/runs/HistoryEligibility.test.tsx:49:18
+     47|   let dialog = await screen.findByRole('dialog');
+     48|   await within(dialog).findByRole('button', { name: 'Confirm delete-re…
+     49|   expect(dialog).toHaveTextContent(
+       |                  ^
+     50|     'permanently remove this history and its owned, unshared workspace…
+     51|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 147 passed (148)
+      Tests  1 failed | 1790 passed (1791)
+   Start at  00:19:20
+   Duration  736.44s (tests 38%, environment 33%, import 11%, setup 10%, transform 7%, worker 1%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.74% ( 9041/9250 )
+Branches     : 94.54% ( 8388/8872 )
+Functions    : 98% ( 2403/2452 )
+Lines        : 98.68% ( 7902/8007 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+
+EXIT 1

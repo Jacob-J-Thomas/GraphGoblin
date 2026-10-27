@@ -1,0 +1,63 @@
+Current head b4ba2bb6:
+
+              tabIndex={event.seq === tabStop ? 0 : -1}
+              aria-current={event.seq === selected ? 'true' : undefined}
+              aria-description={
+                'uncached' in event
+                  ? 'Select to load the exact event payload from the server.'
+                  : undefined
+              }
+              className={cn(
+                'grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2',
+                'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11',
+                'aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row',
+                'forced-colors:aria-[current=true]:outline',
+              )}
+              onFocus={() => {
+                setActive(event.seq);
+                setAnchor(shown[0]?.seq);
+                onPause?.();
+              }}
+              onClick={() => {
+                setAnchor(shown[0]?.seq);
+                onSelect(event.seq);
+              }}
+            >
+              <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
+              <code className="text-[12.5px] font-medium">{event.type}</code>
+              <span className="min-w-0 break-words text-muted">
+                {'uncached' in event ? (
+                  <>
+                    {describeParts(event.description, definition)}
+                    <span aria-hidden="true"> - Load exact event payload</span>
+                  </>
+                ) : (
+                  describeEvent(event, definition)
+                )}
+
+main d356094e:
+
+
+      if (focusRef.current !== undefined) {
+        listRef.current
+>         ?.querySelector<HTMLButtonElement>(`button[data-seq="${focusRef.current}"]`)
+          ?.focus();
+        focusRef.current = undefined;
+              <button
+                type="button"
+>               data-seq={event.seq}
+                aria-current={event.seq === selected ? 'true' : undefined}
+                aria-description={
+                }
+                className={cn(
+>                 'grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2',
+                  'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover 
+pointer-coarse:min-h-11',
+                  'aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row',
+                }}
+              >
+>               <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
+                <code className="text-[12.5px] font-medium">{event.type}</code>
+                <span className="min-w-0 break-words text-muted">
+
+

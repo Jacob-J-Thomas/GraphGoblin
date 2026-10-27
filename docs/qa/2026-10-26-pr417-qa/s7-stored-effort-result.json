@@ -1,0 +1,129 @@
+{
+  "scenario": "s7-stored-effort",
+  "passed": 11,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "P0 first gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "P1 restart refreshes the harness seed: the stored gpt-5.5 row lists no max again",
+      "ok": true,
+      "detail": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "P1 stored inference gpt-5.5/max is refused with EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The selected reasoning effort is not supported by this model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort"
+        }
+      }
+    },
+    {
+      "id": "P1 stored LLM decision gpt-5.5/max is refused with EFFORT_UNSUPPORTED",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The selected reasoning effort is not supported by this model",
+        "nodeId": "pick",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort"
+        }
+      }
+    },
+    {
+      "id": "P1 neither refused run reached the CLI",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "P1 control: gpt-6-luna/max still runs and sends max",
+      "ok": true,
+      "detail": {
+        "start": 202,
+        "status": "succeeded",
+        "requests": [
+          {
+            "model": "gpt-6-luna",
+            "effort": "max"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P1 exactly one CLI request in phase 1 (the control)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "P1 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "P2 a stored owner default gpt-5.5/max is refused before any request (EVALUATION_INVALID_CONFIGURATION naming the unsupported default effort)",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The default reasoning effort is not supported by its model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": [
+          {
+            "level": "owner",
+            "harness": "codex",
+            "resolution": {
+              "status": "invalid",
+              "code": "EFFORT_UNSUPPORTED",
+              "path": "effort",
+              "message": "The default reasoning effort is not supported by its model"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "P2 the refusal carries the code EFFORT_UNSUPPORTED somewhere in the run record",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The default reasoning effort is not supported by its model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": [
+          {
+            "level": "owner",
+            "harness": "codex",
+            "resolution": {
+              "status": "invalid",
+              "code": "EFFORT_UNSUPPORTED",
+              "path": "effort",
+              "message": "The default reasoning effort is not supported by its model"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "P2 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

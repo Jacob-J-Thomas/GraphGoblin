@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runClaudeProcess } from './process.js';
@@ -94,6 +94,59 @@ describe('owned native Claude process transport', () => {
     setTimeout(() => running.abort(), 50);
     expect(await promise).toMatchObject({ aborted: true });
   });
+  it.skipIf(process.platform !== 'win32')(
+    'counts a turn process that exited before its cancellation as stopped once its output closes',
+    async () => {
+      const dir = await directory(),
+        marker = join(dir, 'pids.json'),
+        release = join(dir, 'release');
+      // Like a CLI that prints its init line and exits at once. A detached process it started
+      // keeps the output open until the test creates the release file (or 30 s pass, so a failed
+      // run leaves nothing behind).
+      const holder =
+        "const fs=require('node:fs');setInterval(()=>{if(fs.existsSync(process.argv[1]))process.exit(0)},25);setTimeout(()=>process.exit(0),30000)";
+      const script =
+        "const {spawn}=await import('node:child_process');const fs=await import('node:fs');" +
+        `const holder=spawn(process.execPath,['-e',${JSON.stringify(holder)},${JSON.stringify(release)}],{detached:true,stdio:['ignore','inherit','ignore'],windowsHide:true});` +
+        'holder.unref();' +
+        `fs.writeFileSync(${JSON.stringify(marker)},JSON.stringify({root:process.pid,holder:holder.pid}));` +
+        "process.stdout.write('init\\n');";
+      const controller = new AbortController();
+      const result = run(script, { signal: controller.signal, timeoutMs: 10_000 });
+      const running = (pid: number) => {
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      try {
+        let pids: { root: number; holder: number } | undefined;
+        await vi.waitFor(
+          async () => {
+            pids = JSON.parse(await readFile(marker, 'utf8')) as { root: number; holder: number };
+          },
+          { timeout: 10_000 },
+        );
+        // Cancel once the root is gone. Whether or not Node has reported its exit yet, a gone root
+        // counts as stopped; killTree's own tests cover each of those two paths.
+        await vi.waitFor(() => expect(running(pids!.root)).toBe(false), { timeout: 10_000 });
+        expect(running(pids!.holder)).toBe(true);
+        controller.abort();
+        await writeFile(release, 'release');
+        const settled = await result;
+        expect(settled).not.toHaveProperty('terminationUnconfirmed');
+        expect(settled).toMatchObject({ aborted: true, exitCode: 0, stdout: 'init\n' });
+        expect(running(pids!.holder)).toBe(false);
+      } finally {
+        controller.abort();
+        await writeFile(release, 'release');
+        await result;
+      }
+    },
+    15_000,
+  );
   it('kills the descendant that a long-lived child started', async () => {
     const dir = await directory(),
       marker = join(dir, 'descendant-marker');

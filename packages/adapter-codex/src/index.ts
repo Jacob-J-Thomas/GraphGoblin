@@ -27,5 +27,4 @@ export {
   type ClassifiedError,
   type TurnOutcome,
 } from './events.js';
-export { mapEffort } from './options.js';
 export { createCodexAdapters, type CodexAdapters } from './adapters.js';

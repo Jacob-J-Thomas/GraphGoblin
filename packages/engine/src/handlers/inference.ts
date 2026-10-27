@@ -594,7 +594,11 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       const patch: PatchOperation[] = [];
       let working = ctx.thread;
       if (config.output.captureTranscript === 'artifact') {
-        const stored = await ctx.ports.artifacts.put('transcript', JSON.stringify(result.items));
+        const stored = await ctx.ports.artifacts.put(
+          'transcript',
+          JSON.stringify(result.items),
+          ctx.run.id,
+        );
         patch.push({
           op: 'add',
           path: '/artifacts/-',

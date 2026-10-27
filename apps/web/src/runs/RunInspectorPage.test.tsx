@@ -720,7 +720,8 @@ describe('RunInspectorPage', () => {
       screen.getAllByText('Showing the first 4,096 characters of a larger value.'),
     ).toHaveLength(2);
 
-    // The patch diff bounds each side at the cell bound.
+    // A selected completion's patch diff bounds each side at the cell bound.
+    await user.click(within(screen.getByRole('list', { name: 'Timeline' })).getByText(/#8/));
     const diff = await screen.findByRole('list', { name: 'Patch diff' });
     expect(within(diff).getByLabelText('Value before /vars/blob')).toHaveTextContent('(absent)');
     expect(within(diff).getByLabelText('Value after /vars/blob').textContent?.length).toBe(1_025);

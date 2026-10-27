@@ -5,7 +5,7 @@ import { setTimeout } from 'node:timers/promises';
 import { ArtifactStoreError, type ArtifactStorePort } from '@graphgoblin/engine';
 
 const REF_PREFIX = 'artifact:';
-const REF_PATTERN = /^artifact:([a-z0-9_-]+)\/([a-f0-9]{64})$/i;
+const REF_PATTERN = /^artifact:([a-z0-9_-]+)\/([a-f0-9]{64})$/;
 
 /** Content-addressed UTF-8 artifacts, published by same-directory atomic replacement. */
 export class FsArtifactStore implements ArtifactStorePort {
@@ -54,18 +54,18 @@ export class FsArtifactStore implements ArtifactStorePort {
 
   async get(ref: string): Promise<string | undefined> {
     const match = REF_PATTERN.exec(ref);
-    if (!match) return undefined;
-    const [, kind, hash] = match as unknown as [string, string, string];
+    // JS's $ may match before a final newline; require the entire canonical spelling.
+    if (!match || match[0] !== ref) return undefined;
+    const kind = match[1]!,
+      hash = match[2]!;
     let bytes: Buffer;
     try {
-      bytes = await readFile(
-        join(this.dataDir, 'artifacts', kind.toLowerCase(), hash.toLowerCase()),
-      );
+      bytes = await readFile(join(this.dataDir, 'artifacts', kind, hash));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
       throw error;
     }
-    if (createHash('sha256').update(bytes).digest('hex') !== hash.toLowerCase())
+    if (createHash('sha256').update(bytes).digest('hex') !== hash)
       throw new ArtifactStoreError('ARTIFACT_CORRUPT', ref);
     return bytes.toString('utf8');
   }

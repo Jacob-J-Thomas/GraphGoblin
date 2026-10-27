@@ -17,6 +17,8 @@ WORKDIR /src
 # Only what the build reads; .dockerignore also drops build output, local data, and secrets
 # inside these paths (checked by tooling/scripts/dockerignore.test.mjs).
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json ./
+# pnpm applies these dependency patches (pnpm-workspace.yaml patchedDependencies) during install.
+COPY patches ./patches
 COPY tooling ./tooling
 COPY packages ./packages
 COPY apps ./apps

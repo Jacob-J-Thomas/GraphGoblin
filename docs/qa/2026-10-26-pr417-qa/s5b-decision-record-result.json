@@ -1,0 +1,95 @@
+{
+  "scenario": "s5b-decision-record",
+  "passed": 6,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "gpt-6-luna/max: argv carries max",
+      "ok": true,
+      "detail": [
+        "model_reasoning_effort=\"max\""
+      ]
+    },
+    {
+      "id": "gpt-6-luna/max: the decision.made record (provenance) names gpt-6-luna/max",
+      "ok": true,
+      "detail": {
+        "kind": "llm",
+        "provider": "codex",
+        "classifierId": null,
+        "model": "gpt-6-luna",
+        "effort": "max"
+      }
+    },
+    {
+      "id": "gpt-6-luna/max: every effort the run's events name for the decision node is max",
+      "ok": true,
+      "detail": [
+        {
+          "type": "run.queued",
+          "path": "#1.pinned.defaults.process.byHarness.codex.effort",
+          "effort": "low"
+        },
+        {
+          "type": "decision.made",
+          "path": "#6.provenance.effort",
+          "effort": "max"
+        },
+        {
+          "type": "node.finished",
+          "path": "#7.patch.0.value.value.provenance.effort",
+          "effort": "max"
+        },
+        {
+          "type": "node.finished",
+          "path": "#7.patch.1.value.value.provenance.effort",
+          "effort": "max"
+        }
+      ]
+    },
+    {
+      "id": "gpt-6.1-sol/xhigh: argv carries xhigh",
+      "ok": true,
+      "detail": [
+        "model_reasoning_effort=\"xhigh\""
+      ]
+    },
+    {
+      "id": "gpt-6.1-sol/xhigh: the decision.made record (provenance) names gpt-6.1-sol/xhigh",
+      "ok": true,
+      "detail": {
+        "kind": "llm",
+        "provider": "codex",
+        "classifierId": null,
+        "model": "gpt-6.1-sol",
+        "effort": "xhigh"
+      }
+    },
+    {
+      "id": "gpt-6.1-sol/xhigh: every effort the run's events name for the decision node is xhigh",
+      "ok": true,
+      "detail": [
+        {
+          "type": "run.queued",
+          "path": "#1.pinned.defaults.process.byHarness.codex.effort",
+          "effort": "low"
+        },
+        {
+          "type": "decision.made",
+          "path": "#6.provenance.effort",
+          "effort": "xhigh"
+        },
+        {
+          "type": "node.finished",
+          "path": "#7.patch.0.value.value.provenance.effort",
+          "effort": "xhigh"
+        },
+        {
+          "type": "node.finished",
+          "path": "#7.patch.1.value.value.provenance.effort",
+          "effort": "xhigh"
+        }
+      ]
+    }
+  ]
+}

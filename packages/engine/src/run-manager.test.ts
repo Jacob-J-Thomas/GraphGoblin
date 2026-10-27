@@ -17,8 +17,16 @@ import {
   findPendingWake,
 } from './run-manager.js';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
-import { createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
+import { FakeHarness, createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
 import { createInitialThread } from './thread.js';
+
+function barrier() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 describe('a minimal run', () => {
   it.each(['DECIDER_HTTP_ERROR', 'DECIDER_private-marker'])(
@@ -348,11 +356,31 @@ describe('run control', () => {
   });
 
   it('limits concurrency to the configured number of workers', async () => {
-    const engine = await createTestEngine({ maxConcurrentRuns: 1 });
-    engine.ports.harness.script([
-      { finalText: 'one', delayMs: 30 },
-      { finalText: 'two', delayMs: 30 },
-    ]);
+    const engine = await createTestEngine({ maxConcurrentRuns: 2 });
+    const started = Array.from({ length: 3 }, () => barrier());
+    const releases: (() => void)[] = [];
+    let active = 0,
+      maximum = 0;
+    class BarrierHarness extends FakeHarness {
+      override start(...args: Parameters<FakeHarness['start']>): ReturnType<FakeHarness['start']> {
+        const session = super.start(...args);
+        const index = releases.length;
+        active++;
+        maximum = Math.max(maximum, active);
+        const gate = barrier();
+        let released = false;
+        releases.push(() => {
+          if (released) return;
+          released = true;
+          active--;
+          engine.ports.clock.advance(1000);
+          gate.resolve();
+        });
+        started[index]!.resolve();
+        return { ...session, result: gate.promise.then(() => session.result) };
+      }
+    }
+    engine.ports.harnesses.codex = new BarrierHarness();
     const version = engine.publish(
       singleNodeLoop('inf', {
         id: 'infer',
@@ -363,12 +391,46 @@ describe('run control', () => {
     );
     const a = await engine.start(version.loopId);
     const b = await engine.start(version.loopId);
-    await engine.manager.waitForIdle();
-    const finishedA = engine.events(a.id).find((e) => e.type === 'run.finished') as RunEvent;
-    const startedB = engine.events(b.id).find((e) => e.type === 'run.started') as RunEvent;
-    expect(finishedA).toBeDefined();
-    expect(startedB).toBeDefined();
-    expect((await engine.ports.runs.get(b.id))?.status).toBe('succeeded');
+    await Promise.all([started[0]!.promise, started[1]!.promise]);
+    const order: string[] = [];
+    const unsubscribeA = engine.ports.events.subscribe(a.id, (event) => {
+      if (event.type === 'run.finished') order.push('finished A');
+    });
+    const c = await engine.start(version.loopId);
+    const unsubscribeC = engine.ports.events.subscribe(c.id, (event) => {
+      if (event.type === 'run.started') order.push('started C');
+    });
+    // No elapsed-time sleep: allow this trigger -> inference graph's executor yields
+    // and fake-port microtasks to drain while both harness results remain held.
+    for (let phase = 0; phase < 4; phase++)
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    const beforeRelease = {
+      active,
+      starts: releases.length,
+      status: (await engine.ports.runs.get(c.id))?.status,
+      events: [...engine.eventTypes(c.id)],
+    };
+    try {
+      releases[0]!();
+      await started[2]!.promise;
+      // Release every owned barrier before asserting, including a wrongly early third turn.
+      for (const release of releases) release();
+      await engine.manager.waitForIdle();
+    } finally {
+      for (const release of releases) release();
+      engine.manager.stop();
+      unsubscribeA();
+      unsubscribeC();
+    }
+    expect(beforeRelease).toMatchObject({ active: 2, starts: 2, status: 'queued' });
+    expect(beforeRelease.events).not.toContain('run.started');
+    expect(order).toEqual(['finished A', 'started C']);
+    expect(active).toBe(0);
+    expect(maximum).toBe(2);
+    for (const run of [a, b, c]) {
+      expect((await engine.ports.runs.get(run.id))?.status).toBe('succeeded');
+      expect(engine.eventTypes(run.id).filter((type) => type === 'run.finished')).toHaveLength(1);
+    }
   });
 });
 

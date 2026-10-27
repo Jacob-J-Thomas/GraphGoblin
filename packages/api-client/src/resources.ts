@@ -119,6 +119,12 @@ export const loops = {
 };
 
 export const runs = {
+  previewDeletion: async (client: GraphGoblinClient, runIds: string[]) =>
+    unwrap(await client.POST('/runs/deletion-eligibility/preview', { body: { runIds } })),
+  confirmDeletion: async (
+    client: GraphGoblinClient,
+    body: RequestBody<'/runs/deletion-eligibility', 'post'>,
+  ) => unwrap(await client.POST('/runs/deletion-eligibility', { body })),
   /** Start a run from a manual trigger. Returns the queued run; it executes in the background. */
   start: async (client: GraphGoblinClient, loopId: string, body: StartRunBody = {}) =>
     unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,

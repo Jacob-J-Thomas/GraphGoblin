@@ -87,7 +87,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
       .from(runs)
       .where(
         and(
-          eq(runs.replayIntentSourceRunId, sourceRunId),
+          eq(runs.replaySourceRunId, sourceRunId),
           eq(runs.replayIntentNodeId, nodeId),
           eq(runs.replayIntentObservedSeq, observedSeq),
         ),
@@ -110,7 +110,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
       const replay = input.replayIntent;
       const replayScope = replay
         ? and(
-            eq(runs.replayIntentSourceRunId, replay.sourceRunId),
+            eq(runs.replaySourceRunId, replay.sourceRunId),
             eq(runs.replayIntentNodeId, replay.nodeId),
             eq(runs.replayIntentObservedSeq, replay.observedSeq),
           )
@@ -277,6 +277,18 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         assertAdmissionIdentity(input, run, thread, stored.data);
       } else {
         if (first) throw new AdmissionConflictError();
+        const replaySource = input.initialThread.invocation.replayOf?.runId;
+        if (replaySource) {
+          const [source] = await tx
+            .select({ id: runs.id })
+            .from(runs)
+            .where(and(eq(runs.id, replaySource), eq(runs.ownerId, input.run.ownerId)));
+          if (!source)
+            throw new EngineRequestError(
+              'RUN_NOT_FOUND',
+              'Replay source was removed before admission',
+            );
+        }
         run = { ...input.run, lastEventSeq: 1 };
         event = validateGeneratedEvent(queuedEvent(input));
         if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
@@ -284,7 +296,6 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           ...runInsert(run, input.initialThread),
           ...(replay
             ? {
-                replayIntentSourceRunId: replay.sourceRunId,
                 replayIntentNodeId: replay.nodeId,
                 replayIntentObservedSeq: replay.observedSeq,
               }
@@ -296,7 +307,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
             .values(values)
             .onConflictDoNothing({
               target: [
-                runs.replayIntentSourceRunId,
+                runs.replaySourceRunId,
                 runs.replayIntentNodeId,
                 runs.replayIntentObservedSeq,
               ],

@@ -1,0 +1,42 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/deletion-eligibility.test.ts -t backfills --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/deletion-eligibility.test.ts (16 tests | 1 failed | 15 skipped) 318ms
+   × backfills indexed replay provenance from existing threads in the shipped migration 315ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/deletion-eligibility.test.ts > backfills indexed replay provenance from existing threads in the shipped migration
+LibsqlError: SQLITE_ERROR: error in trigger workspace_run_version: no such table: main.run_resource_uses
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+System.Management.Automation.RemoteException
+Caused by: SqliteError: error in trigger workspace_run_version: no such table: main.run_resource_uses
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Statement.run ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:335:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:549:34
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  05:57:37
+   Duration  6.93s (import 52%, transform 43%, tests 5%)
+
+  Transform  transforming modules took 2.80s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1

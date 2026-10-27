@@ -221,3 +221,97 @@ it('keeps live rows at the end and exposes a sequence seek independently of load
   await user.click(screen.getByRole('button', { name: 'Go to event' }));
   expect(select).toHaveBeenCalledWith(2);
 });
+
+/** The text of every polite live region on the page: what a screen reader is told. */
+function announced() {
+  return [...document.querySelectorAll('[aria-live="polite"]')].map((node) => node.textContent);
+}
+
+it('announces pausing and browsing, not every live append (#186 QA)', async () => {
+  const user = userEvent.setup();
+  const props = { status: 'live' as const, error: undefined, selected: undefined };
+  function Following({ count }: { count: number }) {
+    const [following, setFollowing] = useState(true);
+    return (
+      <Timeline
+        {...props}
+        events={events.slice(0, count)}
+        following={following}
+        onSelect={vi.fn()}
+        onPause={() => setFollowing(false)}
+        onLive={() => setFollowing(true)}
+      />
+    );
+  }
+  const { rerender } = render(<Following count={400} />);
+  const before = announced();
+  for (let count = 401; count <= 440; count++) rerender(<Following count={count} />);
+  // The visible window text follows the tail; the announcement does not change with it.
+  expect(screen.getByText('Showing events 361–440 of the retained window.')).toBeInTheDocument();
+  expect(announced()).toEqual(before);
+  expect(announced()).toContain('Following live.');
+  await user.click(screen.getByRole('button', { name: 'Previous rows' }));
+  expect(announced()).toContain('Following paused. Showing events 281–360 of the retained window.');
+  await user.click(screen.getByRole('button', { name: 'Follow live' }));
+  expect(announced()).toContain('Following live.');
+});
+
+it('leaves the row list in one Tab or Shift+Tab from any row (#186 QA)', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  const row = within(list).getByRole('button', { name: /#\s*500\s*run\.started/ });
+  act(() => row.focus());
+  await user.tab({ shift: true });
+  expect(screen.getByRole('button', { name: 'Go to event' })).toHaveFocus();
+  // Back into the list lands on the row last focused, and Tab leaves it again.
+  await user.tab();
+  expect(row).toHaveFocus();
+  await user.tab();
+  expect(list.contains(document.activeElement)).toBe(false);
+});
+
+it('keeps keyboard focus on Follow live once it resumes following (#186 QA)', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  act(() =>
+    within(list)
+      .getByRole('button', { name: /#\s*500\s*run\.started/ })
+      .focus(),
+  );
+  const follow = screen.getByRole('button', { name: 'Follow live' });
+  act(() => follow.focus());
+  await user.keyboard('{Enter}');
+  // It cannot act while following, but stays focusable so focus does not fall to the page.
+  expect(follow).toHaveAttribute('aria-disabled', 'true');
+  expect(follow).not.toBeDisabled();
+  expect(follow).toHaveFocus();
+  expect(announced()).toContain('Following live.');
+});
+
+it('ignores controls that cannot act, keeping them focusable (#186 QA)', async () => {
+  const user = userEvent.setup();
+  const live = vi.fn();
+  const select = vi.fn();
+  render(
+    <Timeline
+      events={events}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      busy
+      following
+      onSelect={select}
+      onLive={live}
+    />,
+  );
+  const follow = screen.getByRole('button', { name: 'Follow live' });
+  await user.click(follow);
+  expect(follow).toHaveFocus();
+  expect(live).not.toHaveBeenCalled();
+  await user.type(screen.getByRole('spinbutton', { name: 'Event sequence' }), '7');
+  await user.click(screen.getByRole('button', { name: 'Go to event' }));
+  await user.type(screen.getByRole('spinbutton', { name: 'Event sequence' }), '{Enter}');
+  expect(select).not.toHaveBeenCalled();
+});

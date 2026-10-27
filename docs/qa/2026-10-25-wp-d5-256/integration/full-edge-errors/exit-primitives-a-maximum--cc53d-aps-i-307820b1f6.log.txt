@@ -1,0 +1,156 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: exit-primitives.spec.ts >> a maximum-length route label wraps in the 768 px inspector
+- Location: e2e\exit-primitives.spec.ts:303:1
+
+# Error details
+
+```
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "recovery"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"recovery\""
+  }
+]
+```
+
+# Test source
+
+```ts
+  244 |     await expect(destinations).toHaveAccessibleDescription(
+  245 |       'Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.',
+  246 |     );
+  247 |     if (shape === 'quiet') {
+  248 |       for (const row of [2, 1])
+  249 |         await destinations
+  250 |           .getByRole('button', { name: `Remove destinations ${row}`, exact: true })
+  251 |           .click();
+  252 |       await expect(destinations).toHaveAccessibleDescription(
+  253 |         'Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.',
+  254 |       );
+  255 |     }
+  256 |     await closeNode(page);
+  257 |     await expect(page.getByText('Ready to publish')).toBeVisible();
+  258 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  259 |     await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  260 |     await expect(page.getByText('Published version 1.')).toBeVisible();
+  261 | 
+  262 |     const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+  263 |       data: { input: {} },
+  264 |     });
+  265 |     expect(started.status()).toBe(202);
+  266 |     const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  267 |     await expect
+  268 |       .poll(
+  269 |         async () =>
+  270 |           RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+  271 |       )
+  272 |       .toBe('succeeded');
+  273 |     const run = RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  274 |     expect(run.result).toBeUndefined();
+  275 |     const events = RunEventSchema.array().parse(
+  276 |       (
+  277 |         (await (await request.get(url + '/runs/' + runId + '/events')).json()) as {
+  278 |           items: unknown[];
+  279 |         }
+  280 |       ).items,
+  281 |     );
+  282 |     expect(events.filter((e) => e.type.startsWith('return.'))).toEqual([]);
+  283 | 
+  284 |     await page.goto(url + '/app/runs/' + runId);
+  285 |     const reason =
+  286 |       shape === 'quiet'
+  287 |         ? 'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.'
+  288 |         : 'No value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.';
+  289 |     await expect(page.getByTestId('exit-returns')).toHaveText(reason);
+  290 |     await expect(page.getByTestId('run-result')).toHaveCount(0);
+  291 |     await page.getByRole('list', { name: 'Timeline' }).getByText('exit.evaluated').click();
+  292 |     await expect(page.getByText(/^Exit outcome:/)).toHaveText(
+  293 |       `Exit outcome: success. This exit is terminal. ${reason}`,
+  294 |     );
+  295 |   });
+  296 | }
+  297 | 
+  298 | /**
+  299 |  * A chosen route's label can be 120 characters with no break opportunity. At 768 px the inspector
+  300 |  * keeps its width and wraps the whole label inside the details, instead of widening the page and
+  301 |  * squeezing the other detail rows (#129 review).
+  302 |  */
+  303 | test('a maximum-length route label wraps in the 768 px inspector', async ({ page, request }) => {
+  304 |   const instance = await control(request, '/apps');
+  305 |   const url = String(instance['url']);
+  306 |   const longLabel = 'L'.repeat(120);
+  307 |   const definition: LoopDefinitionInput = {
+  308 |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  309 |     name: 'Long route label',
+  310 |     nodes: [
+  311 |       { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+  312 |       {
+  313 |         id: 'pick',
+  314 |         kind: 'decision',
+  315 |         label: 'Pick',
+  316 |         config: {
+  317 |           kind: 'expression',
+  318 |           jsonata: '"long"',
+  319 |           routes: [
+  320 |             { id: 'long', label: longLabel },
+  321 |             { id: 'short', label: 'Short' },
+  322 |           ],
+  323 |         },
+  324 |       },
+  325 |       { id: 'done', kind: 'exit', label: 'Done', config: { returns: '"done"' } },
+  326 |       { id: 'other', kind: 'exit', label: 'Other', config: {} },
+  327 |     ],
+  328 |     edges: [
+  329 |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  330 |       { id: 'e2', from: { node: 'pick', port: 'long' }, to: { node: 'done' } },
+  331 |       { id: 'e3', from: { node: 'pick', port: 'short' }, to: { node: 'other' } },
+  332 |     ],
+  333 |   };
+  334 |   const created = await request.post(url + '/loops', { data: { definition } });
+  335 |   expect(created.status()).toBe(201);
+  336 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  337 |   expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  338 |   const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  339 |   expect(started.status()).toBe(202);
+  340 |   const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  341 |   await expect
+  342 |     .poll(
+  343 |       async () =>
+> 344 |         RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      |                         ^ ZodError: [
+  345 |     )
+  346 |     .toBe('succeeded');
+  347 | 
+  348 |   await page.setViewportSize({ width: 768, height: 900 });
+  349 |   await page.goto(url + '/app/runs/' + runId);
+  350 |   await page.getByRole('list', { name: 'Timeline' }).getByText('decision.made').click();
+  351 |   const term = (name: string) =>
+  352 |     page.getByText(name, { exact: true }).locator('xpath=following-sibling::dd[1]');
+  353 |   const label = term('Label');
+  354 |   await expect(label).toBeVisible();
+  355 |   await expect(label).toHaveText(longLabel);
+  356 |   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(768);
+  357 |   const box = await label.boundingBox();
+  358 |   if (!box) throw new Error('The label has no box.');
+  359 |   expect(box.x + box.width).toBeLessThanOrEqual(768);
+  360 |   // Wrapped, not clipped: the whole label is laid out on several lines inside the details.
+  361 |   expect(await label.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  362 |   expect(box.height).toBeGreaterThan(30);
+  363 |   // The other rows keep readable widths: the selected port stays on one line.
+  364 |   const port = await term('Selected port').boundingBox();
+  365 |   if (!port) throw new Error('The selected port has no box.');
+  366 |   expect(port.height).toBeLessThan(30);
+  367 | });
+  368 | 
+```

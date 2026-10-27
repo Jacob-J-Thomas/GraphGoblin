@@ -8,7 +8,7 @@ import {
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
 import { and, asc, desc, eq, gt, lt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { runEvents, runs } from './schema.js';
+import { freshSessionCondition, gateEvidenceCondition, runEvents, runs } from './schema.js';
 
 type Row = Omit<typeof runEvents.$inferSelect, 'payload'> & { payload: string };
 
@@ -226,54 +226,55 @@ export class SqliteEventStore implements EventStorePort {
     };
   }
 
-  /** Latest matching evidence, independent of the browser window; indexed by run/type/seq. */
+  /**
+   * The latest decision carrying gate evidence, independent of the browser window. One seek of
+   * the partial index `run_events_gate_idx`, however many ungated decisions the run has (#186).
+   * Malformed JSON is in that index too, so decoding reports corruption instead of silently
+   * treating it as no gate.
+   */
   async latestGate(runId: string): Promise<RunEvent | undefined> {
-    // One indexed type scan, not one SQL round trip per ungated decision. Malformed JSON is
-    // selected too, so decoding reports corruption instead of silently treating it as no gate.
-    const [row] = await this.db
-      .select({
-        runId: runEvents.runId,
-        seq: runEvents.seq,
-        ts: runEvents.ts,
-        type: runEvents.type,
-        nodeId: runEvents.nodeId,
-        payload: sql<string>`${runEvents.payload}`,
-      })
-      .from(runEvents)
-      .where(
-        and(
-          eq(runEvents.runId, runId),
-          eq(runEvents.type, 'decision.made'),
-          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.gate') is not null else 1 end`,
-        ),
-      )
-      .orderBy(desc(runEvents.seq))
-      .limit(1);
+    const [row] = await this.evidence('run_events_gate_idx', gateEvidenceCondition, runId, 1);
     return row ? toEvent(row) : undefined;
   }
 
-  /** Fresh-session choices (#265), the newest `limit` oldest first; one indexed type scan. */
+  /**
+   * Fresh-session choices (#265), the newest `limit` oldest first: one range of the partial index
+   * `run_events_fresh_session_idx`, however many other resumes the run has.
+   */
   async freshSessionChoices(runId: string, limit: number): Promise<RunEvent[]> {
-    const rows = await this.db
+    const rows = await this.evidence(
+      'run_events_fresh_session_idx',
+      freshSessionCondition,
+      runId,
+      limit,
+    );
+    return rows.reverse().map(toEvent);
+  }
+
+  /**
+   * The newest rows of a partial evidence index. The condition must be the index's own, word for
+   * word, for SQLite to use the index; naming it makes a mismatch fail instead of scanning.
+   */
+  private evidence(
+    index: 'run_events_gate_idx' | 'run_events_fresh_session_idx',
+    condition: typeof gateEvidenceCondition,
+    runId: string,
+    limit: number,
+  ): Promise<Row[]> {
+    // A source written as SQL takes its columns as SQL too.
+    return this.db
       .select({
-        runId: runEvents.runId,
-        seq: runEvents.seq,
-        ts: runEvents.ts,
-        type: runEvents.type,
-        nodeId: runEvents.nodeId,
+        runId: sql<string>`${runEvents.runId}`,
+        seq: sql<number>`${runEvents.seq}`,
+        ts: sql<string>`${runEvents.ts}`,
+        type: sql<string>`${runEvents.type}`,
+        nodeId: sql<string | null>`${runEvents.nodeId}`,
         payload: sql<string>`${runEvents.payload}`,
       })
-      .from(runEvents)
-      .where(
-        and(
-          eq(runEvents.runId, runId),
-          eq(runEvents.type, 'run.resumed'),
-          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.freshSession') is not null else 1 end`,
-        ),
-      )
+      .from(sql`${runEvents} INDEXED BY ${sql.identifier(index)}`)
+      .where(and(eq(runEvents.runId, runId), condition(runEvents)))
       .orderBy(desc(runEvents.seq))
       .limit(limit);
-    return rows.reverse().map(toEvent);
   }
 
   async latest(

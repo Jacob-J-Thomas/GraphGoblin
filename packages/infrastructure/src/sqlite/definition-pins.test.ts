@@ -154,22 +154,23 @@ describe('draft snapshots', () => {
           sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
           args: [draft.id],
         });
-      // Seed the historical columns explicitly: today's ORM also names post-0018 columns.
+      // Seed the historical table explicitly: the current repository also writes columns added later.
       await old.client.execute({
-        sql: 'INSERT INTO runs (id, owner_id, loop_id, version_id, pinned, invocation_id, status, iteration, created_at, last_event_seq, initial_thread, thread_snapshot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        sql: 'INSERT INTO runs (id,owner_id,loop_id,version_id,invocation_id,status,current_node_id,iteration,created_at,last_event_seq,initial_thread,thread_snapshot,pinned) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
         args: [
           intent.run.id,
           intent.run.ownerId,
           intent.run.loopId,
           intent.run.versionId,
-          JSON.stringify(intent.run.pinned),
           intent.run.invocationId,
           intent.run.status,
+          intent.run.currentNodeId ?? null,
           intent.run.iteration,
           intent.run.createdAt,
-          intent.run.lastEventSeq,
+          0,
           JSON.stringify(intent.initialThread),
           JSON.stringify(intent.initialThread),
+          JSON.stringify(intent.run.pinned),
         ],
       });
       await new SqliteEventStore(old.db, new FakeClock()).append(intent.run.id, [intent.queued]);

@@ -1,0 +1,73 @@
+﻿pnpm.cmd --filter @graphgoblin/api exec vitest run src/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/api
+
+ ❯ src/history-cleanup.test.ts (20 tests | 2 failed) 4051ms
+   × timestamps an unavailable capacity attempt and clears the preceding volumes 119ms
+   × returns from startup measurement before background reclamation finishes 15ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > timestamps an unavailable capacity attempt and clears the preceding volumes
+AssertionError: expected { state: 'unavailable', …(8) } to match object { state: 'unavailable', …(2) }
+(6 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "checkedAt": "2026-10-02T12:01:00.000Z",
++   "checkedAt": "2026-10-02T12:00:00.000Z",
+    "state": "unavailable",
+-   "volumes": [],
++   "volumes": [
++     {
++       "availableBytes": 53687091200,
++       "name": "data",
++       "totalBytes": 107374182400,
++     },
++   ],
+  }
+System.Management.Automation.RemoteException
+ ❯ src/history-cleanup.test.ts:35:49
+     33|   app.clock.advance(60_000); unavailable = true;
+     34|   await app.container.historyCleanup.poll();
+     35|   expect(app.container.historyCleanup.status()).toMatchObject({ state:…
+       |                                                 ^
+     36| });
+     37|
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/history-cleanup.test.ts > returns from startup measurement before background reclamation finishes
+AssertionError: expected false to be true // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- true
++ false
+System.Management.Automation.RemoteException
+ ❯ src/history-cleanup.test.ts:50:22
+     48|   try {
+     49|     for (let i = 0; i < 20; i++) await Promise.resolve();
+     50|     expect(returned).toBe(true);
+       |                      ^
+     51|   } finally { release(); await starting; await cleanup.stop(); }
+     52| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  03:32:44
+   Duration  11.15s (import 40%, tests 37%, transform 23%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\api
+System.Management.Automation.RemoteException
+EXIT 1

@@ -1,6 +1,6 @@
 # ADR-0055 - Explicit recovery from a missing provider conversation
 
-Date: 2026-10-24. Status: Proposed for #265 delivery review.
+Date: 2026-10-24. Status: Accepted (2026-10-25): #265 merged as PR #401 after independent review and QA.
 
 ## Context
 

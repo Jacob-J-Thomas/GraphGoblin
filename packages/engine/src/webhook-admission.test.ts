@@ -253,7 +253,12 @@ describe('durable webhook admission', () => {
     expect(engine.ports.admission.receipts.size).toBe(0);
   });
   it('boot and periodic sweep reuse a committed identity after a lost acknowledgement', async () => {
-    const { engine, input, claim } = await setup();
+    const { engine, input: originalInput, claim: originalClaim } = await setup();
+    const input = { ...originalInput, dedupeKey: 'delivery' };
+    const claim = {
+      ...originalClaim,
+      inbound: { ...originalClaim.inbound, dedupeKey: 'delivery' },
+    };
     const original = engine.ports.admission.create.bind(engine.ports.admission);
     vi.spyOn(engine.ports.admission, 'create').mockImplementationOnce(async (intent, id) => {
       await original(intent, id);
@@ -269,6 +274,23 @@ describe('durable webhook admission', () => {
     await restarted.start();
     await restarted.waitForIdle();
     expect(engine.ports.runs.runs.size).toBe(1);
+    const redelivery = await restarted.receiveWebhook(
+      {
+        ...claim,
+        id: engine.ports.ids.next(),
+        inbound: { ...claim.inbound, id: engine.ports.ids.next() },
+      },
+      input,
+    );
+    await restarted.waitForWebhookRecovery();
+    await restarted.waitForIdle();
+    expect(redelivery.state).toBe('deduplicated');
+    expect(await engine.ports.admission.get(pending.receipt.id)).toMatchObject({
+      status: 'admitted',
+      intent: { run: { id: pending.receipt.intent!.run.id } },
+    });
+    expect(engine.ports.runs.runs.size).toBe(1);
+
     expect(
       engine.ports.events
         .all(pending.receipt.intent!.run.id)

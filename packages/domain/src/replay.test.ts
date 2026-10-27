@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { RunEvent } from '@graphgoblin/contracts';
+import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import { FIXTURE_IDS, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
-import { replayStateAt, replayThread, summarizeRun } from './replay.js';
+import {
+  replayStateAt,
+  replayThread,
+  summarizeRun,
+  THREAD_EVENT_TYPES,
+  type ReplayState,
+} from './replay.js';
 
 function ev<T extends RunEvent['type']>(
   seq: number,
@@ -111,6 +117,39 @@ describe('replayThread', () => {
     expect(replayThread(base, [finished(2), finished(4)]).messages).toHaveLength(
       base.messages.length + 2,
     );
+  });
+
+  it('changes a thread only through the listed thread event types (#186)', () => {
+    type Other = Exclude<
+      RunEvent['type'],
+      'node.started' | 'node.finished' | 'decision.made' | 'iteration.incremented'
+    >;
+    const types = RunEventSchema.options.map((option) => option.shape.type.value);
+    const others = types.filter((type): type is Other => !THREAD_EVENT_TYPES.has(type));
+    expect(new Set(types).size).toBe(types.length);
+    expect(others).toHaveLength(types.length - THREAD_EVENT_TYPES.size);
+    const base = sampleThread();
+    const states: ReplayState[] = [{ strict: false }, { strict: true, openNodeId: 'prep' }];
+    for (const type of others)
+      for (const state of states) {
+        expect(replayThread(base, [{ type, seq: 1 }], undefined, state), type).toBe(base);
+        expect(replayStateAt([{ type, seq: 1 }], 1, state), type).toEqual(state);
+      }
+    // Each listed type can change the thread.
+    const changed = [
+      replayThread(base, [{ type: 'node.started', seq: 1, nodeId: 'prep' }]),
+      replayThread(base, [
+        {
+          type: 'node.finished',
+          seq: 1,
+          nodeId: 'prep',
+          patch: [{ op: 'add', path: '/vars/x', value: 1 }],
+        },
+      ]),
+      replayThread(base, [{ type: 'decision.made', seq: 1, nodeId: 'gate', gate: { passes: 2 } }]),
+      replayThread(base, [{ type: 'iteration.incremented', seq: 1, to: 2 }]),
+    ];
+    for (const thread of changed) expect(thread).not.toEqual(base);
   });
 
   it('stops at a sequence number', () => {

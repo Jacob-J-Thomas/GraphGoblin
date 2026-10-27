@@ -1,0 +1,331 @@
+{
+  "scenario": "s3-force-cli-child",
+  "passed": 32,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "A0 the CLI and its tool child are running; the run is running",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A1 forcing ends within the documented bound (5 s acknowledgement; measured from the confirm click)",
+      "ok": true,
+      "detail": {
+        "forcingEndedMs": 5277
+      }
+    },
+    {
+      "id": "A1 force concludes as force-failed",
+      "ok": true,
+      "detail": "force-failed"
+    },
+    {
+      "id": "A1 the run is listed in unconfirmedRunIds",
+      "ok": true,
+      "detail": [
+        "01M5VVA1SPB3GKS9TTDGCCY6AQ"
+      ]
+    },
+    {
+      "id": "A1 only a further explicit force (Force exit) is offered",
+      "ok": true,
+      "detail": [
+        "force"
+      ]
+    },
+    {
+      "id": "A1 the Codex CLI itself is gone",
+      "ok": true,
+      "detail": {
+        "cli": false,
+        "tool": true
+      }
+    },
+    {
+      "id": "A1 the run records HARNESS_TERMINATION_UNCONFIRMED (not a clean interruption)",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Codex CLI termination was not confirmed: its output stayed open 5000 ms after the turn was aborted, so a process it started may still be running",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "interruptedByStop": true
+        },
+        "inference": {
+          "visitId": "01M5VVA1SPB3GKS9TTDGCCY6AQ:5",
+          "turnId": "01M5VVA273ZBBJXH1VW9QDKZ6S",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "qa-417-session-45644"
+        }
+      }
+    },
+    {
+      "id": "A2 the notice says force failed and offers Force exit",
+      "ok": true,
+      "detail": [
+        "Force exit"
+      ]
+    },
+    {
+      "id": "A2 the notice names the unconfirmed run",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A2 force-failed is stable (no automatic exit), listener and lock held",
+      "ok": true,
+      "detail": "force-failed"
+    },
+    {
+      "id": "A3 Force exit needs its own confirmation (nothing sent before Confirm)",
+      "ok": true,
+      "detail": {
+        "postsBeforeConfirm": 1
+      }
+    },
+    {
+      "id": "A3 Force exit leaves with exit code 1",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "A3 the lock is kept for next-start reclamation",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "A3 the browser sent exactly two POSTs (confirmed force, confirmed force exit)",
+      "ok": true,
+      "detail": [
+        {
+          "at": "2026-10-26T10:15:29.941Z",
+          "method": "POST",
+          "tab": "a"
+        },
+        {
+          "at": "2026-10-26T10:15:40.664Z",
+          "method": "POST",
+          "tab": "a"
+        }
+      ]
+    },
+    {
+      "id": "A4 after restart the run is failed HARNESS_TERMINATION_UNCONFIRMED, non-resumable (truthful: cleanup was not confirmed)",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Codex CLI termination was not confirmed: its output stayed open 5000 ms after the turn was aborted, so a process it started may still be running",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "interruptedByStop": true
+        },
+        "inference": {
+          "visitId": "01M5VVA1SPB3GKS9TTDGCCY6AQ:5",
+          "turnId": "01M5VVA273ZBBJXH1VW9QDKZ6S",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "qa-417-session-45644"
+        }
+      }
+    },
+    {
+      "id": "A4 no automatic re-run after restart (one CLI turn in total)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "A4 Resume is refused",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "INVALID_STATE"
+      }
+    },
+    {
+      "id": "A5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B1 a force with an ordinary Codex turn never reports force-failed",
+      "ok": true,
+      "detail": [
+        {
+          "ms": 13,
+          "phase": "forcing",
+          "choices": [],
+          "unconfirmed": [],
+          "active": [
+            "01M5VVB89VHEFVPVNHRT0522TG"
+          ]
+        },
+        {
+          "ms": 281,
+          "phase": "gone"
+        }
+      ]
+    },
+    {
+      "id": "B1 the gateway exits 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B1 the Codex CLI is gone and the lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B2 RUN_INTERRUPTED_BY_STOP, non-resumable",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "B2 no false HARNESS_TERMINATION_UNCONFIRMED in the run events or gateway log",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "B3 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "C1 API force concludes force-failed within the bound",
+      "ok": true,
+      "detail": {
+        "phase": "force-failed",
+        "ms": 5248
+      }
+    },
+    {
+      "id": "C1 unconfirmedRunIds lists only the Codex run (the script was released)",
+      "ok": true,
+      "detail": [
+        "01M5VVBN6HC1FP49J1HP8A8KW0"
+      ]
+    },
+    {
+      "id": "C1 the script process and the Codex CLI are gone; the tool child survives",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C2 a further API force exits with code 1",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "C2 lock kept",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "C3 the Codex run records HARNESS_TERMINATION_UNCONFIRMED",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Codex CLI termination was not confirmed: its output stayed open 5000 ms after the turn was aborted, so a process it started may still be running",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "interruptedByStop": true
+        },
+        "inference": {
+          "visitId": "01M5VVBN6HC1FP49J1HP8A8KW0:5",
+          "turnId": "01M5VVBNGJN6FPKQVH5N470DAG",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "qa-417-session-34044"
+        }
+      }
+    },
+    {
+      "id": "C3 the script run records RUN_INTERRUPTED_BY_STOP",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        },
+        "script": {
+          "visitId": "01M5VVBNEF982M4AD1ZG5FHEPV:5",
+          "dispatchId": "01M5VVBNH2ZR5V7C6VM47M2953",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "C4 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T10:15:19.909Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:29.800Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:29.941Z",
+      "method": "POST",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:31.955Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:33.966Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:35.973Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:37.982Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:39.992Z",
+      "method": "GET",
+      "tab": "a"
+    },
+    {
+      "at": "2026-10-26T10:15:40.664Z",
+      "method": "POST",
+      "tab": "a"
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 import { HistoryState } from '../components/HistoryState.js';
-import type { ListRunsQuery } from '@graphgoblin/api-client';
+import { useEffect, useState } from 'react';
+import { HistoryEligibility } from './HistoryEligibility.js';
+import { GraphGoblinApiError, runs, type ListRunsQuery } from '@graphgoblin/api-client';
+import { useApi } from '../api/context.js';
 import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
@@ -10,6 +13,8 @@ import {
   Button,
   buttonStyles,
   Card,
+  Checkbox,
+  CHECKBOX_LABEL,
   FieldGroup,
   FieldRow,
   Label,
@@ -31,6 +36,7 @@ const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
  */
 export function RunsPage() {
   const [params, setParams] = useSearchParams();
+  const [selected, setSelected] = useState<string[]>([]);
   const loopId = params.get('loop') ?? '';
   const status = params.get('status') ?? '';
   const parent = params.get('parent') ?? '';
@@ -41,8 +47,39 @@ export function RunsPage() {
   };
   const loopsQuery = useLoops();
   const runsQuery = useRuns(query, 5000);
+  const client = useApi();
+  useEffect(() => {
+    if (!runsQuery.data) return;
+    const visible = new Set(
+      runsQuery.data.pages.flatMap((page) => page.items.map((run) => run.id)),
+    );
+    const absent = selected.filter((id) => !visible.has(id));
+    if (!absent.length) return;
+    let cancelled = false;
+    void Promise.all(
+      absent.map(async (id) => {
+        try {
+          await runs.get(client, id);
+        } catch (error) {
+          if (error instanceof GraphGoblinApiError && error.status === 404) return id;
+        }
+        return undefined; // Existing, protected and unknown records remain in the explicit selection.
+      }),
+    ).then((missing) => {
+      if (cancelled) return;
+      const removed = new Set(missing.filter((id) => id !== undefined));
+      if (removed.size)
+        setSelected((ids) =>
+          ids.some((id) => removed.has(id)) ? ids.filter((id) => !removed.has(id)) : ids,
+        );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [client, runsQuery.data, selected]);
 
   const setFilter = (key: string, value: string) => {
+    setSelected([]);
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
     else next.delete(key);
@@ -108,12 +145,24 @@ export function RunsPage() {
             </Select>
           </FieldGroup>
           {loopId || status || parent ? (
-            <Button variant="ghost" onClick={() => setParams(new URLSearchParams())}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelected([]);
+                setParams(new URLSearchParams());
+              }}
+            >
               Clear filters
             </Button>
           ) : null}
         </FieldRow>
       </Card>
+      <HistoryEligibility
+        runIds={selected}
+        onConfirmed={(confirmedIds) =>
+          setSelected((ids) => ids.filter((id) => !confirmedIds.includes(id)))
+        }
+      />
       <HistoryState query={runsQuery} what="Runs">
         {(items) =>
           items.length === 0 ? (
@@ -123,9 +172,11 @@ export function RunsPage() {
               <Table stack="lg">
                 <thead>
                   <tr>
+                    <Th className="whitespace-normal">Select history</Th>
                     <Th>Run</Th>
                     <Th>Loop</Th>
                     <Th>Status</Th>
+                    <Th>Retention</Th>
                     <Th>Started</Th>
                     <Th>Parent</Th>
                     <Th>Children</Th>
@@ -134,7 +185,22 @@ export function RunsPage() {
                 <tbody>
                   {items.map((run) => (
                     <tr key={run.id}>
-                      <Td>
+                      <Td label="Select history">
+                        <label className={CHECKBOX_LABEL}>
+                          <Checkbox
+                            aria-label={`Select history ${run.id}`}
+                            checked={selected.includes(run.id)}
+                            onChange={(event) =>
+                              setSelected((ids) =>
+                                event.target.checked
+                                  ? [...ids, run.id]
+                                  : ids.filter((id) => id !== run.id),
+                              )
+                            }
+                          />
+                        </label>
+                      </Td>
+                      <Td className="wrap-anywhere">
                         <Link className={ID_LINK} to={`/runs/${run.id}`}>
                           {run.id}
                         </Link>
@@ -150,7 +216,10 @@ export function RunsPage() {
                           </p>
                         ) : null}
                       </Td>
-                      <Td label="Started" className="text-sm whitespace-nowrap text-muted">
+                      <Td label="Retention">
+                        {run.deletionApproval ? 'Delete-ready' : 'Retained'}
+                      </Td>
+                      <Td label="Started" className="text-sm text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}
                       </Td>
                       <Td label="Parent">
