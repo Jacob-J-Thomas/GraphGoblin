@@ -1,0 +1,16 @@
+runs {"A":"01M5W1TFTB66G2BSC4199K25FF","B":"01M5W1THRKWCDGS0WF8B4R00DB","E":"01M5W1TJ8N5GKSYZQCMQN8HPP3","r1":"01M5W1TJRT8M1WWR71H9V12SQ0","r2":"01M5W1TJSCSD6X6PYNJSQBCMY7","D":"01M5W1TJSZN88EW70NWX7AE37K"}
+PASS approve A (1,900 files), B (20 files) and E (5 files)
+retargeted X to B's workspace 56589 ms after pressure was set, once A was in quarantine {"exists":true,"quarantineEntries":1}
+pass 1 {"state":"pressure","deletedRuns":3,"removedFileBytes":3840000,"pending":1,"preserved":1}
+after pass 1 {"A_workspace":false,"B_workspace":false,"X_isLink":true,"X_target":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e3r-race\\data\\workspaces\\01M5W1THRKWCDGS0WF8B4R00DB","X_resolves":false,"Y_sentinel_unchanged":true,"r1":200}
+OUTCOME in-pass race: B's workspace (20 entries) was REMOVED although the retained fixed directory X now points at it (the race ADR-0060 documents)
+PASS substitution control: E (workspace replaced by a junction) kept, outside target untouched
+PASS retained directory Y untouched
+a new run of the retained loop whose fixed directory X now dangles {"status":"failed","failure":{"code":"INTERNAL_ERROR","message":"ENOENT: no such file or directory, mkdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e3r-race\\x-link'","nodeId":"files","resumable":true,"details":{"name":"Error","stack":"Error: ENOENT: no such file or directory, mkdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e3r-race\\x-link'\n    at async mkdir (node:internal/fs/promises:858:10)\n    at async FsWorkspace.resolve (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/infrastructure/dist/fs/workspace.js:30:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/infrastructure/dist/fs/owned-resources.js:80:28\n    at async Mutex.run (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/infrastructure/dist/sqlite/db.js:45:20)\n    at async RunManager.workingDirectory (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/engine/dist/run-manager.js:2445:21)\n    at async Object.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/engine/dist/handlers/script.js:15:50)\n    at async RunManager.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/engine/dist/run-manager.js:1842:26)"}}}
+PASS approve D after its workspace became the target of X2 (between passes)
+pass 2 {"state":"pressure","deletedRuns":1,"removedFileBytes":0,"pending":2,"preserved":2}
+pass 3 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2}
+PASS control: a junction created before the sweep protects D (run deleted, workspace kept)
+PASS Y2 untouched
+server stop {"code":0,"signal":null}
+failures 0

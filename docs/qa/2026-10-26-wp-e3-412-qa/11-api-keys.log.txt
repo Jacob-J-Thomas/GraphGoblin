@@ -1,0 +1,9 @@
+key ids {"read":"01M5VJ0CKNTPSCT3KPH10ZMNAM","write":"01M5VJ0CKVZG1JG471B7AAMZFT","system":"01M5VJ0CM1W40G44HPNJBA3QPQ"}
+PASS runs:read key can preview :: 200
+PASS runs:read key cannot confirm (403) :: 403
+PASS runs:write key confirms; approval names the api-key actor and server time :: {"confirmedAt":"2026-10-26T07:32:41.244Z","confirmedBy":{"ownerId":"local","kind":"api-key","id":"01M5VJ0CKVZG1JG471B7AAMZFT"}}
+PASS key without system:read cannot read storage status (403) :: 403
+PASS system:read key reads storage status :: 200
+PASS wrong key refused (401) :: 401
+server stop {"code":0,"signal":null}
+failures 0

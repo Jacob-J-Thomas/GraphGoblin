@@ -1,0 +1,138 @@
+runs {"ok1":"01M5W2HZXV1DTWQ8GSRCCS3K1E","ok2":"01M5W2HZZAKWV2M8F2VK0WXHH7","fail1":"01M5W2J00GAGKENBZGGRR7A8VG","ok3":"01M5W2J028GYZ6ZBC4MQWE3XSR","p1":"01M5W2J03FJECBDT3KQNDGYCDY","c1":"01M5W2J091SE6ZJ6BA7GG1K6Z1","active":"01M5W2J0TT125KMXF0VGPN6A42"}
+PASS Runs: review button disabled with nothing selected
+PASS Runs: count shows 1 selected
+dialog aria snapshot (individual, Runs)
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5W2HZXV1DTWQ8GSRCCS3K1E
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection"
+focus on open h2 "Mark selected history delete-ready?"
+screenshot ui-review-dialog.png
+focus after Cancel button "Review delete-ready history"
+PASS Cancel changes nothing
+focus after Escape button "Review delete-ready history"
+PASS Escape changes nothing
+dialog buttons ["","Cancel","Confirm delete-ready selection"]
+PASS Close button changes nothing
+PASS Runs: count shows 3 selected
+PASS bulk preview lists exactly the three selected runs :: ["01M5W2HZXV1DTWQ8GSRCCS3K1E","01M5W2HZZAKWV2M8F2VK0WXHH7","01M5W2J00GAGKENBZGGRR7A8VG"]
+PASS polling and new history do not extend the frozen selection :: ["01M5W2HZXV1DTWQ8GSRCCS3K1E","01M5W2HZZAKWV2M8F2VK0WXHH7","01M5W2J00GAGKENBZGGRR7A8VG"]
+focus after Confirm body "GraphGoblinMenuLoopsRunsEventsSettingsRunsNew runLoopAll loopsUI parentUI childU"
+PASS confirm marks exactly the three (succeeded and failed alike) :: {"ok1":{"confirmedAt":"2026-10-26T12:22:03.699Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}},"ok2":{"confirmedAt":"2026-10-26T12:22:03.699Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}},"fail1":{"confirmedAt":"2026-10-26T12:22:03.699Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}}
+who/when via API {"confirmedAt":"2026-10-26T12:22:03.699Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+PASS Runs table shows Delete-ready for exactly 3 rows :: 3
+selection count after confirm 0 selected
+protected dialog
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5W2J028GYZ6ZBC4MQWE3XSR
+    - listitem:
+      - code: 01M5W2J0TT125KMXF0VGPN6A42
+      - paragraph: Run is running; active and paused history is protected.
+      - paragraph: Run finalization is incomplete.
+  - alert: No history will be marked. Resolve every protected record and review the selection again.
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection" [disabled]
+PASS Confirm disabled when a selected run is protected
+screenshot ui-protected-dialog.png
+PASS ok3 not marked by refused bulk selection
+parent-only dialog
+- dialog "Mark selected history delete-ready?":
+  - banner:
+    - heading "Mark selected history delete-ready?" [level=2]
+    - button "Close"
+  - paragraph: Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5W2J03FJECBDT3KQNDGYCDY
+      - paragraph: Required retained history 01M5W2J091SE6ZJ6BA7GG1K6Z1 must be selected together.
+  - alert: No history will be marked. Resolve every protected record and review the selection again.
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm delete-ready selection" [disabled]
+PASS changing a filter clears the selection
+stale alert text No history changed. Review the selection again; protected or stale records cannot be silently omitted. (DELETION_SELECTION_STALE) Cancel and review again.
+PASS stale confirmation refused; state unchanged (still retained after other tab withdrew)
+PASS Confirm disabled after the stale error
+screenshot ui-stale-dialog.png
+inspector approval line Delete-ready: confirmed by local at 10/26/2026, 7:22:03 AM.
+withdraw dialog
+- dialog "Withdraw deletion approval?":
+  - banner:
+    - heading "Withdraw deletion approval?" [level=2]
+    - button "Close"
+  - paragraph: These runs stay retained. Approval for related parent, child and replay history is also withdrawn so required records remain protected.
+  - paragraph: Active, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.
+  - list:
+    - listitem:
+      - code: 01M5W2J00GAGKENBZGGRR7A8VG
+  - contentinfo:
+    - button "Cancel"
+    - button "Confirm withdrawal"
+PASS inspector withdrawal persisted
+PASS inspector individual mark persisted
+resume buttons []
+PASS Space toggles a history checkbox
+Shift+Tab presses from the checkbox to the review button: 15
+focus on keyboard open h2 "Mark selected history delete-ready?"
+Tab order inside dialog ["button \"Close\"","button \"Cancel\"","button \"Confirm delete-ready selection\"","button \"Close\"","button \"Cancel\""]
+PASS focus returns to the review button after Escape :: "button \"Review delete-ready history\""
+PASS keyboard Escape changed nothing
+MCP tools ["list_loops","describe_loop","start_run","wait_for_run","get_run","get_run_thread","list_runs","read_run_events","cancel_run","pause_run","resume_run","replay_run","provide_input","send_signal"]
+PASS MCP offers no deletion/approval tool :: ["list_loops","describe_loop","start_run","wait_for_run","get_run","get_run_thread","list_runs","read_run_events","cancel_run","pause_run","resume_run","replay_run","provide_input","send_signal"]
+PASS MCP list_runs exposes the approval of an approved run :: "{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"01M5W2J1YBEHM2F1CY3Y0DA092\\\",\\n      \\\"loopId\\\": \\\"01M5W2HZSV482QHCCQ6NECFFNT\\\",\\n      \\\"definition\\\": \\\"UI history v1\\\",\\n      \\\"status\\\": \\\"succeeded\\\",\\n      \\\"finalizedAt\\\": \\\"2026-10-26T12:21:57.522Z\\\",\\n      \\\"ite"
+PASS MCP list_runs did not mark anything
+PASS adequate storage: no notice
+pressure pass {"state":"pressure","checkedAt":"2026-10-26T12:22:54.498Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":3,"removedFileBytes":92,"reusableDatabaseBytes":36864,"pendingResources":0,"preservedResources":0}
+notice on /loops: visible=true "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+notice aria snapshot
+- status "Storage pressure":
+  - paragraph: Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.
+  - link "Review run history":
+    - /url: /app/runs
+notice attributes {"role":"status","live":"polite","label":"Storage pressure","tag":"ASIDE"}
+screenshot ui-notice-pressure-loops.png
+notice on /runs: visible=true "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+notice on /events: visible=true "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+notice on /settings: visible=true "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+notice on /runs/01M5W2HZZAKWV2M8F2VK0WXHH7: visible=true "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+no-eligible notice "Storage is low. No approved eligible history could be cleaned. Review history you can remove or free disk space.\n\nReview run history" {"state":"no-eligible","checkedAt":"2026-10-26T12:23:54.510Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":36864,"pendingResources":0,"preservedResources":0}
+screenshot ui-notice-no-eligible-runs.png
+PASS notice link leads to Runs :: "http://127.0.0.1:6580/app/runs"
+unavailable notice "Storage measurement or cleanup could not finish. Check available disk space; protected resources stay kept.\n\nReview run history"
+PASS adequate again: notice gone
+PASS ok1/ok2 (approved) deleted under pressure; ok3/later retained
+loop delete dialog
+- alertdialog "Delete “UI deletable loop”?":
+  - heading "Delete “UI deletable loop”?" [level=2]
+  - paragraph: The loop, all its versions, its triggers and all its runs (2) will be deleted, including run history and artifact references. Loops using it as a subloop will no longer be able to start it. Cancel active runs first.
+  - paragraph: This cannot be undone.
+  - button "Confirm delete UI deletable loop": Confirm delete
+  - button "Keep"
+  - status
+screenshot ui-loop-delete-dialog.png
+PASS loop delete Escape keeps loop and runs
+ERROR locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('alertdialog').getByRole('button', { name: /Delete/ }).last()[22m
+
+    at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a67e9f5737ee26db3\docs\qa\2026-10-26-wp-e3-412-qa-recheck\ui-edge.mjs:321:70
+screenshot ui-error.png
+server stop {"code":0,"signal":null}
+failures 0

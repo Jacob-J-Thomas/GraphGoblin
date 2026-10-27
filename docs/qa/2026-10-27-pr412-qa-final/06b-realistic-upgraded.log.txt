@@ -1,0 +1,50 @@
+server http://127.0.0.1:6628 pid 52176
+Retained existing main/upgrade history ["01M5XH2DXQGSP1656SHV46P6VA","01M5XGRCXXXE956NEFK2BYQVSC","01M5XGRCXGHCQM5DXQN0X3CDBC","01M5XGRCG5MH074YDDQZ5BPZ27","01M5XGRCEJ1QA7ENWMTAZAP1DW","01M5XGRCDPK9YV2Q7Z0W34FM00","01M5XGRCCX00YG2A8MSRY7PS52"]
+setup: 435 retained runs created in 54 s (plus approved ones)
+PASS all 488 runs succeeded and finalized :: 0
+PASS 53 approved runs (temp, template, fixed, shared, parent/child, replay pair)
+PASS retained artifacts readable before pressure (435) :: 0
+storage before pressure {"state":"adequate","checkedAt":"2026-10-27T01:58:20.916Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":53687091200},{"name":"database","totalBytes":107374182400,"availableBytes":53687091200}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":12288,"pendingResources":0,"preservedResources":0}
+phase A pass {"pass":1,"state":"pressure","deletedRuns":20,"removedFileBytes":48000,"pending":24,"preserved":24,"reusable":253952,"approvedPresent":33,"expectedGoneStillOnDisk":19}
+PASS phase A pass 1: not "no-eligible" while approved runs or reclaimable workspaces remain :: {"pass":1,"state":"pressure","deletedRuns":20,"removedFileBytes":48000,"pending":24,"preserved":24,"reusable":253952,"approvedPresent":33,"expectedGoneStillOnDisk":19}
+phase A pass {"pass":2,"state":"pressure","deletedRuns":20,"removedFileBytes":48000,"pending":47,"preserved":47,"reusable":507904,"approvedPresent":13,"expectedGoneStillOnDisk":3}
+PASS phase A pass 2: not "no-eligible" while approved runs or reclaimable workspaces remain :: {"pass":2,"state":"pressure","deletedRuns":20,"removedFileBytes":48000,"pending":47,"preserved":47,"reusable":507904,"approvedPresent":13,"expectedGoneStillOnDisk":3}
+phase A pass {"pass":3,"state":"pressure","deletedRuns":13,"removedFileBytes":600,"pending":58,"preserved":58,"reusable":675840,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+PASS phase A pass 3: not "no-eligible" while approved runs or reclaimable workspaces remain :: {"pass":3,"state":"pressure","deletedRuns":13,"removedFileBytes":600,"pending":58,"preserved":58,"reusable":675840,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+phase A pass {"pass":4,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":58,"preserved":58,"reusable":679936,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+PASS phase A pass 4: not "no-eligible" while approved runs or reclaimable workspaces remain :: {"pass":4,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":58,"preserved":58,"reusable":679936,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+phase A pass {"pass":5,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":58,"preserved":58,"reusable":679936,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+PASS phase A pass 5: not "no-eligible" while approved runs or reclaimable workspaces remain :: {"pass":5,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":58,"preserved":58,"reusable":679936,"approvedPresent":0,"expectedGoneStillOnDisk":0}
+GET /runs?limit=1 during phase A (ms) {"n":8802,"p50":5.2,"p99":16.4,"max":312.7,"over1s":0}
+PASS paging consistent during cleanup (limit 7, 924 full traversals, 59857 pages) :: []
+PASS every approved run record deleted
+PASS every retained run still present (435/435)
+PASS approved unshared temp workspaces reclaimed (35/35) :: []
+PASS approved workspaces with a junction or hard link inside, or aliased by retained configuration/history (X junction, Y missing child, Z template use), kept :: [["01M5XH8Y9SV9VPZK25GSJZSV2V",true],["01M5XH8YAJR9VDT4R8KG44BNGT",true],["01M5XH8YB29MKZQ83C36779DNB",true],["01M5XH8YC8H3NN2B6R7XNWMP15",true],["01M5XH92AN5X4EGAQ5J0PRRDMZ",true],["01M5XH92B06RVPNVRX70AKR8J6",true],["01M5XH92BNH1C2V5EW6KDQXG1S",true]]
+PASS only reclaimed approved workspaces (and approved artifacts) disappeared :: []
+PASS no file outside the reclaimed set changed (user, template, shared, alias, outside, retained workspaces, unrelated) :: {"changed":[],"added":[]}
+artifact files removed: 0 (ADR-0060 proof budget: 2,000 documents / 2 MiB)
+PASS every retained artifact still retrievable and identical (435/435)
+PASS credited removedFileBytes equal the managed bytes that disappeared :: {"credited":96600,"disappeared":96600}
+PASS final paging lists exactly the retained runs
+kept count by pass [24,47,58,58,58]
+PASS all original main/upgrade run snapshots are identical after realistic cleanup
+PASS phase C: approve three retained temp runs while a published loop is configured on a junction to the workspaces root
+phase C pass 1 {"state":"pressure","deletedRuns":3,"removedFileBytes":0,"pending":64,"preserved":64} workspaces on disk 3
+phase C pass 2 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":64,"preserved":64} workspaces on disk 3
+PASS phase C: workspaces enclosed by a configured parent alias are kept
+phase C: delete the configured loop 204
+phase C after loop deletion, pass 1 {"state":"pressure","deletedRuns":0,"removedFileBytes":384,"pending":61,"preserved":61} workspaces on disk 0
+PASS phase C: once the configuration is gone, the approved workspaces are reclaimed
+PASS phase C: the workspaces root and retained workspaces are untouched
+phase D: retained template run that never needed its working directory 01M5XHQKK7GGTT1HW5R7G7QN6Q succeeded
+PASS phase D: approve three more retained temp runs
+phase D pass 1 {"state":"pressure","deletedRuns":3,"removedFileBytes":384,"pending":64,"preserved":64} approved workspaces on disk 0
+phase D pass 2 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":64,"preserved":64} approved workspaces on disk 0
+phase D pass 3 {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":64,"preserved":64} approved workspaces on disk 0
+phase D: approved, unshared, unaliased workspaces still on disk after 3 passes: 0/3
+PASS phase D: approved unshared workspaces are reclaimed while an unrelated template run is retained :: {"keptByUnknown":0,"state":"no-eligible"}
+phase D: approve the template run itself 200
+phase D: workspaces on disk at the end 0
+server stop {"code":0,"signal":null}
+failures 0

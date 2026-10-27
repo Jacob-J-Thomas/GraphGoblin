@@ -1,0 +1,23 @@
+pnpm.cmd exec node --experimental-import-meta-resolve docs/qa/2026-10-26-pr-412-audit-r1/reference-probes.mjs alias
+Runtime v22.23.4 %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"status":400,"value":{"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/seconds","message":"Invalid input: expected number, received undefined"},{"path":"/definition/nodes/1/config/durationMs","message":"Unrecognized key \"durationMs\""}]}}
+
+400 !== 201
+
+    at Object.create (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-e3-412/docs/qa/2026-10-26-pr-412-audit-r1/audit-api.mjs:45:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-wp-e3-412/docs/qa/2026-10-26-pr-412-audit-r1/reference-probes.mjs:35:26 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 400,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.4
+EXIT 1

@@ -1,0 +1,17 @@
+variant plain path (control): GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-412f-a-dalias\physical-data-root
+PASS plain path (control): a run with a temp workspace and a transcript succeeds
+PASS plain path (control): approve the run
+plain path (control): pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":77,"pending":0}
+PASS plain path (control): the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+variant different letter case: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-412f-a-dalias\PHYSICAL-Data-Root
+PASS different letter case: a run with a temp workspace and a transcript succeeds
+PASS different letter case: approve the run
+different letter case: pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":78,"pending":0}
+PASS different letter case: the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+variant 8.3 short name: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\GG0E17~1\PHYSIC~1
+ERROR Error: server exited early with 1
+    at ChildProcess.<anonymous> (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-pr412-final/docs/qa/2026-10-27-pr412-qa-final/qa-lib.mjs:64:38)
+    at Object.onceWrapper (node:events:634:26)
+    at ChildProcess.emit (node:events:531:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+failures 0

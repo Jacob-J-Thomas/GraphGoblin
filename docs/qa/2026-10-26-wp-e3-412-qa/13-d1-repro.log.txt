@@ -1,0 +1,11 @@
+older 01M5VJHMHS02TP4BEEHKF46ATY newer 01M5VJHMX1K3QKP8HG057JYZBJ older < newer true
+PASS step 1: mark the newer run
+step 2: first pressure pass {"state":"pressure","deletedRuns":1} newer 404
+PASS step 3: mark the older run right after the pass
+older approval {"confirmedAt":"2026-10-26T07:43:06.679Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+step 4: next pass {"state":"no-eligible","deletedRuns":0} older run status 200
+notice text while the approved older run is still present "Storage is low. No approved eligible history could be cleaned. Review history you can remove or free disk space.\n\nReview run history"
+FAIL pass after approving an eligible run does not claim nothing eligible :: {"state":"no-eligible","olderStatus":200}
+step 5: following pass {"state":"pressure","deletedRuns":1} older run status 404
+server stop {"code":0,"signal":null}
+failures 1

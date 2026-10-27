@@ -1,0 +1,13 @@
+control statuses [{"startup":true,"state":"pressure","deletedRuns":4,"removedFileBytes":162,"pending":2,"preserved":2},{"pass":1,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2},{"pass":2,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2}]
+control: approved artifact files present after pressure [["01M5W1TFTY0D7ZD5N8EXKSGA1D",false],["01M5W1TFWF9DHVS1TFRRVFPK0F",false],["01M5W1TFXBXGZSD4KG9Q39W0XJ",true],["01M5W1TFYZMHDY45DZ1S83TRSK",true]]
+PASS control: unaliased, unshared approved artifacts are reclaimed in a small store
+PASS control: approved artifact hard-linked from outside is kept; outside link untouched
+PASS control: shared transcript (approved owner, retained user) kept
+PASS control: every retained artifact readable and identical :: [{"id":"01M5W1TGV4RHCHEN5WNHKG36TX","status":200,"same":true},{"id":"01M5W1TGW1CTAMSP116VRH02JT","status":200,"same":true},{"id":"01M5W1TGWZV4RD96A28AVSGZZV","status":200,"same":true},{"id":"01M5W1TGY9VGT8D6MS5K1C5T5T","status":200,"same":true}]
+ERROR Error: ENOENT: no such file or directory, open '%USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-art\kind\capacity.json'
+    at writeFileSync (node:fs:2430:20)
+    at setCapacity (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/docs/qa/2026-10-26-wp-e3-412-qa-recheck/qa-lib.mjs:46:3)
+    at populate (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/docs/qa/2026-10-26-wp-e3-412-qa-recheck/artifact-alias.mjs:59:3)
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/docs/qa/2026-10-26-wp-e3-412-qa-recheck/artifact-alias.mjs:138:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+failures 0

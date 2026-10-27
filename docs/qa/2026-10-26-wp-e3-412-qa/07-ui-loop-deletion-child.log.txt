@@ -1,0 +1,8 @@
+parent preview before child loop deletion [{"runId":"01M5VHHN1NEBD4MJA94BQ783MT","reasons":["Required retained history 01M5VHHN4GEETRW9274P5JWS4F must be selected together."]}]
+child loop delete dialog text "Delete “Child loop”?\n\nThe loop, all its versions, its triggers and all its runs (1) will be deleted, including run history and artifact references. Loops using it as a subloop will no longer be able to start it. Cancel active runs first.\n\nThis cannot be undone.\n\nConfirm delete\nKeep"
+PASS child loop deleted with its run; parent run kept
+parent inspector lines about the child ["child runs","Call child (call) (subloop) attempt 1","child_run.started","Call child (call)","Call child (call) waits for child","Call child (call) woken by child","Call child (call) (subloop) attempt 2","child_run.finished","Call child (call)","Call child (call) → out, 3 changes, 8 ms"]
+screenshot ui-parent-missing-child.png
+PASS parent alone is now reviewable (no missing relative blocks it) :: [{"runId":"01M5VHHN1NEBD4MJA94BQ783MT","reasons":[]}]
+server stop {"code":0,"signal":null}
+failures 0

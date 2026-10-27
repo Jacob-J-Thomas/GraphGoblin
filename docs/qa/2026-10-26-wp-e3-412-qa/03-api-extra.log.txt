@@ -1,0 +1,27 @@
+webhook run terminal {"status":"succeeded","finalizedAt":null,"deliveries":[{"id":"01M5VHSYAT8VH74079GJD6MWA5","channel":{"kind":"webhook","url":"http://127.0.0.1:6488/hook"},"status":"pending","attempts":1,"maxAttempts":5,"inFlight":true,"acknowledgement":"unknown","effectMayHaveHappened":true,"acknowledgementUncertain":false,"nextAttemptAt":"2026-10-26T07:29:22.002Z"}]}
+PASS terminal run with pending webhook delivery is protected (finalization incomplete) :: {"runId":"01M5VHSXJFQGTQNNEWJPMDRRHG","reasons":["Run finalization is incomplete."]}
+PASS bulk with the unfinalized run refused whole :: "DELETION_SELECTION_PROTECTED"
+minted keys {}
+FAIL runs:read key can preview :: 401
+FAIL runs:read key cannot confirm (403) :: 401
+FAIL runs:write key confirms; approval names the api-key actor
+FAIL key without system:read cannot read storage status (403) :: 401
+PASS parent + child marked together :: 200
+PASS replaying the child withdraws consent for the whole component (parent and child) :: {"parent":null,"child":null}
+PASS cancelled (terminal, finalized) run can be marked like succeeded/failed :: {"status":"cancelled","mark":200}
+PASS mark big + uniq :: 200
+PASS deleting a loop whose run is delete-ready works (204) and removes the run :: {"mark":200,"del":204}
+deleted loop run workspace still on disk true
+PASS mark heavy
+baseline GET /runs?limit=1 latency (ms) {"n":89,"p50":3.5,"p99":29.4,"max":29.4}
+GET /system/storage latency during the pressure transition (ms) {"n":1647,"p50":1.3,"max":112.7}
+GET /runs?limit=1 latency over 100 s including the pass (ms) {"n":2028,"p50":2.9,"p99":8.1,"max":6637.7,"over1s":7}
+pass result {"state":"no-eligible","checkedAt":"2026-10-26T07:31:07.920Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":172032,"pendingResources":15,"preservedResources":0}
+next pass {"state":"no-eligible","checkedAt":"2026-10-26T07:32:07.921Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":172032,"pendingResources":15,"preservedResources":15}
+PASS 2,100-file workspace preserved (inventory bound) :: {"big":true}
+artifact files remaining 19 preservedResources 15 pendingResources 15
+heavy workspaces remaining 0
+PASS approved runs gone
+notice-state with preserved resources {"state":"no-eligible","preserved":15}
+server stop {"code":0,"signal":null}
+failures 4

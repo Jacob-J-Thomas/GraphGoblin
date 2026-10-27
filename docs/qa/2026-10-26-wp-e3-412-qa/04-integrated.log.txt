@@ -1,0 +1,123 @@
+server http://127.0.0.1:6483 pid 47108
+pause pz1 200
+runs {"w1":"01M5VHMBNA6DBZF8X0RZJ97TE8","w2":"01M5VHMBP88GN08PVG2YRWHCXS","w3":"01M5VHMBQH8SRBAMKVJJ4R8SRX","s1":"01M5VHMBRY6XSSSW7F03KWD2VX","s2":"01M5VHMCF6C78CT8QCDHNASQHZ","f1":"01M5VHMCFRN5NBHYAAVAJ5S367","k1":"01M5VHMCG8ADC01HR93K1DK310","h1":"01M5VHMCHJ5H5A9H8JESWWP4K3","p1":"01M5VHMCJZY5HK68JC4RGM48JW","r1":"01M5VHMCN4SY9XCQVZNQGJ6H6C","r2":"01M5VHMCP2DSJG23F09JGJP3JN","e1":"01M5VHMCQ734XWXKZHHS30QA88","c1":"01M5VHMDF1J8B6GM8HH7JTPJ2H","r1f":"01M5VHMEDWYAT52KDE7RAJDC7Q","a1":"01M5VHMERXGNDH29TQ198SS40F","pz1":"01M5VHMESWMAY8K313P06YXN1R","u1":"01M5VHMETT335R6HA4CDV1XW6C"}
+  w1 01M5VHMBNA6DBZF8X0RZJ97TE8 status=succeeded finalized=true parent=- failure=-
+  w2 01M5VHMBP88GN08PVG2YRWHCXS status=succeeded finalized=true parent=- failure=-
+  w3 01M5VHMBQH8SRBAMKVJJ4R8SRX status=failed finalized=true parent=- failure=HARNESS_DELIVERY_UNCERTAIN
+  s1 01M5VHMBRY6XSSSW7F03KWD2VX status=succeeded finalized=true parent=- failure=-
+  s2 01M5VHMCF6C78CT8QCDHNASQHZ status=succeeded finalized=true parent=- failure=-
+  f1 01M5VHMCFRN5NBHYAAVAJ5S367 status=succeeded finalized=true parent=- failure=-
+  k1 01M5VHMCG8ADC01HR93K1DK310 status=succeeded finalized=true parent=- failure=-
+  h1 01M5VHMCHJ5H5A9H8JESWWP4K3 status=succeeded finalized=true parent=- failure=-
+  p1 01M5VHMCJZY5HK68JC4RGM48JW status=succeeded finalized=true parent=- failure=-
+  r1 01M5VHMCN4SY9XCQVZNQGJ6H6C status=succeeded finalized=true parent=- failure=-
+  r2 01M5VHMCP2DSJG23F09JGJP3JN status=succeeded finalized=true parent=- failure=-
+  e1 01M5VHMCQ734XWXKZHHS30QA88 status=failed finalized=true parent=- failure=HARNESS_DELIVERY_UNCERTAIN
+  c1 01M5VHMDF1J8B6GM8HH7JTPJ2H status=succeeded finalized=true parent=01M5VHMCJZY5HK68JC4RGM48JW failure=-
+  r1f 01M5VHMEDWYAT52KDE7RAJDC7Q status=succeeded finalized=true parent=- failure=-
+  a1 01M5VHMERXGNDH29TQ198SS40F status=running finalized=false parent=- failure=-
+  pz1 01M5VHMESWMAY8K313P06YXN1R status=paused finalized=false parent=- failure=-
+  u1 01M5VHMETT335R6HA4CDV1XW6C status=succeeded finalized=false parent=- failure=-
+PASS w3 is a failed run, e1 is a failed run :: "failed"
+PASS preview of an active run lists a protection reason :: [{"runId":"01M5VHMERXGNDH29TQ198SS40F","reasons":["Run is running; active and paused history is protected.","Run finalization is incomplete."]}]
+preview paused [{"runId":"01M5VHMESWMAY8K313P06YXN1R","reasons":["Run is paused; active and paused history is protected.","Run finalization is incomplete."]}] status paused
+PASS preview of a terminal unfinalized run lists finalization reason :: [{"runId":"01M5VHMETT335R6HA4CDV1XW6C","reasons":["Run finalization is incomplete."]}]
+PASS bulk selection including an active run refused 409 PROTECTED :: {"status":409,"code":"DELETION_SELECTION_PROTECTED","errors":[{"runId":"01M5VHMBP88GN08PVG2YRWHCXS","reasons":[]},{"runId":"01M5VHMERXGNDH29TQ198SS40F","reasons":["Run is running; active and paused history is protected.","Run finalization is incomplete."]}]}
+PASS w2 not marked by the refused bulk selection
+PASS bulk selection including unfinalized run refused :: "DELETION_SELECTION_PROTECTED"
+PASS bulk selection including paused run refused :: {"code":"DELETION_SELECTION_PROTECTED","status":"paused"}
+PASS parent alone refused: child required :: [{"runId":"01M5VHMCJZY5HK68JC4RGM48JW","reasons":["Required retained history 01M5VHMDF1J8B6GM8HH7JTPJ2H must be selected together."]}]
+PASS child alone refused: parent required :: [{"runId":"01M5VHMDF1J8B6GM8HH7JTPJ2H","reasons":["Required retained history 01M5VHMCJZY5HK68JC4RGM48JW must be selected together."]}]
+PASS replay source alone refused: fork required :: [{"runId":"01M5VHMCN4SY9XCQVZNQGJ6H6C","reasons":["Required retained history 01M5VHMEDWYAT52KDE7RAJDC7Q must be selected together."]}]
+PASS competing confirmation succeeds :: 200
+PASS stale token refused 409 STALE :: "DELETION_SELECTION_STALE"
+PASS token from before an approve/withdraw cycle stays stale :: "DELETION_SELECTION_STALE"
+PASS unknown run refused :: "DELETION_SELECTION_MISSING"
+PASS duplicate ids refused 400 :: 400
+PASS empty selection refused 400 :: 400
+PASS confirmation without confirmed:true refused 400 :: 400
+PASS preview alone marks nothing
+PASS bulk mark of eligible selection (succeeded + failed, components complete) :: 200
+PASS approval records who and when (API) :: {"confirmedAt":"2026-10-26T07:26:10.986Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+approval w1 {"confirmedAt":"2026-10-26T07:26:10.986Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+approval w3 {"confirmedAt":"2026-10-26T07:26:10.986Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+approval c1 {"confirmedAt":"2026-10-26T07:26:10.986Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+PASS w2 (unselected) still retained
+PASS mark then withdraw w2 leaves it retained
+e1 before resume approved
+resume e1 200 
+PASS resuming an approved run withdraws its approval :: {"status":"succeeded","approval":null}
+PASS replay from an approved run withdraws the source approval
+PASS replay fork starts without consent
+PASS new run starts without consent
+approved before pressure w1,w3,s1,f1,k1,h1,p1,r1,c1,r1f
+storage at start {"state":"adequate","checkedAt":"2026-10-26T07:26:06.010Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":53687091200},{"name":"database","totalBytes":107374182400,"availableBytes":53687091200}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":0,"pendingResources":0,"preservedResources":0}
+storage after a natural timer pass (adequate) {"state":"adequate","checkedAt":"2026-10-26T07:27:06.028Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":53687091200},{"name":"database","totalBytes":107374182400,"availableBytes":53687091200}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":0,"pendingResources":0,"preservedResources":0}
+storage with production fs.statfs reading {"state":"adequate","checkedAt":"2026-10-26T07:28:06.033Z","volumes":[{"name":"data","totalBytes":510255951872,"availableBytes":40722440192},{"name":"database","totalBytes":510255951872,"availableBytes":40722440192}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":0,"pendingResources":0,"preservedResources":0}
+PASS adequate storage: every approved run still present :: {"stillThere":10,"approved":10}
+PASS adequate storage: no file under the QA root changed :: ["capacity.json","server.log"]
+PASS adequate storage state reported, no deletion counters :: {"state":"adequate","checkedAt":"2026-10-26T07:28:06.033Z","volumes":[{"name":"data","totalBytes":510255951872,"availableBytes":40722440192},{"name":"database","totalBytes":510255951872,"availableBytes":40722440192}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":0,"pendingResources":0,"preservedResources":0}
+PASS 1.5 GiB free of 100 GiB stays adequate (enter threshold 1 GiB) :: "adequate"
+pressure pass 1 observed after 60499 ms {"state":"pressure","checkedAt":"2026-10-26T07:30:06.034Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":10,"removedFileBytes":3713,"reusableDatabaseBytes":86016,"pendingResources":3,"preservedResources":3}
+PASS paging stayed consistent during cleanup (limit 3, continuous traversals) :: {"traversals":2866,"problems":[]}
+removed paths ["data/artifacts/transcript/47d78f83644c6dba4272dc8738dacac6a45b4f2eec27871d2748674652583290","data/artifacts/transcript/5fad4952686030b2faa14697ff3f42070ac3738e8cbd0c789c40977da34f85ab","data/artifacts/transcript/819122160ae3c9d00b1a78591e0e0511195f3c98fab49592a02c13a221c1abe4","data/artifacts/transcript/d6148ab9c86302d5c7571a910143d756947812603a0e6d184da086c4c56b3293","data/artifacts/transcript/dc19382daeb012c2a7fb63a8f0f9ba3e53e0fa0a4bc7338b9487847df546cb48","data/artifacts/transcript/fdb0f5124a26ce6ccea89ed890366fb02fd7c2f5ed0ac47d2768ca0ab2e23186","data/workspaces/01M5VHMBNA6DBZF8X0RZJ97TE8/","data/workspaces/01M5VHMBNA6DBZF8X0RZJ97TE8/f0.bin","data/workspaces/01M5VHMBNA6DBZF8X0RZJ97TE8/f1.bin","data/workspaces/01M5VHMBNA6DBZF8X0RZJ97TE8/f2.bin","data/workspaces/01M5VHMBQH8SRBAMKVJJ4R8SRX/","data/workspaces/01M5VHMBRY6XSSSW7F03KWD2VX/","data/workspaces/01M5VHMBRY6XSSSW7F03KWD2VX/f0.bin","data/workspaces/01M5VHMCN4SY9XCQVZNQGJ6H6C/","data/workspaces/01M5VHMCN4SY9XCQVZNQGJ6H6C/f0.bin","data/workspaces/01M5VHMDF1J8B6GM8HH7JTPJ2H/","data/workspaces/01M5VHMEDWYAT52KDE7RAJDC7Q/","data/workspaces/01M5VHMEDWYAT52KDE7RAJDC7Q/f0.bin"]
+added paths ["data/cleanup-pending/"]
+PASS reported removedFileBytes equals bytes of files that disappeared :: {"reported":3713,"observed":3713}
+db file+wal bytes before/after 4660824 4660824 reusableDatabaseBytes 86016
+PASS w1 approved -> deleted :: 404
+PASS w2 retained -> present :: 200
+PASS w3 approved -> deleted :: 404
+PASS s1 approved -> deleted :: 404
+PASS s2 retained -> present :: 200
+PASS f1 approved -> deleted :: 404
+PASS k1 approved -> deleted :: 404
+PASS h1 approved -> deleted :: 404
+PASS p1 approved -> deleted :: 404
+PASS r1 approved -> deleted :: 404
+PASS r2 retained -> present :: 200
+PASS e1 retained -> present :: 200
+PASS c1 approved -> deleted :: 404
+PASS r1f approved -> deleted :: 404
+PASS a1 retained -> present :: 200
+PASS pz1 retained -> present :: 200
+PASS u1 retained -> present :: 200
+PASS r2f retained -> present :: 200
+PASS n1 retained -> present :: 200
+PASS retained w2 artifact artifact:transcript/21754d43ed… still retrievable and identical :: {"status":200}
+PASS retained s2 artifact artifact:transcript/cd56b55cd3… still retrievable and identical :: {"status":200}
+PASS retained r2 artifact artifact:transcript/dcfb9119d4… still retrievable and identical :: {"status":200}
+PASS retained e1 artifact artifact:transcript/9149ebab73… still retrievable and identical :: {"status":200}
+PASS retained u1 artifact artifact:transcript/cfcc6c0595… still retrievable and identical :: {"status":200}
+PASS retained r2f artifact artifact:transcript/dcfb9119d4… still retrievable and identical :: {"status":200}
+PASS retained n1 artifact artifact:transcript/0a650f18a4… still retrievable and identical :: {"status":200}
+PASS user-owned fixed directory and its files untouched
+PASS junction target untouched
+PASS hard-link source untouched
+PASS k1 workspace with a junction preserved :: {"k1":true}
+PASS h1 workspace with a hard link preserved
+PASS unrelated and run-shaped files untouched
+PASS retained workspaces untouched (w2, s2, n1, r2, r2f, e1)
+late mark of older run w2 after pass 1 200
+pressure pass 2 {"state":"no-eligible","checkedAt":"2026-10-26T07:31:06.043Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":86016,"pendingResources":3,"preservedResources":0}
+w2 status after pass 2 200
+FAIL pass 2 notice state with an approved, eligible run still present (expect not "no-eligible") :: {"state":"no-eligible","deletedRuns":0}
+pressure pass 3 {"state":"pressure","checkedAt":"2026-10-26T07:32:06.052Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":1,"removedFileBytes":1052,"reusableDatabaseBytes":118784,"pendingResources":3,"preservedResources":3}
+w2 status after pass 3 404
+pressure pass 4 (nothing left eligible) {"state":"no-eligible","checkedAt":"2026-10-26T07:33:06.053Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":118784,"pendingResources":3,"preservedResources":0}
+PASS nothing eligible -> no-eligible state, nothing deleted :: {"state":"no-eligible","checkedAt":"2026-10-26T07:33:06.053Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":536870912},{"name":"database","totalBytes":107374182400,"availableBytes":536870912}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":118784,"pendingResources":3,"preservedResources":0}
+PASS after no-eligible pass s2 still present
+PASS after no-eligible pass r2 still present
+PASS after no-eligible pass e1 still present
+PASS after no-eligible pass a1 still present
+PASS after no-eligible pass pz1 still present
+PASS after no-eligible pass u1 still present
+PASS after no-eligible pass r2f still present
+PASS after no-eligible pass n1 still present
+final paging (limit 4) [["01M5VHMG4PMAMA6SKYXS26KFBY","01M5VHMFYJNT8YYNDAMPB2C0ZN","01M5VHMETT335R6HA4CDV1XW6C","01M5VHMESWMAY8K313P06YXN1R"],["01M5VHMERXGNDH29TQ198SS40F","01M5VHMCQ734XWXKZHHS30QA88","01M5VHMCP2DSJG23F09JGJP3JN","01M5VHMCF6C78CT8QCDHNASQHZ"]]
+PASS 1.5 GiB free stays in pressure (leave threshold 2 GiB) :: "no-eligible"
+PASS unavailable reading -> unavailable state :: {"state":"unavailable","checkedAt":"2026-10-26T07:34:06.067Z","volumes":[{"name":"data","totalBytes":107374182400,"availableBytes":1610612736},{"name":"database","totalBytes":107374182400,"availableBytes":1610612736}],"cleaning":false,"deletedRuns":0,"removedFileBytes":0,"reusableDatabaseBytes":118784,"pendingResources":3,"preservedResources":3}
+PASS adequate again -> adequate :: "adequate"
+cancel 01M5VHMESWMAY8K313P06YXN1R 200
+cancel 01M5VHMERXGNDH29TQ198SS40F 200
+server stop {"code":0,"signal":null}
+failures 1

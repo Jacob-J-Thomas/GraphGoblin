@@ -1,0 +1,11 @@
+variant plain path (control): GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\physical-data-root
+PASS plain path (control): a run with a temp workspace and a transcript succeeds
+variant different letter case: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\PHYSICAL-Data-Root
+PASS different letter case: a run with a temp workspace and a transcript succeeds
+variant 8.3 short name: GG_DATA_DIR = C:\"%USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\physical-data-root\"
+ERROR Error: ENOENT: no such file or directory, mkdir 'C:\"%USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\physical-data-root\"'
+    at mkdirSync (node:fs:1370:26)
+    at startServer (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/docs/qa/2026-10-26-wp-e3-412-qa-recheck/qa-lib.mjs:54:3)
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/docs/qa/2026-10-26-wp-e3-412-qa-recheck/datadir-alias.mjs:27:26
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+failures 0

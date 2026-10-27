@@ -1,0 +1,22 @@
+after upgrade: dx status=succeeded
+after upgrade: de status=failed
+after upgrade: ds status=succeeded
+after upgrade: w1 status=succeeded
+after upgrade: dw status=waiting
+after upgrade: lw status=waiting
+server stop (to inspect the migrated store) {"code":0,"signal":null}
+ERROR Error: Command failed: python -I %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-pr412-final\docs\qa\2026-10-27-pr412-qa-final\upgrade-audit.py after
+Traceback (most recent call last):
+  File "%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-pr412-final\docs\qa\2026-10-27-pr412-qa-final\upgrade-audit.py", line 40, in <module>
+    assert count==24 and not bad and not changed and approved==0 and owned==0
+                                                                     ^^^^^^^^
+AssertionError
+
+    at genericNodeError (node:internal/errors:983:15)
+    at wrappedFn (node:internal/errors:537:14)
+    at checkExecSyncError (node:child_process:916:11)
+    at execFileSync (node:child_process:952:15)
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-pr412-final/docs/qa/2026-10-27-pr412-qa-final/migrated.mjs:33:41
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+server stop {"code":0,"signal":null}
+failures 0

@@ -1,0 +1,25 @@
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:203:11)
+    at defaultLoad (node:internal/modules/esm/load:86:3)
+    at nextLoad (node:internal/modules/esm/hooks:748:28)
+    at Hooks.load (node:internal/modules/esm/hooks:385:26)
+    at ModuleLoader.load (node:internal/modules/esm/loader:827:35)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:609:31)
+    at #createModuleJob (node:internal/modules/esm/loader:640:36)
+    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v22.23.4
+(node:51004) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("file%3A///C%3A%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-pr412-final/docs/qa/2026-10-27-pr412-qa-final/main-resolver.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+QA_READY http://127.0.0.1:6620
+{"level":50,"time":1793065533504,"pid":51004,"runId":"01M5XGHDAVTHGH65B8318B6D6P","nodeId":"infer","failure":{"code":"INTERNAL_ERROR","message":"working directory template rendered to an empty path","nodeId":"infer","resumable":true,"details":{"name":"Error","stack":"Error: working directory template rendered to an empty path\n    at FsWorkspace.resolve (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-412f-main-qY6ffO/packages/infrastructure/dist/fs/workspace.js:22:27)\n    at async RunManager.workingDirectory (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-412f-main-qY6ffO/packages/engine/dist/run-manager.js:2445:21)\n    at async Object.execute (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-412f-main-qY6ffO/packages/engine/dist/handlers/inference.js:192:34)\n    at async RunManager.execute (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-412f-main-qY6ffO/packages/engine/dist/run-manager.js:1842:26)"}},"msg":"node failed"}
+QA_STOPPED

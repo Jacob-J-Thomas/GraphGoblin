@@ -1,0 +1,20 @@
+control statuses [{"startup":true,"state":"pressure","deletedRuns":4,"removedFileBytes":162,"pending":2,"preserved":2},{"pass":1,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2},{"pass":2,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2}]
+control: approved artifact files present after pressure [["01M5W6T1FMWHYQ5BP36ER0XNJE",false],["01M5W6T1HASFG4GP5S7RG1EBD6",false],["01M5W6T1JKFD0HXZ3G8V1WKDSF",true],["01M5W6T1MKK8Y34XMZQ7KEPDGB",true]]
+PASS control: unaliased, unshared approved artifacts are reclaimed in a small store
+PASS control: approved artifact hard-linked from outside is kept; outside link untouched
+PASS control: shared transcript (approved owner, retained user) kept
+PASS control: every retained artifact readable and identical :: [{"id":"01M5W6T2ZEF8Q4J430W7MBKAP9","status":200,"same":true},{"id":"01M5W6T30227RD8J4BTXRXT0Y1","status":200,"same":true},{"id":"01M5W6T3143TXZ878KS0J7QN5E","status":200,"same":true},{"id":"01M5W6T3259STPKFAV67ND6Z0W","status":200,"same":true}]
+kind-junction statuses [{"startup":true,"state":"pressure","deletedRuns":4,"removedFileBytes":40,"pending":4,"preserved":4},{"pass":1,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":4,"preserved":4},{"pass":2,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":4,"preserved":4}]
+PASS kind junction: nothing in the outside location removed or changed :: {"removed":[],"changed":[],"added":[]}
+PASS kind junction: approved runs deleted
+PASS kind junction: every retained artifact readable and identical :: [{"id":"01M5W6YDRFCW0EHK58DTEVH49X","status":200,"same":true},{"id":"01M5W6YDXS4NKPHJ5AMMR7N6TV","status":200,"same":true},{"id":"01M5W6YE42MZXW8S4BFA7ZS83S","status":200,"same":true},{"id":"01M5W6YEJ3QVAZJHKK12BEG3GA","status":200,"same":true}]
+kind junction: a new run that publishes a transcript {"status":"failed","failure":{"code":"INTERNAL_ERROR","message":"Artifact directory is a link","nodeId":"infer","resumable":true,"details":{"name":"Error","stack":"Error: Artifact directory is a link\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/infrastructure/dist/fs/owned-resources.js:100:27\n    at async Mutex.run (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/infrastructure/dist/sqlite/db.js:45:20)\n    at async Object.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/engine/dist/handlers/inference.js:466:32)\n    at async RunManager.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a67e9f5737ee26db3/packages/engine/dist/run-manager.js:1842:26)"},"inference":{"visitId":"01M5W729VBSJ8M3GZXTQ02NP70:5","turnId":"01M5W729YAJDWGPDSYMSYRRF25","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+root-junction statuses [{"startup":true,"state":"pressure","deletedRuns":4,"removedFileBytes":40,"pending":4,"preserved":4},{"pass":1,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":4,"preserved":4},{"pass":2,"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":4,"preserved":4}]
+PASS artifacts-root junction: nothing in the outside location removed or changed :: {"removed":[],"changed":[],"added":[]}
+PASS artifacts-root junction: every retained artifact readable and identical :: [{"id":"01M5W72DH8800TJ7EJCFD2RN3N","status":200,"same":true},{"id":"01M5W72DHP1DSV8H0XZGX5E4FF","status":200,"same":true},{"id":"01M5W72DJ5B8DH7PZXAYD3QEHV","status":200,"same":true},{"id":"01M5W72DK7KRHJK43CYWTV6446","status":200,"same":true}]
+artifacts-root junction: approved workspaces still on disk 0 of 4
+data directory through a junction: temp-workspace run with a transcript {"status":"succeeded","failure":null}
+data directory through a junction: trigger-exit run (no workspace, no artifact) succeeded
+PASS data directory through a junction: a run that uses a temp workspace and a transcript succeeds :: null
+server log lines mentioning a link []
+failures 0

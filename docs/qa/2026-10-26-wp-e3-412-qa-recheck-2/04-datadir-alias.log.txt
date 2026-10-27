@@ -1,0 +1,21 @@
+variant plain path (control): GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\physical-data-root
+PASS plain path (control): a run with a temp workspace and a transcript succeeds
+PASS plain path (control): approve the run
+plain path (control): pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":77,"pending":0}
+PASS plain path (control): the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+variant different letter case: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\PHYSICAL-Data-Root
+PASS different letter case: a run with a temp workspace and a transcript succeeds
+PASS different letter case: approve the run
+different letter case: pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":78,"pending":0}
+PASS different letter case: the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+variant 8.3 short name: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\GG1A44~1\PHYSIC~1
+PASS 8.3 short name: a run with a temp workspace and a transcript succeeds
+PASS 8.3 short name: approve the run
+8.3 short name: pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":71,"pending":0}
+PASS 8.3 short name: the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+variant junction: GG_DATA_DIR = %USERPROFILE%\AppData\Local\Temp\gg-qa-e3r-dalias\junction-to-data
+PASS junction: a run with a temp workspace and a transcript succeeds
+PASS junction: approve the run
+junction: pressure pass {"state":"pressure","deletedRuns":1,"removedFileBytes":65,"pending":0}
+PASS junction: the approved run's workspace (physical path) is reclaimed; the retained transcript stays readable :: {"existedBefore":true,"stillThere":false,"after":200}
+failures 0

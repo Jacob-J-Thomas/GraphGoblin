@@ -1,0 +1,65 @@
+after upgrade: dx status=succeeded
+after upgrade: de status=failed
+after upgrade: ds status=succeeded
+after upgrade: w1 status=succeeded
+after upgrade: dw status=waiting
+after upgrade: lw status=waiting
+server stop (to inspect the migrated store) {"code":0,"signal":null}
+read-only preservation audit after migration: 24 migrations; altered historical tables: [] ; altered resource files: [] ; approved: 0 ; ownership claims: 0 ; changed fields: [] ; serialization-only changes: [('01M5XGRCXGHCQM5DXQN0X3CDBC', 'waiting', 'identical keys and values; JSON key order changed by wait recovery'), ('01M5XGRCXXXE956NEFK2BYQVSC', 'waiting', 'identical keys and values; JSON key order changed by wait recovery')]
+PASS migrations 0022/0023 applied once; every old column/row and resource file preserved, no historical approval or ownership inferred
+
+workspace obligations right after migrating the pre-PR store
+{
+ "migrations": 24,
+ "state": [
+  0,
+  0
+ ],
+ "references": [
+  {
+   "kind": "pending",
+   "run": "dw",
+   "runStatus": "waiting",
+   "version": null,
+   "path": null,
+   "physical": null
+  },
+  {
+   "kind": "pending",
+   "run": "lw",
+   "runStatus": "waiting",
+   "version": null,
+   "path": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-412f-b-mig\\literal\\one",
+   "physical": null
+  }
+ ]
+}
+PASS backfill: no obligation for terminal template runs that never resolved a directory (dx, de) or did (ds)
+PASS backfill: one pending obligation per live template run (dw dynamic with no path, lw literal with its path) :: [{"kind":"pending","run":"01M5XGRCXGHCQM5DXQN0X3CDBC","runStatus":"waiting","version":null,"path":null,"physical":null},{"kind":"pending","run":"01M5XGRCXXXE956NEFK2BYQVSC","runStatus":"waiting","version":null,"path":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-412f-b-mig\\literal\\one","physical":null}]
+PASS migrations apply once on a second reopen
+PASS approve two new temp-workspace runs
+pass 1 while dw (dynamic) and lw (literal) wait {"state":"pressure","deletedRuns":2,"removedFileBytes":90,"pending":2,"preserved":2} new workspaces on disk 2
+pass 2 while dw (dynamic) and lw (literal) wait {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":2,"preserved":2} new workspaces on disk 2
+PASS a LIVE dynamic template run keeps approved workspaces (documented: unknown future directory)
+cancel dw 200 cancelled
+pass after dw ended (lw still waiting) {"state":"pressure","deletedRuns":0,"removedFileBytes":4000,"pending":0,"preserved":0} new workspaces on disk 0
+PASS once the dynamic run is terminal its obligation is released; the literal live run does not block unrelated workspaces
+PASS approve q while a live literal run names q workspace
+pass 1 with the live literal run on q {"state":"pressure","deletedRuns":1,"removedFileBytes":44,"pending":1,"preserved":1} q run 404 q workspace on disk true
+pass 2 with the live literal run on q {"state":"no-eligible","deletedRuns":0,"removedFileBytes":0,"pending":1,"preserved":1} q run 404 q workspace on disk true
+PASS a live literal template protects exactly its directory (q run deleted, q workspace kept)
+cancel lq cancelled
+pass after lq ended {"state":"pressure","deletedRuns":0,"removedFileBytes":2000,"pending":0,"preserved":0} q workspace on disk false
+PASS after the literal run ends, q workspace is reclaimed
+PASS literal directory and the pre-upgrade temp workspace (unowned) untouched
+server stop {"code":0,"signal":null}
+obligations at the end
+{
+ "migrations": 24,
+ "state": [
+  6,
+  0
+ ],
+ "references": []
+}
+failures 0

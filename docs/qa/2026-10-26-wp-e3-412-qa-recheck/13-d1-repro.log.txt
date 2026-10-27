@@ -1,0 +1,11 @@
+older 01M5W1FH3S2SHB6JXG59NXXSHF newer 01M5W1FKJT7RKTN2VGK5P1B870 older < newer true
+PASS step 1: mark the newer run
+step 2: first pressure pass {"state":"pressure","deletedRuns":1} newer 404
+PASS step 3: mark the older run right after the pass
+older approval {"confirmedAt":"2026-10-26T12:04:04.073Z","confirmedBy":{"ownerId":"local","kind":"user","id":"local"}}
+step 4: next pass {"state":"pressure","deletedRuns":1} older run status 404
+notice text while the approved older run is still present "Storage is low. Cleanup removes only history you marked delete-ready and its owned, unshared resources.\n\nReview run history"
+PASS pass after approving an eligible run does not claim nothing eligible :: {"state":"pressure","olderStatus":404}
+step 5: following pass {"state":"no-eligible","deletedRuns":0} older run status 404
+server stop {"code":0,"signal":null}
+failures 0
