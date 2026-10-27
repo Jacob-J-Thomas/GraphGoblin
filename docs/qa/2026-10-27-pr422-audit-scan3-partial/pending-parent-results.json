@@ -1,0 +1,548 @@
+{
+  "checks": [
+    {
+      "name": "real restart while bound parent recovery is pending preserves exact consent and one child",
+      "passed": true
+    },
+    {
+      "name": "new uncertain child failure after restart requires fresh parent observation and consent",
+      "passed": true
+    }
+  ],
+  "evidence": {
+    "reviewed": {
+      "parent": {
+        "id": "01M5Y3W7570B2VM7ATCV6R1HNT",
+        "ownerId": "local",
+        "loopId": "01M5Y3W74G6GXJJBW2EQ4GH3E0",
+        "versionId": "01M5Y3W74G6GXJJBW2EQ4GH3E1",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Pending parent consent",
+          "label": "Pending parent consent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3W758Q4SY6Z81ZNGVARM5",
+        "status": "failed",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3W7570B2VM7ATCV6R1HNT:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "subloop child 01M5Y3W77CR4MXVY2WKZFSJ8DZ failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "sub",
+          "resumable": true,
+          "details": {
+            "childRunId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+            "childNodeId": "a"
+          },
+          "script": {
+            "visitId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ:5",
+            "dispatchId": "01M5Y3W78THW3SPF0GPTVBH3AB",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T07:23:27.783Z",
+        "startedAt": "2026-10-27T07:23:27.806Z",
+        "finishedAt": "2026-10-27T07:23:30.598Z",
+        "finalizedAt": "2026-10-27T07:23:30.604Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Child",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ],
+          "scriptConsent": {
+            "failureSeq": 11,
+            "nodeId": "sub"
+          }
+        }
+      },
+      "child": {
+        "id": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+        "ownerId": "local",
+        "loopId": "01M5Y3W73CE3ET1CR59ZDKNN60",
+        "versionId": "01M5Y3W73CE3ET1CR59ZDKNN61",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Pending child consent",
+          "label": "Pending child consent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT",
+        "invocationId": "01M5Y3W77CR4MXVY2WKZFSJ8E0",
+        "status": "failed",
+        "currentNodeId": "a",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "a",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ:5",
+            "dispatchId": "01M5Y3W78THW3SPF0GPTVBH3AB",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T07:23:27.852Z",
+        "startedAt": "2026-10-27T07:23:27.868Z",
+        "finishedAt": "2026-10-27T07:23:30.546Z",
+        "finalizedAt": "2026-10-27T07:23:30.566Z",
+        "lastEventSeq": 9,
+        "recovery": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+              },
+              "effects": [
+                {
+                  "nodeId": "a",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "a",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+              },
+              "effects": [
+                {
+                  "nodeId": "a",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "b",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+              },
+              "effects": [
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5Y3W7570B2VM7ATCV6R1HNT. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT"
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "failureA": {
+        "runId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+        "seq": 9,
+        "ts": "2026-10-27T07:23:30.544Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "a",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ:5",
+            "dispatchId": "01M5Y3W78THW3SPF0GPTVBH3AB",
+            "state": "outcome-uncertain"
+          }
+        }
+      }
+    },
+    "committedIntent": {
+      "runId": "01M5Y3W7570B2VM7ATCV6R1HNT",
+      "seq": 12,
+      "ts": "2026-10-27T07:23:31.190Z",
+      "type": "run.resumed",
+      "retryUncertainScript": true,
+      "childRecovery": {
+        "runId": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+        "failureSeq": 9,
+        "observedSeq": 9,
+        "retryUncertainScript": true
+      },
+      "actor": {
+        "kind": "user",
+        "id": "local"
+      }
+    },
+    "lostAcknowledgement": {
+      "connectionError": "TypeError: fetch failed"
+    },
+    "final": {
+      "parent": {
+        "id": "01M5Y3W7570B2VM7ATCV6R1HNT",
+        "ownerId": "local",
+        "loopId": "01M5Y3W74G6GXJJBW2EQ4GH3E0",
+        "versionId": "01M5Y3W74G6GXJJBW2EQ4GH3E1",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Pending parent consent",
+          "label": "Pending parent consent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3W758Q4SY6Z81ZNGVARM5",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T07:23:27.783Z",
+        "startedAt": "2026-10-27T07:23:27.806Z",
+        "finishedAt": "2026-10-27T07:23:38.487Z",
+        "finalizedAt": "2026-10-27T07:23:38.492Z",
+        "lastEventSeq": 29,
+        "recovery": {
+          "observedSeq": 29,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "child": {
+        "id": "01M5Y3W77CR4MXVY2WKZFSJ8DZ",
+        "ownerId": "local",
+        "loopId": "01M5Y3W73CE3ET1CR59ZDKNN60",
+        "versionId": "01M5Y3W73CE3ET1CR59ZDKNN61",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Pending child consent",
+          "label": "Pending child consent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5Y3W7570B2VM7ATCV6R1HNT",
+        "invocationId": "01M5Y3W77CR4MXVY2WKZFSJ8E0",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T07:23:27.852Z",
+        "startedAt": "2026-10-27T07:23:27.868Z",
+        "finishedAt": "2026-10-27T07:23:38.427Z",
+        "finalizedAt": "2026-10-27T07:23:38.440Z",
+        "lastEventSeq": 28,
+        "recovery": {
+          "observedSeq": 28,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "a",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "a",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "a",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "b",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "b",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "countA": 2,
+      "countB": 2,
+      "stale": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "unconsented": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        }
+      }
+    }
+  }
+}

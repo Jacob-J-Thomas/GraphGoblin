@@ -1,0 +1,37 @@
+$ node "%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-pr422-recheck\docs\qa\2026-10-27-pr422-qa-recheck\restarts.mjs"
+PASS exhausted Resume and accessible explanation agree
+PASS exhausted MCP/HTTP agree
+PASS exhausted HTTP/MCP Resume refusal agrees
+PASS exhausted Replay start and live reason agree
+PASS exhausted Replay done and live reason agree
+PASS crash restart preserves uncertain effect without retry
+PASS uncertain-script Resume and accessible explanation agree
+PASS uncertain-script MCP/HTTP agree
+PASS uncertain-script HTTP/MCP Resume refusal agrees
+PASS uncertain-script Replay start and live reason agree
+PASS uncertain-script Replay script and live reason agree
+PASS uncertain-script Replay done and live reason agree
+PASS cancelling script consent has no effect
+PASS earlier-node Replay requires uncertain-script checkbox
+PASS uncertain script consent resumes same visit and inspector follows
+PASS missing-session Resume and accessible explanation agree
+PASS missing-session MCP/HTTP agree
+PASS missing-session HTTP/MCP Resume refusal agrees
+PASS missing-session Replay start and live reason agree
+PASS missing-session Replay think and live reason agree
+PASS missing-session Replay park and live reason agree
+PASS missing-session Replay gate and live reason agree
+PASS missing-session Replay done and live reason agree
+locator.isVisible: Error: strict mode violation: getByRole('button', { name: /Start fresh session/ }) resolved to 2 elements:
+    1) <button type="button" class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-di…>…</button> aka getByRole('button', { name: 'Start fresh session for think' })
+    2) <button tabindex="0" type="button" data-seq="25" aria-current="true" class="grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline">…</button> aka getByRole('button', { name: '#25 run.failed' })
+
+Call log:
+[2m    - checking visibility of getByRole('button', { name: /Start fresh session/ })[22m
+
+    at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-pr422-recheck\docs\qa\2026-10-27-pr422-qa-recheck\restarts.mjs:214:78
+FAIL restart driver completed: "locator.isVisible: Error: strict mode violation: getByRole('button', { name: /Start fresh session/ }) resolved to 2 elements:\n    1) <button type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-di…>…</button> aka getByRole('button', { name: 'Start fresh session for think' })\n    2) <button tabindex=\"0\" type=\"button\" data-seq=\"25\" aria-current=\"true\" class=\"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline\">…</button> aka getByRole('button', { name: '#25 run.failed' })\n\nCall log:\n\u001b[2m    - checking visibility of getByRole('button', { name: /Start fresh session/ })\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-pr422-recheck\\docs\\qa\\2026-10-27-pr422-qa-recheck\\restarts.mjs:214:78"
+QA_RETAIN_DIRECTORY %USERPROFILE%\AppData\Local\Temp\gg-qa-422r-c1cebe0847534596a0448172d719286b\playwright-artifacts-kmTBmo
+QA_RETAIN_DIRECTORY %USERPROFILE%\AppData\Local\Temp\gg-qa-422r-c1cebe0847534596a0448172d719286b\playwright_chromiumdev_profile-Dpjeel
+
+EXIT 1 null

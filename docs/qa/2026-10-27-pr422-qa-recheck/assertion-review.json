@@ -1,0 +1,195 @@
+{
+  "corrected": [
+    {
+      "name": "early changed child reason is explicit",
+      "originalPassed": false,
+      "explanation": "The probe expected an internal exception message in the logger. The shipped logger records RECOVERY_STALE and parent child recovery refused; observing current child outcome. The retained HTTP refusal also explains that the run changed and requires refresh/review.",
+      "passed": true
+    },
+    {
+      "name": "different changed child reason is explicit",
+      "originalPassed": false,
+      "explanation": "The probe expected an internal exception message in the logger. The shipped logger records RECOVERY_STALE and parent child recovery refused; observing current child outcome. The retained HTTP refusal also explains that the run changed and requires refresh/review.",
+      "passed": true
+    }
+  ],
+  "interleavings": [
+    {
+      "name": "pending",
+      "parentId": "01M5Y3VEMEDAKQG7Y66H8TY9CW",
+      "childId": "01M5Y3VEPZ4C4724VTY2YHHKDA",
+      "effectsBeforeFresh": 3,
+      "effectsAfterFresh": 4,
+      "oldConsent": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "newConsentRequired": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        }
+      },
+      "binding": {
+        "runId": "01M5Y3VEPZ4C4724VTY2YHHKDA",
+        "failureSeq": 7,
+        "observedSeq": 7,
+        "retryUncertainScript": true
+      },
+      "childFailureBeforeFresh": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "b",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5Y3VEPZ4C4724VTY2YHHKDA:13",
+          "dispatchId": "01M5Y3VFG7871F3WANQ0HFZCSM",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "name": "early",
+      "parentId": "01M5Y3VKJVYK0PVQ1S0RHKN8SD",
+      "childId": "01M5Y3VKN6KMBB0699AY33TT9Z",
+      "effectsBeforeFresh": 3,
+      "effectsAfterFresh": 4,
+      "oldConsent": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "newConsentRequired": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        }
+      },
+      "binding": {
+        "runId": "01M5Y3VKN6KMBB0699AY33TT9Z",
+        "failureSeq": 7,
+        "observedSeq": 7,
+        "retryUncertainScript": true
+      },
+      "childFailureBeforeFresh": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "b",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5Y3VKN6KMBB0699AY33TT9Z:13",
+          "dispatchId": "01M5Y3VMEA1A2MD80YGS2AQQME",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "name": "different",
+      "parentId": "01M5Y3VRCAG63GEW51QXDM1YAH",
+      "childId": "01M5Y3VREXDADQ1PZVFX64PGT2",
+      "effectsBeforeFresh": 2,
+      "effectsAfterFresh": 4,
+      "oldConsent": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "newConsentRequired": {
+        "status": 200,
+        "body": {
+          "id": "01M5Y3VRCAG63GEW51QXDM1YAH",
+          "ownerId": "local",
+          "loopId": "01M5Y3VRBKGCC1MB4SC15X92ER",
+          "versionId": "01M5Y3VRBKGCC1MB4SC15X92ES",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 parent different",
+            "label": "B1 parent different v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3VRCAG63GEW51QXDM1YAJ",
+          "status": "running",
+          "currentNodeId": "sub",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5Y3VRCAG63GEW51QXDM1YAH:13",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5Y3VREXDADQ1PZVFX64PGT2",
+            "startedSeq": 13
+          },
+          "createdAt": "2026-10-27T07:23:12.650Z",
+          "startedAt": "2026-10-27T07:23:12.682Z",
+          "lastEventSeq": 19
+        }
+      },
+      "binding": {
+        "runId": "01M5Y3VREXDADQ1PZVFX64PGT2",
+        "failureSeq": 7,
+        "observedSeq": 7,
+        "retryUncertainScript": true
+      },
+      "childFailureBeforeFresh": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "script exited with code 7",
+        "nodeId": "a",
+        "resumable": true,
+        "details": {
+          "exitCode": 7,
+          "stderr": "",
+          "stdout": "null"
+        },
+        "script": {
+          "visitId": "01M5Y3VREXDADQ1PZVFX64PGT2:5",
+          "dispatchId": "01M5Y3VS41XB2XDTPJ3RBF783C",
+          "state": "completed",
+          "exitCode": 7
+        }
+      }
+    }
+  ],
+  "restartFixtureCorrection": "The initial reopen incorrectly started base.manager before the decorated manager. Only the single-manager reopen in child-races-results.json qualifies restart."
+}

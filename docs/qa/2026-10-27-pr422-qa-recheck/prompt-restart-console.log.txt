@@ -1,0 +1,62 @@
+$ pnpm.cmd test:prompt-restart
+$ node --test apps/api/scripts/prompt-restart.integration.mjs
+TAP version 13
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\\\gg-qa-422r-prompt-HpXzvD","port":6660,"runId":"01M5Y3KDNJ8QJD7YWS7P1JGNMF","visitId":"01M5Y3KDNJ8QJD7YWS7P1JGNMF:5","recovered":"same session, continuation only"}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-HpXzvD
+# Subtest: a real kill of the built API continues accepted work from durable visit evidence
+ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+  ---
+  duration_ms: 6721.7664
+  type: 'test'
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\\\gg-qa-422r-prompt-gyr9b5","port":6660,"runId":"01M5Y3KKVNP3ENQZKJGGA5G0DR","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-gyr9b5
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+  ---
+  duration_ms: 6165.2023
+  type: 'test'
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\\\gg-qa-422r-prompt-GgxxNp","port":6660,"runId":"01M5Y3KSZEQYQ76W6V948P57P1","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-GgxxNp
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+  ---
+  duration_ms: 6191.1293
+  type: 'test'
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\\\gg-qa-422r-prompt-XloUGX","port":6660,"runId":"01M5Y3M0GGB401FMC9ZYEC9DZX","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-XloUGX
+# Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+  ---
+  duration_ms: 8483.8563
+  type: 'test'
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\\\gg-qa-422r-prompt-Ef6OGm","port":6660,"runId":"01M5Y3M8NC1WPJGTR1TB3BT1KM","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-Ef6OGm
+# Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+  ---
+  duration_ms: 8155.4611
+  type: 'test'
+  ...
+# {"runId":"01M5Y3MG3W9YJXTTBJM5CFR00P","recovered":"own worker/reviewer handles, new process, authored feedback preserved"}
+# QA_RETAIN_DIRECTORY %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-422r-c1cebe0847534596a0448172d719286b\\gg-qa-422r-prompt-1uKJkM
+# Subtest: a real restart preserves separate own handles across completed visits
+ok 6 - a real restart preserves separate own handles across completed visits
+  ---
+  duration_ms: 6231.738
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 42675.2646
+
+EXIT 0 null

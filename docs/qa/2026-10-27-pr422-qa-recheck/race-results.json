@@ -1,0 +1,1090 @@
+{
+  "checks": [
+    {
+      "name": "two Edge tabs admit exactly one Resume",
+      "passed": true,
+      "detail": [
+        {
+          "status": 200,
+          "body": {
+            "id": "01M5Y3BMVACBESHNE9PB0ZX13T",
+            "ownerId": "local",
+            "loopId": "01M5Y3BMSTMPTCYXKJ89BV1CX3",
+            "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Resume",
+              "label": "QA two tab Resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3BMVACBESHNE9PB0ZX13V",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5Y3BMVACBESHNE9PB0ZX13T:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T07:14:24.746Z",
+            "startedAt": "2026-10-27T07:14:24.782Z",
+            "lastEventSeq": 8
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        }
+      ]
+    },
+    {
+      "name": "stale Edge observation is refused and announced",
+      "passed": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/recovery-stale",
+        "title": "recovery stale",
+        "status": 409,
+        "code": "RECOVERY_STALE",
+        "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+      }
+    },
+    {
+      "name": "two Edge tabs admit exactly one Replay",
+      "passed": true,
+      "detail": [
+        {
+          "status": 202,
+          "body": {
+            "run": {
+              "id": "01M5Y3BTZXFZAMHSVBFJBTMGF9",
+              "ownerId": "local",
+              "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+              "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "QA two tab Replay",
+                "label": "QA two tab Replay v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "invocationId": "01M5Y3BTZXFZAMHSVBFJBTMGFA",
+              "status": "queued",
+              "currentNodeId": "done",
+              "iteration": 1,
+              "createdAt": "2026-10-27T07:14:31.037Z",
+              "lastEventSeq": 1
+            }
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "This Replay intent already created run 01M5Y3BTZXFZAMHSVBFJBTMGF9. Open that run instead of submitting the same intent again.",
+            "replayRunId": "01M5Y3BTZXFZAMHSVBFJBTMGF9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replay leaves source history unchanged",
+      "passed": true
+    },
+    {
+      "name": "double click submits one Replay",
+      "passed": true,
+      "detail": {
+        "sent": [
+          {
+            "nodeId": "done",
+            "observedSeq": 8
+          }
+        ],
+        "fork": {
+          "id": "01M5Y3BW0F24760S6Y5368N7QB",
+          "ownerId": "local",
+          "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+          "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA two tab Replay",
+            "label": "QA two tab Replay v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3BW0F24760S6Y5368N7QC",
+          "status": "queued",
+          "currentNodeId": "done",
+          "iteration": 1,
+          "createdAt": "2026-10-27T07:14:32.079Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "name": "lost Replay ack and restart retain exactly one admitted fork",
+      "passed": true,
+      "detail": {
+        "lost": true,
+        "admitted": {
+          "status": 202,
+          "body": {
+            "run": {
+              "id": "01M5Y3BWJ0EEVAZGYFVHMCZDVG",
+              "ownerId": "local",
+              "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+              "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "QA two tab Replay",
+                "label": "QA two tab Replay v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "invocationId": "01M5Y3BWJ0EEVAZGYFVHMCZDVH",
+              "status": "queued",
+              "currentNodeId": "done",
+              "iteration": 1,
+              "createdAt": "2026-10-27T07:14:32.640Z",
+              "lastEventSeq": 1
+            }
+          }
+        },
+        "repeat": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "This Replay intent already created run 01M5Y3BWJ0EEVAZGYFVHMCZDVG. Open that run instead of submitting the same intent again.",
+            "replayRunId": "01M5Y3BWJ0EEVAZGYFVHMCZDVG"
+          }
+        },
+        "forks": ["01M5Y3BWJ0EEVAZGYFVHMCZDVG"]
+      }
+    },
+    {
+      "name": "Resume revokes deletion approval",
+      "passed": true,
+      "detail": {
+        "marked": {
+          "token": "7150c5e6344dbd541db9fbf6dbdb8486c566b9a693a01e71f5f3d3c05ea0dfb2",
+          "items": [
+            {
+              "runId": "01M5Y3BZV0N9X56K8ZZA91ET6D",
+              "approval": {
+                "confirmedAt": "2026-10-27T07:14:36.282Z",
+                "confirmedBy": {
+                  "ownerId": "local",
+                  "kind": "user",
+                  "id": "local"
+                }
+              },
+              "reasons": []
+            }
+          ]
+        },
+        "preview": {
+          "token": "0795eceb88770037fd7b1440cc96fcc1db0610a21c941ec990d8cd940b26236d",
+          "items": [
+            {
+              "runId": "01M5Y3BZV0N9X56K8ZZA91ET6D",
+              "reasons": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Replay revokes source deletion approval",
+      "passed": true,
+      "detail": {
+        "marked": {
+          "token": "4f3390bc1ab186b9cf9c3da18e2e36af8f1586646abc548a7ba2df09659d3c3d",
+          "items": [
+            {
+              "runId": "01M5Y3C0D7KY8BGQYT3030XADZ",
+              "approval": {
+                "confirmedAt": "2026-10-27T07:14:36.733Z",
+                "confirmedBy": {
+                  "ownerId": "local",
+                  "kind": "user",
+                  "id": "local"
+                }
+              },
+              "reasons": []
+            }
+          ]
+        },
+        "preview": {
+          "token": "66a4f69eb3b65d6611fa59f3f34b484a3a6d65d6dd239ec41b066aeee964ca3d",
+          "items": [
+            {
+              "runId": "01M5Y3C0D7KY8BGQYT3030XADZ",
+              "reasons": [
+                "Required retained history 01M5Y3C0JNSCRNTS5C9JFG92FV must be selected together."
+              ]
+            }
+          ]
+        },
+        "forked": {
+          "run": {
+            "id": "01M5Y3C0JNSCRNTS5C9JFG92FV",
+            "ownerId": "local",
+            "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+            "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Replay",
+              "label": "QA two tab Replay v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3C0JNSCRNTS5C9JFG92FW",
+            "status": "queued",
+            "currentNodeId": "done",
+            "iteration": 1,
+            "createdAt": "2026-10-27T07:14:36.757Z",
+            "lastEventSeq": 1
+          }
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "twoTabResume": {
+      "paused": {
+        "id": "01M5Y3BMVACBESHNE9PB0ZX13T",
+        "ownerId": "local",
+        "loopId": "01M5Y3BMSTMPTCYXKJ89BV1CX3",
+        "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Resume",
+          "label": "QA two tab Resume v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3BMVACBESHNE9PB0ZX13V",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3BMVACBESHNE9PB0ZX13T:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T07:14:24.941Z",
+        "createdAt": "2026-10-27T07:14:24.746Z",
+        "startedAt": "2026-10-27T07:14:24.782Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "id": "01M5Y3BMVACBESHNE9PB0ZX13T",
+            "ownerId": "local",
+            "loopId": "01M5Y3BMSTMPTCYXKJ89BV1CX3",
+            "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Resume",
+              "label": "QA two tab Resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3BMVACBESHNE9PB0ZX13V",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5Y3BMVACBESHNE9PB0ZX13T:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T07:14:24.746Z",
+            "startedAt": "2026-10-27T07:14:24.782Z",
+            "lastEventSeq": 8
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        }
+      ],
+      "events": [
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 1,
+          "ts": "2026-10-27T07:14:24.746Z",
+          "type": "run.queued",
+          "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA two tab Resume",
+            "label": "QA two tab Resume v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5Y3BMVACBESHNE9PB0ZX13T",
+              "loopId": "01M5Y3BMSTMPTCYXKJ89BV1CX3",
+              "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5Y3BMVACBESHNE9PB0ZX13V",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T07:14:24.746Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 2,
+          "ts": "2026-10-27T07:14:24.788Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 3,
+          "ts": "2026-10-27T07:14:24.803Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 4,
+          "ts": "2026-10-27T07:14:24.822Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T07:14:24.812Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T07:14:24.812Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 8
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 5,
+          "ts": "2026-10-27T07:14:24.845Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 6,
+          "ts": "2026-10-27T07:14:24.854Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5Y3BMVACBESHNE9PB0ZX13T:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 7,
+          "ts": "2026-10-27T07:14:24.944Z",
+          "type": "run.paused",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "01M5Y3BMVACBESHNE9PB0ZX13T",
+          "seq": 8,
+          "ts": "2026-10-27T07:14:26.143Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        }
+      ]
+    },
+    "stale": {
+      "paused": {
+        "id": "01M5Y3BMVACBESHNE9PB0ZX13T",
+        "ownerId": "local",
+        "loopId": "01M5Y3BMSTMPTCYXKJ89BV1CX3",
+        "versionId": "01M5Y3BMSTMPTCYXKJ89BV1CX4",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Resume",
+          "label": "QA two tab Resume v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3BMVACBESHNE9PB0ZX13V",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3BMVACBESHNE9PB0ZX13T:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T07:14:26.232Z",
+        "createdAt": "2026-10-27T07:14:24.746Z",
+        "startedAt": "2026-10-27T07:14:24.782Z",
+        "lastEventSeq": 9,
+        "recovery": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "refusal": {
+        "type": "https://graphgoblin.dev/problems/recovery-stale",
+        "title": "recovery stale",
+        "status": 409,
+        "code": "RECOVERY_STALE",
+        "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+      }
+    },
+    "twoTabReplay": {
+      "source": {
+        "id": "01M5Y3BQ35E8DCSWR8ZW4GDKXB",
+        "ownerId": "local",
+        "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+        "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Replay",
+          "label": "QA two tab Replay v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3BQ35E8DCSWR8ZW4GDKXC",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T07:14:27.045Z",
+        "lastEventSeq": 1
+      },
+      "responses": [
+        {
+          "status": 202,
+          "body": {
+            "run": {
+              "id": "01M5Y3BTZXFZAMHSVBFJBTMGF9",
+              "ownerId": "local",
+              "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+              "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "QA two tab Replay",
+                "label": "QA two tab Replay v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "invocationId": "01M5Y3BTZXFZAMHSVBFJBTMGFA",
+              "status": "queued",
+              "currentNodeId": "done",
+              "iteration": 1,
+              "createdAt": "2026-10-27T07:14:31.037Z",
+              "lastEventSeq": 1
+            }
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "This Replay intent already created run 01M5Y3BTZXFZAMHSVBFJBTMGF9. Open that run instead of submitting the same intent again.",
+            "replayRunId": "01M5Y3BTZXFZAMHSVBFJBTMGF9"
+          }
+        }
+      ],
+      "fork": {
+        "id": "01M5Y3BTZXFZAMHSVBFJBTMGF9",
+        "ownerId": "local",
+        "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+        "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Replay",
+          "label": "QA two tab Replay v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3BTZXFZAMHSVBFJBTMGFA",
+        "status": "queued",
+        "currentNodeId": "done",
+        "iteration": 1,
+        "createdAt": "2026-10-27T07:14:31.037Z",
+        "lastEventSeq": 1
+      }
+    },
+    "doubleReplay": {
+      "sent": [
+        {
+          "nodeId": "done",
+          "observedSeq": 8
+        }
+      ],
+      "doubleFork": {
+        "id": "01M5Y3BW0F24760S6Y5368N7QB",
+        "ownerId": "local",
+        "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+        "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Replay",
+          "label": "QA two tab Replay v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3BW0F24760S6Y5368N7QC",
+        "status": "queued",
+        "currentNodeId": "done",
+        "iteration": 1,
+        "createdAt": "2026-10-27T07:14:32.079Z",
+        "lastEventSeq": 1
+      }
+    },
+    "lostAck": {
+      "lost": true,
+      "admitted": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5Y3BWJ0EEVAZGYFVHMCZDVG",
+            "ownerId": "local",
+            "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+            "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Replay",
+              "label": "QA two tab Replay v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3BWJ0EEVAZGYFVHMCZDVH",
+            "status": "queued",
+            "currentNodeId": "done",
+            "iteration": 1,
+            "createdAt": "2026-10-27T07:14:32.640Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "repeat": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "This Replay intent already created run 01M5Y3BWJ0EEVAZGYFVHMCZDVG. Open that run instead of submitting the same intent again.",
+          "replayRunId": "01M5Y3BWJ0EEVAZGYFVHMCZDVG"
+        }
+      },
+      "forks": ["01M5Y3BWJ0EEVAZGYFVHMCZDVG"]
+    },
+    "deletionResume": {
+      "marked": {
+        "token": "7150c5e6344dbd541db9fbf6dbdb8486c566b9a693a01e71f5f3d3c05ea0dfb2",
+        "items": [
+          {
+            "runId": "01M5Y3BZV0N9X56K8ZZA91ET6D",
+            "approval": {
+              "confirmedAt": "2026-10-27T07:14:36.282Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          }
+        ]
+      },
+      "preview": {
+        "token": "0795eceb88770037fd7b1440cc96fcc1db0610a21c941ec990d8cd940b26236d",
+        "items": [
+          {
+            "runId": "01M5Y3BZV0N9X56K8ZZA91ET6D",
+            "reasons": []
+          }
+        ]
+      }
+    },
+    "deletionReplay": {
+      "marked": {
+        "token": "4f3390bc1ab186b9cf9c3da18e2e36af8f1586646abc548a7ba2df09659d3c3d",
+        "items": [
+          {
+            "runId": "01M5Y3C0D7KY8BGQYT3030XADZ",
+            "approval": {
+              "confirmedAt": "2026-10-27T07:14:36.733Z",
+              "confirmedBy": {
+                "ownerId": "local",
+                "kind": "user",
+                "id": "local"
+              }
+            },
+            "reasons": []
+          }
+        ]
+      },
+      "preview": {
+        "token": "66a4f69eb3b65d6611fa59f3f34b484a3a6d65d6dd239ec41b066aeee964ca3d",
+        "items": [
+          {
+            "runId": "01M5Y3C0D7KY8BGQYT3030XADZ",
+            "reasons": [
+              "Required retained history 01M5Y3C0JNSCRNTS5C9JFG92FV must be selected together."
+            ]
+          }
+        ]
+      },
+      "forked": {
+        "run": {
+          "id": "01M5Y3C0JNSCRNTS5C9JFG92FV",
+          "ownerId": "local",
+          "loopId": "01M5Y3BQ2F4DPGJFM80BDP4SM9",
+          "versionId": "01M5Y3BQ2F4DPGJFM80BDP4SMA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA two tab Replay",
+            "label": "QA two tab Replay v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3C0JNSCRNTS5C9JFG92FW",
+          "status": "queued",
+          "currentNodeId": "done",
+          "iteration": 1,
+          "createdAt": "2026-10-27T07:14:36.757Z",
+          "lastEventSeq": 1
+        }
+      }
+    }
+  }
+}

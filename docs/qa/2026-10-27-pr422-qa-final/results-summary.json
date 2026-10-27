@@ -1,0 +1,121 @@
+{
+  "rows": [
+    {
+      "file": "behaviour-results.json",
+      "passed": 77,
+      "failed": []
+    },
+    {
+      "file": "lineage-results.json",
+      "passed": 5,
+      "failed": []
+    },
+    {
+      "file": "restart-results.json",
+      "passed": 23,
+      "failed": ["restart driver completed"],
+      "qualification": "Copied driver stopped on ambiguous locator; preceding checks retained; fresh-results.json completes the same fixture without repeating the native crash."
+    },
+    {
+      "file": "fresh-results.json",
+      "passed": 3,
+      "failed": []
+    },
+    {
+      "file": "race-results.json",
+      "passed": 8,
+      "failed": []
+    },
+    {
+      "file": "final-results.json",
+      "passed": 3,
+      "failed": []
+    },
+    {
+      "file": "force-http-results.json",
+      "passed": 4,
+      "failed": []
+    },
+    {
+      "file": "upgrade-results.json",
+      "passed": 8,
+      "failed": []
+    },
+    {
+      "file": "child-races-results.json",
+      "passed": 21,
+      "failed": []
+    },
+    {
+      "file": "snapshot-cost-results.json",
+      "passed": 6,
+      "failed": []
+    },
+    {
+      "file": "failure-projection-native-results.json",
+      "passed": 1,
+      "failed": []
+    },
+    {
+      "file": "atomic-definition-results.json",
+      "passed": 14,
+      "failed": []
+    },
+    {
+      "file": "script-replay-results.json",
+      "passed": 5,
+      "failed": []
+    },
+    {
+      "file": "accessibility-results.json",
+      "passed": 7,
+      "failed": []
+    },
+    {
+      "file": "wording-results.json",
+      "passed": 3,
+      "failed": []
+    }
+  ],
+  "projectionScenarios": [
+    {
+      "scenario": "running-replay",
+      "refusal": "RECOVERY_STALE",
+      "dispatches": 1
+    },
+    {
+      "scenario": "paused-replay",
+      "refusal": "RECOVERY_STALE",
+      "dispatches": 1
+    },
+    {
+      "scenario": "paused-resume",
+      "refusal": "RECOVERY_STALE",
+      "dispatches": 1,
+      "afterRestart": "SCRIPT_CONSENT_REQUIRED"
+    }
+  ],
+  "acceptance": [
+    {
+      "name": "wait-restart",
+      "command": "pnpm.cmd test:wait-restart",
+      "pid": 692,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "prompt-restart",
+      "command": "pnpm.cmd test:prompt-restart",
+      "pid": 49240,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "missing-session",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec node --test scripts/missing-session.integration.mjs",
+      "pid": 41816,
+      "code": 0,
+      "signal": null
+    }
+  ]
+}

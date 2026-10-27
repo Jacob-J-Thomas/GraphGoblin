@@ -1,0 +1,199 @@
+[
+  {
+    "scenario": "running-replay",
+    "snapshotStatus": "running",
+    "observedSeq": 7,
+    "durableFailureSeq": 7,
+    "resume": {
+      "allowed": false,
+      "code": "RUN_ACTIVE",
+      "message": "This run is still active. Pause it before continuing with Resume."
+    },
+    "replay": {
+      "allowed": true
+    },
+    "acceptedRunId": "00000000000000000000000004",
+    "after": {
+      "dispatches": 2,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.failed",
+          "seq": 7
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "paused-replay",
+    "snapshotStatus": "paused",
+    "observedSeq": 8,
+    "durableFailureSeq": 8,
+    "resume": {
+      "allowed": true
+    },
+    "replay": {
+      "allowed": true
+    },
+    "acceptedRunId": "00000000000000000000000004",
+    "after": {
+      "dispatches": 2,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "paused-resume",
+    "snapshotStatus": "paused",
+    "observedSeq": 8,
+    "durableFailureSeq": 8,
+    "resume": {
+      "allowed": true
+    },
+    "replay": {
+      "allowed": true
+    },
+    "acceptedRunId": "00000000000000000000000001",
+    "after": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        },
+        {
+          "type": "run.resumed",
+          "seq": 9
+        }
+      ]
+    },
+    "afterRestart": {
+      "dispatches": 1,
+      "status": "failed",
+      "events": [
+        {
+          "type": "run.queued",
+          "seq": 1
+        },
+        {
+          "type": "run.started",
+          "seq": 2
+        },
+        {
+          "type": "node.started",
+          "seq": 3
+        },
+        {
+          "type": "node.finished",
+          "seq": 4
+        },
+        {
+          "type": "node.started",
+          "seq": 5
+        },
+        {
+          "type": "script.dispatched",
+          "seq": 6
+        },
+        {
+          "type": "run.paused",
+          "seq": 7
+        },
+        {
+          "type": "run.failed",
+          "seq": 8
+        },
+        {
+          "type": "run.resumed",
+          "seq": 9
+        }
+      ]
+    }
+  }
+]

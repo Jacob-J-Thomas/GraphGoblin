@@ -1,0 +1,2695 @@
+{
+  "checks": [
+    {
+      "name": "main store contains every execution status before upgrade",
+      "passed": true,
+      "detail": {
+        "succeeded": "succeeded",
+        "exhausted": "exhausted",
+        "failed": "failed",
+        "waiting": "waiting",
+        "paused": "paused",
+        "cancelled": "cancelled",
+        "running": "running",
+        "queued": "queued"
+      }
+    },
+    {
+      "name": "migrations 0024 and 0025 add two ledger entries",
+      "passed": true,
+      "detail": {
+        "before": 24,
+        "after": 26
+      }
+    },
+    {
+      "name": "old replay forks retain source with empty intent fields",
+      "passed": true,
+      "detail": [
+        {
+          "id": "01M5Y3DXGCCSTHT38RGE93SWQ9",
+          "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        },
+        {
+          "id": "01M5Y3DXM11SAW133VD7643KM3",
+          "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        }
+      ]
+    },
+    {
+      "name": "upgrade preserves existing indexes and triggers",
+      "passed": true,
+      "detail": {
+        "before": [
+          "api_keys_hash_idx",
+          "event_receipts_due_idx",
+          "event_receipts_inbound_idx",
+          "event_receipts_node_key_idx",
+          "event_receipts_request_idx",
+          "harness_sessions_scope_idx",
+          "inbound_events_owner_idx",
+          "inbound_events_source_dedupe_idx",
+          "inbound_events_type_dedupe_idx",
+          "loop_versions_loop_idx",
+          "loops_owner_idx",
+          "run_events_delivery_idx",
+          "run_events_fresh_session_idx",
+          "run_events_gate_idx",
+          "run_resource_uses_key_idx",
+          "run_resources_owner_idx",
+          "run_resources_pending_idx",
+          "runs_deletion_approval_idx",
+          "runs_loop_idx",
+          "runs_loop_owner_history_idx",
+          "runs_owner_status_idx",
+          "runs_parent_idx",
+          "runs_replay_source_idx",
+          "runs_trigger_dedupe_idx",
+          "runs_version_idx",
+          "schedules_due_idx",
+          "schedules_loop_idx",
+          "timers_at_idx",
+          "webhook_endpoints_loop_idx",
+          "webhook_endpoints_token_idx",
+          "webhook_receipts_content_idx",
+          "webhook_receipts_due_idx",
+          "webhook_receipts_inbound_idx",
+          "workspace_references_epoch_idx",
+          "workspace_references_physical_idx",
+          "workspace_references_run_idx",
+          "workspace_references_version_idx",
+          "loop_versions_snapshot_immutable",
+          "loop_versions_snapshot_pinned",
+          "runs_deletion_activity",
+          "runs_deletion_dependency_insert",
+          "runs_deletion_relationship",
+          "runs_deletion_revision",
+          "runs_replay_source_update",
+          "workspace_run_delete",
+          "workspace_run_insert",
+          "workspace_run_version",
+          "workspace_use_delete",
+          "workspace_use_insert",
+          "workspace_version_change",
+          "workspace_version_delete",
+          "workspace_version_insert"
+        ],
+        "after": [
+          "api_keys_hash_idx",
+          "event_receipts_due_idx",
+          "event_receipts_inbound_idx",
+          "event_receipts_node_key_idx",
+          "event_receipts_request_idx",
+          "harness_sessions_scope_idx",
+          "inbound_events_owner_idx",
+          "inbound_events_source_dedupe_idx",
+          "inbound_events_type_dedupe_idx",
+          "loop_versions_loop_idx",
+          "loops_owner_idx",
+          "run_events_delivery_idx",
+          "run_events_fresh_session_idx",
+          "run_events_gate_idx",
+          "run_events_reached_idx",
+          "run_resource_uses_key_idx",
+          "run_resources_owner_idx",
+          "run_resources_pending_idx",
+          "runs_deletion_approval_idx",
+          "runs_loop_idx",
+          "runs_loop_owner_history_idx",
+          "runs_owner_status_idx",
+          "runs_parent_idx",
+          "runs_replay_intent_idx",
+          "runs_replay_source_idx",
+          "runs_trigger_dedupe_idx",
+          "runs_version_idx",
+          "schedules_due_idx",
+          "schedules_loop_idx",
+          "timers_at_idx",
+          "webhook_endpoints_loop_idx",
+          "webhook_endpoints_token_idx",
+          "webhook_receipts_content_idx",
+          "webhook_receipts_due_idx",
+          "webhook_receipts_inbound_idx",
+          "workspace_references_epoch_idx",
+          "workspace_references_physical_idx",
+          "workspace_references_run_idx",
+          "workspace_references_version_idx",
+          "loop_versions_snapshot_immutable",
+          "loop_versions_snapshot_pinned",
+          "runs_deletion_activity",
+          "runs_deletion_dependency_insert",
+          "runs_deletion_relationship",
+          "runs_deletion_revision",
+          "runs_replay_source_update",
+          "workspace_run_delete",
+          "workspace_run_insert",
+          "workspace_run_version",
+          "workspace_use_delete",
+          "workspace_use_insert",
+          "workspace_version_change",
+          "workspace_version_delete",
+          "workspace_version_insert"
+        ]
+      }
+    },
+    {
+      "name": "upgraded paused run resumes its same park",
+      "passed": true,
+      "detail": {
+        "resume": {
+          "status": 200,
+          "body": {
+            "id": "01M5Y3DX7C895REBKJR0RKN70E",
+            "ownerId": "local",
+            "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+            "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Upgrade wait",
+              "label": "Upgrade wait v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T07:15:38.860Z",
+            "startedAt": "2026-10-27T07:15:38.868Z",
+            "lastEventSeq": 8
+          }
+        },
+        "waiting": {
+          "id": "01M5Y3DX7C895REBKJR0RKN70E",
+          "ownerId": "local",
+          "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+          "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Upgrade wait",
+            "label": "Upgrade wait v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T07:15:38.860Z",
+          "startedAt": "2026-10-27T07:15:38.868Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "upgraded SCRIPT_EXIT_CODE run resumes",
+      "passed": true,
+      "detail": {
+        "status": 200,
+        "body": {
+          "id": "01M5Y3DWVQ56VNYJPWAFT1BDD6",
+          "ownerId": "local",
+          "loopId": "01M5Y3DWV1C1WBHXCQ2RPPVZ56",
+          "versionId": "01M5Y3DWV1C1WBHXCQ2RPPVZ57",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Upgrade script failure",
+            "label": "Upgrade script failure v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3DWVQ56VNYJPWAFT1BDD7",
+          "status": "running",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "createdAt": "2026-10-27T07:15:38.487Z",
+          "startedAt": "2026-10-27T07:15:38.496Z",
+          "lastEventSeq": 9
+        }
+      }
+    },
+    {
+      "name": "old source accepts new observed Replay despite historical unobserved forks",
+      "passed": true,
+      "detail": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5Y3E1TB6T0FPTWB962FH9X5",
+            "ownerId": "local",
+            "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+            "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Upgrade succeeded",
+              "label": "Upgrade succeeded v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3E1TB6T0FPTWB962FH9X6",
+            "status": "queued",
+            "currentNodeId": "done",
+            "iteration": 1,
+            "createdAt": "2026-10-27T07:15:43.563Z",
+            "lastEventSeq": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "second reopen does not reapply 0024 or 0025",
+      "passed": true,
+      "detail": [
+        {
+          "id": null,
+          "hash": "ff9e1eced82b221aab083a89013b98e4dd5ed39ada8c6243d70870a2c6765b10",
+          "created_at": 1790994664038
+        },
+        {
+          "id": null,
+          "hash": "2d5542233b650276bd77ab032b70da63bb7d54dc71c5319744efdd7c9a38e532",
+          "created_at": 1790999415943
+        },
+        {
+          "id": null,
+          "hash": "71dac548eebf5e48bd13df1a051926733572c8df410276dcdff182c26e27d75c",
+          "created_at": 1791044399130
+        },
+        {
+          "id": null,
+          "hash": "c754aaa8f0ab6072f6ff47510c3e5fd95964f892c8d1ea85ccb351435c5ae41c",
+          "created_at": 1791079869396
+        },
+        {
+          "id": null,
+          "hash": "88f0a25cf0ab1bacb56408d40a795a225cbfc2d6d0e26235386f7db678fac015",
+          "created_at": 1791136800000
+        },
+        {
+          "id": null,
+          "hash": "acf176adb56b408eb28a93193a164d1446c7a057329dcf2955814a7b79b0af3f",
+          "created_at": 1791152101266
+        },
+        {
+          "id": null,
+          "hash": "fd21030beae9f39e62331f84b1c05556c805e272ca984ffe7862afe8af09d140",
+          "created_at": 1791185767298
+        },
+        {
+          "id": null,
+          "hash": "23eae55968768aa6a595938df4973baf0dba424a73819cd2d94a897d4ece9a47",
+          "created_at": 1791309600000
+        },
+        {
+          "id": null,
+          "hash": "1289f36aa1c3a81e186dce0d034b8e86b7777a4fc11ab580e46d2db046292d0c",
+          "created_at": 1791396000000
+        },
+        {
+          "id": null,
+          "hash": "ed4b71c78cde4146683451fe5fe2cc4ed1c6c7a76e048d286349f04752cb2350",
+          "created_at": 1791482400000
+        },
+        {
+          "id": null,
+          "hash": "ca7853228949c6d492586b6cec57d6003924e2303ba32db11845e3a76f3acfc3",
+          "created_at": 1791568800000
+        },
+        {
+          "id": null,
+          "hash": "1730bcd7249dca5c3352dd58867a4837a85068c86963c36c7f2dc89f8024f8ec",
+          "created_at": 1791655200000
+        },
+        {
+          "id": null,
+          "hash": "2c34d9d799a3cb7568fffe1b154bb2f426224ada46093fade5465a2457578dae",
+          "created_at": 1791741600000
+        },
+        {
+          "id": null,
+          "hash": "f741ac41526cb980ad509b7e3e9761f665edf455b746ac049c0a7a5ed236f03c",
+          "created_at": 1791828000000
+        },
+        {
+          "id": null,
+          "hash": "ff90a84630e1149916d0df8049442717adb71bc72e38f8e99a693ce7f2c6d13a",
+          "created_at": 1792372966976
+        },
+        {
+          "id": null,
+          "hash": "3f7d4c8dc51009ab45c63e5a1be8b937e642fd39e09721aa6de51d753edc7aef",
+          "created_at": 1792454400000
+        },
+        {
+          "id": null,
+          "hash": "f8aad2061f6c93fc6079c083a3f8530438e3e430b37aa546c2171d2cab7588af",
+          "created_at": 1792472004405
+        },
+        {
+          "id": null,
+          "hash": "f6179cd0e120db6a842005cf42e8e4f5c81ec56d6149442e94203db3126b63db",
+          "created_at": 1792600000000
+        },
+        {
+          "id": null,
+          "hash": "11e21e92a5a72481dc380eac3a908faf2eadbad8998e02e876b1770c1382b42a",
+          "created_at": 1792800000000
+        },
+        {
+          "id": null,
+          "hash": "a11173749595f6735142768ab90df164e97234f0715b64165c571ac7e954db6f",
+          "created_at": 1792818000000
+        },
+        {
+          "id": null,
+          "hash": "5cbc17cfb2d46cb19e0d5bb8783229447ce6f1f76113ae27e3a08134b3e8e9e5",
+          "created_at": 1792897422989
+        },
+        {
+          "id": null,
+          "hash": "590c94e04c2f9d47b55f6020d2f4ca71cc7b56dec8e0d4a6020f6301683774ce",
+          "created_at": 1793016584412
+        },
+        {
+          "id": null,
+          "hash": "3a91ca74c25b39d4535cb6c99766cdde51150c09dacb5ed36e50c87f70d7eedd",
+          "created_at": 1793016584413
+        },
+        {
+          "id": null,
+          "hash": "385b39f82ff566fa62ba6fc502e84489d0853caac8cf2b1b7fe057b51b58345a",
+          "created_at": 1793016584414
+        },
+        {
+          "id": null,
+          "hash": "37b7213f340aa805e87c2e37c6dad4766aad00088fff36b129fc118caeb21977",
+          "created_at": 1793068183452
+        },
+        {
+          "id": null,
+          "hash": "16f76eeb1bf8fc52fa7270c445ea6a00e492340a855736544d4257e46749667e",
+          "created_at": 1793075959181
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "before": {
+      "succeeded": {
+        "id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+        "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade succeeded",
+          "label": "Upgrade succeeded v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWHRNWFAPS1W79AWPF0J",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T07:15:38.168Z",
+        "startedAt": "2026-10-27T07:15:38.193Z",
+        "finishedAt": "2026-10-27T07:15:38.235Z",
+        "finalizedAt": "2026-10-27T07:15:38.242Z",
+        "lastEventSeq": 8
+      },
+      "exhausted": {
+        "id": "01M5Y3DWQ3MY1BQGDEWRSDHMV3",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWPHJJYCQ5DP3T49FVSJ",
+        "versionId": "01M5Y3DWPHJJYCQ5DP3T49FVSK",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade exhausted",
+          "label": "Upgrade exhausted v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWQ3MY1BQGDEWRSDHMV4",
+        "status": "exhausted",
+        "iteration": 1,
+        "outcome": "exhausted",
+        "createdAt": "2026-10-27T07:15:38.339Z",
+        "startedAt": "2026-10-27T07:15:38.347Z",
+        "finishedAt": "2026-10-27T07:15:38.385Z",
+        "finalizedAt": "2026-10-27T07:15:38.389Z",
+        "lastEventSeq": 8
+      },
+      "failed": {
+        "id": "01M5Y3DWVQ56VNYJPWAFT1BDD6",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWV1C1WBHXCQ2RPPVZ56",
+        "versionId": "01M5Y3DWV1C1WBHXCQ2RPPVZ57",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade script failure",
+          "label": "Upgrade script failure v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWVQ56VNYJPWAFT1BDD7",
+        "status": "failed",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "01M5Y3DWVQ56VNYJPWAFT1BDD6:5",
+            "dispatchId": "01M5Y3DWXD769DTNQ5HKGAMHQW",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "createdAt": "2026-10-27T07:15:38.487Z",
+        "startedAt": "2026-10-27T07:15:38.496Z",
+        "finishedAt": "2026-10-27T07:15:38.644Z",
+        "finalizedAt": "2026-10-27T07:15:38.649Z",
+        "lastEventSeq": 8
+      },
+      "waiting": {
+        "id": "01M5Y3DX3NR3EDM64E42GMQED8",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DX3NR3EDM64E42GMQED9",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3DX3NR3EDM64E42GMQED8:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T07:15:38.741Z",
+        "startedAt": "2026-10-27T07:15:38.748Z",
+        "lastEventSeq": 6
+      },
+      "paused": {
+        "id": "01M5Y3DX7C895REBKJR0RKN70E",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T07:15:38.984Z",
+        "createdAt": "2026-10-27T07:15:38.860Z",
+        "startedAt": "2026-10-27T07:15:38.868Z",
+        "lastEventSeq": 7
+      },
+      "cancelled": {
+        "id": "01M5Y3DXBHYEXTKQMYKVJFHAPK",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXBHYEXTKQMYKVJFHAPM",
+        "status": "cancelled",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-27T07:15:39.126Z",
+        "createdAt": "2026-10-27T07:15:38.993Z",
+        "startedAt": "2026-10-27T07:15:39.002Z",
+        "finishedAt": "2026-10-27T07:15:39.134Z",
+        "finalizedAt": "2026-10-27T07:15:39.139Z",
+        "lastEventSeq": 8
+      },
+      "running": {
+        "id": "01M5Y3DXRE8T6FNZ1B62FH5HE8",
+        "ownerId": "local",
+        "loopId": "01M5Y3DXQYQQG9G67BGD00YAAF",
+        "versionId": "01M5Y3DXQYQQG9G67BGD00YAAG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade running",
+          "label": "Upgrade running v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXRE8T6FNZ1B62FH5HE9",
+        "status": "running",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "createdAt": "2026-10-27T07:15:39.406Z",
+        "startedAt": "2026-10-27T07:15:39.414Z",
+        "lastEventSeq": 6
+      },
+      "queued": {
+        "id": "01M5Y3DXZP68APRD48Q43ZRGBP",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+        "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade succeeded",
+          "label": "Upgrade succeeded v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXZP68APRD48Q43ZRGBQ",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-27T07:15:39.637Z",
+        "lastEventSeq": 1
+      }
+    },
+    "after": {
+      "succeeded": {
+        "id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+        "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade succeeded",
+          "label": "Upgrade succeeded v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWHRNWFAPS1W79AWPF0J",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T07:15:38.168Z",
+        "startedAt": "2026-10-27T07:15:38.193Z",
+        "finishedAt": "2026-10-27T07:15:38.235Z",
+        "finalizedAt": "2026-10-27T07:15:38.242Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "exhausted": {
+        "id": "01M5Y3DWQ3MY1BQGDEWRSDHMV3",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWPHJJYCQ5DP3T49FVSJ",
+        "versionId": "01M5Y3DWPHJJYCQ5DP3T49FVSK",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade exhausted",
+          "label": "Upgrade exhausted v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWQ3MY1BQGDEWRSDHMV4",
+        "status": "exhausted",
+        "iteration": 1,
+        "outcome": "exhausted",
+        "createdAt": "2026-10-27T07:15:38.339Z",
+        "startedAt": "2026-10-27T07:15:38.347Z",
+        "finishedAt": "2026-10-27T07:15:38.385Z",
+        "finalizedAt": "2026-10-27T07:15:38.389Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "failed": {
+        "id": "01M5Y3DWVQ56VNYJPWAFT1BDD6",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWV1C1WBHXCQ2RPPVZ56",
+        "versionId": "01M5Y3DWV1C1WBHXCQ2RPPVZ57",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade script failure",
+          "label": "Upgrade script failure v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DWVQ56VNYJPWAFT1BDD7",
+        "status": "failed",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "01M5Y3DWVQ56VNYJPWAFT1BDD6:5",
+            "dispatchId": "01M5Y3DWXD769DTNQ5HKGAMHQW",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "createdAt": "2026-10-27T07:15:38.487Z",
+        "startedAt": "2026-10-27T07:15:38.496Z",
+        "finishedAt": "2026-10-27T07:15:38.644Z",
+        "finalizedAt": "2026-10-27T07:15:38.649Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "waiting": {
+        "id": "01M5Y3DX3NR3EDM64E42GMQED8",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DX3NR3EDM64E42GMQED9",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3DX3NR3EDM64E42GMQED8:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T07:15:38.741Z",
+        "startedAt": "2026-10-27T07:15:38.748Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "paused": {
+        "id": "01M5Y3DX7C895REBKJR0RKN70E",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T07:15:38.984Z",
+        "createdAt": "2026-10-27T07:15:38.860Z",
+        "startedAt": "2026-10-27T07:15:38.868Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "cancelled": {
+        "id": "01M5Y3DXBHYEXTKQMYKVJFHAPK",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXBHYEXTKQMYKVJFHAPM",
+        "status": "cancelled",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-27T07:15:39.126Z",
+        "createdAt": "2026-10-27T07:15:38.993Z",
+        "startedAt": "2026-10-27T07:15:39.002Z",
+        "finishedAt": "2026-10-27T07:15:39.134Z",
+        "finalizedAt": "2026-10-27T07:15:39.139Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_CANCELLED",
+            "message": "This run was cancelled; Resume is unavailable."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "running": {
+        "id": "01M5Y3DXRE8T6FNZ1B62FH5HE8",
+        "ownerId": "local",
+        "loopId": "01M5Y3DXQYQQG9G67BGD00YAAF",
+        "versionId": "01M5Y3DXQYQQG9G67BGD00YAAG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade running",
+          "label": "Upgrade running v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXRE8T6FNZ1B62FH5HE9",
+        "status": "failed",
+        "currentNodeId": "script",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5Y3DXRE8T6FNZ1B62FH5HE8:5",
+            "dispatchId": "01M5Y3DXSXSDDAAFJBB269DC94",
+            "state": "outcome-uncertain"
+          }
+        },
+        "createdAt": "2026-10-27T07:15:39.406Z",
+        "startedAt": "2026-10-27T07:15:39.414Z",
+        "finishedAt": "2026-10-27T07:15:42.471Z",
+        "finalizedAt": "2026-10-27T07:15:42.493Z",
+        "lastEventSeq": 9,
+        "recovery": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ],
+          "scriptConsent": {
+            "failureSeq": 9,
+            "nodeId": "script"
+          }
+        }
+      },
+      "queued": {
+        "id": "01M5Y3DXZP68APRD48Q43ZRGBP",
+        "ownerId": "local",
+        "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+        "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade succeeded",
+          "label": "Upgrade succeeded v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DXZP68APRD48Q43ZRGBQ",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T07:15:39.637Z",
+        "startedAt": "2026-10-27T07:15:42.437Z",
+        "finishedAt": "2026-10-27T07:15:42.522Z",
+        "finalizedAt": "2026-10-27T07:15:42.951Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "ids": {
+      "succeeded": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+      "exhausted": "01M5Y3DWQ3MY1BQGDEWRSDHMV3",
+      "failed": "01M5Y3DWVQ56VNYJPWAFT1BDD6",
+      "waiting": "01M5Y3DX3NR3EDM64E42GMQED8",
+      "paused": "01M5Y3DX7C895REBKJR0RKN70E",
+      "cancelled": "01M5Y3DXBHYEXTKQMYKVJFHAPK",
+      "running": "01M5Y3DXRE8T6FNZ1B62FH5HE8",
+      "queued": "01M5Y3DXZP68APRD48Q43ZRGBP"
+    },
+    "forks": ["01M5Y3DXGCCSTHT38RGE93SWQ9", "01M5Y3DXM11SAW133VD7643KM3"],
+    "oldForks": [
+      {
+        "id": "01M5Y3DXGCCSTHT38RGE93SWQ9",
+        "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H"
+      },
+      {
+        "id": "01M5Y3DXM11SAW133VD7643KM3",
+        "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H"
+      }
+    ],
+    "oldLedger": [
+      {
+        "id": null,
+        "hash": "ff9e1eced82b221aab083a89013b98e4dd5ed39ada8c6243d70870a2c6765b10",
+        "created_at": 1790994664038
+      },
+      {
+        "id": null,
+        "hash": "2d5542233b650276bd77ab032b70da63bb7d54dc71c5319744efdd7c9a38e532",
+        "created_at": 1790999415943
+      },
+      {
+        "id": null,
+        "hash": "71dac548eebf5e48bd13df1a051926733572c8df410276dcdff182c26e27d75c",
+        "created_at": 1791044399130
+      },
+      {
+        "id": null,
+        "hash": "c754aaa8f0ab6072f6ff47510c3e5fd95964f892c8d1ea85ccb351435c5ae41c",
+        "created_at": 1791079869396
+      },
+      {
+        "id": null,
+        "hash": "88f0a25cf0ab1bacb56408d40a795a225cbfc2d6d0e26235386f7db678fac015",
+        "created_at": 1791136800000
+      },
+      {
+        "id": null,
+        "hash": "acf176adb56b408eb28a93193a164d1446c7a057329dcf2955814a7b79b0af3f",
+        "created_at": 1791152101266
+      },
+      {
+        "id": null,
+        "hash": "fd21030beae9f39e62331f84b1c05556c805e272ca984ffe7862afe8af09d140",
+        "created_at": 1791185767298
+      },
+      {
+        "id": null,
+        "hash": "23eae55968768aa6a595938df4973baf0dba424a73819cd2d94a897d4ece9a47",
+        "created_at": 1791309600000
+      },
+      {
+        "id": null,
+        "hash": "1289f36aa1c3a81e186dce0d034b8e86b7777a4fc11ab580e46d2db046292d0c",
+        "created_at": 1791396000000
+      },
+      {
+        "id": null,
+        "hash": "ed4b71c78cde4146683451fe5fe2cc4ed1c6c7a76e048d286349f04752cb2350",
+        "created_at": 1791482400000
+      },
+      {
+        "id": null,
+        "hash": "ca7853228949c6d492586b6cec57d6003924e2303ba32db11845e3a76f3acfc3",
+        "created_at": 1791568800000
+      },
+      {
+        "id": null,
+        "hash": "1730bcd7249dca5c3352dd58867a4837a85068c86963c36c7f2dc89f8024f8ec",
+        "created_at": 1791655200000
+      },
+      {
+        "id": null,
+        "hash": "2c34d9d799a3cb7568fffe1b154bb2f426224ada46093fade5465a2457578dae",
+        "created_at": 1791741600000
+      },
+      {
+        "id": null,
+        "hash": "f741ac41526cb980ad509b7e3e9761f665edf455b746ac049c0a7a5ed236f03c",
+        "created_at": 1791828000000
+      },
+      {
+        "id": null,
+        "hash": "ff90a84630e1149916d0df8049442717adb71bc72e38f8e99a693ce7f2c6d13a",
+        "created_at": 1792372966976
+      },
+      {
+        "id": null,
+        "hash": "3f7d4c8dc51009ab45c63e5a1be8b937e642fd39e09721aa6de51d753edc7aef",
+        "created_at": 1792454400000
+      },
+      {
+        "id": null,
+        "hash": "f8aad2061f6c93fc6079c083a3f8530438e3e430b37aa546c2171d2cab7588af",
+        "created_at": 1792472004405
+      },
+      {
+        "id": null,
+        "hash": "f6179cd0e120db6a842005cf42e8e4f5c81ec56d6149442e94203db3126b63db",
+        "created_at": 1792600000000
+      },
+      {
+        "id": null,
+        "hash": "11e21e92a5a72481dc380eac3a908faf2eadbad8998e02e876b1770c1382b42a",
+        "created_at": 1792800000000
+      },
+      {
+        "id": null,
+        "hash": "a11173749595f6735142768ab90df164e97234f0715b64165c571ac7e954db6f",
+        "created_at": 1792818000000
+      },
+      {
+        "id": null,
+        "hash": "5cbc17cfb2d46cb19e0d5bb8783229447ce6f1f76113ae27e3a08134b3e8e9e5",
+        "created_at": 1792897422989
+      },
+      {
+        "id": null,
+        "hash": "590c94e04c2f9d47b55f6020d2f4ca71cc7b56dec8e0d4a6020f6301683774ce",
+        "created_at": 1793016584412
+      },
+      {
+        "id": null,
+        "hash": "3a91ca74c25b39d4535cb6c99766cdde51150c09dacb5ed36e50c87f70d7eedd",
+        "created_at": 1793016584413
+      },
+      {
+        "id": null,
+        "hash": "385b39f82ff566fa62ba6fc502e84489d0853caac8cf2b1b7fe057b51b58345a",
+        "created_at": 1793016584414
+      }
+    ],
+    "oldObjects": [
+      {
+        "type": "index",
+        "name": "api_keys_hash_idx",
+        "sql": "CREATE INDEX `api_keys_hash_idx` ON `api_keys` (`hash`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_due_idx",
+        "sql": "CREATE INDEX `event_receipts_due_idx` ON `event_receipts` (`status`,`next_attempt_at`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_inbound_idx",
+        "sql": "CREATE UNIQUE INDEX `event_receipts_inbound_idx` ON `event_receipts` (`inbound_id`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_node_key_idx",
+        "sql": "CREATE INDEX `event_receipts_node_key_idx` ON `event_receipts` (`owner_id`,`loop_id`,`trigger_node_id`,`node_key`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_request_idx",
+        "sql": "CREATE UNIQUE INDEX `event_receipts_request_idx` ON `event_receipts` (`owner_id`,`loop_id`,`trigger_node_id`,`event_type`,`request_key`)"
+      },
+      {
+        "type": "index",
+        "name": "harness_sessions_scope_idx",
+        "sql": "CREATE INDEX `harness_sessions_scope_idx` ON `harness_sessions` (`scope_key`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_owner_idx",
+        "sql": "CREATE INDEX `inbound_events_owner_idx` ON `inbound_events` (`owner_id`,`received_at`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_source_dedupe_idx",
+        "sql": "CREATE INDEX `inbound_events_source_dedupe_idx` ON `inbound_events` (`owner_id`,`source`,`dedupe_key`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_type_dedupe_idx",
+        "sql": "CREATE INDEX `inbound_events_type_dedupe_idx` ON `inbound_events` (`owner_id`,`type`,`dedupe_key`)"
+      },
+      {
+        "type": "index",
+        "name": "loop_versions_loop_idx",
+        "sql": "CREATE INDEX `loop_versions_loop_idx` ON `loop_versions` (`loop_id`,`version`)"
+      },
+      {
+        "type": "index",
+        "name": "loops_owner_idx",
+        "sql": "CREATE INDEX `loops_owner_idx` ON `loops` (`owner_id`)"
+      },
+      {
+        "type": "index",
+        "name": "run_events_delivery_idx",
+        "sql": "CREATE INDEX `run_events_delivery_idx` ON `run_events` (`run_id`, `type`, `seq`)"
+      },
+      {
+        "type": "index",
+        "name": "run_events_fresh_session_idx",
+        "sql": "CREATE INDEX `run_events_fresh_session_idx` ON `run_events` (`run_id`,`seq`) WHERE \"run_events\".\"type\" = 'run.resumed' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.freshSession') is not null else 1 end"
+      },
+      {
+        "type": "index",
+        "name": "run_events_gate_idx",
+        "sql": "CREATE INDEX `run_events_gate_idx` ON `run_events` (`run_id`,`seq`) WHERE \"run_events\".\"type\" = 'decision.made' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.gate') is not null else 1 end"
+      },
+      {
+        "type": "index",
+        "name": "run_resource_uses_key_idx",
+        "sql": "CREATE INDEX `run_resource_uses_key_idx` ON `run_resource_uses` (`key`)"
+      },
+      {
+        "type": "index",
+        "name": "run_resources_owner_idx",
+        "sql": "CREATE INDEX `run_resources_owner_idx` ON `run_resources` (`owner_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "run_resources_pending_idx",
+        "sql": "CREATE INDEX `run_resources_pending_idx` ON `run_resources` (`pending`,`key`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_deletion_approval_idx",
+        "sql": "CREATE INDEX `runs_deletion_approval_idx` ON `runs` (`deletion_approval`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_loop_idx",
+        "sql": "CREATE INDEX `runs_loop_idx` ON `runs` (`loop_id`,`created_at`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_loop_owner_history_idx",
+        "sql": "CREATE INDEX `runs_loop_owner_history_idx` ON `runs` (`loop_id`,`owner_id`,`created_at`,`id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_owner_status_idx",
+        "sql": "CREATE INDEX `runs_owner_status_idx` ON `runs` (`owner_id`,`status`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_parent_idx",
+        "sql": "CREATE INDEX `runs_parent_idx` ON `runs` (`parent_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_replay_source_idx",
+        "sql": "CREATE INDEX `runs_replay_source_idx` ON `runs` (`replay_source_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_trigger_dedupe_idx",
+        "sql": "CREATE INDEX runs_trigger_dedupe_idx ON runs(loop_id,json_extract(initial_thread,'$.invocation.trigger.nodeId'),json_extract(initial_thread,'$.invocation.trigger.dedupeKey'))"
+      },
+      {
+        "type": "index",
+        "name": "runs_version_idx",
+        "sql": "CREATE INDEX `runs_version_idx` ON `runs` (`version_id`)"
+      },
+      {
+        "type": "index",
+        "name": "schedules_due_idx",
+        "sql": "CREATE INDEX `schedules_due_idx` ON `schedules` (`enabled`,`next_fire_at`)"
+      },
+      {
+        "type": "index",
+        "name": "schedules_loop_idx",
+        "sql": "CREATE INDEX `schedules_loop_idx` ON `schedules` (`loop_id`,`version_id`)"
+      },
+      {
+        "type": "index",
+        "name": "timers_at_idx",
+        "sql": "CREATE INDEX `timers_at_idx` ON `timers` (`at`)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_endpoints_loop_idx",
+        "sql": "CREATE INDEX webhook_endpoints_loop_idx ON webhook_endpoints (loop_id,version_id)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_endpoints_token_idx",
+        "sql": "CREATE INDEX webhook_endpoints_token_idx ON webhook_endpoints (token)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_content_idx",
+        "sql": "CREATE INDEX webhook_receipts_content_idx ON webhook_receipts(owner_id,loop_id,trigger_node_id,content_hash)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_due_idx",
+        "sql": "CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_inbound_idx",
+        "sql": "CREATE UNIQUE INDEX webhook_receipts_inbound_idx ON webhook_receipts(inbound_id)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_epoch_idx",
+        "sql": "CREATE INDEX `workspace_references_epoch_idx` ON `workspace_references` (`checked_epoch`,`id`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_physical_idx",
+        "sql": "CREATE INDEX `workspace_references_physical_idx` ON `workspace_references` (`physical_path`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_run_idx",
+        "sql": "CREATE INDEX `workspace_references_run_idx` ON `workspace_references` (`run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_version_idx",
+        "sql": "CREATE INDEX `workspace_references_version_idx` ON `workspace_references` (`version_id`)"
+      },
+      {
+        "type": "trigger",
+        "name": "loop_versions_snapshot_immutable",
+        "sql": "CREATE TRIGGER `loop_versions_snapshot_immutable` BEFORE UPDATE ON `loop_versions`\nWHEN OLD.status = 'snapshot'\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes'); END"
+      },
+      {
+        "type": "trigger",
+        "name": "loop_versions_snapshot_pinned",
+        "sql": "CREATE TRIGGER `loop_versions_snapshot_pinned` BEFORE DELETE ON `loop_versions`\nWHEN OLD.status = 'snapshot' AND EXISTS (SELECT 1 FROM runs WHERE runs.version_id = OLD.id)\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_PINNED: a run still pins this draft snapshot'); END"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_activity",
+        "sql": "CREATE TRIGGER runs_deletion_activity AFTER UPDATE OF status, finalized_at, last_event_seq ON runs\nWHEN OLD.deletion_approval IS NOT NULL AND\n  (OLD.status IS NOT NEW.status OR OLD.finalized_at IS NOT NEW.finalized_at OR OLD.last_event_seq IS NOT NEW.last_event_seq)\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_dependency_insert",
+        "sql": "CREATE TRIGGER runs_deletion_dependency_insert AFTER INSERT ON runs\nWHEN EXISTS (SELECT 1 FROM runs WHERE id IN (NEW.parent_run_id, NEW.replay_source_run_id) AND deletion_approval IS NOT NULL)\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_relationship",
+        "sql": "CREATE TRIGGER runs_deletion_relationship AFTER UPDATE OF parent_run_id, replay_source_run_id ON runs\nWHEN (OLD.parent_run_id IS NOT NEW.parent_run_id OR OLD.replay_source_run_id IS NOT NEW.replay_source_run_id)\n  AND (OLD.deletion_approval IS NOT NULL OR EXISTS (\n    SELECT 1 FROM runs WHERE id IN (OLD.parent_run_id, OLD.replay_source_run_id, NEW.parent_run_id, NEW.replay_source_run_id)\n      AND deletion_approval IS NOT NULL))\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id UNION SELECT OLD.parent_run_id WHERE OLD.parent_run_id IS NOT NULL UNION SELECT OLD.replay_source_run_id WHERE OLD.replay_source_run_id IS NOT NULL\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_revision",
+        "sql": "CREATE TRIGGER runs_deletion_revision AFTER UPDATE OF deletion_approval ON runs\nWHEN OLD.deletion_approval IS NOT NEW.deletion_approval\nBEGIN\n  UPDATE runs SET deletion_revision = deletion_revision + 1 WHERE id = NEW.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_replay_source_update",
+        "sql": "CREATE TRIGGER runs_replay_source_update AFTER UPDATE OF initial_thread ON runs\nWHEN OLD.initial_thread IS NOT NEW.initial_thread\nBEGIN\n  UPDATE runs SET replay_source_run_id = CASE WHEN json_valid(NEW.initial_thread)\n    THEN json_extract(NEW.initial_thread, '$.invocation.replayOf.runId') END\n    WHERE id = NEW.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_delete",
+        "sql": "CREATE TRIGGER workspace_run_delete AFTER DELETE ON runs\nBEGIN DELETE FROM workspace_references WHERE run_id = OLD.id; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_insert",
+        "sql": "CREATE TRIGGER workspace_run_insert AFTER INSERT ON runs\nWHEN NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')\nBEGIN\n  INSERT INTO workspace_references(id, run_id, path)\n    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0\n      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0\n      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions\n    WHERE id = NEW.version_id AND json_valid(definition)\n      AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template';\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_version",
+        "sql": "CREATE TRIGGER workspace_run_version AFTER UPDATE OF version_id, status ON runs\nWHEN NEW.version_id IS NOT OLD.version_id OR NEW.status IS NOT OLD.status\nBEGIN\n  DELETE FROM workspace_references WHERE id = 'pending:' || NEW.id;\n  INSERT INTO workspace_references(id, run_id, path)\n    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0\n      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0\n      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions\n    WHERE id = NEW.version_id AND json_valid(definition)\n      AND NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')\n      AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template'\n      AND NOT EXISTS (SELECT 1 FROM run_resource_uses WHERE run_id = NEW.id AND key LIKE 'workspace:%');\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_use_delete",
+        "sql": "CREATE TRIGGER workspace_use_delete AFTER DELETE ON run_resource_uses\nWHEN OLD.key LIKE 'workspace:%'\nBEGIN DELETE FROM workspace_references WHERE id = 'use:' || OLD.run_id || ':' || OLD.key; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_use_insert",
+        "sql": "CREATE TRIGGER workspace_use_insert AFTER INSERT ON run_resource_uses\nWHEN NEW.key LIKE 'workspace:%'\nBEGIN\n  INSERT INTO workspace_references(id, run_id, path)\n    VALUES ('use:' || NEW.run_id || ':' || NEW.key, NEW.run_id, NEW.path);\n  DELETE FROM workspace_references WHERE id = 'pending:' || NEW.run_id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_change",
+        "sql": "CREATE TRIGGER workspace_version_change AFTER UPDATE OF definition ON loop_versions\nWHEN NEW.definition IS NOT OLD.definition\nBEGIN\n  DELETE FROM workspace_references WHERE version_id = NEW.id;\n  INSERT INTO workspace_references(id, version_id, path)\n    SELECT 'version:' || NEW.id, NEW.id, json_extract(NEW.definition, '$.settings.workingDirectory.path')\n    WHERE json_valid(NEW.definition) AND json_extract(NEW.definition, '$.settings.workingDirectory.kind') = 'fixed';\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_delete",
+        "sql": "CREATE TRIGGER workspace_version_delete AFTER DELETE ON loop_versions\nBEGIN DELETE FROM workspace_references WHERE version_id = OLD.id; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_insert",
+        "sql": "CREATE TRIGGER workspace_version_insert AFTER INSERT ON loop_versions\nWHEN json_valid(NEW.definition) AND json_extract(NEW.definition, '$.settings.workingDirectory.kind') = 'fixed'\nBEGIN\n  INSERT INTO workspace_references(id, version_id, path)\n  VALUES ('version:' || NEW.id, NEW.id, json_extract(NEW.definition, '$.settings.workingDirectory.path'));\nEND"
+      }
+    ],
+    "newForks": [
+      {
+        "id": "01M5Y3DXGCCSTHT38RGE93SWQ9",
+        "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+        "replay_intent_node_id": null,
+        "replay_intent_observed_seq": null
+      },
+      {
+        "id": "01M5Y3DXM11SAW133VD7643KM3",
+        "replay_source_run_id": "01M5Y3DWHRNWFAPS1W79AWPF0H",
+        "replay_intent_node_id": null,
+        "replay_intent_observed_seq": null
+      }
+    ],
+    "newLedger": [
+      {
+        "id": null,
+        "hash": "ff9e1eced82b221aab083a89013b98e4dd5ed39ada8c6243d70870a2c6765b10",
+        "created_at": 1790994664038
+      },
+      {
+        "id": null,
+        "hash": "2d5542233b650276bd77ab032b70da63bb7d54dc71c5319744efdd7c9a38e532",
+        "created_at": 1790999415943
+      },
+      {
+        "id": null,
+        "hash": "71dac548eebf5e48bd13df1a051926733572c8df410276dcdff182c26e27d75c",
+        "created_at": 1791044399130
+      },
+      {
+        "id": null,
+        "hash": "c754aaa8f0ab6072f6ff47510c3e5fd95964f892c8d1ea85ccb351435c5ae41c",
+        "created_at": 1791079869396
+      },
+      {
+        "id": null,
+        "hash": "88f0a25cf0ab1bacb56408d40a795a225cbfc2d6d0e26235386f7db678fac015",
+        "created_at": 1791136800000
+      },
+      {
+        "id": null,
+        "hash": "acf176adb56b408eb28a93193a164d1446c7a057329dcf2955814a7b79b0af3f",
+        "created_at": 1791152101266
+      },
+      {
+        "id": null,
+        "hash": "fd21030beae9f39e62331f84b1c05556c805e272ca984ffe7862afe8af09d140",
+        "created_at": 1791185767298
+      },
+      {
+        "id": null,
+        "hash": "23eae55968768aa6a595938df4973baf0dba424a73819cd2d94a897d4ece9a47",
+        "created_at": 1791309600000
+      },
+      {
+        "id": null,
+        "hash": "1289f36aa1c3a81e186dce0d034b8e86b7777a4fc11ab580e46d2db046292d0c",
+        "created_at": 1791396000000
+      },
+      {
+        "id": null,
+        "hash": "ed4b71c78cde4146683451fe5fe2cc4ed1c6c7a76e048d286349f04752cb2350",
+        "created_at": 1791482400000
+      },
+      {
+        "id": null,
+        "hash": "ca7853228949c6d492586b6cec57d6003924e2303ba32db11845e3a76f3acfc3",
+        "created_at": 1791568800000
+      },
+      {
+        "id": null,
+        "hash": "1730bcd7249dca5c3352dd58867a4837a85068c86963c36c7f2dc89f8024f8ec",
+        "created_at": 1791655200000
+      },
+      {
+        "id": null,
+        "hash": "2c34d9d799a3cb7568fffe1b154bb2f426224ada46093fade5465a2457578dae",
+        "created_at": 1791741600000
+      },
+      {
+        "id": null,
+        "hash": "f741ac41526cb980ad509b7e3e9761f665edf455b746ac049c0a7a5ed236f03c",
+        "created_at": 1791828000000
+      },
+      {
+        "id": null,
+        "hash": "ff90a84630e1149916d0df8049442717adb71bc72e38f8e99a693ce7f2c6d13a",
+        "created_at": 1792372966976
+      },
+      {
+        "id": null,
+        "hash": "3f7d4c8dc51009ab45c63e5a1be8b937e642fd39e09721aa6de51d753edc7aef",
+        "created_at": 1792454400000
+      },
+      {
+        "id": null,
+        "hash": "f8aad2061f6c93fc6079c083a3f8530438e3e430b37aa546c2171d2cab7588af",
+        "created_at": 1792472004405
+      },
+      {
+        "id": null,
+        "hash": "f6179cd0e120db6a842005cf42e8e4f5c81ec56d6149442e94203db3126b63db",
+        "created_at": 1792600000000
+      },
+      {
+        "id": null,
+        "hash": "11e21e92a5a72481dc380eac3a908faf2eadbad8998e02e876b1770c1382b42a",
+        "created_at": 1792800000000
+      },
+      {
+        "id": null,
+        "hash": "a11173749595f6735142768ab90df164e97234f0715b64165c571ac7e954db6f",
+        "created_at": 1792818000000
+      },
+      {
+        "id": null,
+        "hash": "5cbc17cfb2d46cb19e0d5bb8783229447ce6f1f76113ae27e3a08134b3e8e9e5",
+        "created_at": 1792897422989
+      },
+      {
+        "id": null,
+        "hash": "590c94e04c2f9d47b55f6020d2f4ca71cc7b56dec8e0d4a6020f6301683774ce",
+        "created_at": 1793016584412
+      },
+      {
+        "id": null,
+        "hash": "3a91ca74c25b39d4535cb6c99766cdde51150c09dacb5ed36e50c87f70d7eedd",
+        "created_at": 1793016584413
+      },
+      {
+        "id": null,
+        "hash": "385b39f82ff566fa62ba6fc502e84489d0853caac8cf2b1b7fe057b51b58345a",
+        "created_at": 1793016584414
+      },
+      {
+        "id": null,
+        "hash": "37b7213f340aa805e87c2e37c6dad4766aad00088fff36b129fc118caeb21977",
+        "created_at": 1793068183452
+      },
+      {
+        "id": null,
+        "hash": "16f76eeb1bf8fc52fa7270c445ea6a00e492340a855736544d4257e46749667e",
+        "created_at": 1793075959181
+      }
+    ],
+    "newObjects": [
+      {
+        "type": "index",
+        "name": "api_keys_hash_idx",
+        "sql": "CREATE INDEX `api_keys_hash_idx` ON `api_keys` (`hash`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_due_idx",
+        "sql": "CREATE INDEX `event_receipts_due_idx` ON `event_receipts` (`status`,`next_attempt_at`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_inbound_idx",
+        "sql": "CREATE UNIQUE INDEX `event_receipts_inbound_idx` ON `event_receipts` (`inbound_id`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_node_key_idx",
+        "sql": "CREATE INDEX `event_receipts_node_key_idx` ON `event_receipts` (`owner_id`,`loop_id`,`trigger_node_id`,`node_key`)"
+      },
+      {
+        "type": "index",
+        "name": "event_receipts_request_idx",
+        "sql": "CREATE UNIQUE INDEX `event_receipts_request_idx` ON `event_receipts` (`owner_id`,`loop_id`,`trigger_node_id`,`event_type`,`request_key`)"
+      },
+      {
+        "type": "index",
+        "name": "harness_sessions_scope_idx",
+        "sql": "CREATE INDEX `harness_sessions_scope_idx` ON `harness_sessions` (`scope_key`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_owner_idx",
+        "sql": "CREATE INDEX `inbound_events_owner_idx` ON `inbound_events` (`owner_id`,`received_at`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_source_dedupe_idx",
+        "sql": "CREATE INDEX `inbound_events_source_dedupe_idx` ON `inbound_events` (`owner_id`,`source`,`dedupe_key`)"
+      },
+      {
+        "type": "index",
+        "name": "inbound_events_type_dedupe_idx",
+        "sql": "CREATE INDEX `inbound_events_type_dedupe_idx` ON `inbound_events` (`owner_id`,`type`,`dedupe_key`)"
+      },
+      {
+        "type": "index",
+        "name": "loop_versions_loop_idx",
+        "sql": "CREATE INDEX `loop_versions_loop_idx` ON `loop_versions` (`loop_id`,`version`)"
+      },
+      {
+        "type": "index",
+        "name": "loops_owner_idx",
+        "sql": "CREATE INDEX `loops_owner_idx` ON `loops` (`owner_id`)"
+      },
+      {
+        "type": "index",
+        "name": "run_events_delivery_idx",
+        "sql": "CREATE INDEX `run_events_delivery_idx` ON `run_events` (`run_id`, `type`, `seq`)"
+      },
+      {
+        "type": "index",
+        "name": "run_events_fresh_session_idx",
+        "sql": "CREATE INDEX `run_events_fresh_session_idx` ON `run_events` (`run_id`,`seq`) WHERE \"run_events\".\"type\" = 'run.resumed' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.freshSession') is not null else 1 end"
+      },
+      {
+        "type": "index",
+        "name": "run_events_gate_idx",
+        "sql": "CREATE INDEX `run_events_gate_idx` ON `run_events` (`run_id`,`seq`) WHERE \"run_events\".\"type\" = 'decision.made' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.gate') is not null else 1 end"
+      },
+      {
+        "type": "index",
+        "name": "run_events_reached_idx",
+        "sql": "CREATE INDEX `run_events_reached_idx` ON `run_events` (`run_id`,`node_id`,`seq`) WHERE \"run_events\".\"type\" = 'node.started'"
+      },
+      {
+        "type": "index",
+        "name": "run_resource_uses_key_idx",
+        "sql": "CREATE INDEX `run_resource_uses_key_idx` ON `run_resource_uses` (`key`)"
+      },
+      {
+        "type": "index",
+        "name": "run_resources_owner_idx",
+        "sql": "CREATE INDEX `run_resources_owner_idx` ON `run_resources` (`owner_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "run_resources_pending_idx",
+        "sql": "CREATE INDEX `run_resources_pending_idx` ON `run_resources` (`pending`,`key`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_deletion_approval_idx",
+        "sql": "CREATE INDEX `runs_deletion_approval_idx` ON `runs` (`deletion_approval`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_loop_idx",
+        "sql": "CREATE INDEX `runs_loop_idx` ON `runs` (`loop_id`,`created_at`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_loop_owner_history_idx",
+        "sql": "CREATE INDEX `runs_loop_owner_history_idx` ON `runs` (`loop_id`,`owner_id`,`created_at`,`id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_owner_status_idx",
+        "sql": "CREATE INDEX `runs_owner_status_idx` ON `runs` (`owner_id`,`status`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_parent_idx",
+        "sql": "CREATE INDEX `runs_parent_idx` ON `runs` (`parent_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_replay_intent_idx",
+        "sql": "CREATE UNIQUE INDEX `runs_replay_intent_idx` ON `runs`\n  (`replay_source_run_id`,`replay_intent_node_id`,`replay_intent_observed_seq`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_replay_source_idx",
+        "sql": "CREATE INDEX `runs_replay_source_idx` ON `runs` (`replay_source_run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "runs_trigger_dedupe_idx",
+        "sql": "CREATE INDEX runs_trigger_dedupe_idx ON runs(loop_id,json_extract(initial_thread,'$.invocation.trigger.nodeId'),json_extract(initial_thread,'$.invocation.trigger.dedupeKey'))"
+      },
+      {
+        "type": "index",
+        "name": "runs_version_idx",
+        "sql": "CREATE INDEX `runs_version_idx` ON `runs` (`version_id`)"
+      },
+      {
+        "type": "index",
+        "name": "schedules_due_idx",
+        "sql": "CREATE INDEX `schedules_due_idx` ON `schedules` (`enabled`,`next_fire_at`)"
+      },
+      {
+        "type": "index",
+        "name": "schedules_loop_idx",
+        "sql": "CREATE INDEX `schedules_loop_idx` ON `schedules` (`loop_id`,`version_id`)"
+      },
+      {
+        "type": "index",
+        "name": "timers_at_idx",
+        "sql": "CREATE INDEX `timers_at_idx` ON `timers` (`at`)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_endpoints_loop_idx",
+        "sql": "CREATE INDEX webhook_endpoints_loop_idx ON webhook_endpoints (loop_id,version_id)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_endpoints_token_idx",
+        "sql": "CREATE INDEX webhook_endpoints_token_idx ON webhook_endpoints (token)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_content_idx",
+        "sql": "CREATE INDEX webhook_receipts_content_idx ON webhook_receipts(owner_id,loop_id,trigger_node_id,content_hash)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_due_idx",
+        "sql": "CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)"
+      },
+      {
+        "type": "index",
+        "name": "webhook_receipts_inbound_idx",
+        "sql": "CREATE UNIQUE INDEX webhook_receipts_inbound_idx ON webhook_receipts(inbound_id)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_epoch_idx",
+        "sql": "CREATE INDEX `workspace_references_epoch_idx` ON `workspace_references` (`checked_epoch`,`id`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_physical_idx",
+        "sql": "CREATE INDEX `workspace_references_physical_idx` ON `workspace_references` (`physical_path`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_run_idx",
+        "sql": "CREATE INDEX `workspace_references_run_idx` ON `workspace_references` (`run_id`)"
+      },
+      {
+        "type": "index",
+        "name": "workspace_references_version_idx",
+        "sql": "CREATE INDEX `workspace_references_version_idx` ON `workspace_references` (`version_id`)"
+      },
+      {
+        "type": "trigger",
+        "name": "loop_versions_snapshot_immutable",
+        "sql": "CREATE TRIGGER `loop_versions_snapshot_immutable` BEFORE UPDATE ON `loop_versions`\nWHEN OLD.status = 'snapshot'\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes'); END"
+      },
+      {
+        "type": "trigger",
+        "name": "loop_versions_snapshot_pinned",
+        "sql": "CREATE TRIGGER `loop_versions_snapshot_pinned` BEFORE DELETE ON `loop_versions`\nWHEN OLD.status = 'snapshot' AND EXISTS (SELECT 1 FROM runs WHERE runs.version_id = OLD.id)\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_PINNED: a run still pins this draft snapshot'); END"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_activity",
+        "sql": "CREATE TRIGGER runs_deletion_activity AFTER UPDATE OF status, finalized_at, last_event_seq ON runs\nWHEN OLD.deletion_approval IS NOT NULL AND\n  (OLD.status IS NOT NEW.status OR OLD.finalized_at IS NOT NEW.finalized_at OR OLD.last_event_seq IS NOT NEW.last_event_seq)\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_dependency_insert",
+        "sql": "CREATE TRIGGER runs_deletion_dependency_insert AFTER INSERT ON runs\nWHEN EXISTS (SELECT 1 FROM runs WHERE id IN (NEW.parent_run_id, NEW.replay_source_run_id) AND deletion_approval IS NOT NULL)\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_relationship",
+        "sql": "CREATE TRIGGER runs_deletion_relationship AFTER UPDATE OF parent_run_id, replay_source_run_id ON runs\nWHEN (OLD.parent_run_id IS NOT NEW.parent_run_id OR OLD.replay_source_run_id IS NOT NEW.replay_source_run_id)\n  AND (OLD.deletion_approval IS NOT NULL OR EXISTS (\n    SELECT 1 FROM runs WHERE id IN (OLD.parent_run_id, OLD.replay_source_run_id, NEW.parent_run_id, NEW.replay_source_run_id)\n      AND deletion_approval IS NOT NULL))\nBEGIN\n  UPDATE runs SET deletion_approval = NULL WHERE id IN (\n    WITH RECURSIVE related(id) AS (\n      SELECT NEW.id UNION SELECT OLD.parent_run_id WHERE OLD.parent_run_id IS NOT NULL UNION SELECT OLD.replay_source_run_id WHERE OLD.replay_source_run_id IS NOT NULL\n      UNION SELECT r.parent_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.parent_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.parent_run_id = related.id\n      UNION SELECT r.replay_source_run_id FROM runs r JOIN related ON r.id = related.id WHERE r.replay_source_run_id IS NOT NULL\n      UNION SELECT r.id FROM runs r JOIN related ON r.replay_source_run_id = related.id\n    ) SELECT id FROM related\n  ) AND deletion_approval IS NOT NULL;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_deletion_revision",
+        "sql": "CREATE TRIGGER runs_deletion_revision AFTER UPDATE OF deletion_approval ON runs\nWHEN OLD.deletion_approval IS NOT NEW.deletion_approval\nBEGIN\n  UPDATE runs SET deletion_revision = deletion_revision + 1 WHERE id = NEW.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "runs_replay_source_update",
+        "sql": "CREATE TRIGGER runs_replay_source_update AFTER UPDATE OF initial_thread ON runs\nWHEN OLD.initial_thread IS NOT NEW.initial_thread\nBEGIN\n  UPDATE runs SET replay_source_run_id = CASE WHEN json_valid(NEW.initial_thread)\n    THEN json_extract(NEW.initial_thread, '$.invocation.replayOf.runId') END\n    WHERE id = NEW.id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_delete",
+        "sql": "CREATE TRIGGER workspace_run_delete AFTER DELETE ON runs\nBEGIN DELETE FROM workspace_references WHERE run_id = OLD.id; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_insert",
+        "sql": "CREATE TRIGGER workspace_run_insert AFTER INSERT ON runs\nWHEN NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')\nBEGIN\n  INSERT INTO workspace_references(id, run_id, path)\n    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0\n      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0\n      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions\n    WHERE id = NEW.version_id AND json_valid(definition)\n      AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template';\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_run_version",
+        "sql": "CREATE TRIGGER workspace_run_version AFTER UPDATE OF version_id, status ON runs\nWHEN NEW.version_id IS NOT OLD.version_id OR NEW.status IS NOT OLD.status\nBEGIN\n  DELETE FROM workspace_references WHERE id = 'pending:' || NEW.id;\n  INSERT INTO workspace_references(id, run_id, path)\n    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0\n      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0\n      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions\n    WHERE id = NEW.version_id AND json_valid(definition)\n      AND NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')\n      AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template'\n      AND NOT EXISTS (SELECT 1 FROM run_resource_uses WHERE run_id = NEW.id AND key LIKE 'workspace:%');\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_use_delete",
+        "sql": "CREATE TRIGGER workspace_use_delete AFTER DELETE ON run_resource_uses\nWHEN OLD.key LIKE 'workspace:%'\nBEGIN DELETE FROM workspace_references WHERE id = 'use:' || OLD.run_id || ':' || OLD.key; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_use_insert",
+        "sql": "CREATE TRIGGER workspace_use_insert AFTER INSERT ON run_resource_uses\nWHEN NEW.key LIKE 'workspace:%'\nBEGIN\n  INSERT INTO workspace_references(id, run_id, path)\n    VALUES ('use:' || NEW.run_id || ':' || NEW.key, NEW.run_id, NEW.path);\n  DELETE FROM workspace_references WHERE id = 'pending:' || NEW.run_id;\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_change",
+        "sql": "CREATE TRIGGER workspace_version_change AFTER UPDATE OF definition ON loop_versions\nWHEN NEW.definition IS NOT OLD.definition\nBEGIN\n  DELETE FROM workspace_references WHERE version_id = NEW.id;\n  INSERT INTO workspace_references(id, version_id, path)\n    SELECT 'version:' || NEW.id, NEW.id, json_extract(NEW.definition, '$.settings.workingDirectory.path')\n    WHERE json_valid(NEW.definition) AND json_extract(NEW.definition, '$.settings.workingDirectory.kind') = 'fixed';\nEND"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_delete",
+        "sql": "CREATE TRIGGER workspace_version_delete AFTER DELETE ON loop_versions\nBEGIN DELETE FROM workspace_references WHERE version_id = OLD.id; END"
+      },
+      {
+        "type": "trigger",
+        "name": "workspace_version_insert",
+        "sql": "CREATE TRIGGER workspace_version_insert AFTER INSERT ON loop_versions\nWHEN json_valid(NEW.definition) AND json_extract(NEW.definition, '$.settings.workingDirectory.kind') = 'fixed'\nBEGIN\n  INSERT INTO workspace_references(id, version_id, path)\n  VALUES ('version:' || NEW.id, NEW.id, json_extract(NEW.definition, '$.settings.workingDirectory.path'));\nEND"
+      }
+    ],
+    "pausedResume": {
+      "resume": {
+        "status": 200,
+        "body": {
+          "id": "01M5Y3DX7C895REBKJR0RKN70E",
+          "ownerId": "local",
+          "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+          "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Upgrade wait",
+            "label": "Upgrade wait v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T07:15:38.860Z",
+          "startedAt": "2026-10-27T07:15:38.868Z",
+          "lastEventSeq": 8
+        }
+      },
+      "waiting": {
+        "id": "01M5Y3DX7C895REBKJR0RKN70E",
+        "ownerId": "local",
+        "loopId": "01M5Y3DX360NQ6K8H1398JFS8V",
+        "versionId": "01M5Y3DX360NQ6K8H1398JFS8W",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Upgrade wait",
+          "label": "Upgrade wait v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5Y3DX7C895REBKJR0RKN70F",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5Y3DX7C895REBKJR0RKN70E:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-27T07:15:38.860Z",
+        "startedAt": "2026-10-27T07:15:38.868Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "newReplay": {
+      "status": 202,
+      "body": {
+        "run": {
+          "id": "01M5Y3E1TB6T0FPTWB962FH9X5",
+          "ownerId": "local",
+          "loopId": "01M5Y3DWGQ773C2JFDGF579SB9",
+          "versionId": "01M5Y3DWGQ773C2JFDGF579SBA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Upgrade succeeded",
+            "label": "Upgrade succeeded v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3E1TB6T0FPTWB962FH9X6",
+          "status": "queued",
+          "currentNodeId": "done",
+          "iteration": 1,
+          "createdAt": "2026-10-27T07:15:43.563Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    "secondLedger": [
+      {
+        "id": null,
+        "hash": "ff9e1eced82b221aab083a89013b98e4dd5ed39ada8c6243d70870a2c6765b10",
+        "created_at": 1790994664038
+      },
+      {
+        "id": null,
+        "hash": "2d5542233b650276bd77ab032b70da63bb7d54dc71c5319744efdd7c9a38e532",
+        "created_at": 1790999415943
+      },
+      {
+        "id": null,
+        "hash": "71dac548eebf5e48bd13df1a051926733572c8df410276dcdff182c26e27d75c",
+        "created_at": 1791044399130
+      },
+      {
+        "id": null,
+        "hash": "c754aaa8f0ab6072f6ff47510c3e5fd95964f892c8d1ea85ccb351435c5ae41c",
+        "created_at": 1791079869396
+      },
+      {
+        "id": null,
+        "hash": "88f0a25cf0ab1bacb56408d40a795a225cbfc2d6d0e26235386f7db678fac015",
+        "created_at": 1791136800000
+      },
+      {
+        "id": null,
+        "hash": "acf176adb56b408eb28a93193a164d1446c7a057329dcf2955814a7b79b0af3f",
+        "created_at": 1791152101266
+      },
+      {
+        "id": null,
+        "hash": "fd21030beae9f39e62331f84b1c05556c805e272ca984ffe7862afe8af09d140",
+        "created_at": 1791185767298
+      },
+      {
+        "id": null,
+        "hash": "23eae55968768aa6a595938df4973baf0dba424a73819cd2d94a897d4ece9a47",
+        "created_at": 1791309600000
+      },
+      {
+        "id": null,
+        "hash": "1289f36aa1c3a81e186dce0d034b8e86b7777a4fc11ab580e46d2db046292d0c",
+        "created_at": 1791396000000
+      },
+      {
+        "id": null,
+        "hash": "ed4b71c78cde4146683451fe5fe2cc4ed1c6c7a76e048d286349f04752cb2350",
+        "created_at": 1791482400000
+      },
+      {
+        "id": null,
+        "hash": "ca7853228949c6d492586b6cec57d6003924e2303ba32db11845e3a76f3acfc3",
+        "created_at": 1791568800000
+      },
+      {
+        "id": null,
+        "hash": "1730bcd7249dca5c3352dd58867a4837a85068c86963c36c7f2dc89f8024f8ec",
+        "created_at": 1791655200000
+      },
+      {
+        "id": null,
+        "hash": "2c34d9d799a3cb7568fffe1b154bb2f426224ada46093fade5465a2457578dae",
+        "created_at": 1791741600000
+      },
+      {
+        "id": null,
+        "hash": "f741ac41526cb980ad509b7e3e9761f665edf455b746ac049c0a7a5ed236f03c",
+        "created_at": 1791828000000
+      },
+      {
+        "id": null,
+        "hash": "ff90a84630e1149916d0df8049442717adb71bc72e38f8e99a693ce7f2c6d13a",
+        "created_at": 1792372966976
+      },
+      {
+        "id": null,
+        "hash": "3f7d4c8dc51009ab45c63e5a1be8b937e642fd39e09721aa6de51d753edc7aef",
+        "created_at": 1792454400000
+      },
+      {
+        "id": null,
+        "hash": "f8aad2061f6c93fc6079c083a3f8530438e3e430b37aa546c2171d2cab7588af",
+        "created_at": 1792472004405
+      },
+      {
+        "id": null,
+        "hash": "f6179cd0e120db6a842005cf42e8e4f5c81ec56d6149442e94203db3126b63db",
+        "created_at": 1792600000000
+      },
+      {
+        "id": null,
+        "hash": "11e21e92a5a72481dc380eac3a908faf2eadbad8998e02e876b1770c1382b42a",
+        "created_at": 1792800000000
+      },
+      {
+        "id": null,
+        "hash": "a11173749595f6735142768ab90df164e97234f0715b64165c571ac7e954db6f",
+        "created_at": 1792818000000
+      },
+      {
+        "id": null,
+        "hash": "5cbc17cfb2d46cb19e0d5bb8783229447ce6f1f76113ae27e3a08134b3e8e9e5",
+        "created_at": 1792897422989
+      },
+      {
+        "id": null,
+        "hash": "590c94e04c2f9d47b55f6020d2f4ca71cc7b56dec8e0d4a6020f6301683774ce",
+        "created_at": 1793016584412
+      },
+      {
+        "id": null,
+        "hash": "3a91ca74c25b39d4535cb6c99766cdde51150c09dacb5ed36e50c87f70d7eedd",
+        "created_at": 1793016584413
+      },
+      {
+        "id": null,
+        "hash": "385b39f82ff566fa62ba6fc502e84489d0853caac8cf2b1b7fe057b51b58345a",
+        "created_at": 1793016584414
+      },
+      {
+        "id": null,
+        "hash": "37b7213f340aa805e87c2e37c6dad4766aad00088fff36b129fc118caeb21977",
+        "created_at": 1793068183452
+      },
+      {
+        "id": null,
+        "hash": "16f76eeb1bf8fc52fa7270c445ea6a00e492340a855736544d4257e46749667e",
+        "created_at": 1793075959181
+      }
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "synthetic": [
+    {
+      "seq": 0,
+      "reached": []
+    },
+    {
+      "seq": 1,
+      "latest": "run.started",
+      "reached": []
+    },
+    {
+      "seq": 2,
+      "latest": "run.started",
+      "reached": ["a"]
+    },
+    {
+      "seq": 3,
+      "latest": "run.failed",
+      "failed": 3,
+      "reached": ["a"]
+    },
+    {
+      "seq": 5,
+      "latest": "run.started",
+      "failed": 3,
+      "resumed": 4,
+      "reached": ["a"]
+    },
+    {
+      "seq": 6,
+      "latest": "run.failed",
+      "failed": 6,
+      "resumed": 4,
+      "reached": ["a"]
+    },
+    {
+      "seq": 8,
+      "latest": "run.resumed",
+      "failed": 6,
+      "resumed": 7,
+      "reached": ["a", "b"]
+    },
+    {
+      "seq": 9,
+      "latest": "run.cancelled",
+      "failed": 6,
+      "resumed": 7,
+      "reached": ["a", "b"]
+    },
+    {
+      "seq": 3039,
+      "statements": 6,
+      "returned": 5,
+      "plans": [
+        "SEARCH run_events USING COVERING INDEX sqlite_autoindex_run_events_1 (run_id=?)",
+        "SEARCH run_events USING INDEX sqlite_autoindex_run_events_1 (run_id=? AND seq=?)",
+        "SCALAR SUBQUERY 1",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 2",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 3",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 4",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 5",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 6",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SCALAR SUBQUERY 7",
+        "SEARCH run_events USING COVERING INDEX run_events_delivery_idx (run_id=? AND type=? AND seq<?)",
+        "SEARCH run_events USING COVERING INDEX run_events_reached_idx (run_id=? AND node_id=? AND seq<?)",
+        "SEARCH run_events USING COVERING INDEX run_events_reached_idx (run_id=? AND node_id=? AND seq<?)",
+        "SEARCH run_events USING COVERING INDEX run_events_reached_idx (run_id=? AND node_id=? AND seq<?)",
+        "SEARCH run_events USING COVERING INDEX run_events_reached_idx (run_id=? AND node_id=? AND seq<?)"
+      ]
+    }
+  ],
+  "upgraded": [
+    {
+      "runId": "01M5Y3G719ZSDNQ4HCTXTN55G7",
+      "status": "succeeded",
+      "events": 8,
+      "reached": ["start", "done"]
+    },
+    {
+      "runId": "01M5Y3G7BX15NKBM0AW6GS9HM8",
+      "status": "exhausted",
+      "events": 8,
+      "reached": ["start", "done"]
+    },
+    {
+      "runId": "01M5Y3G7J2XPMZJM3VE491D6T3",
+      "status": "succeeded",
+      "events": 17,
+      "reached": ["start", "script", "done"]
+    },
+    {
+      "runId": "01M5Y3G7TY5YT1097HFBG0AX8S",
+      "status": "waiting",
+      "events": 6,
+      "reached": ["start", "park"]
+    },
+    {
+      "runId": "01M5Y3G7ZTEHY5E9FVNK86FTSD",
+      "status": "waiting",
+      "events": 8,
+      "reached": ["start", "park"]
+    },
+    {
+      "runId": "01M5Y3G850SQRG432PD2DARSRK",
+      "status": "cancelled",
+      "events": 8,
+      "reached": ["start", "park"]
+    },
+    {
+      "runId": "01M5Y3G8B2KVHDV6F1Q8814581",
+      "status": "succeeded",
+      "events": 6,
+      "reached": ["done"]
+    },
+    {
+      "runId": "01M5Y3G8FFSTCF8K0BHS8YDC3Z",
+      "status": "succeeded",
+      "events": 6,
+      "reached": ["done"]
+    },
+    {
+      "runId": "01M5Y3G8MBHATNM7TA3T1G4GK8",
+      "status": "failed",
+      "events": 9,
+      "reached": ["start", "script"]
+    },
+    {
+      "runId": "01M5Y3G8W0P8VQVWAJ6PEBRMEY",
+      "status": "succeeded",
+      "events": 8,
+      "reached": ["start", "done"]
+    },
+    {
+      "runId": "01M5Y3GD2MY4EX7YN71XK8WNSV",
+      "status": "succeeded",
+      "events": 6,
+      "reached": ["done"]
+    }
+  ],
+  "append": [
+    {
+      "indexed": false,
+      "kind": "signal.received",
+      "eventsPerSample": 1000,
+      "statementsPerSample": 30,
+      "ms": [
+        43.04689999999982, 40.565500000000156, 42.38760000000002,
+        36.96569999999974, 35.84820000000036, 43.6588999999999,
+        38.708500000000186
+      ],
+      "medianMs": 40.565500000000156
+    },
+    {
+      "indexed": false,
+      "kind": "node.started",
+      "eventsPerSample": 1000,
+      "statementsPerSample": 30,
+      "ms": [
+        48.30029999999988, 43.58320000000003, 47.5616, 44.409999999999854,
+        40.9703999999997, 40.91190000000006, 37.698599999999715
+      ],
+      "medianMs": 43.58320000000003
+    },
+    {
+      "indexed": true,
+      "kind": "signal.received",
+      "eventsPerSample": 1000,
+      "statementsPerSample": 30,
+      "ms": [
+        40.78740000000016, 37.681900000000496, 43.703599999999824,
+        36.67630000000008, 34.459899999999834, 40.35069999999996,
+        37.15610000000015
+      ],
+      "medianMs": 37.681900000000496
+    },
+    {
+      "indexed": true,
+      "kind": "node.started",
+      "eventsPerSample": 1000,
+      "statementsPerSample": 30,
+      "ms": [
+        45.03650000000016, 33.884000000000015, 53.046299999999974,
+        44.33680000000004, 43.59070000000065, 37.94329999999991,
+        45.373100000000704
+      ],
+      "medianMs": 44.33680000000004
+    }
+  ]
+}

@@ -1,0 +1,4392 @@
+{
+  "checks": [
+    {
+      "name": "Replay seeds before selected node FIRST start",
+      "passed": true,
+      "detail": {
+        "sameFields": [
+          {
+            "field": "vars",
+            "equal": true
+          },
+          {
+            "field": "messages",
+            "equal": true
+          },
+          {
+            "field": "outputs",
+            "equal": true
+          },
+          {
+            "field": "gates",
+            "equal": true
+          },
+          {
+            "field": "counters",
+            "equal": true
+          }
+        ],
+        "seed": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+            "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+            "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5YCFGYJ4F4V6R27JFMS5FCF",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-27T09:53:47.425Z"
+            },
+            "replayOf": {
+              "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+              "nodeId": "think"
+            }
+          },
+          "messages": [
+            {
+              "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+              "role": "user",
+              "content": "Initial QA message",
+              "nodeId": "prepare",
+              "ts": "2026-10-27T09:53:47.650Z"
+            }
+          ],
+          "vars": {
+            "trace": ["seed"]
+          },
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-27T09:53:47.625Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-27T09:53:47.625Z"
+          },
+          "gates": {
+            "gate": {
+              "passes": 1
+            }
+          },
+          "counters": {
+            "nodeVisits": {
+              "start": 1,
+              "prepare": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "expected": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+            "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+            "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-27T09:53:47.425Z"
+            }
+          },
+          "messages": [
+            {
+              "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+              "role": "user",
+              "content": "Initial QA message",
+              "nodeId": "prepare",
+              "ts": "2026-10-27T09:53:47.650Z"
+            }
+          ],
+          "vars": {
+            "trace": ["seed"]
+          },
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-27T09:53:47.625Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-27T09:53:47.625Z"
+          },
+          "gates": {
+            "gate": {
+              "passes": 1
+            }
+          },
+          "counters": {
+            "nodeVisits": {
+              "start": 1,
+              "prepare": 1
+            },
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Replay preserves parent and child pinned versions after publishing edits",
+      "passed": true,
+      "detail": {
+        "source": {
+          "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "ownerId": "local",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          },
+          "deliveries": [
+            {
+              "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+              "channel": {
+                "kind": "webhook",
+                "url": "http://127.0.0.1:6662/delivery"
+              },
+              "status": "pending",
+              "attempts": 1,
+              "maxAttempts": 5,
+              "inFlight": true,
+              "acknowledgement": "unknown",
+              "effectMayHaveHappened": true,
+              "acknowledgementUncertain": false,
+              "nextAttemptAt": "2026-10-27T09:54:00.579Z"
+            }
+          ],
+          "createdAt": "2026-10-27T09:53:47.425Z",
+          "startedAt": "2026-10-27T09:53:47.596Z",
+          "finishedAt": "2026-10-27T09:53:48.570Z",
+          "lastEventSeq": 43,
+          "recovery": {
+            "observedSeq": 43,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "prepare",
+                "label": "Seed values",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Pinned child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "fork": {
+          "id": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "ownerId": "local",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCFGYJ4F4V6R27JFMS5FCF",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          },
+          "deliveries": [
+            {
+              "id": "01M5YCFHR9E8AHAW3RDD74K5KE",
+              "channel": {
+                "kind": "webhook",
+                "url": "http://127.0.0.1:6662/delivery"
+              },
+              "status": "delivered",
+              "attempts": 1,
+              "maxAttempts": 5,
+              "inFlight": false,
+              "acknowledgement": "accepted",
+              "effectMayHaveHappened": true,
+              "acknowledgementUncertain": false
+            }
+          ],
+          "createdAt": "2026-10-27T09:53:49.010Z",
+          "startedAt": "2026-10-27T09:53:49.020Z",
+          "finishedAt": "2026-10-27T09:53:49.836Z",
+          "finalizedAt": "2026-10-27T09:53:49.856Z",
+          "lastEventSeq": 40,
+          "recovery": {
+            "observedSeq": 40,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "prepare",
+                "label": "Seed values",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Pinned child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ],
+            "replayOf": {
+              "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+              "nodeId": "think"
+            }
+          }
+        },
+        "sourceChildren": [
+          {
+            "id": "01M5YCFG8DAEPS6VE61TN6RF27",
+            "ownerId": "local",
+            "loopId": "01M5YCFF5P9YH9CDQRM8M8DY4V",
+            "versionId": "01M5YCFF5P9YH9CDQRM8M8DY4W",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Pinned child version one",
+              "label": "Pinned child version one v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+            "invocationId": "01M5YCFG8DAEPS6VE61TN6RF28",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:53:48.301Z",
+            "startedAt": "2026-10-27T09:53:48.317Z",
+            "finishedAt": "2026-10-27T09:53:48.365Z",
+            "finalizedAt": "2026-10-27T09:53:48.380Z",
+            "lastEventSeq": 8
+          }
+        ],
+        "forkChildren": [
+          {
+            "id": "01M5YCFHHWZG2KDN3WP7XK8MYF",
+            "ownerId": "local",
+            "loopId": "01M5YCFF5P9YH9CDQRM8M8DY4V",
+            "versionId": "01M5YCFF5P9YH9CDQRM8M8DY4W",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Pinned child version one",
+              "label": "Pinned child version one v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+            "invocationId": "01M5YCFHHWZG2KDN3WP7XK8MYG",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:53:49.628Z",
+            "startedAt": "2026-10-27T09:53:49.647Z",
+            "finishedAt": "2026-10-27T09:53:49.693Z",
+            "finalizedAt": "2026-10-27T09:53:49.704Z",
+            "lastEventSeq": 8
+          }
+        ],
+        "sourcePins": {
+          "01M5YCFF5P9YH9CDQRM8M8DY4V": "01M5YCFF5P9YH9CDQRM8M8DY4W"
+        },
+        "forkPins": {
+          "01M5YCFF5P9YH9CDQRM8M8DY4V": "01M5YCFF5P9YH9CDQRM8M8DY4W"
+        }
+      }
+    },
+    {
+      "name": "Replay preserves source history thread result and recorded deliveries",
+      "passed": true,
+      "detail": {
+        "before": {
+          "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "ownerId": "local",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          },
+          "deliveries": [
+            {
+              "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+              "channel": {
+                "kind": "webhook",
+                "url": "http://127.0.0.1:6662/delivery"
+              },
+              "status": "delivered",
+              "attempts": 1,
+              "maxAttempts": 5,
+              "inFlight": false,
+              "acknowledgement": "accepted",
+              "effectMayHaveHappened": true,
+              "acknowledgementUncertain": false
+            }
+          ],
+          "createdAt": "2026-10-27T09:53:47.425Z",
+          "startedAt": "2026-10-27T09:53:47.596Z",
+          "finishedAt": "2026-10-27T09:53:48.570Z",
+          "finalizedAt": "2026-10-27T09:53:48.650Z",
+          "lastEventSeq": 44,
+          "recovery": {
+            "observedSeq": 44,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "prepare",
+                "label": "Seed values",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Pinned child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "after": {
+          "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "ownerId": "local",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          },
+          "deliveries": [
+            {
+              "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+              "channel": {
+                "kind": "webhook",
+                "url": "http://127.0.0.1:6662/delivery"
+              },
+              "status": "delivered",
+              "attempts": 1,
+              "maxAttempts": 5,
+              "inFlight": false,
+              "acknowledgement": "accepted",
+              "effectMayHaveHappened": true,
+              "acknowledgementUncertain": false
+            }
+          ],
+          "createdAt": "2026-10-27T09:53:47.425Z",
+          "startedAt": "2026-10-27T09:53:47.596Z",
+          "finishedAt": "2026-10-27T09:53:48.570Z",
+          "finalizedAt": "2026-10-27T09:53:48.650Z",
+          "lastEventSeq": 44,
+          "recovery": {
+            "observedSeq": 44,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "prepare",
+                "label": "Seed values",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": false,
+                  "code": "RECOVERY_STALE",
+                  "message": "This Replay intent already created run 01M5YCFGYJ4F4V6R27JFMS5FCE. Open that run instead of submitting the same intent again.",
+                  "replayRunId": "01M5YCFGYJ4F4V6R27JFMS5FCE"
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  },
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Pinned child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Pinned child",
+                    "kind": "subloop"
+                  },
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "fork owns one new delivery and source delivery is not resent",
+      "passed": true,
+      "detail": [
+        {
+          "body": "{\"runId\":\"01M5YCFFD2ERBH9C26Z4HVZ0DM\",\"loopId\":\"01M5YCFF727EVZEPYDSBJDTDF8\",\"outcome\":\"success\",\"result\":{\"trace\":[\"seed\"]}}",
+          "headers": {
+            "host": "127.0.0.1:6662",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-graphgoblin-timestamp": "2026-10-27T09:53:48.586Z",
+            "idempotency-key": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "accept": "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "accept-encoding": "gzip, deflate",
+            "content-length": "124"
+          }
+        },
+        {
+          "body": "{\"runId\":\"01M5YCFGYJ4F4V6R27JFMS5FCE\",\"loopId\":\"01M5YCFF727EVZEPYDSBJDTDF8\",\"outcome\":\"success\",\"result\":{\"trace\":[\"seed\"]}}",
+          "headers": {
+            "host": "127.0.0.1:6662",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-graphgoblin-timestamp": "2026-10-27T09:53:49.846Z",
+            "idempotency-key": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "accept": "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "accept-encoding": "gzip, deflate",
+            "content-length": "124"
+          }
+        }
+      ]
+    },
+    {
+      "name": "fork has new ID and explicit source link",
+      "passed": true,
+      "detail": {
+        "source": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+        "fork": "01M5YCFGYJ4F4V6R27JFMS5FCE"
+      }
+    }
+  ],
+  "evidence": {
+    "details": {
+      "source": {
+        "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+        "ownerId": "local",
+        "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+        "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Replay seed and pins",
+          "label": "Replay seed and pins v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "trace": ["seed"]
+        },
+        "deliveries": [
+          {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false,
+            "nextAttemptAt": "2026-10-27T09:54:00.579Z"
+          }
+        ],
+        "createdAt": "2026-10-27T09:53:47.425Z",
+        "startedAt": "2026-10-27T09:53:47.596Z",
+        "finishedAt": "2026-10-27T09:53:48.570Z",
+        "lastEventSeq": 43,
+        "recovery": {
+          "observedSeq": 43,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "prepare",
+              "label": "Seed values",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Pinned child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "fork": {
+        "id": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+        "ownerId": "local",
+        "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+        "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Replay seed and pins",
+          "label": "Replay seed and pins v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCFGYJ4F4V6R27JFMS5FCF",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "trace": ["seed"]
+        },
+        "deliveries": [
+          {
+            "id": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        ],
+        "createdAt": "2026-10-27T09:53:49.010Z",
+        "startedAt": "2026-10-27T09:53:49.020Z",
+        "finishedAt": "2026-10-27T09:53:49.836Z",
+        "finalizedAt": "2026-10-27T09:53:49.856Z",
+        "lastEventSeq": 40,
+        "recovery": {
+          "observedSeq": 40,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "prepare",
+              "label": "Seed values",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Pinned child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ],
+          "replayOf": {
+            "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+            "nodeId": "think"
+          }
+        }
+      },
+      "preFirst": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-27T09:53:47.425Z"
+          }
+        },
+        "messages": [
+          {
+            "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+            "role": "user",
+            "content": "Initial QA message",
+            "nodeId": "prepare",
+            "ts": "2026-10-27T09:53:47.650Z"
+          }
+        ],
+        "vars": {
+          "trace": ["seed"]
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-27T09:53:47.625Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-27T09:53:47.625Z"
+        },
+        "gates": {
+          "gate": {
+            "passes": 1
+          }
+        },
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "prepare": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "seed": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5YCFGYJ4F4V6R27JFMS5FCF",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-27T09:53:47.425Z"
+          },
+          "replayOf": {
+            "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+            "nodeId": "think"
+          }
+        },
+        "messages": [
+          {
+            "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+            "role": "user",
+            "content": "Initial QA message",
+            "nodeId": "prepare",
+            "ts": "2026-10-27T09:53:47.650Z"
+          }
+        ],
+        "vars": {
+          "trace": ["seed"]
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-27T09:53:47.625Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-27T09:53:47.625Z"
+        },
+        "gates": {
+          "gate": {
+            "passes": 1
+          }
+        },
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "prepare": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "sourceHistory": [
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 1,
+          "ts": "2026-10-27T09:53:47.425Z",
+          "type": "run.queued",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+              "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+              "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T09:53:47.425Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {
+              "gate": {
+                "passes": 1
+              }
+            },
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "01M5YCFF5P9YH9CDQRM8M8DY4V": "01M5YCFF5P9YH9CDQRM8M8DY4W"
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 2,
+          "ts": "2026-10-27T09:53:47.600Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 3,
+          "ts": "2026-10-27T09:53:47.619Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 4,
+          "ts": "2026-10-27T09:53:47.627Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T09:53:47.625Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T09:53:47.625Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 5,
+          "ts": "2026-10-27T09:53:47.645Z",
+          "type": "node.started",
+          "nodeId": "prepare",
+          "kind": "mutate",
+          "attempt": 1,
+          "configHash": "5387e82efa505316"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 6,
+          "ts": "2026-10-27T09:53:47.653Z",
+          "type": "node.finished",
+          "nodeId": "prepare",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/vars/trace",
+              "value": ["seed"]
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+                "role": "user",
+                "content": "Initial QA message",
+                "nodeId": "prepare",
+                "ts": "2026-10-27T09:53:47.650Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 7,
+          "ts": "2026-10-27T09:53:47.672Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 8,
+          "ts": "2026-10-27T09:53:47.686Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:7",
+          "turnId": "01M5YCFFN59TYF2T18JGF5XNFP",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5YCFFD2ERBH9C26Z4HVZ0DM visit=1"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 9,
+          "ts": "2026-10-27T09:53:47.955Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "03904c2d-f938-4e48-b1aa-9b730eb49457",
+          "mode": "fresh",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 10,
+          "ts": "2026-10-27T09:53:47.957Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 11,
+          "ts": "2026-10-27T09:53:47.961Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:7",
+          "turnId": "01M5YCFFN59TYF2T18JGF5XNFP",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 12,
+          "ts": "2026-10-27T09:53:47.964Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 13,
+          "ts": "2026-10-27T09:53:47.988Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5YCFFYHQQ829GWDP8XTRJ14",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5YCFFYHQQ829GWDP8XTRJ15",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=1",
+                "nodeId": "think",
+                "ts": "2026-10-27T09:53:47.985Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=1",
+                "at": "2026-10-27T09:53:47.985Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=1",
+                "at": "2026-10-27T09:53:47.985Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 1,
+                "outputTokens": 1,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 312
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 14,
+          "ts": "2026-10-27T09:53:48.000Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 0.408,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 15,
+          "ts": "2026-10-27T09:53:48.011Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 16,
+          "ts": "2026-10-27T09:53:48.011Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.408,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T09:53:48.007Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.408,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T09:53:48.007Z"
+              }
+            }
+          ],
+          "route": "again",
+          "durationMs": 7
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 17,
+          "ts": "2026-10-27T09:53:48.031Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 18,
+          "ts": "2026-10-27T09:53:48.036Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:17",
+          "turnId": "01M5YCFG04JYHFFYFJJKERTMW5",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5YCFFD2ERBH9C26Z4HVZ0DM visit=2",
+          "resumeSessionId": "03904c2d-f938-4e48-b1aa-9b730eb49457"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 19,
+          "ts": "2026-10-27T09:53:48.250Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 20,
+          "ts": "2026-10-27T09:53:48.253Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:17",
+          "turnId": "01M5YCFG04JYHFFYFJJKERTMW5",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 21,
+          "ts": "2026-10-27T09:53:48.256Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 22,
+          "ts": "2026-10-27T09:53:48.258Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "03904c2d-f938-4e48-b1aa-9b730eb49457",
+          "mode": "resumed",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 23,
+          "ts": "2026-10-27T09:53:48.265Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5YCFG77W0YNSXJ3W26V1BM5",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5YCFG77W0YNSXJ3W26V1BM6",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=2",
+                "nodeId": "think",
+                "ts": "2026-10-27T09:53:48.263Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=2",
+                "at": "2026-10-27T09:53:48.263Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=03904c2d-f938-4e48-b1aa-9b730eb49457 turn=2",
+                "at": "2026-10-27T09:53:48.263Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 2,
+                "outputTokens": 2,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 231
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 24,
+          "ts": "2026-10-27T09:53:48.282Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 0.689,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 25,
+          "ts": "2026-10-27T09:53:48.287Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 26,
+          "ts": "2026-10-27T09:53:48.287Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.689,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T09:53:48.286Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.689,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T09:53:48.286Z"
+              }
+            }
+          ],
+          "route": "limit-reached",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 27,
+          "ts": "2026-10-27T09:53:48.297Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "15d8b50e1f073efd"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 28,
+          "ts": "2026-10-27T09:53:48.301Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 29,
+          "ts": "2026-10-27T09:53:48.310Z",
+          "type": "run.waiting",
+          "nodeId": "sub",
+          "wait": {
+            "waitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:27",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27",
+            "startedSeq": 27
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 30,
+          "ts": "2026-10-27T09:53:48.374Z",
+          "type": "run.woken",
+          "nodeId": "sub",
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27",
+            "childFinishedSeq": 8,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 31,
+          "ts": "2026-10-27T09:53:48.391Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "15d8b50e1f073efd"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 32,
+          "ts": "2026-10-27T09:53:48.398Z",
+          "type": "child_run.finished",
+          "nodeId": "sub",
+          "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 33,
+          "ts": "2026-10-27T09:53:48.398Z",
+          "type": "node.finished",
+          "nodeId": "sub",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/sub",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27"
+                },
+                "at": "2026-10-27T09:53:48.397Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YCFG8DAEPS6VE61TN6RF27"
+                },
+                "at": "2026-10-27T09:53:48.397Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 2,
+                "outputTokens": 2,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 4
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 34,
+          "ts": "2026-10-27T09:53:48.422Z",
+          "type": "node.started",
+          "nodeId": "script",
+          "kind": "script",
+          "attempt": 1,
+          "configHash": "697a8251e904dd1d"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 35,
+          "ts": "2026-10-27T09:53:48.426Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5YCFFD2ERBH9C26Z4HVZ0DM:34",
+          "dispatchId": "01M5YCFGCA97TAFEBMSSFV1BMD"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 36,
+          "ts": "2026-10-27T09:53:48.550Z",
+          "type": "node.progress",
+          "nodeId": "script",
+          "progress": {
+            "exitCode": 0,
+            "stderr": "",
+            "stdoutBytes": 0
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 37,
+          "ts": "2026-10-27T09:53:48.554Z",
+          "type": "node.finished",
+          "nodeId": "script",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/script",
+              "value": {
+                "nodeId": "script",
+                "value": "",
+                "at": "2026-10-27T09:53:48.552Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "script",
+                "value": "",
+                "at": "2026-10-27T09:53:48.552Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 128
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 38,
+          "ts": "2026-10-27T09:53:48.561Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "4b20455a3fde5c86"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 39,
+          "ts": "2026-10-27T09:53:48.565Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 40,
+          "ts": "2026-10-27T09:53:48.565Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 41,
+          "ts": "2026-10-27T09:53:48.565Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 42,
+          "ts": "2026-10-27T09:53:48.565Z",
+          "type": "delivery.queued",
+          "delivery": {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "pending",
+            "attempts": 0,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "not_sent",
+            "effectMayHaveHappened": false,
+            "acknowledgementUncertain": false
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 43,
+          "ts": "2026-10-27T09:53:48.581Z",
+          "type": "delivery.attempted",
+          "delivery": {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false,
+            "nextAttemptAt": "2026-10-27T09:54:00.579Z"
+          }
+        },
+        {
+          "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "seq": 44,
+          "ts": "2026-10-27T09:53:48.643Z",
+          "type": "delivery.finished",
+          "delivery": {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        }
+      ],
+      "forkHistory": [
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 1,
+          "ts": "2026-10-27T09:53:49.010Z",
+          "type": "run.queued",
+          "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Replay seed and pins",
+            "label": "Replay seed and pins v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "replayOf": {
+            "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+            "nodeId": "think"
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+              "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+              "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YCFGYJ4F4V6R27JFMS5FCF",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T09:53:47.425Z"
+              },
+              "replayOf": {
+                "runId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+                "nodeId": "think"
+              }
+            },
+            "messages": [
+              {
+                "id": "01M5YCFFM28PQ8S7FA7RFHTHG4",
+                "role": "user",
+                "content": "Initial QA message",
+                "nodeId": "prepare",
+                "ts": "2026-10-27T09:53:47.650Z"
+              }
+            ],
+            "vars": {
+              "trace": ["seed"]
+            },
+            "artifacts": [],
+            "outputs": {
+              "start": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T09:53:47.625Z"
+              }
+            },
+            "lastOutput": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-27T09:53:47.625Z"
+            },
+            "gates": {
+              "gate": {
+                "passes": 1
+              }
+            },
+            "counters": {
+              "nodeVisits": {
+                "start": 1,
+                "prepare": 1
+              },
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "01M5YCFF5P9YH9CDQRM8M8DY4V": "01M5YCFF5P9YH9CDQRM8M8DY4W"
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 2,
+          "ts": "2026-10-27T09:53:49.025Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 3,
+          "ts": "2026-10-27T09:53:49.032Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 4,
+          "ts": "2026-10-27T09:53:49.042Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:3",
+          "turnId": "01M5YCFGZJRMY6R1JYMSJ0F2H9",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5YCFGYJ4F4V6R27JFMS5FCE visit=1"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 5,
+          "ts": "2026-10-27T09:53:49.259Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "77486a00-52f5-435c-bb38-d6a4101532f7",
+          "mode": "fresh",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 6,
+          "ts": "2026-10-27T09:53:49.261Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 7,
+          "ts": "2026-10-27T09:53:49.263Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:3",
+          "turnId": "01M5YCFGZJRMY6R1JYMSJ0F2H9",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 8,
+          "ts": "2026-10-27T09:53:49.266Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 9,
+          "ts": "2026-10-27T09:53:49.274Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5YCFH6QVGF92N0WRVY890Z0",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5YCFH6QVGF92N0WRVY890Z1",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=1",
+                "nodeId": "think",
+                "ts": "2026-10-27T09:53:49.271Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=1",
+                "at": "2026-10-27T09:53:49.271Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=1",
+                "at": "2026-10-27T09:53:49.271Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 1,
+                "outputTokens": 1,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 239
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 10,
+          "ts": "2026-10-27T09:53:49.298Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 0.281,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 11,
+          "ts": "2026-10-27T09:53:49.302Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 12,
+          "ts": "2026-10-27T09:53:49.302Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.281,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T09:53:49.301Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.281,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T09:53:49.301Z"
+              }
+            }
+          ],
+          "route": "again",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 13,
+          "ts": "2026-10-27T09:53:49.312Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 14,
+          "ts": "2026-10-27T09:53:49.316Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:13",
+          "turnId": "01M5YCFH84D59QN8NQHPVA1ZXT",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5YCFGYJ4F4V6R27JFMS5FCE visit=2",
+          "resumeSessionId": "77486a00-52f5-435c-bb38-d6a4101532f7"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 15,
+          "ts": "2026-10-27T09:53:49.574Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 16,
+          "ts": "2026-10-27T09:53:49.576Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:13",
+          "turnId": "01M5YCFH84D59QN8NQHPVA1ZXT",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 17,
+          "ts": "2026-10-27T09:53:49.578Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 18,
+          "ts": "2026-10-27T09:53:49.579Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "77486a00-52f5-435c-bb38-d6a4101532f7",
+          "mode": "resumed",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 19,
+          "ts": "2026-10-27T09:53:49.586Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5YCFHGG7NQA3WFTARJZPNF2",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5YCFHGG7NQA3WFTARJZPNF3",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=2",
+                "nodeId": "think",
+                "ts": "2026-10-27T09:53:49.584Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=2",
+                "at": "2026-10-27T09:53:49.584Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=77486a00-52f5-435c-bb38-d6a4101532f7 turn=2",
+                "at": "2026-10-27T09:53:49.584Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 2,
+                "outputTokens": 2,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 271
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 20,
+          "ts": "2026-10-27T09:53:49.608Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 0.591,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 21,
+          "ts": "2026-10-27T09:53:49.613Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 22,
+          "ts": "2026-10-27T09:53:49.613Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.591,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T09:53:49.611Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 0.591,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T09:53:49.611Z"
+              }
+            }
+          ],
+          "route": "limit-reached",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 23,
+          "ts": "2026-10-27T09:53:49.623Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "15d8b50e1f073efd"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 24,
+          "ts": "2026-10-27T09:53:49.628Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 25,
+          "ts": "2026-10-27T09:53:49.638Z",
+          "type": "run.waiting",
+          "nodeId": "sub",
+          "wait": {
+            "waitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:23",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF",
+            "startedSeq": 23
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 26,
+          "ts": "2026-10-27T09:53:49.700Z",
+          "type": "run.woken",
+          "nodeId": "sub",
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF",
+            "childFinishedSeq": 8,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 27,
+          "ts": "2026-10-27T09:53:49.717Z",
+          "type": "node.started",
+          "nodeId": "sub",
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "15d8b50e1f073efd"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 28,
+          "ts": "2026-10-27T09:53:49.724Z",
+          "type": "child_run.finished",
+          "nodeId": "sub",
+          "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 29,
+          "ts": "2026-10-27T09:53:49.724Z",
+          "type": "node.finished",
+          "nodeId": "sub",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/sub",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF"
+                },
+                "at": "2026-10-27T09:53:49.723Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "sub",
+                "value": {
+                  "status": "succeeded",
+                  "outcome": "success",
+                  "childRunId": "01M5YCFHHWZG2KDN3WP7XK8MYF"
+                },
+                "at": "2026-10-27T09:53:49.723Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 2,
+                "outputTokens": 2,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 3
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 30,
+          "ts": "2026-10-27T09:53:49.733Z",
+          "type": "node.started",
+          "nodeId": "script",
+          "kind": "script",
+          "attempt": 1,
+          "configHash": "697a8251e904dd1d"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 31,
+          "ts": "2026-10-27T09:53:49.736Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5YCFGYJ4F4V6R27JFMS5FCE:30",
+          "dispatchId": "01M5YCFHN8736MTPGGH6PAJEET"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 32,
+          "ts": "2026-10-27T09:53:49.819Z",
+          "type": "node.progress",
+          "nodeId": "script",
+          "progress": {
+            "exitCode": 0,
+            "stderr": "",
+            "stdoutBytes": 0
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 33,
+          "ts": "2026-10-27T09:53:49.823Z",
+          "type": "node.finished",
+          "nodeId": "script",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/script",
+              "value": {
+                "nodeId": "script",
+                "value": "",
+                "at": "2026-10-27T09:53:49.822Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "script",
+                "value": "",
+                "at": "2026-10-27T09:53:49.822Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 87
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 34,
+          "ts": "2026-10-27T09:53:49.829Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "4b20455a3fde5c86"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 35,
+          "ts": "2026-10-27T09:53:49.833Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 36,
+          "ts": "2026-10-27T09:53:49.833Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 37,
+          "ts": "2026-10-27T09:53:49.833Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": {
+            "trace": ["seed"]
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 38,
+          "ts": "2026-10-27T09:53:49.833Z",
+          "type": "delivery.queued",
+          "delivery": {
+            "id": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "pending",
+            "attempts": 0,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "not_sent",
+            "effectMayHaveHappened": false,
+            "acknowledgementUncertain": false
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 39,
+          "ts": "2026-10-27T09:53:49.844Z",
+          "type": "delivery.attempted",
+          "delivery": {
+            "id": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false,
+            "nextAttemptAt": "2026-10-27T09:54:01.843Z"
+          }
+        },
+        {
+          "runId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "seq": 40,
+          "ts": "2026-10-27T09:53:49.850Z",
+          "type": "delivery.finished",
+          "delivery": {
+            "id": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        }
+      ],
+      "sourceChildren": [
+        {
+          "id": "01M5YCFG8DAEPS6VE61TN6RF27",
+          "ownerId": "local",
+          "loopId": "01M5YCFF5P9YH9CDQRM8M8DY4V",
+          "versionId": "01M5YCFF5P9YH9CDQRM8M8DY4W",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Pinned child version one",
+            "label": "Pinned child version one v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+          "invocationId": "01M5YCFG8DAEPS6VE61TN6RF28",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:53:48.301Z",
+          "startedAt": "2026-10-27T09:53:48.317Z",
+          "finishedAt": "2026-10-27T09:53:48.365Z",
+          "finalizedAt": "2026-10-27T09:53:48.380Z",
+          "lastEventSeq": 8
+        }
+      ],
+      "forkChildren": [
+        {
+          "id": "01M5YCFHHWZG2KDN3WP7XK8MYF",
+          "ownerId": "local",
+          "loopId": "01M5YCFF5P9YH9CDQRM8M8DY4V",
+          "versionId": "01M5YCFF5P9YH9CDQRM8M8DY4W",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Pinned child version one",
+            "label": "Pinned child version one v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5YCFGYJ4F4V6R27JFMS5FCE",
+          "invocationId": "01M5YCFHHWZG2KDN3WP7XK8MYG",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:53:49.628Z",
+          "startedAt": "2026-10-27T09:53:49.647Z",
+          "finishedAt": "2026-10-27T09:53:49.693Z",
+          "finalizedAt": "2026-10-27T09:53:49.704Z",
+          "lastEventSeq": 8
+        }
+      ],
+      "deliveries": [
+        {
+          "body": "{\"runId\":\"01M5YCFFD2ERBH9C26Z4HVZ0DM\",\"loopId\":\"01M5YCFF727EVZEPYDSBJDTDF8\",\"outcome\":\"success\",\"result\":{\"trace\":[\"seed\"]}}",
+          "headers": {
+            "host": "127.0.0.1:6662",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-graphgoblin-timestamp": "2026-10-27T09:53:48.586Z",
+            "idempotency-key": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "accept": "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "accept-encoding": "gzip, deflate",
+            "content-length": "124"
+          }
+        },
+        {
+          "body": "{\"runId\":\"01M5YCFGYJ4F4V6R27JFMS5FCE\",\"loopId\":\"01M5YCFF727EVZEPYDSBJDTDF8\",\"outcome\":\"success\",\"result\":{\"trace\":[\"seed\"]}}",
+          "headers": {
+            "host": "127.0.0.1:6662",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-graphgoblin-timestamp": "2026-10-27T09:53:49.846Z",
+            "idempotency-key": "01M5YCFHR9E8AHAW3RDD74K5KE",
+            "accept": "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "accept-encoding": "gzip, deflate",
+            "content-length": "124"
+          }
+        }
+      ],
+      "before": {
+        "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+        "ownerId": "local",
+        "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+        "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Replay seed and pins",
+          "label": "Replay seed and pins v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "trace": ["seed"]
+        },
+        "deliveries": [
+          {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        ],
+        "createdAt": "2026-10-27T09:53:47.425Z",
+        "startedAt": "2026-10-27T09:53:47.596Z",
+        "finishedAt": "2026-10-27T09:53:48.570Z",
+        "finalizedAt": "2026-10-27T09:53:48.650Z",
+        "lastEventSeq": 44,
+        "recovery": {
+          "observedSeq": 44,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "prepare",
+              "label": "Seed values",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Pinned child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "after": {
+        "id": "01M5YCFFD2ERBH9C26Z4HVZ0DM",
+        "ownerId": "local",
+        "loopId": "01M5YCFF727EVZEPYDSBJDTDF8",
+        "versionId": "01M5YCFF727EVZEPYDSBJDTDF9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Replay seed and pins",
+          "label": "Replay seed and pins v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCFFD2ERBH9C26Z4HVZ0DN",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "trace": ["seed"]
+        },
+        "deliveries": [
+          {
+            "id": "01M5YCFGGNWY26D45WNT8E26Q4",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6662/delivery"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        ],
+        "createdAt": "2026-10-27T09:53:47.425Z",
+        "startedAt": "2026-10-27T09:53:47.596Z",
+        "finishedAt": "2026-10-27T09:53:48.570Z",
+        "finalizedAt": "2026-10-27T09:53:48.650Z",
+        "lastEventSeq": 44,
+        "recovery": {
+          "observedSeq": 44,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "prepare",
+              "label": "Seed values",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "RECOVERY_STALE",
+                "message": "This Replay intent already created run 01M5YCFGYJ4F4V6R27JFMS5FCE. Open that run instead of submitting the same intent again.",
+                "replayRunId": "01M5YCFGYJ4F4V6R27JFMS5FCE"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                },
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Pinned child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Pinned child",
+                  "kind": "subloop"
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

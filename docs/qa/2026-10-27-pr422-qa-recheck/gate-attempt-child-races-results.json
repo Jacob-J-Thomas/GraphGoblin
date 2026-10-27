@@ -1,0 +1,1882 @@
+{
+  "checks": [
+    {
+      "name": "pending pending child ownership refuses independent client",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+          "title": "parent recovery required",
+          "status": 409,
+          "code": "PARENT_RECOVERY_REQUIRED",
+          "detail": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices."
+        }
+      }
+    },
+    {
+      "name": "pending durable consent identifies A failure",
+      "passed": true,
+      "detail": {
+        "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+        "failureSeq": 7,
+        "observedSeq": 7,
+        "retryUncertainScript": true
+      }
+    },
+    {
+      "name": "pending old consent adds no script dispatch",
+      "passed": true,
+      "detail": {
+        "effects": [
+          {
+            "pid": 21952,
+            "label": "a",
+            "at": 1793085705513
+          },
+          {
+            "pid": 52416,
+            "label": "a",
+            "at": 1793085706119
+          },
+          {
+            "pid": 42192,
+            "label": "b",
+            "at": 1793085706246
+          }
+        ],
+        "old": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "changed": {
+          "id": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "ownerId": "local",
+          "loopId": "01M5Y3S303WYHEW59Y1NZBZDQJ",
+          "versionId": "01M5Y3S303WYHEW59Y1NZBZDQK",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 parent pending",
+            "label": "B1 parent pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3S30ZS2H2735SVMJTAG39",
+          "status": "failed",
+          "currentNodeId": "sub",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:13",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "startedSeq": 13
+          },
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "subloop child 01M5Y3S33T40V6TGJ6JHTEE3VT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "sub",
+            "resumable": true,
+            "details": {
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "childNodeId": "b"
+            },
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+              "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.247Z",
+          "startedAt": "2026-10-27T07:21:45.276Z",
+          "finishedAt": "2026-10-27T07:21:46.319Z",
+          "finalizedAt": "2026-10-27T07:21:46.327Z",
+          "lastEventSeq": 18,
+          "recovery": {
+            "observedSeq": 18,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Child",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 18,
+              "nodeId": "sub"
+            }
+          }
+        },
+        "changedChild": {
+          "id": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+          "ownerId": "local",
+          "loopId": "01M5Y3S2Y8C1SPWNGQJBQQJERF",
+          "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 child pending",
+            "label": "B1 child pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "invocationId": "01M5Y3S33T40V6TGJ6JHTEE3VV",
+          "status": "failed",
+          "currentNodeId": "b",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "b",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+              "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.338Z",
+          "startedAt": "2026-10-27T07:21:45.356Z",
+          "finishedAt": "2026-10-27T07:21:46.272Z",
+          "finalizedAt": "2026-10-27T07:21:46.286Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "a",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "b",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "pending B needs new explicit consent",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        }
+      }
+    },
+    {
+      "name": "pending fresh review recovers one identical child",
+      "passed": true,
+      "detail": [
+        {
+          "pid": 21952,
+          "label": "a",
+          "at": 1793085705513
+        },
+        {
+          "pid": 52416,
+          "label": "a",
+          "at": 1793085706119
+        },
+        {
+          "pid": 42192,
+          "label": "b",
+          "at": 1793085706246
+        },
+        {
+          "pid": 22056,
+          "label": "b",
+          "at": 1793085706879
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "scenarios": {
+      "pending": {
+        "parentId": "01M5Y3S30ZS2H2735SVMJTAG38",
+        "childId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+        "childA": {
+          "id": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+          "ownerId": "local",
+          "loopId": "01M5Y3S2Y8C1SPWNGQJBQQJERF",
+          "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 child pending",
+            "label": "B1 child pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "invocationId": "01M5Y3S33T40V6TGJ6JHTEE3VV",
+          "status": "failed",
+          "currentNodeId": "a",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "a",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+              "dispatchId": "01M5Y3S35VCKSMGG8YCYXYJ0BX",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.338Z",
+          "startedAt": "2026-10-27T07:21:45.356Z",
+          "finishedAt": "2026-10-27T07:21:45.560Z",
+          "finalizedAt": "2026-10-27T07:21:45.589Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "a",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "b",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "accepted": {
+          "status": 200,
+          "body": {
+            "id": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "ownerId": "local",
+            "loopId": "01M5Y3S303WYHEW59Y1NZBZDQJ",
+            "versionId": "01M5Y3S303WYHEW59Y1NZBZDQK",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "B1 parent pending",
+              "label": "B1 parent pending v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Y3S30ZS2H2735SVMJTAG39",
+            "status": "running",
+            "currentNodeId": "sub",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:5",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T07:21:45.247Z",
+            "startedAt": "2026-10-27T07:21:45.276Z",
+            "lastEventSeq": 12
+          }
+        },
+        "pendingChild": {
+          "id": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+          "ownerId": "local",
+          "loopId": "01M5Y3S2Y8C1SPWNGQJBQQJERF",
+          "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 child pending",
+            "label": "B1 child pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "invocationId": "01M5Y3S33T40V6TGJ6JHTEE3VV",
+          "status": "failed",
+          "currentNodeId": "a",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "a",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+              "dispatchId": "01M5Y3S35VCKSMGG8YCYXYJ0BX",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.338Z",
+          "startedAt": "2026-10-27T07:21:45.356Z",
+          "finishedAt": "2026-10-27T07:21:45.560Z",
+          "finalizedAt": "2026-10-27T07:21:45.589Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "a",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "b",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "independent": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/parent-recovery-required",
+            "title": "parent recovery required",
+            "status": 409,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "detail": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices."
+          }
+        },
+        "binding": {
+          "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+          "failureSeq": 7,
+          "observedSeq": 7,
+          "retryUncertainScript": true
+        },
+        "changed": {
+          "id": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "ownerId": "local",
+          "loopId": "01M5Y3S303WYHEW59Y1NZBZDQJ",
+          "versionId": "01M5Y3S303WYHEW59Y1NZBZDQK",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 parent pending",
+            "label": "B1 parent pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y3S30ZS2H2735SVMJTAG39",
+          "status": "failed",
+          "currentNodeId": "sub",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:13",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "startedSeq": 13
+          },
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "subloop child 01M5Y3S33T40V6TGJ6JHTEE3VT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "sub",
+            "resumable": true,
+            "details": {
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "childNodeId": "b"
+            },
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+              "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.247Z",
+          "startedAt": "2026-10-27T07:21:45.276Z",
+          "finishedAt": "2026-10-27T07:21:46.319Z",
+          "finalizedAt": "2026-10-27T07:21:46.327Z",
+          "lastEventSeq": 18,
+          "recovery": {
+            "observedSeq": 18,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Child",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 18,
+              "nodeId": "sub"
+            }
+          }
+        },
+        "changedChild": {
+          "id": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+          "ownerId": "local",
+          "loopId": "01M5Y3S2Y8C1SPWNGQJBQQJERF",
+          "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "B1 child pending",
+            "label": "B1 child pending v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38",
+          "invocationId": "01M5Y3S33T40V6TGJ6JHTEE3VV",
+          "status": "failed",
+          "currentNodeId": "b",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "b",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+              "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T07:21:45.338Z",
+          "startedAt": "2026-10-27T07:21:45.356Z",
+          "finishedAt": "2026-10-27T07:21:46.272Z",
+          "finalizedAt": "2026-10-27T07:21:46.286Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+              "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "a",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "a",
+                    "label": "QA effect",
+                    "kind": "script"
+                  },
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "b",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": [
+                  {
+                    "nodeId": "b",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M5Y3S30ZS2H2735SVMJTAG38. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "old": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "noConsent": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/script-consent-required",
+            "title": "script consent required",
+            "status": 409,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          }
+        },
+        "staleReason": false,
+        "effectsBeforeFresh": [
+          {
+            "pid": 21952,
+            "label": "a",
+            "at": 1793085705513
+          },
+          {
+            "pid": 52416,
+            "label": "a",
+            "at": 1793085706119
+          },
+          {
+            "pid": 42192,
+            "label": "b",
+            "at": 1793085706246
+          }
+        ],
+        "finalEffects": [
+          {
+            "pid": 21952,
+            "label": "a",
+            "at": 1793085705513
+          },
+          {
+            "pid": 52416,
+            "label": "a",
+            "at": 1793085706119
+          },
+          {
+            "pid": 42192,
+            "label": "b",
+            "at": 1793085706246
+          },
+          {
+            "pid": 22056,
+            "label": "b",
+            "at": 1793085706879
+          }
+        ],
+        "parentEvents": [
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 1,
+            "ts": "2026-10-27T07:21:45.247Z",
+            "type": "run.queued",
+            "versionId": "01M5Y3S303WYHEW59Y1NZBZDQK",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "B1 parent pending",
+              "label": "B1 parent pending v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5Y3S30ZS2H2735SVMJTAG38",
+                "loopId": "01M5Y3S303WYHEW59Y1NZBZDQJ",
+                "versionId": "01M5Y3S303WYHEW59Y1NZBZDQK",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5Y3S30ZS2H2735SVMJTAG39",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T07:21:45.247Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "subloopVersions": {
+              "01M5Y3S2Y8C1SPWNGQJBQQJERF": "01M5Y3S2Y8C1SPWNGQJBQQJERG"
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 2,
+            "ts": "2026-10-27T07:21:45.281Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 3,
+            "ts": "2026-10-27T07:21:45.301Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 4,
+            "ts": "2026-10-27T07:21:45.313Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T07:21:45.309Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T07:21:45.309Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 5,
+            "ts": "2026-10-27T07:21:45.333Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 1,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 6,
+            "ts": "2026-10-27T07:21:45.338Z",
+            "type": "child_run.started",
+            "nodeId": "sub",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 7,
+            "ts": "2026-10-27T07:21:45.350Z",
+            "type": "run.waiting",
+            "nodeId": "sub",
+            "wait": {
+              "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:5",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 8,
+            "ts": "2026-10-27T07:21:45.576Z",
+            "type": "run.woken",
+            "nodeId": "sub",
+            "reason": "child",
+            "payload": {
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "childFinishedSeq": 7,
+              "status": "failed",
+              "outcome": null
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 9,
+            "ts": "2026-10-27T07:21:45.601Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 2,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 10,
+            "ts": "2026-10-27T07:21:45.618Z",
+            "type": "child_run.finished",
+            "nodeId": "sub",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "status": "failed"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 11,
+            "ts": "2026-10-27T07:21:45.618Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "subloop child 01M5Y3S33T40V6TGJ6JHTEE3VT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "sub",
+              "resumable": true,
+              "details": {
+                "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+                "childNodeId": "a"
+              },
+              "script": {
+                "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+                "dispatchId": "01M5Y3S35VCKSMGG8YCYXYJ0BX",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 12,
+            "ts": "2026-10-27T07:21:45.824Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "childRecovery": {
+              "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "failureSeq": 7,
+              "observedSeq": 7,
+              "retryUncertainScript": true
+            },
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 13,
+            "ts": "2026-10-27T07:21:45.957Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 3,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 14,
+            "ts": "2026-10-27T07:21:45.990Z",
+            "type": "run.waiting",
+            "nodeId": "sub",
+            "wait": {
+              "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:13",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "startedSeq": 13
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 15,
+            "ts": "2026-10-27T07:21:46.281Z",
+            "type": "run.woken",
+            "nodeId": "sub",
+            "reason": "child",
+            "payload": {
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "childFinishedSeq": 15,
+              "status": "failed",
+              "outcome": null
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 16,
+            "ts": "2026-10-27T07:21:46.301Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 4,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 17,
+            "ts": "2026-10-27T07:21:46.317Z",
+            "type": "child_run.finished",
+            "nodeId": "sub",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "status": "failed"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 18,
+            "ts": "2026-10-27T07:21:46.317Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "subloop child 01M5Y3S33T40V6TGJ6JHTEE3VT failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "sub",
+              "resumable": true,
+              "details": {
+                "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+                "childNodeId": "b"
+              },
+              "script": {
+                "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+                "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 19,
+            "ts": "2026-10-27T07:21:46.747Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "childRecovery": {
+              "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "failureSeq": 15,
+              "observedSeq": 15,
+              "retryUncertainScript": true
+            },
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 20,
+            "ts": "2026-10-27T07:21:46.765Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 5,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 21,
+            "ts": "2026-10-27T07:21:46.795Z",
+            "type": "run.waiting",
+            "nodeId": "sub",
+            "wait": {
+              "waitId": "01M5Y3S30ZS2H2735SVMJTAG38:20",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "startedSeq": 20
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 22,
+            "ts": "2026-10-27T07:21:46.943Z",
+            "type": "run.woken",
+            "nodeId": "sub",
+            "reason": "child",
+            "payload": {
+              "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+              "childFinishedSeq": 24,
+              "status": "succeeded",
+              "outcome": "success"
+            }
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 23,
+            "ts": "2026-10-27T07:21:46.956Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 6,
+            "configHash": "294cc5afe3d8fc2d"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 24,
+            "ts": "2026-10-27T07:21:46.964Z",
+            "type": "child_run.finished",
+            "nodeId": "sub",
+            "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "outcome": "success",
+            "status": "succeeded"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 25,
+            "ts": "2026-10-27T07:21:46.964Z",
+            "type": "node.finished",
+            "nodeId": "sub",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/sub",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT"
+                  },
+                  "at": "2026-10-27T07:21:46.963Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5Y3S33T40V6TGJ6JHTEE3VT"
+                  },
+                  "at": "2026-10-27T07:21:46.963Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 4
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 26,
+            "ts": "2026-10-27T07:21:46.988Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 27,
+            "ts": "2026-10-27T07:21:46.991Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 28,
+            "ts": "2026-10-27T07:21:46.991Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5Y3S30ZS2H2735SVMJTAG38",
+            "seq": 29,
+            "ts": "2026-10-27T07:21:46.991Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "childEvents": [
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 1,
+            "ts": "2026-10-27T07:21:45.338Z",
+            "type": "run.queued",
+            "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "B1 child pending",
+              "label": "B1 child pending v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+                "loopId": "01M5Y3S2Y8C1SPWNGQJBQQJERF",
+                "versionId": "01M5Y3S2Y8C1SPWNGQJBQQJERG",
+                "parentRunId": "01M5Y3S30ZS2H2735SVMJTAG38",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5Y3S33T40V6TGJ6JHTEE3VV",
+                "source": "subloop",
+                "caller": {
+                  "kind": "run",
+                  "id": "01M5Y3S30ZS2H2735SVMJTAG38"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T07:21:45.338Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {
+                "start": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T07:21:45.309Z"
+                }
+              },
+              "lastOutput": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T07:21:45.309Z"
+              },
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "subloopVersions": {
+              "01M5Y3S2Y8C1SPWNGQJBQQJERF": "01M5Y3S2Y8C1SPWNGQJBQQJERG"
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 2,
+            "ts": "2026-10-27T07:21:45.363Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 3,
+            "ts": "2026-10-27T07:21:45.368Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 4,
+            "ts": "2026-10-27T07:21:45.375Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "replace",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T07:21:45.373Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T07:21:45.373Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 5,
+            "ts": "2026-10-27T07:21:45.396Z",
+            "type": "node.started",
+            "nodeId": "a",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "3427004442609dbe"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 6,
+            "ts": "2026-10-27T07:21:45.403Z",
+            "type": "script.dispatched",
+            "nodeId": "a",
+            "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+            "dispatchId": "01M5Y3S35VCKSMGG8YCYXYJ0BX"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 7,
+            "ts": "2026-10-27T07:21:45.557Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "a",
+              "resumable": true,
+              "script": {
+                "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+                "dispatchId": "01M5Y3S35VCKSMGG8YCYXYJ0BX",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 8,
+            "ts": "2026-10-27T07:21:45.978Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "actor": {
+              "kind": "run",
+              "id": "01M5Y3S30ZS2H2735SVMJTAG38"
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 9,
+            "ts": "2026-10-27T07:21:45.998Z",
+            "type": "node.started",
+            "nodeId": "a",
+            "kind": "script",
+            "attempt": 2,
+            "configHash": "3427004442609dbe"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 10,
+            "ts": "2026-10-27T07:21:46.002Z",
+            "type": "script.dispatched",
+            "nodeId": "a",
+            "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:5",
+            "dispatchId": "01M5Y3S3RJCVBJGWWZWFS4W2V8"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 11,
+            "ts": "2026-10-27T07:21:46.137Z",
+            "type": "node.progress",
+            "nodeId": "a",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 4
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 12,
+            "ts": "2026-10-27T07:21:46.143Z",
+            "type": "node.finished",
+            "nodeId": "a",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/a",
+                "value": {
+                  "nodeId": "a",
+                  "value": null,
+                  "at": "2026-10-27T07:21:46.141Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "a",
+                  "value": null,
+                  "at": "2026-10-27T07:21:46.141Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 141
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 13,
+            "ts": "2026-10-27T07:21:46.162Z",
+            "type": "node.started",
+            "nodeId": "b",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "b46ba89b6215d70f"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 14,
+            "ts": "2026-10-27T07:21:46.165Z",
+            "type": "script.dispatched",
+            "nodeId": "b",
+            "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+            "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 15,
+            "ts": "2026-10-27T07:21:46.270Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "b",
+              "resumable": true,
+              "script": {
+                "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+                "dispatchId": "01M5Y3S3XN2SPTWQTRWKXDAD7F",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 16,
+            "ts": "2026-10-27T07:21:46.782Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "actor": {
+              "kind": "run",
+              "id": "01M5Y3S30ZS2H2735SVMJTAG38"
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 17,
+            "ts": "2026-10-27T07:21:46.804Z",
+            "type": "node.started",
+            "nodeId": "b",
+            "kind": "script",
+            "attempt": 2,
+            "configHash": "b46ba89b6215d70f"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 18,
+            "ts": "2026-10-27T07:21:46.809Z",
+            "type": "script.dispatched",
+            "nodeId": "b",
+            "visitId": "01M5Y3S33T40V6TGJ6JHTEE3VT:13",
+            "dispatchId": "01M5Y3S4HS1FWY1JG88SKVHV66"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 19,
+            "ts": "2026-10-27T07:21:46.897Z",
+            "type": "node.progress",
+            "nodeId": "b",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 4
+            }
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 20,
+            "ts": "2026-10-27T07:21:46.900Z",
+            "type": "node.finished",
+            "nodeId": "b",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/b",
+                "value": {
+                  "nodeId": "b",
+                  "value": null,
+                  "at": "2026-10-27T07:21:46.899Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "b",
+                  "value": null,
+                  "at": "2026-10-27T07:21:46.899Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 92
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 21,
+            "ts": "2026-10-27T07:21:46.924Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 22,
+            "ts": "2026-10-27T07:21:46.929Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 23,
+            "ts": "2026-10-27T07:21:46.929Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5Y3S33T40V6TGJ6JHTEE3VT",
+            "seq": 24,
+            "ts": "2026-10-27T07:21:46.929Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ]
+      }
+    }
+  }
+}

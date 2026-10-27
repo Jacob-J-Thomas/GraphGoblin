@@ -1,0 +1,384 @@
+{
+  "checks": [
+    {
+      "name": "two Edge tabs admit exactly one Resume",
+      "passed": true,
+      "detail": [
+        {
+          "status": 200,
+          "body": {
+            "id": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+            "ownerId": "local",
+            "loopId": "01M5XRVSSFTTJRW9BHF94HY9SK",
+            "versionId": "01M5XRVSSFTTJRW9BHF94HY9SM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Resume",
+              "label": "QA two tab Resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5XRVSTXZDBW7GEPKPRQAF5G",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5XRVSTXZDBW7GEPKPRQAF5F:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T04:10:59.805Z",
+            "startedAt": "2026-10-27T04:10:59.839Z",
+            "lastEventSeq": 8
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        }
+      ]
+    },
+    {
+      "name": "race driver completed",
+      "passed": false,
+      "detail": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Resume', exact: true }) to be visible\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-pr422\\docs\\qa\\2026-10-27-pr422-qa\\races.mjs:16:309"
+    }
+  ],
+  "evidence": {
+    "twoTabResume": {
+      "paused": {
+        "id": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+        "ownerId": "local",
+        "loopId": "01M5XRVSSFTTJRW9BHF94HY9SK",
+        "versionId": "01M5XRVSSFTTJRW9BHF94HY9SM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA two tab Resume",
+          "label": "QA two tab Resume v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XRVSTXZDBW7GEPKPRQAF5G",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5XRVSTXZDBW7GEPKPRQAF5F:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T04:10:59.982Z",
+        "createdAt": "2026-10-27T04:10:59.805Z",
+        "startedAt": "2026-10-27T04:10:59.839Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "id": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+            "ownerId": "local",
+            "loopId": "01M5XRVSSFTTJRW9BHF94HY9SK",
+            "versionId": "01M5XRVSSFTTJRW9BHF94HY9SM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA two tab Resume",
+              "label": "QA two tab Resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5XRVSTXZDBW7GEPKPRQAF5G",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5XRVSTXZDBW7GEPKPRQAF5F:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T04:10:59.805Z",
+            "startedAt": "2026-10-27T04:10:59.839Z",
+            "lastEventSeq": 8
+          }
+        },
+        {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        }
+      ],
+      "events": [
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 1,
+          "ts": "2026-10-27T04:10:59.805Z",
+          "type": "run.queued",
+          "versionId": "01M5XRVSSFTTJRW9BHF94HY9SM",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA two tab Resume",
+            "label": "QA two tab Resume v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+              "loopId": "01M5XRVSSFTTJRW9BHF94HY9SK",
+              "versionId": "01M5XRVSSFTTJRW9BHF94HY9SM",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5XRVSTXZDBW7GEPKPRQAF5G",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T04:10:59.805Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 2,
+          "ts": "2026-10-27T04:10:59.844Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 3,
+          "ts": "2026-10-27T04:10:59.863Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 4,
+          "ts": "2026-10-27T04:10:59.875Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:10:59.870Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:10:59.870Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 3
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 5,
+          "ts": "2026-10-27T04:10:59.888Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 6,
+          "ts": "2026-10-27T04:10:59.896Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5XRVSTXZDBW7GEPKPRQAF5F:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 7,
+          "ts": "2026-10-27T04:10:59.986Z",
+          "type": "run.paused",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "01M5XRVSTXZDBW7GEPKPRQAF5F",
+          "seq": 8,
+          "ts": "2026-10-27T04:11:01.347Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        }
+      ]
+    },
+    "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Resume', exact: true }) to be visible\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-pr422\\docs\\qa\\2026-10-27-pr422-qa\\races.mjs:16:309"
+  }
+}

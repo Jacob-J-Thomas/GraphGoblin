@@ -1,0 +1,500 @@
+[
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 1,
+    "ts": "2026-10-27T07:19:22.158Z",
+    "type": "run.queued",
+    "versionId": "01M5Y3MQ888J9DC4D6VGGX1FBK",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "missing disk session",
+      "label": "missing disk session v1",
+      "defaults": {
+        "owner": { "byHarness": {} },
+        "process": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } }
+      },
+      "limits": { "maxNodeVisits": 10, "runDeadlineSeconds": null, "structuredTimeoutMs": null },
+      "classifiers": {}
+    },
+    "initialThread": {
+      "schemaVersion": 1,
+      "run": {
+        "id": "01M5Y3MQ9EN385DZBYGG06F711",
+        "loopId": "01M5Y3MQ888J9DC4D6VGGX1FBJ",
+        "versionId": "01M5Y3MQ888J9DC4D6VGGX1FBK",
+        "iteration": 1
+      },
+      "invocation": {
+        "id": "01M5Y3MQ9F5327MM84N1T3A0B2",
+        "source": "manual.api",
+        "caller": { "kind": "user", "id": "local" },
+        "trigger": {
+          "nodeId": "start",
+          "kind": "manual",
+          "payload": null,
+          "receivedAt": "2026-10-27T07:19:22.158Z"
+        }
+      },
+      "messages": [],
+      "vars": {},
+      "artifacts": [],
+      "outputs": {},
+      "gates": {},
+      "counters": {
+        "nodeVisits": {},
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    }
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 2,
+    "ts": "2026-10-27T07:19:22.186Z",
+    "type": "run.started",
+    "attempt": 1
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 3,
+    "ts": "2026-10-27T07:19:22.194Z",
+    "type": "node.started",
+    "nodeId": "start",
+    "kind": "trigger",
+    "attempt": 1,
+    "configHash": "527dee9c4254fe4e"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 4,
+    "ts": "2026-10-27T07:19:22.204Z",
+    "type": "node.finished",
+    "nodeId": "start",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/outputs/start",
+        "value": { "nodeId": "start", "value": null, "at": "2026-10-27T07:19:22.200Z" }
+      },
+      {
+        "op": "add",
+        "path": "/lastOutput",
+        "value": { "nodeId": "start", "value": null, "at": "2026-10-27T07:19:22.200Z" }
+      }
+    ],
+    "route": "out",
+    "durationMs": 2
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 5,
+    "ts": "2026-10-27T07:19:22.234Z",
+    "type": "node.started",
+    "nodeId": "warm",
+    "kind": "inference",
+    "attempt": 1,
+    "configHash": "66fb08538c09e963"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 6,
+    "ts": "2026-10-27T07:19:22.248Z",
+    "type": "harness.turn",
+    "nodeId": "warm",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:5",
+    "turnId": "01M5Y3MQC8KFES3NKA6S4J9DR5",
+    "harness": "codex",
+    "promptKind": "authored",
+    "prompt": "Earlier context"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 7,
+    "ts": "2026-10-27T07:19:22.256Z",
+    "type": "harness.session",
+    "nodeId": "warm",
+    "harness": "codex",
+    "sessionId": "92d4b259-72c1-4c3d-ba09-446f4f7776ba",
+    "mode": "fresh",
+    "model": "gpt-6-luna",
+    "effort": "low"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 8,
+    "ts": "2026-10-27T07:19:22.259Z",
+    "type": "harness.submission",
+    "nodeId": "warm",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:5",
+    "turnId": "01M5Y3MQC8KFES3NKA6S4J9DR5",
+    "submission": "submitted",
+    "marker": "fake.accepted"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 9,
+    "ts": "2026-10-27T07:19:22.277Z",
+    "type": "node.finished",
+    "nodeId": "warm",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/artifacts/-",
+        "value": {
+          "id": "01M5Y3MQD0WQPP4RKZMTHF1QRZ",
+          "kind": "transcript",
+          "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "nodeId": "warm",
+          "bytes": 2,
+          "label": "transcript warm"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/messages/-",
+        "value": {
+          "id": "01M5Y3MQD0WQPP4RKZMTHF1QS0",
+          "role": "assistant",
+          "content": "OK",
+          "nodeId": "warm",
+          "ts": "2026-10-27T07:19:22.272Z"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/outputs/warm",
+        "value": { "nodeId": "warm", "value": "OK", "at": "2026-10-27T07:19:22.272Z" }
+      },
+      {
+        "op": "replace",
+        "path": "/lastOutput",
+        "value": { "nodeId": "warm", "value": "OK", "at": "2026-10-27T07:19:22.272Z" }
+      },
+      {
+        "op": "replace",
+        "path": "/counters/usage",
+        "value": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    ],
+    "route": "out",
+    "durationMs": 38
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 10,
+    "ts": "2026-10-27T07:19:22.298Z",
+    "type": "node.started",
+    "nodeId": "hold",
+    "kind": "wait",
+    "attempt": 1,
+    "configHash": "9ff925cc39b4a4a8"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 11,
+    "ts": "2026-10-27T07:19:22.303Z",
+    "type": "run.waiting",
+    "nodeId": "hold",
+    "wait": {
+      "waitId": "01M5Y3MQ9EN385DZBYGG06F711:10",
+      "nodeId": "hold",
+      "kind": "input",
+      "prompt": "Continue after removing the disposable provider session.",
+      "startedSeq": 10
+    }
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 12,
+    "ts": "2026-10-27T07:19:22.392Z",
+    "type": "input.received",
+    "nodeId": "hold",
+    "payload": "continue"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 13,
+    "ts": "2026-10-27T07:19:22.392Z",
+    "type": "run.woken",
+    "nodeId": "hold",
+    "reason": "input",
+    "payload": "continue"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 14,
+    "ts": "2026-10-27T07:19:22.418Z",
+    "type": "node.started",
+    "nodeId": "hold",
+    "kind": "wait",
+    "attempt": 2,
+    "configHash": "9ff925cc39b4a4a8"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 15,
+    "ts": "2026-10-27T07:19:22.423Z",
+    "type": "node.finished",
+    "nodeId": "hold",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/messages/-",
+        "value": {
+          "id": "01M5Y3MQHNYTWPXT18W8K4PZY0",
+          "role": "user",
+          "content": "continue",
+          "nodeId": "hold",
+          "ts": "2026-10-27T07:19:22.421Z",
+          "tags": ["input"]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/outputs/hold",
+        "value": { "nodeId": "hold", "value": "continue", "at": "2026-10-27T07:19:22.421Z" }
+      },
+      {
+        "op": "replace",
+        "path": "/lastOutput",
+        "value": { "nodeId": "hold", "value": "continue", "at": "2026-10-27T07:19:22.421Z" }
+      }
+    ],
+    "route": "out",
+    "durationMs": 1
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 16,
+    "ts": "2026-10-27T07:19:22.435Z",
+    "type": "node.started",
+    "nodeId": "worker",
+    "kind": "inference",
+    "attempt": 1,
+    "configHash": "cfd710f6f09d69f8"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 17,
+    "ts": "2026-10-27T07:19:22.440Z",
+    "type": "harness.turn",
+    "nodeId": "worker",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+    "turnId": "01M5Y3MQJ8VES02BCEYPZ6D7Q4",
+    "harness": "codex",
+    "promptKind": "authored",
+    "prompt": "Original selected task",
+    "resumeSessionId": "92d4b259-72c1-4c3d-ba09-446f4f7776ba"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 18,
+    "ts": "2026-10-27T07:19:22.444Z",
+    "type": "harness.submission",
+    "nodeId": "worker",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+    "turnId": "01M5Y3MQJ8VES02BCEYPZ6D7Q4",
+    "submission": "session-missing"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 19,
+    "ts": "2026-10-27T07:19:22.446Z",
+    "type": "harness.submission",
+    "nodeId": "worker",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+    "turnId": "01M5Y3MQJ8VES02BCEYPZ6D7Q4",
+    "submission": "session-missing"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 20,
+    "ts": "2026-10-27T07:19:22.455Z",
+    "type": "run.failed",
+    "failure": {
+      "code": "HARNESS_SESSION_MISSING",
+      "message": "The codex session \"92d4b259-72c1-4c3d-ba09-446f4f7776ba\" from resume-previous is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+      "nodeId": "worker",
+      "resumable": false,
+      "details": { "adapterCode": "HARNESS_SESSION_MISSING" },
+      "inference": {
+        "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+        "turnId": "01M5Y3MQJ8VES02BCEYPZ6D7Q4",
+        "submission": "session-missing",
+        "promptKind": "authored",
+        "sessionId": "92d4b259-72c1-4c3d-ba09-446f4f7776ba"
+      },
+      "missingSession": {
+        "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+        "harness": "codex",
+        "sessionId": "92d4b259-72c1-4c3d-ba09-446f4f7776ba",
+        "origin": "resume-previous",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      }
+    }
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 21,
+    "ts": "2026-10-27T07:19:25.552Z",
+    "type": "run.resumed",
+    "actor": { "kind": "user", "id": "local" },
+    "freshSession": {
+      "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+      "harness": "codex",
+      "sessionId": "92d4b259-72c1-4c3d-ba09-446f4f7776ba",
+      "origin": "resume-previous",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "nodeId": "worker",
+      "failureSeq": 20,
+      "priorContextCarried": false,
+      "prompt": "Original selected task"
+    }
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 22,
+    "ts": "2026-10-27T07:19:28.876Z",
+    "type": "node.started",
+    "nodeId": "worker",
+    "kind": "inference",
+    "attempt": 2,
+    "configHash": "cfd710f6f09d69f8"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 23,
+    "ts": "2026-10-27T07:19:28.924Z",
+    "type": "harness.turn",
+    "nodeId": "worker",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+    "turnId": "01M5Y3MXWWY4XT6CZ3GFRMFH88",
+    "harness": "codex",
+    "promptKind": "authored",
+    "prompt": "Original selected task"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 24,
+    "ts": "2026-10-27T07:19:28.931Z",
+    "type": "harness.session",
+    "nodeId": "worker",
+    "harness": "codex",
+    "sessionId": "8f84ef07-106f-4d5d-9141-efaf645493e4",
+    "mode": "fresh",
+    "model": "gpt-6-luna",
+    "effort": "low"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 25,
+    "ts": "2026-10-27T07:19:28.934Z",
+    "type": "harness.submission",
+    "nodeId": "worker",
+    "visitId": "01M5Y3MQ9EN385DZBYGG06F711:16",
+    "turnId": "01M5Y3MXWWY4XT6CZ3GFRMFH88",
+    "submission": "submitted",
+    "marker": "fake.accepted"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 26,
+    "ts": "2026-10-27T07:19:28.947Z",
+    "type": "node.finished",
+    "nodeId": "worker",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/artifacts/-",
+        "value": {
+          "id": "01M5Y3MXXDMW02K2E5QC5YPNGF",
+          "kind": "transcript",
+          "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "nodeId": "worker",
+          "bytes": 2,
+          "label": "transcript worker"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/messages/-",
+        "value": {
+          "id": "01M5Y3MXXEDVB8BG380TYBFHQ3",
+          "role": "assistant",
+          "content": "OK",
+          "nodeId": "worker",
+          "ts": "2026-10-27T07:19:28.942Z"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/outputs/worker",
+        "value": { "nodeId": "worker", "value": "OK", "at": "2026-10-27T07:19:28.942Z" }
+      },
+      {
+        "op": "replace",
+        "path": "/lastOutput",
+        "value": { "nodeId": "worker", "value": "OK", "at": "2026-10-27T07:19:28.942Z" }
+      },
+      {
+        "op": "replace",
+        "path": "/counters/usage",
+        "value": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    ],
+    "route": "out",
+    "durationMs": 63
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 27,
+    "ts": "2026-10-27T07:19:28.965Z",
+    "type": "node.started",
+    "nodeId": "done",
+    "kind": "exit",
+    "attempt": 1,
+    "configHash": "caacd31f1376b30f"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 28,
+    "ts": "2026-10-27T07:19:28.971Z",
+    "type": "exit.evaluated",
+    "nodeId": "done",
+    "outcome": "success"
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 29,
+    "ts": "2026-10-27T07:19:28.971Z",
+    "type": "node.finished",
+    "nodeId": "done",
+    "patch": [],
+    "durationMs": 1
+  },
+  {
+    "runId": "01M5Y3MQ9EN385DZBYGG06F711",
+    "seq": 30,
+    "ts": "2026-10-27T07:19:28.971Z",
+    "type": "run.finished",
+    "status": "succeeded",
+    "outcome": "success"
+  }
+]

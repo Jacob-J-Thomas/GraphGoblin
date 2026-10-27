@@ -1,0 +1,20 @@
+{"scenario":"parent consent followed by independent child recovery during parent scheduling","beforeRelease":{"dispatches":3,"failure":"b"},"afterRelease":{"dispatches":4,"childStatus":"succeeded","parentStatus":"succeeded"},"resumedActors":[{"actor":{"kind":"user","id":"child-tab"},"retryUncertainScript":true},{"actor":{"kind":"run","id":"00000000000000000000000001"},"retryUncertainScript":true}]}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+System.Management.Automation.RemoteException
+AssertionError [ERR_ASSERTION]: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/name","message":"Invalid input: expected string, received undefined"},{"path":"/definition/nodes/1/config/signalName","message":"Unrecognized key \"signalName\""}]}
+System.Management.Automation.RemoteException
+400 !== 201
+System.Management.Automation.RemoteException
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/docs/qa/2026-10-26-pr422-audit-r2/component-probes.mjs:119:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 400,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+System.Management.Automation.RemoteException
+Node.js v22.23.4

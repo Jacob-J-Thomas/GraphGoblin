@@ -1,0 +1,2777 @@
+{
+  "checks": [
+    {
+      "name": "signal.received interleaved parked Resume refuses atomically",
+      "passed": true,
+      "detail": {
+        "response": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "after": {
+          "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+          "ownerId": "local",
+          "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+          "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park signal.received",
+            "label": "Atomic park signal.received v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8720VK7BR9EWXJF5EQH",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.618Z",
+          "createdAt": "2026-10-27T09:57:29.442Z",
+          "startedAt": "2026-10-27T09:57:29.465Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "history": [
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 1,
+            "ts": "2026-10-27T09:57:29.442Z",
+            "type": "run.queued",
+            "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park signal.received",
+              "label": "Atomic park signal.received v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+                "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+                "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCP8720VK7BR9EWXJF5EQH",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:57:29.442Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 2,
+            "ts": "2026-10-27T09:57:29.469Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 3,
+            "ts": "2026-10-27T09:57:29.489Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 4,
+            "ts": "2026-10-27T09:57:29.498Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.495Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.495Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 5,
+            "ts": "2026-10-27T09:57:29.510Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 6,
+            "ts": "2026-10-27T09:57:29.516Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 7,
+            "ts": "2026-10-27T09:57:29.622Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 8,
+            "ts": "2026-10-27T09:57:29.647Z",
+            "type": "signal.received",
+            "name": "unrelated",
+            "payload": "interleave"
+          }
+        ]
+      }
+    },
+    {
+      "name": "run.cancel_requested interleaved parked Resume refuses atomically",
+      "passed": true,
+      "detail": {
+        "response": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "after": {
+          "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+          "ownerId": "local",
+          "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+          "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park run.cancel_requested",
+            "label": "Atomic park run.cancel_requested v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.865Z",
+          "createdAt": "2026-10-27T09:57:29.698Z",
+          "startedAt": "2026-10-27T09:57:29.706Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "history": [
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 1,
+            "ts": "2026-10-27T09:57:29.698Z",
+            "type": "run.queued",
+            "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park run.cancel_requested",
+              "label": "Atomic park run.cancel_requested v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+                "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+                "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:57:29.698Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 2,
+            "ts": "2026-10-27T09:57:29.709Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 3,
+            "ts": "2026-10-27T09:57:29.713Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 4,
+            "ts": "2026-10-27T09:57:29.720Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.718Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.718Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 5,
+            "ts": "2026-10-27T09:57:29.734Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 6,
+            "ts": "2026-10-27T09:57:29.739Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 7,
+            "ts": "2026-10-27T09:57:29.868Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 8,
+            "ts": "2026-10-27T09:57:29.891Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "qa-other"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "uninterleaved parked Resume retains same wait",
+      "passed": true,
+      "detail": {
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "ownerId": "local",
+            "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+            "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park none",
+              "label": "Atomic park none v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T09:57:29.923Z",
+            "startedAt": "2026-10-27T09:57:29.930Z",
+            "lastEventSeq": 8
+          }
+        },
+        "waiting": {
+          "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+          "ownerId": "local",
+          "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+          "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park none",
+            "label": "Atomic park none v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.923Z",
+          "startedAt": "2026-10-27T09:57:29.930Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "after": {
+          "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+          "ownerId": "local",
+          "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+          "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park none",
+            "label": "Atomic park none v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.923Z",
+          "startedAt": "2026-10-27T09:57:29.930Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "original wait consumes input once",
+      "passed": true
+    },
+    {
+      "name": "stored {} HTTP remains readable; commands agree",
+      "passed": true,
+      "detail": {
+        "read": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "resume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "replay": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        }
+      }
+    },
+    {
+      "name": "stored {} MCP recovery agrees",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCP91JDG4G7HCP1G4TXCFA\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCP91429T7JAA7D8CMHDQ0\",\n  \"versionId\": \"01M5YCP91429T7JAA7D8CMHDQ1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Damaged stored definition\",\n    \"label\": \"Damaged stored definition v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCP91JDG4G7HCP1G4TXCFB\",\n  \"status\": \"succeeded\",\n  \"iteration\": 1,\n  \"outcome\": \"success\",\n  \"createdAt\": \"2026-10-27T09:57:30.290Z\",\n  \"startedAt\": \"2026-10-27T09:57:30.298Z\",\n  \"finishedAt\": \"2026-10-27T09:57:30.331Z\",\n  \"finalizedAt\": \"2026-10-27T09:57:30.335Z\",\n  \"lastEventSeq\": 8,\n  \"recovery\": {\n    \"observedSeq\": 8,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replay\": []\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+          "ownerId": "local",
+          "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+          "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Damaged stored definition",
+            "label": "Damaged stored definition v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:57:30.290Z",
+          "startedAt": "2026-10-27T09:57:30.298Z",
+          "finishedAt": "2026-10-27T09:57:30.331Z",
+          "finalizedAt": "2026-10-27T09:57:30.335Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replay": []
+          }
+        }
+      }
+    },
+    {
+      "name": "stored {} MCP resume_run refuses consistently",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "name": "stored {} MCP replay_run refuses consistently",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "name": "stored {} Edge displays run and unavailable reason",
+      "passed": true,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5YCP91JDG4G7HCP1G4TXCFA\nsucceeded\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: The pinned definition is unavailable or cannot execute.\n\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nDamaged stored definition v1 · version ID 01M5YCP91429T7JAA7D8CMHDQ1\n\nLoading pinned definition…\n\nExact run record\nFinalization\n\nFully finalized.\n\nExecution: succeeded. Delivery is tracked separately.\n\nTimeline (8 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–8 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 3 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nExact recorded event #8\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (1 nodes)"
+    },
+    {
+      "name": "stored { HTTP remains readable; commands agree",
+      "passed": true,
+      "detail": {
+        "read": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "resume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "replay": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        }
+      }
+    },
+    {
+      "name": "stored { MCP recovery agrees",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCP91JDG4G7HCP1G4TXCFA\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCP91429T7JAA7D8CMHDQ0\",\n  \"versionId\": \"01M5YCP91429T7JAA7D8CMHDQ1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Damaged stored definition\",\n    \"label\": \"Damaged stored definition v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCP91JDG4G7HCP1G4TXCFB\",\n  \"status\": \"succeeded\",\n  \"iteration\": 1,\n  \"outcome\": \"success\",\n  \"createdAt\": \"2026-10-27T09:57:30.290Z\",\n  \"startedAt\": \"2026-10-27T09:57:30.298Z\",\n  \"finishedAt\": \"2026-10-27T09:57:30.331Z\",\n  \"finalizedAt\": \"2026-10-27T09:57:30.335Z\",\n  \"lastEventSeq\": 8,\n  \"recovery\": {\n    \"observedSeq\": 8,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replay\": []\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+          "ownerId": "local",
+          "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+          "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Damaged stored definition",
+            "label": "Damaged stored definition v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:57:30.290Z",
+          "startedAt": "2026-10-27T09:57:30.298Z",
+          "finishedAt": "2026-10-27T09:57:30.331Z",
+          "finalizedAt": "2026-10-27T09:57:30.335Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replay": []
+          }
+        }
+      }
+    },
+    {
+      "name": "stored { MCP resume_run refuses consistently",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "name": "stored { MCP replay_run refuses consistently",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "name": "stored { Edge displays run and unavailable reason",
+      "passed": true,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5YCP91JDG4G7HCP1G4TXCFA\nsucceeded\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: The pinned definition is unavailable or cannot execute.\n\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nDamaged stored definition v1 · version ID 01M5YCP91429T7JAA7D8CMHDQ1\n\nLoading pinned definition…\n\nExact run record\nFinalization\n\nFully finalized.\n\nExecution: succeeded. Delivery is tracked separately.\n\nTimeline (8 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–8 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 3 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nExact recorded event #8\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (1 nodes)"
+    }
+  ],
+  "evidence": {
+    "parked": [
+      {
+        "type": "signal.received",
+        "waiting": {
+          "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+          "ownerId": "local",
+          "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+          "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park signal.received",
+            "label": "Atomic park signal.received v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8720VK7BR9EWXJF5EQH",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.442Z",
+          "startedAt": "2026-10-27T09:57:29.465Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "paused": {
+          "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+          "ownerId": "local",
+          "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+          "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park signal.received",
+            "label": "Atomic park signal.received v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8720VK7BR9EWXJF5EQH",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.618Z",
+          "createdAt": "2026-10-27T09:57:29.442Z",
+          "startedAt": "2026-10-27T09:57:29.465Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "response": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "after": {
+          "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+          "ownerId": "local",
+          "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+          "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park signal.received",
+            "label": "Atomic park signal.received v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8720VK7BR9EWXJF5EQH",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.618Z",
+          "createdAt": "2026-10-27T09:57:29.442Z",
+          "startedAt": "2026-10-27T09:57:29.465Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "history": [
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 1,
+            "ts": "2026-10-27T09:57:29.442Z",
+            "type": "run.queued",
+            "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park signal.received",
+              "label": "Atomic park signal.received v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCP8720VK7BR9EWXJF5EQG",
+                "loopId": "01M5YCP85T6BBECT79B6E4DN1P",
+                "versionId": "01M5YCP85T6BBECT79B6E4DN1Q",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCP8720VK7BR9EWXJF5EQH",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:57:29.442Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 2,
+            "ts": "2026-10-27T09:57:29.469Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 3,
+            "ts": "2026-10-27T09:57:29.489Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 4,
+            "ts": "2026-10-27T09:57:29.498Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.495Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.495Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 5,
+            "ts": "2026-10-27T09:57:29.510Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 6,
+            "ts": "2026-10-27T09:57:29.516Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCP8720VK7BR9EWXJF5EQG:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 7,
+            "ts": "2026-10-27T09:57:29.622Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCP8720VK7BR9EWXJF5EQG",
+            "seq": 8,
+            "ts": "2026-10-27T09:57:29.647Z",
+            "type": "signal.received",
+            "name": "unrelated",
+            "payload": "interleave"
+          }
+        ]
+      },
+      {
+        "type": "run.cancel_requested",
+        "waiting": {
+          "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+          "ownerId": "local",
+          "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+          "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park run.cancel_requested",
+            "label": "Atomic park run.cancel_requested v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.698Z",
+          "startedAt": "2026-10-27T09:57:29.706Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "paused": {
+          "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+          "ownerId": "local",
+          "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+          "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park run.cancel_requested",
+            "label": "Atomic park run.cancel_requested v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.865Z",
+          "createdAt": "2026-10-27T09:57:29.698Z",
+          "startedAt": "2026-10-27T09:57:29.706Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "response": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "after": {
+          "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+          "ownerId": "local",
+          "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+          "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park run.cancel_requested",
+            "label": "Atomic park run.cancel_requested v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:29.865Z",
+          "createdAt": "2026-10-27T09:57:29.698Z",
+          "startedAt": "2026-10-27T09:57:29.706Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "history": [
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 1,
+            "ts": "2026-10-27T09:57:29.698Z",
+            "type": "run.queued",
+            "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park run.cancel_requested",
+              "label": "Atomic park run.cancel_requested v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+                "loopId": "01M5YCP8EFSYKRFSCDY72J047T",
+                "versionId": "01M5YCP8EFSYKRFSCDY72J047V",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCP8F2EFAC3Y1X34NJPJCT",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:57:29.698Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 2,
+            "ts": "2026-10-27T09:57:29.709Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 3,
+            "ts": "2026-10-27T09:57:29.713Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 4,
+            "ts": "2026-10-27T09:57:29.720Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.718Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.718Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 5,
+            "ts": "2026-10-27T09:57:29.734Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 6,
+            "ts": "2026-10-27T09:57:29.739Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCP8F2EFAC3Y1X34NJPJCS:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 7,
+            "ts": "2026-10-27T09:57:29.868Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCP8F2EFAC3Y1X34NJPJCS",
+            "seq": 8,
+            "ts": "2026-10-27T09:57:29.891Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "qa-other"
+            }
+          }
+        ]
+      },
+      {
+        "type": "none",
+        "waiting": {
+          "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+          "ownerId": "local",
+          "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+          "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park none",
+            "label": "Atomic park none v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.923Z",
+          "startedAt": "2026-10-27T09:57:29.930Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "paused": {
+          "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+          "ownerId": "local",
+          "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+          "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park none",
+            "label": "Atomic park none v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+          "status": "paused",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-27T09:57:30.085Z",
+          "createdAt": "2026-10-27T09:57:29.923Z",
+          "startedAt": "2026-10-27T09:57:29.930Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "ownerId": "local",
+            "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+            "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park none",
+              "label": "Atomic park none v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T09:57:29.923Z",
+            "startedAt": "2026-10-27T09:57:29.930Z",
+            "lastEventSeq": 8
+          }
+        },
+        "after": {
+          "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+          "ownerId": "local",
+          "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+          "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Atomic park none",
+            "label": "Atomic park none v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:57:29.923Z",
+          "startedAt": "2026-10-27T09:57:29.930Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "history": [
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 1,
+            "ts": "2026-10-27T09:57:29.923Z",
+            "type": "run.queued",
+            "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Atomic park none",
+              "label": "Atomic park none v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+                "loopId": "01M5YCP8NMACEV72RB5BGVM3J4",
+                "versionId": "01M5YCP8NMACEV72RB5BGVM3J5",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCP8P3RGJVWX6BYXPB3A2Y",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:57:29.923Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 2,
+            "ts": "2026-10-27T09:57:29.933Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 3,
+            "ts": "2026-10-27T09:57:29.937Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 4,
+            "ts": "2026-10-27T09:57:29.944Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.942Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:57:29.942Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 5,
+            "ts": "2026-10-27T09:57:29.956Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 6,
+            "ts": "2026-10-27T09:57:29.960Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCP8P3RGJVWX6BYXPB3A2X:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 7,
+            "ts": "2026-10-27T09:57:30.088Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCP8P3RGJVWX6BYXPB3A2X",
+            "seq": 8,
+            "ts": "2026-10-27T09:57:30.107Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          }
+        ]
+      }
+    ],
+    "definition": [
+      {
+        "bad": "{}",
+        "read": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "resume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "replay": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "mcp": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCP91JDG4G7HCP1G4TXCFA\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCP91429T7JAA7D8CMHDQ0\",\n  \"versionId\": \"01M5YCP91429T7JAA7D8CMHDQ1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Damaged stored definition\",\n    \"label\": \"Damaged stored definition v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCP91JDG4G7HCP1G4TXCFB\",\n  \"status\": \"succeeded\",\n  \"iteration\": 1,\n  \"outcome\": \"success\",\n  \"createdAt\": \"2026-10-27T09:57:30.290Z\",\n  \"startedAt\": \"2026-10-27T09:57:30.298Z\",\n  \"finishedAt\": \"2026-10-27T09:57:30.331Z\",\n  \"finalizedAt\": \"2026-10-27T09:57:30.335Z\",\n  \"lastEventSeq\": 8,\n  \"recovery\": {\n    \"observedSeq\": 8,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replay\": []\n  }\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "commands": [
+          {
+            "content": [
+              {
+                "type": "text",
+                "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+              }
+            ],
+            "isError": true
+          },
+          {
+            "content": [
+              {
+                "type": "text",
+                "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+              }
+            ],
+            "isError": true
+          }
+        ],
+        "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5YCP91JDG4G7HCP1G4TXCFA\nsucceeded\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: The pinned definition is unavailable or cannot execute.\n\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nDamaged stored definition v1 · version ID 01M5YCP91429T7JAA7D8CMHDQ1\n\nLoading pinned definition…\n\nExact run record\nFinalization\n\nFully finalized.\n\nExecution: succeeded. Delivery is tracked separately.\n\nTimeline (8 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–8 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 3 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nExact recorded event #8\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (1 nodes)"
+      },
+      {
+        "bad": "{",
+        "read": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "resume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "replay": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/definition-unavailable",
+            "title": "definition unavailable",
+            "status": 409,
+            "code": "DEFINITION_UNAVAILABLE",
+            "detail": "The pinned definition is unavailable or cannot execute."
+          }
+        },
+        "mcp": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCP91JDG4G7HCP1G4TXCFA\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCP91429T7JAA7D8CMHDQ0\",\n  \"versionId\": \"01M5YCP91429T7JAA7D8CMHDQ1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Damaged stored definition\",\n    \"label\": \"Damaged stored definition v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCP91JDG4G7HCP1G4TXCFB\",\n  \"status\": \"succeeded\",\n  \"iteration\": 1,\n  \"outcome\": \"success\",\n  \"createdAt\": \"2026-10-27T09:57:30.290Z\",\n  \"startedAt\": \"2026-10-27T09:57:30.298Z\",\n  \"finishedAt\": \"2026-10-27T09:57:30.331Z\",\n  \"finalizedAt\": \"2026-10-27T09:57:30.335Z\",\n  \"lastEventSeq\": 8,\n  \"recovery\": {\n    \"observedSeq\": 8,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"DEFINITION_UNAVAILABLE\",\n      \"message\": \"The pinned definition is unavailable or cannot execute.\"\n    },\n    \"replay\": []\n  }\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCP91JDG4G7HCP1G4TXCFA",
+            "ownerId": "local",
+            "loopId": "01M5YCP91429T7JAA7D8CMHDQ0",
+            "versionId": "01M5YCP91429T7JAA7D8CMHDQ1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Damaged stored definition",
+              "label": "Damaged stored definition v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCP91JDG4G7HCP1G4TXCFB",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T09:57:30.290Z",
+            "startedAt": "2026-10-27T09:57:30.298Z",
+            "finishedAt": "2026-10-27T09:57:30.331Z",
+            "finalizedAt": "2026-10-27T09:57:30.335Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "DEFINITION_UNAVAILABLE",
+                "message": "The pinned definition is unavailable or cannot execute."
+              },
+              "replay": []
+            }
+          }
+        },
+        "commands": [
+          {
+            "content": [
+              {
+                "type": "text",
+                "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+              }
+            ],
+            "isError": true
+          },
+          {
+            "content": [
+              {
+                "type": "text",
+                "text": "GraphGoblin API error DEFINITION_UNAVAILABLE (HTTP 409): The pinned definition is unavailable or cannot execute."
+              }
+            ],
+            "isError": true
+          }
+        ],
+        "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5YCP91JDG4G7HCP1G4TXCFA\nsucceeded\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: The pinned definition is unavailable or cannot execute.\n\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nDamaged stored definition v1 · version ID 01M5YCP91429T7JAA7D8CMHDQ1\n\nLoading pinned definition…\n\nExact run record\nFinalization\n\nFully finalized.\n\nExecution: succeeded. Delivery is tracked separately.\n\nTimeline (8 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–8 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 3 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 1 ms\n#8\nrun.finished\nsucceeded (success)\nExact recorded event #8\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (1 nodes)"
+      }
+    ],
+    "mcpPid": 48256,
+    "edge": "156.0.4314.42"
+  }
+}

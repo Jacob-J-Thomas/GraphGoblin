@@ -1,0 +1,3288 @@
+{
+  "checks": [
+    {
+      "name": "exhausted Resume and accessible explanation agree",
+      "passed": true,
+      "detail": {
+        "run": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        },
+        "reason": "Resume unavailable: This run has finished. Resume only continues paused runs or supported failures.",
+        "ax": {
+          "nodeId": "86",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG100XZR357S2TYZ8PD44",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 92,
+                    "idref": "resume-reason-01M5YCG100XZR357S2TYZ8PD44"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "85",
+          "childIds": ["89"],
+          "backendDOMNodeId": 86
+        }
+      }
+    },
+    {
+      "name": "exhausted MCP/HTTP agree",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCG100XZR357S2TYZ8PD44\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG0YSVY6SF9DJMH3MNF0N\",\n  \"versionId\": \"01M5YCG0YSVY6SF9DJMH3MNF0P\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA exhausted\",\n    \"label\": \"QA exhausted v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG100XZR357S2TYZ8PD45\",\n  \"status\": \"exhausted\",\n  \"iteration\": 1,\n  \"outcome\": \"exhausted\",\n  \"result\": \"QA exhausted value\",\n  \"createdAt\": \"2026-10-27T09:54:05.440Z\",\n  \"startedAt\": \"2026-10-27T09:54:05.480Z\",\n  \"finishedAt\": \"2026-10-27T09:54:05.717Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:05.994Z\",\n  \"lastEventSeq\": 9,\n  \"recovery\": {\n    \"observedSeq\": 9,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"RUN_FINISHED\",\n      \"message\": \"This run has finished. Resume only continues paused runs or supported failures.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"done\",\n            \"label\": \"Done\",\n            \"kind\": \"delivery\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"done\",\n            \"label\": \"Done\",\n            \"kind\": \"delivery\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCG100XZR357S2TYZ8PD44",
+          "ownerId": "local",
+          "loopId": "01M5YCG0YSVY6SF9DJMH3MNF0N",
+          "versionId": "01M5YCG0YSVY6SF9DJMH3MNF0P",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA exhausted",
+            "label": "QA exhausted v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG100XZR357S2TYZ8PD45",
+          "status": "exhausted",
+          "iteration": 1,
+          "outcome": "exhausted",
+          "result": "QA exhausted value",
+          "createdAt": "2026-10-27T09:54:05.440Z",
+          "startedAt": "2026-10-27T09:54:05.480Z",
+          "finishedAt": "2026-10-27T09:54:05.717Z",
+          "finalizedAt": "2026-10-27T09:54:05.994Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "exhausted HTTP/MCP Resume refusal agrees",
+      "passed": true,
+      "detail": {
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/run-finished",
+            "title": "run finished",
+            "status": 409,
+            "code": "RUN_FINISHED",
+            "detail": "This run has finished. Resume only continues paused runs or supported failures."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error RUN_FINISHED (HTTP 409): This run has finished. Resume only continues paused runs or supported failures."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "exhausted Replay start and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "exhausted Replay done and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "crash restart preserves uncertain effect without retry",
+      "passed": true,
+      "detail": {
+        "failed": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "failed",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "script",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+              "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:09.886Z",
+          "finalizedAt": "2026-10-27T09:54:10.105Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 9,
+              "nodeId": "script"
+            }
+          }
+        },
+        "count": 1
+      }
+    },
+    {
+      "name": "uncertain-script Resume and accessible explanation agree",
+      "passed": true,
+      "detail": {
+        "run": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "action": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+              },
+              "effects": [
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "kind": "script"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ],
+          "scriptConsent": {
+            "failureSeq": 9,
+            "nodeId": "script"
+          }
+        },
+        "reason": "Resume unavailable: The script may already have produced its effect. Choose Recover script to explicitly retry.",
+        "ax": {
+          "nodeId": "80",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG2F9HTDT0NW8YJP92MDP",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 86,
+                    "idref": "resume-reason-01M5YCG2F9HTDT0NW8YJP92MDP"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "79",
+          "childIds": ["83"],
+          "backendDOMNodeId": 80
+        }
+      }
+    },
+    {
+      "name": "uncertain-script MCP/HTTP agree",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCG2F9HTDT0NW8YJP92MDP\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG2E8BBJDE7RWQ14KHQDQ\",\n  \"versionId\": \"01M5YCG2E8BBJDE7RWQ14KHQDR\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA uncertain\",\n    \"label\": \"QA uncertain v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG2F9HTDT0NW8YJP92MDQ\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"script\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"SCRIPT_OUTCOME_UNCERTAIN\",\n    \"message\": \"The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.\",\n    \"nodeId\": \"script\",\n    \"resumable\": true,\n    \"script\": {\n      \"visitId\": \"01M5YCG2F9HTDT0NW8YJP92MDP:5\",\n      \"dispatchId\": \"01M5YCG2HYYW21VNP51MCC09B6\",\n      \"state\": \"outcome-uncertain\"\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:54:06.953Z\",\n  \"startedAt\": \"2026-10-27T09:54:06.961Z\",\n  \"finishedAt\": \"2026-10-27T09:54:09.886Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:10.105Z\",\n  \"lastEventSeq\": 9,\n  \"recovery\": {\n    \"observedSeq\": 9,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n      \"message\": \"The script may already have produced its effect. Choose Recover script to explicitly retry.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n          \"message\": \"This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.\"\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"script\",\n            \"label\": \"QA effect\",\n            \"kind\": \"script\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"script\",\n        \"label\": \"QA effect\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n          \"message\": \"This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.\"\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"script\",\n            \"label\": \"QA effect\",\n            \"kind\": \"script\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ],\n    \"scriptConsent\": {\n      \"failureSeq\": 9,\n      \"nodeId\": \"script\"\n    }\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "failed",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "script",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+              "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:09.886Z",
+          "finalizedAt": "2026-10-27T09:54:10.105Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 9,
+              "nodeId": "script"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "uncertain-script HTTP/MCP Resume refusal agrees",
+      "passed": true,
+      "detail": {
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/script-consent-required",
+            "title": "script consent required",
+            "status": 409,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error SCRIPT_CONSENT_REQUIRED (HTTP 409): The script may already have produced its effect. Choose Recover script to explicitly retry."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "uncertain-script Replay start and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+          },
+          "effects": [
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "kind": "script"
+            }
+          ]
+        },
+        "text": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.",
+        "disabled": true,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "uncertain-script Replay script and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "script",
+          "label": "QA effect",
+          "action": {
+            "allowed": false,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+          },
+          "effects": [
+            {
+              "nodeId": "script",
+              "label": "QA effect",
+              "kind": "script"
+            }
+          ]
+        },
+        "text": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.",
+        "disabled": true,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "uncertain-script Replay done and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        },
+        "text": "This run never reached this node.",
+        "disabled": true,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "cancelling script consent has no effect",
+      "passed": true,
+      "detail": "Recover script\n\nThe previous script attempt may already have produced its effect. Resume runs the script again and may repeat that effect.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nWork that can run again on this path, if reached:\n\nQA effect (script): script\n\nReplay starts a new run from this node and runs the script again. Cancel leaves this run failed without running anything.\n\nResume\nReplay\nCancel"
+    },
+    {
+      "name": "earlier-node Replay requires uncertain-script checkbox",
+      "passed": true
+    },
+    {
+      "name": "uncertain script consent resumes same visit and inspector follows",
+      "passed": true,
+      "detail": {
+        "resumed": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:11.990Z",
+          "finalizedAt": "2026-10-27T09:54:11.995Z",
+          "lastEventSeq": 18,
+          "recovery": {
+            "observedSeq": 18,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "events": [
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 1,
+            "ts": "2026-10-27T09:54:06.953Z",
+            "type": "run.queued",
+            "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA uncertain",
+              "label": "QA uncertain v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+                "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+                "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:54:06.953Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 2,
+            "ts": "2026-10-27T09:54:06.963Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 3,
+            "ts": "2026-10-27T09:54:06.988Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 4,
+            "ts": "2026-10-27T09:54:06.994Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:06.993Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:06.993Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 5,
+            "ts": "2026-10-27T09:54:07.034Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 6,
+            "ts": "2026-10-27T09:54:07.038Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+            "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 7,
+            "ts": "2026-10-27T09:54:09.712Z",
+            "type": "run.started",
+            "attempt": 2
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 8,
+            "ts": "2026-10-27T09:54:09.731Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 2,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 9,
+            "ts": "2026-10-27T09:54:09.743Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+                "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 10,
+            "ts": "2026-10-27T09:54:11.674Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 11,
+            "ts": "2026-10-27T09:54:11.701Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 3,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 12,
+            "ts": "2026-10-27T09:54:11.708Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+            "dispatchId": "01M5YCG73WQ74N2MQMWT4PRRB2"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 13,
+            "ts": "2026-10-27T09:54:11.941Z",
+            "type": "node.progress",
+            "nodeId": "script",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 0
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 14,
+            "ts": "2026-10-27T09:54:11.959Z",
+            "type": "node.finished",
+            "nodeId": "script",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/script",
+                "value": {
+                  "nodeId": "script",
+                  "value": "",
+                  "at": "2026-10-27T09:54:11.957Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "script",
+                  "value": "",
+                  "at": "2026-10-27T09:54:11.957Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 254
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 15,
+            "ts": "2026-10-27T09:54:11.978Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 16,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 17,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 18,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "name": "missing-session Resume and accessible explanation agree",
+      "passed": true,
+      "detail": {
+        "run": {
+          "observedSeq": 25,
+          "resume": {
+            "allowed": false,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        },
+        "reason": "Resume unavailable: Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run.",
+        "ax": {
+          "nodeId": "79",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG8XPBQP8YET42QX1DKMW",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 85,
+                    "idref": "resume-reason-01M5YCG8XPBQP8YET42QX1DKMW"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "78",
+          "childIds": ["82"],
+          "backendDOMNodeId": 79
+        }
+      }
+    },
+    {
+      "name": "missing-session MCP/HTTP agree",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCG8XPBQP8YET42QX1DKMW\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG8Q7K5PFQ4C1VJXPBHVA\",\n  \"versionId\": \"01M5YCG8Q7K5PFQ4C1VJXPBHVB\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA missing session\",\n    \"label\": \"QA missing session v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG8XPBQP8YET42QX1DKMX\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"think\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"HARNESS_SESSION_MISSING\",\n    \"message\": \"The claude session \\\"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\\\" from resume-own is missing. Choose Start fresh session for node \\\"think\\\" to continue without its prior provider conversation.\",\n    \"nodeId\": \"think\",\n    \"resumable\": false,\n    \"details\": {\n      \"adapterCode\": \"HARNESS_SESSION_MISSING\"\n    },\n    \"inference\": {\n      \"visitId\": \"01M5YCG8XPBQP8YET42QX1DKMW:21\",\n      \"turnId\": \"01M5YCG9S9KGRGMTKA3M3WC8D4\",\n      \"submission\": \"session-missing\",\n      \"promptKind\": \"authored\",\n      \"sessionId\": \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\"\n    },\n    \"missingSession\": {\n      \"visitId\": \"01M5YCG8XPBQP8YET42QX1DKMW:21\",\n      \"harness\": \"claude\",\n      \"sessionId\": \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\",\n      \"origin\": \"resume-own\",\n      \"model\": \"claude-opus-5-5\",\n      \"effort\": \"low\"\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:54:13.558Z\",\n  \"startedAt\": \"2026-10-27T09:54:13.748Z\",\n  \"finishedAt\": \"2026-10-27T09:54:14.745Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:14.771Z\",\n  \"lastEventSeq\": 25,\n  \"recovery\": {\n    \"observedSeq\": 25,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"SESSION_RECOVERY_REQUIRED\",\n      \"message\": \"Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"think\",\n        \"label\": \"Inference\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"park\",\n        \"label\": \"Input park\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"gate\",\n        \"label\": \"Repeat gate\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ]\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCG8XPBQP8YET42QX1DKMW",
+          "ownerId": "local",
+          "loopId": "01M5YCG8Q7K5PFQ4C1VJXPBHVA",
+          "versionId": "01M5YCG8Q7K5PFQ4C1VJXPBHVB",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA missing session",
+            "label": "QA missing session v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG8XPBQP8YET42QX1DKMX",
+          "status": "failed",
+          "currentNodeId": "think",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_SESSION_MISSING",
+            "message": "The claude session \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+            "nodeId": "think",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            },
+            "inference": {
+              "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+              "turnId": "01M5YCG9S9KGRGMTKA3M3WC8D4",
+              "submission": "session-missing",
+              "promptKind": "authored",
+              "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71"
+            },
+            "missingSession": {
+              "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+              "harness": "claude",
+              "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71",
+              "origin": "resume-own",
+              "model": "claude-opus-5-5",
+              "effort": "low"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:13.558Z",
+          "startedAt": "2026-10-27T09:54:13.748Z",
+          "finishedAt": "2026-10-27T09:54:14.745Z",
+          "finalizedAt": "2026-10-27T09:54:14.771Z",
+          "lastEventSeq": 25,
+          "recovery": {
+            "observedSeq": 25,
+            "resume": {
+              "allowed": false,
+              "code": "SESSION_RECOVERY_REQUIRED",
+              "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "missing-session HTTP/MCP Resume refusal agrees",
+      "passed": true,
+      "detail": {
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/session-recovery-required",
+            "title": "session recovery required",
+            "status": 409,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "detail": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error SESSION_RECOVERY_REQUIRED (HTTP 409): Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "missing-session Replay start and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "kind": "inference"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "missing-session Replay think and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "think",
+          "label": "Inference",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "kind": "inference"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "missing-session Replay park and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "park",
+          "label": "Input park",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "kind": "inference"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "missing-session Replay gate and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "gate",
+          "label": "Repeat gate",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "kind": "inference"
+            }
+          ]
+        },
+        "text": "Replay is available at this node.",
+        "disabled": false,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "missing-session Replay done and live reason agree",
+      "passed": true,
+      "detail": {
+        "n": {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        },
+        "text": "This run never reached this node.",
+        "disabled": true,
+        "live": "polite"
+      }
+    },
+    {
+      "name": "restart driver completed",
+      "passed": false,
+      "detail": "locator.isVisible: Error: strict mode violation: getByRole('button', { name: /Start fresh session/ }) resolved to 2 elements:\n    1) <button type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-di…>…</button> aka getByRole('button', { name: 'Start fresh session for think' })\n    2) <button tabindex=\"0\" type=\"button\" data-seq=\"25\" aria-current=\"true\" class=\"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline\">…</button> aka getByRole('button', { name: '#25 run.failed' })\n\nCall log:\n\u001b[2m    - checking visibility of getByRole('button', { name: /Start fresh session/ })\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-pr422-final\\docs\\qa\\2026-10-27-pr422-qa-final\\restarts.mjs:214:78"
+    }
+  ],
+  "evidence": {
+    "states": {
+      "exhausted": {
+        "run": {
+          "id": "01M5YCG100XZR357S2TYZ8PD44",
+          "ownerId": "local",
+          "loopId": "01M5YCG0YSVY6SF9DJMH3MNF0N",
+          "versionId": "01M5YCG0YSVY6SF9DJMH3MNF0P",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA exhausted",
+            "label": "QA exhausted v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG100XZR357S2TYZ8PD45",
+          "status": "exhausted",
+          "iteration": 1,
+          "outcome": "exhausted",
+          "result": "QA exhausted value",
+          "createdAt": "2026-10-27T09:54:05.440Z",
+          "startedAt": "2026-10-27T09:54:05.480Z",
+          "finishedAt": "2026-10-27T09:54:05.717Z",
+          "finalizedAt": "2026-10-27T09:54:05.994Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "done",
+                    "label": "Done",
+                    "kind": "delivery"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "reason": "Resume unavailable: This run has finished. Resume only continues paused runs or supported failures.",
+        "ax": {
+          "nodeId": "86",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG100XZR357S2TYZ8PD44",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 92,
+                    "idref": "resume-reason-01M5YCG100XZR357S2TYZ8PD44"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "85",
+          "childIds": ["89"],
+          "backendDOMNodeId": 86
+        },
+        "mcp": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCG100XZR357S2TYZ8PD44\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG0YSVY6SF9DJMH3MNF0N\",\n  \"versionId\": \"01M5YCG0YSVY6SF9DJMH3MNF0P\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA exhausted\",\n    \"label\": \"QA exhausted v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG100XZR357S2TYZ8PD45\",\n  \"status\": \"exhausted\",\n  \"iteration\": 1,\n  \"outcome\": \"exhausted\",\n  \"result\": \"QA exhausted value\",\n  \"createdAt\": \"2026-10-27T09:54:05.440Z\",\n  \"startedAt\": \"2026-10-27T09:54:05.480Z\",\n  \"finishedAt\": \"2026-10-27T09:54:05.717Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:05.994Z\",\n  \"lastEventSeq\": 9,\n  \"recovery\": {\n    \"observedSeq\": 9,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"RUN_FINISHED\",\n      \"message\": \"This run has finished. Resume only continues paused runs or supported failures.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"done\",\n            \"label\": \"Done\",\n            \"kind\": \"delivery\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"done\",\n            \"label\": \"Done\",\n            \"kind\": \"delivery\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCG100XZR357S2TYZ8PD44",
+            "ownerId": "local",
+            "loopId": "01M5YCG0YSVY6SF9DJMH3MNF0N",
+            "versionId": "01M5YCG0YSVY6SF9DJMH3MNF0P",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA exhausted",
+              "label": "QA exhausted v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCG100XZR357S2TYZ8PD45",
+            "status": "exhausted",
+            "iteration": 1,
+            "outcome": "exhausted",
+            "result": "QA exhausted value",
+            "createdAt": "2026-10-27T09:54:05.440Z",
+            "startedAt": "2026-10-27T09:54:05.480Z",
+            "finishedAt": "2026-10-27T09:54:05.717Z",
+            "finalizedAt": "2026-10-27T09:54:05.994Z",
+            "lastEventSeq": 9,
+            "recovery": {
+              "observedSeq": 9,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_FINISHED",
+                "message": "This run has finished. Resume only continues paused runs or supported failures."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "done",
+                      "label": "Done",
+                      "kind": "delivery"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "done",
+                      "label": "Done",
+                      "kind": "delivery"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/run-finished",
+            "title": "run finished",
+            "status": 409,
+            "code": "RUN_FINISHED",
+            "detail": "This run has finished. Resume only continues paused runs or supported failures."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error RUN_FINISHED (HTTP 409): This run has finished. Resume only continues paused runs or supported failures."
+            }
+          ],
+          "isError": true
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          },
+          {
+            "nodeId": "done",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          }
+        ],
+        "wording": "Replay as a new run\n\nSource run 01M5YCG100XZR357S2TYZ8PD44. The fork starts from recorded state before the selected node.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nWork that can run again on this path, if reached:\n\nDone (done): delivery\nReplay from node\nStart (start)\nDone (done)\n\nReplay is available at this node.\n\nCreate replay run\nCancel"
+      },
+      "uncertain-script": {
+        "run": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "failed",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "script",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+              "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:09.886Z",
+          "finalizedAt": "2026-10-27T09:54:10.105Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 9,
+              "nodeId": "script"
+            }
+          }
+        },
+        "reason": "Resume unavailable: The script may already have produced its effect. Choose Recover script to explicitly retry.",
+        "ax": {
+          "nodeId": "80",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: The script may already have produced its effect. Choose Recover script to explicitly retry."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG2F9HTDT0NW8YJP92MDP",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 86,
+                    "idref": "resume-reason-01M5YCG2F9HTDT0NW8YJP92MDP"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "79",
+          "childIds": ["83"],
+          "backendDOMNodeId": 80
+        },
+        "mcp": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCG2F9HTDT0NW8YJP92MDP\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG2E8BBJDE7RWQ14KHQDQ\",\n  \"versionId\": \"01M5YCG2E8BBJDE7RWQ14KHQDR\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA uncertain\",\n    \"label\": \"QA uncertain v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG2F9HTDT0NW8YJP92MDQ\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"script\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"SCRIPT_OUTCOME_UNCERTAIN\",\n    \"message\": \"The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.\",\n    \"nodeId\": \"script\",\n    \"resumable\": true,\n    \"script\": {\n      \"visitId\": \"01M5YCG2F9HTDT0NW8YJP92MDP:5\",\n      \"dispatchId\": \"01M5YCG2HYYW21VNP51MCC09B6\",\n      \"state\": \"outcome-uncertain\"\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:54:06.953Z\",\n  \"startedAt\": \"2026-10-27T09:54:06.961Z\",\n  \"finishedAt\": \"2026-10-27T09:54:09.886Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:10.105Z\",\n  \"lastEventSeq\": 9,\n  \"recovery\": {\n    \"observedSeq\": 9,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n      \"message\": \"The script may already have produced its effect. Choose Recover script to explicitly retry.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n          \"message\": \"This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.\"\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"script\",\n            \"label\": \"QA effect\",\n            \"kind\": \"script\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"script\",\n        \"label\": \"QA effect\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"SCRIPT_CONSENT_REQUIRED\",\n          \"message\": \"This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.\"\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"script\",\n            \"label\": \"QA effect\",\n            \"kind\": \"script\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ],\n    \"scriptConsent\": {\n      \"failureSeq\": 9,\n      \"nodeId\": \"script\"\n    }\n  }\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "ownerId": "local",
+            "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+            "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA uncertain",
+              "label": "QA uncertain v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+            "status": "failed",
+            "currentNodeId": "script",
+            "iteration": 1,
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+                "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+                "state": "outcome-uncertain"
+              }
+            },
+            "createdAt": "2026-10-27T09:54:06.953Z",
+            "startedAt": "2026-10-27T09:54:06.961Z",
+            "finishedAt": "2026-10-27T09:54:09.886Z",
+            "finalizedAt": "2026-10-27T09:54:10.105Z",
+            "lastEventSeq": 9,
+            "recovery": {
+              "observedSeq": 9,
+              "resume": {
+                "allowed": false,
+                "code": "SCRIPT_CONSENT_REQUIRED",
+                "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": false,
+                    "code": "SCRIPT_CONSENT_REQUIRED",
+                    "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "script",
+                      "label": "QA effect",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "script",
+                  "label": "QA effect",
+                  "action": {
+                    "allowed": false,
+                    "code": "SCRIPT_CONSENT_REQUIRED",
+                    "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "script",
+                      "label": "QA effect",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "REPLAY_NODE_NOT_REACHED",
+                    "message": "This run never reached this node."
+                  },
+                  "effects": []
+                }
+              ],
+              "scriptConsent": {
+                "failureSeq": 9,
+                "nodeId": "script"
+              }
+            }
+          }
+        },
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/script-consent-required",
+            "title": "script consent required",
+            "status": 409,
+            "code": "SCRIPT_CONSENT_REQUIRED",
+            "detail": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error SCRIPT_CONSENT_REQUIRED (HTTP 409): The script may already have produced its effect. Choose Recover script to explicitly retry."
+            }
+          ],
+          "isError": true
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "text": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.",
+            "disabled": true,
+            "live": "polite"
+          },
+          {
+            "nodeId": "script",
+            "text": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat.",
+            "disabled": true,
+            "live": "polite"
+          },
+          {
+            "nodeId": "done",
+            "text": "This run never reached this node.",
+            "disabled": true,
+            "live": "polite"
+          }
+        ],
+        "wording": "Replay as a new run\n\nSource run 01M5YCG2F9HTDT0NW8YJP92MDP. The fork starts from recorded state before the selected node.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nThe recorded definition identifies no scripts, provider turns, child runs or deliveries on this path.\n\nReplay from node\nStart (start)\nQA effect (script)\nDone (done)\n\nThis run never reached this node.\n\nCreate replay run\nCancel"
+      },
+      "missing-session": {
+        "run": {
+          "id": "01M5YCG8XPBQP8YET42QX1DKMW",
+          "ownerId": "local",
+          "loopId": "01M5YCG8Q7K5PFQ4C1VJXPBHVA",
+          "versionId": "01M5YCG8Q7K5PFQ4C1VJXPBHVB",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA missing session",
+            "label": "QA missing session v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG8XPBQP8YET42QX1DKMX",
+          "status": "failed",
+          "currentNodeId": "think",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_SESSION_MISSING",
+            "message": "The claude session \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+            "nodeId": "think",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            },
+            "inference": {
+              "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+              "turnId": "01M5YCG9S9KGRGMTKA3M3WC8D4",
+              "submission": "session-missing",
+              "promptKind": "authored",
+              "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71"
+            },
+            "missingSession": {
+              "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+              "harness": "claude",
+              "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71",
+              "origin": "resume-own",
+              "model": "claude-opus-5-5",
+              "effort": "low"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:13.558Z",
+          "startedAt": "2026-10-27T09:54:13.748Z",
+          "finishedAt": "2026-10-27T09:54:14.745Z",
+          "finalizedAt": "2026-10-27T09:54:14.771Z",
+          "lastEventSeq": 25,
+          "recovery": {
+            "observedSeq": 25,
+            "resume": {
+              "allowed": false,
+              "code": "SESSION_RECOVERY_REQUIRED",
+              "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "reason": "Resume unavailable: Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run.",
+        "ax": {
+          "nodeId": "79",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCG8XPBQP8YET42QX1DKMW",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 85,
+                    "idref": "resume-reason-01M5YCG8XPBQP8YET42QX1DKMW"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "78",
+          "childIds": ["82"],
+          "backendDOMNodeId": 79
+        },
+        "mcp": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCG8XPBQP8YET42QX1DKMW\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCG8Q7K5PFQ4C1VJXPBHVA\",\n  \"versionId\": \"01M5YCG8Q7K5PFQ4C1VJXPBHVB\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA missing session\",\n    \"label\": \"QA missing session v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCG8XPBQP8YET42QX1DKMX\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"think\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"HARNESS_SESSION_MISSING\",\n    \"message\": \"The claude session \\\"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\\\" from resume-own is missing. Choose Start fresh session for node \\\"think\\\" to continue without its prior provider conversation.\",\n    \"nodeId\": \"think\",\n    \"resumable\": false,\n    \"details\": {\n      \"adapterCode\": \"HARNESS_SESSION_MISSING\"\n    },\n    \"inference\": {\n      \"visitId\": \"01M5YCG8XPBQP8YET42QX1DKMW:21\",\n      \"turnId\": \"01M5YCG9S9KGRGMTKA3M3WC8D4\",\n      \"submission\": \"session-missing\",\n      \"promptKind\": \"authored\",\n      \"sessionId\": \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\"\n    },\n    \"missingSession\": {\n      \"visitId\": \"01M5YCG8XPBQP8YET42QX1DKMW:21\",\n      \"harness\": \"claude\",\n      \"sessionId\": \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\",\n      \"origin\": \"resume-own\",\n      \"model\": \"claude-opus-5-5\",\n      \"effort\": \"low\"\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:54:13.558Z\",\n  \"startedAt\": \"2026-10-27T09:54:13.748Z\",\n  \"finishedAt\": \"2026-10-27T09:54:14.745Z\",\n  \"finalizedAt\": \"2026-10-27T09:54:14.771Z\",\n  \"lastEventSeq\": 25,\n  \"recovery\": {\n    \"observedSeq\": 25,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"SESSION_RECOVERY_REQUIRED\",\n      \"message\": \"Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"think\",\n        \"label\": \"Inference\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"park\",\n        \"label\": \"Input park\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"gate\",\n        \"label\": \"Repeat gate\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": [\n          {\n            \"nodeId\": \"think\",\n            \"label\": \"Inference\",\n            \"kind\": \"inference\"\n          }\n        ]\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCG8XPBQP8YET42QX1DKMW",
+            "ownerId": "local",
+            "loopId": "01M5YCG8Q7K5PFQ4C1VJXPBHVA",
+            "versionId": "01M5YCG8Q7K5PFQ4C1VJXPBHVB",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA missing session",
+              "label": "QA missing session v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCG8XPBQP8YET42QX1DKMX",
+            "status": "failed",
+            "currentNodeId": "think",
+            "iteration": 1,
+            "failure": {
+              "code": "HARNESS_SESSION_MISSING",
+              "message": "The claude session \"e1e1dc4e-2fee-4425-8cc8-d189a7737d71\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+              "nodeId": "think",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_SESSION_MISSING"
+              },
+              "inference": {
+                "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+                "turnId": "01M5YCG9S9KGRGMTKA3M3WC8D4",
+                "submission": "session-missing",
+                "promptKind": "authored",
+                "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71"
+              },
+              "missingSession": {
+                "visitId": "01M5YCG8XPBQP8YET42QX1DKMW:21",
+                "harness": "claude",
+                "sessionId": "e1e1dc4e-2fee-4425-8cc8-d189a7737d71",
+                "origin": "resume-own",
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            },
+            "createdAt": "2026-10-27T09:54:13.558Z",
+            "startedAt": "2026-10-27T09:54:13.748Z",
+            "finishedAt": "2026-10-27T09:54:14.745Z",
+            "finalizedAt": "2026-10-27T09:54:14.771Z",
+            "lastEventSeq": 25,
+            "recovery": {
+              "observedSeq": 25,
+              "resume": {
+                "allowed": false,
+                "code": "SESSION_RECOVERY_REQUIRED",
+                "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "think",
+                      "label": "Inference",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "think",
+                      "label": "Inference",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "park",
+                  "label": "Input park",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "think",
+                      "label": "Inference",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "gate",
+                  "label": "Repeat gate",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "think",
+                      "label": "Inference",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "REPLAY_NODE_NOT_REACHED",
+                    "message": "This run never reached this node."
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          }
+        },
+        "refusal": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/session-recovery-required",
+            "title": "session recovery required",
+            "status": 409,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "detail": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          }
+        },
+        "mcpRefusal": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error SESSION_RECOVERY_REQUIRED (HTTP 409): Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+            }
+          ],
+          "isError": true
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          },
+          {
+            "nodeId": "think",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          },
+          {
+            "nodeId": "park",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          },
+          {
+            "nodeId": "gate",
+            "text": "Replay is available at this node.",
+            "disabled": false,
+            "live": "polite"
+          },
+          {
+            "nodeId": "done",
+            "text": "This run never reached this node.",
+            "disabled": true,
+            "live": "polite"
+          }
+        ],
+        "wording": "Replay as a new run\n\nSource run 01M5YCG8XPBQP8YET42QX1DKMW. The fork starts from recorded state before the selected node.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nThe recorded definition identifies no scripts, provider turns, child runs or deliveries on this path.\n\nReplay from node\nStart (start)\nInference (think)\nInput park (park)\nRepeat gate (gate)\nDone (done)\n\nThis run never reached this node.\n\nCreate replay run\nCancel"
+      }
+    },
+    "scenarios": {
+      "uncertain": {
+        "preCrash": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "running",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "failed": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "failed",
+          "currentNodeId": "script",
+          "iteration": 1,
+          "failure": {
+            "code": "SCRIPT_OUTCOME_UNCERTAIN",
+            "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+            "nodeId": "script",
+            "resumable": true,
+            "script": {
+              "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+              "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:09.886Z",
+          "finalizedAt": "2026-10-27T09:54:10.105Z",
+          "lastEventSeq": 9,
+          "recovery": {
+            "observedSeq": 9,
+            "resume": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 9,
+              "nodeId": "script"
+            }
+          }
+        },
+        "resumed": {
+          "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+          "ownerId": "local",
+          "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+          "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA uncertain",
+            "label": "QA uncertain v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T09:54:06.953Z",
+          "startedAt": "2026-10-27T09:54:06.961Z",
+          "finishedAt": "2026-10-27T09:54:11.990Z",
+          "finalizedAt": "2026-10-27T09:54:11.995Z",
+          "lastEventSeq": 18,
+          "recovery": {
+            "observedSeq": 18,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "script",
+                "label": "QA effect",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "QA effect",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "consentText": "Recover script\n\nThe previous script attempt may already have produced its effect. Resume runs the script again and may repeat that effect.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nWork that can run again on this path, if reached:\n\nQA effect (script): script\n\nReplay starts a new run from this node and runs the script again. Cancel leaves this run failed without running anything.\n\nResume\nReplay\nCancel",
+        "events": [
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 1,
+            "ts": "2026-10-27T09:54:06.953Z",
+            "type": "run.queued",
+            "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA uncertain",
+              "label": "QA uncertain v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCG2F9HTDT0NW8YJP92MDP",
+                "loopId": "01M5YCG2E8BBJDE7RWQ14KHQDQ",
+                "versionId": "01M5YCG2E8BBJDE7RWQ14KHQDR",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCG2F9HTDT0NW8YJP92MDQ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:54:06.953Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 2,
+            "ts": "2026-10-27T09:54:06.963Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 3,
+            "ts": "2026-10-27T09:54:06.988Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 4,
+            "ts": "2026-10-27T09:54:06.994Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:06.993Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:06.993Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 5,
+            "ts": "2026-10-27T09:54:07.034Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 6,
+            "ts": "2026-10-27T09:54:07.038Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+            "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 7,
+            "ts": "2026-10-27T09:54:09.712Z",
+            "type": "run.started",
+            "attempt": 2
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 8,
+            "ts": "2026-10-27T09:54:09.731Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 2,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 9,
+            "ts": "2026-10-27T09:54:09.743Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "SCRIPT_OUTCOME_UNCERTAIN",
+              "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+                "dispatchId": "01M5YCG2HYYW21VNP51MCC09B6",
+                "state": "outcome-uncertain"
+              }
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 10,
+            "ts": "2026-10-27T09:54:11.674Z",
+            "type": "run.resumed",
+            "retryUncertainScript": true,
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 11,
+            "ts": "2026-10-27T09:54:11.701Z",
+            "type": "node.started",
+            "nodeId": "script",
+            "kind": "script",
+            "attempt": 3,
+            "configHash": "41c874edf80503cc"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 12,
+            "ts": "2026-10-27T09:54:11.708Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5YCG2F9HTDT0NW8YJP92MDP:5",
+            "dispatchId": "01M5YCG73WQ74N2MQMWT4PRRB2"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 13,
+            "ts": "2026-10-27T09:54:11.941Z",
+            "type": "node.progress",
+            "nodeId": "script",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 0
+            }
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 14,
+            "ts": "2026-10-27T09:54:11.959Z",
+            "type": "node.finished",
+            "nodeId": "script",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/script",
+                "value": {
+                  "nodeId": "script",
+                  "value": "",
+                  "at": "2026-10-27T09:54:11.957Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "script",
+                  "value": "",
+                  "at": "2026-10-27T09:54:11.957Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 254
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 15,
+            "ts": "2026-10-27T09:54:11.978Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 16,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 17,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5YCG2F9HTDT0NW8YJP92MDP",
+            "seq": 18,
+            "ts": "2026-10-27T09:54:11.986Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    "environment": {
+      "edge": "156.0.4314.42",
+      "node": "v22.23.4",
+      "mcpPid": 57540
+    },
+    "error": "locator.isVisible: Error: strict mode violation: getByRole('button', { name: /Start fresh session/ }) resolved to 2 elements:\n    1) <button type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-di…>…</button> aka getByRole('button', { name: 'Start fresh session for think' })\n    2) <button tabindex=\"0\" type=\"button\" data-seq=\"25\" aria-current=\"true\" class=\"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline\">…</button> aka getByRole('button', { name: '#25 run.failed' })\n\nCall log:\n\u001b[2m    - checking visibility of getByRole('button', { name: /Start fresh session/ })\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-pr422-final\\docs\\qa\\2026-10-27-pr422-qa-final\\restarts.mjs:214:78"
+  }
+}

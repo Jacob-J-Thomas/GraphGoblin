@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+not ok 1 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+  ---
+  duration_ms: 7041.7541
+  type: 'test'
+  location: '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-audit-pr422-r2\\apps\\api\\scripts\\prompt-restart.integration.mjs:209:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    /runs/01M5XS7G1FTF5E7VTEZXS077B6/resume
+    
+    400 !== 409
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 409
+  actual: 400
+  operator: 'strictEqual'
+  stack: |-
+    api (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:128:40)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:257:9
+    async withApiFixture (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:137:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+not ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+  ---
+  duration_ms: 6565.1054
+  type: 'test'
+  location: '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-audit-pr422-r2\\apps\\api\\scripts\\prompt-restart.integration.mjs:209:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    /runs/01M5XS7PVAGH6WXFVJ1HV2PGYZ/resume
+    
+    400 !== 409
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 409
+  actual: 400
+  operator: 'strictEqual'
+  stack: |-
+    api (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:128:40)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:257:9
+    async withApiFixture (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r2/apps/api/scripts/prompt-restart.integration.mjs:137:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14473.8531

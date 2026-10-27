@@ -1,0 +1,29 @@
+Node: v22.23.4 at %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe
+pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/engine test:coverage --maxWorkers=1 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-audit-pr422-r3/packages/engine
+      Coverage enabled with v8
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  60 passed (60)
+      Tests  1745 passed (1745)
+   Start at  02:16:02
+   Duration  157.41s (tests 72%, import 25%, transform 2%, worker 1%)
+
+     Import  151 modules were evaluated 233 times · 35.16s total, 25% of tracked time
+             ~12.37s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.7% ( 3569/3729 )
+Branches     : 91.21% ( 2937/3220 )
+Functions    : 97.75% ( 652/667 )
+Lines        : 97.01% ( 3253/3353 )
+================================================================================
+EXIT_CODE=0

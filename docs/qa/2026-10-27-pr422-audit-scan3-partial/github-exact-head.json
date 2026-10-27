@@ -1,0 +1,419 @@
+{
+  "capturedAt": "2026-10-27T07:39:55.769Z",
+  "pr": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/422",
+        "number": 422,
+        "state": "open",
+        "merged": false,
+        "mergeable": true,
+        "draft": false,
+        "body": "Part of #256 (owner product acceptance remains open). UoW #301, intent I04 #286.\n\n## What changes\n\nResume and Replay eligibility is decided in one place on the server, exposed and explained, and bound to what the user reviewed.\n\n- **One policy, three consumers.** The engine computes a read-only `RunRecovery` from the run, its pinned definition, initial state and event log. `GET /runs/{id}` returns it as `recovery`, MCP `get_run` returns the same snapshot, and the inspector renders its decisions and text. `POST /runs/{id}/resume` and `/replay` evaluate the same policy again and refuse with the same typed codes (HTTP codes equal the policy codes; refusals are 409, shutdown 503, a missing run 404).\n- **The rules are main's rules, made visible.** Resume continues paused runs and supported failures with the same run ID (a completed failed script, `SCRIPT_EXIT_CODE`, stays resumable); a failed parent owns its identified child's recovery; an uncertain script needs #321's explicit consent; a missing provider session needs #265's fresh-session choice; stop, deadline and unconfirmed-termination failures stay non-resumable. Replay is available at any node the source reached, with a usable definition and state, as on main; the Replay dialog says plainly that the fork runs again from that node as a new run, naming the kinds of work that will run again (scripts, provider turns, child runs, deliveries), and the source's recorded effects and deliveries are never undone or resent.\n- **Observation-bound commands.** Both commands require the `observedSeq` the user reviewed; a stale or repeated intent is refused as `RECOVERY_STALE`. Replay is deduplicated at fork admission: migration `0024_replay_intent` adds the intent's node and observed sequence to the fork row with a uniqueness constraint across the existing indexed `replay_source_run_id` (from #412), so one transaction admits at most one fork per reviewed intent and a lost acknowledgement finds the existing fork. Nothing is appended to a finished run's history.\n- Docs: ADR-0061, docs/05, /07, /09, the run-and-observe and troubleshooting guides, CHANGELOG with the API/MCP upgrade note (`observedSeq` is required), generated references and client.\n\n## Delivery record\n\n- Implementer: the work package's implementer. The orchestrator's review (scan 1 of 3 under D-035) required the eligibility rules to return to main's (the first version had tightened Replay and Resume beyond #256's scope) and Replay deduplication to move from an event on the finished source run to fork admission; both done. Integrated with `main` after #412, #417 and #418 (13 conflicts resolved, migration renumbered to 0024). Record: `docs/qa/2026-10-25-wp-d5-256/REPORT.md`.\n- Gate: an independent audit at the exact head and an independent behaviour QA, then green CI.\n\n## Post-merge human QA (#256)\n\nThe Replay dialog's explanation of repeated work and the inspector's explanations of unavailable actions are product wording the owner should read on a disposable instance.\n\n",
+        "title": "Decide Resume and Replay eligibility on the server, explain it, and bind recovery to the reviewed observation (#256)",
+        "base": "main",
+        "base_sha": "35576b4a582b07b9d0f72e6d5ca80928591de393",
+        "head": "codex-wp-d5-256",
+        "head_sha": "ef349181691a97b1fbe0d50a7ed8b4a4ba01175e",
+        "head_repo_id": 1403707890,
+        "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+        "merge_commit_sha": "49c43fe9db55c1d938abc70a14c6cd8d537e58c5",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "requested_reviewers": null,
+        "requested_team_reviewers": null,
+        "diff": null,
+        "comments": null,
+        "created_at": "2026-10-27T03:53:12Z",
+        "updated_at": "2026-10-27T07:00:47Z",
+        "closed_at": null,
+        "merged_at": null,
+        "commits": 6,
+        "changed_files": 469,
+        "additions": 40070,
+        "deletions": 1652,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/422",
+        "display_title": "Decide Resume and Replay eligibility on the server, explain it, and bind recovery to the reviewed observation (#256)"
+      },
+      "isError": false
+    }
+  },
+  "workflow": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "workflow_runs": [
+        {
+          "id": 40464533311,
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 781,
+          "jobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/40464533311/jobs",
+          "logs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/40464533311/logs",
+          "workflow_id": 374245139
+        }
+      ]
+    },
+    "isError": false
+  },
+  "jobs": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "jobs": [
+        {
+          "id": 122056765381,
+          "name": "Gates",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40464533311,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Reset acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Recovery process acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Wait restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Prompt restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Webhook retry acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Current-format migration acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Format check",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Layer rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Migration generation is a no-op",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Design token rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Dependency graph rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Shipped templates and deliberate-invalid refusal",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Unit tests with coverage thresholds",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Licence allowlist",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Generated docs are current",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Design token contrast table is current and passing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Dependency audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            },
+            {
+              "name": "Upload coverage reports",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 50
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 51
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 52
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 53
+            }
+          ]
+        },
+        {
+          "id": 122056765578,
+          "name": "Browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40464533311,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install Edge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Functional browser suite (no retries)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Browser coverage and exclusions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Upload browser failure evidence",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        },
+        {
+          "id": 122056765765,
+          "name": "Template image",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40464533311,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Build the distributed image",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Load installed templates without network or writable storage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

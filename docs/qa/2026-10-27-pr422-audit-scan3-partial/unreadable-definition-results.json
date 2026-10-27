@@ -1,0 +1,125 @@
+[
+  {
+    "storedDefinition": "{}",
+    "responses": [
+      {
+        "action": "read",
+        "status": 200,
+        "body": {
+          "id": "01M5Y423TH6KAPRWD20JCES57C",
+          "ownerId": "local",
+          "loopId": "01M5Y423RYW2K5KTQ6MW2HD8NE",
+          "versionId": "01M5Y423RYW2K5KTQ6MW2HD8NF",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "minimal",
+            "label": "minimal v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Y423TH6KAPRWD20JCES57D",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T07:26:40.977Z",
+          "startedAt": "2026-10-27T07:26:41.018Z",
+          "finishedAt": "2026-10-27T07:26:41.147Z",
+          "finalizedAt": "2026-10-27T07:26:41.198Z",
+          "lastEventSeq": 8,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "DEFINITION_UNAVAILABLE",
+              "message": "The pinned definition is unavailable or cannot execute."
+            },
+            "replay": []
+          }
+        }
+      },
+      {
+        "action": "resume",
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/definition-unavailable",
+          "title": "definition unavailable",
+          "status": 409,
+          "code": "DEFINITION_UNAVAILABLE",
+          "detail": "The pinned definition is unavailable or cannot execute."
+        }
+      },
+      {
+        "action": "replay",
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/definition-unavailable",
+          "title": "definition unavailable",
+          "status": 409,
+          "code": "DEFINITION_UNAVAILABLE",
+          "detail": "The pinned definition is unavailable or cannot execute."
+        }
+      }
+    ]
+  },
+  {
+    "storedDefinition": "{",
+    "responses": [
+      {
+        "action": "read",
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/internal-error",
+          "title": "internal error",
+          "status": 500,
+          "code": "INTERNAL_ERROR",
+          "detail": "something went wrong on the server"
+        }
+      },
+      {
+        "action": "resume",
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/internal-error",
+          "title": "internal error",
+          "status": 500,
+          "code": "INTERNAL_ERROR",
+          "detail": "something went wrong on the server"
+        }
+      },
+      {
+        "action": "replay",
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/internal-error",
+          "title": "internal error",
+          "status": 500,
+          "code": "INTERNAL_ERROR",
+          "detail": "something went wrong on the server"
+        }
+      }
+    ]
+  }
+]

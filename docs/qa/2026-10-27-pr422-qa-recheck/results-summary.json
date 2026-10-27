@@ -1,0 +1,296 @@
+{
+  "results": [
+    {
+      "name": "behaviour-results.json",
+      "checks": 77,
+      "failed": []
+    },
+    {
+      "name": "lineage-results.json",
+      "checks": 5,
+      "failed": []
+    },
+    {
+      "name": "race-results.json",
+      "checks": 8,
+      "failed": []
+    },
+    {
+      "name": "final-results.json",
+      "checks": 3,
+      "failed": []
+    },
+    {
+      "name": "force-http-results.json",
+      "checks": 4,
+      "failed": []
+    },
+    {
+      "name": "upgrade-results.json",
+      "checks": 8,
+      "failed": []
+    },
+    {
+      "name": "fresh-results.json",
+      "checks": 3,
+      "failed": []
+    },
+    {
+      "name": "snapshot-cost-results.json",
+      "checks": 6,
+      "failed": []
+    },
+    {
+      "name": "script-replay-results.json",
+      "checks": 5,
+      "failed": []
+    },
+    {
+      "name": "child-races-results.json",
+      "checks": 5,
+      "failed": []
+    }
+  ],
+  "assertionCorrections": [
+    {
+      "name": "early changed child reason is explicit",
+      "originalPassed": false,
+      "explanation": "The probe expected an internal exception message in the logger. The shipped logger records RECOVERY_STALE and parent child recovery refused; observing current child outcome. The retained HTTP refusal also explains that the run changed and requires refresh/review.",
+      "passed": true
+    },
+    {
+      "name": "different changed child reason is explicit",
+      "originalPassed": false,
+      "explanation": "The probe expected an internal exception message in the logger. The shipped logger records RECOVERY_STALE and parent child recovery refused; observing current child outcome. The retained HTTP refusal also explains that the run changed and requires refresh/review.",
+      "passed": true
+    }
+  ],
+  "migrations": {
+    "before": 24,
+    "after": 26,
+    "reopen": 26
+  },
+  "acceptance": [
+    {
+      "name": "wait-restart",
+      "command": "pnpm.cmd test:wait-restart",
+      "pid": 8264,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "prompt-restart",
+      "command": "pnpm.cmd test:prompt-restart",
+      "pid": 38016,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "missing-session",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec node --test scripts/missing-session.integration.mjs",
+      "pid": 37716,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "edge": "156.0.4314.42",
+  "throughput": [
+    {
+      "name": "no inspector (from about 4,000)",
+      "seconds": 10.1,
+      "A": {
+        "from": 4031,
+        "to": 5279,
+        "eventsPerSecond": 123.6
+      },
+      "B": {
+        "from": 4034,
+        "to": 5281,
+        "eventsPerSecond": 123.5
+      },
+      "inspectorRequests": {},
+      "inspectorRequestsPerMinute": {},
+      "latency": {},
+      "apiMemory": {
+        "privateMiB": 156.9,
+        "workingSetMiB": 155
+      }
+    },
+    {
+      "name": "inspector following A live (from about 5,000)",
+      "seconds": 30.1,
+      "A": {
+        "from": 5581,
+        "to": 8789,
+        "eventsPerSecond": 106.5
+      },
+      "B": {
+        "from": 5584,
+        "to": 8791,
+        "eventsPerSecond": 106.5
+      },
+      "inspectorRequests": {
+        "run": 60,
+        "observation": 60,
+        "thread": 60
+      },
+      "inspectorRequestsPerMinute": {
+        "run": 119.5,
+        "observation": 119.5,
+        "thread": 119.5
+      },
+      "latency": {
+        "run": {
+          "n": 60,
+          "medianMs": 37.7,
+          "p95Ms": 51.4,
+          "maxMs": 53.2
+        },
+        "observation": {
+          "n": 60,
+          "medianMs": 27,
+          "p95Ms": 40.5,
+          "maxMs": 44.2
+        },
+        "thread": {
+          "n": 60,
+          "medianMs": 18.7,
+          "p95Ms": 28.3,
+          "maxMs": 31.6
+        }
+      },
+      "currentThreadBodyBytes": {
+        "min": 1462,
+        "max": 1464
+      },
+      "apiMemory": {
+        "privateMiB": 166.8,
+        "workingSetMiB": 167.1
+      },
+      "jsHeapMiB": 9.52,
+      "sessionStorageBytesUtf16": 419044,
+      "view": {
+        "threadHeading": "Current thread",
+        "rowsMounted": 80,
+        "contiguous": true,
+        "timeline": {
+          "total": 8831,
+          "stream": "live"
+        },
+        "uiVarsN": 1763,
+        "apiVarsNAfter": 1766,
+        "followLiveEnabled": false,
+        "patchDiffShown": false
+      }
+    },
+    {
+      "name": "no inspector (after the 5,000 window)",
+      "seconds": 15.1,
+      "A": {
+        "from": 8839,
+        "to": 10664,
+        "eventsPerSecond": 120.8
+      },
+      "B": {
+        "from": 8839,
+        "to": 10666,
+        "eventsPerSecond": 120.9
+      },
+      "inspectorRequests": {},
+      "inspectorRequestsPerMinute": {},
+      "latency": {},
+      "apiMemory": {
+        "privateMiB": 172.7,
+        "workingSetMiB": 172.5
+      }
+    },
+    {
+      "name": "inspector following A live (from about 10,000)",
+      "seconds": 30.1,
+      "A": {
+        "from": 10884,
+        "to": 14176,
+        "eventsPerSecond": 109.3
+      },
+      "B": {
+        "from": 10884,
+        "to": 14176,
+        "eventsPerSecond": 109.3
+      },
+      "inspectorRequests": {
+        "run": 60,
+        "observation": 60,
+        "thread": 60
+      },
+      "inspectorRequestsPerMinute": {
+        "run": 119.5,
+        "observation": 119.5,
+        "thread": 119.5
+      },
+      "latency": {
+        "run": {
+          "n": 60,
+          "medianMs": 36.4,
+          "p95Ms": 50.7,
+          "maxMs": 52
+        },
+        "observation": {
+          "n": 60,
+          "medianMs": 26.4,
+          "p95Ms": 38,
+          "maxMs": 38.6
+        },
+        "thread": {
+          "n": 60,
+          "medianMs": 16.9,
+          "p95Ms": 25.7,
+          "maxMs": 31.8
+        }
+      },
+      "currentThreadBodyBytes": {
+        "min": 1458,
+        "max": 1466
+      },
+      "apiMemory": {
+        "privateMiB": 159.8,
+        "workingSetMiB": 154.2
+      },
+      "jsHeapMiB": 9.47,
+      "sessionStorageBytesUtf16": 420700,
+      "view": {
+        "threadHeading": "Current thread",
+        "rowsMounted": 80,
+        "contiguous": true,
+        "timeline": {
+          "total": 14216,
+          "stream": "live"
+        },
+        "uiVarsN": 2834,
+        "apiVarsNAfter": 2844,
+        "followLiveEnabled": false,
+        "patchDiffShown": false
+      }
+    },
+    {
+      "name": "no inspector (after the 10,000 window)",
+      "seconds": 15.1,
+      "A": {
+        "from": 14224,
+        "to": 15969,
+        "eventsPerSecond": 115.5
+      },
+      "B": {
+        "from": 14224,
+        "to": 15971,
+        "eventsPerSecond": 115.6
+      },
+      "inspectorRequests": {},
+      "inspectorRequestsPerMinute": {},
+      "latency": {},
+      "apiMemory": {
+        "privateMiB": 159.5,
+        "workingSetMiB": 155.2
+      }
+    }
+  ]
+}

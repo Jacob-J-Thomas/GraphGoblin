@@ -1,0 +1,27 @@
+{
+  "checks": [
+    {
+      "name": "native uncertain script Replay refuses without consent",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/script-consent-required",
+          "title": "script consent required",
+          "status": 409,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "detail": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+        }
+      }
+    },
+    {
+      "name": "native script Replay driver completed",
+      "passed": false,
+      "detail": "TypeError: Cannot read properties of undefined (reading 'id')\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-pr422-recheck/docs/qa/2026-10-27-pr422-qa-recheck/script-replay.mjs:29:41\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+    }
+  ],
+  "evidence": {
+    "mcpPid": 5512,
+    "error": "TypeError: Cannot read properties of undefined (reading 'id')\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-pr422-recheck/docs/qa/2026-10-27-pr422-qa-recheck/script-replay.mjs:29:41\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  }
+}

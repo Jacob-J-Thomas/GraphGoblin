@@ -1,0 +1,2497 @@
+{
+  "checks": [
+    {
+      "name": "fresh-session Edge choice retains same run and records one explicit choice",
+      "passed": true,
+      "detail": {
+        "before": {
+          "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "ownerId": "local",
+          "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+          "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA missing session",
+            "label": "QA missing session v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+          "status": "failed",
+          "currentNodeId": "think",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_SESSION_MISSING",
+            "message": "The claude session \"d92de5ac-afc5-4a48-8f3f-51b8da68f0f1\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+            "nodeId": "think",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            },
+            "inference": {
+              "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+              "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+              "submission": "session-missing",
+              "promptKind": "authored",
+              "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1"
+            },
+            "missingSession": {
+              "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+              "harness": "claude",
+              "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+              "origin": "resume-own",
+              "model": "claude-opus-5-5",
+              "effort": "low"
+            }
+          },
+          "createdAt": "2026-10-27T04:09:22.386Z",
+          "startedAt": "2026-10-27T04:09:23.082Z",
+          "finishedAt": "2026-10-27T04:09:27.356Z",
+          "finalizedAt": "2026-10-27T04:09:27.415Z",
+          "lastEventSeq": 25,
+          "recovery": {
+            "observedSeq": 25,
+            "resume": {
+              "allowed": false,
+              "code": "SESSION_RECOVERY_REQUIRED",
+              "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "fresh": {
+          "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "ownerId": "local",
+          "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+          "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA missing session",
+            "label": "QA missing session v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:34",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 34
+          },
+          "createdAt": "2026-10-27T04:09:22.386Z",
+          "startedAt": "2026-10-27T04:09:23.082Z",
+          "lastEventSeq": 35,
+          "recovery": {
+            "observedSeq": 35,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_ACTIVE",
+              "message": "This run is still active. Pause it before continuing with Resume."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "park",
+                "label": "Input park",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "gate",
+                "label": "Repeat gate",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "choices": [
+          {
+            "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+            "seq": 26,
+            "ts": "2026-10-27T04:14:47.524Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            },
+            "freshSession": {
+              "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+              "harness": "claude",
+              "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+              "origin": "resume-own",
+              "model": "claude-opus-5-5",
+              "effort": "low",
+              "nodeId": "think",
+              "failureSeq": 25,
+              "priorContextCarried": false,
+              "prompt": "QA worker 01M5XRRTPJRHQRY3ZP99HYJEFM visit=2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parent Resume refuses before child fresh choice",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/session-recovery-required",
+          "title": "session recovery required",
+          "status": 409,
+          "code": "SESSION_RECOVERY_REQUIRED",
+          "detail": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+        }
+      }
+    },
+    {
+      "name": "child fresh choice then parent Resume retains one exact child",
+      "passed": true,
+      "detail": {
+        "choice": {
+          "status": 200,
+          "body": {
+            "id": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+            "ownerId": "local",
+            "loopId": "01M5XS2T2ZZ1EE37HRH5CQCG04",
+            "versionId": "01M5XS2T2ZZ1EE37HRH5CQCG05",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA child missing followup",
+              "label": "QA child missing followup v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1",
+            "invocationId": "01M5XS2TH0KAGJ2WM6283NTQQ3",
+            "status": "running",
+            "currentNodeId": "think",
+            "iteration": 1,
+            "createdAt": "2026-10-27T04:14:49.888Z",
+            "startedAt": "2026-10-27T04:14:49.900Z",
+            "lastEventSeq": 26
+          }
+        },
+        "parentResume": {
+          "status": 200,
+          "body": {
+            "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+            "ownerId": "local",
+            "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+            "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA parent missing followup",
+              "label": "QA parent missing followup v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+            "status": "running",
+            "currentNodeId": "sub",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5XS2T9HQK5JFQV9X22NVQP1:5",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T04:14:49.649Z",
+            "startedAt": "2026-10-27T04:14:49.845Z",
+            "lastEventSeq": 12
+          }
+        },
+        "parentDone": {
+          "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+          "ownerId": "local",
+          "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+          "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent missing followup",
+            "label": "QA parent missing followup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T04:14:49.649Z",
+          "startedAt": "2026-10-27T04:14:49.845Z",
+          "finishedAt": "2026-10-27T04:14:51.393Z",
+          "finalizedAt": "2026-10-27T04:14:51.400Z",
+          "lastEventSeq": 22,
+          "recovery": {
+            "observedSeq": 22,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "sub",
+                "label": "Child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "sub",
+                    "label": "Child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+            "ownerId": "local",
+            "loopId": "01M5XS2T2ZZ1EE37HRH5CQCG04",
+            "versionId": "01M5XS2T2ZZ1EE37HRH5CQCG05",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA child missing followup",
+              "label": "QA child missing followup v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1",
+            "invocationId": "01M5XS2TH0KAGJ2WM6283NTQQ3",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-27T04:14:49.888Z",
+            "startedAt": "2026-10-27T04:14:49.900Z",
+            "finishedAt": "2026-10-27T04:14:51.315Z",
+            "finalizedAt": "2026-10-27T04:14:51.337Z",
+            "lastEventSeq": 46
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "fresh": {
+      "before": {
+        "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+        "ownerId": "local",
+        "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+        "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA missing session",
+          "label": "QA missing session v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The claude session \"d92de5ac-afc5-4a48-8f3f-51b8da68f0f1\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+          "nodeId": "think",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+            "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1"
+          },
+          "missingSession": {
+            "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+            "harness": "claude",
+            "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+            "origin": "resume-own",
+            "model": "claude-opus-5-5",
+            "effort": "low"
+          }
+        },
+        "createdAt": "2026-10-27T04:09:22.386Z",
+        "startedAt": "2026-10-27T04:09:23.082Z",
+        "finishedAt": "2026-10-27T04:09:27.356Z",
+        "finalizedAt": "2026-10-27T04:09:27.415Z",
+        "lastEventSeq": 25,
+        "recovery": {
+          "observedSeq": 25,
+          "resume": {
+            "allowed": false,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "fresh": {
+        "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+        "ownerId": "local",
+        "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+        "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA missing session",
+          "label": "QA missing session v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+        "status": "waiting",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:34",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 34
+        },
+        "createdAt": "2026-10-27T04:09:22.386Z",
+        "startedAt": "2026-10-27T04:09:23.082Z",
+        "lastEventSeq": 35,
+        "recovery": {
+          "observedSeq": 35,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_ACTIVE",
+            "message": "This run is still active. Pause it before continuing with Resume."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "end": {
+        "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+        "ownerId": "local",
+        "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+        "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA missing session",
+          "label": "QA missing session v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T04:09:22.386Z",
+        "startedAt": "2026-10-27T04:09:23.082Z",
+        "finishedAt": "2026-10-27T04:14:48.174Z",
+        "finalizedAt": "2026-10-27T04:14:48.182Z",
+        "lastEventSeq": 46,
+        "recovery": {
+          "observedSeq": 46,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat gate",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "history": [
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 1,
+          "ts": "2026-10-27T04:09:22.386Z",
+          "type": "run.queued",
+          "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA missing session",
+            "label": "QA missing session v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+              "loopId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7W",
+              "versionId": "01M5XRRT1D70KBAJ4Q1AQ8AQ7X",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5XRRTPJRHQRY3ZP99HYJEFN",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T04:09:22.386Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {
+              "gate": {
+                "passes": 1
+              }
+            },
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 2,
+          "ts": "2026-10-27T04:09:23.086Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 3,
+          "ts": "2026-10-27T04:09:23.154Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 4,
+          "ts": "2026-10-27T04:09:23.267Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:09:23.261Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:09:23.261Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 6
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 5,
+          "ts": "2026-10-27T04:09:23.481Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 6,
+          "ts": "2026-10-27T04:09:23.777Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:5",
+          "turnId": "01M5XRRW21TR7Q9EEZH7G10C9B",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5XRRTPJRHQRY3ZP99HYJEFM visit=1"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 7,
+          "ts": "2026-10-27T04:09:24.864Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+          "mode": "fresh",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 8,
+          "ts": "2026-10-27T04:09:24.871Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 9,
+          "ts": "2026-10-27T04:09:25.013Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:5",
+          "turnId": "01M5XRRW21TR7Q9EEZH7G10C9B",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 10,
+          "ts": "2026-10-27T04:09:25.084Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 11,
+          "ts": "2026-10-27T04:09:25.440Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5XRRXMDZB3JYY7RVE5VMETN",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5XRRXMDZB3JYY7RVE5VMETP",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=d92de5ac-afc5-4a48-8f3f-51b8da68f0f1 turn=1",
+                "nodeId": "think",
+                "ts": "2026-10-27T04:09:25.389Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=d92de5ac-afc5-4a48-8f3f-51b8da68f0f1 turn=1",
+                "at": "2026-10-27T04:09:25.389Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=d92de5ac-afc5-4a48-8f3f-51b8da68f0f1 turn=1",
+                "at": "2026-10-27T04:09:25.389Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 1,
+                "outputTokens": 1,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1944
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 12,
+          "ts": "2026-10-27T04:09:25.600Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 13,
+          "ts": "2026-10-27T04:09:25.779Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:12",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 12
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 14,
+          "ts": "2026-10-27T04:09:26.005Z",
+          "type": "input.received",
+          "nodeId": "park",
+          "payload": "go"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 15,
+          "ts": "2026-10-27T04:09:26.005Z",
+          "type": "run.woken",
+          "nodeId": "park",
+          "reason": "input",
+          "payload": "go"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 16,
+          "ts": "2026-10-27T04:09:26.099Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 2,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 17,
+          "ts": "2026-10-27T04:09:26.140Z",
+          "type": "node.finished",
+          "nodeId": "park",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5XRRYBTFMK3NSHAQJTRHPCD",
+                "role": "user",
+                "content": "go",
+                "nodeId": "park",
+                "ts": "2026-10-27T04:09:26.138Z",
+                "tags": ["input"]
+              }
+            },
+            {
+              "op": "add",
+              "path": "/outputs/park",
+              "value": {
+                "nodeId": "park",
+                "value": "go",
+                "at": "2026-10-27T04:09:26.138Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "park",
+                "value": "go",
+                "at": "2026-10-27T04:09:26.138Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 3
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 18,
+          "ts": "2026-10-27T04:09:26.253Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 3.214,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 19,
+          "ts": "2026-10-27T04:09:26.304Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 20,
+          "ts": "2026-10-27T04:09:26.304Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 3.214,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T04:09:26.299Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "again",
+                  "gate": {
+                    "previousPasses": 1,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 3.214,
+                    "limit": null
+                  }
+                },
+                "at": "2026-10-27T04:09:26.299Z"
+              }
+            }
+          ],
+          "route": "again",
+          "durationMs": 9
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 21,
+          "ts": "2026-10-27T04:09:26.396Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 22,
+          "ts": "2026-10-27T04:09:26.440Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+          "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5XRRTPJRHQRY3ZP99HYJEFM visit=2",
+          "resumeSessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 23,
+          "ts": "2026-10-27T04:09:27.197Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+          "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+          "submission": "session-missing"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 24,
+          "ts": "2026-10-27T04:09:27.207Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+          "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+          "submission": "session-missing"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 25,
+          "ts": "2026-10-27T04:09:27.311Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "HARNESS_SESSION_MISSING",
+            "message": "The claude session \"d92de5ac-afc5-4a48-8f3f-51b8da68f0f1\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+            "nodeId": "think",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            },
+            "inference": {
+              "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+              "turnId": "01M5XRRYN7F0CHJEPDRHCXX81B",
+              "submission": "session-missing",
+              "promptKind": "authored",
+              "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1"
+            },
+            "missingSession": {
+              "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+              "harness": "claude",
+              "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+              "origin": "resume-own",
+              "model": "claude-opus-5-5",
+              "effort": "low"
+            }
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 26,
+          "ts": "2026-10-27T04:14:47.524Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          },
+          "freshSession": {
+            "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+            "harness": "claude",
+            "sessionId": "d92de5ac-afc5-4a48-8f3f-51b8da68f0f1",
+            "origin": "resume-own",
+            "model": "claude-opus-5-5",
+            "effort": "low",
+            "nodeId": "think",
+            "failureSeq": 25,
+            "priorContextCarried": false,
+            "prompt": "QA worker 01M5XRRTPJRHQRY3ZP99HYJEFM visit=2"
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 27,
+          "ts": "2026-10-27T04:14:47.577Z",
+          "type": "node.started",
+          "nodeId": "think",
+          "kind": "inference",
+          "attempt": 2,
+          "configHash": "e40a401d32ca5d17"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 28,
+          "ts": "2026-10-27T04:14:47.594Z",
+          "type": "harness.turn",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+          "turnId": "01M5XS2R9AXE1NEGP5WW4M28X1",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "QA worker 01M5XRRTPJRHQRY3ZP99HYJEFM visit=2"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 29,
+          "ts": "2026-10-27T04:14:47.910Z",
+          "type": "harness.session",
+          "nodeId": "think",
+          "harness": "claude",
+          "sessionId": "885a3f67-06bb-4a33-a20d-7219b75c956b",
+          "mode": "fresh",
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 30,
+          "ts": "2026-10-27T04:14:47.912Z",
+          "type": "node.progress",
+          "nodeId": "think",
+          "progress": {
+            "item": {
+              "id": "claude-policy",
+              "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+              "type": "other"
+            }
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 31,
+          "ts": "2026-10-27T04:14:47.915Z",
+          "type": "harness.submission",
+          "nodeId": "think",
+          "visitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:21",
+          "turnId": "01M5XS2R9AXE1NEGP5WW4M28X1",
+          "submission": "submitted",
+          "marker": "claude.result"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 32,
+          "ts": "2026-10-27T04:14:47.917Z",
+          "type": "harness.usage",
+          "nodeId": "think",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 33,
+          "ts": "2026-10-27T04:14:47.936Z",
+          "type": "node.finished",
+          "nodeId": "think",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "01M5XS2RKV7RH3WRM6HNWYAEVK",
+                "kind": "transcript",
+                "ref": "artifact:transcript/5d0ecc78f8f66ede393b4cb2c3227bdc3eee2d233a7387e9e5efef597dd95c64",
+                "nodeId": "think",
+                "bytes": 530,
+                "label": "transcript think"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5XS2RKV7RH3WRM6HNWYAEVM",
+                "role": "assistant",
+                "content": "Synthetic reply conversation=885a3f67-06bb-4a33-a20d-7219b75c956b turn=1",
+                "nodeId": "think",
+                "ts": "2026-10-27T04:14:47.931Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/outputs/think",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=885a3f67-06bb-4a33-a20d-7219b75c956b turn=1",
+                "at": "2026-10-27T04:14:47.931Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "think",
+                "value": "Synthetic reply conversation=885a3f67-06bb-4a33-a20d-7219b75c956b turn=1",
+                "at": "2026-10-27T04:14:47.931Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 2,
+                "outputTokens": 2,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 352
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 34,
+          "ts": "2026-10-27T04:14:47.963Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 35,
+          "ts": "2026-10-27T04:14:47.969Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5XRRTPJRHQRY3ZP99HYJEFM:34",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 34
+          }
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 36,
+          "ts": "2026-10-27T04:14:48.082Z",
+          "type": "input.received",
+          "nodeId": "park",
+          "payload": "go"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 37,
+          "ts": "2026-10-27T04:14:48.082Z",
+          "type": "run.woken",
+          "nodeId": "park",
+          "reason": "input",
+          "payload": "go"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 38,
+          "ts": "2026-10-27T04:14:48.107Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 2,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 39,
+          "ts": "2026-10-27T04:14:48.113Z",
+          "type": "node.finished",
+          "nodeId": "park",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "01M5XS2RSFP0XBRK09QW2NRN7Y",
+                "role": "user",
+                "content": "go",
+                "nodeId": "park",
+                "ts": "2026-10-27T04:14:48.112Z",
+                "tags": ["input"]
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/outputs/park",
+              "value": {
+                "nodeId": "park",
+                "value": "go",
+                "at": "2026-10-27T04:14:48.111Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "park",
+                "value": "go",
+                "at": "2026-10-27T04:14:48.111Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 40,
+          "ts": "2026-10-27T04:14:48.133Z",
+          "type": "node.started",
+          "nodeId": "gate",
+          "kind": "decision",
+          "attempt": 1,
+          "configHash": "53d400ed25d10069"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 2,
+            "elapsedSeconds": 325.057,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 41,
+          "ts": "2026-10-27T04:14:48.143Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 42,
+          "ts": "2026-10-27T04:14:48.143Z",
+          "type": "node.finished",
+          "nodeId": "gate",
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/outputs/gate",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 325.057,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T04:14:48.141Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "gate",
+                "value": {
+                  "provenance": {
+                    "kind": "expression",
+                    "provider": null,
+                    "classifierId": null,
+                    "model": null,
+                    "effort": null
+                  },
+                  "observation": {
+                    "kind": "route",
+                    "routeId": "again",
+                    "confidence": null,
+                    "reasoning": null
+                  },
+                  "portId": "limit-reached",
+                  "gate": {
+                    "previousPasses": 2,
+                    "passes": 2,
+                    "repeatRouteId": "again",
+                    "maxPasses": 2,
+                    "elapsedSeconds": 325.057,
+                    "limit": "max-passes"
+                  }
+                },
+                "at": "2026-10-27T04:14:48.141Z"
+              }
+            }
+          ],
+          "route": "limit-reached",
+          "durationMs": 5
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 43,
+          "ts": "2026-10-27T04:14:48.163Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 44,
+          "ts": "2026-10-27T04:14:48.169Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 45,
+          "ts": "2026-10-27T04:14:48.169Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5XRRTPJRHQRY3ZP99HYJEFM",
+          "seq": 46,
+          "ts": "2026-10-27T04:14:48.169Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ]
+    },
+    "child": {
+      "childFailed": {
+        "id": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+        "ownerId": "local",
+        "loopId": "01M5XS2T2ZZ1EE37HRH5CQCG04",
+        "versionId": "01M5XS2T2ZZ1EE37HRH5CQCG05",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA child missing followup",
+          "label": "QA child missing followup v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1",
+        "invocationId": "01M5XS2TH0KAGJ2WM6283NTQQ3",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The claude session \"18a22ed6-2192-4f46-ae20-0f729ae4423d\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+          "nodeId": "think",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M5XS2TH0KAGJ2WM6283NTQQ2:21",
+            "turnId": "01M5XS2V1CT2YMSAB80NMMW03M",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "18a22ed6-2192-4f46-ae20-0f729ae4423d"
+          },
+          "missingSession": {
+            "visitId": "01M5XS2TH0KAGJ2WM6283NTQQ2:21",
+            "harness": "claude",
+            "sessionId": "18a22ed6-2192-4f46-ae20-0f729ae4423d",
+            "origin": "resume-own",
+            "model": "claude-opus-5-5",
+            "effort": "low"
+          }
+        },
+        "createdAt": "2026-10-27T04:14:49.888Z",
+        "startedAt": "2026-10-27T04:14:49.900Z",
+        "finishedAt": "2026-10-27T04:14:50.695Z",
+        "finalizedAt": "2026-10-27T04:14:50.711Z",
+        "lastEventSeq": 25,
+        "recovery": {
+          "observedSeq": 25,
+          "resume": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "PARENT_RECOVERY_REQUIRED",
+            "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+            "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Repeat gate",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "PARENT_RECOVERY_REQUIRED",
+                "message": "Recovery belongs to parent run 01M5XS2T9HQK5JFQV9X22NVQP1. Open that parent to review its recovery choices.",
+                "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1"
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "parentFailed": {
+        "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+        "ownerId": "local",
+        "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+        "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent missing followup",
+          "label": "QA parent missing followup v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+        "status": "failed",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5XS2T9HQK5JFQV9X22NVQP1:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "subloop child 01M5XS2TH0KAGJ2WM6283NTQQ2 failed: The claude session \"18a22ed6-2192-4f46-ae20-0f729ae4423d\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+            "childNodeId": "think",
+            "childDetails": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            }
+          }
+        },
+        "createdAt": "2026-10-27T04:14:49.649Z",
+        "startedAt": "2026-10-27T04:14:49.845Z",
+        "finishedAt": "2026-10-27T04:14:50.748Z",
+        "finalizedAt": "2026-10-27T04:14:50.759Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "SESSION_RECOVERY_REQUIRED",
+            "message": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "early": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/session-recovery-required",
+          "title": "session recovery required",
+          "status": 409,
+          "code": "SESSION_RECOVERY_REQUIRED",
+          "detail": "Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run."
+        }
+      },
+      "choice": {
+        "status": 200,
+        "body": {
+          "id": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+          "ownerId": "local",
+          "loopId": "01M5XS2T2ZZ1EE37HRH5CQCG04",
+          "versionId": "01M5XS2T2ZZ1EE37HRH5CQCG05",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA child missing followup",
+            "label": "QA child missing followup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1",
+          "invocationId": "01M5XS2TH0KAGJ2WM6283NTQQ3",
+          "status": "running",
+          "currentNodeId": "think",
+          "iteration": 1,
+          "createdAt": "2026-10-27T04:14:49.888Z",
+          "startedAt": "2026-10-27T04:14:49.900Z",
+          "lastEventSeq": 26
+        }
+      },
+      "parentReady": {
+        "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+        "ownerId": "local",
+        "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+        "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent missing followup",
+          "label": "QA parent missing followup v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+        "status": "failed",
+        "currentNodeId": "sub",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5XS2T9HQK5JFQV9X22NVQP1:5",
+          "nodeId": "sub",
+          "kind": "child",
+          "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "subloop child 01M5XS2TH0KAGJ2WM6283NTQQ2 failed: The claude session \"18a22ed6-2192-4f46-ae20-0f729ae4423d\" from resume-own is missing. Choose Start fresh session for node \"think\" to continue without its prior provider conversation.",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+            "childNodeId": "think",
+            "childDetails": {
+              "adapterCode": "HARNESS_SESSION_MISSING"
+            }
+          }
+        },
+        "createdAt": "2026-10-27T04:14:49.649Z",
+        "startedAt": "2026-10-27T04:14:49.845Z",
+        "finishedAt": "2026-10-27T04:14:50.748Z",
+        "finalizedAt": "2026-10-27T04:14:50.759Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "parentResume": {
+        "status": 200,
+        "body": {
+          "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+          "ownerId": "local",
+          "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+          "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent missing followup",
+            "label": "QA parent missing followup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+          "status": "running",
+          "currentNodeId": "sub",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5XS2T9HQK5JFQV9X22NVQP1:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T04:14:49.649Z",
+          "startedAt": "2026-10-27T04:14:49.845Z",
+          "lastEventSeq": 12
+        }
+      },
+      "parentDone": {
+        "id": "01M5XS2T9HQK5JFQV9X22NVQP1",
+        "ownerId": "local",
+        "loopId": "01M5XS2T8YWGGEZ3HH3CM4327D",
+        "versionId": "01M5XS2T8YWGGEZ3HH3CM4327E",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent missing followup",
+          "label": "QA parent missing followup v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XS2T9HQK5JFQV9X22NVQP2",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-27T04:14:49.649Z",
+        "startedAt": "2026-10-27T04:14:49.845Z",
+        "finishedAt": "2026-10-27T04:14:51.393Z",
+        "finalizedAt": "2026-10-27T04:14:51.400Z",
+        "lastEventSeq": 22,
+        "recovery": {
+          "observedSeq": 22,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "sub",
+              "label": "Child",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "sub",
+                  "label": "Child",
+                  "kind": "subloop"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "children": [
+        {
+          "id": "01M5XS2TH0KAGJ2WM6283NTQQ2",
+          "ownerId": "local",
+          "loopId": "01M5XS2T2ZZ1EE37HRH5CQCG04",
+          "versionId": "01M5XS2T2ZZ1EE37HRH5CQCG05",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA child missing followup",
+            "label": "QA child missing followup v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5XS2T9HQK5JFQV9X22NVQP1",
+          "invocationId": "01M5XS2TH0KAGJ2WM6283NTQQ3",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-27T04:14:49.888Z",
+          "startedAt": "2026-10-27T04:14:49.900Z",
+          "finishedAt": "2026-10-27T04:14:51.315Z",
+          "finalizedAt": "2026-10-27T04:14:51.337Z",
+          "lastEventSeq": 46
+        }
+      ]
+    }
+  }
+}

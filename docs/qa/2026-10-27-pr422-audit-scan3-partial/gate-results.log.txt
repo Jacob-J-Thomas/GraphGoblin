@@ -1,0 +1,35 @@
+build | exit=0 | seconds=48.53 | pnpm.cmd --config.verifyDepsBeforeRun=false build
+typecheck | exit=0 | seconds=51.04 | pnpm.cmd --config.verifyDepsBeforeRun=false typecheck --force
+lint | exit=0 | seconds=118.92 | pnpm.cmd --config.verifyDepsBeforeRun=false lint --force
+browser-recovery | exit=0 | seconds=23.92 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/web exec playwright test e2e/recovery-eligibility.spec.ts e2e/missing-session.spec.ts e2e/replay-seed.spec.ts --trace=off --output %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\browser-results
+format | exit=0 | seconds=162.12 | pnpm.cmd --config.verifyDepsBeforeRun=false format:check
+layers | exit=0 | seconds=0.25 | pnpm.cmd --config.verifyDepsBeforeRun=false check:layers
+deps | exit=0 | seconds=9.61 | pnpm.cmd --config.verifyDepsBeforeRun=false check:deps
+docs | exit=0 | seconds=1.25 | pnpm.cmd --config.verifyDepsBeforeRun=false check:docs
+tokens | exit=0 | seconds=1.19 | pnpm.cmd --config.verifyDepsBeforeRun=false check:tokens
+migrations | exit=0 | seconds=1.69 | pnpm.cmd --config.verifyDepsBeforeRun=false check:migrations
+contracts-coverage | exit=0 | seconds=15.17 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/contracts test:coverage --maxWorkers=1 --coverage.reportOnFailure
+api-client-coverage | exit=0 | seconds=35.04 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/api-client test:coverage --maxWorkers=1 --coverage.reportOnFailure
+snapshot-probe | exit=0 | seconds=12.76 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\snapshot-probe.mjs
+baseline-build | exit=0 | seconds=6.51 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\build-baseline.mjs
+native-browser | exit=0 | seconds=15.13 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/web exec playwright test --config %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\native-browser.config.mjs
+native-upgrade | exit=0 | seconds=23.75 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\upgrade.mjs
+engine-coverage | exit=0 | seconds=158.77 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/engine test:coverage --maxWorkers=1 --coverage.reportOnFailure
+pending-parent | exit=1 | seconds=50.14 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\pending-parent.mjs
+facts-parity | exit=0 | seconds=4.98 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\facts-parity.mjs
+infrastructure-coverage | exit=1 | seconds=199.14 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure
+pending-parent-diagnostic | exit=0 | seconds=1.7 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\inspect-parent.mjs
+pending-parent-corrected | exit=0 | seconds=24.44 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\pending-parent.mjs
+wait-restart | exit=0 | seconds=96.94 | pnpm.cmd --config.verifyDepsBeforeRun=false test:wait-restart
+unreadable-definition | exit=0 | seconds=4.5 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\unreadable-definition.mjs
+prompt-restart | exit=0 | seconds=43.89 | pnpm.cmd --config.verifyDepsBeforeRun=false test:prompt-restart
+missing-session | exit=0 | seconds=38.98 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node --test apps/api/scripts/missing-session.integration.mjs
+failure-projection-race | exit=0 | seconds=1.05 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\failure-projection-race.mjs
+failure-projection-native | exit=0 | seconds=18.62 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\failure-projection-native.mjs
+native-permission | exit=0 | seconds=2.34 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\native-permission.mjs
+failure-projection-paused | exit=0 | seconds=0.98 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\failure-projection-race.mjs
+api-coverage | exit=0 | seconds=1053.13 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/api test:coverage --maxWorkers=1 --coverage.reportOnFailure
+mcp-coverage | exit=0 | seconds=43.78 | pnpm.cmd --config.verifyDepsBeforeRun=false --filter @graphgoblin/mcp test:coverage --maxWorkers=1 --coverage.reportOnFailure
+unreadable-definition-baseline | exit=0 | seconds=3.54 | pnpm.cmd --config.verifyDepsBeforeRun=false exec node %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\unreadable-definition-baseline.mjs
+evidence-format | exit=0 | seconds=0.94 | pnpm.cmd --config.verifyDepsBeforeRun=false exec prettier --write %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\**\*.md %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\**\*.json
+evidence-format-final-draft | exit=0 | seconds=0.64 | pnpm.cmd --config.verifyDepsBeforeRun=false exec prettier --write %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\REPORT.md %USERPROFILE%\AppData\Local\Temp\gg-audit-422r3-report\append-cost-summary.json

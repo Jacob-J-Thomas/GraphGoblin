@@ -1,0 +1,663 @@
+{
+  "checks": [
+    {
+      "name": "force of real HTTP work records RUN_INTERRUPTED_BY_STOP",
+      "passed": true,
+      "detail": {
+        "id": "01M5YCJ87JM3QP12YW635VPJQG",
+        "ownerId": "local",
+        "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+        "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force an HTTP probe",
+          "label": "Force an HTTP probe v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCJ87JM3QP12YW635VPJQH",
+        "status": "failed",
+        "currentNodeId": "beat",
+        "iteration": 1,
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "beat",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "createdAt": "2026-10-27T09:55:18.386Z",
+        "startedAt": "2026-10-27T09:55:18.410Z",
+        "finishedAt": "2026-10-27T09:55:18.533Z",
+        "finalizedAt": "2026-10-27T09:55:18.539Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "beat",
+              "label": "Local pending probe",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "ordinary forced run UI and command match with accessible reason",
+      "passed": true,
+      "detail": {
+        "reason": "Resume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.",
+        "ax": {
+          "nodeId": "76",
+          "ignored": false,
+          "role": {
+            "type": "role",
+            "value": "button"
+          },
+          "chromeRole": {
+            "type": "internalRole",
+            "value": 9
+          },
+          "name": {
+            "type": "computedString",
+            "value": "Resume",
+            "sources": [
+              {
+                "type": "relatedElement",
+                "attribute": "aria-labelledby"
+              },
+              {
+                "type": "attribute",
+                "attribute": "aria-label"
+              },
+              {
+                "type": "relatedElement",
+                "nativeSource": "label"
+              },
+              {
+                "type": "contents",
+                "value": {
+                  "type": "computedString",
+                  "value": "Resume"
+                }
+              },
+              {
+                "type": "attribute",
+                "attribute": "title",
+                "superseded": true
+              }
+            ]
+          },
+          "description": {
+            "type": "computedString",
+            "value": "Resume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "properties": [
+            {
+              "name": "disabled",
+              "value": {
+                "type": "boolean",
+                "value": true
+              }
+            },
+            {
+              "name": "invalid",
+              "value": {
+                "type": "token",
+                "value": "false"
+              }
+            },
+            {
+              "name": "describedby",
+              "value": {
+                "type": "idrefList",
+                "value": "resume-reason-01M5YCJ87JM3QP12YW635VPJQG",
+                "relatedNodes": [
+                  {
+                    "backendDOMNodeId": 82,
+                    "idref": "resume-reason-01M5YCJ87JM3QP12YW635VPJQG"
+                  }
+                ]
+              }
+            }
+          ],
+          "parentId": "75",
+          "childIds": ["79"],
+          "backendDOMNodeId": 76
+        },
+        "refused": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+            "title": "failure not resumable",
+            "status": 409,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          }
+        }
+      }
+    },
+    {
+      "name": "ordinary force MCP eligibility equals HTTP",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCJ87JM3QP12YW635VPJQG\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCJ86QW4FAJ3FQD4HZ4QY4\",\n  \"versionId\": \"01M5YCJ86QW4FAJ3FQD4HZ4QY5\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Force an HTTP probe\",\n    \"label\": \"Force an HTTP probe v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCJ87JM3QP12YW635VPJQH\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"beat\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"RUN_INTERRUPTED_BY_STOP\",\n    \"message\": \"Explicit force-stop interrupted this run; external effects may have happened\",\n    \"nodeId\": \"beat\",\n    \"resumable\": false,\n    \"details\": {\n      \"attempt\": 1,\n      \"effectMayHaveHappened\": true\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:55:18.386Z\",\n  \"startedAt\": \"2026-10-27T09:55:18.410Z\",\n  \"finishedAt\": \"2026-10-27T09:55:18.533Z\",\n  \"finalizedAt\": \"2026-10-27T09:55:18.539Z\",\n  \"lastEventSeq\": 6,\n  \"recovery\": {\n    \"observedSeq\": 6,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"FAILURE_NOT_RESUMABLE\",\n      \"message\": \"This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": []\n      },\n      {\n        \"nodeId\": \"beat\",\n        \"label\": \"Local pending probe\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": []\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ]\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCJ87JM3QP12YW635VPJQG",
+          "ownerId": "local",
+          "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+          "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force an HTTP probe",
+            "label": "Force an HTTP probe v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCJ87JM3QP12YW635VPJQH",
+          "status": "failed",
+          "currentNodeId": "beat",
+          "iteration": 1,
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "beat",
+            "resumable": false,
+            "details": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            }
+          },
+          "createdAt": "2026-10-27T09:55:18.386Z",
+          "startedAt": "2026-10-27T09:55:18.410Z",
+          "finishedAt": "2026-10-27T09:55:18.533Z",
+          "finalizedAt": "2026-10-27T09:55:18.539Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "beat",
+                "label": "Local pending probe",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "explicit Replay after ordinary force creates new run",
+      "passed": true,
+      "detail": {
+        "run": {
+          "id": "01M5YCJDEHGBZZFP735TCG5MGP",
+          "ownerId": "local",
+          "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+          "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force an HTTP probe",
+            "label": "Force an HTTP probe v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCJDEHGBZZFP735TCG5MGQ",
+          "status": "queued",
+          "currentNodeId": "beat",
+          "iteration": 1,
+          "createdAt": "2026-10-27T09:55:23.729Z",
+          "lastEventSeq": 1
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "mcpPid": 50688,
+    "details": {
+      "run": {
+        "id": "01M5YCJ87JM3QP12YW635VPJQG",
+        "ownerId": "local",
+        "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+        "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force an HTTP probe",
+          "label": "Force an HTTP probe v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCJ87JM3QP12YW635VPJQH",
+        "status": "failed",
+        "currentNodeId": "beat",
+        "iteration": 1,
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "beat",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "createdAt": "2026-10-27T09:55:18.386Z",
+        "startedAt": "2026-10-27T09:55:18.410Z",
+        "finishedAt": "2026-10-27T09:55:18.533Z",
+        "finalizedAt": "2026-10-27T09:55:18.539Z",
+        "lastEventSeq": 6,
+        "recovery": {
+          "observedSeq": 6,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "beat",
+              "label": "Local pending probe",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "reason": "Resume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.",
+      "ax": {
+        "nodeId": "76",
+        "ignored": false,
+        "role": {
+          "type": "role",
+          "value": "button"
+        },
+        "chromeRole": {
+          "type": "internalRole",
+          "value": 9
+        },
+        "name": {
+          "type": "computedString",
+          "value": "Resume",
+          "sources": [
+            {
+              "type": "relatedElement",
+              "attribute": "aria-labelledby"
+            },
+            {
+              "type": "attribute",
+              "attribute": "aria-label"
+            },
+            {
+              "type": "relatedElement",
+              "nativeSource": "label"
+            },
+            {
+              "type": "contents",
+              "value": {
+                "type": "computedString",
+                "value": "Resume"
+              }
+            },
+            {
+              "type": "attribute",
+              "attribute": "title",
+              "superseded": true
+            }
+          ]
+        },
+        "description": {
+          "type": "computedString",
+          "value": "Resume unavailable: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "properties": [
+          {
+            "name": "disabled",
+            "value": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          {
+            "name": "invalid",
+            "value": {
+              "type": "token",
+              "value": "false"
+            }
+          },
+          {
+            "name": "describedby",
+            "value": {
+              "type": "idrefList",
+              "value": "resume-reason-01M5YCJ87JM3QP12YW635VPJQG",
+              "relatedNodes": [
+                {
+                  "backendDOMNodeId": 82,
+                  "idref": "resume-reason-01M5YCJ87JM3QP12YW635VPJQG"
+                }
+              ]
+            }
+          }
+        ],
+        "parentId": "75",
+        "childIds": ["79"],
+        "backendDOMNodeId": 76
+      },
+      "refused": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      },
+      "mcp": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCJ87JM3QP12YW635VPJQG\",\n  \"ownerId\": \"local\",\n  \"loopId\": \"01M5YCJ86QW4FAJ3FQD4HZ4QY4\",\n  \"versionId\": \"01M5YCJ86QW4FAJ3FQD4HZ4QY5\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Force an HTTP probe\",\n    \"label\": \"Force an HTTP probe v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"invocationId\": \"01M5YCJ87JM3QP12YW635VPJQH\",\n  \"status\": \"failed\",\n  \"currentNodeId\": \"beat\",\n  \"iteration\": 1,\n  \"failure\": {\n    \"code\": \"RUN_INTERRUPTED_BY_STOP\",\n    \"message\": \"Explicit force-stop interrupted this run; external effects may have happened\",\n    \"nodeId\": \"beat\",\n    \"resumable\": false,\n    \"details\": {\n      \"attempt\": 1,\n      \"effectMayHaveHappened\": true\n    }\n  },\n  \"createdAt\": \"2026-10-27T09:55:18.386Z\",\n  \"startedAt\": \"2026-10-27T09:55:18.410Z\",\n  \"finishedAt\": \"2026-10-27T09:55:18.533Z\",\n  \"finalizedAt\": \"2026-10-27T09:55:18.539Z\",\n  \"lastEventSeq\": 6,\n  \"recovery\": {\n    \"observedSeq\": 6,\n    \"resume\": {\n      \"allowed\": false,\n      \"code\": \"FAILURE_NOT_RESUMABLE\",\n      \"message\": \"This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.\"\n    },\n    \"replayDefault\": {\n      \"allowed\": false,\n      \"code\": \"REPLAY_NODE_NOT_REACHED\",\n      \"message\": \"This run never reached this node.\"\n    },\n    \"replay\": [\n      {\n        \"nodeId\": \"start\",\n        \"label\": \"Start\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": []\n      },\n      {\n        \"nodeId\": \"beat\",\n        \"label\": \"Local pending probe\",\n        \"action\": {\n          \"allowed\": true\n        },\n        \"effects\": []\n      },\n      {\n        \"nodeId\": \"done\",\n        \"label\": \"Done\",\n        \"action\": {\n          \"allowed\": false,\n          \"code\": \"REPLAY_NODE_NOT_REACHED\",\n          \"message\": \"This run never reached this node.\"\n        },\n        \"effects\": []\n      }\n    ]\n  }\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCJ87JM3QP12YW635VPJQG",
+          "ownerId": "local",
+          "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+          "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force an HTTP probe",
+            "label": "Force an HTTP probe v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCJ87JM3QP12YW635VPJQH",
+          "status": "failed",
+          "currentNodeId": "beat",
+          "iteration": 1,
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "beat",
+            "resumable": false,
+            "details": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            }
+          },
+          "createdAt": "2026-10-27T09:55:18.386Z",
+          "startedAt": "2026-10-27T09:55:18.410Z",
+          "finishedAt": "2026-10-27T09:55:18.533Z",
+          "finalizedAt": "2026-10-27T09:55:18.539Z",
+          "lastEventSeq": 6,
+          "recovery": {
+            "observedSeq": 6,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "beat",
+                "label": "Local pending probe",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      },
+      "replay": {
+        "run": {
+          "id": "01M5YCJDEHGBZZFP735TCG5MGP",
+          "ownerId": "local",
+          "loopId": "01M5YCJ86QW4FAJ3FQD4HZ4QY4",
+          "versionId": "01M5YCJ86QW4FAJ3FQD4HZ4QY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force an HTTP probe",
+            "label": "Force an HTTP probe v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCJDEHGBZZFP735TCG5MGQ",
+          "status": "queued",
+          "currentNodeId": "beat",
+          "iteration": 1,
+          "createdAt": "2026-10-27T09:55:23.729Z",
+          "lastEventSeq": 1
+        }
+      }
+    }
+  }
+}

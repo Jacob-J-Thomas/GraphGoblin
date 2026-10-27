@@ -1,0 +1,662 @@
+{
+  "checks": [
+    {
+      "name": "lost Resume ack and restart retain exactly one continuation",
+      "passed": true,
+      "detail": {
+        "lost": true,
+        "accepted": {
+          "status": 200,
+          "body": {
+            "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "ownerId": "local",
+            "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+            "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Lost Resume ack",
+              "label": "Lost Resume ack v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5YCHNXNT5BS41D7PKDNAN5R",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T09:54:59.637Z",
+            "startedAt": "2026-10-27T09:54:59.692Z",
+            "lastEventSeq": 8
+          }
+        },
+        "repeated": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "events": [
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 1,
+            "ts": "2026-10-27T09:54:59.637Z",
+            "type": "run.queued",
+            "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Lost Resume ack",
+              "label": "Lost Resume ack v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+                "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+                "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5YCHNXNT5BS41D7PKDNAN5R",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T09:54:59.637Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 2,
+            "ts": "2026-10-27T09:54:59.696Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 3,
+            "ts": "2026-10-27T09:54:59.712Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 4,
+            "ts": "2026-10-27T09:54:59.748Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:59.745Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T09:54:59.745Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 5,
+            "ts": "2026-10-27T09:54:59.796Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 6,
+            "ts": "2026-10-27T09:54:59.808Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 7,
+            "ts": "2026-10-27T09:54:59.858Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+            "seq": 8,
+            "ts": "2026-10-27T09:54:59.940Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MCP Resume accepts eligible observation and retains ID",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCHNXNT5BS41D7PKDNAN5Q\",\n  \"loopId\": \"01M5YCHNW9VYK67DXXNYGYQ23H\",\n  \"definition\": \"Lost Resume ack v1\",\n  \"status\": \"waiting\",\n  \"currentNodeId\": \"park\",\n  \"iteration\": 1,\n  \"waiting\": {\n    \"waitId\": \"01M5YCHNXNT5BS41D7PKDNAN5Q:5\",\n    \"nodeId\": \"park\",\n    \"kind\": \"input\",\n    \"prompt\": \"Continue QA\",\n    \"startedSeq\": 5\n  },\n  \"createdAt\": \"2026-10-27T09:54:59.637Z\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+          "definition": "Lost Resume ack v1",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:54:59.637Z"
+        }
+      }
+    },
+    {
+      "name": "MCP Replay accepts then reports RECOVERY_STALE for repeated intent",
+      "passed": true,
+      "detail": {
+        "mcpReplay": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5YCHT8YP4Y9DA7A13XGET0B\",\n  \"loopId\": \"01M5YCHSZK1KEFG2GPW214TY30\",\n  \"definition\": \"MCP Replay v1\",\n  \"status\": \"queued\",\n  \"currentNodeId\": \"done\",\n  \"iteration\": 1,\n  \"createdAt\": \"2026-10-27T09:55:04.094Z\",\n  \"replayOf\": {\n    \"runId\": \"01M5YCHT0HEFDSNPWESB3J60MP\",\n    \"nodeId\": \"done\"\n  },\n  \"next\": \"Call wait_for_run with this run id to follow the fork.\"\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5YCHT8YP4Y9DA7A13XGET0B",
+            "loopId": "01M5YCHSZK1KEFG2GPW214TY30",
+            "definition": "MCP Replay v1",
+            "status": "queued",
+            "currentNodeId": "done",
+            "iteration": 1,
+            "createdAt": "2026-10-27T09:55:04.094Z",
+            "replayOf": {
+              "runId": "01M5YCHT0HEFDSNPWESB3J60MP",
+              "nodeId": "done"
+            },
+            "next": "Call wait_for_run with this run id to follow the fork."
+          }
+        },
+        "repeat": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error RECOVERY_STALE (HTTP 409): This Replay intent already created run 01M5YCHT8YP4Y9DA7A13XGET0B. Open that run instead of submitting the same intent again."
+            }
+          ],
+          "isError": true
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "resumeAck": {
+      "paused": {
+        "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+        "ownerId": "local",
+        "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+        "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Lost Resume ack",
+          "label": "Lost Resume ack v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5YCHNXNT5BS41D7PKDNAN5R",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T09:54:59.855Z",
+        "createdAt": "2026-10-27T09:54:59.637Z",
+        "startedAt": "2026-10-27T09:54:59.692Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "lost": true,
+      "accepted": {
+        "status": 200,
+        "body": {
+          "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "ownerId": "local",
+          "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+          "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Lost Resume ack",
+            "label": "Lost Resume ack v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5YCHNXNT5BS41D7PKDNAN5R",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:54:59.637Z",
+          "startedAt": "2026-10-27T09:54:59.692Z",
+          "lastEventSeq": 8
+        }
+      },
+      "repeated": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "events": [
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 1,
+          "ts": "2026-10-27T09:54:59.637Z",
+          "type": "run.queued",
+          "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Lost Resume ack",
+            "label": "Lost Resume ack v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+              "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+              "versionId": "01M5YCHNW9VYK67DXXNYGYQ23J",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5YCHNXNT5BS41D7PKDNAN5R",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T09:54:59.637Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 2,
+          "ts": "2026-10-27T09:54:59.696Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 3,
+          "ts": "2026-10-27T09:54:59.712Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 4,
+          "ts": "2026-10-27T09:54:59.748Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T09:54:59.745Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T09:54:59.745Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 2
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 5,
+          "ts": "2026-10-27T09:54:59.796Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 6,
+          "ts": "2026-10-27T09:54:59.808Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 7,
+          "ts": "2026-10-27T09:54:59.858Z",
+          "type": "run.paused",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "seq": 8,
+          "ts": "2026-10-27T09:54:59.940Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        }
+      ]
+    },
+    "mcpPid": 49680,
+    "mcp": {
+      "mcpResume": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCHNXNT5BS41D7PKDNAN5Q\",\n  \"loopId\": \"01M5YCHNW9VYK67DXXNYGYQ23H\",\n  \"definition\": \"Lost Resume ack v1\",\n  \"status\": \"waiting\",\n  \"currentNodeId\": \"park\",\n  \"iteration\": 1,\n  \"waiting\": {\n    \"waitId\": \"01M5YCHNXNT5BS41D7PKDNAN5Q:5\",\n    \"nodeId\": \"park\",\n    \"kind\": \"input\",\n    \"prompt\": \"Continue QA\",\n    \"startedSeq\": 5\n  },\n  \"createdAt\": \"2026-10-27T09:54:59.637Z\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCHNXNT5BS41D7PKDNAN5Q",
+          "loopId": "01M5YCHNW9VYK67DXXNYGYQ23H",
+          "definition": "Lost Resume ack v1",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5YCHNXNT5BS41D7PKDNAN5Q:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T09:54:59.637Z"
+        }
+      },
+      "mcpReplay": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5YCHT8YP4Y9DA7A13XGET0B\",\n  \"loopId\": \"01M5YCHSZK1KEFG2GPW214TY30\",\n  \"definition\": \"MCP Replay v1\",\n  \"status\": \"queued\",\n  \"currentNodeId\": \"done\",\n  \"iteration\": 1,\n  \"createdAt\": \"2026-10-27T09:55:04.094Z\",\n  \"replayOf\": {\n    \"runId\": \"01M5YCHT0HEFDSNPWESB3J60MP\",\n    \"nodeId\": \"done\"\n  },\n  \"next\": \"Call wait_for_run with this run id to follow the fork.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5YCHT8YP4Y9DA7A13XGET0B",
+          "loopId": "01M5YCHSZK1KEFG2GPW214TY30",
+          "definition": "MCP Replay v1",
+          "status": "queued",
+          "currentNodeId": "done",
+          "iteration": 1,
+          "createdAt": "2026-10-27T09:55:04.094Z",
+          "replayOf": {
+            "runId": "01M5YCHT0HEFDSNPWESB3J60MP",
+            "nodeId": "done"
+          },
+          "next": "Call wait_for_run with this run id to follow the fork."
+        }
+      },
+      "repeat": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error RECOVERY_STALE (HTTP 409): This Replay intent already created run 01M5YCHT8YP4Y9DA7A13XGET0B. Open that run instead of submitting the same intent again."
+          }
+        ],
+        "isError": true
+      }
+    }
+  }
+}

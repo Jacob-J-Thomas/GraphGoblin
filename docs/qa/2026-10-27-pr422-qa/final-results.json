@@ -1,0 +1,938 @@
+{
+  "checks": [
+    {
+      "name": "lost Resume ack and restart retain exactly one continuation",
+      "passed": true,
+      "detail": {
+        "lost": true,
+        "accepted": {
+          "status": 200,
+          "body": {
+            "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "ownerId": "local",
+            "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+            "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Lost Resume ack",
+              "label": "Lost Resume ack v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5XSE4H4V2RG6XHFG45E7YTW",
+            "status": "waiting",
+            "currentNodeId": "park",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-27T04:21:00.580Z",
+            "startedAt": "2026-10-27T04:21:00.613Z",
+            "lastEventSeq": 8
+          }
+        },
+        "repeated": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/recovery-stale",
+            "title": "recovery stale",
+            "status": 409,
+            "code": "RECOVERY_STALE",
+            "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+          }
+        },
+        "events": [
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 1,
+            "ts": "2026-10-27T04:21:00.580Z",
+            "type": "run.queued",
+            "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Lost Resume ack",
+              "label": "Lost Resume ack v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+                "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+                "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5XSE4H4V2RG6XHFG45E7YTW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-27T04:21:00.580Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 2,
+            "ts": "2026-10-27T04:21:00.617Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 3,
+            "ts": "2026-10-27T04:21:00.626Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 4,
+            "ts": "2026-10-27T04:21:00.633Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T04:21:00.631Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-27T04:21:00.631Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 5,
+            "ts": "2026-10-27T04:21:00.658Z",
+            "type": "node.started",
+            "nodeId": "park",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "acdd41ac9788eb55"
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 6,
+            "ts": "2026-10-27T04:21:00.663Z",
+            "type": "run.waiting",
+            "nodeId": "park",
+            "wait": {
+              "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+              "nodeId": "park",
+              "kind": "input",
+              "prompt": "Continue QA",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 7,
+            "ts": "2026-10-27T04:21:00.772Z",
+            "type": "run.paused",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+            "seq": 8,
+            "ts": "2026-10-27T04:21:00.824Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MCP Resume accepts eligible observation and retains ID",
+      "passed": true,
+      "detail": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5XSE4H4V2RG6XHFG45E7YTV\",\n  \"loopId\": \"01M5XSE4G6HWYCQCAXTRVP60TC\",\n  \"definition\": \"Lost Resume ack v1\",\n  \"status\": \"waiting\",\n  \"currentNodeId\": \"park\",\n  \"iteration\": 1,\n  \"waiting\": {\n    \"waitId\": \"01M5XSE4H4V2RG6XHFG45E7YTV:5\",\n    \"nodeId\": \"park\",\n    \"kind\": \"input\",\n    \"prompt\": \"Continue QA\",\n    \"startedSeq\": 5\n  },\n  \"createdAt\": \"2026-10-27T04:21:00.580Z\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+          "definition": "Lost Resume ack v1",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T04:21:00.580Z"
+        }
+      }
+    },
+    {
+      "name": "MCP Replay accepts then reports RECOVERY_STALE for repeated intent",
+      "passed": true,
+      "detail": {
+        "mcpReplay": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"01M5XSE9153FSC6NXES57KN2R7\",\n  \"loopId\": \"01M5XSE8VA157W4QQYT7YZ1FVC\",\n  \"definition\": \"MCP Replay v1\",\n  \"status\": \"queued\",\n  \"currentNodeId\": \"done\",\n  \"iteration\": 1,\n  \"createdAt\": \"2026-10-27T04:21:05.189Z\",\n  \"replayOf\": {\n    \"runId\": \"01M5XSE8W12DZTKR6854SSJ7ZG\",\n    \"nodeId\": \"done\"\n  },\n  \"next\": \"Call wait_for_run with this run id to follow the fork.\"\n}"
+            }
+          ],
+          "structuredContent": {
+            "id": "01M5XSE9153FSC6NXES57KN2R7",
+            "loopId": "01M5XSE8VA157W4QQYT7YZ1FVC",
+            "definition": "MCP Replay v1",
+            "status": "queued",
+            "currentNodeId": "done",
+            "iteration": 1,
+            "createdAt": "2026-10-27T04:21:05.189Z",
+            "replayOf": {
+              "runId": "01M5XSE8W12DZTKR6854SSJ7ZG",
+              "nodeId": "done"
+            },
+            "next": "Call wait_for_run with this run id to follow the fork."
+          }
+        },
+        "repeat": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error RECOVERY_STALE (HTTP 409): This Replay intent already created run 01M5XSE9153FSC6NXES57KN2R7. Open that run instead of submitting the same intent again."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "held fake CLI force records RUN_INTERRUPTED_BY_STOP and forbids Resume",
+      "passed": false,
+      "detail": {
+        "forceState": {
+          "phase": "force-failed",
+          "graceMs": 300000,
+          "startedAt": "2026-10-27T04:21:06.585Z",
+          "choiceAt": "2026-10-27T04:26:06.585Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": ["01M5XSE9DV74YCB1B3R670F0BN"],
+          "choices": ["force"],
+          "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+          "controlToken": "3169cce2-fa51-4014-9d03-0f6d0b1c4242:3:force-failed"
+        },
+        "failure": {
+          "id": "01M5XSE9DV74YCB1B3R670F0BN",
+          "ownerId": "local",
+          "loopId": "01M5XSE932F1FFJRVDQE5AVW0R",
+          "versionId": "01M5XSE932F1FFJRVDQE5AVW0S",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Force held fake CLI",
+            "label": "Force held fake CLI v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XSE9DV74YCB1B3R670F0BP",
+          "status": "failed",
+          "currentNodeId": "think",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TERMINATION_UNCONFIRMED",
+            "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+            "nodeId": "think",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+              "interruptedByStop": true
+            },
+            "inference": {
+              "visitId": "01M5XSE9DV74YCB1B3R670F0BN:5",
+              "turnId": "01M5XSE9THEMXDMN5QQTWPJK4C",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "73c79365-43aa-40e6-82a2-390efe843c1a"
+            }
+          },
+          "createdAt": "2026-10-27T04:21:05.595Z",
+          "startedAt": "2026-10-27T04:21:05.916Z",
+          "finishedAt": "2026-10-27T04:21:06.708Z",
+          "finalizedAt": "2026-10-27T04:21:06.729Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "think",
+                "label": "Inference",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "think",
+                    "label": "Inference",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "force refusal agrees with recovery",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "resumeAck": {
+      "paused": {
+        "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+        "ownerId": "local",
+        "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+        "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Lost Resume ack",
+          "label": "Lost Resume ack v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XSE4H4V2RG6XHFG45E7YTW",
+        "status": "paused",
+        "currentNodeId": "park",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+          "nodeId": "park",
+          "kind": "input",
+          "prompt": "Continue QA",
+          "startedSeq": 5
+        },
+        "pausedAt": "2026-10-27T04:21:00.752Z",
+        "createdAt": "2026-10-27T04:21:00.580Z",
+        "startedAt": "2026-10-27T04:21:00.613Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "park",
+              "label": "Input park",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "lost": true,
+      "accepted": {
+        "status": 200,
+        "body": {
+          "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "ownerId": "local",
+          "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+          "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Lost Resume ack",
+            "label": "Lost Resume ack v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5XSE4H4V2RG6XHFG45E7YTW",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T04:21:00.580Z",
+          "startedAt": "2026-10-27T04:21:00.613Z",
+          "lastEventSeq": 8
+        }
+      },
+      "repeated": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        }
+      },
+      "events": [
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 1,
+          "ts": "2026-10-27T04:21:00.580Z",
+          "type": "run.queued",
+          "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Lost Resume ack",
+            "label": "Lost Resume ack v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+              "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+              "versionId": "01M5XSE4G7XNS3NTGVGVCQ1H0A",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5XSE4H4V2RG6XHFG45E7YTW",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-27T04:21:00.580Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 2,
+          "ts": "2026-10-27T04:21:00.617Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 3,
+          "ts": "2026-10-27T04:21:00.626Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 4,
+          "ts": "2026-10-27T04:21:00.633Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:21:00.631Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-27T04:21:00.631Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 5,
+          "ts": "2026-10-27T04:21:00.658Z",
+          "type": "node.started",
+          "nodeId": "park",
+          "kind": "wait",
+          "attempt": 1,
+          "configHash": "acdd41ac9788eb55"
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 6,
+          "ts": "2026-10-27T04:21:00.663Z",
+          "type": "run.waiting",
+          "nodeId": "park",
+          "wait": {
+            "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          }
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 7,
+          "ts": "2026-10-27T04:21:00.772Z",
+          "type": "run.paused",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "seq": 8,
+          "ts": "2026-10-27T04:21:00.824Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        }
+      ]
+    },
+    "mcpPid": 10052,
+    "mcp": {
+      "mcpResume": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5XSE4H4V2RG6XHFG45E7YTV\",\n  \"loopId\": \"01M5XSE4G6HWYCQCAXTRVP60TC\",\n  \"definition\": \"Lost Resume ack v1\",\n  \"status\": \"waiting\",\n  \"currentNodeId\": \"park\",\n  \"iteration\": 1,\n  \"waiting\": {\n    \"waitId\": \"01M5XSE4H4V2RG6XHFG45E7YTV:5\",\n    \"nodeId\": \"park\",\n    \"kind\": \"input\",\n    \"prompt\": \"Continue QA\",\n    \"startedSeq\": 5\n  },\n  \"createdAt\": \"2026-10-27T04:21:00.580Z\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5XSE4H4V2RG6XHFG45E7YTV",
+          "loopId": "01M5XSE4G6HWYCQCAXTRVP60TC",
+          "definition": "Lost Resume ack v1",
+          "status": "waiting",
+          "currentNodeId": "park",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5XSE4H4V2RG6XHFG45E7YTV:5",
+            "nodeId": "park",
+            "kind": "input",
+            "prompt": "Continue QA",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-27T04:21:00.580Z"
+        }
+      },
+      "mcpReplay": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"01M5XSE9153FSC6NXES57KN2R7\",\n  \"loopId\": \"01M5XSE8VA157W4QQYT7YZ1FVC\",\n  \"definition\": \"MCP Replay v1\",\n  \"status\": \"queued\",\n  \"currentNodeId\": \"done\",\n  \"iteration\": 1,\n  \"createdAt\": \"2026-10-27T04:21:05.189Z\",\n  \"replayOf\": {\n    \"runId\": \"01M5XSE8W12DZTKR6854SSJ7ZG\",\n    \"nodeId\": \"done\"\n  },\n  \"next\": \"Call wait_for_run with this run id to follow the fork.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "01M5XSE9153FSC6NXES57KN2R7",
+          "loopId": "01M5XSE8VA157W4QQYT7YZ1FVC",
+          "definition": "MCP Replay v1",
+          "status": "queued",
+          "currentNodeId": "done",
+          "iteration": 1,
+          "createdAt": "2026-10-27T04:21:05.189Z",
+          "replayOf": {
+            "runId": "01M5XSE8W12DZTKR6854SSJ7ZG",
+            "nodeId": "done"
+          },
+          "next": "Call wait_for_run with this run id to follow the fork."
+        }
+      },
+      "repeat": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error RECOVERY_STALE (HTTP 409): This Replay intent already created run 01M5XSE9153FSC6NXES57KN2R7. Open that run instead of submitting the same intent again."
+          }
+        ],
+        "isError": true
+      }
+    },
+    "force": {
+      "heldPid": 19584,
+      "forceState": {
+        "phase": "force-failed",
+        "graceMs": 300000,
+        "startedAt": "2026-10-27T04:21:06.585Z",
+        "choiceAt": "2026-10-27T04:26:06.585Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": ["01M5XSE9DV74YCB1B3R670F0BN"],
+        "choices": ["force"],
+        "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+        "controlToken": "3169cce2-fa51-4014-9d03-0f6d0b1c4242:3:force-failed"
+      },
+      "failure": {
+        "id": "01M5XSE9DV74YCB1B3R670F0BN",
+        "ownerId": "local",
+        "loopId": "01M5XSE932F1FFJRVDQE5AVW0R",
+        "versionId": "01M5XSE932F1FFJRVDQE5AVW0S",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Force held fake CLI",
+          "label": "Force held fake CLI v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5XSE9DV74YCB1B3R670F0BP",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "nodeId": "think",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+            "interruptedByStop": true
+          },
+          "inference": {
+            "visitId": "01M5XSE9DV74YCB1B3R670F0BN:5",
+            "turnId": "01M5XSE9THEMXDMN5QQTWPJK4C",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "73c79365-43aa-40e6-82a2-390efe843c1a"
+          }
+        },
+        "createdAt": "2026-10-27T04:21:05.595Z",
+        "startedAt": "2026-10-27T04:21:05.916Z",
+        "finishedAt": "2026-10-27T04:21:06.708Z",
+        "finalizedAt": "2026-10-27T04:21:06.729Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "think",
+              "label": "Inference",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "think",
+                  "label": "Inference",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "refused": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    "heldPidAlreadyExited": true
+  }
+}
