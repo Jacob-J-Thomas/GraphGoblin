@@ -1,0 +1,253 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/apps/api
+
+ ❯ src/api.test.ts (20 tests | 1 failed | 19 skipped) 650ms
+   ❯ settings, secrets, api keys, catalog, events (3)
+     × manages api keys and the model catalog 648ms
+ ❯ src/provider-refusal.test.ts (1 test | 1 failed) 862ms
+   × records a Codex request the provider refused with its own cause and offers no Resume (#243) 861ms
+ ❯ src/catalog.test.ts (32 tests | 5 failed | 25 skipped) 1612ms
+   ❯ Codex efforts are sent unchanged and offered per model (#205) (7)
+     × lists exactly the efforts the Codex CLI catalog gives each model: no minimal, no max for GPT-5.5 637ms
+     × refuses minimal for every seeded Codex model (inference, and as a default) before any request 140ms
+     × refuses minimal for every seeded Codex model (decision, and as a default) before any request 104ms
+     × fails a stored minimal (inference) from before this catalog without any provider request 236ms
+     × fails a stored minimal (decision) from before this catalog without any provider request 174ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/api.test.ts > settings, secrets, api keys, catalog, events > manages api keys and the model catalog
+AssertionError: expected [ 'minimal', 'low', 'medium', …(3) ] to deeply equal [ 'low', 'medium', 'high', …(2) ]
+
+- Expected
++ Received
+
+@@ -1,6 +1,7 @@
+  [
++   "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+
+ ❯ src/api.test.ts:636:7
+    634|     expect(
+    635|       catalog.items.find((m) => m.harness === 'codex' && m.model === '…
+    636|     ).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+       |       ^
+    637|     await t.container.repos.catalog.upsert({
+    638|       harness: 'codex',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > lists exactly the efforts the Codex CLI catalog gives each model: no minimal, no max for GPT-5.5
+AssertionError: expected { Object (gpt-5.5, gpt-5.6-luna, ...) } to deeply equal { 'gpt-5.5': [ 'low', …(3) ], …(7) }
+
+- Expected
++ Received
+
+@@ -1,55 +1,63 @@
+  {
+    "gpt-5.5": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+    ],
+    "gpt-5.6-luna": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-sol": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-terra": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-astra": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-luna": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-sol": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6.1-sol": [
++     "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+
+ ❯ src/catalog.test.ts:407:84
+    405|     const codex = items.filter((entry) => entry.harness === 'codex');
+    406|     const toMax: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+    407|     expect(Object.fromEntries(codex.map((entry) => [entry.model, entry…
+       |                                                                                    ^
+    408|       'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+    409|       'gpt-5.6-luna': toMax,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > refuses minimal for every seeded Codex model (inference, and as a default) before any request
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > refuses minimal for every seeded Codex model (decision, and as a default) before any request
+AssertionError: gpt-5.5: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ src/catalog.test.ts:433:43
+    431|           payload: { definition: withEffort(place, model, 'minimal') },
+    432|         });
+    433|         expect(refused.statusCode, model).toBe(400);
+       |                                           ^
+    434|         expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+    435|         const defaults = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > fails a stored minimal (inference) from before this catalog without any provider request
+AssertionError: expected { …(15) } to match object { status: 'failed', failure: { …(3) } }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failure": {
+-     "code": "EVALUATION_INVALID_CONFIGURATION",
+-     "details": {
+-       "code": "EFFORT_UNSUPPORTED",
+-       "path": "effort",
+-     },
+-     "resumable": false,
+-   },
+-   "status": "failed",
++   "status": "succeeded",
+  }
+
+ ❯ src/catalog.test.ts:467:19
+    465|         await t.app.inject(`/runs/${started.json<{ run: { id: string }…
+    466|       ).json();
+    467|       expect(run).toMatchObject({
+       |                   ^
+    468|         status: 'failed',
+    469|         failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are sent unchanged and offered per model (#205) > fails a stored minimal (decision) from before this catalog without any provider request
+AssertionError: expected { …(15) } to match object { status: 'failed', failure: { …(2) } }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failure": {
+-     "code": "EVALUATION_INVALID_CONFIGURATION",
+-     "resumable": false,
+-   },
+-   "status": "failed",
++   "status": "succeeded",
+  }
+
+ ❯ src/catalog.test.ts:467:19
+    465|         await t.app.inject(`/runs/${started.json<{ run: { id: string }…
+    466|       ).json();
+    467|       expect(run).toMatchObject({
+       |                   ^
+    468|         status: 'failed',
+    469|         failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/provider-refusal.test.ts > records a Codex request the provider refused with its own cause and offers no Resume (#243)
+AssertionError: expected { …(16) } to match object { status: 'failed', …(2) }
+(27 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "HARNESS_TURN_FAILED",
++     "code": "HARNESS_DELIVERY_UNCERTAIN",
+      "details": {
+-       "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
++       "adapterCode": "HARNESS_TURN_FAILED",
+      },
+      "inference": {
+        "sessionId": "refused-thread",
+      },
+-     "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account.",
+-     "resumable": false,
++     "message": "harness turn failed: Codex Exec exited with code 1: Reading prompt from stdin...
++ ",
++     "resumable": true,
+    },
+    "recovery": {
+      "resume": {
+-       "allowed": false,
++       "allowed": true,
+      },
+    },
+    "status": "failed",
+  }
+
+ ❯ src/provider-refusal.test.ts:60:23
+     58|   await t.idle();
+     59|   const read = await t.app.inject(`/runs/${runId}`);
+     60|   expect(read.json()).toMatchObject({
+       |                       ^
+     61|     status: 'failed',
+     62|     failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  7 failed | 2 passed | 44 skipped (53)
+   Start at  11:20:02
+   Duration  7.13s (import 56%, transform 28%, tests 17%)
+
+  Transform  transforming modules took 5.20s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

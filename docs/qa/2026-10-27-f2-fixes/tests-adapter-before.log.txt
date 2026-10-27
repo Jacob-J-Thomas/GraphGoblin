@@ -1,0 +1,265 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a028ffe9642f999a3/packages/adapter-codex
+
+ ❯ src/decider.test.ts (27 tests | 1 failed) 35ms
+   ❯ CodexDecider.route (26)
+     × maps native Choice failure HARNESS_ARGUMENTS_REJECTED without retaining provider text 11ms
+ ❯ src/events.test.ts (14 tests | 4 failed) 38ms
+   ❯ classifyCodexError (4)
+     × unwraps the JSON API error Codex reports and names the provider refusal 12ms
+     × classifies the provider refusal of a request parameter as a pinned argument refusal (#243) 2ms
+   ❯ TurnAccumulator (7)
+     × turns turn.failed into a classified failure and ignores the preceding stream error 3ms
+     × never lets the generic process-exit error replace a failure the stream reported (#243) 1ms
+ ❯ src/harness.test.ts (32 tests | 1 failed) 146ms
+   ❯ CodexHarness.start (14)
+     × reports a failed turn as an error event and rejects the result with a code 12ms
+ ❯ src/refusal.test.ts (3 tests | 3 failed) 364ms
+   ❯ a failure the Codex event stream reports before the CLI exits non-zero (#243) (3)
+     × records the provider refusal of the request, not the exit error that follows it 147ms
+     × keeps an unclassified stream failure instead of the generic exit error 84ms
+     × fails the run with the provider refusal as its non-resumable cause and offers no Resume 132ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/decider.test.ts > CodexDecider.route > maps native Choice failure HARNESS_ARGUMENTS_REJECTED without retaining provider text
+AssertionError: expected Error: private-native-message { …(2) } to match object { code: 'DECIDER_HTTP_ERROR', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "DECIDER_HTTP_ERROR",
+-   "message": "Codex route completion failed",
++ Error {
++   "code": "HARNESS_ARGUMENTS_REJECTED",
+  }
+
+ ❯ src/decider.test.ts:105:8
+    103|       await expect(
+    104|         createCodexDecider(port).route(choice, new AbortController().s…
+    105|       ).rejects.toMatchObject({ code: expected, message: 'Codex route …
+       |        ^
+    106|     },
+    107|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > unwraps the JSON API error Codex reports and names the provider refusal
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400): The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
++   "code": "HARNESS_TURN_FAILED",
++   "message": "The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:179:41
+    177|     const raw = loadFixture('failed-invalid-model').events.find((e) =>…
+    178|     const message = (raw as { error: { message: string } }).error.mess…
+    179|     expect(classifyCodexError(message)).toEqual({
+       |                                         ^
+    180|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    181|       message:
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/events.test.ts > classifyCodexError > classifies the provider refusal of a request parameter as a pinned argument refusal (#243)
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
++   "code": "HARNESS_TURN_FAILED",
++   "message": "Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model.",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:199:41
+    197|       status: 400,
+    198|     });
+    199|     expect(classifyCodexError(refusal)).toEqual({
+       |                                         ^
+    200|       code: 'HARNESS_ARGUMENTS_REJECTED',
+    201|       message:
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > turns turn.failed into a classified failure and ignores the preceding stream error
+AssertionError: expected 'HARNESS_TURN_FAILED' to be 'HARNESS_ARGUMENTS_REJECTED' // Object.is equality
+
+Expected: "HARNESS_ARGUMENTS_REJECTED"
+Received: "HARNESS_TURN_FAILED"
+
+ ❯ src/events.test.ts:307:35
+    305|     const outcome = acc.finish();
+    306|     expect(outcome.completed).toBe(false);
+    307|     expect(outcome.failure?.code).toBe('HARNESS_ARGUMENTS_REJECTED');
+       |                                   ^
+    308|     expect(outcome.failure?.message).toContain('not supported');
+    309|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/events.test.ts > TurnAccumulator > never lets the generic process-exit error replace a failure the stream reported (#243)
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(2) } to deeply equal { code: 'HARNESS_TURN_FAILED', …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "something odd",
++   "message": "Codex Exec exited with code 1: Reading prompt from stdin...
++ ",
+    "retriable": false,
+  }
+
+ ❯ src/events.test.ts:317:37
+    315|     failed.push({ type: 'turn.failed', error: { message: 'something od…
+    316|     failed.fail(exit);
+    317|     expect(failed.finish().failure).toEqual({
+       |                                     ^
+    318|       code: 'HARNESS_TURN_FAILED',
+    319|       message: 'something odd',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/harness.test.ts > CodexHarness.start > reports a failed turn as an error event and rejects the result with a code
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_ARGUMENTS_REJECTED",
+-   "message": "The provider refused the request (HTTP 400): The 'gpt-graphgoblin-does-not-exist' model is not supported when using Codex with a ChatGPT account.",
++   "code": "HARNESS_TURN_FAILED",
++   "message": "Codex Exec exited with code 1: ",
+    "retriable": false,
+    "type": "error",
+  }
+
+ ❯ src/harness.test.ts:230:27
+    228|       retriable: false,
+    229|     };
+    230|     expect(events.at(-1)).toMatchObject({ type: 'error', ...refusal });
+       |                           ^
+    231|     await expect(session.result).rejects.toMatchObject(refusal);
+    232|     await expect(session.sessionId).resolves.toMatch(/^01a0/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > records the provider refusal of the request, not the exit error that follows it
+AssertionError: expected [ { type: 'session', …(2) }, …(2) ] to deeply equal [ { type: 'session', …(2) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -7,12 +7,13 @@
+    {
+      "marker": "codex.turn.started",
+      "type": "submitted",
+    },
+    {
+-     "code": "HARNESS_ARGUMENTS_REJECTED",
+-     "message": "The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
++     "code": "HARNESS_TURN_FAILED",
++     "message": "Codex Exec exited with code 1: Reading prompt from stdin...
++ ",
+      "retriable": false,
+      "submission": "delivery-uncertain",
+      "type": "error",
+    },
+  ]
+
+ ❯ src/refusal.test.ts:68:20
+     66|     // turn.started is the documented Codex acceptance marker (#244): …
+     67|     // its conversation, so a later refusal cannot make the turn defin…
+     68|     expect(events).toEqual([
+       |                    ^
+     69|       { type: 'session', sessionId: 'refused-thread', mode: 'fresh' },
+     70|       { type: 'submitted', marker: 'codex.turn.started' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > keeps an unclassified stream failure instead of the generic exit error
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TURN_FAILED",
+-   "message": "The synthetic turn stopped for a reason GraphGoblin does not classify",
++   "message": "Codex Exec exited with code 1: Reading prompt from stdin...
++ ",
+    "type": "error",
+  }
+
+ ❯ src/refusal.test.ts:96:27
+     94|       message: 'The synthetic turn stopped for a reason GraphGoblin do…
+     95|     };
+     96|     expect(events.at(-1)).toMatchObject({ type: 'error', ...failure });
+       |                           ^
+     97|     await expect(session.result).rejects.toMatchObject(failure);
+     98|   }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/refusal.test.ts > a failure the Codex event stream reports before the CLI exits non-zero (#243) > fails the run with the provider refusal as its non-resumable cause and offers no Resume
+AssertionError: expected { …(6) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TURN_FAILED",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+-     "adapterCode": "HARNESS_ARGUMENTS_REJECTED",
++     "adapterCode": "HARNESS_TURN_FAILED",
+    },
+    "inference": {
+      "sessionId": "refused-thread",
+      "submission": "delivery-uncertain",
+    },
+-   "message": "harness turn failed: The provider refused the request (HTTP 400, reasoning.effort): Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.",
+-   "resumable": false,
++   "message": "harness turn failed: Codex Exec exited with code 1: Reading prompt from stdin...
++ ",
++   "resumable": true,
+  }
+
+ ❯ src/refusal.test.ts:118:27
+    116|       );
+    117|       const run = await e.runToIdle(version.loopId);
+    118|       expect(run.failure).toMatchObject({
+       |                           ^
+    119|         code: 'HARNESS_TURN_FAILED',
+    120|         message: `harness turn failed: The provider refused the reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  9 failed | 67 passed (76)
+   Start at  11:19:12
+   Duration  3.23s (import 57%, transform 36%, tests 7%)
+
+  Transform  transforming modules took 2.97s · 36% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

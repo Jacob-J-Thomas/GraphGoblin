@@ -1,0 +1,118 @@
+
+Running 3 tests using 1 worker
+
+  x  1 [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: no minimal, max is offered and requested unchanged, but not for GPT-5.5 (1.9s)
+  x  2 [chromium] › e2e\model-effort.spec.ts:444:3 › inference: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen (562ms)
+  x  3 [chromium] › e2e\model-effort.spec.ts:444:3 › llm: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen (570ms)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: no minimal, max is offered and requested unchanged, but not for GPT-5.5 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+    @@ -1,7 +1,8 @@
+      Array [
+        "",
+    +   "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+
+      338 |   // The Codex CLI's own model catalog lists no minimal for any model, and the provider refuses it
+      339 |   // for GPT-6 Luna (F2 LP-5), so it is never offered.
+    > 340 |   expect(await offered()).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+          |                           ^
+      341 |   await effort.selectOption('max');
+      342 |   // GPT-5.5 tops out at xhigh in the Codex CLI's own model catalog, so max is not a choice there.
+      343 |   await model.selectOption('gpt-5.5');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a028ffe9642f999a3\apps\web\e2e\model-effort.spec.ts:340:27
+
+    Error Context: test-results\model-effort-Codex-effort--db943-changed-but-not-for-GPT-5-5-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-Codex-effort--db943-changed-but-not-for-GPT-5-5-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-Codex-effort--db943-changed-but-not-for-GPT-5-5-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-effort.spec.ts:444:3 › inference: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+    @@ -1,6 +1,7 @@
+      Array [
+    +   "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+
+      455 |       (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+      456 |     )!;
+    > 457 |     expect(luna['efforts']).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+          |                             ^
+      458 |     // A draft saved while the shipped catalog still offered minimal (before #205's F2 fix); the next
+      459 |     // start restores the shipped efforts.
+      460 |     await control(request, '/catalog/upsert', {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a028ffe9642f999a3\apps\web\e2e\model-effort.spec.ts:457:29
+
+    Error Context: test-results\model-effort-inference-a-C-94076--supported-effort-is-chosen-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-inference-a-C-94076--supported-effort-is-chosen-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-inference-a-C-94076--supported-effort-is-chosen-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\model-effort.spec.ts:444:3 › llm: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+    @@ -1,6 +1,7 @@
+      Array [
+    +   "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+
+      455 |       (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+      456 |     )!;
+    > 457 |     expect(luna['efforts']).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+          |                             ^
+      458 |     // A draft saved while the shipped catalog still offered minimal (before #205's F2 fix); the next
+      459 |     // start restores the shipped efforts.
+      460 |     await control(request, '/catalog/upsert', {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a028ffe9642f999a3\apps\web\e2e\model-effort.spec.ts:457:29
+
+    Error Context: test-results\model-effort-llm-a-Codex-m-4af9b--supported-effort-is-chosen-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-llm-a-Codex-m-4af9b--supported-effort-is-chosen-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-llm-a-Codex-m-4af9b--supported-effort-is-chosen-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e\model-effort.spec.ts:318:1 › Codex effort choices follow the model: no minimal, max is offered and requested unchanged, but not for GPT-5.5 
+    [chromium] › e2e\model-effort.spec.ts:444:3 › inference: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen 
+    [chromium] › e2e\model-effort.spec.ts:444:3 › llm: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen 
