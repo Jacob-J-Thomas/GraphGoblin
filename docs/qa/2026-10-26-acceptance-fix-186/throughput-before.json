@@ -1,0 +1,157 @@
+{
+  "label": "before",
+  "phases": [
+    {
+      "name": "no inspector (~5,000 events)",
+      "seconds": 30,
+      "A": {
+        "from": 4536,
+        "to": 7536,
+        "eventsPerSecond": 99.9
+      },
+      "B": {
+        "from": 4536,
+        "to": 7536,
+        "eventsPerSecond": 99.9
+      },
+      "inspectorReads": 0,
+      "inspectorReadsPerSecond": 0,
+      "inspectorReadsPer100EventsOfA": 0,
+      "requests": {},
+      "apiMemory": {
+        "privateMiB": 143,
+        "workingSetMiB": 144.6
+      }
+    },
+    {
+      "name": "inspector following A live (~5,000 events)",
+      "seconds": 60.3,
+      "A": {
+        "from": 7800,
+        "to": 8044,
+        "eventsPerSecond": 4
+      },
+      "B": {
+        "from": 7801,
+        "to": 8041,
+        "eventsPerSecond": 4
+      },
+      "inspectorReads": 831,
+      "inspectorReadsPerSecond": 13.79,
+      "inspectorReadsPer100EventsOfA": 340.57,
+      "requests": {
+        "GET /runs/:id": 209,
+        "GET /runs/:id/thread": 209,
+        "GET /runs/:id/observation": 209,
+        "GET /runs/:id/thread?at": 204,
+        "GET /system/shutdown": 6
+      },
+      "jsHeapMiB": 9.87,
+      "apiMemory": {
+        "privateMiB": 295.7,
+        "workingSetMiB": 295.5
+      }
+    },
+    {
+      "name": "no inspector (~10,000 events)",
+      "seconds": 30.1,
+      "A": {
+        "from": 9584,
+        "to": 12629,
+        "eventsPerSecond": 101.1
+      },
+      "B": {
+        "from": 9584,
+        "to": 12629,
+        "eventsPerSecond": 101.1
+      },
+      "inspectorReads": 0,
+      "inspectorReadsPerSecond": 0,
+      "inspectorReadsPer100EventsOfA": 0,
+      "requests": {},
+      "apiMemory": {
+        "privateMiB": 296,
+        "workingSetMiB": 295.2
+      }
+    },
+    {
+      "name": "inspector following A live (~10,000 events)",
+      "seconds": 60.3,
+      "A": {
+        "from": 12826,
+        "to": 12919,
+        "eventsPerSecond": 1.5
+      },
+      "B": {
+        "from": 12826,
+        "to": 12917,
+        "eventsPerSecond": 1.5
+      },
+      "inspectorReads": 493,
+      "inspectorReadsPerSecond": 8.17,
+      "inspectorReadsPer100EventsOfA": 530.11,
+      "requests": {
+        "GET /runs/:id": 127,
+        "GET /runs/:id/thread": 127,
+        "GET /runs/:id/observation": 127,
+        "GET /runs/:id/thread?at": 112,
+        "GET /system/shutdown": 5
+      },
+      "jsHeapMiB": 9.48,
+      "apiMemory": {
+        "privateMiB": 304.7,
+        "workingSetMiB": 303.8
+      }
+    },
+    {
+      "name": "inspector in history mode (Load older)",
+      "seconds": 30,
+      "A": {
+        "from": 12924,
+        "to": 15071,
+        "eventsPerSecond": 71.5
+      },
+      "B": {
+        "from": 12924,
+        "to": 15071,
+        "eventsPerSecond": 71.5
+      },
+      "inspectorReads": 690,
+      "inspectorReadsPerSecond": 22.98,
+      "inspectorReadsPer100EventsOfA": 32.14,
+      "requests": {
+        "GET /runs/:id": 231,
+        "GET /runs/:id/thread": 231,
+        "GET /runs/:id/observation": 231,
+        "GET /system/shutdown": 3
+      },
+      "jsHeapMiB": 10.33,
+      "apiMemory": {
+        "privateMiB": 305.1,
+        "workingSetMiB": 304.7
+      }
+    },
+    {
+      "name": "inspector closed",
+      "seconds": 30.1,
+      "A": {
+        "from": 15291,
+        "to": 18311,
+        "eventsPerSecond": 100.4
+      },
+      "B": {
+        "from": 15291,
+        "to": 18311,
+        "eventsPerSecond": 100.4
+      },
+      "inspectorReads": 0,
+      "inspectorReadsPerSecond": 0,
+      "inspectorReadsPer100EventsOfA": 0,
+      "requests": {},
+      "apiMemory": {
+        "privateMiB": 305.7,
+        "workingSetMiB": 305.4
+      }
+    }
+  ]
+}

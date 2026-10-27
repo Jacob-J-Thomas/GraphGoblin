@@ -60,7 +60,7 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0048: Targeted durable Event admission](ADR-0048-targeted-event-admission.md) records a single explicit recipient, receipt-before-acknowledgement, recipient-scoped keys and bounded payload nesting.
 
-[ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.
+[ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery, the bounded browser history window, and bounded, coalesced reads while the inspector follows a run live.
 
 [ADR-0058: Node 22.22.2 floor for development and gates](ADR-0058-node-22-patch-floor-for-development.md) amends ADR-0040's `^22` range: pnpm refuses an older Node 22, while the built app still needs only major 22.
 

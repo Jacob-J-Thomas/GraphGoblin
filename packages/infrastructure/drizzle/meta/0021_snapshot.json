@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f6151b73-c6ea-41ce-9b02-c804b3cd2f84",
+  "id": "b776f571-c548-49f5-9fe5-6e241909e20c",
   "prevId": "3b37d9f9-4bb0-455f-8563-16dd57a9544c",
   "tables": {
     "api_keys": {
@@ -728,6 +728,18 @@
           "name": "run_events_delivery_idx",
           "columns": ["run_id", "type", "seq"],
           "isUnique": false
+        },
+        "run_events_gate_idx": {
+          "name": "run_events_gate_idx",
+          "columns": ["run_id", "seq"],
+          "isUnique": false,
+          "where": "\"run_events\".\"type\" = 'decision.made' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.gate') is not null else 1 end"
+        },
+        "run_events_fresh_session_idx": {
+          "name": "run_events_fresh_session_idx",
+          "columns": ["run_id", "seq"],
+          "isUnique": false,
+          "where": "\"run_events\".\"type\" = 'run.resumed' and case when json_valid(\"run_events\".\"payload\") then json_type(\"run_events\".\"payload\", '$.freshSession') is not null else 1 end"
         }
       },
       "foreignKeys": {},
@@ -912,30 +924,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "deletion_approval": {
-          "name": "deletion_approval",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "pinned": {
           "name": "pinned",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "deletion_revision": {
-          "name": "deletion_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "replay_source_run_id": {
-          "name": "replay_source_run_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -975,16 +965,6 @@
         "runs_version_idx": {
           "name": "runs_version_idx",
           "columns": ["version_id"],
-          "isUnique": false
-        },
-        "runs_deletion_approval_idx": {
-          "name": "runs_deletion_approval_idx",
-          "columns": ["deletion_approval"],
-          "isUnique": false
-        },
-        "runs_replay_source_idx": {
-          "name": "runs_replay_source_idx",
-          "columns": ["replay_source_run_id"],
           "isUnique": false
         }
       },

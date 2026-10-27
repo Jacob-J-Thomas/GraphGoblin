@@ -1,0 +1,214 @@
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\live-follow.spec.ts:58:1 › following a fast run live refreshes bounded read models and reads no historical thread (#186) (12.3s)
+
+
+  1) [chromium] › e2e\live-follow.spec.ts:58:1 › following a fast run live refreshes bounded read models and reads no historical thread (#186) 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -   1
+    + Received  + 178
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "at": "86",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "85",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "89",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "88",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "91",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "90",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "99",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "98",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "106",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "105",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "111",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "110",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "114",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "113",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "129",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "128",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "131",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "130",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "134",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "133",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "136",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "135",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "139",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "138",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "141",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "140",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "144",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "143",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "149",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "148",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "151",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "150",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "154",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "153",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "159",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "158",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "169",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "168",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "174",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "173",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "176",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "175",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "179",
+    +     "route": "/thread",
+    +   },
+    +   Object {
+    +     "at": "178",
+    +     "route": "/thread",
+    +   },
+    + ]
+
+      90 |     const window = reads.slice(mark);
+      91 |     expect(to).toBeGreaterThan(from);
+    > 92 |     expect(window.filter((read) => read.at !== null)).toEqual([]);
+         |                                                       ^
+      93 |     const bound = Math.ceil(elapsed / LIVE_REFRESH_MS) + 1;
+      94 |     for (const route of ['', '/observation', '/thread']) {
+      95 |       const count = window.filter((read) => read.route === route).length;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ae61ad15bb76ad037\apps\web\e2e\live-follow.spec.ts:92:55
+
+    Error Context: test-results\live-follow-following-a-fa-fbae5-s-no-historical-thread-186--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\live-follow-following-a-fa-fbae5-s-no-historical-thread-186--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\live-follow-following-a-fa-fbae5-s-no-historical-thread-186--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\live-follow.spec.ts:58:1 › following a fast run live refreshes bounded read models and reads no historical thread (#186) 

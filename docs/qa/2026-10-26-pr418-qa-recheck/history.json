@@ -1,0 +1,414 @@
+{
+  "checks": [
+    {
+      "name": "following: thread panel is \"Current thread\", no patch diff, latest row marked current, Follow live disabled",
+      "ok": true,
+      "detail": {
+        "threadHeading": "Current thread",
+        "currentRow": 2141,
+        "lastRow": 2141,
+        "followLiveEnabled": false,
+        "timeline": {
+          "total": 2141,
+          "stream": "live"
+        }
+      }
+    },
+    {
+      "name": "selected completion: thread equals thread?at=N; patch diff before/after equal at=N-1 and at=N",
+      "ok": true,
+      "detail": {
+        "n": 2156,
+        "uiVars": {
+          "n": 431
+        },
+        "apiAtN": {
+          "n": 431
+        },
+        "apiAtPrev": {
+          "n": 430
+        },
+        "patchBefore": 430,
+        "patchAfter": 431,
+        "patchTitle": "Patch from Grow (grow)",
+        "eventType": "node.finished",
+        "eventPatch": [
+          {
+            "op": "replace",
+            "path": "/vars/n",
+            "value": 431
+          }
+        ]
+      }
+    },
+    {
+      "name": "selection reads exactly thread?at=N-1 and N",
+      "ok": true,
+      "detail": {
+        "boundaries": [2155, 2156]
+      }
+    },
+    {
+      "name": "selection pauses following: rows, thread heading and values hold while the run advances; Follow live enabled",
+      "ok": true,
+      "detail": {
+        "rowsBefore": [2080, 2159],
+        "rowsAfter": [2080, 2159],
+        "heading": "Thread at event 2156",
+        "runAdvanced": [2291, 3050],
+        "followLiveEnabled": true,
+        "timeline": {
+          "total": 3045,
+          "stream": "live"
+        }
+      }
+    },
+    {
+      "name": "while a selection is shown: run record keeps refreshing, no current-thread or further boundary read",
+      "ok": true,
+      "detail": {
+        "readsIn5s": {
+          "run": 10,
+          "observation": 10
+        }
+      }
+    },
+    {
+      "name": "Follow live shows the current thread including changes made during the selection",
+      "ok": true,
+      "detail": {
+        "uiVars": {
+          "n": 610
+        },
+        "apiCurrent": {
+          "n": 610
+        },
+        "selectedWas": {
+          "n": 431
+        },
+        "lastRow": 3052,
+        "readsAfterFollowLive": {
+          "events-page": 1,
+          "thread": 1
+        }
+      }
+    },
+    {
+      "name": "a status change during the selection reached the header (paused)",
+      "ok": true,
+      "detail": {
+        "statusDuringSelection": "paused"
+      }
+    },
+    {
+      "name": "selected decision.made: thread equals thread?at=N, reads only that boundary, no patch diff",
+      "ok": true,
+      "detail": {
+        "m": 3490,
+        "reads": [3490],
+        "uiVars": {
+          "n": 697
+        },
+        "apiVars": {
+          "n": 697
+        }
+      }
+    },
+    {
+      "name": "selected node.started: thread equals thread?at=N, reads only that boundary, no patch diff",
+      "ok": true,
+      "detail": {
+        "m": 3817,
+        "reads": [3817],
+        "uiVars": {
+          "n": 762
+        },
+        "apiVars": {
+          "n": 762
+        }
+      }
+    },
+    {
+      "name": "keyboard: Arrow keys move focus (pausing), Enter selects; focus stays on the row; thread equals thread?at",
+      "ok": true,
+      "detail": {
+        "focusedSeq": 4095,
+        "stillFocused": 4095,
+        "currentRow": 4095,
+        "reads": [4095],
+        "announcedRecently": [
+          "Following live.",
+          "Following paused. Showing events 4019–4098 of the retained window.",
+          "Reading the thread at event 4095…",
+          "Following paused. Showing events 4019–4098 of the retained window.",
+          "Reading the thread at event 4095…",
+          "Following paused. Showing events 4019–4098 of the retained window.",
+          "Reading the thread at event 4095…",
+          "Following paused. Showing events 4019–4098 of the retained window.",
+          "Reading the thread at event 4095…",
+          "Following paused. Showing events 4019–4098 of the retained window.",
+          "Reading the thread at event 4095…",
+          "Following paused. Showing events 4019–4098 of the retained window."
+        ]
+      }
+    },
+    {
+      "name": "keyboard: Follow live via Enter returns to the current thread",
+      "ok": true,
+      "detail": {
+        "focusAfterFollowLive": {
+          "tag": "BUTTON",
+          "text": "Follow live"
+        }
+      }
+    },
+    {
+      "name": "rapid selection settles on the last selected completion with its exact thread",
+      "ok": true,
+      "detail": {
+        "selections": 6,
+        "lastSeq": 4438,
+        "threadAtReadsIssued": 12,
+        "failedOrAborted": 10,
+        "uiVars": {
+          "n": 887
+        },
+        "apiVars": {
+          "n": 887
+        }
+      }
+    },
+    {
+      "name": "older-history browsing: every window contiguous, at most 80 rows, holds still while the run executes",
+      "ok": true,
+      "detail": {
+        "windows": [
+          {
+            "what": "live",
+            "first": 4737,
+            "last": 4816,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Load older",
+            "first": 4506,
+            "last": 4585,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Previous rows",
+            "first": 4378,
+            "last": 4457,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after a second Load older",
+            "first": 4250,
+            "last": 4329,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "3 s later (run still executing)",
+            "first": 4250,
+            "last": 4329,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Next rows",
+            "first": 4330,
+            "last": 4409,
+            "rows": 80,
+            "contiguous": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Go to event 137 selects the row and shows the exact thread at 137",
+      "ok": true,
+      "detail": {
+        "currentRow": 137,
+        "uiVars": {
+          "n": 27
+        },
+        "apiVars": {
+          "n": 27
+        },
+        "rows": 80,
+        "window": [58, 137]
+      }
+    },
+    {
+      "name": "Follow live after browsing returns to the contiguous tail",
+      "ok": true,
+      "detail": {
+        "window": [10419, 10498],
+        "apiLastSeq": 10503,
+        "rows": 80
+      }
+    },
+    {
+      "name": "cancellation while a completion is selected: header updates, selection holds; Follow live shows the final current thread",
+      "ok": true,
+      "detail": {
+        "during": {
+          "status": "cancelled",
+          "heading": "Thread at event 10498"
+        },
+        "final": {
+          "vars": {
+            "n": 2117
+          },
+          "api": {
+            "n": 2117
+          },
+          "timeline": {
+            "total": 10593,
+            "stream": "complete"
+          },
+          "lastEventSeq": 10593,
+          "executionContext": "Execution contextQA history v1 · version ID 01M5XCVEJHQ8V3BMDCXNZ3HQJ9Cancelled by user local (request #10592; cancellation #10593). Recorded node position: Grow (grow).Exact run recordPinned definition JSON"
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "ariaFollowing": "- region \"Current thread\":\n  - heading \"Current thread\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 429 }\"\n  - button \"Full thread JSON\"",
+  "ariaSelected": "- region \"Thread at event 2156\":\n  - heading \"Thread at event 2156\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 431 }\"\n  - button \"Full thread JSON\"",
+  "ariaPatch": "- region \"Patch from Grow (grow)\":\n  - heading \"Patch from Grow (grow)\" [level=2]\n  - list \"Patch diff\":\n    - listitem:\n      - text: replace\n      - code: /vars/n\n      - text: Before 430 After 431",
+  "announced": [
+    "Following live.",
+    "Following paused. Showing events 2080–2159 of the retained window.",
+    "Reading the thread at event 2156…",
+    "Following paused. Showing events 2080–2159 of the retained window.",
+    "Reading the thread at event 2156…",
+    "Following paused. Showing events 2080–2159 of the retained window.",
+    "Reading the thread at event 2156…",
+    "Following paused. Showing events 2080–2159 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 3429–3508 of the retained window.",
+    "Reading the thread at event 3490…",
+    "Following paused. Showing events 3429–3508 of the retained window.",
+    "Reading the thread at event 3490…",
+    "Following paused. Showing events 3429–3508 of the retained window.",
+    "Reading the thread at event 3490…",
+    "Following paused. Showing events 3429–3508 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 3738–3817 of the retained window.",
+    "Reading the thread at event 3817…",
+    "Following paused. Showing events 3738–3817 of the retained window.",
+    "Reading the thread at event 3817…",
+    "Following paused. Showing events 3738–3817 of the retained window.",
+    "Reading the thread at event 3817…",
+    "Following paused. Showing events 3738–3817 of the retained window.",
+    "Reading the thread at event 3817…",
+    "Following paused. Showing events 3738–3817 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Reading the thread at event 4095…",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Reading the thread at event 4095…",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Reading the thread at event 4095…",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Reading the thread at event 4095…",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Reading the thread at event 4095…",
+    "Following paused. Showing events 4019–4098 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4463…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4463…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4458…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4458…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4448…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4443…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4443…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Reading the thread at event 4438…",
+    "Following paused. Showing events 4384–4463 of the retained window.",
+    "Following paused. Showing events 4554–4633 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 4506–4585 of the retained window.",
+    "Following paused. Showing events 4378–4457 of the retained window.",
+    "Following paused. Showing events 4250–4329 of the retained window.",
+    "Following paused. Showing events 4330–4409 of the retained window.",
+    "Following paused. Showing events 4250–4329 of the retained window.",
+    "Following paused. Showing events 58–137 of the retained window.",
+    "Reading the thread at event 137…",
+    "Following paused. Showing events 58–137 of the retained window.",
+    "Reading the thread at event 137…",
+    "Following paused. Showing events 58–137 of the retained window.",
+    "Following live.",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Reading the thread at event 10498…",
+    "Following paused. Showing events 10419–10498 of the retained window.",
+    "Following live."
+  ],
+  "allRequests": {
+    "system": 7,
+    "run": 130,
+    "thread": 101,
+    "events-sse": 1,
+    "observation": 128,
+    "version": 1,
+    "thread?at": 20,
+    "events-page": 11
+  },
+  "ok": true
+}

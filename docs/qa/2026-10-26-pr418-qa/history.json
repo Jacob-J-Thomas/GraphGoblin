@@ -1,0 +1,563 @@
+{
+  "checks": [
+    {
+      "name": "following: thread panel is \"Current thread\", no patch diff, latest row marked current, Follow live disabled",
+      "ok": true,
+      "detail": {
+        "threadHeading": "Current thread",
+        "currentRow": 2784,
+        "lastRow": 2784,
+        "followLiveEnabled": false,
+        "timeline": {
+          "total": 2784,
+          "stream": "live"
+        }
+      }
+    },
+    {
+      "name": "selected completion: thread equals thread?at=N; patch diff before/after equal at=N-1 and at=N",
+      "ok": true,
+      "detail": {
+        "n": 2796,
+        "uiVars": {
+          "n": 559
+        },
+        "apiAtN": {
+          "n": 559
+        },
+        "apiAtPrev": {
+          "n": 558
+        },
+        "patchBefore": 558,
+        "patchAfter": 559,
+        "patchTitle": "Patch from Grow (grow)",
+        "eventType": "node.finished",
+        "eventPatch": [
+          {
+            "op": "replace",
+            "path": "/vars/n",
+            "value": 559
+          }
+        ]
+      }
+    },
+    {
+      "name": "selection reads exactly thread?at=N-1 and N",
+      "ok": true,
+      "detail": {
+        "boundaries": [
+          2795,
+          2796
+        ]
+      }
+    },
+    {
+      "name": "selection pauses following: rows, thread heading and values hold while the run advances; Follow live enabled",
+      "ok": true,
+      "detail": {
+        "rowsBefore": [
+          2745,
+          2824
+        ],
+        "rowsAfter": [
+          2745,
+          2824
+        ],
+        "heading": "Thread at event 2796",
+        "runAdvanced": [
+          2926,
+          3501
+        ],
+        "followLiveEnabled": true,
+        "timeline": {
+          "total": 3489,
+          "stream": "live"
+        }
+      }
+    },
+    {
+      "name": "while a selection is shown: run record keeps refreshing, no current-thread or further boundary read",
+      "ok": true,
+      "detail": {
+        "readsIn5s": {
+          "run": 10,
+          "observation": 10
+        }
+      }
+    },
+    {
+      "name": "Follow live shows the current thread including changes made during the selection",
+      "ok": true,
+      "detail": {
+        "uiVars": {
+          "n": 700
+        },
+        "apiCurrent": {
+          "n": 700
+        },
+        "selectedWas": {
+          "n": 559
+        },
+        "lastRow": 3505,
+        "readsAfterFollowLive": {
+          "events-page": 1,
+          "thread": 1
+        }
+      }
+    },
+    {
+      "name": "a status change during the selection reached the header (paused)",
+      "ok": true,
+      "detail": {
+        "statusDuringSelection": "paused"
+      }
+    },
+    {
+      "name": "selected decision.made: thread equals thread?at=N, reads only that boundary, no patch diff",
+      "ok": false,
+      "detail": {
+        "m": 2796,
+        "reads": [
+          3730
+        ],
+        "uiVars": {
+          "n": 745
+        },
+        "apiVars": {
+          "n": 559
+        }
+      }
+    },
+    {
+      "name": "selected node.started: thread equals thread?at=N, reads only that boundary, no patch diff",
+      "ok": false,
+      "detail": {
+        "m": 3730,
+        "reads": [
+          3937
+        ],
+        "uiVars": {
+          "n": 786
+        },
+        "apiVars": {
+          "n": 745
+        }
+      }
+    },
+    {
+      "name": "keyboard: Arrow keys move focus (pausing), Enter selects; focus stays on the row; thread equals thread?at",
+      "ok": true,
+      "detail": {
+        "focusedSeq": 4155,
+        "stillFocused": 4155,
+        "currentRow": 4155,
+        "reads": [
+          4155
+        ],
+        "announcedRecently": [
+          "Showing events 4067–4146 of the retained window.",
+          "Showing events 4079–4158 of the retained window.",
+          "Reading the thread at event 4155…",
+          "Showing events 4079–4158 of the retained window.",
+          "Reading the thread at event 4155…",
+          "Showing events 4079–4158 of the retained window.",
+          "Reading the thread at event 4155…",
+          "Showing events 4079–4158 of the retained window.",
+          "Reading the thread at event 4155…",
+          "Showing events 4079–4158 of the retained window.",
+          "Reading the thread at event 4155…",
+          "Showing events 4079–4158 of the retained window."
+        ]
+      }
+    },
+    {
+      "name": "keyboard: Follow live via Enter returns to the current thread",
+      "ok": true,
+      "detail": {
+        "focusAfterFollowLive": {
+          "tag": "BODY",
+          "text": "GraphGoblinMenuLoopsRunsEventsSettingsRun 01M5W0BCHH4R8M9BGZ"
+        }
+      }
+    },
+    {
+      "name": "rapid selection settles on the last selected completion with its exact thread",
+      "ok": true,
+      "detail": {
+        "selections": 6,
+        "lastSeq": 4453,
+        "threadAtReadsIssued": 12,
+        "failedOrAborted": 10,
+        "uiVars": {
+          "n": 890
+        },
+        "apiVars": {
+          "n": 890
+        }
+      }
+    },
+    {
+      "name": "older-history browsing: every window contiguous, at most 80 rows, holds still while the run executes",
+      "ok": true,
+      "detail": {
+        "windows": [
+          {
+            "what": "live",
+            "first": 4652,
+            "last": 4731,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Load older",
+            "first": 4327,
+            "last": 4406,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Previous rows",
+            "first": 4327,
+            "last": 4406,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after a second Load older",
+            "first": 4199,
+            "last": 4278,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "3 s later (run still executing)",
+            "first": 4199,
+            "last": 4278,
+            "rows": 80,
+            "contiguous": true
+          },
+          {
+            "what": "after Next rows",
+            "first": 4279,
+            "last": 4358,
+            "rows": 80,
+            "contiguous": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Go to event 137 selects the row and shows the exact thread at 137",
+      "ok": true,
+      "detail": {
+        "currentRow": 137,
+        "uiVars": {
+          "n": 27
+        },
+        "apiVars": {
+          "n": 27
+        },
+        "rows": 80,
+        "window": [
+          58,
+          137
+        ]
+      }
+    },
+    {
+      "name": "Follow live after browsing returns to the contiguous tail",
+      "ok": true,
+      "detail": {
+        "window": [
+          9527,
+          9606
+        ],
+        "apiLastSeq": 9623,
+        "rows": 80
+      }
+    },
+    {
+      "name": "cancellation while a completion is selected: header updates, selection holds; Follow live shows the final current thread",
+      "ok": true,
+      "detail": {
+        "during": {
+          "status": "cancelled",
+          "heading": "Thread at event 137"
+        },
+        "final": {
+          "vars": {
+            "n": 1926
+          },
+          "api": {
+            "n": 1926
+          },
+          "timeline": {
+            "total": 9635,
+            "stream": "complete"
+          },
+          "lastEventSeq": 9635,
+          "executionContext": "Execution contextQA history v1 · version ID 01M5W0BCFAGVXEGP870SZH1R8WCancelled by user local (request #9634; cancellation #9635). Recorded node position: Gate (gate).Exact run recordPinned definition JSON"
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "ariaFollowing": "- region \"Current thread\":\n  - heading \"Current thread\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 551 }\"\n  - button \"Full thread JSON\"",
+  "ariaSelected": "- region \"Thread at event 2796\":\n  - heading \"Thread at event 2796\" [level=2]\n  - heading \"Messages (0)\" [level=3]\n  - list \"Messages\"\n  - heading \"Variables\" [level=3]\n  - text: \"{ \\\"n\\\": 559 }\"\n  - button \"Full thread JSON\"",
+  "ariaPatch": "- region \"Patch from Grow (grow)\":\n  - heading \"Patch from Grow (grow)\" [level=2]\n  - list \"Patch diff\":\n    - listitem:\n      - text: replace\n      - code: /vars/n\n      - text: Before 558 After 559",
+  "announced": [
+    "No events loaded.",
+    "Showing events 177–256 of the retained window.",
+    "Showing events 433–512 of the retained window.",
+    "Showing events 689–768 of the retained window.",
+    "Showing events 945–1024 of the retained window.",
+    "Showing events 1201–1280 of the retained window.",
+    "Showing events 1457–1536 of the retained window.",
+    "Showing events 1713–1792 of the retained window.",
+    "Showing events 1969–2048 of the retained window.",
+    "Showing events 2225–2304 of the retained window.",
+    "Showing events 2457–2536 of the retained window.",
+    "Showing events 2473–2552 of the retained window.",
+    "Showing events 2490–2569 of the retained window.",
+    "Showing events 2506–2585 of the retained window.",
+    "Showing events 2521–2600 of the retained window.",
+    "Showing events 2537–2616 of the retained window.",
+    "Showing events 2550–2629 of the retained window.",
+    "Showing events 2566–2645 of the retained window.",
+    "Showing events 2582–2661 of the retained window.",
+    "Showing events 2597–2676 of the retained window.",
+    "Showing events 2610–2689 of the retained window.",
+    "Showing events 2622–2701 of the retained window.",
+    "Showing events 2636–2715 of the retained window.",
+    "Showing events 2650–2729 of the retained window.",
+    "Showing events 2665–2744 of the retained window.",
+    "Showing events 2680–2759 of the retained window.",
+    "Showing events 2693–2772 of the retained window.",
+    "Showing events 2705–2784 of the retained window.",
+    "Showing events 2720–2799 of the retained window.",
+    "Showing events 2732–2811 of the retained window.",
+    "Showing events 2745–2824 of the retained window.",
+    "Reading the thread at event 2796…",
+    "Showing events 2745–2824 of the retained window.",
+    "Reading the thread at event 2796…",
+    "Showing events 2745–2824 of the retained window.",
+    "Reading the thread at event 2796…",
+    "Showing events 2745–2824 of the retained window.",
+    "Reading the thread at event 2796…",
+    "Showing events 2745–2824 of the retained window.",
+    "Reading the thread at event 2796…",
+    "Showing events 2745–2824 of the retained window.",
+    "Showing events 3426–3505 of the retained window.",
+    "Showing events 3427–3506 of the retained window.",
+    "Showing events 3437–3516 of the retained window.",
+    "Showing events 3447–3526 of the retained window.",
+    "Showing events 3457–3536 of the retained window.",
+    "Showing events 3464–3543 of the retained window.",
+    "Showing events 3473–3552 of the retained window.",
+    "Showing events 3480–3559 of the retained window.",
+    "Showing events 3489–3568 of the retained window.",
+    "Showing events 3499–3578 of the retained window.",
+    "Showing events 3507–3586 of the retained window.",
+    "Showing events 3517–3596 of the retained window.",
+    "Showing events 3524–3603 of the retained window.",
+    "Showing events 3532–3611 of the retained window.",
+    "Showing events 3542–3621 of the retained window.",
+    "Showing events 3549–3628 of the retained window.",
+    "Showing events 3558–3637 of the retained window.",
+    "Showing events 3567–3646 of the retained window.",
+    "Showing events 3577–3656 of the retained window.",
+    "Showing events 3587–3666 of the retained window.",
+    "Showing events 3598–3677 of the retained window.",
+    "Showing events 3609–3688 of the retained window.",
+    "Showing events 3619–3698 of the retained window.",
+    "Showing events 3629–3708 of the retained window.",
+    "Showing events 3642–3721 of the retained window.",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Reading the thread at event 3730…",
+    "Showing events 3652–3731 of the retained window.",
+    "Showing events 3699–3778 of the retained window.",
+    "Showing events 3709–3788 of the retained window.",
+    "Showing events 3722–3801 of the retained window.",
+    "Showing events 3734–3813 of the retained window.",
+    "Showing events 3749–3828 of the retained window.",
+    "Showing events 3759–3838 of the retained window.",
+    "Showing events 3772–3851 of the retained window.",
+    "Showing events 3784–3863 of the retained window.",
+    "Showing events 3794–3873 of the retained window.",
+    "Showing events 3810–3889 of the retained window.",
+    "Showing events 3822–3901 of the retained window.",
+    "Showing events 3834–3913 of the retained window.",
+    "Showing events 3848–3927 of the retained window.",
+    "Showing events 3859–3938 of the retained window.",
+    "Reading the thread at event 3937…",
+    "Showing events 3859–3938 of the retained window.",
+    "Reading the thread at event 3937…",
+    "Showing events 3859–3938 of the retained window.",
+    "Reading the thread at event 3937…",
+    "Showing events 3859–3938 of the retained window.",
+    "Reading the thread at event 3937…",
+    "Showing events 3859–3938 of the retained window.",
+    "Reading the thread at event 3937…",
+    "Showing events 3859–3938 of the retained window.",
+    "Showing events 3909–3988 of the retained window.",
+    "Showing events 3922–4001 of the retained window.",
+    "Showing events 3929–4008 of the retained window.",
+    "Showing events 3939–4018 of the retained window.",
+    "Showing events 3952–4031 of the retained window.",
+    "Showing events 3964–4043 of the retained window.",
+    "Showing events 3982–4061 of the retained window.",
+    "Showing events 3992–4071 of the retained window.",
+    "Showing events 4002–4081 of the retained window.",
+    "Showing events 4012–4091 of the retained window.",
+    "Showing events 4027–4106 of the retained window.",
+    "Showing events 4039–4118 of the retained window.",
+    "Showing events 4057–4136 of the retained window.",
+    "Showing events 4067–4146 of the retained window.",
+    "Showing events 4079–4158 of the retained window.",
+    "Reading the thread at event 4155…",
+    "Showing events 4079–4158 of the retained window.",
+    "Reading the thread at event 4155…",
+    "Showing events 4079–4158 of the retained window.",
+    "Reading the thread at event 4155…",
+    "Showing events 4079–4158 of the retained window.",
+    "Reading the thread at event 4155…",
+    "Showing events 4079–4158 of the retained window.",
+    "Reading the thread at event 4155…",
+    "Showing events 4079–4158 of the retained window.",
+    "Showing events 4195–4274 of the retained window.",
+    "Showing events 4204–4283 of the retained window.",
+    "Showing events 4219–4298 of the retained window.",
+    "Showing events 4229–4308 of the retained window.",
+    "Showing events 4239–4318 of the retained window.",
+    "Showing events 4254–4333 of the retained window.",
+    "Showing events 4269–4348 of the retained window.",
+    "Showing events 4282–4361 of the retained window.",
+    "Showing events 4299–4378 of the retained window.",
+    "Showing events 4314–4393 of the retained window.",
+    "Showing events 4327–4406 of the retained window.",
+    "Showing events 4342–4421 of the retained window.",
+    "Showing events 4355–4434 of the retained window.",
+    "Showing events 4369–4448 of the retained window.",
+    "Showing events 4384–4463 of the retained window.",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4478…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4478…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4478…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4473…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4473…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4468…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4463…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4458…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4458…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Reading the thread at event 4453…",
+    "Showing events 4400–4479 of the retained window.",
+    "Showing events 4503–4582 of the retained window.",
+    "Showing events 4512–4591 of the retained window.",
+    "Showing events 4524–4603 of the retained window.",
+    "Showing events 4534–4613 of the retained window.",
+    "Showing events 4553–4632 of the retained window.",
+    "Showing events 4569–4648 of the retained window.",
+    "Showing events 4584–4663 of the retained window.",
+    "Showing events 4602–4681 of the retained window.",
+    "Showing events 4620–4699 of the retained window.",
+    "Showing events 4637–4716 of the retained window.",
+    "Showing events 4652–4731 of the retained window.",
+    "Showing events 4455–4534 of the retained window.",
+    "Showing events 4327–4406 of the retained window.",
+    "Showing events 4199–4278 of the retained window.",
+    "Showing events 4279–4358 of the retained window.",
+    "Showing events 4199–4278 of the retained window.",
+    "Showing events 58–137 of the retained window.",
+    "Reading the thread at event 137…",
+    "Showing events 58–137 of the retained window.",
+    "Reading the thread at event 137…",
+    "Showing events 58–137 of the retained window.",
+    "Showing events 9342–9421 of the retained window.",
+    "Showing events 9354–9433 of the retained window.",
+    "Showing events 9370–9449 of the retained window.",
+    "Showing events 9385–9464 of the retained window.",
+    "Showing events 9402–9481 of the retained window.",
+    "Showing events 9414–9493 of the retained window.",
+    "Showing events 9427–9506 of the retained window.",
+    "Showing events 9444–9523 of the retained window.",
+    "Showing events 9455–9534 of the retained window.",
+    "Showing events 9467–9546 of the retained window.",
+    "Showing events 9482–9561 of the retained window.",
+    "Showing events 9497–9576 of the retained window.",
+    "Showing events 9514–9593 of the retained window.",
+    "Showing events 9527–9606 of the retained window.",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9544–9623 of the retained window.",
+    "Reading the thread at event 9603…",
+    "Showing events 9556–9635 of the retained window."
+  ],
+  "allRequests": {
+    "system": 8,
+    "run": 140,
+    "thread": 106,
+    "events-sse": 1,
+    "observation": 129,
+    "version": 1,
+    "thread?at": 20,
+    "events-page": 12
+  },
+  "ok": false
+}

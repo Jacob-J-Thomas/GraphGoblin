@@ -16,6 +16,18 @@ export type ThreadReplayEvent =
     };
 
 /**
+ * The only event types `replayThread` applies (a decision only when it carries a gate). Any other
+ * event leaves a context thread exactly as it was, so a reader whose newer events are all of
+ * other types still holds the current thread (#186).
+ */
+export const THREAD_EVENT_TYPES: ReadonlySet<RunEvent['type']> = new Set<RunEvent['type']>([
+  'node.started',
+  'node.finished',
+  'decision.made',
+  'iteration.incremented',
+]);
+
+/**
  * Which completions a replay applies. Once the log has shown a `node.started` (every log the
  * engine writes does), a `node.finished` is applied only when it completes the open visit: the
  * node most recently started and not yet finished (one token, so at most one is open). A second

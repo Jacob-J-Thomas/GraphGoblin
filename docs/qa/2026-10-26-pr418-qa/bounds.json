@@ -1,0 +1,201 @@
+{
+  "checks": [
+    {
+      "name": "following live for 2 minutes: heap within 25% + 2 MiB, session cache under 1.3 MB, at most 80 contiguous rows",
+      "ok": true,
+      "detail": {
+        "samples": [
+          {
+            "atSeconds": 0,
+            "apiLastEventSeq": 3624,
+            "timelineTotal": 3606,
+            "jsHeapMiB": 9.26,
+            "sessionStorageBytesUtf16": 419820,
+            "rowsMounted": 80,
+            "contiguous": true,
+            "apiPrivateMiB": 138.7
+          },
+          {
+            "atSeconds": 32,
+            "apiLastEventSeq": 7854,
+            "timelineTotal": 7844,
+            "jsHeapMiB": 9.95,
+            "sessionStorageBytesUtf16": 421254,
+            "rowsMounted": 80,
+            "contiguous": true,
+            "apiPrivateMiB": 141.7
+          },
+          {
+            "atSeconds": 63,
+            "apiLastEventSeq": 12301,
+            "timelineTotal": 12286,
+            "jsHeapMiB": 10.54,
+            "sessionStorageBytesUtf16": 422868,
+            "rowsMounted": 80,
+            "contiguous": true,
+            "apiPrivateMiB": 144
+          },
+          {
+            "atSeconds": 93,
+            "apiLastEventSeq": 16434,
+            "timelineTotal": 16430,
+            "jsHeapMiB": 10.07,
+            "sessionStorageBytesUtf16": 422324,
+            "rowsMounted": 80,
+            "contiguous": true,
+            "apiPrivateMiB": 146
+          },
+          {
+            "atSeconds": 129,
+            "apiLastEventSeq": 21326,
+            "timelineTotal": 21319,
+            "jsHeapMiB": 10.98,
+            "sessionStorageBytesUtf16": 422330,
+            "rowsMounted": 80,
+            "contiguous": true,
+            "apiPrivateMiB": 149.7
+          }
+        ]
+      }
+    },
+    {
+      "name": "normal reader: paged replay delivers 1..last in order, then stream.complete",
+      "ok": false,
+      "detail": {
+        "last": 608,
+        "delivered": 609,
+        "bytes": 23865997,
+        "controls": [
+          "stream.complete"
+        ]
+      }
+    },
+    {
+      "name": "reader stalled 2 s (under the 5 s drain limit): completes with no failure control",
+      "ok": false,
+      "detail": {
+        "delivered": 609,
+        "controls": [
+          "stream.complete"
+        ]
+      }
+    },
+    {
+      "name": "reader stalled 7 s: explicit SSE_SLOW_CONSUMER, no completion; Last-Event-ID resume completes 1..last with no gap or duplicate",
+      "ok": false,
+      "detail": {
+        "beforeFailure": 10,
+        "resumedFrom": 10,
+        "afterResume": 599,
+        "last": 608,
+        "apiPrivateMiB": {
+          "before": 342.7,
+          "after": 353.7
+        },
+        "fetchError": "UND_ERR_SOCKET"
+      }
+    },
+    {
+      "name": "inspector stalled 9 s during replay: reopens from its cursor, completes, contiguous rows, status and count equal the API",
+      "ok": false,
+      "detail": {
+        "atPause": {
+          "total": 15,
+          "stream": "live"
+        },
+        "final": {
+          "timeline": {
+            "total": 609,
+            "stream": "complete"
+          },
+          "lastRow": 609,
+          "rows": 18,
+          "status": "succeeded",
+          "threadHeading": "Current thread"
+        },
+        "sseRequests": [
+          "?after=0",
+          "?after=80"
+        ],
+        "sawFellBehind": [],
+        "requests": {
+          "system": 14,
+          "run": 8,
+          "thread": 4,
+          "events-sse": 2,
+          "observation": 6,
+          "version": 1
+        }
+      }
+    }
+  ],
+  "edgeVersion": "156.0.4314.42",
+  "memory": {
+    "samples": [
+      {
+        "atSeconds": 0,
+        "apiLastEventSeq": 3624,
+        "timelineTotal": 3606,
+        "jsHeapMiB": 9.26,
+        "sessionStorageBytesUtf16": 419820,
+        "rowsMounted": 80,
+        "contiguous": true,
+        "apiPrivateMiB": 138.7
+      },
+      {
+        "atSeconds": 32,
+        "apiLastEventSeq": 7854,
+        "timelineTotal": 7844,
+        "jsHeapMiB": 9.95,
+        "sessionStorageBytesUtf16": 421254,
+        "rowsMounted": 80,
+        "contiguous": true,
+        "apiPrivateMiB": 141.7
+      },
+      {
+        "atSeconds": 63,
+        "apiLastEventSeq": 12301,
+        "timelineTotal": 12286,
+        "jsHeapMiB": 10.54,
+        "sessionStorageBytesUtf16": 422868,
+        "rowsMounted": 80,
+        "contiguous": true,
+        "apiPrivateMiB": 144
+      },
+      {
+        "atSeconds": 93,
+        "apiLastEventSeq": 16434,
+        "timelineTotal": 16430,
+        "jsHeapMiB": 10.07,
+        "sessionStorageBytesUtf16": 422324,
+        "rowsMounted": 80,
+        "contiguous": true,
+        "apiPrivateMiB": 146
+      },
+      {
+        "atSeconds": 129,
+        "apiLastEventSeq": 21326,
+        "timelineTotal": 21319,
+        "jsHeapMiB": 10.98,
+        "sessionStorageBytesUtf16": 422330,
+        "rowsMounted": 80,
+        "contiguous": true,
+        "apiPrivateMiB": 149.7
+      }
+    ],
+    "requests": {
+      "run": 264,
+      "observation": 264,
+      "thread": 264,
+      "system": 13
+    },
+    "sseRequestsAtOpen": [
+      "/runs/:id/events?after=0"
+    ]
+  },
+  "history": {
+    "last": 608,
+    "bytes": 23865997
+  },
+  "ok": false
+}
