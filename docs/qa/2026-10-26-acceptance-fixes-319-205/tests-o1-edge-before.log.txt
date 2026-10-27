@@ -1,0 +1,80 @@
+
+Running 2 tests using 1 worker
+
+  x  1 [chromium] › e2e\model-effort.spec.ts:365:3 › inference: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen (12.2s)
+  x  2 [chromium] › e2e\model-effort.spec.ts:365:3 › llm: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen (12.2s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:365:3 › inference: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen 
+
+    Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+    Locator: getByRole('dialog').getByLabel('Effort', { exact: true })
+    Expected pattern: /Effort max is not supported by GPT-5.5. Choose a supported effort or Default./
+    Received string:  "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: low. This effort is not supported by the selected model. The saved choice stays until you change it."
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveAccessibleDescription" getByRole('dialog').getByLabel('Effort', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Effort', { exact: true })
+        23 × locator resolved to <select id="_r_v_" aria-describedby="_r_v_-help _r_v_-default _r_v_-effort" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:tex…>…</select>
+           - unexpected value "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: low. This effort is not supported by the selected model. The saved choice stays until you change it."
+
+
+      416 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      417 |     await expect(effort).toHaveValue('max');
+    > 418 |     await expect(effort).toHaveAccessibleDescription(new RegExp(message));
+          |                          ^
+      419 |     await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+      420 |     await page.screenshot({ path: test.info().outputPath(`kept-max-${kind}.png`) });
+      421 |     await closeNode(page);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a9b1ddf54c64d7465\apps\web\e2e\model-effort.spec.ts:418:26
+
+    Error Context: test-results\model-effort-inference-a-m-f1931--supported-effort-is-chosen-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-inference-a-m-f1931--supported-effort-is-chosen-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-inference-a-m-f1931--supported-effort-is-chosen-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-effort.spec.ts:365:3 › llm: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen 
+
+    Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+    Locator: getByRole('dialog').getByLabel('Effort', { exact: true })
+    Expected pattern: /Effort max is not supported by GPT-5.5. Choose a supported effort or Default./
+    Received string:  "Inherit or explicitly select reasoning effort. Default effort: low. This effort is not supported by the selected model. The saved choice stays until you change it."
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveAccessibleDescription" getByRole('dialog').getByLabel('Effort', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Effort', { exact: true })
+        23 × locator resolved to <select id="_r_1e_" aria-required="true" aria-describedby="_r_1e_-help _r_1e_-default _r_1e_-effort" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-su…>…</select>
+           - unexpected value "Inherit or explicitly select reasoning effort. Default effort: low. This effort is not supported by the selected model. The saved choice stays until you change it."
+
+
+      416 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      417 |     await expect(effort).toHaveValue('max');
+    > 418 |     await expect(effort).toHaveAccessibleDescription(new RegExp(message));
+          |                          ^
+      419 |     await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+      420 |     await page.screenshot({ path: test.info().outputPath(`kept-max-${kind}.png`) });
+      421 |     await closeNode(page);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a9b1ddf54c64d7465\apps\web\e2e\model-effort.spec.ts:418:26
+
+    Error Context: test-results\model-effort-llm-a-max-kep-bcc1b--supported-effort-is-chosen-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-llm-a-max-kep-bcc1b--supported-effort-is-chosen-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-llm-a-max-kep-bcc1b--supported-effort-is-chosen-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\model-effort.spec.ts:365:3 › inference: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen 
+    [chromium] › e2e\model-effort.spec.ts:365:3 › llm: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen 

@@ -689,6 +689,13 @@ own interruption block release in `force-failed`. Earlier failures are reported 
 failed cleanup and exits code 1, retaining the failure and lock for next-start reclamation.
 A drain observation failure is separately `drain-failed`; incompatible controls return 409.
 
+On Windows, scripts, the Claude CLI and the Codex CLI each run with their own hidden console
+(the Codex SDK through a pnpm patch), so a terminal Ctrl+C reaches only the gateway and starts
+a normal drain without touching running work. A Codex turn whose CLI output stays open after
+the abort (a process the CLI started holds it) fails `HARNESS_TERMINATION_UNCONFIRMED` five
+seconds later instead of holding force indefinitely. A process that exited on its own before
+the kill counts as released once its output closes. See the ADR-0049 acceptance amendment.
+
 D-021 still stops retry backoffs without cancelling the bounded in-flight delivery attempt;
 pending deliveries and webhook admissions recover on the next start. After runnable work
 and finalization settle, SSE closes, HTTP closes, timers/manager stop, SQLite closes and

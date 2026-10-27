@@ -60,13 +60,13 @@
       "outputs": ["coverage/**"]
     },
     "@graphgoblin/tooling#test": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "@graphgoblin/api#build", "@graphgoblin/web#build"],
       "cache": false
     },
     "@graphgoblin/tooling#test:coverage": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "@graphgoblin/api#build", "@graphgoblin/web#build"],
       "cache": false,
-      "outputs": []
+      "outputs": ["coverage/**"]
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
-import type { CodexOptions, ModelReasoningEffort, ThreadOptions } from '@openai/codex-sdk';
+import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
@@ -19,12 +19,11 @@ import type { CodexOptions, ModelReasoningEffort, ThreadOptions } from '@openai/
  * | `webSearchMode`        | `--config web_search="disabled|cached|live"`       |
  * | `workingDirectory`     | `--cd <dir>`                                       |
  * | `skipGitRepoCheck`     | `--skip-git-repo-check`                            |
+ *
+ * Every canonical effort is a Codex effort and is sent unchanged, so the effort a run records is
+ * the effort the CLI receives. CLI 0.160.0 passes `model_reasoning_effort` through to the request
+ * as `reasoning.effort`, and its model catalog lists `max` (docs/06-harness-integration.md).
  */
-
-/** The canonical effort scale onto Codex's. Codex tops out at `xhigh`, so `max` maps there. */
-export function mapEffort(effort: Effort): ModelReasoningEffort {
-  return effort === 'max' ? 'xhigh' : effort;
-}
 
 export interface ResolvedSettings {
   model: string;
@@ -37,7 +36,7 @@ export function threadOptions(settings: ResolvedSettings): ThreadOptions {
   const { options } = settings;
   return {
     model: settings.model,
-    modelReasoningEffort: mapEffort(settings.effort),
+    modelReasoningEffort: settings.effort,
     sandboxMode: options.sandbox,
     approvalPolicy: options.approval,
     networkAccessEnabled: options.networkAccess ?? false,

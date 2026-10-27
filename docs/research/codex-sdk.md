@@ -6,7 +6,7 @@ Captured 2026-10-02. Sources: the `openai/codex` repository, OpenAI Codex config
 
 - Package `@openai/codex-sdk`, licence Apache-2.0, engines `node >= 18`, pinned exactly (`"0.160.0"`) in `packages/adapter-codex`.
 - **Correction:** the SDK now depends on `@openai/codex` at the same version (Apache-2.0), whose optional per-platform package (`@openai/codex-win32-x64` and so on) carries the native CLI, about 430 MB on Windows. With no `codexPathOverride`, the SDK runs that bundled binary, not the `codex` on `PATH`. Both read the same `~/.codex` login. The adapter's `codexBinary` option overrides the binary.
-- The SDK spawns `codex exec --experimental-json [flags] [resume <id>]` with `child_process.spawn(binary, args, { env, signal })`, writes the prompt to stdin, and reads JSONL from stdout. It does not set `windowsHide` or `detached`, and it does not expose the child process or its pid.
+- The SDK spawns `codex exec --experimental-json [flags] [resume <id>]` with `child_process.spawn(binary, args, { env, signal })`, writes the prompt to stdin, and reads JSONL from stdout. It does not set `windowsHide` or `detached`, and it does not expose the child process or its pid. Without `windowsHide` the CLI shares the gateway's Windows console and receives a terminal Ctrl+C; GraphGoblin therefore patches that one spawn to add `windowsHide: true` (2026-10-26, ADR-0049; no release up to 0.164.0 sets it).
 - The SDK's `.d.ts` imports `@modelcontextprotocol/sdk/types.js`, which it lists only as a dev dependency; with `skipLibCheck: true` (the repository default) the unresolved type is harmless.
 
 ## Client and thread API (verified)
@@ -34,7 +34,7 @@ Captured 2026-10-02. Sources: the `openai/codex` repository, OpenAI Codex config
 | `additionalDirectories` | `--add-dir <dir>` (repeated)                             | paths                                                                               |
 | `threadSource`          | `--thread-source <v>` (new threads only)                 | string                                                                              |
 
-Thread options are emitted after `config` and `configOverrides`, so they win over both and over `config.toml`. The adapter therefore uses thread options for every behaviour-affecting setting and `config` only for `harnessOptions.configOverrides`. The adapter maps the canonical effort `max` to `xhigh`, the highest level the research and the CLI docs confirm; the SDK type also lists `max`, `ultra`, and `persistent`, which were not tested.
+Thread options are emitted after `config` and `configOverrides`, so they win over both and over `config.toml`. The adapter therefore uses thread options for every behaviour-affecting setting and `config` only for `harnessOptions.configOverrides`. The adapter sends every canonical effort, including `max`, unchanged. Checked 2026-10-26 without a provider (#205): CLI 0.160.0 passes `model_reasoning_effort` through to the request's `reasoning.effort` without validating it (even an invalid value), and the model catalog compiled into the CLI lists `low`, `medium`, `high`, `xhigh` and `max` for the GPT-6 and GPT-5.6 models (plus `ultra` for most), but only `low` to `xhigh` for `gpt-5.5`. Until then the adapter mapped `max` to `xhigh`. `ultra` and `persistent` remain untested and are not canonical efforts.
 
 Unknown `--config` keys are accepted but produce a warning item ("Codex is ignoring 1 unrecognized configuration setting"), so the adapter adds no marker keys of its own.
 

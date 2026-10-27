@@ -1,0 +1,80 @@
+node v22.23.4
+$ codex --version
+exit 0: codex-cli 0.160.0
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-6-luna --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="max" --config approval_policy="never"
+exit 1 after 7143 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-6-luna","reasoning":{"effort":"max","context":"all_turns"}}
+distinct reasoning sent: ["{\"effort\":\"max\",\"context\":\"all_turns\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773c-d860-7981-b0cf-fe46579531bc"}
+2026-10-26T08:03:58.848811Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:03:59.006436Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:03:59.219835Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-6-luna --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="xhigh" --config approval_policy="never"
+exit 1 after 7587 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-6-luna","reasoning":{"effort":"xhigh","context":"all_turns"}}
+distinct reasoning sent: ["{\"effort\":\"xhigh\",\"context\":\"all_turns\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773c-f4aa-7b81-a6c1-045c99b14ebc"}
+2026-10-26T08:04:06.091740Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:06.395989Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:06.593153Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-6-luna --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="minimal" --config approval_policy="never"
+exit 1 after 7024 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-6-luna","reasoning":{"effort":"minimal","context":"all_turns"}}
+distinct reasoning sent: ["{\"effort\":\"minimal\",\"context\":\"all_turns\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773d-118b-7321-abce-a710cdeee155"}
+2026-10-26T08:04:13.454924Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:13.582081Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:13.776498Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-6-luna --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="bogus" --config approval_policy="never"
+exit 1 after 6839 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-6-luna","reasoning":{"effort":"bogus","context":"all_turns"}}
+distinct reasoning sent: ["{\"effort\":\"bogus\",\"context\":\"all_turns\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773d-2d3a-7e61-8405-1a21593ebc3e"}
+2026-10-26T08:04:20.549262Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:20.700560Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:20.913635Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-6.1-sol --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="max" --config approval_policy="never"
+exit 1 after 7126 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-6.1-sol","reasoning":{"effort":"max","context":"all_turns"}}
+distinct reasoning sent: ["{\"effort\":\"max\",\"context\":\"all_turns\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773d-47f0-7a10-a6fb-63f15e3622d8"}
+2026-10-26T08:04:27.387408Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:27.534896Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:27.748575Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-5.5 --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="max" --config approval_policy="never"
+exit 1 after 6931 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-5.5","reasoning":{"effort":"max"}}
+distinct reasoning sent: ["{\"effort\":\"max\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773d-6415-7e43-813d-4ee7454dd97b"}
+2026-10-26T08:04:34.642880Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:34.791725Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:35.005855Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+
+$ codex exec --experimental-json --config openai_base_url="http://127.0.0.1:6501/v1" --model gpt-5.5 --sandbox read-only --skip-git-repo-check --config model_reasoning_effort="xhigh" --config approval_policy="never"
+exit 1 after 7362 ms
+captured 8 request(s); first POST: {"method":"POST","path":"/v1/responses","upgrade":null,"model":"gpt-5.5","reasoning":{"effort":"xhigh"}}
+distinct reasoning sent: ["{\"effort\":\"xhigh\"}"]
+Reading prompt from stdin...
+{"type":"thread.started","thread_id":"01a1773d-7ee8-72c3-9033-f88e50879b36"}
+2026-10-26T08:04:41.483580Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+{"type":"turn.started"}
+2026-10-26T08:04:41.630297Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses
+2026-10-26T08:04:41.840578Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 404 Not Found, url: ws://127.0.0.1:6501/v1/responses

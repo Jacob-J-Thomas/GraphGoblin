@@ -1,0 +1,237 @@
+{
+  "scenario": "s6-effort-browser",
+  "passed": 14,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "B1 a Codex model that lists max offers max as a plain choice",
+      "ok": true,
+      "detail": [
+        "Default (medium)",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "B1 max is saved, survives reload, is sent as model_reasoning_effort=\"max\" and the session row records max",
+      "ok": true,
+      "detail": {
+        "runId": "01M5VW16ZWHN0RMAW4QZ05YG4W",
+        "status": "succeeded",
+        "requests": [
+          {
+            "model": "gpt-6-sol",
+            "effort": "max",
+            "argv": "model_reasoning_effort=\"max\""
+          }
+        ],
+        "sessionRow": {
+          "model": "gpt-6-sol",
+          "effort": "max"
+        }
+      }
+    },
+    {
+      "id": "B2 Default (medium) removes the override and medium is sent",
+      "ok": true,
+      "detail": {
+        "runId": "01M5VW19A7M63S0GYS0XCGZV6Y",
+        "status": "succeeded",
+        "requests": [
+          {
+            "model": "gpt-6-sol",
+            "effort": "medium",
+            "argv": "model_reasoning_effort=\"medium\""
+          }
+        ],
+        "sessionRow": {
+          "model": "gpt-6-sol",
+          "effort": "medium"
+        }
+      }
+    },
+    {
+      "id": "B2 after owner Settings high the editor shows Default (high) and high is sent",
+      "ok": true,
+      "detail": {
+        "ownerLabel": "Default (high)",
+        "ownerRun": {
+          "runId": "01M5VW1A8N1434M4YBRG3MF1QC",
+          "status": "succeeded",
+          "requests": [
+            {
+              "model": "gpt-6-sol",
+              "effort": "high",
+              "argv": "model_reasoning_effort=\"high\""
+            }
+          ],
+          "sessionRow": {
+            "model": "gpt-6-sol",
+            "effort": "high"
+          }
+        }
+      }
+    },
+    {
+      "id": "B3 on GPT-5.5 the kept max is shown as \"max (not supported by this model)\" with a not-supported description",
+      "ok": true,
+      "detail": {
+        "checked": "max (not supported by this model)",
+        "desc": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. | Default effort: medium. | This effort is not supported by the selected model. The saved choice stays until you change it."
+      }
+    },
+    {
+      "id": "B3 GPT-5.5 offers minimal..xhigh and no selectable max",
+      "ok": true,
+      "detail": {
+        "allValues55": [
+          "",
+          "max",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "allTexts55": [
+          "Default (medium)",
+          "max (not supported by this model)",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ]
+      }
+    },
+    {
+      "id": "B3 the editor cannot store a GPT-5.5/max draft: the server refuses the draft save 400 with EFFORT_UNSUPPORTED and the editor shows Save failed",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    {
+      "id": "B3 Publish refuses too (\"Publish failed\"); no stored draft or published version names gpt-5.5; no CLI request was made",
+      "ok": true,
+      "detail": {
+        "publishMessage": [
+          "invalid evaluator or model configuration (EVALUATION_INVALID_CONFIGURATION)",
+          "Publish failed",
+          "The draft could not be saved; fix the issues below first.",
+          "Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision evaluation or output-transform repair through the structured port when Limited; it defaults to Unlimited. Same-session inference schema repairs follow the node timeout. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.",
+          "Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff."
+        ],
+        "requestsMade": 0
+      }
+    },
+    {
+      "id": "B4 GPT-5.5/xhigh publishes and is sent as xhigh",
+      "ok": true,
+      "detail": {
+        "runId": "01M5VW1EVN68YMJS9FY7ZTFK73",
+        "status": "succeeded",
+        "requests": [
+          {
+            "model": "gpt-5.5",
+            "effort": "xhigh",
+            "argv": "model_reasoning_effort=\"xhigh\""
+          }
+        ],
+        "sessionRow": {
+          "model": "gpt-5.5",
+          "effort": "xhigh"
+        }
+      }
+    },
+    {
+      "id": "B5 LLM decision on GPT-5.5 offers no max",
+      "ok": true,
+      "detail": [
+        "",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "B5 LLM decision on GPT-6 Luna offers max",
+      "ok": true,
+      "detail": [
+        "",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "B5 LLM decision max is saved, sent as max and recorded as max (decision provenance)",
+      "ok": true,
+      "detail": {
+        "argv": [
+          "model_reasoning_effort=\"max\""
+        ],
+        "provenance": {
+          "kind": "llm",
+          "provider": "codex",
+          "classifierId": null,
+          "model": "gpt-6-luna",
+          "effort": "max"
+        }
+      }
+    },
+    {
+      "id": "B6 Claude offers low..max without minimal and max sends --effort max",
+      "ok": true,
+      "detail": {
+        "vals": [
+          "",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "run": {
+          "runId": "01M5VW1NWCQ5HXV39234NPM99F",
+          "status": "succeeded",
+          "requests": [
+            {
+              "model": "claude-opus-5-5",
+              "effort": "max",
+              "argv": "--effort max"
+            }
+          ],
+          "sessionRow": {
+            "model": "claude-opus-5-5",
+            "effort": "max"
+          }
+        }
+      }
+    },
+    {
+      "id": "B7 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

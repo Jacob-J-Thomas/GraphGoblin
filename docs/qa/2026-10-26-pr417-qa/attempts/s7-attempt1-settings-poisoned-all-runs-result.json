@@ -1,0 +1,74 @@
+{
+  "scenario": "s7-stored-effort",
+  "passed": 4,
+  "failed": 3,
+  "checks": [
+    {
+      "id": "S0 first gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "S1 restart refreshes the harness seed: gpt-5.5 lists no max again",
+      "ok": true,
+      "detail": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "S2 stored GPT-5.5 max (inference) is refused with EFFORT_UNSUPPORTED before any request",
+      "ok": false,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "nodeId": "work",
+          "message": "The default reasoning effort is not supported by its model"
+        }
+      }
+    },
+    {
+      "id": "S2 stored GPT-5.5 max (decision) is refused with EFFORT_UNSUPPORTED before any request",
+      "ok": false,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "nodeId": "pick",
+          "message": "The default reasoning effort is not supported by its model"
+        }
+      }
+    },
+    {
+      "id": "S2 stored GPT-5.5 max (owner default) is refused with EFFORT_UNSUPPORTED before any request",
+      "ok": false,
+      "detail": {
+        "start": 202,
+        "status": "failed",
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "nodeId": "work",
+          "message": "The default reasoning effort is not supported by its model"
+        }
+      }
+    },
+    {
+      "id": "S2 no CLI request was made for any of them",
+      "ok": true,
+      "detail": {
+        "requestsMade": 0
+      }
+    },
+    {
+      "id": "S3 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

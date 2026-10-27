@@ -1,0 +1,75 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage --coverage.reportOnFailure --maxWorkers=1
+$ vitest run --coverage --coverage.reportOnFailure --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+ ❯ perf/runtime.test.mjs (21 tests | 2 failed) 231002ms
+   × maintained measurement CLI validates a bounded append workload with disposable stores 8098ms
+   × native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 25035ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > maintained measurement CLI validates a bounded append workload with disposable stores
+Error: Command failed: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-264\tooling\perf\measure.mjs append --aged=0 --items=1 --profile=node --out=%USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-BRCSm7 --passes=25 --item-pause-ms=1
+PERF_OUTPUT %USERPROFILE%\AppData\Local\Temp\gg-wp-a5b-perf-smoke-BRCSm7
+PERF_WORKER importing API 12620
+PERF_WORKER imports ready
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+System.Management.Automation.RemoteException
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:15456:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling/perf/measure.mjs:486:30 {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:53208
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1638:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 53208
+  }
+}
+System.Management.Automation.RemoteException
+Node.js v22.23.4
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 25712
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:286:45
+    284|   const deadline = (promise, label) =>
+    285|     new Promise((resolve, reject) => {
+    286|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    287|       promise.then(
+    288|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  2 failed | 116 passed (118)
+   Start at  01:08:54
+   Duration  333.90s (tests 99%, import 1%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 94.7% ( 1790/1890 )
+Branches     : 90.61% ( 1091/1204 )
+Functions    : 90.85% ( 308/339 )
+Lines        : 95.9% ( 1594/1662 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

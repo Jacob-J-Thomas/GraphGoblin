@@ -1,0 +1,30 @@
+@openai/codex-sdk releases checked 2026-10-26 (registry metadata and published dist; nothing executed)
+
+Registry (pnpm view @openai/codex-sdk): dist-tag latest = 0.164.0. Stable releases after the
+pinned 0.160.0: 0.160.1 (2026-10-05), 0.161.0 (2026-10-07), 0.162.0 (2026-10-08),
+0.162.1 (2026-10-09), 0.163.0 (2026-10-15), 0.164.0 (2026-10-23).
+
+Tarballs downloaded from https://registry.npmjs.org/@openai/codex-sdk/-/codex-sdk-<version>.tgz
+into an empty temporary directory, extracted with tar, and dist/index.js read with grep.
+
+SHA-256 of the tarballs:
+2c8167e7921b9b0c693a7671042beb32ae92022fadff9b9e08103406e15a3a3d  codex-sdk-0.160.1.tgz
+20925ee02f6d281bd2b9e48d34d79837552499a2e5f2b731ee6322665b08c2c5  codex-sdk-0.161.0.tgz
+67ddc2f3fcc92b853f13846487e2c22a4d9e36dc3fd6d3429f22a44629755e52  codex-sdk-0.162.0.tgz
+ae10b9096bb72ebdf1fbac598fd87960afc1ddf5b8980fa0d38bdd6770400349  codex-sdk-0.162.1.tgz
+4d70dfef77dd868d7d5c6af8b93f9108ac2e2e2a5c1616665297c45bf1df0073  codex-sdk-0.163.0.tgz
+e59e69d81deffb980dbc314cf65a24ebe593755cc0f839064394a5ca29bbd97d  codex-sdk-0.164.0.tgz
+
+windowsHide occurrences in dist/index.js and the CLI spawn call (CodexExec.run):
+0.160.0 (installed)  0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.160.1              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.161.0              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.162.0              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.162.1              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.163.0              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+0.164.0              0  const child = spawn(this.executablePath, commandArgs, { env, signal: args.signal });
+
+Each release pins @openai/codex at its own version (0.160.1 pins 0.160.1, ..., 0.164.0 pins
+0.164.0). The only patch-level candidate, 0.160.1, would also move the CLI to 0.160.1. No release sets windowsHide, so an upgrade would not fix #319 D-1. The pinned SDK is
+patched instead: patches/@openai__codex-sdk@0.160.0.patch adds `windowsHide: true` to that spawn
+and changes nothing else (pnpm patch / patch-commit; patchedDependencies in pnpm-workspace.yaml).

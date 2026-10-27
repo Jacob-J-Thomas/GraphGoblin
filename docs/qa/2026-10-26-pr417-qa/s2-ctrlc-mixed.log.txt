@@ -1,0 +1,47 @@
+2026-10-26T10:12:21.156Z +5.9s gateway d1 listening {"pid":26880,"launcherPid":24672,"port":6533,"viaConsole":true}
+2026-10-26T10:12:29.243Z +14.0s D1 work started {"treeRun":"01M5VV4T4R8QY6J841N8B6JJ0Y","codexRun":"01M5VV4T6VJEFVY0JXQC28B22M","claudeRun":"01M5VV4VDGH75EMGWM3Q198PBJ","treePid":17228,"grandPid":53036,"codexPid":53708,"claudePid":56168,"runsBefore":["running","running","running"],"gatewayConsole":{"status":0,"entries":["26880:node","24672:launcher2"]},"tree":[{"pid":17228,"ppid":26880,"name":"node.exe"},{"pid":48288,"ppid":17228,"name":"conhost.exe"},{"pid":53036,"ppid":17228,"name":"node.exe"},{"pid":53708,"ppid":26880,"name":"qa-codex.exe"},{"pid":46468,"ppid":53708,"name":"conhost.exe"},{"pid":56168,"ppid":26880,"name":"claude.exe"},{"pid":28984,"ppid":56168,"name":"conhost.exe"}]}
+2026-10-26T10:12:29.244Z +14.0s CHECK PASS D1-0 all three runs running before the Ctrl+C ["running","running","running"]
+2026-10-26T10:12:29.244Z +14.0s CHECK PASS D1-0 none of the script, Codex CLI or Claude CLI is attached to the gateway console {"status":0,"entries":["26880:node","24672:launcher2"]}
+2026-10-26T10:12:30.828Z +15.6s D1 Ctrl+C #1 {"status":0,"stderr":""}
+2026-10-26T10:12:31.202Z +16.0s D1 Ctrl+C #2 right after #1 (duplicate forwarding) {"status":0,"stderr":"","sinceFirstMs":374}
+2026-10-26T10:12:32.732Z +17.5s D1 state after #1 and #2 {"phase":"draining","graceMs":10000,"startedAt":"2026-10-26T10:12:30.515Z","choiceAt":"2026-10-26T10:12:40.515Z","activeRunIds":["01M5VV4T4R8QY6J841N8B6JJ0Y","01M5VV4T6VJEFVY0JXQC28B22M","01M5VV4VDGH75EMGWM3Q198PBJ"],"unconfirmedRunIds":[],"choices":["wait","force"],"controlToken":"8d5237c3-27f8-44a5-8f3c-41d2bfe11474:1:draining"}
+2026-10-26T10:12:32.734Z +17.5s CHECK PASS D1-1 the first Ctrl+C starts a normal drain; the duplicate is coalesced (not force) "draining"
+2026-10-26T10:12:32.735Z +17.5s CHECK PASS D1-1 all three runs are active work ["01M5VV4T4R8QY6J841N8B6JJ0Y","01M5VV4T6VJEFVY0JXQC28B22M","01M5VV4VDGH75EMGWM3Q198PBJ"]
+2026-10-26T10:12:33.707Z +18.5s CHECK PASS D1-1 the script tree, the Codex CLI and the Claude CLI all survive {"treeRoot":true,"grandchild":true,"codex":true,"claude":true}
+2026-10-26T10:12:33.716Z +18.5s CHECK PASS D1-1 all three runs still running [{"status":"running"},{"status":"running"},{"status":"running"}]
+2026-10-26T10:12:33.728Z +18.5s CHECK PASS D1-1 no turn failure in the gateway log null
+2026-10-26T10:12:42.584Z +27.4s D1 notice at expiry {"text":"Gateway is draining\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\nThe gateway grace period elapsed. Keep waiting without a hidden kill timer, or deliberately interrupt the active work.\nCtrl+C script tree — 01M5VV4T4R8QY6J841N8B6JJ0Y\nCtrl+C Codex turn — 01M5VV4T6VJEFVY0JXQC28B22M\nCtrl+C Claude turn — 01M5VV4VDGH75EMGWM3Q198PBJ\nKeep waiting\nForce stop","buttons":["Keep waiting","Force stop"]}
+2026-10-26T10:12:42.651Z +27.4s CHECK PASS D1-2 the expiry notice lists the script, Codex and Claude runs with their loop names null
+2026-10-26T10:12:42.652Z +27.4s CHECK PASS D1-2 Keep waiting and Force stop are offered ["Keep waiting","Force stop"]
+2026-10-26T10:12:43.368Z +28.2s CHECK PASS D1-2 everything still alive at expiry {"treeRoot":true,"grandchild":true,"codex":true,"claude":true}
+2026-10-26T10:12:43.728Z +28.5s D1 Ctrl+C #3 (later) {"status":0,"stderr":"","sinceFirstMs":12900}
+2026-10-26T10:12:43.842Z +28.6s D1 gateway exit after Ctrl+C #3 {"code":0,"ms":114}
+2026-10-26T10:12:43.843Z +28.6s CHECK PASS D1-3 a later Ctrl+C forces and the gateway exits 0 0
+2026-10-26T10:12:43.843Z +28.6s CHECK PASS D1-3 lock released null
+2026-10-26T10:12:44.763Z +29.5s CHECK PASS D1-3 no script, grandchild, Codex CLI, Claude CLI or gateway process remains (tasklist) {"treeRoot":false,"grandchild":false,"codex":false,"claude":false,"gateway":false}
+2026-10-26T10:12:44.764Z +29.5s CHECK PASS D1-3 the browser sent no shutdown POST []
+2026-10-26T10:12:49.047Z +33.8s gateway d1r listening {"pid":39700,"port":6533,"viaConsole":false}
+2026-10-26T10:12:49.070Z +33.9s CHECK PASS D1-4 script run records RUN_INTERRUPTED_BY_STOP at node hold, non-resumable, effects may have happened {"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"hold","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true},"script":{"visitId":"01M5VV4T4R8QY6J841N8B6JJ0Y:5","dispatchId":"01M5VV4T9JCBC06K2V4YGWYS5F","state":"outcome-uncertain"}}
+2026-10-26T10:12:49.076Z +33.9s CHECK PASS D1-4 codex run records RUN_INTERRUPTED_BY_STOP at node infer, non-resumable, effects may have happened {"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}
+2026-10-26T10:12:49.080Z +33.9s CHECK PASS D1-4 claude run records RUN_INTERRUPTED_BY_STOP at node infer, non-resumable, effects may have happened {"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}
+2026-10-26T10:12:49.080Z +33.9s D1 runs after restart {"script":{"status":"failed","failure":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"hold","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true},"script":{"visitId":"01M5VV4T4R8QY6J841N8B6JJ0Y:5","dispatchId":"01M5VV4T9JCBC06K2V4YGWYS5F","state":"outcome-uncertain"}}},"codex":{"status":"failed","failure":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}},"claude":{"status":"failed","failure":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}}}
+2026-10-26T10:12:49.192Z +34.0s CHECK PASS D1-5 restarted gateway drains to exit 0 0
+2026-10-26T10:12:53.117Z +37.9s gateway d2 listening {"pid":57720,"launcherPid":28424,"port":6534,"viaConsole":true}
+2026-10-26T10:12:53.853Z +38.6s D2 Ctrl+C {"status":0,"stderr":""}
+2026-10-26T10:12:55.566Z +40.4s CHECK PASS D2-1 Ctrl+C drain keeps the script running "draining"
+2026-10-26T10:13:06.944Z +51.7s CHECK PASS D2-2 after expiry with no choice the script still runs null
+2026-10-26T10:13:07.496Z +52.3s CHECK PASS D2-3 the Ctrl+C drain completes normally with exit 0 0
+2026-10-26T10:13:10.654Z +55.4s gateway d2r listening {"pid":47028,"port":6534,"viaConsole":false}
+2026-10-26T10:13:10.673Z +55.5s CHECK PASS D2-4 the run succeeded {"status":"succeeded"}
+2026-10-26T10:13:10.799Z +55.6s CHECK PASS D2-5 restarted gateway exits 0 0
+2026-10-26T10:13:14.789Z +59.6s gateway d3 listening {"pid":17684,"launcherPid":27452,"port":6535,"viaConsole":true}
+2026-10-26T10:13:17.899Z +62.7s D3 both turns started {"claudeRun":"01M5VV6DT70J2VP9HV9WHSHC5Y","codexRun":"01M5VV6E8TEARBTE2WKRBQG79R","procs":[{"pid":4904,"ppid":17684,"name":"claude.exe"},{"pid":2364,"ppid":17684,"name":"codex.exe"}]}
+2026-10-26T10:13:18.315Z +63.1s D3 Ctrl+C {"status":0,"stderr":""}
+2026-10-26T10:13:20.434Z +65.2s CHECK PASS D3-1 Ctrl+C drains with both CLI turns alive {"phase":"draining","alive":[{"pid":4904,"ppid":17684,"name":"claude.exe","alive":true},{"pid":2364,"ppid":17684,"name":"codex.exe","alive":true}]}
+2026-10-26T10:13:32.845Z +77.6s D3 gateway exit {"code":0,"msSinceTurnsStarted":14946}
+2026-10-26T10:13:32.845Z +77.6s CHECK PASS D3-2 both turns finish and the drain exits 0 0
+2026-10-26T10:13:35.577Z +80.4s gateway d3r listening {"pid":40388,"port":6535,"viaConsole":false}
+2026-10-26T10:13:35.605Z +80.4s CHECK PASS D3-3 the Claude and Codex runs both succeeded {"claude":{"status":"succeeded"},"codex":{"status":"succeeded"}}
+2026-10-26T10:13:35.614Z +80.4s CHECK PASS D3-3 each CLI ran exactly one turn [{"harness":"claude","outcome":"answered"},{"harness":"codex","outcome":"answered"}]
+2026-10-26T10:13:35.723Z +80.5s CHECK PASS D3-4 restarted gateway exits 0 0
+2026-10-26T10:13:35.726Z +80.5s DONE passed=28 failed=0

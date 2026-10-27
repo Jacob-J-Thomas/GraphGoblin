@@ -1,0 +1,250 @@
+{
+  "scenario": "s4-exited-release",
+  "passed": 15,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "O1-1 every fast-exiting Claude wrong-identity reply reports the identity error, never HARNESS_TERMINATION_UNCONFIRMED (8 runs)",
+      "ok": true,
+      "detail": [
+        {
+          "label": "claude-fast-1",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-2",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-3",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-4",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-5",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-6",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-7",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        },
+        {
+          "label": "claude-fast-8",
+          "code": "HARNESS_DELIVERY_UNCERTAIN"
+        }
+      ]
+    },
+    {
+      "id": "O1-1 each is explicit and non-resumable, with no resumed-session claim and no fresh fallback turn",
+      "ok": true,
+      "detail": [
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        },
+        {
+          "resumable": false,
+          "resumedClaims": 0,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "id": "O1-2 control: the same reply with a live process gives the same outcome",
+      "ok": true,
+      "detail": {
+        "label": "claude-linger-control",
+        "run": "01M5VVF1PYB30X28YQKDY3KQ0E",
+        "status": "failed",
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "resumable": false,
+        "message": "harness turn failed: Claude CLI 2.1.287: required capability stream-json protocol verification failed: Claude resumed session does not match the requested session. Update GraphGoblin or report this Claude CLI version.. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+        "calls": 2,
+        "secondCallOutcome": "different-id",
+        "resumedClaims": 0
+      }
+    },
+    {
+      "id": "O1-3 control: Codex wrong identity still reports HARNESS_SESSION_MISSING",
+      "ok": true,
+      "detail": {
+        "label": "codex-control",
+        "run": "01M5VVF372D18Q6PYERDM5E037",
+        "status": "failed",
+        "code": "HARNESS_SESSION_MISSING",
+        "resumable": false,
+        "message": "The codex session \"0513c4a9-275c-409a-9ee9-d01481953c39\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "calls": 2,
+        "secondCallOutcome": "different-id",
+        "resumedClaims": 0
+      }
+    },
+    {
+      "id": "O1-4 the gateway log has no unconfirmed-termination line",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "O1-5 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "E0 root exited, grandchild holds the pipe, run still running",
+      "ok": true,
+      "detail": {
+        "status": "running"
+      }
+    },
+    {
+      "id": "E1 an unconfirmable script tree still ends in force-failed",
+      "ok": true,
+      "detail": "force-failed"
+    },
+    {
+      "id": "E1 the run is listed as unconfirmed; only Force exit is offered",
+      "ok": true,
+      "detail": {
+        "unconfirmed": [
+          "01M5VVF7YED8NEHFPJQHXT8VTT"
+        ],
+        "choices": [
+          "force"
+        ]
+      }
+    },
+    {
+      "id": "E1 the grandchild is really still alive (cleanup truly unconfirmed)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E2 force-failed is stable, lock held",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E3 Force exit asks for its own confirmation",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "E3 Force exit exits 1 and keeps the lock",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "E4 the run records SCRIPT_TERMINATION_UNCONFIRMED after restart",
+      "ok": true,
+      "detail": {
+        "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+        "message": "Script process tree termination was not confirmed; stop the process before restarting",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "interruptedByStop": true
+        },
+        "script": {
+          "visitId": "01M5VVF7YED8NEHFPJQHXT8VTT:5",
+          "dispatchId": "01M5VVF81546ZYE7F0VPNPR60V",
+          "state": "outcome-uncertain"
+        }
+      }
+    },
+    {
+      "id": "E5 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T10:18:08.539Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:10.551Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:12.553Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:14.564Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:15.046Z",
+      "method": "POST",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:17.084Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:19.088Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:21.090Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:23.102Z",
+      "method": "GET",
+      "tab": "e"
+    },
+    {
+      "at": "2026-10-26T10:18:24.773Z",
+      "method": "POST",
+      "tab": "e"
+    }
+  ]
+}

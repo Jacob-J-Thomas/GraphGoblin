@@ -1,0 +1,52 @@
+pnpm.cmd --filter @graphgoblin/engine test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/recovery.test.ts (69 tests | 1 failed) 9486ms
+   ❯ thread checkpoints (review finding 9) (5)
+     × a long log resumes from its checkpoint (10,000 completions) 3826ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/recovery.test.ts > thread checkpoints (review finding 9) > a long log resumes from its checkpoint (10,000 completions)
+AssertionError: expected 2042.9668999999994 to be less than 2000
+ ❯ src/recovery.test.ts:679:21
+    677|     );
+    678|     // Generous: the point is that it does not replay 10,000 patches (…
+    679|     expect(elapsed).toBeLessThan(2_000);
+       |                     ^
+    680|   }, 30_000);
+    681| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 57 passed (58)
+      Tests  1 failed | 1727 passed (1728)
+   Start at  01:07:53
+   Duration  43.64s (tests 51%, import 40%, transform 8%, worker 1%)
+
+    Isolate  58 workers spawned · ~925ms startup each (spawn + environment, per file)
+             at least ~3.95s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.14% ( 3371/3506 )
+Branches     : 91.43% ( 2691/2943 )
+Functions    : 97.49% ( 622/638 )
+Lines        : 97.48% ( 3068/3147 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\packages\engine
+System.Management.Automation.RemoteException
+EXIT 1

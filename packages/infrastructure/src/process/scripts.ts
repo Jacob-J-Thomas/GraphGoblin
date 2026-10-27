@@ -12,10 +12,22 @@ export interface ProcessScriptsOptions {
   platform?: NodeJS.Platform;
 }
 
+/** `taskkill` exit code when no process with the PID exists. */
+const TASKKILL_NOT_FOUND = 128;
+
+const hasExited = (child: ChildProcess): boolean =>
+  child.exitCode !== null || child.signalCode !== null;
+
 /**
  * Kill a process and everything it started. Windows has no process groups or POSIX signals, so
  * `taskkill /T /F` is used there; elsewhere the child was started detached as a group leader and
  * the whole group is signalled.
+ *
+ * On Windows a root that is verifiably gone counts as released: Node has observed its exit, or
+ * taskkill found no process with its PID and Node then reports the exit. A root Node saw exit is
+ * never signalled, because Node has closed its handle and Windows may already have reused the PID.
+ * Any other taskkill failure leaves the state undetermined and reports `false`. A descendant that
+ * inherited the root's output keeps it open; callers confirm release only when it closes.
  */
 export function killTree(
   child: ChildProcess,
@@ -24,6 +36,7 @@ export function killTree(
 ): Promise<boolean> {
   if (child.pid === undefined) return Promise.resolve(true);
   if (platform === 'win32') {
+    if (hasExited(child)) return Promise.resolve(true);
     return new Promise((resolve) => {
       let killer: ChildProcess;
       try {
@@ -49,7 +62,14 @@ export function killTree(
         }
         resolve(false);
       });
-      killer.once('close', (code) => resolve(code === 0));
+      killer.once('close', (code) => {
+        if (code !== TASKKILL_NOT_FOUND) resolve(code === 0);
+        // No process has the PID, so the root is no longer running: it exited on its own before
+        // taskkill looked. Release is claimed once Node reports that exit; the caller's deadline
+        // bounds this wait.
+        else if (hasExited(child)) resolve(true);
+        else child.once('exit', () => resolve(true));
+      });
     });
   }
   try {

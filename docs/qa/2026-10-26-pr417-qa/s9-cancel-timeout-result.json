@@ -1,0 +1,77 @@
+{
+  "scenario": "s9-cancel-timeout",
+  "passed": 6,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "C1 the run is cancelled promptly; the CLI is gone; no unconfirmed termination",
+      "ok": true,
+      "detail": {
+        "status": "cancelled",
+        "ms": 16
+      }
+    },
+    {
+      "id": "T1 the run fails with its timeout (not unconfirmed termination) and the CLI is gone",
+      "ok": true,
+      "detail": {
+        "code": "INFERENCE_TIMEOUT",
+        "message": "inference exceeded 3s",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5VWN24X2QGANWGRTM8VW67T:5",
+          "turnId": "01M5VWN2ESQFCSNEPV3P8VB98N",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "qa-417-session-35884"
+        }
+      }
+    },
+    {
+      "id": "C1/T1 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "C2 the run leaves running within the acknowledgement bound (does not hang)",
+      "ok": true,
+      "detail": {
+        "status": "failed",
+        "ms": 5048
+      }
+    },
+    {
+      "id": "C2 the outcome is truthful: unconfirmed termination is reported (the tool child is really alive)",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Codex CLI termination was not confirmed: its output stayed open 5000 ms after the turn was aborted, so a process it started may still be running",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+          "interruptedByStop": false
+        },
+        "inference": {
+          "visitId": "01M5VWN9NH7HWC5YK583JC2WN2:5",
+          "turnId": "01M5VWNA3JH5G3B5FAJMMXRW1Z",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "qa-417-session-31488"
+        }
+      }
+    },
+    {
+      "id": "C2 an earlier unconfirmed cancel does not trap a later normal drain (exit 0)",
+      "ok": true,
+      "detail": {
+        "drain": 202,
+        "code": 0,
+        "unconfirmed": [
+          "01M5VWN9NH7HWC5YK583JC2WN2"
+        ]
+      }
+    }
+  ]
+}

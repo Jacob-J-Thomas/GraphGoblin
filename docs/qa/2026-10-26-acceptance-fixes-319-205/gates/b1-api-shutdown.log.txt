@@ -1,0 +1,42 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/apps/api
+
+ ✓ src/shutdown-signals.test.ts > one foreground SIGINT and pnpm forwarding drain once; deliberate later signals force 7ms
+ ✓ src/shutdown-signals.test.ts > a signal after an API-initiated stop explicitly forces, while its forwarded duplicate is ignored 1ms
+ ✓ src/shutdown-controller.test.ts > B3 reports an earlier unconfirmed timeout but completes a normal stop 80ms
+ ✓ src/shutdown-controller.test.ts > B3 force failure offers an explicit nonzero exit acknowledgement, retaining the failure 108ms
+ ✓ src/shutdown-controller.test.ts > force over a Codex turn whose CLI output outlives the kill fails cleanup instead of waiting in forcing 181ms
+ ✓ src/shutdown-controller.test.ts > labels a drain observation failure accurately and rejects invalid transitions 78ms
+ ✓ src/shutdown-controller.test.ts > captures admission before returning state and wait has no hidden kill timer 169ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: drain-first 2ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: force-first 2ms
+ ✓ src/shutdown-controller.test.ts > an observation failure during an open drain keeps its origin when force races it 81ms
+ ✓ src/shutdown-admission.test.ts > B2 refuses an Event before consuming its dedupe key during drain 1299ms
+ ✓ src/shutdown-admission.test.ts > refuses manual and webhook HTTP admission and preserves due cron slots and poll dedupe 290ms
+ ✓ src/shutdown-admission.test.ts > rejects force after a drain observation failure with 409 and the current phase 243ms
+ ✓ src/shutdown-choice.test.ts > rejects a stale tab force instead of acknowledging a newly failed cleanup 1855ms
+ ✓ src/shutdown-startup.test.ts > a stop requested during startup leaves independent queued work unstarted on the same store 2372ms
+ ✓ src/shutdown-choice.test.ts > rejects a force prepared before another control chose to keep waiting (after the phase recurs) 252ms
+ ✓ src/shutdown-choice.test.ts > rejects a force prepared before another control chose to keep waiting (after a wait within draining) 149ms
+ ✓ src/shutdown-choice.test.ts > keeps tokens stable per phase and rejects another route incarnation without starting drain 243ms
+ ✓ src/shutdown-choice.test.ts > requires system read/write scopes and preserves authentication with the conditional header 286ms
+ ✓ src/shutdown-process.test.ts > native drain rechecks a wake during delivery cleanup and completes its required child before closing controls 14157ms
+ ✓ src/shutdown-console.test.ts > one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes 20995ms
+ ✓ src/shutdown-process.test.ts > native racing Events retain admitted work or reusable keys through drain and restart 13778ms
+ ✓ src/shutdown-console.test.ts > a later terminal Ctrl+C explicitly forces the running Codex turn 15915ms
+ ✓ src/shutdown-process.test.ts > native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work 17080ms
+ ↓ src/shutdown-process.test.ts > native first SIGINT drains and second signal explicitly forces script descendants
+ ↓ src/shutdown-process.test.ts > native first SIGTERM drains and second signal explicitly forces script descendants
+ ↓ src/shutdown-process.test.ts > native explicit force cancels a controlled harness turn and does not replay it on restart
+ ✓ src/shutdown-process.test.ts > native drain preserves durable timer, paused input, and parked parent/child across restart 14643ms
+ ✓ src/shutdown-console.test.ts > force over a Codex CLI whose tool process keeps its output open fails cleanup and offers Force exit 22057ms
+ ✓ src/shutdown-process.test.ts > native force preserves durable timer, paused input, and parked parent/child across restart 17010ms
+ ✓ src/shutdown-process.test.ts > native Event refusal leaves its dedupe key available after restart 19420ms
+ ↓ src/shutdown-process.test.ts > native earlier unconfirmed script timeout does not trap a later normal stop 9295ms [D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination]
+ ↓ src/shutdown-process.test.ts > native further force exits nonzero after failed stop cleanup, leaves lock, and restart reclaims it 8119ms [D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination]
+
+ Test Files  7 passed (7)
+      Tests  28 passed | 5 skipped (33)
+   Start at  05:24:09
+   Duration  115.18s (tests 83%, import 10%, transform 7%)
+

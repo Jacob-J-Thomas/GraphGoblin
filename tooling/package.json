@@ -12,8 +12,9 @@
     "./layers.json": "./layers.json"
   },
   "scripts": {
-    "test": "node --test scripts/*.test.mjs perf/*.test.mjs",
-    "test:coverage": "node --test scripts/*.test.mjs perf/*.test.mjs"
+    "lint": "eslint scripts/*.mjs perf/*.mjs *.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "vitest": "^5.0.3"

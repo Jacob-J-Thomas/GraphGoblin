@@ -4,7 +4,7 @@ import { defineConfig, mergeConfig } from 'vitest/config';
  * Shared Vitest configuration for every package and app.
  *
  * Coverage thresholds are the repository policy (docs/10-testing-and-quality.md):
- * more than 90% of lines and branches in every package. They are not tunable per
+ * at least 90% for lines, branches, functions and statements in every package. They are not tunable per
  * package; raise them repo-wide or add an exclusion for generated code only.
  *
  * Workspace packages declare a `development` export condition that points at their TypeScript

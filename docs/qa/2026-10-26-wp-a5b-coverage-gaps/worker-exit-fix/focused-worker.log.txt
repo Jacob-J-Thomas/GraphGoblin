@@ -1,0 +1,33 @@
+pnpm.cmd --filter @graphgoblin/tooling test perf/runtime.test.mjs -t native measurement worker --maxWorkers 1 --reporter verbose
+$ vitest run perf/runtime.test.mjs -t 'native measurement worker' --maxWorkers 1 --reporter verbose
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+
+ ↓ perf/runtime.test.mjs > measurement helpers count nested files, tolerate absent stores and reject invalid HTTP responses
+ ↓ perf/runtime.test.mjs > raw replay reads real HTTP framing and rejects an incomplete chunked response
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded long workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded context workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded artifacts workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded replay workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded readiness workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded browser workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded append workload with disposable stores
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'unknown' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--unknown=x' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', 'bad-argument' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'readiness', '--passes=2' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--profile=unknown' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--aged=-1' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--passes=0' ] before opening a store
+ ↓ perf/runtime.test.mjs > summary CLI writes compact records and refuses absent output arguments
+ ↓ perf/runtime.test.mjs > browser observation refuses an unavailable API before starting a browser
+ ✓ perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 4446ms
+ ↓ perf/runtime.test.mjs > comparison CLI accepts identical stored histories and rejects changed workload/state
+ ↓ perf/runtime.test.mjs > measurement refuses reused evidence and unsafe store prefixes without starting an API
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 20 skipped (21)
+   Start at  04:08:37
+   Duration  4.95s (tests 96%, import 2%, transform 1%)
+
+EXIT 0

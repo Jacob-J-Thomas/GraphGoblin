@@ -117,7 +117,6 @@ test('PR48-QA-02: a double-click on a node leaves one editor open; a later backd
   expect((await node.boundingBox())!.x + startClick.x).toBeLessThan(
     (await dialog.boundingBox())!.x,
   );
-  await page.waitForTimeout(600);
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(dialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
   // It is open and editable.
@@ -140,7 +139,6 @@ test('PR48-QA-02: a double-click on a node leaves one editor open; a later backd
   const approveDialog = (await approve.boundingBox())!;
   expect(approveBox.x + approveClick.x).toBeGreaterThan(approveDialog.x);
   expect(approveBox.x + approveClick.x).toBeLessThan(approveDialog.x + approveDialog.width);
-  await page.waitForTimeout(600);
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(approve.getByRole('heading', { name: 'Edit wait approve' })).toBeFocused();
 });

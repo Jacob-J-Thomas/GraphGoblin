@@ -1,4 +1,3 @@
-/* global Buffer, performance, TextDecoder, URL */
 import { createConnection } from 'node:net';
 import { once } from 'node:events';
 import { Frames, sleep } from './common.mjs';

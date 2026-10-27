@@ -1,0 +1,116 @@
+pnpm.cmd --filter @graphgoblin/tooling test:coverage perf/runtime.test.mjs -t native measurement worker --maxWorkers 1 --coverage.reportOnFailure --coverage.reportsDirectory ../.tmp/gg-wp-a5b-worker-probe-coverage --reporter verbose
+$ vitest run --coverage perf/runtime.test.mjs -t 'native measurement worker' --maxWorkers 1 --coverage.reportOnFailure --coverage.reportsDirectory ../.tmp/gg-wp-a5b-worker-probe-coverage --reporter verbose
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a5b-264/tooling
+      Coverage enabled with v8
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE fork 14768
+
+ ↓ perf/runtime.test.mjs > measurement helpers count nested files, tolerate absent stores and reject invalid HTTP responses
+ ↓ perf/runtime.test.mjs > raw replay reads real HTTP framing and rejects an incomplete chunked response
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded long workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded context workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded artifacts workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded replay workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded readiness workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded browser workload with disposable stores
+ ↓ perf/runtime.test.mjs > maintained measurement CLI validates a bounded append workload with disposable stores
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'unknown' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--unknown=x' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', 'bad-argument' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'readiness', '--passes=2' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--profile=unknown' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--aged=-1' ] before opening a store
+ ↓ perf/runtime.test.mjs > measurement CLI refuses malformed invocation [ 'long', '--passes=0' ] before opening a store
+ ↓ perf/runtime.test.mjs > summary CLI writes compact records and refuses absent output arguments
+ ↓ perf/runtime.test.mjs > browser observation refuses an unavailable API before starting a browser
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE booted {
+  base: 'http://127.0.0.1:50620',
+  bootMs: 818.1175999999996,
+  pid: 14768
+}
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE cleanup { pid: 14768, exitCode: null, signalCode: null, connected: false }
+WORKER_PROBE kill returned true
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE event disconnect []
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE stderr end
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE stderr close
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE event exit [ null, 'SIGKILL' ]
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE cleanup { pid: 14768, exitCode: null, signalCode: 'SIGKILL', connected: false }
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE cleanup { pid: 14768, exitCode: null, signalCode: 'SIGKILL', connected: false }
+
+stdout | perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+WORKER_PROBE final {
+  pid: 14768,
+  liveness: 'ESRCH',
+  exitCode: null,
+  signalCode: 'SIGKILL',
+  connected: false,
+  stderrClosed: true,
+  stderrDestroyed: true
+}
+
+ × perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close 25108ms
+   → forced worker cleanup timed out: PERF_WORKER importing API 14768
+PERF_WORKER imports ready
+
+ ↓ perf/runtime.test.mjs > comparison CLI accepts identical stored histories and rejects changed workload/state
+ ↓ perf/runtime.test.mjs > measurement refuses reused evidence and unsafe store prefixes without starting an API
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  perf/runtime.test.mjs > native measurement worker rejects malformed IPC and cancels an unfinished measurement on close
+Error: forced worker cleanup timed out: PERF_WORKER importing API 14768
+PERF_WORKER imports ready
+System.Management.Automation.RemoteException
+ ❯ Timeout._onTimeout perf/runtime.test.mjs:302:45
+    300|   const deadline = (promise, label) =>
+    301|     new Promise((resolve, reject) => {
+    302|       const timer = setTimeout(() => reject(new Error(label + ' timed …
+       |                                             ^
+    303|       promise.then(
+    304|         (value) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 skipped (21)
+   Start at  04:05:24
+   Duration  26.40s (tests 99%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 0% ( 0/1891 )
+Branches     : 0.08% ( 1/1206 )
+Functions    : 0% ( 0/339 )
+Lines        : 0% ( 0/1663 )
+================================================================================
+ERROR: Coverage for lines (0%) does not meet global threshold (90%)
+ERROR: Coverage for functions (0%) does not meet global threshold (90%)
+ERROR: Coverage for statements (0%) does not meet global threshold (90%)
+ERROR: Coverage for branches (0.08%) does not meet global threshold (90%)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a5b-
+  │ 264\tooling
+System.Management.Automation.RemoteException
+EXIT 1

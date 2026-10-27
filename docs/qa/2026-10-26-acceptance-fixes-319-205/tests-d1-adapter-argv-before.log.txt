@@ -1,0 +1,35 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a9b1ddf54c64d7465/packages/adapter-codex
+
+ ❯ src/effort.test.ts (6 tests | 1 failed) 621ms
+   × sends the requested effort max to the Codex CLI unchanged 101ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/effort.test.ts > sends the requested effort max to the Codex CLI unchanged
+AssertionError: expected [ 'model_reasoning_effort="xhigh"' ] to deeply equal [ 'model_reasoning_effort="max"' ]
+
+- Expected
++ Received
+
+  [
+-   "model_reasoning_effort=\"max\"",
++   "model_reasoning_effort=\"xhigh\"",
+  ]
+
+ ❯ src/effort.test.ts:48:86
+     46|     const argv = JSON.parse(await readFile(argvFile, 'utf8')) as strin…
+     47|     const overrides = argv.filter((_arg, index) => argv[index - 1] ===…
+     48|     expect(overrides.filter((value) => value.startsWith('model_reasoni…
+       |                                                                                      ^
+     49|       `model_reasoning_effort="${effort}"`,
+     50|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  03:26:36
+   Duration  3.17s (import 42%, transform 36%, tests 21%)
+
