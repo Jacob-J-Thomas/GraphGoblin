@@ -477,6 +477,47 @@ describe('Codex efforts are sent unchanged and offered per model (#205)', () => 
     },
   );
 
+  it.each(['loop', 'owner'] as const)(
+    'fails a run inheriting a stored %s-default minimal with the same details shape, without any request',
+    async (level) => {
+      // Defaults saved while the seeded GPT-6 Luna row still listed minimal (PR #426 QA O-1).
+      const luna = await t.container.repos.catalog.findOne('codex', 'gpt-6-luna');
+      await t.container.repos.catalog.upsert({ ...luna!, efforts: ['minimal', ...luna!.efforts] });
+      const minimal = { byHarness: { codex: { model: 'gpt-6-luna', effort: 'minimal' as const } } };
+      const inference = modelLoop('inference');
+      const loopId = await t.publishLoop(
+        level === 'loop' ? { ...inference, settings: { defaults: minimal } } : inference,
+      );
+      if (level === 'owner')
+        expect(
+          (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaults: minimal } }))
+            .statusCode,
+        ).toBe(200);
+      await t.container.repos.catalog.seed();
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      const run = (
+        await t.app.inject(`/runs/${started.json<{ run: { id: string } }>().run.id}`)
+      ).json<{ status: string; failure: { details: unknown } }>();
+      expect(run).toMatchObject({
+        status: 'failed',
+        failure: { code: 'EVALUATION_INVALID_CONFIGURATION', resumable: false },
+      });
+      expect(run.failure.details).toEqual({
+        code: 'EFFORT_UNSUPPORTED',
+        path: 'effort',
+        level,
+        harness: 'codex',
+      });
+      expect(t.harness.started).toEqual([]);
+    },
+  );
+
   it.each(['inference', 'decision'] as const)(
     'refuses max for a GPT-5.5 %s before any request and runs max on GPT-6 Luna unchanged',
     async (place) => {

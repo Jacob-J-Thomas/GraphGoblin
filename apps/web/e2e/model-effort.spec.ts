@@ -544,6 +544,80 @@ for (const kind of ['inference', 'llm'] as const) {
   });
 }
 
+test('Settings Codex default effort follows the server default model and names an unsupported effort', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  const catalog = (await (await request.get(url + '/model-catalog')).json()) as {
+    items: Record<string, unknown>[];
+  };
+  const { ecosystemDefault: _, ...luna } = catalog.items.find(
+    (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+  )!;
+  const withMinimal = {
+    ...luna,
+    instanceId,
+    efforts: ['minimal', ...(luna['efforts'] as string[])],
+  };
+  const message =
+    'Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.';
+  await page.goto(url + '/app/settings');
+  const effort = page.getByLabel('Default effort', { exact: true });
+  const offered = () =>
+    effort
+      .locator('option')
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  // Default model "(server default)" is the process default, GPT-6 Luna (PR #426 QA D-1).
+  await expect(page.getByLabel('Default model', { exact: true })).toHaveValue('');
+  await expect.poll(offered).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+
+  // A catalog this page read before the server stopped offering minimal: the refusal names the
+  // effort and model on the field, not only a generic footer.
+  await control(request, '/catalog/upsert', withMinimal);
+  await page.reload();
+  await expect.poll(offered).toContain('minimal');
+  await control(request, '/catalog/upsert', { ...luna, instanceId });
+  await effort.selectOption('minimal');
+  await expect(page.getByRole('alert').filter({ hasText: 'Not saved.' })).toHaveText(
+    `Not saved. ${message}`,
+  );
+  await expect(effort).toHaveAccessibleDescription(new RegExp(message));
+  await expect(page.getByText(/invalid harness defaults/)).toHaveCount(0);
+
+  // A minimal default stored before the upgrade is kept and explained (QA O-2).
+  await control(request, '/catalog/upsert', withMinimal);
+  expect(
+    (
+      await request.put(url + '/settings', {
+        data: { defaults: { byHarness: { codex: { effort: 'minimal' } } } },
+      })
+    ).status(),
+  ).toBe(200);
+  await control(request, '/catalog/upsert', { ...luna, instanceId });
+  await page.reload();
+  await expect(effort).toHaveValue('minimal');
+  await expect(effort.locator('option:checked')).toHaveText(
+    'minimal (not supported by this model)',
+  );
+  await expect(effort).toHaveAccessibleDescription(message);
+  await page
+    .getByRole('region', { name: 'codex defaults' })
+    .screenshot({ path: test.info().outputPath('settings-kept-minimal.png') });
+  await effort.selectOption('low');
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get(url + '/settings')).json()) as Record<string, unknown>)[
+          'defaults'
+        ],
+    )
+    .toEqual({ byHarness: { codex: { effort: 'low' } } });
+  await expect(effort).not.toHaveAccessibleDescription(/not supported/);
+});
+
 test('classifier keeps Question, Model, Answer visible and has no effort', async ({
   page,
   request,

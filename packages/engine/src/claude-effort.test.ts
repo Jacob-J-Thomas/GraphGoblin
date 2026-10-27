@@ -51,7 +51,13 @@ it.each(['supported', 'unsupported'] as const)(
         failure: {
           nodeId: 'work',
           code: 'EVALUATION_INVALID_CONFIGURATION',
-          details: [{ harness: 'claude', resolution: { code: 'EFFORT_UNSUPPORTED' } }],
+          // One details shape for every source: code and path, plus where the default lives.
+          details: {
+            code: 'EFFORT_UNSUPPORTED',
+            path: 'effort',
+            level: 'process',
+            harness: 'claude',
+          },
         },
       });
       expect(harness.started).toEqual([]);

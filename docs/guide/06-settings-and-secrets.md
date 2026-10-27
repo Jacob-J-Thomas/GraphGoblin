@@ -53,6 +53,14 @@ saved choice stays selected as "<name> (saved)" with the short help line "Claude
 same help line for Codex when it is not ready. This asymmetry is recorded for a later owner
 decision in the [delivery register, section 9](../delivery/2026-10-18-i01-i07-register.md#9-pending-owner-decisions-and-acceptance).
 
+The Codex **Default effort** lists the efforts of the model it applies to: the selected
+**Default model**, or, with **(server default)**, the server's default model (GPT-6 Luna unless
+`GG_DEFAULTS` names another). While that model is unknown it lists only the efforts every Codex
+model shares. A stored effort that model does not offer, such as `minimal` from an earlier
+version, stays selected as "minimal (not supported by this model)" with "Effort minimal is not
+supported by GPT-6 Luna. Choose a supported effort or Default." under the field. If the server
+refuses a chosen effort, the field says "Not saved." with the same explanation.
+
 Scripts that PUT an entry to toggle it must switch to PATCH. For example (replace the base URL with your gateway):
 
 ```bash
