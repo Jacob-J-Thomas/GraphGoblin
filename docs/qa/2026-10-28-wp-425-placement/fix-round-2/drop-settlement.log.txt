@@ -1,0 +1,40 @@
+
+Running 1 test using 1 worker
+
+(node:50948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › ..\..\docs\qa\2026-10-28-wp-425-placement\fix-round-2\drop-settlement.spec.ts:6:1 › 300-card drop settles labels once (12.7s)
+
+
+  1) [chromium] › ..\..\docs\qa\2026-10-28-wp-425-placement\fix-round-2\drop-settlement.spec.ts:6:1 › 300-card drop settles labels once 
+
+    Error: expect(locator).toBeEnabled() failed
+
+    Locator: getByRole('button', { name: /^Undo Move/ })
+    Expected: enabled
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeEnabled" getByRole('button', { name: /^Undo Move/ }) with timeout 10000ms
+      - waiting for getByRole('button', { name: /^Undo Move/ })
+
+
+      53 |   await page.mouse.up();
+      54 |   await expect(card).not.toHaveClass(/\bdragging\b/);
+    > 55 |   await expect(page.getByRole('button', { name: /^Undo Move/ })).toBeEnabled();
+         |                                                                  ^
+      56 |   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+      57 |   const samples = await page.evaluate(async () => {
+      58 |     await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())));
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-placement\docs\qa\2026-10-28-wp-425-placement\fix-round-2\drop-settlement.spec.ts:55:66
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-r2-drop\drop-settlement-300-card-drop-settles-labels-once-chromium\error-context.md
+
+  1 failed
+    [chromium] › ..\..\docs\qa\2026-10-28-wp-425-placement\fix-round-2\drop-settlement.spec.ts:6:1 › 300-card drop settles labels once 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1

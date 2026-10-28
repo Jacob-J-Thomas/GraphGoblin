@@ -11,6 +11,42 @@ import {
 } from './routing.js';
 
 export const ROUTING_MEASURE = 'gg:backward-routing';
+
+type RoutingDetail = {
+  nodes: number;
+  edges: number;
+  preparationMs: number;
+  rerouted: number;
+  expansions: number;
+  checks: number;
+};
+
+function recordRouting(routingMs: number, detail: RoutingDetail, labelMs = 0): void {
+  const duration = routingMs + labelMs;
+  performance.clearMeasures(ROUTING_MEASURE);
+  performance.measure(ROUTING_MEASURE, {
+    start: Math.max(0, performance.now() - duration),
+    duration,
+    detail: { ...detail, routingMs, labelMs },
+  });
+}
+
+/** One observer sample per plan, after labels; a label-only settlement has zero routing cost. */
+export function createRoutingTimer() {
+  let pending: { duration: number; detail: RoutingDetail } | undefined;
+  let last: RoutingDetail | undefined;
+  return {
+    routing(this: void, duration: number, detail: RoutingDetail) {
+      pending = { duration, detail };
+      last = detail;
+    },
+    complete(this: void, labelMs: number) {
+      if (!last) return;
+      recordRouting(pending?.duration ?? 0, pending?.detail ?? last, labelMs);
+      pending = undefined;
+    },
+  };
+}
 export interface RoutingGeometry {
   nodes: readonly RoutingNode[];
   preparationMs: number;
@@ -96,7 +132,9 @@ export function createGeometrySelector() {
 }
 
 /** No JSON round-trip: snapshots and route objects retain their identity across irrelevant changes. */
-export function createRoutingCache() {
+export function createRoutingCache(
+  report: (duration: number, detail: RoutingDetail) => void = recordRouting,
+) {
   let previousGeometry: RoutingGeometry | undefined;
   let previous: RoutingPlan | undefined;
   const workspace = new SearchWorkspace();
@@ -137,24 +175,22 @@ export function createRoutingCache() {
     // Includes geometry collection/comparison, cache checks, invalidation, routing and identity reuse.
     // Timing phases are summed, excluding time React spent scheduling between the selector and render.
     const duration = performance.now() - start + preparationMs;
-    performance.clearMeasures(ROUTING_MEASURE);
-    performance.measure(ROUTING_MEASURE, {
-      start: Math.max(0, performance.now() - duration),
-      duration,
-      detail: {
-        nodes: geometry.nodes.length,
-        edges: edges.length,
-        preparationMs,
-        ...next.statistics,
-      },
+    report(duration, {
+      nodes: geometry.nodes.length,
+      edges: edges.length,
+      preparationMs,
+      ...next.statistics,
     });
     return next;
   };
 }
 
-export function useRouting(edges: readonly RoutingEdge[], expected?: ExpectedPorts): RoutingPlan {
+export function useRouting(edges: readonly RoutingEdge[], expected?: ExpectedPorts) {
   const [selector] = useState(createGeometrySelector);
   const geometry = useStore(selector);
-  const [route] = useState(createRoutingCache);
-  return route(geometry, edges, expected);
+  const [session] = useState(() => {
+    const timer = createRoutingTimer();
+    return { route: createRoutingCache(timer.routing), measureLabels: timer.complete };
+  });
+  return { plan: session.route(geometry, edges, expected), measureLabels: session.measureLabels };
 }

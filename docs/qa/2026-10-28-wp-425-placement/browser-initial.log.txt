@@ -1,0 +1,6 @@
+Initial broader Edge run, summarized from the terminal output. The raw log was replaced by the final corrected run; this file is not a raw Playwright log.
+Command: pnpm.cmd exec playwright test e2e/palette-placement.spec.ts e2e/palette.spec.ts e2e/edge-routes.spec.ts
+Result: 13 passed, 2 failed (1.8m), retries 0.
+- keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape returns to the edge: after Control+z, expected route coordinate undefined; received 88 (edge-routes.spec.ts:294).
+- a node move keeps the manual detour if resetting would cross the original obstacle: expected cardsCrossed ['done']; received [] (edge-routes.spec.ts:376).
+The isolated baseline-source comparison passed both cases. Final tests stabilize the viewport and fix logical Date.now for the intended nudge sequence, leaving timers running; final broader run passes 15/15.

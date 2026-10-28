@@ -1,0 +1,832 @@
+{
+  "label": "main",
+  "passed": 27,
+  "failed": 27,
+  "observations": 15,
+  "realProviderTurns": 0,
+  "checks": [
+    {
+      "id": "S1 pressed Wait is visible and inside the canvas after the pan",
+      "ok": true,
+      "detail": {
+        "visible": true,
+        "inView": true
+      }
+    },
+    {
+      "id": "S1 pressed Exit is visible and inside the canvas after the pan",
+      "ok": true,
+      "detail": {
+        "visible": true,
+        "inView": true
+      }
+    },
+    {
+      "id": "S1 no existing node moved when a palette entry was pressed",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S1 stored positions after each press",
+      "ok": null,
+      "detail": [
+        {
+          "after": "Trigger",
+          "positions": {
+            "trigger": {
+              "x": 40,
+              "y": 140
+            }
+          }
+        },
+        {
+          "after": "Inference",
+          "positions": {
+            "trigger": {
+              "x": 40,
+              "y": 140
+            },
+            "inference": {
+              "x": 40,
+              "y": 280
+            }
+          }
+        },
+        {
+          "after": "Decision",
+          "positions": {
+            "trigger": {
+              "x": 40,
+              "y": 140
+            },
+            "inference": {
+              "x": 40,
+              "y": 280
+            },
+            "decision": {
+              "x": 40,
+              "y": 420
+            }
+          }
+        },
+        {
+          "after": "Wait",
+          "positions": {
+            "trigger": {
+              "x": 40,
+              "y": 140
+            },
+            "inference": {
+              "x": 40,
+              "y": 280
+            },
+            "decision": {
+              "x": 40,
+              "y": 420
+            },
+            "wait": {
+              "x": 40,
+              "y": 560
+            }
+          }
+        },
+        {
+          "after": "Exit",
+          "positions": {
+            "trigger": {
+              "x": 40,
+              "y": 140
+            },
+            "inference": {
+              "x": 40,
+              "y": 280
+            },
+            "decision": {
+              "x": 40,
+              "y": 420
+            },
+            "wait": {
+              "x": 40,
+              "y": 560
+            },
+            "exit": {
+              "x": 40,
+              "y": 700
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S1 six connections stored",
+      "ok": true,
+      "detail": [
+        "trigger:out->inference",
+        "inference:out->decision",
+        "decision:again->wait",
+        "decision:finish->exit",
+        "decision:limit-reached->exit",
+        "wait:out->inference"
+      ]
+    },
+    {
+      "id": "S1 no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S1 no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S1 no label sits on a card",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S1 every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S1 every label's text is in its edge <title>",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S1 labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0.5,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Finish",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Limit reached",
+          "attachPx": 0.3,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S2 stored positions",
+      "ok": null,
+      "detail": {
+        "start": {
+          "x": 0,
+          "y": 80
+        },
+        "done": {
+          "x": 320,
+          "y": 80
+        },
+        "inference": {
+          "x": 40,
+          "y": 220
+        },
+        "decision": {
+          "x": 40,
+          "y": 360
+        },
+        "wait": {
+          "x": 40,
+          "y": 500
+        }
+      }
+    },
+    {
+      "id": "S2 no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S2 no label boxes intersect",
+      "ok": false,
+      "detail": [
+        "e4:Finish / e5:Limit reached"
+      ]
+    },
+    {
+      "id": "S2 no label sits on a card",
+      "ok": false,
+      "detail": [
+        "e5:Limit reached on inference"
+      ]
+    },
+    {
+      "id": "S2 every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S2 every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e4",
+        "e5"
+      ]
+    },
+    {
+      "id": "S2 labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Finish",
+          "attachPx": 0.4,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S7 selecting the Finish edge does not move its label (<= 1 px)",
+      "ok": true,
+      "detail": {
+        "before": {
+          "left": 709.5081787109375,
+          "right": 787.84521484375,
+          "top": 476.76385498046875,
+          "bottom": 504.74139404296875
+        },
+        "after": {
+          "left": 709.5081787109375,
+          "right": 787.84521484375,
+          "top": 476.76385498046875,
+          "bottom": 504.74139404296875
+        },
+        "type": [
+          "react-flow__edge-smoothstep",
+          "react-flow__edge-orthogonal"
+        ]
+      }
+    },
+    {
+      "id": "S7 the selected forward edge shows segment handles",
+      "ok": true,
+      "detail": {
+        "handles": 3
+      }
+    },
+    {
+      "id": "S7 (selected) no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S7 (selected) no label boxes intersect",
+      "ok": false,
+      "detail": [
+        "e4:Finish / e5:Limit reached"
+      ]
+    },
+    {
+      "id": "S7 (selected) no label sits on a card",
+      "ok": false,
+      "detail": [
+        "e5:Limit reached on inference"
+      ]
+    },
+    {
+      "id": "S7 (selected) every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S7 (selected) every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e5"
+      ]
+    },
+    {
+      "id": "S7 (selected) labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Finish",
+          "attachPx": 0.4,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S3 dragging the Finish edge vertical stores a manual route",
+      "ok": true,
+      "detail": {
+        "route": [
+          315
+        ]
+      }
+    },
+    {
+      "id": "S3 the manually routed edge keeps its accessible name \"manual route\"",
+      "ok": true,
+      "detail": "decision Finish (finish) to done, manual route"
+    },
+    {
+      "id": "S3 (manual route, selected) no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S3 (manual route, selected) no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S3 (manual route, selected) no label sits on a card",
+      "ok": false,
+      "detail": [
+        "e5:Limit reached on inference"
+      ]
+    },
+    {
+      "id": "S3 (manual route, selected) every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S3 (manual route, selected) every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e5"
+      ]
+    },
+    {
+      "id": "S3 (manual route, selected) labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Finish",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S3 (manual route, deselected) no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S3 (manual route, deselected) no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S3 (manual route, deselected) no label sits on a card",
+      "ok": false,
+      "detail": [
+        "e5:Limit reached on inference"
+      ]
+    },
+    {
+      "id": "S3 (manual route, deselected) every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S3 (manual route, deselected) every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e5"
+      ]
+    },
+    {
+      "id": "S3 (manual route, deselected) labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Finish",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S6 every sampled drag frame keeps labels on their own paths (<= 3 px)",
+      "ok": false,
+      "detail": [
+        {
+          "step": 1,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 2,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 3,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 4,
+          "maxAttachPx": 0.6,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 5,
+          "maxAttachPx": 0.7,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 6,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 7,
+          "maxAttachPx": 0.2,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 8,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 9,
+          "maxAttachPx": 0.7,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 10,
+          "maxAttachPx": 0.4,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 11,
+          "maxAttachPx": 0.6,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 12,
+          "maxAttachPx": 16.5,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 13,
+          "maxAttachPx": 10.6,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 14,
+          "maxAttachPx": 4.5,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 15,
+          "maxAttachPx": 1.5,
+          "labelOverlaps": 0
+        },
+        {
+          "step": 16,
+          "maxAttachPx": 7.5,
+          "labelOverlaps": 0
+        }
+      ]
+    },
+    {
+      "id": "S6 DOM mutations on edges not attached to the dragged Decision",
+      "ok": null,
+      "detail": {
+        "edges": [
+          "e1",
+          "e6"
+        ],
+        "unrelatedMutations": 2
+      }
+    },
+    {
+      "id": "S6 (after drag) no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S6 (after drag) no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S6 (after drag) no label sits on a card",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S6 (after drag) every label without a leader is on its own path (<= 3 px)",
+      "ok": false,
+      "detail": [
+        "e4:Finish 7.5px"
+      ]
+    },
+    {
+      "id": "S6 (after drag) every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e5"
+      ]
+    },
+    {
+      "id": "S6 (after drag) labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0.2,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Finish",
+          "attachPx": 7.5,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.2,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S4 no card boxes intersect",
+      "ok": false,
+      "detail": [
+        "decision / wait"
+      ]
+    },
+    {
+      "id": "S4 no label boxes intersect",
+      "ok": false,
+      "detail": [
+        "e4:Finish and send the summary to the reviewer / e5:Limit reached"
+      ]
+    },
+    {
+      "id": "S4 no label sits on a card",
+      "ok": false,
+      "detail": [
+        "e4:Finish and send the summary to the reviewer on inference",
+        "e5:Limit reached on inference"
+      ]
+    },
+    {
+      "id": "S4 every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S4 every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "e4",
+        "e5"
+      ]
+    },
+    {
+      "id": "S4 labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "e3",
+          "type": "react-flow__edge-orthogonal",
+          "text": "Again",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "e4",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Finish and send the summary to the reviewer",
+          "attachPx": 0.4,
+          "leader": null
+        },
+        {
+          "id": "e5",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Limit reached",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S5 dark no card boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 dark no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 dark no label sits on a card",
+      "ok": false,
+      "detail": [
+        "yes:Yes on check",
+        "yes:Yes on done",
+        "no:No on done"
+      ]
+    },
+    {
+      "id": "S5 dark every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 dark every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "yes",
+        "no"
+      ]
+    },
+    {
+      "id": "S5 dark labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "yes",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Yes",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "no",
+          "type": "react-flow__edge-smoothstep",
+          "text": "No",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S5 dark canvas background",
+      "ok": null,
+      "detail": "rgb(21, 18, 15)"
+    },
+    {
+      "id": "S5 forced colours: leader strokes and canvas",
+      "ok": null,
+      "detail": {
+        "canvas": "rgb(255, 255, 255)",
+        "leaders": []
+      }
+    },
+    {
+      "id": "S5 light no card boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 light no label boxes intersect",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 light no label sits on a card",
+      "ok": false,
+      "detail": [
+        "yes:Yes on check",
+        "yes:Yes on done",
+        "no:No on done"
+      ]
+    },
+    {
+      "id": "S5 light every label without a leader is on its own path (<= 3 px)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "S5 light every label's text is in its edge <title>",
+      "ok": false,
+      "detail": [
+        "yes",
+        "no"
+      ]
+    },
+    {
+      "id": "S5 light labels",
+      "ok": null,
+      "detail": [
+        {
+          "id": "yes",
+          "type": "react-flow__edge-smoothstep",
+          "text": "Yes",
+          "attachPx": 0,
+          "leader": null
+        },
+        {
+          "id": "no",
+          "type": "react-flow__edge-smoothstep",
+          "text": "No",
+          "attachPx": 0.4,
+          "leader": null
+        }
+      ]
+    },
+    {
+      "id": "S5 light canvas background",
+      "ok": null,
+      "detail": "rgb(251, 250, 248)"
+    }
+  ]
+}

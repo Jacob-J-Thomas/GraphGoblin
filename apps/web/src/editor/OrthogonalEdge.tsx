@@ -29,7 +29,9 @@ import { RouteEditingContext, type RouteBase, type RouteEditing } from './route-
 import type { RouteChannel } from './route-channels.js';
 import type { Box, Point } from './routing-geometry.js';
 import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-labels.js';
-import { roundedPath, routeMessage } from './routing.js';
+import { roundedPath } from './routing.js';
+import { followEdgeLabel } from './edge-label-placement.js';
+import { edgeLabelText } from './edge-label-text.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -82,21 +84,19 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
     data?.channel.getSnapshot ?? noSnapshot,
   );
   const editing = use(RouteEditingContext);
+  const placement = useSyncExternalStore(
+    data?.channel.subscribe ?? noSubscription,
+    data?.channel.getLabelSnapshot ?? noSnapshot,
+  );
   if (!route && !data?.forward) return null; // A backward edge's handles are not measured yet.
   const textLabel = typeof label === 'string' ? label : '';
-  const message = route ? routeMessage(route) : '';
-  const fullLabel = message ? `${textLabel || 'Connection'}: ${message}` : textLabel;
+  const { full: fullLabel, visible: visibleLabel } = edgeLabelText(textLabel, route);
   let path: string;
   let labelAt: Point;
-  let visibleLabel = fullLabel;
   let labelBox: Box | undefined;
   if (route) {
     path = roundedPath(route.points, route.radii);
     labelAt = route.label;
-    // Fit text on the straight segment; the edge's accessible name and title keep the full port.
-    const capacity = Math.floor(route.labelWidth / LABEL_CHARACTER_WIDTH);
-    if (fullLabel.length > capacity && !message)
-      visibleLabel = `${fullLabel.slice(0, Math.max(0, capacity - 1))}…`;
     labelBox = route.labelBounds ?? pill(labelAt, visibleLabel);
   } else {
     const [smooth, x, y] = getSmoothStepPath({
@@ -115,9 +115,24 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
   const points = route
     ? route.points
     : forwardPoints({ x: sourceX, y: sourceY }, { x: targetX, y: targetY });
+  const placedLabel = placement ? followEdgeLabel(placement, points) : undefined;
+  if (placedLabel) {
+    labelAt = placedLabel.at;
+    labelBox = placedLabel.box;
+  }
   return (
     <>
       <title>{fullLabel}</title>
+      {placedLabel?.anchor ? (
+        <path
+          className="gg-edge-label-leader"
+          fill="none"
+          style={style}
+          d={`M ${placedLabel.anchor.x} ${placedLabel.anchor.y} L ${labelAt.x} ${labelAt.y}`}
+          aria-hidden="true"
+          pointerEvents="none"
+        />
+      ) : null}
       <BaseEdge
         id={id}
         path={path}

@@ -1,0 +1,241 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-ac1d90d26b904089d/apps/web
+
+ ❯ .rev425-red/main/node-placement.test.ts (4 tests | 4 failed) 21ms
+   ❯ palettePosition (4)
+     × clears a Decision with three ports before its first DOM measurement 8ms
+     × uses the lowest bottom, even when the tallest card has a higher top 6ms
+     × uses larger measured heights but never an obsolete smaller measurement after ports grow 1ms
+     × handles an empty canvas, missing positions, exits, scripts and negative coordinates 4ms
+ ❯ .rev425-red/main/edge-label-placement.test.ts (8 tests | 7 failed) 27ms
+   ❯ placeEdgeLabels (8)
+     × separates Finish and Limit reached on lanes into the same target only 20px apart 13ms
+     × separates intersecting boxes on unrelated horizontal and vertical edges 1ms
+     × is stable across input order and handles more than two labels without mutating paths 1ms
+     × keeps pills off rounded corners when a segment runs in reverse 4ms
+     × avoids cards and falls back to an attached callout if a path has no room 1ms
+     × uses the closest free interval along reversed paths, with room for rounded corners 2ms
+     × handles zero-length, short, unavailable and nonorthogonal geometry without an infinite search 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > separates Finish and Limit reached on lanes into the same target only 20px apart
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ separate .rev425-red/main/edge-label-placement.test.ts:17:80
+     15|   const placements = [...placeEdgeLabels(paths).values()];
+     16|   for (const [i, a] of placements.entries())
+     17|     for (const b of placements.slice(i + 1)) expect(overlapsBox(a.box,…
+       |                                                                                ^
+     18|   return placements;
+     19| };
+ ❯ .rev425-red/main/edge-label-placement.test.ts:23:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > separates intersecting boxes on unrelated horizontal and vertical edges
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ separate .rev425-red/main/edge-label-placement.test.ts:17:80
+     15|   const placements = [...placeEdgeLabels(paths).values()];
+     16|   for (const [i, a] of placements.entries())
+     17|     for (const b of placements.slice(i + 1)) expect(overlapsBox(a.box,…
+       |                                                                                ^
+     18|   return placements;
+     19| };
+ ❯ .rev425-red/main/edge-label-placement.test.ts:33:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > is stable across input order and handles more than two labels without mutating paths
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ separate .rev425-red/main/edge-label-placement.test.ts:17:80
+     15|   const placements = [...placeEdgeLabels(paths).values()];
+     16|   for (const [i, a] of placements.entries())
+     17|     for (const b of placements.slice(i + 1)) expect(overlapsBox(a.box,…
+       |                                                                                ^
+     18|   return placements;
+     19| };
+ ❯ .rev425-red/main/edge-label-placement.test.ts:38:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > keeps pills off rounded corners when a segment runs in reverse
+AssertionError: expected { x: +0, y: 100 } to deeply equal { x: 40, y: 100 }
+
+- Expected
++ Received
+
+  {
+-   "x": 40,
++   "x": 0,
+    "y": 100,
+  }
+
+ ❯ .rev425-red/main/edge-label-placement.test.ts:56:60
+     54|       ],
+     55|     };
+     56|     expect(placeEdgeLabels([reversed]).get('reverse')?.at).toEqual({ x…
+       |                                                            ^
+     57|   });
+     58|   it('avoids cards and falls back to an attached callout if a path has…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > avoids cards and falls back to an attached callout if a path has no room
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ .rev425-red/main/edge-label-placement.test.ts:61:43
+     59|     const card = { id: 'card', left: 0, right: 500, top: 0, bottom: 20…
+     60|     const result = placeEdgeLabels([path('one', 100)], [card]).get('on…
+     61|     expect(overlapsBox(result.box, card)).toBe(false);
+       |                                           ^
+     62|     expect(result.anchor).toEqual({ x: 250, y: 100 });
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > uses the closest free interval along reversed paths, with room for rounded corners
+AssertionError: expected { x: 250, y: 200 } to deeply equal { x: 359.5, y: 100 }
+
+- Expected
++ Received
+
+  {
+-   "x": 359.5,
+-   "y": 100,
++   "x": 250,
++   "y": 200,
+  }
+
+ ❯ .rev425-red/main/edge-label-placement.test.ts:79:23
+     77|       [{ id: 'card', left: 150, right: 300, top: 90, bottom: 110 }],
+     78|     ).get('bent')!;
+     79|     expect(result.at).toEqual({ x: 359.5, y: 100 });
+       |                       ^
+     80|     expect(result.anchor).toBeUndefined();
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  .rev425-red/main/edge-label-placement.test.ts > placeEdgeLabels > handles zero-length, short, unavailable and nonorthogonal geometry without an infinite search
+AssertionError: expected undefined to be defined
+ ❯ .rev425-red/main/edge-label-placement.test.ts:101:29
+     99|     ]) {
+    100|       const result = placeEdgeLabels([{ ...path('tiny', 0), points }])…
+    101|       expect(result.anchor).toBeDefined();
+       |                             ^
+    102|     }
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  .rev425-red/main/node-placement.test.ts > palettePosition > clears a Decision with three ports before its first DOM measurement
+AssertionError: expected 440 to be greater than or equal to 476
+ ❯ .rev425-red/main/node-placement.test.ts:24:43
+     22| describe('palettePosition', () => {
+     23|   it('clears a Decision with three ports before its first DOM measurem…
+     24|     expect(palettePosition([decision]).y).toBeGreaterThanOrEqual(
+       |                                           ^
+     25|       300 + 154 + NODE_CARD_SIZE.clearance,
+     26|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  .rev425-red/main/node-placement.test.ts > palettePosition > uses the lowest bottom, even when the tallest card has a higher top
+AssertionError: expected 490 to be 476 // Object.is equality
+
+- Expected
++ Received
+
+- 476
++ 490
+
+ ❯ .rev425-red/main/node-placement.test.ts:33:38
+     31|       { id: 'exit', kind: 'exit', label: 'Exit', config: {}, ui: { x: …
+     32|     ];
+     33|     expect(palettePosition(nodes).y).toBe(476);
+       |                                      ^
+     34|     expect(nodes[0]?.ui).toEqual({ x: 200, y: 300 });
+     35|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  .rev425-red/main/node-placement.test.ts > palettePosition > uses larger measured heights but never an obsolete smaller measurement after ports grow
+AssertionError: expected 440 to be 476 // Object.is equality
+
+- Expected
++ Received
+
+- 476
++ 440
+
+ ❯ .rev425-red/main/node-placement.test.ts:37:73
+     35|   });
+     36|   it('uses larger measured heights but never an obsolete smaller measu…
+     37|     expect(palettePosition([decision], new Map([['decision', 114]])).y…
+       |                                                                         ^
+     38|     expect(palettePosition([decision], new Map([['decision', 220]])).y…
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  .rev425-red/main/node-placement.test.ts > palettePosition > handles an empty canvas, missing positions, exits, scripts and negative coordinates
+AssertionError: expected { x: 40, y: 140 } to deeply equal { x: 40, y: 40 }
+
+- Expected
++ Received
+
+  {
+    "x": 40,
+-   "y": 40,
++   "y": 140,
+  }
+
+ ❯ .rev425-red/main/node-placement.test.ts:41:33
+     39|   });
+     40|   it('handles an empty canvas, missing positions, exits, scripts and n…
+     41|     expect(palettePosition([])).toEqual({ x: 40, y: 40 });
+       |                                 ^
+     42|     expect(palettePosition([{ id: 'exit', kind: 'exit', label: 'Exit',…
+     43|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  11 failed | 13 passed (24)
+   Start at  00:33:29
+   Duration  2.52s (transform 49%, import 46%, tests 3%, worker 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ ac1d90d26b904089d\apps\web
+

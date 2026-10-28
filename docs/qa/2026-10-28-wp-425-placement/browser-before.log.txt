@@ -1,0 +1,64 @@
+
+Running 1 test using 1 worker
+
+(node:41764) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart (12.7s)
+
+
+  1) [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "node-decision / node-wait",
+    + ]
+
+      167 |   await page.screenshot({ path: screenshot });
+      168 |   await testInfo.attach('canvas', { path: screenshot, contentType: 'image/png' });
+    > 169 |   expect.soft(await intersections(page.locator('[data-testid^="node-"]'))).toEqual([]);
+          |                                                                            ^
+      170 |   expect.soft(await intersections(page.locator('.react-flow__edge-textwrapper'))).toEqual([]);
+      171 | });
+      172 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-placement\apps\web\e2e\palette-placement.spec.ts:169:76
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Finish / Limit reached",
+    + ]
+
+      168 |   await testInfo.attach('canvas', { path: screenshot, contentType: 'image/png' });
+      169 |   expect.soft(await intersections(page.locator('[data-testid^="node-"]'))).toEqual([]);
+    > 170 |   expect.soft(await intersections(page.locator('.react-flow__edge-textwrapper'))).toEqual([]);
+          |                                                                                   ^
+      171 | });
+      172 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-placement\apps\web\e2e\palette-placement.spec.ts:170:83
+
+    attachment #1: canvas (image/png) ──────────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-before-results\palette-placement-palette--84505-eps-converging-labels-apart-chromium\attachments\canvas-3faeafa63f66044411e08fb578f876b13ae0981e.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-before-results\palette-placement-palette--84505-eps-converging-labels-apart-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-before-results\palette-placement-palette--84505-eps-converging-labels-apart-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-before-results\palette-placement-palette--84505-eps-converging-labels-apart-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart 
+Exit code: 1

@@ -1,7 +1,12 @@
 import { Position, type InternalNode } from '@xyflow/react';
 import { describe, expect, it, vi } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
-import { createRoutingCache, ROUTING_MEASURE, createGeometrySelector } from './useRouting.js';
+import {
+  createRoutingCache,
+  ROUTING_MEASURE,
+  createGeometrySelector,
+  createRoutingTimer,
+} from './useRouting.js';
 import type { RoutingNode } from './routing.js';
 
 const geometryOf = (nodes: readonly RoutingNode[], preparationMs = 0) => ({
@@ -11,6 +16,30 @@ const geometryOf = (nodes: readonly RoutingNode[], preparationMs = 0) => ({
 });
 
 describe('routing measurement and cache', () => {
+  it('includes label work in the geometry budget without accumulating it across renders', () => {
+    performance.clearMeasures(ROUTING_MEASURE);
+    const timer = createRoutingTimer();
+    timer.complete(2);
+    expect(performance.getEntriesByName(ROUTING_MEASURE)).toHaveLength(0);
+    const detail = {
+      nodes: 300,
+      edges: 600,
+      preparationMs: 0,
+      rerouted: 8,
+      expansions: 0,
+      checks: 120,
+    };
+    timer.routing(3, detail);
+    expect(performance.getEntriesByName(ROUTING_MEASURE)).toHaveLength(0);
+    timer.complete(2);
+    expect(performance.getEntriesByName(ROUTING_MEASURE).at(-1)?.duration).toBe(5);
+    expect(performance.getEntriesByName(ROUTING_MEASURE)).toHaveLength(1);
+    timer.complete(1);
+    const entry = performance.getEntriesByName(ROUTING_MEASURE).at(-1) as PerformanceMeasure;
+    expect(entry.duration).toBe(1);
+    expect(entry.detail).toEqual({ ...detail, routingMs: 0, labelMs: 1 });
+    performance.clearMeasures(ROUTING_MEASURE);
+  });
   it('keeps routing geometry and topology changes after measuring a numeric draft label', () => {
     const node: InternalNode = {
       id: 'pick',

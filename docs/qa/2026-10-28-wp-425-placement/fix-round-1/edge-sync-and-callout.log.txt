@@ -1,0 +1,86 @@
+
+Running 4 tests using 1 worker
+
+(node:28848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards (11.0s)
+(node:34848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 [chromium] › e2e\loop-lifecycle.spec.ts:8:1 › draw a loop in the editor, publish it, run it, watch events, and provide input (10.1s)
+  ok 3 [chromium] › e2e\responsive.spec.ts:416:5 › responsive dark › all nine node dialogs fit their controls at 360 and 768 px (5.7s)
+  x  4 [chromium] › e2e\responsive.spec.ts:416:5 › responsive light › all nine node dialogs fit their controls at 360 and 768 px (13.5s)
+
+
+  1) [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader')
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader') with timeout 10000ms
+      - waiting for locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader')
+        23 × locator resolved to <path fill="none" aria-hidden="true" pointer-events="none" d="M 211 494 L 211 530" class="gg-edge-label-leader"></path>
+           - unexpected value "hidden"
+
+
+      61 |   await expect(edge).toHaveClass(/react-flow__edge-smoothstep/);
+      62 |   const leader = edge.locator('.gg-edge-label-leader');
+    > 63 |   await expect(leader).toBeVisible();
+         |                        ^
+      64 |   const geometry = await leader.evaluate((element) => {
+      65 |     const path = element as SVGPathElement;
+      66 |     const length = path.getTotalLength();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-placement\apps\web\e2e\edge-labels.spec.ts:63:24
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\responsive.spec.ts:416:5 › responsive light › all nine node dialogs fit their controls at 360 and 768 px 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: 'Edit trigger trigger' })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: 'Edit trigger trigger' }) with timeout 10000ms
+      - waiting for getByRole('dialog', { name: 'Edit trigger trigger' })
+
+
+      427 |           await page.locator(`.react-flow__node[data-id="${kind}"]`).press('Enter');
+      428 |           const dialog = page.getByRole('dialog', { name: `Edit ${kind} ${kind}` });
+    > 429 |           await expect(dialog).toBeVisible();
+          |                                ^
+      430 |           await geometry(page, `${kind} dialog at ${viewport.width}`, dialog);
+      431 |           const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+      432 |           if (await advanced.count()) {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-placement\apps\web\e2e\responsive.spec.ts:429:32
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\responsive-responsive-ligh-040b9--controls-at-360-and-768-px-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\responsive-responsive-ligh-040b9--controls-at-360-and-768-px-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-425-fix-sync-and-callout\responsive-responsive-ligh-040b9--controls-at-360-and-768-px-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards 
+    [chromium] › e2e\responsive.spec.ts:416:5 › responsive light › all nine node dialogs fit their controls at 360 and 768 px 
+  2 passed (48.0s)
+Exit code: 1

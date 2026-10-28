@@ -1,0 +1,37 @@
+$ vitest run src/editor/edge-label-placement.test.ts src/editor/OrthogonalEdge.test.tsx src/editor/Canvas.test.tsx src/editor/useRouting.test.ts src/editor/route-channels.test.ts src/editor/node-placement.test.ts src/editor/Palette.test.tsx
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+
+ ❯ src/editor/edge-label-placement.test.ts (13 tests | 1 failed) 39ms
+   ❯ placeEdgeLabels (10)
+     × handles zero-length, short, unavailable and nonorthogonal geometry without an infinite search 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > handles zero-length, short, unavailable and nonorthogonal geometry without an infinite search
+AssertionError: expected { x: +0, y: +0 } to be undefined
+- Expected:
+undefined
++ Received:
+{
+  "x": 0,
+  "y": 0,
+}
+ ❯ src/editor/edge-label-placement.test.ts:163:36
+    161|         expect(result.anchor).toBeDefined();
+    162|         expect(distance(result.anchor!, result.at)).toBeLessThanOrEqua…
+    163|       } else expect(result.anchor).toBeUndefined();
+       |                                    ^
+    164|     }
+    165|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 72 passed (73)
+   Start at  01:54:19
+   Duration  21.85s (environment 58%, setup 18%, import 11%, tests 9%, transform 5%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1

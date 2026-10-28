@@ -2,6 +2,8 @@ import { isRepeatPort } from './decision-gates.js';
 import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
+  getSmoothStepPath,
+  Position,
   Controls,
   ReactFlow,
   type AriaLabelConfig,
@@ -40,6 +42,7 @@ import {
   normalize,
   nudged,
   sameRoute,
+  forwardPoints,
 } from './manual-route.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
@@ -61,9 +64,12 @@ import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 import { portWidthLimits } from './port-targets.js';
 import { NODE_CARD_SIZE } from './routing-geometry.js';
+import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-placement.js';
+import { ForwardEdge } from './ForwardEdge.js';
+import { edgeLabelText } from './edge-label-text.js';
 
 const nodeTypes = { gg: NodeCard };
-const edgeTypes = { orthogonal: OrthogonalEdge };
+const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
 
 /** The background's dot spacing; keyboard nudges of a route segment move by it (#44). */
 export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
@@ -198,7 +204,8 @@ function buildNodes(
 }
 
 /**
- * Unselected forward edges without a manual route keep xyflow's smoothstep path. Backward paths
+ * Unselected forward edges without a manual route keep xyflow's smoothstep type and path;
+ * a label channel changes only a colliding label's position. Backward paths
  * (#18) and manual routes (#44) come from the routing plan; a selected edge always uses the
  * orthogonal edge, which shows its segment handles. Labels and the exit's animated dash keep the
  * existing token styles.
@@ -210,6 +217,7 @@ function buildEdges(
   previous: ReadonlyMap<string, Edge>,
   nodes: readonly FlowNode[],
   channels: ReturnType<typeof createRouteChannels>,
+  labels: ReadonlyMap<string, EdgeLabelPosition>,
 ): Edge[] {
   const { routes, directions } = plan;
   const positions = new Map(nodes.map((node) => [node.id, node]));
@@ -250,7 +258,10 @@ function buildEdges(
     );
     const suspended = plan.suspended.has(edge.id);
     const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
-    const channel = type === 'orthogonal' ? channels.edge(edge.id, route) : undefined;
+    const channel =
+      type === 'orthogonal' || labels.has(edge.id)
+        ? channels.edge(edge.id, route, labels.get(edge.id))
+        : undefined;
     // Keep the data object while nothing in it changed: xyflow re-renders an edge on a new one.
     const data: OrthogonalEdgeData | undefined =
       channel &&
@@ -448,8 +459,60 @@ export function Canvas({
     () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),
     [cardData],
   );
-  const plan = useRouting(routingEdges, decisionPorts);
+  const { plan, measureLabels } = useRouting(routingEdges, decisionPorts);
   const { routes } = plan;
+  const [placeLabels] = useState(createLabelPlacementCache);
+  const moving = !!nodeDrag || !!routeDrag || Object.keys(dragging).length > 0;
+  // Card issues and committed ui positions do not change port text. This primitive dependency
+  // stays equal across those refreshes; its collection is memoized away during drag frames.
+  const portText = useMemo(
+    () =>
+      JSON.stringify(
+        plan.edges.map((edge) =>
+          edge.port === 'out'
+            ? ''
+            : (cardData.get(edge.source)?.portLabels[edge.port] ?? edge.port),
+        ),
+      ),
+    [plan.edges, cardData],
+  );
+  const labels = useMemo(() => {
+    const start = performance.now();
+    const result = placeLabels(moving, () => {
+      const byId = new Map(plan.nodes.map((node) => [node.id, node]));
+      const texts = JSON.parse(portText) as string[];
+      return {
+        paths: plan.edges.flatMap((edge, i) => {
+          const from = byId.get(edge.source)?.outputs[edge.port];
+          const to = byId.get(edge.target)?.input;
+          if (!from || !to) return [];
+          const route = routes.get(edge.id);
+          const { visible } = edgeLabelText(texts[i]!, route);
+          const [, x, y] = getSmoothStepPath({
+            sourceX: from.x,
+            sourceY: from.y,
+            targetX: to.x,
+            targetY: to.y,
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            borderRadius: 10,
+          });
+          return [
+            {
+              id: edge.id,
+              text: visible,
+              points: route?.points ?? forwardPoints(from, to),
+              preferred: route?.label ?? { x, y },
+              fixed: !!route,
+            },
+          ];
+        }),
+        cards: cardBoxes(plan.nodes),
+      };
+    });
+    measureLabels(performance.now() - start);
+    return result;
+  }, [plan.edges, portText, plan.nodes, routes, moving, placeLabels, measureLabels]);
   // The route editor reads the latest card boxes when a drag ends or a nudge lands.
   const planRef = useRef(plan);
   useLayoutEffect(() => {
@@ -457,11 +520,11 @@ export function Canvas({
   }, [plan]);
   const [channels] = useState(createRouteChannels);
   useLayoutEffect(() => {
-    channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)));
-  }, [channels, routes, routingEdges]);
+    channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)), labels);
+  }, [channels, routes, routingEdges, labels]);
   const edges = useMemo(() => {
     const previous = edgesRef.current;
-    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels);
+    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels, labels);
     if (
       next.length === previous.value.length &&
       next.every((edge, index) => edge === previous.value[index])
@@ -469,7 +532,7 @@ export function Canvas({
       return previous.value;
     edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
     return next;
-  }, [definition, selectedEdge, plan, nodes, channels]);
+  }, [definition, selectedEdge, plan, nodes, channels, labels]);
 
   // Segment handles and Reset route (#44). A drag previews through the router and ends in one
   // store change; the step before it is closed first, as for a node drag. Where the author puts a

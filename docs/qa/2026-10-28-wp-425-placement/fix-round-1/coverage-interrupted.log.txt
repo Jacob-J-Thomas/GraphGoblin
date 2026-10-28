@@ -1,0 +1,100 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+      Coverage enabled with v8
+
+stderr | src/editor/EditorPage.test.tsx > EditorPage > starts with the loop panel expanded on wide windows, and counts issues beside Publish
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/NodeEditorDialog.test.tsx (32 tests) 43728ms
+   ✓ NodeEditorDialog evaluator-specific decisions (14)
+     ✓ authors terminal success exits with returns and destinations 1180ms
+     ✓ authors terminal failure exits with returns and destinations 723ms
+     ✓ authors terminal exhausted exits with returns and destinations 746ms
+     ✓ says what destinations receive while Returns is None, and names a quiet exit (#129) 481ms
+     ✓ authors and saves a new expression decision from the default editor fields 832ms
+     ✓ authors and saves a new llm decision from the default editor fields 2538ms
+     ✓ authors and saves a new classifier decision from the default editor fields 3294ms
+     ✓ edits and saves a valid expression decision 886ms
+     ✓ edits and saves a valid llm decision 926ms
+     ✓ edits and saves a valid classifier decision 1170ms
+     ✓ edits and saves a valid classifier decision 1121ms
+     ✓ edits and saves a valid classifier decision 1256ms
+     ✓ selects each kind with only its applicable fields and keeps source issue focus 2817ms
+   ✓ NodeEditorDialog webhook receiver (2)
+     ✓ shows Receiver only while the trigger type is Webhook 974ms
+   ✓ NodeEditorDialog GitHub trigger presets (2)
+     ✓ applies an editable body-signed fragment as one undoable graph change 1362ms
+     ✓ shows bounded item controls for the GitHub poll preset 1410ms
+   ✓ NodeEditorDialog disclosures across undo and redo (11)
+     ✓ keeps incomplete Monday 07:30 across closing, reopening, undo and redo 1624ms
+     ✓ keeps Advanced open through an undo and a redo of a basic picker, with focus restored 4034ms
+     ✓ keeps opened and added list items open through an undo and a redo 2525ms
+     ✓ redoing a removal from the removed row keeps its neighbour collapsed 1275ms
+     ✓ undoing an add from its picker focuses a shown header without opening that row 989ms
+     ✓ follows the same row when undo and redo move its header toggle 813ms
+     ✓ follows the same row when undo and redo move its header remove 824ms
+     ✓ undoing the only added row returns focus to the collection Add button 618ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: false) 2038ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: true) 2350ms
+     ✓ undoing an injected message add returns to its surviving operation collection 1020ms
+   ✓ NodeEditorDialog inference harness changes (3)
+     ✓ preserves other authored harness options and reports unsupported Claude settings 885ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: true) 1292ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: false) 1433ms
+ ✓ src/editor/EditorPage.test.tsx (37 tests) 48474ms
+   ✓ EditorPage (37)
+     ✓ describes valid pending JSON accurately and refuses Publish until applied or cancelled 974ms
+     ✓ shows Harness in inference but not in the decision or loop settings 1218ms
+     ✓ collapses and expands the loop panel from its own controls and remembers it 912ms
+     ✓ starts with the loop panel expanded on wide windows, and counts issues beside Publish 1030ms
+     ✓ loads a draft, adds nodes from the palette, edits properties, and autosaves 2498ms
+     ✓ adds a node dropped from the palette and refuses bad connections 480ms
+     ✓ opens the node editor’s Advanced group to focus an issue’s field inside it 3316ms
+     ✓ flags a collapsed Advanced group or operation holding an expression that does not compile 2089ms
+     ✓ keeps schema-invalid drafts on the device and explains why 2080ms
+     ✓ shows a dismissed save notice again after the draft returns to the same invalid state 3213ms
+     ✓ keeps a dismissed offline save notice hidden after an edit that remains offline 1696ms
+     ✓ keeps a newer server draft over an older unsynced local copy, and can switch 603ms
+     ✓ restores an unsynced local draft and reports offline saves 908ms
+     ✓ publishes, surfaces 422 issues, and links to the New run flow once published 1779ms
+     ✓ says there is nothing to publish when the loop has no changes, and hides it after an edit 429ms
+     ✓ waits for the server check before "Ready to publish", and says when it is unavailable 1187ms
+     ✓ shows the issues only the API finds on the node’s badge and in the counts 734ms
+     ✓ blocks readiness and publish when Monday 07:30 has no day chosen 1155ms
+     ✓ blocks publishing on JSON that does not parse, and discards it from the badges 3084ms
+     ✓ opens a node at an issue’s field from its badge, by pointer or keyboard 1880ms
+     ✓ opens a node at an issue whose path holds a newline, a quote, or a backslash 988ms
+     ✓ connects nodes from the keyboard and customizes a default list 1719ms
+     ✓ shows the right node when the open editor is switched to another node of the same kind 659ms
+     ✓ keeps a node editor open under Strict Mode, as the dev server renders the app 597ms
+     ✓ says in the dialog why a connection was refused 684ms
+     ✓ never lets an older save land after a newer one 1789ms
+     ✓ keeps a set-aside device copy across edits and reloads until restored or discarded 1340ms
+     ✓ keeps a restored device copy when leaving while an earlier save is in flight 1365ms
+     ✓ loads the editor once an API key is entered after a 401 385ms
+     ✓ refuses to publish a draft that cannot be saved 520ms
+     ✓ edits loop settings, variables, node ids, and edges 3139ms
+     ✓ applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 1823ms
+     ✓ picks a published subloop and shows its signature 1096ms
+     ✓ shows when the picked subloop has no published version 734ms
+ ✓ src/editor/DecisionAuthoring.test.tsx (23 tests) 41805ms
+   ✓ guides Expression to Classifier setup with field instructions and diagnostic details 2417ms
+   ✓ guides Noul to Score setup without raw bounds errors in the ordinary form 1383ms
+   ✓ decision gates (8)
+     ✓ surfaces a visit-cap warning and focuses Maximum passes without blocking publication 443ms
+     ✓ previews removed gate limits for Routes JSON and applies cleanup with one undo 1550ms
+     ✓ marks only one repeat route and requires maximum passes with focused validation 1326ms
+     ✓ previews removing repeat settings and the Limit reached edge; cancel and undo preserve all 1561ms
+     ✓ marks classifier choice repeat routes and retains limits through kind changes 1924ms
+     ✓ marks classifier noul repeat routes and retains limits through kind changes 1352ms
+     ✓ marks classifier score repeat routes and retains limits through kind changes 1805ms
+     ✓ removing the repeat row previews limits and cleans the gate as one undo step 1010ms
+   ✓ decision authoring checkpoint (13)
+     ✓ keeps unfinished expression route fields through classifier conversion, cancel and undo 1763ms
+
+Interrupted via the running command's Ctrl+C after lint found two missing this:void annotations; no coverage pass is claimed. Tool exit code: 1.

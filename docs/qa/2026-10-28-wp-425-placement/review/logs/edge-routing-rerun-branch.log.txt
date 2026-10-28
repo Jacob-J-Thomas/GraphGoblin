@@ -1,0 +1,198 @@
+
+Running 6 tests using 1 worker
+
+(node:51104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot (11.3s)
+(node:61116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot (11.3s)
+(node:55808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom (11.1s)
+(node:23372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot (11.0s)
+(node:26052) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot (11.0s)
+(node:16292) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  6 [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom (10.9s)
+
+
+  1) [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.react-flow__edge-orthogonal')
+    Expected: 6
+    Received: 7
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.react-flow__edge-orthogonal') with timeout 10000ms
+      - waiting for locator('.react-flow__edge-orthogonal')
+        23 × locator resolved to 7 elements
+           - unexpected value "7"
+
+
+      116 |         });
+      117 |       expect(collisions).toBe(0);
+    > 118 |       if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+          |                                                                   ^
+      119 |       if (name === 'eight-pixel-gap') {
+      120 |         const source = (await page.getByTestId('node-done').boundingBox())!;
+      121 |         const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:118:67
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-dark-six-return-de-103d2-and-labels-owner-screenshot-chromium\error-context.md
+
+  2) [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.react-flow__edge-orthogonal')
+    Expected: 6
+    Received: 7
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.react-flow__edge-orthogonal') with timeout 10000ms
+      - waiting for locator('.react-flow__edge-orthogonal')
+        23 × locator resolved to 7 elements
+           - unexpected value "7"
+
+
+      116 |         });
+      117 |       expect(collisions).toBe(0);
+    > 118 |       if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+          |                                                                   ^
+      119 |       if (name === 'eight-pixel-gap') {
+      120 |         const source = (await page.getByTestId('node-done').boundingBox())!;
+      121 |         const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:118:67
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-light-six-return-d-5ed29-and-labels-owner-screenshot-chromium\error-context.md
+
+  3) [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text')
+    Expected pattern: /…$/
+    Received string:  "retry-this-script-after-reviewing-the-previous-output"
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveText" locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text') with timeout 10000ms
+      - waiting for locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text')
+        23 × locator resolved to <text y="6.5" dy="0.3em" class="react-flow__edge-text">retry-this-script-after-reviewing-the-previous-ou…</text>
+           - unexpected value "retry-this-script-after-reviewing-the-previous-output"
+
+
+      309 |   );
+      310 |   await expect(edge(page, 'script-return')).toHaveAttribute('aria-label', `check ${long} to check`);
+    > 311 |   await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toHaveText(/…$/);
+          |                                                                               ^
+      312 |   for (const name of [/^zoom in$/i, /^zoom out$/i, /^fit view$/i])
+      313 |     await page.getByRole('button', { name, exact: true }).click();
+      314 |   await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toBeVisible();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:311:79
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-vertical-targets-l-26a0b--overlapping-cards-and-zoom-chromium\error-context.md
+
+  4) [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.react-flow__edge-orthogonal')
+    Expected: 6
+    Received: 7
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.react-flow__edge-orthogonal') with timeout 10000ms
+      - waiting for locator('.react-flow__edge-orthogonal')
+        23 × locator resolved to 7 elements
+           - unexpected value "7"
+
+
+      116 |         });
+      117 |       expect(collisions).toBe(0);
+    > 118 |       if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+          |                                                                   ^
+      119 |       if (name === 'eight-pixel-gap') {
+      120 |         const source = (await page.getByTestId('node-done').boundingBox())!;
+      121 |         const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:118:67
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-dark-six-return-de-103d2-and-labels-owner-screenshot-chromium-repeat1\error-context.md
+
+  5) [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.react-flow__edge-orthogonal')
+    Expected: 6
+    Received: 7
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.react-flow__edge-orthogonal') with timeout 10000ms
+      - waiting for locator('.react-flow__edge-orthogonal')
+        23 × locator resolved to 7 elements
+           - unexpected value "7"
+
+
+      116 |         });
+      117 |       expect(collisions).toBe(0);
+    > 118 |       if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+          |                                                                   ^
+      119 |       if (name === 'eight-pixel-gap') {
+      120 |         const source = (await page.getByTestId('node-done').boundingBox())!;
+      121 |         const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:118:67
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-light-six-return-d-5ed29-and-labels-owner-screenshot-chromium-repeat1\error-context.md
+
+  6) [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text')
+    Expected pattern: /…$/
+    Received string:  "retry-this-script-after-reviewing-the-previous-output"
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveText" locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text') with timeout 10000ms
+      - waiting for locator('.react-flow__edge[data-id="script-return"]').locator('.react-flow__edge-text')
+        23 × locator resolved to <text y="6.5" dy="0.3em" class="react-flow__edge-text">retry-this-script-after-reviewing-the-previous-ou…</text>
+           - unexpected value "retry-this-script-after-reviewing-the-previous-output"
+
+
+      309 |   );
+      310 |   await expect(edge(page, 'script-return')).toHaveAttribute('aria-label', `check ${long} to check`);
+    > 311 |   await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toHaveText(/…$/);
+          |                                                                               ^
+      312 |   for (const name of [/^zoom in$/i, /^zoom out$/i, /^fit view$/i])
+      313 |     await page.getByRole('button', { name, exact: true }).click();
+      314 |   await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toBeVisible();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:311:79
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-rerun-branch\routing-vertical-targets-l-26a0b--overlapping-cards-and-zoom-chromium-repeat1\error-context.md
+
+  6 failed
+    [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot 
+    [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot 
+    [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom 
+    [chromium] › e2e\routing.spec.ts:88:5 › dark: six-return-decision routes and labels, owner screenshot 
+    [chromium] › e2e\routing.spec.ts:88:5 › light: six-return-decision routes and labels, owner screenshot 
+    [chromium] › e2e\routing.spec.ts:290:1 › vertical targets, long script route, overlapping cards and zoom 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ ac1d90d26b904089d\apps\web
+

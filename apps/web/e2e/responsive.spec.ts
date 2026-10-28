@@ -17,6 +17,7 @@ import {
   expect,
   openAdvanced,
   openItem,
+  openDraftTab,
   publishEventLoop,
   publishLoop,
   test,
@@ -419,10 +420,13 @@ for (const theme of ['dark', 'light'] as const) {
       const { loopId, kinds } = await seedDialogs(request);
       for (const viewport of WIDTHS.slice(0, 2)) {
         await page.setViewportSize(viewport);
-        await page.goto(`/app/loops/${loopId}/edit`);
+        // xyflow hides wrappers until measurement. Keyboard press/focus does not wait for
+        // visibility, so require the measured wrapper before sending Enter.
+        await openDraftTab(page, loopId, 'responsive dialogs');
         for (const kind of kinds) {
-          await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
-          await page.keyboard.press('Enter');
+          const node = page.locator(`.react-flow__node[data-id="${kind}"]`);
+          await expect(node).toBeVisible();
+          await node.press('Enter');
           const dialog = page.getByRole('dialog', { name: `Edit ${kind} ${kind}` });
           await expect(dialog).toBeVisible();
           await geometry(page, `${kind} dialog at ${viewport.width}`, dialog);

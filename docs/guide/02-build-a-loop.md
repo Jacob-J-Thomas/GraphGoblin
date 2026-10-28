@@ -3,7 +3,7 @@
 ## Edit the starter graph
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
-2. Drag a node from the left palette onto the canvas, or click its palette button to add it. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged. The new node is selected.
+2. Drag a node from the left palette onto the canvas, or click its palette button to add it below the lowest card's bottom with clearance for all its output ports. The canvas pans to the selected new node; existing nodes keep their positions. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged.
 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
 5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.

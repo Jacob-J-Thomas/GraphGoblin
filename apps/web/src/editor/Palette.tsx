@@ -5,6 +5,7 @@ import { SidePanel } from '../components/ui/index.js';
 import { KindChip, kindStyle } from './KindChip.js';
 import { KIND_INFO, KIND_MIME, NODE_KINDS } from './model.js';
 import { useEditorStore } from './store.js';
+import { palettePosition } from './node-placement.js';
 
 /** The palette panel's element id and per-browser storage key. */
 export const PALETTE_PANEL_ID = 'palette';
@@ -71,8 +72,8 @@ export function Palette({
   const add = useCallback(
     (kind: (typeof NODE_KINDS)[number]) => {
       const def = useEditorStore.getState().definition;
-      const lowest = Math.max(0, ...(def?.nodes ?? []).map((n) => n.ui?.y ?? 0));
-      const position = { x: 40, y: lowest + 140 };
+      const heights = new Map(flow.getNodes().map((node) => [node.id, node.measured?.height ?? 0]));
+      const position = palettePosition(def?.nodes ?? [], heights);
       useEditorStore.getState().addNode(kind, position);
       void flow.setCenter(position.x + 90, position.y + 40, {
         zoom: flow.getZoom(),

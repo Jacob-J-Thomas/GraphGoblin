@@ -6,6 +6,8 @@ import { OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import type { RoutedEdge } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
+import { labelBox } from './edge-label-placement.js';
+import { ForwardEdge } from './ForwardEdge.js';
 
 const data = (
   route: RoutedEdge | undefined,
@@ -81,6 +83,62 @@ const editor = () => ({
 });
 
 describe('OrthogonalEdge', () => {
+  it('uses the stock smoothstep renderer for a clear forward label, and a channel only for a shifted one', () => {
+    const plain = { ...props };
+    delete plain.data;
+    const view = render(inFlow(<ForwardEdge {...plain} />));
+    expect(view.container.querySelector('.react-flow__edge-text')).toHaveTextContent('loopBack');
+    expect(view.container.querySelector('.react-flow__edge-path')).toBeInTheDocument();
+    view.rerender(inFlow(<ForwardEdge {...props} />));
+    expect(view.container.querySelector('.react-flow__edge-path')?.getAttribute('d')).toContain(
+      'Q',
+    );
+  });
+  it('retains routed label shortening when a collision placement is present', () => {
+    const at = { x: 200, y: -100 };
+    const text = 'A long port name that cannot fit on this route';
+    const channel = createRouteChannels().edge('return', route, {
+      at,
+      box: labelBox('return', text, at),
+    });
+    const view = render(
+      inFlow(
+        <OrthogonalEdge
+          {...props}
+          label={text}
+          data={{ channel, forward: false, suspended: false }}
+        />,
+      ),
+    );
+    expect(view.container.querySelector('.react-flow__edge-text')?.textContent).toMatch(/…$/);
+    expect(view.container.querySelector('title')).toHaveTextContent(text);
+  });
+  it('uses the shared label position, full text and a leader when the path has no room', () => {
+    const at = { x: 200, y: -100 };
+    const channel = createRouteChannels().edge('return', route, {
+      at,
+      box: labelBox('return', 'Finish', at),
+      anchor: { x: 55, y: 180 },
+    });
+    const view = render(
+      inFlow(
+        <OrthogonalEdge
+          {...props}
+          label="Finish"
+          data={{ channel, forward: false, suspended: false }}
+        />,
+      ),
+    );
+    const label = view.container.querySelector('.react-flow__edge-textwrapper')!;
+    // xyflow places the mocked 56x11 text box with its centre at the requested point.
+    expect(label.getAttribute('transform')).toBe('translate(172 -105.5)');
+    expect(label.textContent).toContain('Finish');
+    expect(view.container.querySelector('.gg-edge-label-leader')).toHaveAttribute(
+      'd',
+      'M 55 180 L 200 -100',
+    );
+  });
+
   it('draws rounded geometry, a label on the lane, and xyflow hit targets', () => {
     const view = render(
       <svg>

@@ -1,0 +1,176 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: loop-lifecycle.spec.ts >> draw a loop in the editor, publish it, run it, watch events, and provide input
+- Location: e2e\loop-lifecycle.spec.ts:8:1
+
+# Error details
+
+```
+Error: expect(locator).toHaveValue(expected) failed
+
+Locator: getByLabel('Loop')
+Expected pattern: /^[0-9A-Z]{26}$/
+Error: strict mode violation: getByLabel('Loop') resolved to 6 elements:
+    1) <button type="button" draggable="true" aria-label="Add Subloop node" title="Subloop: Runs another loop" class="grid w-full cursor-grab grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 rounded-md border border-default bg-surface-raised py-[7px] pr-2.5 pl-[7px] text-left text-default shadow-1 transition-[translate,box-shadow,background-color,border-color] hover:-translate-y-px hover:border-kind hover:bg-kind-subtle hover:shadow-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:…>…</button> aka getByRole('button', { name: 'Add Subloop node' })
+    2) <aside id="loop-panel" data-side="right" aria-labelledby="_r_9_" class="flex shrink-0 flex-col border-l border-default bg-surface-raised max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-10 max-lg:max-w-[calc(100%-2.75rem)] max-lg:shadow-3">…</aside> aka getByRole('complementary', { name: 'Loop settings' })
+    3) <button type="button" aria-expanded="true" aria-controls="loop-panel" title="Hide loop settings" aria-label="Hide loop settings" class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-…>…</button> aka getByRole('button', { name: 'Hide loop settings' })
+    4) <section class="grid gap-field" aria-label="Loop settings">…</section> aka getByRole('region', { name: 'Loop settings' })
+    5) <form novalidate="" class="grid gap-field" aria-label="Loop settings form">…</form> aka getByRole('form', { name: 'Loop settings form' })
+    6) <input min="1" step="1" max="64" value="8" id="_r_l_" type="number" placeholder="8" inputmode="numeric" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:b…/> aka getByRole('spinbutton', { name: 'Subloop depth limit' })
+
+Call log:
+  - Expect "toHaveValue" getByLabel('Loop') with timeout 10000ms
+  - waiting for getByLabel('Loop')
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - generic [ref=e32]:
+      - heading "New run" [level=1] [ref=e33]
+      - link "Runs of this loop" [ref=e35] [cursor=pointer]:
+        - /url: /app/runs?loop=01M3Y7RKG0E8TGEGPYXZDXFRMF
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]: Loop
+        - combobox "Loop" [ref=e42] [cursor=pointer]:
+          - option "(choose)"
+          - option "e2e approval" [selected]
+      - region "Start a run" [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: Version
+          - combobox "Version" [ref=e47] [cursor=pointer]:
+            - option "v1 (current), published 10/2/2026, 7:00:00 AM" [selected]
+          - paragraph [ref=e48]: The run keeps this version to the end. Runs of a loop can run at the same time.
+        - generic [ref=e49]:
+          - generic [ref=e50]: Trigger
+          - combobox "Trigger" [ref=e52] [cursor=pointer]:
+            - option "Start (start)" [selected]
+        - form "Start run" [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: Input (JSON)
+            - textbox "Input (JSON)" [ref=e57]:
+              - /placeholder: "{}"
+          - button "Start run" [ref=e59] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  1  | import type { Page } from '@playwright/test';
+  2  | import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
+  3  | 
+  4  | function handle(page: Page, nodeId: string, handleId: string) {
+  5  |   return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
+  6  | }
+  7  | 
+  8  | test('draw a loop in the editor, publish it, run it, watch events, and provide input', async ({
+  9  |   page,
+  10 |   request,
+  11 | }) => {
+  12 |   await page.goto('/app/loops');
+  13 |   await page.getByLabel('New loop name').fill('e2e approval');
+  14 |   await page.getByRole('button', { name: 'Create' }).click();
+  15 |   await expect(page).toHaveURL(/\/app\/loops\/[0-9A-Z]{26}\/edit$/);
+  16 |   await expect(page.getByRole('heading', { name: 'e2e approval' })).toBeVisible();
+  17 | 
+  18 |   // Add a wait node from the palette and rewire start -> wait -> done on the canvas.
+  19 |   await page.getByRole('button', { name: 'Add Wait node' }).click();
+  20 |   await expect(page.getByTestId('node-wait')).toBeVisible();
+  21 |   const start = await openNode(page, 'start');
+  22 |   await expect(start).toHaveAccessibleName('Edit trigger start');
+  23 |   await start.getByRole('button', { name: 'Remove edge e1' }).click();
+  24 |   await closeNode(page);
+  25 |   await page.locator('.react-flow__controls-fitview').click();
+  26 | 
+  27 |   await handle(page, 'start', 'out').dragTo(handle(page, 'wait', 'in'));
+  28 |   await handle(page, 'wait', 'out').dragTo(handle(page, 'done', 'in'));
+  29 |   await expect(page.getByText('Ready to publish')).toBeVisible();
+  30 | 
+  31 |   // A connection into a trigger is refused by the canvas.
+  32 |   await expect(handle(page, 'done', 'out')).toHaveCount(0);
+  33 |   await expect(page.getByText('Ready to publish')).toBeVisible();
+  34 | 
+  35 |   await page.getByRole('button', { name: 'Publish' }).click();
+  36 |   await expect(page.getByText('Published version 1.')).toBeVisible();
+  37 | 
+  38 |   // Runs start from Runs: the toolbar's Open in Runs opens the New run flow for this loop.
+  39 |   await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  40 |   await expect(page).toHaveURL(/\/app\/runs\/new\?loop=[0-9A-Z]{26}$/);
+> 41 |   await expect(page.getByLabel('Loop')).toHaveValue(/^[0-9A-Z]{26}$/);
+     |                                         ^ Error: expect(locator).toHaveValue(expected) failed
+  42 |   await page.getByRole('button', { name: 'Start run' }).click();
+  43 |   await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
+  44 | 
+  45 |   const timeline = page.getByRole('list', { name: 'Timeline' });
+  46 |   await expect(timeline.getByText('run.waiting')).toBeVisible();
+  47 |   await expect(page.getByText('Input requested')).toBeVisible();
+  48 |   await expect(page.getByText('Approve?')).toBeVisible();
+  49 | 
+  50 |   const runId = new URL(page.url()).pathname.split('/').at(-1)!;
+  51 |   const observed = await (await request.get('/runs/' + runId)).json();
+  52 |   const posted = page.waitForRequest(
+  53 |     (req) => req.method() === 'POST' && req.url().endsWith('/runs/' + runId + '/input'),
+  54 |   );
+  55 |   await page.getByLabel('Input (JSON)').fill('{"approved": true}');
+  56 |   await page.getByRole('button', { name: 'Submit input' }).click();
+  57 |   expect((await posted).postDataJSON()).toEqual({
+  58 |     waitId: observed.waiting.waitId,
+  59 |     input: { approved: true },
+  60 |   });
+  61 |   await expect(timeline.getByText('run.finished')).toBeVisible();
+  62 |   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
+  63 |   await expect(page.getByLabel('Messages')).toContainText('approved');
+  64 |   const duplicate = await request.post('/runs/' + runId + '/input', {
+  65 |     data: { waitId: observed.waiting.waitId, input: false },
+  66 |   });
+  67 |   expect(duplicate.status()).toBe(409);
+  68 |   expect(await duplicate.json()).toMatchObject({ code: 'WAIT_MISMATCH' });
+  69 | 
+  70 |   // The run shows on the runs list, linked from its loop's last-run status.
+  71 |   await page.getByRole('link', { name: 'Loops' }).click();
+  72 |   await expect(
+  73 |     page.getByRole('row', { name: /e2e approval/ }).locator('[data-status="succeeded"]'),
+  74 |   ).toBeVisible();
+  75 | });
+  76 | 
+  77 | test('cancel a waiting run from the inspector', async ({ page, request }) => {
+  78 |   const loopId = await publishLoop(request, approvalLoop('e2e cancel'));
+  79 |   await page.goto(`/app/runs/new?loop=${loopId}`);
+  80 |   await page.getByRole('button', { name: 'Start run' }).click();
+  81 |   await expect(page.getByText('Input requested')).toBeVisible();
+  82 | 
+  83 |   await page.getByRole('button', { name: 'Cancel run' }).click();
+  84 |   await expect(page.locator('[data-status="cancelled"]').first()).toBeVisible();
+  85 |   await expect(
+  86 |     page.getByRole('list', { name: 'Timeline' }).getByText('run.cancelled'),
+  87 |   ).toBeVisible();
+  88 |   await expect(page.getByRole('button', { name: 'Cancel run' })).toHaveCount(0);
+  89 | 
+  90 |   // A reload resumes from the stored cursor: the timeline is complete and not duplicated.
+  91 |   const count = await page.getByRole('list', { name: 'Timeline' }).getByRole('button').count();
+  92 |   await page.reload();
+  93 |   await expect(page.getByRole('list', { name: 'Timeline' }).getByRole('button')).toHaveCount(count);
+  94 | });
+  95 | 
+```

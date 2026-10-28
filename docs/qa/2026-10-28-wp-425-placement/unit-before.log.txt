@@ -1,0 +1,142 @@
+$ vitest run src/editor/node-placement.test.ts src/editor/edge-label-placement.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+
+ ❯ src/editor/node-placement.test.ts (4 tests | 4 failed) 23ms
+   ❯ palettePosition (4)
+     × clears a Decision with three ports before its first DOM measurement 9ms
+     × uses the lowest bottom, even when the tallest card has a higher top 7ms
+     × uses larger measured heights but never an obsolete smaller measurement after ports grow 1ms
+     × handles an empty canvas, missing positions, exits, scripts and negative coordinates 4ms
+ ❯ src/editor/edge-label-placement.test.ts (5 tests | 4 failed) 24ms
+   ❯ placeEdgeLabels (5)
+     × separates Finish and Limit reached on lanes into the same target only 20px apart 16ms
+     × separates intersecting boxes on unrelated horizontal and vertical edges 2ms
+     × is stable across input order and handles more than two labels without mutating paths 1ms
+     × avoids cards and falls back to an attached callout if a path has no room 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > separates Finish and Limit reached on lanes into the same target only 20px apart
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ separate src/editor/edge-label-placement.test.ts:11:39
+      9|   const placements = [...placeEdgeLabels(paths).values()];
+     10|   for (const [i, a] of placements.entries()) for (const b of placement…
+     11|     expect(overlapsBox(a.box, b.box)).toBe(false);
+       |                                       ^
+     12|   return placements;
+     13| };
+ ❯ src/editor/edge-label-placement.test.ts:17:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > separates intersecting boxes on unrelated horizontal and vertical edges
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ separate src/editor/edge-label-placement.test.ts:11:39
+      9|   const placements = [...placeEdgeLabels(paths).values()];
+     10|   for (const [i, a] of placements.entries()) for (const b of placement…
+     11|     expect(overlapsBox(a.box, b.box)).toBe(false);
+       |                                       ^
+     12|   return placements;
+     13| };
+ ❯ src/editor/edge-label-placement.test.ts:21:23
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > is stable across input order and handles more than two labels without mutating paths
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ separate src/editor/edge-label-placement.test.ts:11:39
+      9|   const placements = [...placeEdgeLabels(paths).values()];
+     10|   for (const [i, a] of placements.entries()) for (const b of placement…
+     11|     expect(overlapsBox(a.box, b.box)).toBe(false);
+       |                                       ^
+     12|   return placements;
+     13| };
+ ❯ src/editor/edge-label-placement.test.ts:26:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > avoids cards and falls back to an attached callout if a path has no room
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ src/editor/edge-label-placement.test.ts:37:43
+     35|     const card = { id: 'card', left: 0, right: 500, top: 0, bottom: 20…
+     36|     const result = placeEdgeLabels([path('one', 100)], [card]).get('on…
+     37|     expect(overlapsBox(result.box, card)).toBe(false);
+       |                                           ^
+     38|     expect(result.anchor).toEqual({ x: 250, y: 100 });
+     39|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+ FAIL  src/editor/node-placement.test.ts > palettePosition > clears a Decision with three ports before its first DOM measurement
+AssertionError: expected 440 to be greater than or equal to 476
+ ❯ src/editor/node-placement.test.ts:14:43
+     12| describe('palettePosition', () => {
+     13|   it('clears a Decision with three ports before its first DOM measurem…
+     14|     expect(palettePosition([decision]).y).toBeGreaterThanOrEqual(300 +…
+       |                                           ^
+     15|   });
+     16|   it('uses the lowest bottom, even when the tallest card has a higher …
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+ FAIL  src/editor/node-placement.test.ts > palettePosition > uses the lowest bottom, even when the tallest card has a higher top
+AssertionError: expected 490 to be 476 // Object.is equality
+- Expected
++ Received
+- 476
++ 490
+ ❯ src/editor/node-placement.test.ts:19:38
+     17|     const nodes: NodeInput[] = [decision,
+     18|       { id: 'exit', kind: 'exit', label: 'Exit', config: {}, ui: { x: …
+     19|     expect(palettePosition(nodes).y).toBe(476);
+       |                                      ^
+     20|     expect(nodes[0]?.ui).toEqual({ x: 200, y: 300 });
+     21|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+ FAIL  src/editor/node-placement.test.ts > palettePosition > uses larger measured heights but never an obsolete smaller measurement after ports grow
+AssertionError: expected 440 to be 476 // Object.is equality
+- Expected
++ Received
+- 476
++ 440
+ ❯ src/editor/node-placement.test.ts:23:73
+     21|   });
+     22|   it('uses larger measured heights but never an obsolete smaller measu…
+     23|     expect(palettePosition([decision], new Map([['decision', 114]])).y…
+       |                                                                         ^
+     24|     expect(palettePosition([decision], new Map([['decision', 220]])).y…
+     25|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+ FAIL  src/editor/node-placement.test.ts > palettePosition > handles an empty canvas, missing positions, exits, scripts and negative coordinates
+AssertionError: expected { x: 40, y: 140 } to deeply equal { x: 40, y: 40 }
+- Expected
++ Received
+  {
+    "x": 40,
+-   "y": 40,
++   "y": 140,
+  }
+ ❯ src/editor/node-placement.test.ts:27:33
+     25|   });
+     26|   it('handles an empty canvas, missing positions, exits, scripts and n…
+     27|     expect(palettePosition([])).toEqual({ x: 40, y: 40 });
+       |                                 ^
+     28|     expect(palettePosition([{ id: 'exit', kind: 'exit', label: 'Exit',…
+     29|     expect(palettePosition([{ id: 's', kind: 'script', label: 'Script',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 1 passed (9)
+   Start at  23:27:23
+   Duration  8.19s (environment 70%, setup 24%, transform 5%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1

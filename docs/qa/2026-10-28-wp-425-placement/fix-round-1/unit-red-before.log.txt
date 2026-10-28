@@ -1,0 +1,47 @@
+$ vitest run src/editor/edge-label-placement.test.ts src/editor/OrthogonalEdge.test.tsx
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+
+ ❯ src/editor/edge-label-placement.test.ts (8 tests | 1 failed) 18ms
+   ❯ placeEdgeLabels (8)
+     × keeps a squeezed callout near its own edge with a leader clear of several cards 5ms
+ ❯ src/editor/OrthogonalEdge.test.tsx (11 tests | 1 failed) 502ms
+   ❯ OrthogonalEdge (11)
+     × retains routed label shortening when a collision placement is present 71ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > keeps a squeezed callout near its own edge with a leader clear of several cards
+AssertionError: expected 501 to be less than or equal to 96
+ ❯ src/editor/edge-label-placement.test.ts:72:49
+     70|       preferred: { x: 192, y: 471 } }], cards).get('yes')!;
+     71|     expect(result.anchor).toBeDefined();
+     72|     expect(distance(result.anchor!, result.at)).toBeLessThanOrEqual(96…
+       |                                                 ^
+     73|     for (const card of cards) {
+     74|       expect(overlapsBox(result.box, card)).toBe(false);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > retains routed label shortening when a collision placement is present
+AssertionError: expected 'A long port name that cannot fit on t…' to match /…$/
+- Expected:
+/…$/
++ Received:
+"A long port name that cannot fit on this route"
+ ❯ src/editor/OrthogonalEdge.test.tsx:93:81
+     91|     const view = render(inFlow(<OrthogonalEdge {...props} label={text}
+     92|       data={{ channel, forward: false, suspended: false }} />));
+     93|     expect(view.container.querySelector('.react-flow__edge-text')?.tex…
+       |                                                                                 ^
+     94|     expect(view.container.querySelector('title')).toHaveTextContent(te…
+     95|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 17 passed (19)
+   Start at  01:38:23
+   Duration  6.90s (environment 65%, setup 18%, transform 8%, import 5%, tests 5%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1
