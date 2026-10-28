@@ -1,6 +1,6 @@
 # WP-424: Jev environment seed source
 
-Branch `codex-wp-424-jev-log`, worktree `%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-424-jev-log`, base `a4fee9a95513a059ecb26484059c73b4c9b3de70`. Changes are uncommitted for orchestrator review and commit.
+Branch `codex-wp-424-jev-log`, worktree `%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-424-jev-log`, base `a4fee9a95513a059ecb26484059c73b4c9b3de70`. Committed as `af3b6ebc` after the orchestrator's review; the independent review (`REVIEW.md`, sign-off) and its three P3 wording fixes followed.
 
 `ApiConfig.jevApiKey` now carries `{ value, source }`, with source restricted to `GG_JEV_API_KEY` or `JEV_API_KEY`. Startup stores only the value and logs only the source. Existing-secret precedence and explicit-empty suppression are unchanged. No stored format, API route, dependency or ADR changes.
 
