@@ -30,6 +30,7 @@ import type { RouteChannel } from './route-channels.js';
 import type { Box, Point } from './routing-geometry.js';
 import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-labels.js';
 import { roundedPath, routeMessage } from './routing.js';
+import { followEdgeLabel } from './edge-label-placement.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -82,7 +83,7 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
     data?.channel.getSnapshot ?? noSnapshot,
   );
   const editing = use(RouteEditingContext);
-  const placedLabel = useSyncExternalStore(
+  const placement = useSyncExternalStore(
     data?.channel.subscribe ?? noSubscription,
     data?.channel.getLabelSnapshot ?? noSnapshot,
   );
@@ -119,10 +120,10 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
   const points = route
     ? route.points
     : forwardPoints({ x: sourceX, y: sourceY }, { x: targetX, y: targetY });
+  const placedLabel = placement ? followEdgeLabel(placement, points) : undefined;
   if (placedLabel) {
     labelAt = placedLabel.at;
     labelBox = placedLabel.box;
-    visibleLabel = fullLabel;
   }
   return (
     <>

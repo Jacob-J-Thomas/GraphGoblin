@@ -7,6 +7,7 @@ import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import type { RoutedEdge } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
 import { labelBox } from './edge-label-placement.js';
+import { ForwardEdge } from './ForwardEdge.js';
 
 const data = (
   route: RoutedEdge | undefined,
@@ -82,6 +83,36 @@ const editor = () => ({
 });
 
 describe('OrthogonalEdge', () => {
+  it('uses the stock smoothstep renderer for a clear forward label, and a channel only for a shifted one', () => {
+    const plain = { ...props };
+    delete plain.data;
+    const view = render(inFlow(<ForwardEdge {...plain} />));
+    expect(view.container.querySelector('.react-flow__edge-text')).toHaveTextContent('loopBack');
+    expect(view.container.querySelector('.react-flow__edge-path')).toBeInTheDocument();
+    view.rerender(inFlow(<ForwardEdge {...props} />));
+    expect(view.container.querySelector('.react-flow__edge-path')?.getAttribute('d')).toContain(
+      'Q',
+    );
+  });
+  it('retains routed label shortening when a collision placement is present', () => {
+    const at = { x: 200, y: -100 };
+    const text = 'A long port name that cannot fit on this route';
+    const channel = createRouteChannels().edge('return', route, {
+      at,
+      box: labelBox('return', text, at),
+    });
+    const view = render(
+      inFlow(
+        <OrthogonalEdge
+          {...props}
+          label={text}
+          data={{ channel, forward: false, suspended: false }}
+        />,
+      ),
+    );
+    expect(view.container.querySelector('.react-flow__edge-text')?.textContent).toMatch(/…$/);
+    expect(view.container.querySelector('title')).toHaveTextContent(text);
+  });
   it('uses the shared label position, full text and a leader when the path has no room', () => {
     const at = { x: 200, y: -100 };
     const channel = createRouteChannels().edge('return', route, {

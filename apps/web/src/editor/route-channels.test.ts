@@ -52,3 +52,24 @@ it('publishes label movement and removal without waking unchanged edge geometry'
   expect(channel.getLabelSnapshot()).toBeUndefined();
   expect(changed).toHaveBeenCalledTimes(2);
 });
+
+it('publishes a changed edge attachment even when the settled pill stays in place', () => {
+  const channels = createRouteChannels();
+  const at = { x: 40, y: 60 };
+  const label = {
+    at,
+    box: labelBox('one', 'Finish', at),
+    attachment: { segment: 0, fraction: 0.5, offset: { x: 0, y: 0 } },
+  };
+  const channel = channels.edge('one', undefined, label);
+  const changed = vi.fn();
+  channel.subscribe(changed);
+  const publish = (next: typeof label) =>
+    channels.publish(new Map(), new Set(['one']), new Map([['one', next]]));
+  publish(structuredClone(label));
+  expect(changed).not.toHaveBeenCalled();
+  const next = { ...label, attachment: { ...label.attachment, fraction: 0.25 } };
+  publish(next);
+  expect(channel.getLabelSnapshot()).toBe(next);
+  expect(changed).toHaveBeenCalledOnce();
+});

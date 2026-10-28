@@ -11,6 +11,7 @@ import type { FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
 import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
+import { ForwardEdge } from './ForwardEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
 import type { RoutingNode } from './routing.js';
 import { drawnPoints, crossesCards, moveSegment, normalize } from './manual-route.js';
@@ -99,7 +100,7 @@ describe('Canvas handlers', () => {
     expect(data('infer').issues).toEqual([]);
     const decide = flow().nodes!.find((n) => n.id === 'decide')!;
     expect(decide.data.ports).toEqual(['good', 'bad']);
-    expect(flow().edgeTypes).toEqual({ orthogonal: OrthogonalEdge });
+    expect(flow().edgeTypes).toEqual({ orthogonal: OrthogonalEdge, smoothstep: ForwardEdge });
     expect(flow().edges!.find((e) => e.id === 'e1')!.label).toBeUndefined();
   });
 
@@ -174,6 +175,16 @@ describe('Canvas handlers', () => {
       ]),
     );
     expect(flow().edges!.find((e) => e.id === 'retry')!.type).toBe('smoothstep');
+  });
+
+  it('keeps a measured labelled forward connection smoothstep', () => {
+    const definition = decisionBackRoute();
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    renderCanvas([]);
+    const finish = flow().edges!.find((e) => e.id === 'finish')!;
+    expect(finish.label).toBeTruthy();
+    expect(finish.type).toBe('smoothstep');
   });
 
   it('keeps a node’s data while its node and issues are unchanged, so its card does not re-render', () => {

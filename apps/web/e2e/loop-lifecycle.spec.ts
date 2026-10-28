@@ -38,7 +38,8 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   // Runs start from Runs: the toolbar's Open in Runs opens the New run flow for this loop.
   await page.getByRole('link', { name: 'Open in Runs' }).first().click();
   await expect(page).toHaveURL(/\/app\/runs\/new\?loop=[0-9A-Z]{26}$/);
-  await expect(page.getByLabel('Loop')).toHaveValue(/^[0-9A-Z]{26}$/);
+  // The departing editor can still be mounted while New Run loads its loop selector.
+  await expect(page.getByLabel('Loop', { exact: true })).toHaveValue(/^[0-9A-Z]{26}$/);
   await page.getByRole('button', { name: 'Start run' }).click();
   await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
 

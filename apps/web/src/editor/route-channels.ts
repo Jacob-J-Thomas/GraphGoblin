@@ -64,7 +64,11 @@ export function createRouteChannels() {
             label.box.top === before.box.top &&
             label.box.bottom === before.box.bottom &&
             label.anchor?.x === before.anchor?.x &&
-            label.anchor?.y === before.anchor?.y);
+            label.anchor?.y === before.anchor?.y &&
+            label.attachment?.segment === before.attachment?.segment &&
+            label.attachment?.fraction === before.attachment?.fraction &&
+            label.attachment?.offset.x === before.attachment?.offset.x &&
+            label.attachment?.offset.y === before.attachment?.offset.y);
         if (route !== entry.route || !sameLabel) {
           entry.route = route;
           entry.label = label;

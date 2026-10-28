@@ -1,0 +1,38 @@
+
+Running 1 test using 1 worker
+
+(node:3716) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+300 nodes, drag 1: routing 2.500 ms / frame 95.200 ms p95; 238 routes, 53 frames
+300 nodes, drag 2: routing 2.400 ms / frame 95.400 ms p95; 225 routes, 53 frames
+300 nodes, drag 3: routing 2.200 ms / frame 95.400 ms p95; 232 routes, 53 frames
+Routing performance: {"nodes":300,"edges":600,"repeat":1,"channel":"msedge","browser":"156.0.4314.50","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":2.399999976158142,"idle":{"frameP95Ms":95.10000000000036,"frameSamples":32},"repetitions":[{"repetition":1,"routingP95Ms":2.5,"frameP95Ms":95.19999999999982,"addedFrameP95Ms":0.0999999999994543,"reroutedEdgesP95":10,"routingSamples":238,"frameSamples":53,"durationMs":5062.800000023843,"pointerMovesSent":306,"pointerMovesObserved":279,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":34,"samplerStartOffsetMs":2,"firstPointerMs":18.299999952316284,"lastPointerMs":5065.299999952316,"inputDurationMs":5161},{"repetition":2,"routingP95Ms":2.399999976158142,"frameP95Ms":95.39999999999964,"addedFrameP95Ms":0.2999999999992724,"reroutedEdgesP95":10,"routingSamples":225,"frameSamples":53,"durationMs":5066.600000071525,"pointerMovesSent":306,"pointerMovesObserved":264,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":33,"samplerStartOffsetMs":2,"firstPointerMs":19.800000071525574,"lastPointerMs":5067.200000047684,"inputDurationMs":5114},{"repetition":3,"routingP95Ms":2.200000047683716,"frameP95Ms":95.40000000000146,"addedFrameP95Ms":0.3000000000010914,"reroutedEdgesP95":10,"routingSamples":232,"frameSamples":53,"durationMs":5067.900000095367,"pointerMovesSent":306,"pointerMovesObserved":268,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":31,"samplerStartOffsetMs":2,"firstPointerMs":28.5,"lastPointerMs":5068.400000095367,"inputDurationMs":5100}]}
+  x  1 [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags (21.7s)
+
+
+  1) [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 120
+    Received:   53
+
+      744 |       expect(result.routingP95Ms).toBeLessThan(16);
+      745 |       expect(result.routingSamples).toBeGreaterThan(60);
+    > 746 |       expect(result.frameSamples).toBeGreaterThan(120);
+          |                                   ^
+      747 |       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      748 |       if (strictPerf) {
+      749 |         // The issue's frame criterion is the 60 Hz budget (16.67 ms) at p95. RAF timestamps
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-ac1d90d26b904089d\apps\web\e2e\routing.spec.ts:746:35
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425-pw-profile-main\routing-performance-300-no-c363b-e-five-second-pointer-drags-chromium\error-context.md
+
+  1 failed
+    [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ ac1d90d26b904089d\apps\web
+

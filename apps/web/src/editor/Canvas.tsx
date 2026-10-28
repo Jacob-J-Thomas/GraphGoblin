@@ -64,10 +64,12 @@ import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 import { portWidthLimits } from './port-targets.js';
 import { NODE_CARD_SIZE } from './routing-geometry.js';
-import { placeEdgeLabels, type EdgeLabelPosition } from './edge-label-placement.js';
+import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-placement.js';
+import { ForwardEdge } from './ForwardEdge.js';
+import { LABEL_CHARACTER_WIDTH } from './routing-labels.js';
 
 const nodeTypes = { gg: NodeCard };
-const edgeTypes = { orthogonal: OrthogonalEdge };
+const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
 
 /** The background's dot spacing; keyboard nudges of a route segment move by it (#44). */
 export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
@@ -202,7 +204,8 @@ function buildNodes(
 }
 
 /**
- * Unselected forward edges without a manual route keep xyflow's smoothstep path. Backward paths
+ * Unselected forward edges without a manual route keep xyflow's smoothstep type and path;
+ * a label channel changes only a colliding label's position. Backward paths
  * (#18) and manual routes (#44) come from the routing plan; a selected edge always uses the
  * orthogonal edge, which shows its segment handles. Labels and the exit's animated dash keep the
  * existing token styles.
@@ -254,10 +257,11 @@ function buildEdges(
         n.id === edge.from.node && n.kind === 'decision' && isRepeatPort(n.config, edge.from.port),
     );
     const suspended = plan.suspended.has(edge.id);
-    const type =
-      route || backward || isSelected || labels.has(edge.id) ? 'orthogonal' : 'smoothstep';
+    const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
     const channel =
-      type === 'orthogonal' ? channels.edge(edge.id, route, labels.get(edge.id)) : undefined;
+      type === 'orthogonal' || labels.has(edge.id)
+        ? channels.edge(edge.id, route, labels.get(edge.id))
+        : undefined;
     // Keep the data object while nothing in it changed: xyflow re-renders an edge on a new one.
     const data: OrthogonalEdgeData | undefined =
       channel &&
@@ -455,42 +459,54 @@ export function Canvas({
     () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),
     [cardData],
   );
-  const plan = useRouting(routingEdges, decisionPorts);
+  const { plan, measureLabels } = useRouting(routingEdges, decisionPorts);
   const { routes } = plan;
+  const [placeLabels] = useState(createLabelPlacementCache);
+  const moving = !!nodeDrag || !!routeDrag || Object.keys(dragging).length > 0;
   const labels = useMemo(() => {
-    const byId = new Map(plan.nodes.map((node) => [node.id, node]));
-    return placeEdgeLabels(
-      definition.edges.flatMap((edge) => {
-        const from = byId.get(edge.from.node)?.outputs[edge.from.port];
-        const to = byId.get(edge.to.node)?.input;
-        if (!from || !to) return [];
-        const route = routes.get(edge.id);
-        const port = cardData.get(edge.from.node)?.portLabels[edge.from.port] ?? edge.from.port;
-        const text = edge.from.port === 'out' ? '' : port;
-        const message = route ? routeMessage(route) : '';
-        const fullLabel = message ? `${text || 'Connection'}: ${message}` : text;
-        if (!fullLabel) return [];
-        const [, x, y] = getSmoothStepPath({
-          sourceX: from.x,
-          sourceY: from.y,
-          targetX: to.x,
-          targetY: to.y,
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
-          borderRadius: 10,
-        });
-        return [
-          {
-            id: edge.id,
-            text: fullLabel,
-            points: route?.points ?? forwardPoints(from, to),
-            preferred: route?.label ?? { x, y },
-          },
-        ];
-      }),
-      cardBoxes(plan.nodes),
-    );
-  }, [definition.edges, cardData, plan.nodes, routes]);
+    const start = performance.now();
+    const result = placeLabels(moving, () => {
+      const byId = new Map(plan.nodes.map((node) => [node.id, node]));
+      return {
+        paths: definition.edges.flatMap((edge) => {
+          const from = byId.get(edge.from.node)?.outputs[edge.from.port];
+          const to = byId.get(edge.to.node)?.input;
+          if (!from || !to) return [];
+          const route = routes.get(edge.id);
+          const port = cardData.get(edge.from.node)?.portLabels[edge.from.port] ?? edge.from.port;
+          const text = edge.from.port === 'out' ? '' : port;
+          const message = route ? routeMessage(route) : '';
+          let fullLabel = message ? `${text || 'Connection'}: ${message}` : text;
+          if (route && !message) {
+            const capacity = Math.floor(route.labelWidth / LABEL_CHARACTER_WIDTH);
+            if (fullLabel.length > capacity)
+              fullLabel = `${fullLabel.slice(0, Math.max(0, capacity - 1))}…`;
+          }
+          const [, x, y] = getSmoothStepPath({
+            sourceX: from.x,
+            sourceY: from.y,
+            targetX: to.x,
+            targetY: to.y,
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            borderRadius: 10,
+          });
+          return [
+            {
+              id: edge.id,
+              text: fullLabel,
+              points: route?.points ?? forwardPoints(from, to),
+              preferred: route?.label ?? { x, y },
+              fixed: !!route,
+            },
+          ];
+        }),
+        cards: cardBoxes(plan.nodes),
+      };
+    });
+    measureLabels(performance.now() - start);
+    return result;
+  }, [definition.edges, cardData, plan.nodes, routes, moving, placeLabels, measureLabels]);
   // The route editor reads the latest card boxes when a drag ends or a nudge lands.
   const planRef = useRef(plan);
   useLayoutEffect(() => {

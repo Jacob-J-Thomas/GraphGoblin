@@ -14,18 +14,13 @@ $ vitest run src/editor/node-placement.test.ts src/editor/edge-label-placement.t
      × separates intersecting boxes on unrelated horizontal and vertical edges 2ms
      × is stable across input order and handles more than two labels without mutating paths 1ms
      × avoids cards and falls back to an attached callout if a path has no room 1ms
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > separates Finish and Limit reached on lanes into the same target only 20px apart
 AssertionError: expected true to be false // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - false
 + true
-System.Management.Automation.RemoteException
  ❯ separate src/editor/edge-label-placement.test.ts:11:39
       9|   const placements = [...placeEdgeLabels(paths).values()];
      10|   for (const [i, a] of placements.entries()) for (const b of placement…
@@ -34,18 +29,13 @@ System.Management.Automation.RemoteException
      12|   return placements;
      13| };
  ❯ src/editor/edge-label-placement.test.ts:17:5
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > separates intersecting boxes on unrelated horizontal and vertical edges
 AssertionError: expected true to be false // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - false
 + true
-System.Management.Automation.RemoteException
  ❯ separate src/editor/edge-label-placement.test.ts:11:39
       9|   const placements = [...placeEdgeLabels(paths).values()];
      10|   for (const [i, a] of placements.entries()) for (const b of placement…
@@ -54,18 +44,13 @@ System.Management.Automation.RemoteException
      12|   return placements;
      13| };
  ❯ src/editor/edge-label-placement.test.ts:21:23
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > is stable across input order and handles more than two labels without mutating paths
 AssertionError: expected true to be false // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - false
 + true
-System.Management.Automation.RemoteException
  ❯ separate src/editor/edge-label-placement.test.ts:11:39
       9|   const placements = [...placeEdgeLabels(paths).values()];
      10|   for (const [i, a] of placements.entries()) for (const b of placement…
@@ -74,18 +59,13 @@ System.Management.Automation.RemoteException
      12|   return placements;
      13| };
  ❯ src/editor/edge-label-placement.test.ts:26:5
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > avoids cards and falls back to an attached callout if a path has no room
 AssertionError: expected true to be false // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - false
 + true
-System.Management.Automation.RemoteException
  ❯ src/editor/edge-label-placement.test.ts:37:43
      35|     const card = { id: 'card', left: 0, right: 500, top: 0, bottom: 20…
      36|     const result = placeEdgeLabels([path('one', 100)], [card]).get('on…
@@ -93,9 +73,7 @@ System.Management.Automation.RemoteException
        |                                           ^
      38|     expect(result.anchor).toEqual({ x: 250, y: 100 });
      39|   });
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/node-placement.test.ts > palettePosition > clears a Decision with three ports before its first DOM measurement
 AssertionError: expected 440 to be greater than or equal to 476
  ❯ src/editor/node-placement.test.ts:14:43
@@ -105,18 +83,13 @@ AssertionError: expected 440 to be greater than or equal to 476
        |                                           ^
      15|   });
      16|   it('uses the lowest bottom, even when the tallest card has a higher …
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/node-placement.test.ts > palettePosition > uses the lowest bottom, even when the tallest card has a higher top
 AssertionError: expected 490 to be 476 // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - 476
 + 490
-System.Management.Automation.RemoteException
  ❯ src/editor/node-placement.test.ts:19:38
      17|     const nodes: NodeInput[] = [decision,
      18|       { id: 'exit', kind: 'exit', label: 'Exit', config: {}, ui: { x: …
@@ -124,18 +97,13 @@ System.Management.Automation.RemoteException
        |                                      ^
      20|     expect(nodes[0]?.ui).toEqual({ x: 200, y: 300 });
      21|   });
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/node-placement.test.ts > palettePosition > uses larger measured heights but never an obsolete smaller measurement after ports grow
 AssertionError: expected 440 to be 476 // Object.is equality
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
 - 476
 + 440
-System.Management.Automation.RemoteException
  ❯ src/editor/node-placement.test.ts:23:73
      21|   });
      22|   it('uses larger measured heights but never an obsolete smaller measu…
@@ -143,21 +111,16 @@ System.Management.Automation.RemoteException
        |                                                                         ^
      24|     expect(palettePosition([decision], new Map([['decision', 220]])).y…
      25|   });
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
-System.Management.Automation.RemoteException
  FAIL  src/editor/node-placement.test.ts > palettePosition > handles an empty canvas, missing positions, exits, scripts and negative coordinates
 AssertionError: expected { x: 40, y: 140 } to deeply equal { x: 40, y: 40 }
-System.Management.Automation.RemoteException
 - Expected
 + Received
-System.Management.Automation.RemoteException
   {
     "x": 40,
 -   "y": 40,
 +   "y": 140,
   }
-System.Management.Automation.RemoteException
  ❯ src/editor/node-placement.test.ts:27:33
      25|   });
      26|   it('handles an empty canvas, missing positions, exits, scripts and n…
@@ -165,9 +128,7 @@ System.Management.Automation.RemoteException
        |                                 ^
      28|     expect(palettePosition([{ id: 'exit', kind: 'exit', label: 'Exit',…
      29|     expect(palettePosition([{ id: 's', kind: 'script', label: 'Script',
-System.Management.Automation.RemoteException
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
-System.Management.Automation.RemoteException
 
  Test Files  2 failed (2)
       Tests  8 failed | 1 passed (9)
@@ -176,8 +137,6 @@ System.Management.Automation.RemoteException
 
 [ELIFECYCLE] Test failed. See above for more details.
 Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
-System.Management.Automation.RemoteException
   × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
   │ placement\apps\web
-System.Management.Automation.RemoteException
 Exit code: 1
