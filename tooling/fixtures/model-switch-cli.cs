@@ -9,6 +9,7 @@ public static class ModelSwitchCli {
     var claude = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) == "claude";
     if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine(claude ? "2.1.287" : "codex-cli 0.160.0"); return 0; }
     if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume --json --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
+    if (!claude && Array.IndexOf(args, "mcp") >= 0 && Array.IndexOf(args, "list") >= 0) { Console.WriteLine("[]"); return 0; }
     if (Array.IndexOf(args, "status") >= 0) { Console.WriteLine(claude ? "{\"authMethod\":\"claude.ai\"}" : "Logged in using ChatGPT"); return 0; }
     var model = After(args, "--model");
     var effort = After(args, "--effort");

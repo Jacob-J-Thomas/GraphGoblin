@@ -134,9 +134,21 @@ describe('CodexHarness.start', () => {
       skipGitRepoCheck: true,
       workingDirectory: '/work',
     });
+    // ADR-0063: the machine's plugins, apps, memories, hooks and notify program are switched off.
     expect(codex.runs[0]?.clientOptions).toEqual({
       codexPathOverride: '/opt/codex',
       env: { PATH: '/bin' },
+      config: {
+        features: {
+          plugins: false,
+          apps: false,
+          memories: false,
+          hooks: false,
+          multi_agent: false,
+          goals: false,
+        },
+        notify: [],
+      },
     });
     expect(codex.runs[0]?.input).toBe('Reply with OK.');
     expect(codex.runs[0]?.turnOptions?.outputSchema).toBeUndefined();
@@ -152,10 +164,17 @@ describe('CodexHarness.start', () => {
           webSearch: true,
           configOverrides: {
             'mcp_servers.docs': { command: 'npx', args: ['docs-mcp'] },
+            'features.memories': true,
+            notify: ['notify.exe'],
             dropped: null,
             nan: Number.NaN,
             fn: () => 1,
             list: [1, null, 'a'],
+            table: { kept: 1 },
+            'table.added': { nested: 2 },
+            'table.added.more': 3,
+            scalar: 1,
+            'scalar.child': 4,
           },
         },
       }),
@@ -169,9 +188,22 @@ describe('CodexHarness.start', () => {
       networkAccessEnabled: true,
       webSearchMode: 'live',
     });
+    // Node overrides layer over the isolation defaults key path by key path; dotted keys are
+    // paths, as the CLI reads every `--config` key.
     expect(codex.runs[1]?.clientOptions.config).toEqual({
-      'mcp_servers.docs': { command: 'npx', args: ['docs-mcp'] },
+      features: {
+        plugins: false,
+        apps: false,
+        memories: true,
+        hooks: false,
+        multi_agent: false,
+        goals: false,
+      },
+      notify: ['notify.exe'],
+      mcp_servers: { docs: { command: 'npx', args: ['docs-mcp'] } },
       list: [1, 'a'],
+      table: { kept: 1, added: { nested: 2, more: 3 } },
+      scalar: { child: 4 },
     });
   });
 
@@ -522,18 +554,19 @@ describe('cancellation', () => {
 
 describe('preflight', () => {
   const runner =
-    (responses: Record<string, Awaited<ReturnType<CliRunner>>>): CliRunner =>
-    (_cli, args) =>
-      Promise.resolve(
+    (responses: Record<string, Omit<Awaited<ReturnType<CliRunner>>, 'stdout'>>): CliRunner =>
+    (_cli, args) => {
+      const response =
         responses[args.join(' ')] ??
-          (args.includes('--help')
-            ? {
-                code: 0,
-                output:
-                  '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
-              }
-            : { code: 1, output: '' }),
-      );
+        (args.includes('--help')
+          ? {
+              code: 0,
+              output:
+                '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+            }
+          : { code: 1, output: '' });
+      return Promise.resolve({ ...response, stdout: response.output });
+    };
 
   it('reports version and login for a healthy install', async () => {
     const harness = new CodexHarness({

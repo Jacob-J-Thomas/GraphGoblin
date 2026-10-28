@@ -90,6 +90,7 @@ public static class FakeCodex {
     if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return 0; }
     if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
     if (Array.IndexOf(args, "login") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return 0; }
+    if (Array.IndexOf(args, "mcp") >= 0 && Array.IndexOf(args, "list") >= 0) { Console.WriteLine("[]"); return 0; }
     string pidFile = Environment.GetEnvironmentVariable("SHUTDOWN_FAKE_PID");
     if (Array.IndexOf(args, "--tool-child") >= 0) {
       File.WriteAllText(pidFile + ".tool", Process.GetCurrentProcess().Id.ToString());

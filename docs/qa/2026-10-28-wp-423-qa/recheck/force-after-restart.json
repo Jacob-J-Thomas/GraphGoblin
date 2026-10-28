@@ -1,0 +1,308 @@
+{
+  "run": {
+    "id": "01M60RAQ334C4SZA0EV4VW1GCA",
+    "ownerId": "local",
+    "loopId": "01M60RAPMRGDKEY0GY00WF902T",
+    "versionId": "01M60RAPMRGDKEY0GY00WF902V",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA423 force held turn",
+      "label": "QA423 force held turn v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60RAQ334C4SZA0EV4VW1GCB",
+    "status": "failed",
+    "currentNodeId": "infer",
+    "iteration": 1,
+    "failure": {
+      "code": "RUN_INTERRUPTED_BY_STOP",
+      "message": "Explicit force-stop interrupted this run; external effects may have happened",
+      "nodeId": "infer",
+      "resumable": false,
+      "details": {
+        "attempt": 1,
+        "effectMayHaveHappened": true
+      }
+    },
+    "createdAt": "2026-10-28T07:59:23.235Z",
+    "startedAt": "2026-10-28T07:59:23.554Z",
+    "finishedAt": "2026-10-28T07:59:24.064Z",
+    "finalizedAt": "2026-10-28T07:59:24.070Z",
+    "lastEventSeq": 10,
+    "recovery": {
+      "observedSeq": 10,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "infer",
+          "label": "Infer",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 1,
+      "ts": "2026-10-28T07:59:23.235Z",
+      "type": "run.queued",
+      "versionId": "01M60RAPMRGDKEY0GY00WF902V",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA423 force held turn",
+        "label": "QA423 force held turn v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60RAQ334C4SZA0EV4VW1GCA",
+          "loopId": "01M60RAPMRGDKEY0GY00WF902T",
+          "versionId": "01M60RAPMRGDKEY0GY00WF902V",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60RAQ334C4SZA0EV4VW1GCB",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T07:59:23.235Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 2,
+      "ts": "2026-10-28T07:59:23.560Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 3,
+      "ts": "2026-10-28T07:59:23.574Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 4,
+      "ts": "2026-10-28T07:59:23.582Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:59:23.580Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:59:23.580Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 5,
+      "ts": "2026-10-28T07:59:23.604Z",
+      "type": "node.started",
+      "nodeId": "infer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "b33fb2748b71a85d"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 6,
+      "ts": "2026-10-28T07:59:23.619Z",
+      "type": "harness.turn",
+      "nodeId": "infer",
+      "visitId": "01M60RAQ334C4SZA0EV4VW1GCA:5",
+      "turnId": "01M60RAQF3420E9WFQBYTB2K1B",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "QA423 synthetic task"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 7,
+      "ts": "2026-10-28T07:59:23.753Z",
+      "type": "harness.session",
+      "nodeId": "infer",
+      "harness": "codex",
+      "sessionId": "4da23745-1ef7-450e-9397-20af9d960524",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 8,
+      "ts": "2026-10-28T07:59:23.756Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60RAQ334C4SZA0EV4VW1GCA:5",
+      "turnId": "01M60RAQF3420E9WFQBYTB2K1B",
+      "submission": "submitted",
+      "marker": "codex.turn.started"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 9,
+      "ts": "2026-10-28T07:59:24.053Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60RAQ334C4SZA0EV4VW1GCA:5",
+      "turnId": "01M60RAQF3420E9WFQBYTB2K1B",
+      "submission": "delivery-uncertain"
+    },
+    {
+      "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+      "seq": 10,
+      "ts": "2026-10-28T07:59:24.062Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M60RAQ334C4SZA0EV4VW1GCA",
+        "nodeId": "infer",
+        "attempt": 1,
+        "harness": "codex",
+        "sessionId": "4da23745-1ef7-450e-9397-20af9d960524",
+        "status": "active",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-28T07:59:23.752Z"
+      }
+    ]
+  }
+}

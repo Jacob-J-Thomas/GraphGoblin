@@ -1,0 +1,327 @@
+{
+  "run": {
+    "id": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+    "ownerId": "local",
+    "loopId": "01M60R9SHMGDC4JANCADNB8XX4",
+    "versionId": "01M60R9SHMGDC4JANCADNB8XX5",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA423 structured decision",
+      "label": "QA423 structured decision v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60R9SVJ9YNDPJ9ER716T3ZN",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-28T07:58:53.298Z",
+    "startedAt": "2026-10-28T07:58:53.672Z",
+    "finishedAt": "2026-10-28T07:58:53.891Z",
+    "finalizedAt": "2026-10-28T07:58:53.896Z",
+    "lastEventSeq": 11,
+    "recovery": {
+      "observedSeq": 11,
+      "resume": {
+        "allowed": false,
+        "code": "RUN_FINISHED",
+        "message": "This run has finished. Resume only continues paused runs or supported failures."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": []
+        },
+        {
+          "nodeId": "pick",
+          "label": "Pick",
+          "action": {
+            "allowed": true
+          },
+          "effects": []
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": true
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 1,
+      "ts": "2026-10-28T07:58:53.298Z",
+      "type": "run.queued",
+      "versionId": "01M60R9SHMGDC4JANCADNB8XX5",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA423 structured decision",
+        "label": "QA423 structured decision v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+          "loopId": "01M60R9SHMGDC4JANCADNB8XX4",
+          "versionId": "01M60R9SHMGDC4JANCADNB8XX5",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60R9SVJ9YNDPJ9ER716T3ZN",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T07:58:53.298Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 2,
+      "ts": "2026-10-28T07:58:53.675Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 3,
+      "ts": "2026-10-28T07:58:53.686Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 4,
+      "ts": "2026-10-28T07:58:53.693Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:53.691Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:53.691Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 2
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 5,
+      "ts": "2026-10-28T07:58:53.711Z",
+      "type": "node.started",
+      "nodeId": "pick",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "2525dbb1ad613b4f"
+    },
+    {
+      "provenance": {
+        "kind": "llm",
+        "provider": "codex",
+        "classifierId": null,
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "yes",
+        "confidence": 0.95,
+        "reasoning": "QA423 synthetic decision"
+      },
+      "portId": "yes",
+      "diagnostics": [],
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 6,
+      "ts": "2026-10-28T07:58:53.871Z",
+      "type": "decision.made",
+      "nodeId": "pick"
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 7,
+      "ts": "2026-10-28T07:58:53.871Z",
+      "type": "node.finished",
+      "nodeId": "pick",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/pick",
+          "value": {
+            "nodeId": "pick",
+            "value": {
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "yes",
+                "confidence": 0.95,
+                "reasoning": "QA423 synthetic decision"
+              },
+              "portId": "yes"
+            },
+            "at": "2026-10-28T07:58:53.869Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "pick",
+            "value": {
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "yes",
+                "confidence": 0.95,
+                "reasoning": "QA423 synthetic decision"
+              },
+              "portId": "yes"
+            },
+            "at": "2026-10-28T07:58:53.869Z"
+          }
+        }
+      ],
+      "route": "yes",
+      "durationMs": 155
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 8,
+      "ts": "2026-10-28T07:58:53.883Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 9,
+      "ts": "2026-10-28T07:58:53.888Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 10,
+      "ts": "2026-10-28T07:58:53.888Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M60R9SVJ9YNDPJ9ER716T3ZM",
+      "seq": 11,
+      "ts": "2026-10-28T07:58:53.888Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "sessions": {
+    "items": []
+  }
+}
