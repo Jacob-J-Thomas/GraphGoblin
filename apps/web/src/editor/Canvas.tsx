@@ -2,6 +2,8 @@ import { isRepeatPort } from './decision-gates.js';
 import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
+  getSmoothStepPath,
+  Position,
   Controls,
   ReactFlow,
   type AriaLabelConfig,
@@ -40,6 +42,7 @@ import {
   normalize,
   nudged,
   sameRoute,
+  forwardPoints,
 } from './manual-route.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
@@ -61,6 +64,7 @@ import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 import { portWidthLimits } from './port-targets.js';
 import { NODE_CARD_SIZE } from './routing-geometry.js';
+import { placeEdgeLabels, type EdgeLabelPosition } from './edge-label-placement.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge };
@@ -210,6 +214,7 @@ function buildEdges(
   previous: ReadonlyMap<string, Edge>,
   nodes: readonly FlowNode[],
   channels: ReturnType<typeof createRouteChannels>,
+  labels: ReadonlyMap<string, EdgeLabelPosition>,
 ): Edge[] {
   const { routes, directions } = plan;
   const positions = new Map(nodes.map((node) => [node.id, node]));
@@ -249,8 +254,10 @@ function buildEdges(
         n.id === edge.from.node && n.kind === 'decision' && isRepeatPort(n.config, edge.from.port),
     );
     const suspended = plan.suspended.has(edge.id);
-    const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
-    const channel = type === 'orthogonal' ? channels.edge(edge.id, route) : undefined;
+    const type =
+      route || backward || isSelected || labels.has(edge.id) ? 'orthogonal' : 'smoothstep';
+    const channel =
+      type === 'orthogonal' ? channels.edge(edge.id, route, labels.get(edge.id)) : undefined;
     // Keep the data object while nothing in it changed: xyflow re-renders an edge on a new one.
     const data: OrthogonalEdgeData | undefined =
       channel &&
@@ -450,6 +457,40 @@ export function Canvas({
   );
   const plan = useRouting(routingEdges, decisionPorts);
   const { routes } = plan;
+  const labels = useMemo(() => {
+    const byId = new Map(plan.nodes.map((node) => [node.id, node]));
+    return placeEdgeLabels(
+      definition.edges.flatMap((edge) => {
+        const from = byId.get(edge.from.node)?.outputs[edge.from.port];
+        const to = byId.get(edge.to.node)?.input;
+        if (!from || !to) return [];
+        const route = routes.get(edge.id);
+        const port = cardData.get(edge.from.node)?.portLabels[edge.from.port] ?? edge.from.port;
+        const text = edge.from.port === 'out' ? '' : port;
+        const message = route ? routeMessage(route) : '';
+        const fullLabel = message ? `${text || 'Connection'}: ${message}` : text;
+        if (!fullLabel) return [];
+        const [, x, y] = getSmoothStepPath({
+          sourceX: from.x,
+          sourceY: from.y,
+          targetX: to.x,
+          targetY: to.y,
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          borderRadius: 10,
+        });
+        return [
+          {
+            id: edge.id,
+            text: fullLabel,
+            points: route?.points ?? forwardPoints(from, to),
+            preferred: route?.label ?? { x, y },
+          },
+        ];
+      }),
+      cardBoxes(plan.nodes),
+    );
+  }, [definition.edges, cardData, plan.nodes, routes]);
   // The route editor reads the latest card boxes when a drag ends or a nudge lands.
   const planRef = useRef(plan);
   useLayoutEffect(() => {
@@ -457,11 +498,11 @@ export function Canvas({
   }, [plan]);
   const [channels] = useState(createRouteChannels);
   useLayoutEffect(() => {
-    channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)));
-  }, [channels, routes, routingEdges]);
+    channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)), labels);
+  }, [channels, routes, routingEdges, labels]);
   const edges = useMemo(() => {
     const previous = edgesRef.current;
-    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels);
+    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels, labels);
     if (
       next.length === previous.value.length &&
       next.every((edge, index) => edge === previous.value[index])
@@ -469,7 +510,7 @@ export function Canvas({
       return previous.value;
     edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
     return next;
-  }, [definition, selectedEdge, plan, nodes, channels]);
+  }, [definition, selectedEdge, plan, nodes, channels, labels]);
 
   // Segment handles and Reset route (#44). A drag previews through the router and ends in one
   // store change; the step before it is closed first, as for a node drag. Where the author puts a

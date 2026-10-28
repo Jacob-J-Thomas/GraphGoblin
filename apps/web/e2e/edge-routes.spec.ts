@@ -83,9 +83,28 @@ async function openLoop(page: Page, id: string, theme = 'dark') {
     const button = page.getByRole('button', { name, exact: true });
     if (await button.isVisible()) await button.click();
   }
+  await page.evaluate(() => document.fonts.ready);
   await page.getByRole('button', { name: 'Fit view' }).click();
   await expect(path(page, 'return')).toHaveAttribute('d', /^M.*Q/);
   await page.evaluate(() => document.fonts.ready);
+  // A path can render before the queued initial Fit View finishes. Pointer offsets must
+  // use the settled viewport, including when label placement triggers another render.
+  await page.locator('.react-flow__viewport').evaluate(async (viewport) => {
+    let previous = viewport.getAttribute('style');
+    let since = performance.now();
+    await new Promise<void>((done) => {
+      const frame = () => {
+        const current = viewport.getAttribute('style');
+        if (current !== previous) {
+          previous = current;
+          since = performance.now();
+        }
+        if (performance.now() - since >= 220) done();
+        else requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+  });
 }
 
 async function createLoop(request: APIRequestContext, definition = crossingLoop()) {
@@ -268,6 +287,10 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
   );
   expect(ratio(ring, canvas)).toBeGreaterThanOrEqual(3);
   const y = async () => (await storedRoute(request, loopId, 'return'))?.[1];
+  // This test exercises one quick sequence of nudges. Keep its logical time within the
+  // 1s history grouping window even when HTTP assertions take longer on the shared host.
+  // setFixedTime changes Date.now only; autosave timers and animation frames still run.
+  await page.clock.setFixedTime(new Date());
   await page.keyboard.press('ArrowDown');
   await saved(page);
   const first = (await y())!;

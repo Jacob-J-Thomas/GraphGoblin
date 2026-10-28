@@ -1,6 +1,11 @@
 /** Shared card width, unmeasured footprint and canvas clearance. Rendered height stays content-driven. */
 export const NODE_CARD_SIZE = { width: 184, height: 120, clearance: 22 } as const;
 
+/** NodeCard: border + 36px header + 18px body padding + 20/16px label/id rows.
+ * Ports add a 4px margin, 18px rows and 2px gaps. Use before xyflow measures a new card.
+ */
+export const nodeCardHeight = (ports: number): number => 92 + (ports ? 2 + 20 * ports : 0);
+
 export interface Point {
   x: number;
   y: number;

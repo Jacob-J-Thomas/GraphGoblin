@@ -82,6 +82,10 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
     data?.channel.getSnapshot ?? noSnapshot,
   );
   const editing = use(RouteEditingContext);
+  const placedLabel = useSyncExternalStore(
+    data?.channel.subscribe ?? noSubscription,
+    data?.channel.getLabelSnapshot ?? noSnapshot,
+  );
   if (!route && !data?.forward) return null; // A backward edge's handles are not measured yet.
   const textLabel = typeof label === 'string' ? label : '';
   const message = route ? routeMessage(route) : '';
@@ -115,9 +119,24 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
   const points = route
     ? route.points
     : forwardPoints({ x: sourceX, y: sourceY }, { x: targetX, y: targetY });
+  if (placedLabel) {
+    labelAt = placedLabel.at;
+    labelBox = placedLabel.box;
+    visibleLabel = fullLabel;
+  }
   return (
     <>
       <title>{fullLabel}</title>
+      {placedLabel?.anchor ? (
+        <path
+          className="gg-edge-label-leader"
+          fill="none"
+          style={style}
+          d={`M ${placedLabel.anchor.x} ${placedLabel.anchor.y} L ${labelAt.x} ${labelAt.y}`}
+          aria-hidden="true"
+          pointerEvents="none"
+        />
+      ) : null}
       <BaseEdge
         id={id}
         path={path}

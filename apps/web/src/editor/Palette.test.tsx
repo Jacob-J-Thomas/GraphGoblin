@@ -74,4 +74,30 @@ describe('Palette rail', () => {
     });
     expect(setData).toHaveBeenCalledWith(KIND_MIME, 'exit');
   });
+
+  it('places a pressed Wait clear of a three-output Decision without moving existing cards', () => {
+    const state = useEditorStore.getState();
+    state.addNode('decision', { x: 40, y: 300 });
+    const decision = useEditorStore.getState().definition!.nodes.at(-1)!;
+    useEditorStore.getState().updateNode(decision.id, {
+      config: {
+        kind: 'expression',
+        jsonata: '"again"',
+        maxPasses: 2,
+        routes: [
+          { id: 'again', label: 'Again', repeat: true },
+          { id: 'finish', label: 'Finish' },
+        ],
+      },
+    });
+    const before = useEditorStore.getState().definition!.nodes;
+    render(
+      <ReactFlowProvider>
+        <Palette expanded={false} onExpandedChange={vi.fn()} />
+      </ReactFlowProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    expect(useEditorStore.getState().definition!.nodes.at(-1)?.ui).toEqual({ x: 40, y: 476 });
+    expect(useEditorStore.getState().definition!.nodes.slice(0, -1)).toEqual(before);
+  });
 });

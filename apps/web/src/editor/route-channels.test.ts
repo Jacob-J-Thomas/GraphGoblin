@@ -2,6 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { createRoutingPlan } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
+import { labelBox } from './edge-label-placement.js';
 
 const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
   createRoutingPlan(...args).routes;
@@ -30,4 +31,24 @@ it('publishes changed geometry only to its edge, releases deleted entries and su
   expect(changed).toHaveBeenCalledOnce();
   expect(back.getSnapshot()).toBeUndefined();
   expect(channels.edge('return', next)).not.toBe(back);
+});
+
+it('publishes label movement and removal without waking unchanged edge geometry', () => {
+  const channels = createRouteChannels();
+  const at = { x: 40, y: 60 };
+  const label = { at, box: labelBox('one', 'Finish', at) };
+  const channel = channels.edge('one', undefined, label);
+  const changed = vi.fn();
+  channel.subscribe(changed);
+  const active = new Set(['one']);
+  channels.publish(new Map(), active, new Map([['one', structuredClone(label)]]));
+  expect(changed).not.toHaveBeenCalled();
+  const next = { ...label, anchor: { x: 0, y: 0 } };
+  channels.publish(new Map(), active, new Map([['one', next]]));
+  expect(channel.getLabelSnapshot()).toBe(next);
+  expect(channel.getSnapshot()).toBeUndefined();
+  expect(changed).toHaveBeenCalledOnce();
+  channels.publish(new Map(), active);
+  expect(channel.getLabelSnapshot()).toBeUndefined();
+  expect(changed).toHaveBeenCalledTimes(2);
 });
