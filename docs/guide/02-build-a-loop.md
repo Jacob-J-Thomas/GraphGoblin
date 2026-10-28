@@ -65,6 +65,8 @@ The selected port is `lastOutput.value.portId`, provider details are `lastOutput
 
 > Capability profiles for `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` remain unresolved for Codex; its adapter accepts `harnessOptions.configOverrides`. Claude refuses nonempty capabilities and nonempty raw overrides under its launch policy.
 
+A loop turn does not start your machine's own extensions ([ADR-0063](../decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Codex turns run without the MCP servers, plugins, ChatGPT apps, memories, goals, sub-agents, hooks and `notify` program in your Codex configuration. To use one of your Codex MCP servers in a node, set **Config overrides** (Settings tab, Advanced) to `{"mcp_servers": {"<name>": {"enabled": true}}}`. `{"features": {"plugins": true}}` turns all of your Codex plugins back on; one plugin alone cannot be turned on. `{"features": {"multi_agent": true}}` lets the turn spawn sub-agents again. Write every override key as plain segments of letters, digits, `_` and `-`. A key with any other character, or a segment named `__proto__`, `constructor` or `prototype`, makes the run fail before the turn starts. Claude turns always run without your Claude MCP servers, plugins, hooks and skills.
+
 **Choosing inference context.** Use `fresh` for a new provider conversation with your
 authored task and selected inputs. Include current loop context deliberately in
 `prompt.template`, **Context** input transforms or `contextFiles`; fresh does not

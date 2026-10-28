@@ -1,0 +1,339 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a6d410b9ee903e1ee/packages/adapter-codex
+
+ ❯ src/harness.test.ts (32 tests | 1 failed) 154ms
+   ❯ CodexHarness.start (14)
+     × sets every behaviour-affecting option explicitly on the thread 15ms
+ ❯ src/isolation.test.ts (11 tests | 10 failed) 609ms
+   ❯ Codex loop turns without the machine personal extensions (4)
+     × switches off every configured MCP server, plugins, apps, memories, hooks and notify 223ms
+     × applies a node override after the defaults, before the thread options 126ms
+     × switches them off on a resumed conversation too 109ms
+     × does not start the turn when the MCP servers cannot be listed 118ms
+   ❯ the MCP listing before each turn (7)
+     × refuses to start on {"code":null,"output":"","stdout":"","spawnError":"spawn C:/missing/codex.exe ENOENT"} 8ms
+     × refuses to start on {"code":null,"output":"","stdout":"","spawnError":"timed out after 15000 ms"} 5ms
+     × refuses to start on {"code":0,"output":"WARNING: on stderr\nLoaded.\nnot json","stdout":"Loaded.\nnot json"} 3ms
+     × refuses to start on {"code":0,"output":"WARNING: on stderr\n{\"name\":\"docs\"}","stdout":"{\"name\":\"docs\"}"} 3ms
+     × refuses to start on {"code":0,"output":"WARNING: on stderr\n[{\"enabled\":true}]","stdout":"[{\"enabled\":true}]"} 5ms
+     × refuses to start on {"code":0,"output":"WARNING: on stderr\n[{\"name\":\"docs\"},{\"name\":\"team.docs\"}]","stdout":"[{\"name\":\"docs\"},{\"name\":\"team.docs\"}]"} 4ms
+ ❯ src/cli.test.ts (28 tests | 1 failed) 8542ms
+   ❯ runCli (3)
+     × captures stdout and stderr together, stdout alone, and the exit code 113ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/cli.test.ts > runCli > captures stdout and stderr together, stdout alone, and the exit code
+AssertionError: expected { code: 3, output: 'out err' } to deeply equal { code: 3, …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": 3,
+    "output": "out err",
+-   "stdout": "out ",
+  }
+
+ ❯ src/cli.test.ts:39:20
+     37|       10_000,
+     38|     );
+     39|     expect(result).toEqual({ code: 3, output: expect.stringMatching(/o…
+       |                    ^
+     40|     expect(result.output).toContain('err');
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/harness.test.ts > CodexHarness.start > sets every behaviour-affecting option explicitly on the thread
+AssertionError: expected { …(2) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+    "codexPathOverride": "/opt/codex",
+-   "config": {
+-     "features": {
+-       "apps": false,
+-       "hooks": false,
+-       "memories": false,
+-       "plugins": false,
+-     },
+-     "notify": [],
+-   },
+    "env": {
+      "PATH": "/bin",
+    },
+  }
+
+ ❯ src/harness.test.ts:138:42
+    136|     });
+    137|     // ADR-0063: the machine's plugins, apps, memories, hooks and noti…
+    138|     expect(codex.runs[0]?.clientOptions).toEqual({
+       |                                          ^
+    139|       codexPathOverride: '/opt/codex',
+    140|       env: { PATH: '/bin' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > switches off every configured MCP server, plugins, apps, memories, hooks and notify
+AssertionError: expected [ Array(4) ] to deeply equal [ …(11) ]
+
+- Expected
++ Received
+
+  [
+-   "mcp_servers.node_repl.enabled=false",
+-   "mcp_servers.docs.enabled=false",
+-   "features.plugins=false",
+-   "features.apps=false",
+-   "features.memories=false",
+-   "features.hooks=false",
+-   "notify=[]",
+    "model_reasoning_effort=\"low\"",
+    "sandbox_workspace_write.network_access=false",
+    "web_search=\"disabled\"",
+    "approval_policy=\"never\"",
+  ]
+
+ ❯ src/isolation.test.ts:110:42
+    108|     const { directory, files, session } = await fakeTurn(['node_repl',…
+    109|     await expect(session.result).resolves.toMatchObject({ finalText: '…
+    110|     expect(await configArgs(files.argv)).toEqual([
+       |                                          ^
+    111|       'mcp_servers.node_repl.enabled=false',
+    112|       'mcp_servers.docs.enabled=false',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > applies a node override after the defaults, before the thread options
+AssertionError: expected [ …(7) ] to deeply equal [ …(12) ]
+
+- Expected
++ Received
+
+@@ -1,13 +1,8 @@
+  [
+    "mcp_servers.node_repl.enabled=true",
+-   "mcp_servers.docs.enabled=false",
+    "features.plugins=true",
+-   "features.apps=false",
+-   "features.memories=false",
+-   "features.hooks=false",
+-   "notify=[]",
+    "approval_policy=\"untrusted\"",
+    "model_reasoning_effort=\"low\"",
+    "sandbox_workspace_write.network_access=false",
+    "web_search=\"disabled\"",
+    "approval_policy=\"never\"",
+
+ ❯ src/isolation.test.ts:132:42
+    130|     });
+    131|     await expect(session.result).resolves.toMatchObject({ finalText: '…
+    132|     expect(await configArgs(files.argv)).toEqual([
+       |                                          ^
+    133|       'mcp_servers.node_repl.enabled=true',
+    134|       'mcp_servers.docs.enabled=false',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > switches them off on a resumed conversation too
+AssertionError: expected [ Array(4) ] to deeply equal [ …(10) ]
+
+- Expected
++ Received
+
+  [
+-   "mcp_servers.node_repl.enabled=false",
+-   "features.plugins=false",
+-   "features.apps=false",
+-   "features.memories=false",
+-   "features.hooks=false",
+-   "notify=[]",
+    "model_reasoning_effort=\"low\"",
+    "sandbox_workspace_write.network_access=false",
+    "web_search=\"disabled\"",
+    "approval_policy=\"never\"",
+  ]
+
+ ❯ src/isolation.test.ts:147:42
+    145|     const argv = JSON.parse(await readFile(files.argv, 'utf8')) as str…
+    146|     expect(argv.slice(-2)).toEqual(['resume', 'argv-thread']);
+    147|     expect(await configArgs(files.argv)).toEqual([
+       |                                          ^
+    148|       'mcp_servers.node_repl.enabled=false',
+    149|       ...DEFAULTS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > does not start the turn when the MCP servers cannot be listed
+AssertionError: promise resolved "{ finalText: 'Recorded', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "finalText": "Recorded",
++   "items": [
++     {
++       "detail": {
++         "id": "answer",
++         "text": "Recorded",
++         "type": "agent_message",
++       },
++       "id": "answer",
++       "summary": "Recorded",
++       "type": "message",
++     },
++   ],
++   "usage": {
++     "cachedInputTokens": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "reasoningOutputTokens": 0,
++   },
+  }
+
+ ❯ src/isolation.test.ts:158:33
+    156|       GG_FAKE_CODEX_MCP_EXIT: '2',
+    157|     });
+    158|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    159|       code: 'HARNESS_TURN_FAILED',
+    160|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":null,"output":"","stdout":"","spawnError":"spawn C:/missing/codex.exe ENOENT"}
+AssertionError: expected Error: spawn C:/missing/codex.exe ENOENT { …(3) } to match object { code: 'HARNESS_NOT_INSTALLED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ Error {
+    "code": "HARNESS_NOT_INSTALLED",
+-   "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn C:/missing/codex.exe ENOENT).",
+    "submission": "definitely-not-submitted",
+  }
+
+ ❯ src/isolation.test.ts:217:33
+    215|     const { harness, calls } = harnessWith(() => Promise.resolve(resul…
+    216|     const session = harness.start(request(directory), new AbortControl…
+    217|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    218|       code,
+    219|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":null,"output":"","stdout":"","spawnError":"timed out after 15000 ms"}
+AssertionError: expected Error: spawn C:/missing/codex.exe ENOENT { …(3) } to match object { code: 'HARNESS_TURN_FAILED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (timed out after 15000 ms).",
++ Error {
++   "code": "HARNESS_NOT_INSTALLED",
+    "submission": "definitely-not-submitted",
+  }
+
+ ❯ src/isolation.test.ts:217:33
+    215|     const { harness, calls } = harnessWith(() => Promise.resolve(resul…
+    216|     const session = harness.start(request(directory), new AbortControl…
+    217|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    218|       code,
+    219|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":0,"output":"WARNING: on stderr\nLoaded.\nnot json","stdout":"Loaded.\nnot json"}
+AssertionError: expected Error: spawn C:/missing/codex.exe ENOENT { …(3) } to match object { code: 'HARNESS_TURN_FAILED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex could not list the machine's MCP servers, so the turn did not start: mcp list printed no JSON: Loaded. | not json",
++ Error {
++   "code": "HARNESS_NOT_INSTALLED",
+    "submission": "definitely-not-submitted",
+  }
+
+ ❯ src/isolation.test.ts:217:33
+    215|     const { harness, calls } = harnessWith(() => Promise.resolve(resul…
+    216|     const session = harness.start(request(directory), new AbortControl…
+    217|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    218|       code,
+    219|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":0,"output":"WARNING: on stderr\n{\"name\":\"docs\"}","stdout":"{\"name\":\"docs\"}"}
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":0,"output":"WARNING: on stderr\n[{\"enabled\":true}]","stdout":"[{\"enabled\":true}]"}
+AssertionError: expected Error: spawn C:/missing/codex.exe ENOENT { …(3) } to match object { code: 'HARNESS_TURN_FAILED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex could not list the machine's MCP servers, so the turn did not start: mcp list printed an unexpected shape.",
++ Error {
++   "code": "HARNESS_NOT_INSTALLED",
+    "submission": "definitely-not-submitted",
+  }
+
+ ❯ src/isolation.test.ts:217:33
+    215|     const { harness, calls } = harnessWith(() => Promise.resolve(resul…
+    216|     const session = harness.start(request(directory), new AbortControl…
+    217|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    218|       code,
+    219|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/isolation.test.ts > the MCP listing before each turn > refuses to start on {"code":0,"output":"WARNING: on stderr\n[{\"name\":\"docs\"},{\"name\":\"team.docs\"}]","stdout":"[{\"name\":\"docs\"},{\"name\":\"team.docs\"}]"}
+AssertionError: expected Error: spawn C:/missing/codex.exe ENOENT { …(3) } to match object { code: 'HARNESS_TURN_FAILED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Codex could not list the machine's MCP servers, so the turn did not start: the server name \"team.docs\" cannot be switched off through --config.",
++ Error {
++   "code": "HARNESS_NOT_INSTALLED",
+    "submission": "definitely-not-submitted",
+  }
+
+ ❯ src/isolation.test.ts:217:33
+    215|     const { harness, calls } = harnessWith(() => Promise.resolve(resul…
+    216|     const session = harness.start(request(directory), new AbortControl…
+    217|     await expect(session.result).rejects.toMatchObject({
+       |                                 ^
+    218|       code,
+    219|       submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  12 failed | 59 passed (71)
+   Start at  00:23:57
+   Duration  10.71s (tests 56%, import 26%, transform 18%)

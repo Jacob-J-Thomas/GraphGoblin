@@ -1,0 +1,50 @@
+{
+  "checks": [
+    {
+      "name": "duplicate replay intent refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "This Replay intent already created run 01M60K6SPPKR9NB0Y9WY91EKWP. Open that run instead of submitting the same intent again.",
+          "replayRunId": "01M60K6SPPKR9NB0Y9WY91EKWP"
+        }
+      }
+    },
+    {
+      "name": "browser missing binary cause and Resume",
+      "ok": true,
+      "value": {
+        "id": "01M60KRD3NEWX4KD3J8N2233A9",
+        "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M60KRD3NEWX4KD3J8N2233A9\nfailed\nat Infer (infer)\nloop\nReplay run 01M60KRD3NEWX4KD3J8N2233A9 from 01M60K5F7PQGMPXVZGSDBJ5NNG at infer\nchild runs\nResume\nReplay...\n\nResume continues run 01M60KRD3NEWX4KD3J8N2233A9.\n\nFailed: HARNESS_NOT_INSTALLED\n\nCodex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-matrix-Vcx2zy\\not-installed.exe ENOENT). (resumable)\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nplain-three v1 · version ID 01M60K5EYDF9FTRTYY8J0M7T0G\n\nExact run record\nPinned definition JSON\nFinalization\n\nFully finalized.\n\nExecution: failed. Delivery is tracked separately.\n\nTimeline (7 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–7 of the retained window.\nFollowing live.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nInfer (infer) (inference) attempt 1\n#4\nharness.turn\nInfer (infer)\n#5\nharness.submission\nInfer (infer)\n#6\nharness.submission\nInfer (infer)\n#7\nrun.failed\nHARNESS_NOT_INSTALLED: Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-matrix-Vcx2zy\\not-installed.exe ENOENT).\nExact recorded event #7\nCurrent thread\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (0 nodes)"
+      }
+    },
+    {
+      "name": "missing inspector run unsubmitted",
+      "ok": true,
+      "value": {
+        "code": "HARNESS_NOT_INSTALLED",
+        "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-matrix-Vcx2zy\\not-installed.exe ENOENT).",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M60KRD3NEWX4KD3J8N2233A9:3",
+          "turnId": "01M60KRD5DYM3VYZ76V4DJ11PV",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "process": {
+    "pid": 14408,
+    "exit": {
+      "code": 0,
+      "signal": null
+    }
+  }
+}

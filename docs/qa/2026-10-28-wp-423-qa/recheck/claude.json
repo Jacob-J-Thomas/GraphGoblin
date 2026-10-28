@@ -1,0 +1,394 @@
+{
+  "run": {
+    "id": "01M60R9W4C7PSR1AK8JV56AQSE",
+    "ownerId": "local",
+    "loopId": "01M60R9VWFKZTS6BPZ88QFVQ0E",
+    "versionId": "01M60R9VWFKZTS6BPZ88QFVQ0F",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "claude",
+      "label": "claude v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60R9W4C7PSR1AK8JV56AQSF",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-28T07:58:55.628Z",
+    "startedAt": "2026-10-28T07:58:55.815Z",
+    "finishedAt": "2026-10-28T07:58:56.170Z",
+    "finalizedAt": "2026-10-28T07:58:56.176Z",
+    "lastEventSeq": 15,
+    "recovery": {
+      "observedSeq": 15,
+      "resume": {
+        "allowed": false,
+        "code": "RUN_FINISHED",
+        "message": "This run has finished. Resume only continues paused runs or supported failures."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "infer",
+          "label": "Infer",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": true
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 1,
+      "ts": "2026-10-28T07:58:55.628Z",
+      "type": "run.queued",
+      "versionId": "01M60R9VWFKZTS6BPZ88QFVQ0F",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "claude",
+        "label": "claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60R9W4C7PSR1AK8JV56AQSE",
+          "loopId": "01M60R9VWFKZTS6BPZ88QFVQ0E",
+          "versionId": "01M60R9VWFKZTS6BPZ88QFVQ0F",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60R9W4C7PSR1AK8JV56AQSF",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T07:58:55.628Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 2,
+      "ts": "2026-10-28T07:58:55.817Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 3,
+      "ts": "2026-10-28T07:58:55.828Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 4,
+      "ts": "2026-10-28T07:58:55.833Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:55.832Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:55.832Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 5,
+      "ts": "2026-10-28T07:58:55.852Z",
+      "type": "node.started",
+      "nodeId": "infer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "7dd6ca12940facce"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 6,
+      "ts": "2026-10-28T07:58:55.861Z",
+      "type": "harness.turn",
+      "nodeId": "infer",
+      "visitId": "01M60R9W4C7PSR1AK8JV56AQSE:5",
+      "turnId": "01M60R9WBNTX8ET5QK8T4PXCTQ",
+      "harness": "claude",
+      "promptKind": "authored",
+      "prompt": "QA423 synthetic task"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 7,
+      "ts": "2026-10-28T07:58:56.126Z",
+      "type": "harness.session",
+      "nodeId": "infer",
+      "harness": "claude",
+      "sessionId": "ac76d577-1a12-4936-bb46-f50dd22b76aa",
+      "mode": "fresh",
+      "model": "claude-haiku-5-5",
+      "effort": "low"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 8,
+      "ts": "2026-10-28T07:58:56.128Z",
+      "type": "node.progress",
+      "nodeId": "infer",
+      "progress": {
+        "item": {
+          "id": "claude-policy",
+          "summary": "Claude account login; read-only built-in tools; no OS sandbox",
+          "type": "other"
+        }
+      }
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 9,
+      "ts": "2026-10-28T07:58:56.131Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60R9W4C7PSR1AK8JV56AQSE:5",
+      "turnId": "01M60R9WBNTX8ET5QK8T4PXCTQ",
+      "submission": "submitted",
+      "marker": "claude.result"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 10,
+      "ts": "2026-10-28T07:58:56.133Z",
+      "type": "harness.usage",
+      "nodeId": "infer",
+      "usage": {
+        "inputTokens": 1,
+        "outputTokens": 1,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 11,
+      "ts": "2026-10-28T07:58:56.148Z",
+      "type": "node.finished",
+      "nodeId": "infer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M60R9WMJ3YDCCN2HMZF32BQ2",
+            "kind": "transcript",
+            "ref": "artifact:transcript/f26eb87b8419b42916fea92da2038a479456ea485d88f90b7dc4628b23cd3a53",
+            "nodeId": "infer",
+            "bytes": 531,
+            "label": "transcript infer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M60R9WMJ3YDCCN2HMZF32BQ3",
+            "role": "assistant",
+            "content": "QA423 DONE",
+            "nodeId": "infer",
+            "ts": "2026-10-28T07:58:56.146Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/infer",
+          "value": {
+            "nodeId": "infer",
+            "value": "QA423 DONE",
+            "at": "2026-10-28T07:58:56.146Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "infer",
+            "value": "QA423 DONE",
+            "at": "2026-10-28T07:58:56.146Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 293
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 12,
+      "ts": "2026-10-28T07:58:56.164Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 13,
+      "ts": "2026-10-28T07:58:56.168Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 14,
+      "ts": "2026-10-28T07:58:56.168Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+      "seq": 15,
+      "ts": "2026-10-28T07:58:56.168Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M60R9W4C7PSR1AK8JV56AQSE",
+        "nodeId": "infer",
+        "attempt": 1,
+        "harness": "claude",
+        "sessionId": "ac76d577-1a12-4936-bb46-f50dd22b76aa",
+        "status": "finished",
+        "model": "claude-haiku-5-5",
+        "effort": "low",
+        "updatedAt": "2026-10-28T07:58:56.146Z"
+      }
+    ]
+  }
+}

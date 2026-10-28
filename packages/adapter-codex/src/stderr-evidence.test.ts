@@ -192,14 +192,19 @@ describe('stderr evidence beside the stream failure (PR #426 audit scan 3)', () 
         spec(order, misleading(text), `ERROR: ${misleading(text)}`),
       );
       try {
-        const version = e.publish(
-          singleNodeLoop('Completed refusal ' + order, {
-            id: 'infer',
-            kind: 'inference',
-            label: 'Infer',
-            config: { model: 'gpt-6-luna', effort: 'low', prompt: { template: 'The task' } },
-          }),
-        );
+        // The SDK client lists MCP servers in the turn's working directory first (ADR-0063).
+        const loop = singleNodeLoop('Completed refusal ' + order, {
+          id: 'infer',
+          kind: 'inference',
+          label: 'Infer',
+          config: { model: 'gpt-6-luna', effort: 'low', prompt: { template: 'The task' } },
+        });
+        const path = await mkdtemp(join(tmpdir(), 'gg-codex-stderr-'));
+        directories.push(path);
+        const version = e.publish({
+          ...loop,
+          settings: { workingDirectory: { kind: 'fixed', path } },
+        });
         const run = await e.runToIdle(version.loopId);
         expect(run.failure).toEqual({
           code: 'HARNESS_TURN_FAILED',

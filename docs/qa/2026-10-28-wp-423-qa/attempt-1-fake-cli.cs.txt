@@ -1,0 +1,55 @@
+// Independent behavior QA fixture. No network, credentials, or provider executable is used.
+// Compile to a disposable gg-qa423-* directory as codex.exe; copy as claude.exe.
+using System;
+using System.IO;
+using System.Text;
+using System.Threading;
+public static class Qa423Cli {
+  static string dir = AppDomain.CurrentDomain.BaseDirectory;
+  static string Read(string n, string fallback) { var p = Path.Combine(dir,n); return File.Exists(p) ? File.ReadAllText(p).Trim() : fallback; }
+  static string Q(string s) { if(s==null)return "null"; return "\""+s.Replace("\\","\\\\").Replace("\"","\\\"").Replace("\r","\\r").Replace("\n","\\n").Replace("\t","\\t")+"\""; }
+  static string After(string[] a,string f) { int i=Array.IndexOf(a,f); return i>=0&&i+1<a.Length?a[i+1]:null; }
+  static void Record(string kind,string[] args,string prompt) {
+    var json="{\"at\":"+Q(DateTime.UtcNow.ToString("o"))+",\"kind\":"+Q(kind)+",\"pid\":"+System.Diagnostics.Process.GetCurrentProcess().Id+",\"cwd\":"+Q(Environment.CurrentDirectory)+",\"argv\":["+String.Join(",",Array.ConvertAll(args,Q))+"],\"prompt\":"+Q(prompt)+"}\n";
+    var home=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    json=json.Replace(home.Replace("\\","\\\\"),"%USERPROFILE%").Replace(home,"%USERPROFILE%").Replace(Environment.MachineName,"%COMPUTERNAME%");
+    File.AppendAllText(Path.Combine(dir,"requests.log.txt"),json,new UTF8Encoding(false));
+  }
+  static void Print(string s) { Console.WriteLine(s); Console.Out.Flush(); }
+  public static int Main(string[] args) {
+    bool claude=Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]).Equals("claude",StringComparison.OrdinalIgnoreCase);
+    Record("probe",args,null);
+    if(Array.IndexOf(args,"--version")>=0){ Print(claude?"2.1.308":"codex-cli 0.160.0");return 0; }
+    if(Array.IndexOf(args,"--help")>=0){Print("--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume --json --sandbox --cd --skip-git-repo-check --output-schema --config --max-turns");return 0;}
+    if(Array.IndexOf(args,"status")>=0){Print(claude?"{\"authMethod\":\"claude.ai\",\"loggedIn\":true}":"Logged in using ChatGPT");return 0;}
+    if(Array.IndexOf(args,"mcp")>=0){
+      Record("listing",args,null);
+      var mode=Read("listing-mode.txt","normal");
+      if(mode=="hang")Thread.Sleep(18000); // outlives the product's 15 s deadline, then exits itself
+      if(mode=="exit"){Console.Error.WriteLine("QA423 listing refused: bad local configuration");return 7;}
+      if(mode=="banner")Print("QA423 startup banner on stdout");
+      if(mode=="malformed"){Print("[not valid JSON");return 0;}
+      Console.Error.WriteLine("QA423 benign warning on stderr");
+      Print(Read("listing.json","[]"));return 0;
+    }
+    string prompt=Console.In.ReadToEnd();
+    Record(claude?"claude-turn":"turn",args,prompt);
+    string id=After(args,claude?"--resume":"resume")??Guid.NewGuid().ToString();
+    string text="QA423 DONE";
+    if(After(args,"--output-schema")!=null){
+      int count=Int32.Parse(Read("decision-count.txt","0"));
+      string route=Read("decision-cycle.txt","off")=="on"&&count>0?"no":"yes";
+      File.WriteAllText(Path.Combine(dir,"decision-count.txt"),(count+1).ToString());
+      text="{\"route\":"+Q(route)+",\"confidence\":0.95,\"reasoning\":\"QA423 synthetic decision\"}";
+    }
+    if(claude)Print("{\"type\":\"system\",\"subtype\":\"init\",\"session_id\":"+Q(id)+",\"model\":"+Q(After(args,"--model"))+",\"tools\":[\"Read\",\"Glob\",\"Grep\"],\"mcp_servers\":[],\"plugins\":[],\"skills\":[],\"permissionMode\":\"dontAsk\",\"claude_code_version\":\"2.1.308\"}");
+    else {Print("{\"type\":\"thread.started\",\"thread_id\":"+Q(id)+"}");Print("{\"type\":\"turn.started\"}");}
+    if(Read("hold.txt","off")=="on"){
+      for(int i=0;i<900&&!File.Exists(Path.Combine(dir,"release.txt"));i++)Thread.Sleep(100);
+      if(Read("release.txt","")=="exit")return 0;
+    }
+    if(claude)Print("{\"type\":\"result\",\"subtype\":\"success\",\"session_id\":"+Q(id)+",\"is_error\":false,\"result\":"+Q(text)+",\"num_turns\":1,\"usage\":{\"input_tokens\":1,\"output_tokens\":1},\"modelUsage\":{"+Q(After(args,"--model"))+":{\"inputTokens\":1,\"outputTokens\":1}}}");
+    else{Print("{\"type\":\"item.completed\",\"item\":{\"id\":\"qa423\",\"type\":\"agent_message\",\"text\":"+Q(text)+"}}");Print("{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":1,\"cached_input_tokens\":0,\"output_tokens\":1}}");}
+    return 0;
+  }
+}

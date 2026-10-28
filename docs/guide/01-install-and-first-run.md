@@ -148,6 +148,9 @@ node apps/api/dist/main.js
 | `GG_LOG_LEVEL`           | `info`. One of `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`.                                                                                                                                           |
 | `GG_SWAGGER_UI`          | `true`. Serves interactive API documentation at `/docs`; the OpenAPI document is always at `/openapi.json`.                                                                                                               |
 | `GG_JEV_API_KEY`         | Unset. Seeds the encrypted `jev-api-key` secret at startup only when absent; the secret store wins. Falls back to `JEV_API_KEY` only when unset, not when empty. See [secrets](06-settings-and-secrets.md#store-secrets). |
+| `JEV_API_KEY`            | Unset. Fallback seed for `jev-api-key` only when `GG_JEV_API_KEY` is unset. Existing secrets are never overwritten.                                                                                                       |
+
+For a fresh store, startup seeds the Jev secret from `GG_JEV_API_KEY`, else from `JEV_API_KEY`. The seed log names the variable actually used (`seeded jev-api-key from GG_JEV_API_KEY` or `seeded jev-api-key from JEV_API_KEY`), never its value. An empty seed or an existing secret produces no seed log line.
 
 Boolean variables accept `true`, `false`, `1`, `0`, `yes`, or `no`. An invalid value stops startup with an `invalid configuration` message.
 

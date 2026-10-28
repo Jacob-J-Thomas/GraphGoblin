@@ -30,13 +30,13 @@ describe('cliFor', () => {
 describe('runCli', () => {
   const node = { command: process.execPath, prefix: [] };
 
-  it('captures stdout and stderr together with the exit code', async () => {
+  it('captures stdout and stderr together, stdout alone, and the exit code', async () => {
     const result = await runCli(
       node,
       ['-e', 'process.stdout.write("out ");process.stderr.write("err");process.exit(3)'],
       10_000,
     );
-    expect(result).toEqual({ code: 3, output: expect.stringMatching(/out|err/) });
+    expect(result).toEqual({ code: 3, output: expect.stringMatching(/out|err/), stdout: 'out ' });
     expect(result.output).toContain('err');
   });
 
@@ -167,16 +167,19 @@ it('keeps a timed-out lookup unknown even when partial output mentions quota', a
     (_cli, args) =>
       Promise.resolve(
         args.includes('--version')
-          ? { code: 0, output: 'codex-cli 0.160.0' }
+          ? { code: 0, output: 'codex-cli 0.160.0', stdout: 'codex-cli 0.160.0' }
           : args.includes('--help')
             ? {
                 code: 0,
                 output:
                   '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+                stdout:
+                  '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
               }
             : {
                 code: null,
                 output: 'quota PRIVATE_PARTIAL_BODY',
+                stdout: 'quota PRIVATE_PARTIAL_BODY',
                 spawnError: 'timed out after 10 ms',
               },
       ),
@@ -189,7 +192,7 @@ it('keeps a timed-out lookup unknown even when partial output mentions quota', a
 it('leaves login unknown if a pre-login command reports an auth diagnostic', async () => {
   const result = await preflightCli(
     { command: process.execPath, prefix: [] },
-    () => Promise.resolve({ code: 1, output: 'Invalid API key ? Please run /login' }),
+    () => Promise.resolve({ code: 1, output: 'Invalid API key ? Please run /login', stdout: '' }),
     1000,
   );
   expect(result).toMatchObject({ state: 'auth', ok: false });
@@ -197,8 +200,8 @@ it('leaves login unknown if a pre-login command reports an auth diagnostic', asy
 });
 
 it.each([
-  { code: 1, output: 'unknown option --version' },
-  { code: 0, output: 'unparseable version' },
+  { code: 1, output: 'unknown option --version', stdout: '' },
+  { code: 0, output: 'unparseable version', stdout: 'unparseable version' },
 ])('names the version probe when version syntax cannot be established: %j', async (response) => {
   const result = await preflightCli(
     { command: process.execPath, prefix: [] },

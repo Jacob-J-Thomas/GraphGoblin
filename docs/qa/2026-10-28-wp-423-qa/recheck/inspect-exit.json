@@ -1,0 +1,302 @@
+{
+  "run": {
+    "id": "01M60R9PKQGCGQG8JNF8R1G63E",
+    "ownerId": "local",
+    "loopId": "01M60R9P8R4TGVB83CJH1H3QXH",
+    "versionId": "01M60R9P8R4TGVB83CJH1H3QXJ",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "inspect-exit",
+      "label": "inspect-exit v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60R9PKQGCGQG8JNF8R1G63F",
+    "status": "failed",
+    "currentNodeId": "infer",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 7: QA423 listing refused: bad local configuration",
+      "nodeId": "infer",
+      "resumable": true,
+      "details": {
+        "adapterCode": "HARNESS_TURN_FAILED"
+      },
+      "inference": {
+        "visitId": "01M60R9PKQGCGQG8JNF8R1G63E:5",
+        "turnId": "01M60R9PXXX500T25B94NHBYMX",
+        "submission": "definitely-not-submitted",
+        "promptKind": "authored"
+      }
+    },
+    "createdAt": "2026-10-28T07:58:49.975Z",
+    "startedAt": "2026-10-28T07:58:50.249Z",
+    "finishedAt": "2026-10-28T07:58:50.379Z",
+    "finalizedAt": "2026-10-28T07:58:50.384Z",
+    "lastEventSeq": 9,
+    "recovery": {
+      "observedSeq": 9,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "infer",
+          "label": "Infer",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 1,
+      "ts": "2026-10-28T07:58:49.975Z",
+      "type": "run.queued",
+      "versionId": "01M60R9P8R4TGVB83CJH1H3QXJ",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "inspect-exit",
+        "label": "inspect-exit v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60R9PKQGCGQG8JNF8R1G63E",
+          "loopId": "01M60R9P8R4TGVB83CJH1H3QXH",
+          "versionId": "01M60R9P8R4TGVB83CJH1H3QXJ",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60R9PKQGCGQG8JNF8R1G63F",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T07:58:49.975Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 2,
+      "ts": "2026-10-28T07:58:50.251Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 3,
+      "ts": "2026-10-28T07:58:50.259Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 4,
+      "ts": "2026-10-28T07:58:50.268Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:50.264Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:58:50.264Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 5,
+      "ts": "2026-10-28T07:58:50.290Z",
+      "type": "node.started",
+      "nodeId": "infer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "b33fb2748b71a85d"
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 6,
+      "ts": "2026-10-28T07:58:50.301Z",
+      "type": "harness.turn",
+      "nodeId": "infer",
+      "visitId": "01M60R9PKQGCGQG8JNF8R1G63E:5",
+      "turnId": "01M60R9PXXX500T25B94NHBYMX",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "QA423 synthetic task"
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 7,
+      "ts": "2026-10-28T07:58:50.371Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60R9PKQGCGQG8JNF8R1G63E:5",
+      "turnId": "01M60R9PXXX500T25B94NHBYMX",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 8,
+      "ts": "2026-10-28T07:58:50.374Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60R9PKQGCGQG8JNF8R1G63E:5",
+      "turnId": "01M60R9PXXX500T25B94NHBYMX",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+      "seq": 9,
+      "ts": "2026-10-28T07:58:50.377Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 7: QA423 listing refused: bad local configuration",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M60R9PKQGCGQG8JNF8R1G63E:5",
+          "turnId": "01M60R9PXXX500T25B94NHBYMX",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M60R9PKQGCGQG8JNF8R1G63E",
+        "nodeId": "infer",
+        "attempt": 1,
+        "harness": "codex",
+        "status": "failed",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-28T07:58:50.375Z"
+      }
+    ]
+  }
+}

@@ -89,7 +89,11 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
         codexBinary: process.execPath,
         cliRunner: async (cli, args) => {
           const result = await executable('codex', args, cli.cwd!);
-          return { code: result.code, output: result.stdout + result.stderr };
+          return {
+            code: result.code,
+            output: result.stdout + result.stderr,
+            stdout: result.stdout,
+          };
         },
       });
       app = await createTestApp({ harnesses: { claude, codex } });

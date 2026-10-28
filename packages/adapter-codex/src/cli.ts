@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import type { HarnessPreflight } from '@graphgoblin/engine';
 
 /**
- * Running the Codex CLI directly, for `preflight` only. Sessions go through the SDK.
+ * Running the Codex CLI directly, for `preflight` and the MCP server listing before each turn
+ * (isolation.ts). Sessions go through the SDK.
  */
 
 export interface CliCommand {
@@ -22,12 +23,21 @@ export interface CliCommand {
 
 export interface CliResult {
   code: number | null;
+  /** stdout and stderr together, in arrival order: preflight reads diagnostics from either. */
   output: string;
+  /** stdout alone, for machine-readable output (the MCP listing's JSON). */
+  stdout: string;
   /** Set when the process could not be started at all (missing binary, permissions). */
   spawnError?: string;
 }
 
-export type CliRunner = (cli: CliCommand, args: string[], timeoutMs: number) => Promise<CliResult>;
+/** `signal` ends the call early (the per-turn MCP listing passes the turn's own signal). */
+export type CliRunner = (
+  cli: CliCommand,
+  args: string[],
+  timeoutMs: number,
+  signal?: AbortSignal,
+) => Promise<CliResult>;
 
 /**
  * The CLI the SDK runs when no `codexPathOverride` is given: the `@openai/codex` package the SDK
@@ -53,9 +63,10 @@ export function cliFor(codexBinary: string): CliCommand {
     : { command: codexBinary, prefix: [] };
 }
 
-export const runCli: CliRunner = (cli, args, timeoutMs) =>
+export const runCli: CliRunner = (cli, args, timeoutMs, signal) =>
   new Promise((resolve) => {
     let output = '';
+    let stdout = '';
     let settled = false;
     const finish = (result: CliResult): void => {
       if (settled) return;
@@ -67,20 +78,24 @@ export const runCli: CliRunner = (cli, args, timeoutMs) =>
       windowsHide: true,
       ...(cli.cwd ? { cwd: cli.cwd } : {}),
       ...(cli.env ? { env: cli.env } : {}),
+      ...(signal ? { signal } : {}),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
     });
     const timer = setTimeout(() => {
       child.kill();
-      finish({ code: null, output, spawnError: `timed out after ${timeoutMs} ms` });
+      finish({ code: null, output, stdout, spawnError: `timed out after ${timeoutMs} ms` });
     }, timeoutMs);
-    const collect = (chunk: Buffer): void => {
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString('utf8');
+      output += text;
+      stdout += text;
+    });
+    child.stderr?.on('data', (chunk: Buffer) => {
       output += chunk.toString('utf8');
-    };
-    child.stdout?.on('data', collect);
-    child.stderr?.on('data', collect);
-    child.on('error', (error) => finish({ code: null, output, spawnError: error.message }));
-    child.on('close', (code) => finish({ code, output }));
+    });
+    child.on('error', (error) => finish({ code: null, output, stdout, spawnError: error.message }));
+    child.on('close', (code) => finish({ code, output, stdout }));
   });
 
 /** Fresh names tried before collisions fail a no-turn check. */

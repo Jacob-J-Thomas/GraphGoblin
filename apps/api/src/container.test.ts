@@ -400,10 +400,13 @@ describe('Jev key at boot', () => {
   it('seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value', async () => {
     const key = 'test-environment-seed-key';
     const logger = new CapturingLogger();
-    const first = await createContainer(config({ GG_JEV_API_KEY: key }), {
-      startTimers: false,
-      logger,
-    });
+    const first = await createContainer(
+      config({ GG_JEV_API_KEY: key, JEV_API_KEY: 'unused-key' }),
+      {
+        startTimers: false,
+        logger,
+      },
+    );
     try {
       await first.start();
       await first.start();
@@ -417,6 +420,7 @@ describe('Jev key at boot', () => {
         { level: 'info', obj: {}, msg: 'seeded jev-api-key from GG_JEV_API_KEY' },
       ]);
       expect(JSON.stringify(logger.lines)).not.toContain(key);
+      expect(JSON.stringify(logger.lines)).not.toContain('unused-key');
     } finally {
       await first.stop();
     }
@@ -499,7 +503,7 @@ describe('Jev key at boot', () => {
       );
       expect(await jevAvailable(container)).toBe(true);
       expect(logger.lines.filter((line) => line.level === 'info')).toEqual([
-        { level: 'info', obj: {}, msg: 'seeded jev-api-key from GG_JEV_API_KEY' },
+        { level: 'info', obj: {}, msg: 'seeded jev-api-key from JEV_API_KEY' },
       ]);
       expect(JSON.stringify(logger.lines)).not.toContain(key);
     } finally {

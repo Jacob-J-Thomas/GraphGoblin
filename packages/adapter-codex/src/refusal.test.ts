@@ -27,6 +27,14 @@ afterEach(async () => {
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
 });
 
+/** The SDK client lists MCP servers in the turn's working directory first (ADR-0063). */
+async function inWorkspace(loop: ReturnType<typeof singleNodeLoop>) {
+  return {
+    ...loop,
+    settings: { workingDirectory: { kind: 'fixed' as const, path: await workspace() } },
+  };
+}
+
 async function workspace(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'gg-codex-refusal-'));
   directories.push(directory);
@@ -134,7 +142,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
 
   // PR #426 review B2: the structured 400 decides before any message heuristic.
   it.each([
-    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
     ['missing-thread', 'Thread not found in referenced input.'],
   ] as const)(
     'keeps the %s provider refusal as a refusal with its own text',
@@ -173,6 +181,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
     e.ports.harnesses.codex = codex;
     try {
       const version = e.publish(
+<<<<<<< HEAD
         singleNodeLoop('Provider refusal', {
           id: 'infer',
           kind: 'inference',
@@ -183,6 +192,20 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
             prompt: { template: 'The complete authored task' },
           },
         }),
+=======
+        await inWorkspace(
+          singleNodeLoop('Provider refusal', {
+            id: 'infer',
+            kind: 'inference',
+            label: 'Infer',
+            config: {
+              model: 'gpt-6-luna',
+              effort: 'none',
+              prompt: { template: 'The complete authored task' },
+            },
+          }),
+        ),
+>>>>>>> origin/main
       );
       const run = await e.runToIdle(version.loopId);
       expect(run.failure).toMatchObject({
@@ -205,7 +228,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
   it.each(
     (
       [
-        ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+        ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
         ['missing-thread', 'Thread not found in referenced input.'],
       ] as const
     ).flatMap(([failure, text]) =>
@@ -249,7 +272,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
   );
 
   it.each([
-    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
     ['missing-thread', 'Thread not found in referenced input.'],
   ] as const)(
     'fails the run on the %s refusal repeated on stderr as a refusal, never a missing session',
@@ -258,6 +281,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       e.ports.harnesses.codex = harness(failure, { stderr: 'repeat' }).codex;
       try {
         const version = e.publish(
+<<<<<<< HEAD
           singleNodeLoop('Repeated refusal ' + failure, {
             id: 'infer',
             kind: 'inference',
@@ -268,6 +292,20 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
               prompt: { template: 'The complete authored task' },
             },
           }),
+=======
+          await inWorkspace(
+            singleNodeLoop('Repeated refusal ' + failure, {
+              id: 'infer',
+              kind: 'inference',
+              label: 'Infer',
+              config: {
+                model: 'gpt-6-luna',
+                effort: 'none',
+                prompt: { template: 'The complete authored task' },
+              },
+            }),
+          ),
+>>>>>>> origin/main
         );
         const run = await e.runToIdle(version.loopId);
         expect(run.failure).toEqual({

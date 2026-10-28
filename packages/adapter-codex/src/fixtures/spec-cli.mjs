@@ -7,6 +7,12 @@ import { readFileSync, writeSync } from 'node:fs';
 import { basename } from 'node:path';
 import process from 'node:process';
 
+// The MCP listing before each turn (ADR-0063): no servers configured.
+if (basename(process.argv[1] ?? '') === 'mcp' && process.argv.includes('list')) {
+  writeSync(1, '[]\n');
+  process.exit(0);
+}
+
 if (basename(process.argv[1] ?? '') === 'exec' && process.argv.includes('--experimental-json')) {
   try {
     readFileSync(0);
