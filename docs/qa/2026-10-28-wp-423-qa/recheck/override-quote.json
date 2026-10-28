@@ -1,0 +1,294 @@
+{
+  "run": {
+    "id": "01M60R83658BADTG2Q5CVMJ1SZ",
+    "ownerId": "local",
+    "loopId": "01M60R82WNEXTNFTY11C5JAAG2",
+    "versionId": "01M60R82WPVQT1EM6AQQ5ZSDDN",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "override-quote",
+      "label": "override-quote v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60R83658BADTG2Q5CVMJ1T0",
+    "status": "failed",
+    "currentNodeId": "infer",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: The Codex config override key \"say\\\"hi\\\"\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "nodeId": "infer",
+      "resumable": false,
+      "details": {
+        "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+      },
+      "inference": {
+        "visitId": "01M60R83658BADTG2Q5CVMJ1SZ:5",
+        "turnId": "01M60R83H6V5KZB46KQ2Y3EM2M",
+        "submission": "definitely-not-submitted",
+        "promptKind": "authored"
+      }
+    },
+    "createdAt": "2026-10-28T07:57:57.317Z",
+    "startedAt": "2026-10-28T07:57:57.608Z",
+    "finishedAt": "2026-10-28T07:57:57.680Z",
+    "finalizedAt": "2026-10-28T07:57:57.685Z",
+    "lastEventSeq": 8,
+    "recovery": {
+      "observedSeq": 8,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "infer",
+          "label": "Infer",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 1,
+      "ts": "2026-10-28T07:57:57.317Z",
+      "type": "run.queued",
+      "versionId": "01M60R82WPVQT1EM6AQQ5ZSDDN",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "override-quote",
+        "label": "override-quote v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60R83658BADTG2Q5CVMJ1SZ",
+          "loopId": "01M60R82WNEXTNFTY11C5JAAG2",
+          "versionId": "01M60R82WPVQT1EM6AQQ5ZSDDN",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60R83658BADTG2Q5CVMJ1T0",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T07:57:57.317Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 2,
+      "ts": "2026-10-28T07:57:57.612Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 3,
+      "ts": "2026-10-28T07:57:57.620Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 4,
+      "ts": "2026-10-28T07:57:57.624Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:57:57.623Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T07:57:57.623Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 5,
+      "ts": "2026-10-28T07:57:57.648Z",
+      "type": "node.started",
+      "nodeId": "infer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "ee178581151da46a"
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 6,
+      "ts": "2026-10-28T07:57:57.670Z",
+      "type": "harness.turn",
+      "nodeId": "infer",
+      "visitId": "01M60R83658BADTG2Q5CVMJ1SZ:5",
+      "turnId": "01M60R83H6V5KZB46KQ2Y3EM2M",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "QA423 synthetic task"
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 7,
+      "ts": "2026-10-28T07:57:57.674Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60R83658BADTG2Q5CVMJ1SZ:5",
+      "turnId": "01M60R83H6V5KZB46KQ2Y3EM2M",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "seq": 8,
+      "ts": "2026-10-28T07:57:57.679Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: The Codex config override key \"say\\\"hi\\\"\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "01M60R83658BADTG2Q5CVMJ1SZ:5",
+          "turnId": "01M60R83H6V5KZB46KQ2Y3EM2M",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M60R83658BADTG2Q5CVMJ1SZ",
+        "nodeId": "infer",
+        "attempt": 1,
+        "harness": "codex",
+        "status": "failed",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-28T07:57:57.675Z"
+      }
+    ]
+  }
+}

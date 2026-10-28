@@ -1,0 +1,2486 @@
+{
+  "checks": [
+    {
+      "name": "continuation-baseline second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R7X4C25TDYM4MNAHX2N9N",
+        "ownerId": "local",
+        "loopId": "01M60R7WSCPPJR861KT3GTENCK",
+        "versionId": "01M60R7WSCPPJR861KT3GTENCM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "continuation-baseline",
+          "label": "continuation-baseline v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R7X4C25TDYM4MNAHX2N9P",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:51.116Z",
+        "startedAt": "2026-10-28T07:57:51.437Z",
+        "finishedAt": "2026-10-28T07:57:51.771Z",
+        "finalizedAt": "2026-10-28T07:57:51.777Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "continuation-baseline isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "continuation-baseline listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:57:51.6155717Z",
+          "kind": "listing",
+          "pid": 45112,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R7X4C25TDYM4MNAHX2N9N",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R7X4C25TDYM4MNAHX2N9N"
+      }
+    },
+    {
+      "name": "continuation-baseline thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "continuation-baseline gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 6,
+        "last": {
+          "at": "2026-10-28T07:57:51.734Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override constructor-server pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"mcp_servers.constructor\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R7Y8N5FQ7CKT1CGJ6S1E7:5",
+            "turnId": "01M60R7YJR8F9EY3SBW1YG89XG",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override constructor-server Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-constructor-server second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R7Z0B3TT6R6NVTEDAGBAB",
+        "ownerId": "local",
+        "loopId": "01M60R7YPMN34JPGFNMMFRJZK3",
+        "versionId": "01M60R7YPMN34JPGFNMMFRJZK4",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-constructor-server",
+          "label": "after-override-constructor-server v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R7Z0B3TT6R6NVTEDAGBAC",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:53.035Z",
+        "startedAt": "2026-10-28T07:57:53.329Z",
+        "finishedAt": "2026-10-28T07:57:53.581Z",
+        "finalizedAt": "2026-10-28T07:57:53.587Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-constructor-server isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-constructor-server listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:57:53.4194648Z",
+          "kind": "listing",
+          "pid": 19148,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R7Z0B3TT6R6NVTEDAGBAB",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R7Z0B3TT6R6NVTEDAGBAB"
+      }
+    },
+    {
+      "name": "after-override-constructor-server thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-constructor-server gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 12,
+        "last": {
+          "at": "2026-10-28T07:57:53.357Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override prototype-feature pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"features.prototype\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R7ZWVN7F93D46Q3G41ZMR:5",
+            "turnId": "01M60R809T2A4A7Z10Y4FR6ZSG",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override prototype-feature Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-prototype-feature second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R80R8287QA0YGDQQC9FV6",
+        "ownerId": "local",
+        "loopId": "01M60R80E7JQQ0H9Z8S1HAZQEY",
+        "versionId": "01M60R80E7JQQ0H9Z8S1HAZQEZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-prototype-feature",
+          "label": "after-override-prototype-feature v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R80R8287QA0YGDQQC9FV7",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:54.824Z",
+        "startedAt": "2026-10-28T07:57:55.080Z",
+        "finishedAt": "2026-10-28T07:57:55.257Z",
+        "finalizedAt": "2026-10-28T07:57:55.264Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-prototype-feature isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-prototype-feature listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:57:55.1642129Z",
+          "kind": "listing",
+          "pid": 30432,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R80R8287QA0YGDQQC9FV6",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R80R8287QA0YGDQQC9FV6"
+      }
+    },
+    {
+      "name": "after-override-prototype-feature thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-prototype-feature gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 19,
+        "last": {
+          "at": "2026-10-28T07:57:55.282Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override space pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"team docs\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R81JKAMF2MWYDJHDBFSF6:5",
+            "turnId": "01M60R81XAJCSRFE8NZA1TTYEP",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override space Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-space second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R8292FA9ZXB8FKMXX7X40",
+        "ownerId": "local",
+        "loopId": "01M60R820T68FBVV2HV74X4AFP",
+        "versionId": "01M60R820T68FBVV2HV74X4AFQ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-space",
+          "label": "after-override-space v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R8292FA9ZXB8FKMXX7X41",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:56.386Z",
+        "startedAt": "2026-10-28T07:57:56.702Z",
+        "finishedAt": "2026-10-28T07:57:56.926Z",
+        "finalizedAt": "2026-10-28T07:57:56.932Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-space isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-space listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:57:56.8036156Z",
+          "kind": "listing",
+          "pid": 6372,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R8292FA9ZXB8FKMXX7X40",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R8292FA9ZXB8FKMXX7X40"
+      }
+    },
+    {
+      "name": "after-override-space thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-space gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 25,
+        "last": {
+          "at": "2026-10-28T07:57:56.960Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override quote pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"say\\\"hi\\\"\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R83658BADTG2Q5CVMJ1SZ:5",
+            "turnId": "01M60R83H6V5KZB46KQ2Y3EM2M",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override quote Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-quote second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R83WF84C2W025JAX02S4M",
+        "ownerId": "local",
+        "loopId": "01M60R83M8T5XKMSAJ4Z4VJZ3P",
+        "versionId": "01M60R83M8T5XKMSAJ4Z4VJZ3Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-quote",
+          "label": "after-override-quote v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R83WF84C2W025JAX02S4N",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:58.031Z",
+        "startedAt": "2026-10-28T07:57:58.311Z",
+        "finishedAt": "2026-10-28T07:57:58.557Z",
+        "finalizedAt": "2026-10-28T07:57:58.562Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-quote isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-quote listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:57:58.4022959Z",
+          "kind": "listing",
+          "pid": 13808,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R83WF84C2W025JAX02S4M",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R83WF84C2W025JAX02S4M"
+      }
+    },
+    {
+      "name": "after-override-quote thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-quote gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 31,
+        "last": {
+          "at": "2026-10-28T07:57:58.602Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override empty-segment pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"features..plugins\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R84Q6R76R3D4J8CWAFCF4:5",
+            "turnId": "01M60R851E58BNXWAA3QX340E9",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override empty-segment Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-empty-segment second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R85EXQC684W2FZ7JMJN9B",
+        "ownerId": "local",
+        "loopId": "01M60R855EZSNSZM7HZTDG9YTF",
+        "versionId": "01M60R855F5HW6V4Q8074NRWF5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-empty-segment",
+          "label": "after-override-empty-segment v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R85EXQC684W2FZ7JMJN9C",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:57:59.645Z",
+        "startedAt": "2026-10-28T07:57:59.927Z",
+        "finishedAt": "2026-10-28T07:58:00.138Z",
+        "finalizedAt": "2026-10-28T07:58:00.143Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-empty-segment isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-empty-segment listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:58:00.0318323Z",
+          "kind": "listing",
+          "pid": 13904,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R85EXQC684W2FZ7JMJN9B",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R85EXQC684W2FZ7JMJN9B"
+      }
+    },
+    {
+      "name": "after-override-empty-segment thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-empty-segment gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 36,
+        "last": {
+          "at": "2026-10-28T07:57:59.978Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override array-table pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"arbitrary.bad key\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R869G5MH3CH0CC2A4AEWY:5",
+            "turnId": "01M60R86M3N04RXTX9DZ9CAVCS",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override array-table Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-array-table second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R86ZKE8PC8DS09X4VKA9F",
+        "ownerId": "local",
+        "loopId": "01M60R86QHZDQRWJ3CH5GH0FBH",
+        "versionId": "01M60R86QHZDQRWJ3CH5GH0FBJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-array-table",
+          "label": "after-override-array-table v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R86ZKE8PC8DS09X4VKA9G",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:58:01.203Z",
+        "startedAt": "2026-10-28T07:58:01.562Z",
+        "finishedAt": "2026-10-28T07:58:01.793Z",
+        "finalizedAt": "2026-10-28T07:58:01.799Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-array-table isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-array-table listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:58:01.6764882Z",
+          "kind": "listing",
+          "pid": 8684,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R86ZKE8PC8DS09X4VKA9F",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R86ZKE8PC8DS09X4VKA9F"
+      }
+    },
+    {
+      "name": "after-override-array-table thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-array-table gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 43,
+        "last": {
+          "at": "2026-10-28T07:58:01.860Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override array-nested-proto pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"arbitrary.nested.__proto__.qa423bLeak\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R87ZHVRGEACAE3PJC83WG:5",
+            "turnId": "01M60R889XHS988VR5XVVKQ6CM",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override array-nested-proto Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-array-nested-proto second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R88QMN84P6309N1NRGTBS",
+        "ownerId": "local",
+        "loopId": "01M60R88E6KE24TPBNYEEMCXDM",
+        "versionId": "01M60R88E6KE24TPBNYEEMCXDN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-array-nested-proto",
+          "label": "after-override-array-nested-proto v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R88QMN84P6309N1NRGTBT",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:58:02.996Z",
+        "startedAt": "2026-10-28T07:58:03.323Z",
+        "finishedAt": "2026-10-28T07:58:03.532Z",
+        "finalizedAt": "2026-10-28T07:58:03.538Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-array-nested-proto isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-array-nested-proto listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:58:03.4214147Z",
+          "kind": "listing",
+          "pid": 38692,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R88QMN84P6309N1NRGTBS",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R88QMN84P6309N1NRGTBS"
+      }
+    },
+    {
+      "name": "after-override-array-nested-proto thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-array-nested-proto gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 49,
+        "last": {
+          "at": "2026-10-28T07:58:03.524Z",
+          "pid": 43200,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "ordinary-reenable succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R89NGYW9MX7BWDQ0WNW0V",
+        "ownerId": "local",
+        "loopId": "01M60R89B0GQND8TEA01WH9KBD",
+        "versionId": "01M60R89B1SDT3DQXBVKG59RJJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "ordinary-reenable",
+          "label": "ordinary-reenable v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R89NHRN7Y9Z1AQ68PK0KX",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:58:03.952Z",
+        "startedAt": "2026-10-28T07:58:04.229Z",
+        "finishedAt": "2026-10-28T07:58:04.465Z",
+        "finalizedAt": "2026-10-28T07:58:04.469Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "ordinary-reenable isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=true",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=true",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "approval_policy=\"on-request\"",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "ordinary-reenable listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:58:04.3478374Z",
+          "kind": "listing",
+          "pid": 57188,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R89NGYW9MX7BWDQ0WNW0V",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R89NGYW9MX7BWDQ0WNW0V"
+      }
+    },
+    {
+      "name": "ordinary-reenable thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=true",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "approval_policy=\"on-request\"",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "ordinary-plugins succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R8AGB8Y25V1E7BTYG5E3J",
+        "ownerId": "local",
+        "loopId": "01M60R8A7C7Q5JCZXK3CAV36YQ",
+        "versionId": "01M60R8A7C7Q5JCZXK3CAV36YR",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "ordinary-plugins",
+          "label": "ordinary-plugins v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R8AGB8Y25V1E7BTYG5E3K",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:58:04.811Z",
+        "startedAt": "2026-10-28T07:58:05.089Z",
+        "finishedAt": "2026-10-28T07:58:05.309Z",
+        "finalizedAt": "2026-10-28T07:58:05.313Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "ordinary-plugins isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=true",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=true",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "ordinary-plugins listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:58:05.1965837Z",
+          "kind": "listing",
+          "pid": 12116,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R8AGB8Y25V1E7BTYG5E3J",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R8AGB8Y25V1E7BTYG5E3J"
+      }
+    },
+    {
+      "name": "ordinary-plugins thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=true",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "inspector listed-proto cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R4W88NMRM3ED4EVEY8G1F",
+        "causeVisible": true,
+        "resumeEnabled": true,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector listed-constructor cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R4YQC9Q2X7J858QDBMCH1",
+        "causeVisible": true,
+        "resumeEnabled": true,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector listed-prototype cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R52H1PQPRTM5ZS95H0NJY",
+        "causeVisible": true,
+        "resumeEnabled": true,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector listed-space cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R54W306F3JAR2CMPQ5WJY",
+        "causeVisible": true,
+        "resumeEnabled": true,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector listed-quote cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R57FA1ABD3WTY18HZF367",
+        "causeVisible": true,
+        "resumeEnabled": true,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-dotted-proto cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R59DD53JCXDNDH12QPSHM",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-constructor-server cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R7Y8N5FQ7CKT1CGJ6S1E7",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-prototype-feature cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R7ZWVN7F93D46Q3G41ZMR",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-space cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R81JKAMF2MWYDJHDBFSF6",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-quote cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R83658BADTG2Q5CVMJ1SZ",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-empty-segment cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R84Q6R76R3D4J8CWAFCF4",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-array-table cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R869G5MH3CH0CC2A4AEWY",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    },
+    {
+      "name": "inspector override-array-nested-proto cause and Resume policy",
+      "ok": true,
+      "value": {
+        "id": "01M60R87ZHVRGEACAE3PJC83WG",
+        "causeVisible": true,
+        "resumeEnabled": false,
+        "adapterVisible": true
+      }
+    }
+  ],
+  "passed": 75,
+  "failed": 0,
+  "process": {
+    "pid": 43200,
+    "exit": {
+      "code": 0,
+      "signal": null
+    }
+  },
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU",
+  "targets": [
+    {
+      "name": "listed-proto",
+      "id": "01M60R4W88NMRM3ED4EVEY8G1F",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "__proto__",
+      "allowed": true
+    },
+    {
+      "name": "listed-constructor",
+      "id": "01M60R4YQC9Q2X7J858QDBMCH1",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "constructor",
+      "allowed": true
+    },
+    {
+      "name": "listed-prototype",
+      "id": "01M60R52H1PQPRTM5ZS95H0NJY",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "prototype",
+      "allowed": true
+    },
+    {
+      "name": "listed-space",
+      "id": "01M60R54W306F3JAR2CMPQ5WJY",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "team docs",
+      "allowed": true
+    },
+    {
+      "name": "listed-quote",
+      "id": "01M60R57FA1ABD3WTY18HZF367",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "say\"hi\"",
+      "allowed": true
+    },
+    {
+      "name": "override-dotted-proto",
+      "id": "01M60R59DD53JCXDNDH12QPSHM",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-constructor-server",
+      "id": "01M60R7Y8N5FQ7CKT1CGJ6S1E7",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-prototype-feature",
+      "id": "01M60R7ZWVN7F93D46Q3G41ZMR",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-space",
+      "id": "01M60R81JKAMF2MWYDJHDBFSF6",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-quote",
+      "id": "01M60R83658BADTG2Q5CVMJ1SZ",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-empty-segment",
+      "id": "01M60R84Q6R76R3D4J8CWAFCF4",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-array-table",
+      "id": "01M60R869G5MH3CH0CC2A4AEWY",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    },
+    {
+      "name": "override-array-nested-proto",
+      "id": "01M60R87ZHVRGEACAE3PJC83WG",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    }
+  ],
+  "realProviderTurns": 0
+}

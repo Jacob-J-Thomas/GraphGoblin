@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 4,
+  "name": "listed-proto",
+  "settings": {},
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "trigger",
+      "label": "Start",
+      "config": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "infer",
+      "kind": "inference",
+      "label": "Infer",
+      "config": {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "harnessOptions": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "prompt": {
+          "template": "QA423 synthetic task"
+        }
+      }
+    },
+    {
+      "id": "done",
+      "kind": "exit",
+      "label": "Done",
+      "config": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "a",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "infer"
+      }
+    },
+    {
+      "id": "b",
+      "from": {
+        "node": "infer",
+        "port": "out"
+      },
+      "to": {
+        "node": "done"
+      }
+    }
+  ]
+}
