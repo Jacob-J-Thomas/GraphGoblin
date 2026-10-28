@@ -1,0 +1,84 @@
+{
+  "scenario": "round1/reviewer-head",
+  "passed": 3,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "history: the CHANGELOG SELECT lists the base-written rows; after its statements the SELECT is empty, no minimal is left in the run's events or sessions, and run, events and thread read 200",
+      "ok": true,
+      "detail": {
+        "found": [
+          "loop_versions 01M3Y7RKG0270CBVQ29JZ1JKK7 published",
+          "settings defaults",
+          "model_catalog codex/gpt-6-luna",
+          "runs 01M3Y7RKG0270CBVQ29JZ1JKK8",
+          "run_events 01M3Y7RKG0270CBVQ29JZ1JKK8#1 run.queued",
+          "run_events 01M3Y7RKG0270CBVQ29JZ1JKK8#7 harness.session",
+          "harness_sessions 01M3Y7RKG0270CBVQ29JZ1JKK8/work/1"
+        ],
+        "left": 0,
+        "remaining": {
+          "events": [],
+          "sessions": [
+            "none"
+          ],
+          "failure": null
+        },
+        "reads": {
+          "/runs/01M3Y7RKG0270CBVQ29JZ1JKK8": 200,
+          "/runs/01M3Y7RKG0270CBVQ29JZ1JKK8/events": 200,
+          "/runs/01M3Y7RKG0270CBVQ29JZ1JKK8/thread": 200
+        },
+        "startup": "listening"
+      }
+    },
+    {
+      "id": "missing: the CHANGELOG SELECT lists the base-written rows; after its statements the SELECT is empty, no minimal is left in the run's events or sessions, and run, events and thread read 200",
+      "ok": true,
+      "detail": {
+        "found": [
+          "loop_versions 01M3Y7RKG0F1B9DNCR8R4KF0CP published",
+          "model_catalog codex/gpt-6-luna",
+          "runs 01M3Y7RKG0F1B9DNCR8R4KF0CQ",
+          "run_events 01M3Y7RKG0F1B9DNCR8R4KF0CQ#7 harness.session",
+          "run_events 01M3Y7RKG0F1B9DNCR8R4KF0CQ#15 run.failed",
+          "harness_sessions 01M3Y7RKG0F1B9DNCR8R4KF0CQ/first/1",
+          "harness_sessions 01M3Y7RKG0F1B9DNCR8R4KF0CQ/second/1"
+        ],
+        "left": 0,
+        "remaining": {
+          "events": [],
+          "sessions": [
+            "none",
+            "none"
+          ],
+          "failure": "none"
+        },
+        "reads": {
+          "/runs/01M3Y7RKG0F1B9DNCR8R4KF0CQ": 200,
+          "/runs/01M3Y7RKG0F1B9DNCR8R4KF0CQ/events": 200,
+          "/runs/01M3Y7RKG0F1B9DNCR8R4KF0CQ/thread": 200
+        },
+        "startup": "listening"
+      }
+    },
+    {
+      "id": "scope: the authored variable default {effort:minimal} is neither listed nor changed (byte for byte)",
+      "ok": true,
+      "detail": {
+        "found": 0,
+        "unchanged": true,
+        "variables": {
+          "payload": {
+            "type": "object",
+            "default": {
+              "effort": "minimal"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

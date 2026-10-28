@@ -1,0 +1,60 @@
+{
+  "scenario": "upgrade-snap",
+  "passed": 7,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "S-1 a draft run of a trigger-to-exit loop (no turn) pins a snapshot with loop default none",
+      "ok": true,
+      "detail": {
+        "start": 202,
+        "status": "succeeded",
+        "versionId": "01M60JEGGZDMEPJYKAWHTWKKDT"
+      }
+    },
+    {
+      "id": "S-2 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "REVIEW SELECT finds the immutable draft snapshot",
+      "ok": true,
+      "detail": [
+        {
+          "'loop_versions'": "loop_versions",
+          "id": "01M60JEGGZDMEPJYKAWHTWKKDT"
+        }
+      ]
+    },
+    {
+      "id": "S-3 a stored minimal in a draft snapshot refuses startup, naming the snapshot",
+      "ok": true,
+      "detail": "  Reason:   The format-4 store is damaged: stored loop version 01M60JEGGZDMEPJYKAWHTWKKDT is not a valid definition"
+    },
+    {
+      "id": "S-4 the ordinary statement skips snapshots (0 rows), and without its status filter the trigger refuses it",
+      "ok": true,
+      "detail": {
+        "plain": 0,
+        "refusedPlain": "SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes"
+      }
+    },
+    {
+      "id": "S-5 the snapshot hand fix (trigger lifted and restored in one transaction) lets the store start, the run reads back, and the trigger is restored unchanged",
+      "ok": true,
+      "detail": {
+        "fixed": 1,
+        "run": 200,
+        "triggerRestored": true
+      }
+    },
+    {
+      "id": "S-6 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

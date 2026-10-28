@@ -1,0 +1,159 @@
+{
+  "scenario": "complete-api",
+  "passed": 5,
+  "failed": 4,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "publish none refused codex/inference",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    {
+      "id": "publish none refused codex/decision",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    {
+      "id": "publish none refused codex/loop",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "message": "The default reasoning effort is not supported by its model",
+            "path": "settings.defaults.byHarness.codex.effort"
+          },
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    {
+      "id": "publish none refused claude/inference",
+      "ok": true,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      }
+    },
+    {
+      "id": "none authoring refusal claude/decision/create",
+      "ok": false,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/nodes/1/config/harness",
+            "message": "Invalid input: expected \"codex\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "none authoring refusal claude/decision/draft",
+      "ok": false,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/nodes/1/config/harness",
+            "message": "Invalid input: expected \"codex\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "none authoring refusal claude/decision/validate",
+      "ok": false,
+      "detail": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/nodes/1/config/harness",
+            "message": "Invalid input: expected \"codex\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "complete driver exception",
+      "ok": false,
+      "detail": "TypeError: Cannot read properties of undefined (reading 'id')\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-205/docs/qa/2026-10-28-wp-205-qa/scripts/complete-api.mjs:20:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+    },
+    {
+      "id": "ended complete-api",
+      "ok": true,
+      "detail": {
+        "pid": 56448,
+        "exit": 0
+      }
+    }
+  ]
+}

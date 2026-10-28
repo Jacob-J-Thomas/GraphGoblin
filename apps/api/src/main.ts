@@ -4,6 +4,7 @@ import { buildApp } from './app.js';
 import { bundledWebDist, loadConfig } from './config.js';
 import { runCreateApiKeyCli } from './create-api-key.js';
 import { createContainer } from './container.js';
+import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { runPreflightCli } from './preflight.js';
 import { runResetCli } from './reset/reset.js';
 import { StoreRefusedError } from './store-refusal.js';
@@ -125,8 +126,12 @@ if (invokedDirectly) {
         ? runResetCli().then((code) => process.exit(code))
         : main();
   run.catch((error: unknown) => {
-    // A store refusal is a complete operator explanation; a stack trace would only bury it.
-    console.error(error instanceof StoreRefusedError ? error.message : error);
+    // A store or GG_DEFAULTS refusal is a complete operator explanation; a stack would bury it.
+    console.error(
+      error instanceof StoreRefusedError || error instanceof ProcessDefaultsRefusedError
+        ? error.message
+        : error,
+    );
     process.exit(1);
   });
 }

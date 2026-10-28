@@ -1,0 +1,154 @@
+{
+  "scenario": "upgrade-a",
+  "passed": 6,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "A-1 the base offers low to max for GPT-6 and GPT-5.6, low to xhigh for GPT-5.5, low to max for Claude; no none",
+      "ok": true,
+      "detail": {
+        "claude/claude-fable-5-1": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-haiku-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-opus-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-sonnet-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "codex/gpt-5.6-luna": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.6-sol": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.6-terra": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-astra": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-luna": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-sol": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6.1-sol": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      }
+    },
+    {
+      "id": "A-2 the base disables gpt-6-astra, saves owner defaults, publishes P1-P3 and saves draft D1",
+      "ok": true,
+      "detail": {
+        "disable": 200,
+        "put": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "d1": 201,
+        "ids": {
+          "P1": "01M60J80C7MEGRRY60MHP29Z16",
+          "P2": "01M60J80XJ4VR2XBE9CSFMDDRV",
+          "P3": "01M60J81F858C4FFDKAC543GMK",
+          "D1": "01M60J81XS7FAWW83RTRRSXRWQ",
+          "M1": "01M60J86CNMDHXXRJQ4B8EWFWN",
+          "M2": "01M60J87383TSW1DHWDXSDC5YW"
+        }
+      }
+    },
+    {
+      "id": "A-3 the base refuses effort none (not on its scale)",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "message": null
+      }
+    },
+    {
+      "id": "A-4 U1 base gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "A-5 the base publishes M1, saves draft M2 and an owner default on U2",
+      "ok": true,
+      "detail": {
+        "m2": 201,
+        "put2": 200,
+        "ids": {
+          "P1": "01M60J80C7MEGRRY60MHP29Z16",
+          "P2": "01M60J80XJ4VR2XBE9CSFMDDRV",
+          "P3": "01M60J81F858C4FFDKAC543GMK",
+          "D1": "01M60J81XS7FAWW83RTRRSXRWQ",
+          "M1": "01M60J86CNMDHXXRJQ4B8EWFWN",
+          "M2": "01M60J87383TSW1DHWDXSDC5YW"
+        }
+      }
+    },
+    {
+      "id": "A-6 U2 base gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

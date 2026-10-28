@@ -286,22 +286,18 @@ describe('CodexHarness.start', () => {
   it('logs the canonical effort beside the name the CLI receives, at debug level', async () => {
     const codex = ReplayCodex.fromFixtures('message');
     const log = logger();
-    const harness = new CodexHarness({
-      clientFactory: codex.factory,
-      logger: log,
-      effortFamilies: [{ prefix: 'gpt-5-legacy', none: 'minimal' }],
-    });
+    const harness = new CodexHarness({ clientFactory: codex.factory, logger: log });
     await harness.start(
-      request({ model: 'gpt-5-legacy', effort: 'none' }),
+      request({ model: 'gpt-6-luna', effort: 'none' }),
       new AbortController().signal,
     ).result;
     expect(log.debug).toHaveBeenCalledWith(
-      { model: 'gpt-5-legacy', effort: 'none', providerEffort: 'minimal' },
+      { model: 'gpt-6-luna', effort: 'none', providerEffort: 'none' },
       'codex: reasoning effort sent to the CLI',
     );
     expect(codex.runs[0]?.threadOptions).toMatchObject({
-      model: 'gpt-5-legacy',
-      modelReasoningEffort: 'minimal',
+      model: 'gpt-6-luna',
+      modelReasoningEffort: 'none',
     });
     expect(log.info).not.toHaveBeenCalled();
   });

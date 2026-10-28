@@ -1,0 +1,82 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --exclude src/process/scripts.test.ts --exclude src/process/script-recovery.test.ts --exclude src/claude/process.test.ts --exclude src/adversarial.test.ts
+$ vitest run --coverage --exclude src/process/scripts.test.ts --exclude src/process/script-recovery.test.ts --exclude src/claude/process.test.ts --exclude src/adversarial.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-review-205/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/claude/submission.test.ts (7 tests | 1 failed) 8733ms
+   ❯ Claude submission evidence through a fake CLI process (7)
+     × keeps a provider failure the stream reported ahead of the non-zero exit that follows it 691ms
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 19397ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1435ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/claude/submission.test.ts > Claude submission evidence through a fake CLI process > keeps a provider failure the stream reported ahead of the non-zero exit that follows it
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_QUOTA_EXHAUSTED",
+-   "message": "Claude account rate limit reached",
+-   "retriable": true,
++   "code": "HARNESS_TERMINATION_UNCONFIRMED",
++   "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
++   "retriable": false,
+    "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/claude/submission.test.ts:107:27
+    105|       retriable: true,
+    106|     };
+    107|     expect(events.at(-1)).toEqual({ type: 'error', ...failure, submiss…
+       |                           ^
+    108|     await expect(session.result).rejects.toMatchObject(failure);
+    109|     expect(JSON.stringify(events)).not.toContain('PRIVATE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 56 passed (58)
+      Tests  2 failed | 795 passed (797)
+   Start at  01:39:50
+   Duration  40.93s (tests 61%, import 34%, transform 5%, worker 1%)
+
+    Isolate  58 workers spawned · ~594ms startup each (spawn + environment, per file)
+             at least ~2.54s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\codex-review-
+  │ 205\packages\infrastructure
+
+
+EXIT=1

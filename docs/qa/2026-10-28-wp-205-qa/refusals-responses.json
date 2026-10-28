@@ -1,0 +1,1198 @@
+[
+  {
+    "label": "codex/inference/publish",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-invalid",
+      "title": "loop invalid",
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "detail": "the draft has structural errors",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/inference/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/inference/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/inference/validate",
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "path": "config.effort"
+        }
+      ],
+      "publishable": false
+    }
+  },
+  {
+    "label": "codex/inference/pinned",
+    "start": {
+      "status": 202,
+      "json": {
+        "run": {
+          "id": "01M60J2TFDFZDS26EQG1XSTVQ5",
+          "ownerId": "local",
+          "loopId": "01M60J2SHZ5PQXG5T8PTVT8HFH",
+          "versionId": "01M60J2SHZ5PQXG5T8PTVT8HFJ",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 parked codex inference",
+            "label": "QA205 parked codex inference v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60J2TFDFZDS26EQG1XSTVQ6",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-28T06:10:13.101Z",
+          "lastEventSeq": 1
+        }
+      },
+      "text": "{\"run\":{\"id\":\"01M60J2TFDFZDS26EQG1XSTVQ5\",\"ownerId\":\"local\",\"loopId\":\"01M60J2SHZ5PQXG5T8PTVT8HFH\",\"versionId\":\"01M60J2SHZ5PQXG5T8PTVT8HFJ\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex inference\",\"label\":\"QA205 parked codex inference v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J2TFDFZDS26EQG1XSTVQ6\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-28T06:10:13.101Z\",\"lastEventSeq\":1}}"
+    },
+    "answer": {
+      "status": 200,
+      "json": {
+        "id": "01M60J2TFDFZDS26EQG1XSTVQ5",
+        "ownerId": "local",
+        "loopId": "01M60J2SHZ5PQXG5T8PTVT8HFH",
+        "versionId": "01M60J2SHZ5PQXG5T8PTVT8HFJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 parked codex inference",
+          "label": "QA205 parked codex inference v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60J2TFDFZDS26EQG1XSTVQ6",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M60J2TFDFZDS26EQG1XSTVQ5:5",
+          "nodeId": "hold",
+          "kind": "input",
+          "prompt": "QA gate",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-28T06:10:13.101Z",
+        "startedAt": "2026-10-28T06:10:15.177Z",
+        "lastEventSeq": 8
+      },
+      "text": "{\"id\":\"01M60J2TFDFZDS26EQG1XSTVQ5\",\"ownerId\":\"local\",\"loopId\":\"01M60J2SHZ5PQXG5T8PTVT8HFH\",\"versionId\":\"01M60J2SHZ5PQXG5T8PTVT8HFJ\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex inference\",\"label\":\"QA205 parked codex inference v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J2TFDFZDS26EQG1XSTVQ6\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60J2TFDFZDS26EQG1XSTVQ5:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:10:13.101Z\",\"startedAt\":\"2026-10-28T06:10:15.177Z\",\"lastEventSeq\":8}"
+    },
+    "done": {
+      "id": "01M60J2TFDFZDS26EQG1XSTVQ5",
+      "ownerId": "local",
+      "loopId": "01M60J2SHZ5PQXG5T8PTVT8HFH",
+      "versionId": "01M60J2SHZ5PQXG5T8PTVT8HFJ",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 parked codex inference",
+        "label": "QA205 parked codex inference v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M60J2TFDFZDS26EQG1XSTVQ6",
+      "status": "failed",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "failure": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The selected reasoning effort is not supported by this model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort"
+        }
+      },
+      "createdAt": "2026-10-28T06:10:13.101Z",
+      "startedAt": "2026-10-28T06:10:15.177Z",
+      "finishedAt": "2026-10-28T06:10:15.587Z",
+      "finalizedAt": "2026-10-28T06:10:15.595Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "hold",
+            "label": "Hold",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "codex/decision/publish",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-invalid",
+      "title": "loop invalid",
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "detail": "the draft has structural errors",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/decision/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/decision/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/decision/validate",
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "path": "config.effort"
+        }
+      ],
+      "publishable": false
+    }
+  },
+  {
+    "label": "codex/decision/pinned",
+    "start": {
+      "status": 202,
+      "json": {
+        "run": {
+          "id": "01M60J2ZCJBTMY7HTH9KASQT7X",
+          "ownerId": "local",
+          "loopId": "01M60J2X7R2VNPDEZTJY0TXC9C",
+          "versionId": "01M60J2X7R2VNPDEZTJY0TXC9D",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 parked codex decision",
+            "label": "QA205 parked codex decision v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60J2ZCJBTMY7HTH9KASQT7Y",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-28T06:10:18.130Z",
+          "lastEventSeq": 1
+        }
+      },
+      "text": "{\"run\":{\"id\":\"01M60J2ZCJBTMY7HTH9KASQT7X\",\"ownerId\":\"local\",\"loopId\":\"01M60J2X7R2VNPDEZTJY0TXC9C\",\"versionId\":\"01M60J2X7R2VNPDEZTJY0TXC9D\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex decision\",\"label\":\"QA205 parked codex decision v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J2ZCJBTMY7HTH9KASQT7Y\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-28T06:10:18.130Z\",\"lastEventSeq\":1}}"
+    },
+    "answer": {
+      "status": 200,
+      "json": {
+        "id": "01M60J2ZCJBTMY7HTH9KASQT7X",
+        "ownerId": "local",
+        "loopId": "01M60J2X7R2VNPDEZTJY0TXC9C",
+        "versionId": "01M60J2X7R2VNPDEZTJY0TXC9D",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 parked codex decision",
+          "label": "QA205 parked codex decision v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60J2ZCJBTMY7HTH9KASQT7Y",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M60J2ZCJBTMY7HTH9KASQT7X:5",
+          "nodeId": "hold",
+          "kind": "input",
+          "prompt": "QA gate",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-28T06:10:18.130Z",
+        "startedAt": "2026-10-28T06:10:19.647Z",
+        "lastEventSeq": 8
+      },
+      "text": "{\"id\":\"01M60J2ZCJBTMY7HTH9KASQT7X\",\"ownerId\":\"local\",\"loopId\":\"01M60J2X7R2VNPDEZTJY0TXC9C\",\"versionId\":\"01M60J2X7R2VNPDEZTJY0TXC9D\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex decision\",\"label\":\"QA205 parked codex decision v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J2ZCJBTMY7HTH9KASQT7Y\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60J2ZCJBTMY7HTH9KASQT7X:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:10:18.130Z\",\"startedAt\":\"2026-10-28T06:10:19.647Z\",\"lastEventSeq\":8}"
+    },
+    "done": {
+      "id": "01M60J2ZCJBTMY7HTH9KASQT7X",
+      "ownerId": "local",
+      "loopId": "01M60J2X7R2VNPDEZTJY0TXC9C",
+      "versionId": "01M60J2X7R2VNPDEZTJY0TXC9D",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 parked codex decision",
+        "label": "QA205 parked codex decision v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M60J2ZCJBTMY7HTH9KASQT7Y",
+      "status": "failed",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "failure": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The selected reasoning effort is not supported by this model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort"
+        }
+      },
+      "createdAt": "2026-10-28T06:10:18.130Z",
+      "startedAt": "2026-10-28T06:10:19.647Z",
+      "finishedAt": "2026-10-28T06:10:20.052Z",
+      "finalizedAt": "2026-10-28T06:10:20.059Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": []
+          },
+          {
+            "nodeId": "hold",
+            "label": "Hold",
+            "action": {
+              "allowed": true
+            },
+            "effects": []
+          },
+          {
+            "nodeId": "work",
+            "label": "work",
+            "action": {
+              "allowed": true
+            },
+            "effects": []
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "codex/loop/publish",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-invalid",
+      "title": "loop invalid",
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "detail": "the draft has structural errors",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.codex.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/loop/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.codex.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/loop/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.codex.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/loop/validate",
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.codex.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "path": "config.effort"
+        }
+      ],
+      "publishable": false
+    }
+  },
+  {
+    "label": "codex/loop/pinned",
+    "start": {
+      "status": 202,
+      "json": {
+        "run": {
+          "id": "01M60J33E6TEZCS5DDQ60SX16Q",
+          "ownerId": "local",
+          "loopId": "01M60J31JKBW5MJ2PS5HYQ86X8",
+          "versionId": "01M60J31JM95PHDC3DMA6GV87A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 parked codex loop",
+            "label": "QA205 parked codex loop v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60J33E6TEZCS5DDQ60SX16R",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-28T06:10:22.278Z",
+          "lastEventSeq": 1
+        }
+      },
+      "text": "{\"run\":{\"id\":\"01M60J33E6TEZCS5DDQ60SX16Q\",\"ownerId\":\"local\",\"loopId\":\"01M60J31JKBW5MJ2PS5HYQ86X8\",\"versionId\":\"01M60J31JM95PHDC3DMA6GV87A\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex loop\",\"label\":\"QA205 parked codex loop v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J33E6TEZCS5DDQ60SX16R\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-28T06:10:22.278Z\",\"lastEventSeq\":1}}"
+    },
+    "answer": {
+      "status": 200,
+      "json": {
+        "id": "01M60J33E6TEZCS5DDQ60SX16Q",
+        "ownerId": "local",
+        "loopId": "01M60J31JKBW5MJ2PS5HYQ86X8",
+        "versionId": "01M60J31JM95PHDC3DMA6GV87A",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 parked codex loop",
+          "label": "QA205 parked codex loop v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60J33E6TEZCS5DDQ60SX16R",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M60J33E6TEZCS5DDQ60SX16Q:5",
+          "nodeId": "hold",
+          "kind": "input",
+          "prompt": "QA gate",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-28T06:10:22.278Z",
+        "startedAt": "2026-10-28T06:10:23.564Z",
+        "lastEventSeq": 8
+      },
+      "text": "{\"id\":\"01M60J33E6TEZCS5DDQ60SX16Q\",\"ownerId\":\"local\",\"loopId\":\"01M60J31JKBW5MJ2PS5HYQ86X8\",\"versionId\":\"01M60J31JM95PHDC3DMA6GV87A\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex loop\",\"label\":\"QA205 parked codex loop v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J33E6TEZCS5DDQ60SX16R\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60J33E6TEZCS5DDQ60SX16Q:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:10:22.278Z\",\"startedAt\":\"2026-10-28T06:10:23.564Z\",\"lastEventSeq\":8}"
+    },
+    "done": {
+      "id": "01M60J33E6TEZCS5DDQ60SX16Q",
+      "ownerId": "local",
+      "loopId": "01M60J31JKBW5MJ2PS5HYQ86X8",
+      "versionId": "01M60J31JM95PHDC3DMA6GV87A",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 parked codex loop",
+        "label": "QA205 parked codex loop v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M60J33E6TEZCS5DDQ60SX16R",
+      "status": "failed",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "failure": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The default reasoning effort is not supported by its model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort",
+          "level": "loop",
+          "harness": "codex"
+        }
+      },
+      "createdAt": "2026-10-28T06:10:22.278Z",
+      "startedAt": "2026-10-28T06:10:23.564Z",
+      "finishedAt": "2026-10-28T06:10:23.936Z",
+      "finalizedAt": "2026-10-28T06:10:23.944Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "hold",
+            "label": "Hold",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "codex/owner/pinned",
+    "start": {
+      "status": 202,
+      "json": {
+        "run": {
+          "id": "01M60J37PKGE9SW9JV9HK3MHQ3",
+          "ownerId": "local",
+          "loopId": "01M60J35B5Q7BZFPD70BJQ6V9Y",
+          "versionId": "01M60J35B5Q7BZFPD70BJQ6V9Z",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 parked codex owner",
+            "label": "QA205 parked codex owner v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-5.5",
+                    "effort": "none"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60J37PKGE9SW9JV9HK3MHQ4",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-28T06:10:26.643Z",
+          "lastEventSeq": 1
+        }
+      },
+      "text": "{\"run\":{\"id\":\"01M60J37PKGE9SW9JV9HK3MHQ3\",\"ownerId\":\"local\",\"loopId\":\"01M60J35B5Q7BZFPD70BJQ6V9Y\",\"versionId\":\"01M60J35B5Q7BZFPD70BJQ6V9Z\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex owner\",\"label\":\"QA205 parked codex owner v1\",\"defaults\":{\"owner\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-5.5\",\"effort\":\"none\"}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J37PKGE9SW9JV9HK3MHQ4\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-28T06:10:26.643Z\",\"lastEventSeq\":1}}"
+    },
+    "answer": {
+      "status": 200,
+      "json": {
+        "id": "01M60J37PKGE9SW9JV9HK3MHQ3",
+        "ownerId": "local",
+        "loopId": "01M60J35B5Q7BZFPD70BJQ6V9Y",
+        "versionId": "01M60J35B5Q7BZFPD70BJQ6V9Z",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 parked codex owner",
+          "label": "QA205 parked codex owner v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-5.5",
+                  "effort": "none"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60J37PKGE9SW9JV9HK3MHQ4",
+        "status": "running",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M60J37PKGE9SW9JV9HK3MHQ3:5",
+          "nodeId": "hold",
+          "kind": "input",
+          "prompt": "QA gate",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-28T06:10:26.643Z",
+        "startedAt": "2026-10-28T06:10:30.260Z",
+        "lastEventSeq": 8
+      },
+      "text": "{\"id\":\"01M60J37PKGE9SW9JV9HK3MHQ3\",\"ownerId\":\"local\",\"loopId\":\"01M60J35B5Q7BZFPD70BJQ6V9Y\",\"versionId\":\"01M60J35B5Q7BZFPD70BJQ6V9Z\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 parked codex owner\",\"label\":\"QA205 parked codex owner v1\",\"defaults\":{\"owner\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-5.5\",\"effort\":\"none\"}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60J37PKGE9SW9JV9HK3MHQ4\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60J37PKGE9SW9JV9HK3MHQ3:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:10:26.643Z\",\"startedAt\":\"2026-10-28T06:10:30.260Z\",\"lastEventSeq\":8}"
+    },
+    "done": {
+      "id": "01M60J37PKGE9SW9JV9HK3MHQ3",
+      "ownerId": "local",
+      "loopId": "01M60J35B5Q7BZFPD70BJQ6V9Y",
+      "versionId": "01M60J35B5Q7BZFPD70BJQ6V9Z",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 parked codex owner",
+        "label": "QA205 parked codex owner v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-5.5",
+                "effort": "none"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M60J37PKGE9SW9JV9HK3MHQ4",
+      "status": "failed",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "failure": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "message": "The default reasoning effort is not supported by its model",
+        "nodeId": "work",
+        "resumable": false,
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort",
+          "level": "owner",
+          "harness": "codex"
+        }
+      },
+      "createdAt": "2026-10-28T06:10:26.643Z",
+      "startedAt": "2026-10-28T06:10:30.260Z",
+      "finishedAt": "2026-10-28T06:10:30.644Z",
+      "finalizedAt": "2026-10-28T06:10:30.652Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "hold",
+            "label": "Hold",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "codex/Settings/none",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid harness defaults",
+      "errors": [
+        {
+          "level": "owner",
+          "harness": "codex",
+          "resolution": {
+            "status": "invalid",
+            "code": "EFFORT_UNSUPPORTED",
+            "path": "effort",
+            "message": "The default reasoning effort is not supported by its model"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/inference/publish",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-invalid",
+      "title": "loop invalid",
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "detail": "the draft has structural errors",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/inference/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/inference/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/inference/validate",
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "path": "config.effort"
+        }
+      ],
+      "publishable": false
+    }
+  }
+]

@@ -1,0 +1,11 @@
+2026-10-28T06:16:36.043Z +4.0s gateway u2-snap-create listening {"pid":31408,"port":6365}
+2026-10-28T06:16:36.450Z +4.4s CHECK PASS S-1 a draft run of a trigger-to-exit loop (no turn) pins a snapshot with loop default none {"start":202,"status":"succeeded","versionId":"01M60JEGGZDMEPJYKAWHTWKKDT"}
+2026-10-28T06:16:36.565Z +4.5s CHECK PASS S-2 gateway drains to exit 0 0
+2026-10-28T06:16:36.610Z +4.5s CHECK PASS REVIEW SELECT finds the immutable draft snapshot [{"'loop_versions'":"loop_versions","id":"01M60JEGGZDMEPJYKAWHTWKKDT"}]
+2026-10-28T06:16:39.470Z +7.4s gateway u2-snap-minimal exited during startup {"pid":51632,"exitCode":1}
+2026-10-28T06:16:39.471Z +7.4s CHECK PASS S-3 a stored minimal in a draft snapshot refuses startup, naming the snapshot "  Reason:   The format-4 store is damaged: stored loop version 01M60JEGGZDMEPJYKAWHTWKKDT is not a valid definition"
+2026-10-28T06:16:39.480Z +7.4s CHECK PASS S-4 the ordinary statement skips snapshots (0 rows), and without its status filter the trigger refuses it {"plain":0,"refusedPlain":"SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes"}
+2026-10-28T06:16:42.780Z +10.7s gateway u2-snap-fixed listening {"pid":56844,"port":6367}
+2026-10-28T06:16:42.825Z +10.8s CHECK PASS S-5 the snapshot hand fix (trigger lifted and restored in one transaction) lets the store start, the run reads back, and the trigger is restored unchanged {"fixed":1,"run":200,"triggerRestored":true}
+2026-10-28T06:16:42.944Z +10.9s CHECK PASS S-6 gateway drains to exit 0 0
+2026-10-28T06:16:42.954Z +10.9s DONE passed=7 failed=0 observations=0 realTurns=0

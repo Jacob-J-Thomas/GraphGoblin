@@ -1,0 +1,10 @@
+2026-10-28T06:33:48.457Z +0.0s unlisted stored run failure [{"id":"01M3Y7RKG0WJ2V70NZNX5M3E17","effort":"minimal"}]
+2026-10-28T06:33:48.464Z +0.0s narrow manual correction {"sql":"UPDATE runs SET failure=json_set(failure, '$.missingSession.effort', 'none') WHERE json_extract(failure, '$.missingSession.effort')='minimal'","rows":1}
+2026-10-28T06:33:48.466Z +0.0s narrow manual correction {"sql":"UPDATE run_events SET payload=json_set(payload, '$.failure.missingSession.effort', 'none') WHERE type='run.failed' AND json_extract(payload, '$.failure.missingSession.effort')='minimal'","rows":1}
+2026-10-28T06:33:48.468Z +0.0s narrow manual correction {"sql":"UPDATE run_events SET payload=json_set(payload, '$.effort', 'none') WHERE type='harness.session' AND json_extract(payload, '$.effort')='minimal'","rows":1}
+2026-10-28T06:33:48.469Z +0.0s narrow manual correction {"sql":"UPDATE harness_sessions SET effort='none' WHERE effort='minimal'","rows":2}
+2026-10-28T06:33:53.519Z +5.1s gateway missing-fixed listening {"pid":54268,"port":6363}
+2026-10-28T06:33:53.608Z +5.2s CHECK PASS restored /runs/01M3Y7RKG0WJ2V70NZNX5M3E17 {"status":200,"code":null,"message":null}
+2026-10-28T06:33:53.625Z +5.2s CHECK PASS restored /runs/01M3Y7RKG0WJ2V70NZNX5M3E17/events {"status":200,"code":null,"message":null}
+2026-10-28T06:33:53.635Z +5.2s CHECK PASS restored /runs/01M3Y7RKG0WJ2V70NZNX5M3E17/thread {"status":200,"code":null,"message":null}
+2026-10-28T06:33:53.770Z +5.3s DONE passed=3 failed=0 observations=0 realTurns=0

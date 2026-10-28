@@ -1,0 +1,45 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine test:coverage
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-review-205/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/recovery.test.ts (69 tests | 1 failed) 11463ms
+   ❯ thread checkpoints (review finding 9) (5)
+     × a long log resumes from its checkpoint (10,000 completions) 4652ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery.test.ts > thread checkpoints (review finding 9) > a long log resumes from its checkpoint (10,000 completions)
+AssertionError: expected 2150.8055000000004 to be less than 2000
+ ❯ src/recovery.test.ts:679:21
+    677|     );
+    678|     // Generous: the point is that it does not replay 10,000 patches (…
+    679|     expect(elapsed).toBeLessThan(2_000);
+       |                     ^
+    680|   }, 30_000);
+    681| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 61 passed (62)
+      Tests  1 failed | 1762 passed (1763)
+   Start at  01:10:05
+   Duration  67.27s (tests 48%, import 43%, transform 8%, worker 1%)
+
+    Isolate  62 workers spawned · ~1.27s startup each (spawn + environment, per file)
+             at least ~5.89s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\codex-review-
+  │ 205\packages\engine
+
+
+EXIT=1

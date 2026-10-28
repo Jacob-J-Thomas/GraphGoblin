@@ -1,6 +1,6 @@
 import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
 import type { CodexOptions, ModelReasoningEffort, ThreadOptions } from '@openai/codex-sdk';
-import { CODEX_EFFORT_FAMILIES, codexEffortName, type CodexEffortFamily } from './effort-names.js';
+import { codexEffortName } from './effort-names.js';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
@@ -35,20 +35,13 @@ export interface ResolvedSettings {
   workingDirectory?: string;
 }
 
-export function threadOptions(
-  settings: ResolvedSettings,
-  effortFamilies: readonly CodexEffortFamily[] = CODEX_EFFORT_FAMILIES,
-): ThreadOptions {
+export function threadOptions(settings: ResolvedSettings): ThreadOptions {
   const { options } = settings;
   return {
     model: settings.model,
     // SDK 0.160.0 types this field without `none`; it writes the value into the CLI argument as
     // is, and the CLI forwards it unchanged (verified live for `gpt-6-luna`, #205).
-    modelReasoningEffort: codexEffortName(
-      settings.model,
-      settings.effort,
-      effortFamilies,
-    ) as ModelReasoningEffort,
+    modelReasoningEffort: codexEffortName(settings.model, settings.effort) as ModelReasoningEffort,
     sandboxMode: options.sandbox,
     approvalPolicy: options.approval,
     networkAccessEnabled: options.networkAccess ?? false,

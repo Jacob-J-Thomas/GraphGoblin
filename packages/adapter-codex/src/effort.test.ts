@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { EffortSchema, type Effort } from '@graphgoblin/contracts';
-import { CodexHarness, type CodexHarnessOptions } from './harness.js';
+import { CodexHarness } from './harness.js';
 
 // The real SDK spawns `<codexBinary> exec ...`. This Node executable with the preloaded fake CLI
 // records the arguments the Codex CLI would receive, so the assertion covers the SDK's own
@@ -23,18 +23,13 @@ afterEach(async () => {
 });
 
 /** Run one fake-CLI turn through the public harness; return the CLI's arguments. */
-async function argvFor(
-  model: string,
-  effort: Effort,
-  effortFamilies?: CodexHarnessOptions['effortFamilies'],
-): Promise<string[]> {
+async function argvFor(model: string, effort: Effort): Promise<string[]> {
   const directory = await mkdtemp(join(tmpdir(), 'gg-codex-argv-'));
   directories.push(directory);
   const argvFile = join(directory, 'argv.json');
   const harness = new CodexHarness({
     codexBinary: process.execPath,
     env: { ...inherited, NODE_OPTIONS: `--import=${preload}`, GG_FAKE_CODEX_ARGV: argvFile },
-    ...(effortFamilies ? { effortFamilies } : {}),
   });
   const session = harness.start(
     {
@@ -84,24 +79,6 @@ describe('the provider name for effort none', () => {
     },
     30_000,
   );
-
-  it('sends none as minimal to a family whose entry names the level minimal', async () => {
-    const families = [{ prefix: 'gpt-5-legacy', none: 'minimal' as const }];
-    expect(effortArguments(await argvFor('gpt-5-legacy-mini', 'none', families))).toEqual([
-      'model_reasoning_effort="minimal"',
-    ]);
-    expect(effortArguments(await argvFor('gpt-5-legacy', 'none', families))).toEqual([
-      'model_reasoning_effort="minimal"',
-    ]);
-    // Only the lowest level has a family name; every other level passes through unchanged.
-    expect(effortArguments(await argvFor('gpt-5-legacy-mini', 'low', families))).toEqual([
-      'model_reasoning_effort="low"',
-    ]);
-    // A family prefix matches whole name segments only.
-    expect(effortArguments(await argvFor('gpt-5-legacyx', 'none', families))).toEqual([
-      'model_reasoning_effort="none"',
-    ]);
-  }, 60_000);
 
   it('sends none unchanged to a hand-added model of no known family', async () => {
     expect(effortArguments(await argvFor('house-model-7', 'none'))).toEqual([

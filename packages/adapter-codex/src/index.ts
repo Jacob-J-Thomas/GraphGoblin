@@ -19,7 +19,6 @@ export {
   type CodexStructuredOptions,
 } from './structured.js';
 export { CodexDecider, createCodexDecider } from './decider.js';
-export type { CodexEffortFamily } from './effort-names.js';
 export {
   classifyCodexError,
   mapUsage,

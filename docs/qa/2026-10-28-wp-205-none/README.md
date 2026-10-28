@@ -2,6 +2,8 @@
 
 Date: 2026-10-28. Branch `worktree-agent-a65ec1cd773b204b7`, based on `main` at `a4fee9a9`. Runtime: the project-scoped Node v22.23.4 (`%USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe`), pnpm 12.8.1, Codex CLI 0.160.0 (bundled with the SDK), Claude Code 2.1.308. Implementer: a Claude worker. Real provider turns used: **1** (Codex `gpt-6-luna`, one-line prompt).
 
+> **Round 1 (below) supersedes three statements of the first round:** the hand-correction SQL is now path-scoped and covers every typed effort place (the four text-`replace` statements in "Upgrade check" are withdrawn); `CodexHarnessOptions.effortFamilies` and the `CodexEffortFamily` export are removed (the family table is fixed); and a refused `GG_DEFAULTS` now names its code, harness, model and effort. See [QA round 1](#qa-round-1) and [Review round 1](#review-round-1).
+
 ## What changed and why
 
 The owner decided on 2026-10-27 that `minimal` and `none` are one level for the user, shown as `none`, and that business logic swaps in the provider's name per model group. The owner also decided that nothing migrates stored data automatically before 1.0 ([ADR-0062](../../decisions/ADR-0062-stored-data-corrected-by-hand-before-1.0.md)).
@@ -120,3 +122,82 @@ Edge tests changed or added in `model-effort.spec.ts`: `Codex effort choices fol
 - `pids.log.txt` and `exits.log.txt`: every gateway this record started and its exit code. The disposable stores under `%TEMP%\gg-205-*` were left in place; nothing in them is referenced here beyond the logs copied above.
 
 Every file is UTF-8 text or PNG, below 1,000,000 bytes, with the profile path, machine name and user name replaced.
+
+## QA round 1
+
+The independent QA of `e58e789a` ([../2026-10-28-wp-205-qa/README.md](../2026-10-28-wp-205-qa/README.md), included in this commit unchanged) failed on Q205-1 (P2, run history missing from the hand correction) and Q205-2 (P3, `GG_DEFAULTS` refusal without its code). Q205-1 is answered with review finding 1 below, which widens it. 0 real turns were used in round 1.
+
+### Q205-2: a refused `GG_DEFAULTS` names its code, harness, model and effort
+
+`apps/api/src/defaults-refusal.ts` (new) holds `ProcessDefaultsRefusedError`: `code` `EVALUATION_INVALID_CONFIGURATION`, `details` the first refusal in the shape a run failure's `details` has for a defaults source (`{code, path, level, harness}`), and a message that lists every refused harness. `createContainer` throws it before anything is written (`apps/api/src/container.ts`), and `main.ts` prints its message without a stack, as it already did for a store refusal. With `GG_DEFAULTS={"byHarness":{"codex":{"model":"gpt-5.5","effort":"none"}}}` the API now prints and exits 1:
+
+```text
+GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).
+  codex: EFFORT_UNSUPPORTED at effort (model "gpt-5.5", effort "none"): The default reasoning effort is not supported by its model.
+No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.
+```
+
+Red before (5 failed against the head without the fix, [round1/tests-q205-2-before.log.txt](round1/tests-q205-2-before.log.txt): the generic message and a stack, no code or details); after the fix those two files pass 33 of 33 ([round1/tests-q205-2-after.log.txt](round1/tests-q205-2-after.log.txt)):
+
+- `apps/api/src/container.test.ts`: `refuses a GG_DEFAULTS codex|claude effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2)`; `names every refused GG_DEFAULTS harness and keeps the first as details`.
+- `apps/api/src/defaults-startup.test.ts` (new; the built API as a subprocess): `prints the GG_DEFAULTS codex|claude effort refusal without a stack and exits 1`.
+
+## Review round 1
+
+The independent review of `e58e789a` ([REVIEW.md](REVIEW.md), `review-*.log.txt`, `review-scripts/`, included unchanged) required changes: finding 1 (P2) the hand correction omitted contract-checked run history; finding 2 (P2) its loop-version `UPDATE` rewrote unrelated authored JSON; finding 3 (P3) a test-only public harness option.
+
+### Finding 1 and Q205-1: every typed place that holds an effort
+
+Inventory from `packages/contracts/src` (`EffortSchema` and every schema that embeds it: `nodes.ts` inference config, `evaluation.ts` LLM-decision effort selection, harness defaults and evaluation provenance, `run.ts` pinned defaults and missing-session evidence, `events.ts`, `catalog.ts`) and the stores that validate them on read (`packages/infrastructure/src/sqlite`). `<h>` is `codex` or `claude`.
+
+| Stored place                                            | Typed effort paths                                                                                                                                                                                                                                                      | A stored `minimal` there (observed on the built head)                                                     |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `loop_versions.definition` (draft, published, snapshot) | `$.nodes[*].config.effort` (inference), `$.nodes[*].config.effort.value` (decision, mode explicit), `$.settings.defaults.byHarness.<h>.effort`                                                                                                                          | startup refused, naming the version                                                                       |
+| `settings.value` (key `defaults`)                       | `$.byHarness.<h>.effort`                                                                                                                                                                                                                                                | startup refused ("owner harness defaults are invalid")                                                    |
+| `model_catalog`                                         | `efforts[*]`, `default_effort`                                                                                                                                                                                                                                          | `GET /model-catalog` 500 `RESPONSE_INVALID`                                                               |
+| `runs.pinned`, `runs.failure`                           | `$.defaults.{owner,process}.byHarness.<h>.effort`; `$.missingSession.effort`                                                                                                                                                                                            | that run's record, events, thread and observation 500 `STORED_RUN_INVALID`                                |
+| `run_events.payload`                                    | `run.queued` `$.pinned.defaults.{owner,process}.byHarness.<h>.effort`; `run.failed` `$.failure.missingSession.effort`; `run.resumed` `$.freshSession.effort`; `harness.session` `$.effort`; `decision.made` `$.provenance.effort`, `$.diagnostics[*].provenance.effort` | the run's events 500 `STORED_EVENT_INVALID` when its record is clean (QA Q205-1)                          |
+| `harness_sessions.effort`                               | the column                                                                                                                                                                                                                                                              | not validated on read; corrected so the session record agrees with its events                             |
+| `webhook_receipts.intent`, `event_receipts.intent`      | `$.run.pinned.defaults.{owner,process}.byHarness.<h>.effort`, `$.queued.pinned.defaults.{owner,process}.byHarness.<h>.effort` (the stored run admission)                                                                                                                | parsed when a pending admission is retried; re-delivering an admitted event or webhook still answered 202 |
+
+Not typed, so not matched and not changed: `runs.initial_thread`, `runs.thread_snapshot`, `node.finished` patches and node outputs (`JsonValue`, where a decision's recorded provenance also appears), inbound event payloads. Receipts never hold a draft snapshot: only a manual draft start does.
+
+### Finding 2: path-scoped statements
+
+The statements read and write only those paths, with SQLite's `json_extract` and `json_replace` (SQLite 3.45.1 in libsql): node arrays and decision diagnostics are rebuilt with `json_each` and `json_group_array(... ORDER BY key)`, changing only matching elements; every JSON read is guarded by `json_valid`, so a damaged row is skipped rather than failing the statement. The catalog statement drops a `minimal` that sits beside an existing `none` instead of duplicating it. The generator and the exact text are [scripts/effort-sql.mjs](scripts/effort-sql.mjs) and [round1/hand-fix.sql.txt](round1/hand-fix.sql.txt); the CHANGELOG bullet carries the same text as a `sql` block.
+
+### Finding 3: the family table is fixed
+
+`CodexHarnessOptions.effortFamilies` and the `CodexEffortFamily` export are removed; `threadOptions` always uses `CODEX_EFFORT_FAMILIES`. `packages/adapter-codex/src/effort-names.test.ts` (new) unit-tests `codexEffortName` with a small supplied table: `sends none for gpt-5-legacy|gpt-5-legacy-mini|gpt-5-legacy.2|gpt-5-legacyx|gpt-5-legac|gpt-7|gpt-70|house-model-7 as …` (a hypothetical `minimal` family, whole-segment prefixes), `passes low|medium|high|xhigh|max through unchanged, even in a family that renames none`, and `names none for GPT-6 and GPT-5.6, and no family that renames it`. The public-harness fake-CLI tests in `effort.test.ts` keep the real table (`sends none to gpt-6-luna|gpt-6.1-sol|gpt-5.6-terra as none`) and the unknown-family fallback (`sends none unchanged to a hand-added model of no known family`); the hypothetical-family harness case moved to the unit test. `harness.test.ts` `logs the canonical effort beside the name the CLI receives, at debug level` now uses the real table (`gpt-6-luna`, `none` → `none`).
+
+### Verification of each statement
+
+Two checks, no real turn, the controlled fake Codex/Claude CLI compiled from `../2026-10-28-wp-205-qa/scripts/fake-cli.cs.txt`:
+
+1. [scripts/places.mjs](scripts/places.mjs) on one disposable store, all through the built head's public API ([round1/places.log.txt](round1/places.log.txt), 12 of 12 checks): fixtures for every place at `none` (a missing-session run left failed, one recovered with a fresh session, an LLM decision, an event and a webhook admission, a draft snapshot, owner defaults), plus authored `{"effort":"minimal"}` in a loop variable's schema default, prompt text, run input, an input answer and event and webhook payloads (so also in threads, node outputs and receipts). The SELECT finds none of the authored rows (P-5). With `minimal` written on the typed run-history paths only, the server starts and every read of the affected runs answers 500 (H-1), and the SELECT lists all five event kinds, the runs, sessions and both receipts, and no `node.finished` (H-2). With `minimal` on every typed path, the SELECT lists all eight places including the snapshot (F-1) and startup is refused (F-2). Each statement then changed rows (`loop_versions` 4, `settings` 1, `model_catalog` 1, `runs` 6, `run_events` 13, `harness_sessions` 5, `webhook_receipts` 1, `event_receipts` 1, snapshot transaction 1), and all **143** compared rows equal their state before the writes **byte for byte**, authored `minimal` included; the SELECT is empty and the trigger restored (F-3); every read is 200 and the authored variable default and run input still say `minimal` (F-4).
+2. [scripts/reviewer-fixtures.mjs](scripts/reviewer-fixtures.mjs), the review's `base-history.mjs`, `base-missing.mjs` and `sql-scope.mjs` adapted to this record: the base build (`git archive a4fee9a9`, 529 files transpiled into `%TEMP%\gg-205-base`, its own test app with fake ports and a catalog widened to `minimal`, as the review did) wrote a run whose owner default and session are at `minimal`, and a missing-session failure at `minimal` ([round1/reviewer-base.log.txt](round1/reviewer-base.log.txt), 2 of 2). The head then ran the recipe **as read from the CHANGELOG text**: the SELECT listed the base-written rows; afterwards it was empty, no `minimal` remained in either run's events or sessions, and run, events and thread read 200 for both stores; a head-created loop whose variable default is `{effort:'minimal'}` was neither listed nor changed, byte for byte ([round1/reviewer-head.log.txt](round1/reviewer-head.log.txt), 3 of 3).
+
+Superseded, kept for the record: my first extension used whole-column text `replace` ([scripts/superseded-history-text-replace.mjs](scripts/superseded-history-text-replace.mjs), [round1/superseded/](round1/superseded/)). It covered the run-history places and passed its checks, but it rewrote authored JSON exactly as review finding 2 describes, so it was replaced before commit by the path-scoped recipe above. Its first run failed one check of mine (it expected every effort in `run.queued` to be `none`, while the process default there is `low`).
+
+### Gates (round 1)
+
+Project Node v22.23.4, `GG_TEST_PORT_START=7300 GG_TEST_PORT_COUNT=40`, after `pnpm build` (11 of 11). Logs in [round1/gates/](round1/gates/). Round 1 touched `apps/api`, `packages/adapter-codex`, the CHANGELOG, ADR-0062, docs/06 and this record; contracts, domain, engine, infrastructure and web are unchanged since the first round's green gates.
+
+| Gate                                                                                               | Result                                                                |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm typecheck`                                                                                   | pass, 20 of 20                                                        |
+| `pnpm lint`                                                                                        | pass, 12 of 12                                                        |
+| `pnpm check:layers`, `pnpm check:deps`, `pnpm check:docs`, `pnpm check:migrations`                 | pass (deps: the 3 `no-orphans` warnings main has; no migration added) |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                                           | 605 passed, 4 skipped (`LIVE=1` suite); branches 95.48%, lines 99.31% |
+| `pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2`                                      | 1,693 passed, 14 skipped; branches 90.80%, lines 96.24%               |
+| `pnpm test:upgrade`                                                                                | 2 of 2                                                                |
+| Edge: `model-effort`, `model-picker`, `claude-harness`, `form-controls` (from `apps/web`)          | 49 of 49, first run, 2.3 min                                          |
+| `pnpm format:check` (whole repository)                                                             | pass                                                                  |
+| Record redaction check (both record folders: profile path, user and machine name, SIDs, BOM, size) | 0 findings; largest file 195,320 bytes                                |
+
+### Open points (round 1)
+
+- `harness_sessions.effort` is not validated on read, and a receipt's stored admission is parsed only when a pending admission is retried; both are corrected so the stored records agree, but no read failure was observed for them.
+- The recipe names the two harnesses `codex` and `claude`; a new harness id would need its own paths.
+- A run that ran at `minimal` keeps that word in untyped thread values and node outputs (for example a decision's recorded provenance); they are left as recorded.
+- The review's engine timing failure (`recovery.test.ts`, 2,150 ms against 2,000 ms) and the API worker crash in `shutdown-choice.test.ts` (`0xC0000005`) are in untouched files; see the gates above for this round's runs.

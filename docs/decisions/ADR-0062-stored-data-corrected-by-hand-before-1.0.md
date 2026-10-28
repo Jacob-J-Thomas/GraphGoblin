@@ -20,6 +20,7 @@ The product has one instance with real data, the owner's. A migration that rewri
 
 ## Consequences
 
-- #205 ships no migration. The startup seed refresh gives existing stores the new effort lists of seeded models. A stored `minimal` in a loop version or the owner defaults makes the store guard refuse startup, naming the row and changing nothing; in a hand-added catalog row or a run record it fails the read that meets it. The CHANGELOG gives one `UPDATE` per place ([WP-205 record](../qa/2026-10-28-wp-205-none/README.md)).
+- #205 ships no migration. The startup seed refresh gives existing stores the new effort lists of seeded models. A stored `minimal` in a loop version or the owner defaults makes the store guard refuse startup, naming the row and changing nothing; in a hand-added catalog row, a run record, its events or its session rows it fails the read that meets it. The CHANGELOG gives one discovery `SELECT` and one `UPDATE` per stored place, scoped with SQLite's `json_*` functions to the contract's typed effort paths, so authored JSON elsewhere (variable schemas, prompts, run input, thread values) is never matched or changed ([WP-205 record](../qa/2026-10-28-wp-205-none/README.md)).
+- A hand recipe is held to the standard of code: it is verified on a disposable store before it is published, and it names every typed place the change affects.
 - Stores other than the owner's are not upgraded for stored content. That is acceptable while the product has no other users; this decision is revisited at release with ADR-0020.
 - Reviews treat a new data-rewriting migration as a defect unless the owner asks for one.

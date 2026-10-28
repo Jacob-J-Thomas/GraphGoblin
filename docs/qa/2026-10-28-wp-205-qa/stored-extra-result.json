@@ -1,0 +1,809 @@
+{
+  "scenario": "stored-extra",
+  "passed": 13,
+  "failed": 3,
+  "observations": 1,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "base snapshot created through public draft run",
+      "ok": true,
+      "detail": {
+        "id": "01M60JD55H2EMBD6MAZ5DDBG31",
+        "ownerId": "local",
+        "loopId": "01M60JD549CQTAAA8N0B2V80X1",
+        "versionId": "01M60JD55H2EMBD6MAZ5DDBG33",
+        "pinned": {
+          "source": "draft",
+          "version": 1,
+          "name": "QA205 snapshot no provider",
+          "label": "QA205 snapshot no provider draft v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60JD55H2EMBD6MAZ5DDBG32",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T06:15:51.729Z",
+        "startedAt": "2026-10-28T06:15:51.761Z",
+        "finishedAt": "2026-10-28T06:15:51.844Z",
+        "finalizedAt": "2026-10-28T06:15:51.852Z",
+        "lastEventSeq": 8,
+        "recovery": {
+          "observedSeq": 8,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ended snapshot-final-base",
+      "ok": true,
+      "detail": {
+        "pid": 43620,
+        "exit": 0
+      }
+    },
+    {
+      "id": "snapshot minimal refuses startup; SELECT finds row",
+      "ok": true,
+      "detail": {
+        "log": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-snapshot-final-HpgmO0.\n  Database: %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-snapshot-final-HpgmO0\\graphgoblin.db\n  Found:    format 4, but the store is damaged or unfinished\n  Requires: format 4\n  Reason:   The format-4 store is damaged: stored loop version 01M60JD55H2EMBD6MAZ5DDBG33 is not a valid definition\nNo stored data was changed. This build does not convert stores from other formats.\nRepair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-snapshot-final-HpgmO0\"\n",
+        "found": [
+          {
+            "'loop_versions'": "loop_versions",
+            "id": "01M60JD55H2EMBD6MAZ5DDBG33"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ended snapshot-final-invalid",
+      "ok": true,
+      "detail": {
+        "pid": 31496,
+        "exit": 1
+      }
+    },
+    {
+      "id": "ordinary UPDATE skips snapshot",
+      "ok": true
+    },
+    {
+      "id": "snapshot hand transaction repairs and restores exact trigger",
+      "ok": true,
+      "detail": {
+        "run": {
+          "status": 200,
+          "json": {
+            "id": "01M60JD55H2EMBD6MAZ5DDBG31",
+            "ownerId": "local",
+            "loopId": "01M60JD549CQTAAA8N0B2V80X1",
+            "versionId": "01M60JD55H2EMBD6MAZ5DDBG33",
+            "pinned": {
+              "source": "draft",
+              "version": 1,
+              "name": "QA205 snapshot no provider",
+              "label": "QA205 snapshot no provider draft v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60JD55H2EMBD6MAZ5DDBG32",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-28T06:15:51.729Z",
+            "startedAt": "2026-10-28T06:15:51.761Z",
+            "finishedAt": "2026-10-28T06:15:51.844Z",
+            "finalizedAt": "2026-10-28T06:15:51.852Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_FINISHED",
+                "message": "This run has finished. Resume only continues paused runs or supported failures."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": []
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "text": "{\"id\":\"01M60JD55H2EMBD6MAZ5DDBG31\",\"ownerId\":\"local\",\"loopId\":\"01M60JD549CQTAAA8N0B2V80X1\",\"versionId\":\"01M60JD55H2EMBD6MAZ5DDBG33\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"QA205 snapshot no provider\",\"label\":\"QA205 snapshot no provider draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60JD55H2EMBD6MAZ5DDBG32\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"createdAt\":\"2026-10-28T06:15:51.729Z\",\"startedAt\":\"2026-10-28T06:15:51.761Z\",\"finishedAt\":\"2026-10-28T06:15:51.844Z\",\"finalizedAt\":\"2026-10-28T06:15:51.852Z\",\"lastEventSeq\":8,\"recovery\":{\"observedSeq\":8,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[]}]}}"
+        },
+        "trigger": "CREATE TRIGGER `loop_versions_snapshot_immutable` BEFORE UPDATE ON `loop_versions`\nWHEN OLD.status = 'snapshot'\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes'); END"
+      }
+    },
+    {
+      "id": "ended snapshot-final-repaired",
+      "ok": true,
+      "detail": {
+        "pid": 55356,
+        "exit": 0
+      }
+    },
+    {
+      "id": "ended legacy-event-base",
+      "ok": true,
+      "detail": {
+        "pid": 3152,
+        "exit": 0
+      }
+    },
+    {
+      "id": "legacy run_events minimal omitted by CHANGELOG SELECT",
+      "ok": null,
+      "detail": {
+        "scan": [],
+        "events": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+            "title": "stored event invalid",
+            "status": 500,
+            "code": "STORED_EVENT_INVALID",
+            "detail": "Stored run event does not conform: run 01M60JDGMV4JD2AE3SXEPAAX9Y, seq 7, type harness.session"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-event-invalid\",\"title\":\"stored event invalid\",\"status\":500,\"code\":\"STORED_EVENT_INVALID\",\"detail\":\"Stored run event does not conform: run 01M60JDGMV4JD2AE3SXEPAAX9Y, seq 7, type harness.session\"}"
+        },
+        "detail": {
+          "status": 200,
+          "json": {
+            "id": "01M60JDGMV4JD2AE3SXEPAAX9Y",
+            "ownerId": "local",
+            "loopId": "01M60JDG3NWWK98M04CKYFDPR4",
+            "versionId": "01M60JDG3NWWK98M04CKYFDPR5",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 legacy event",
+              "label": "QA205 legacy event v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60JDGMV4JD2AE3SXEPAAX9Z",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-28T06:16:03.483Z",
+            "startedAt": "2026-10-28T06:16:03.926Z",
+            "finishedAt": "2026-10-28T06:16:04.160Z",
+            "finalizedAt": "2026-10-28T06:16:04.168Z",
+            "lastEventSeq": 15,
+            "recovery": {
+              "observedSeq": 15,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_FINISHED",
+                "message": "This run has finished. Resume only continues paused runs or supported failures."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "work",
+                      "label": "work",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "work",
+                  "label": "work",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "work",
+                      "label": "work",
+                      "kind": "inference"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "text": "{\"id\":\"01M60JDGMV4JD2AE3SXEPAAX9Y\",\"ownerId\":\"local\",\"loopId\":\"01M60JDG3NWWK98M04CKYFDPR4\",\"versionId\":\"01M60JDG3NWWK98M04CKYFDPR5\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 legacy event\",\"label\":\"QA205 legacy event v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60JDGMV4JD2AE3SXEPAAX9Z\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"createdAt\":\"2026-10-28T06:16:03.483Z\",\"startedAt\":\"2026-10-28T06:16:03.926Z\",\"finishedAt\":\"2026-10-28T06:16:04.160Z\",\"finalizedAt\":\"2026-10-28T06:16:04.168Z\",\"lastEventSeq\":15,\"recovery\":{\"observedSeq\":15,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"work\",\"label\":\"work\",\"kind\":\"inference\"}]},{\"nodeId\":\"work\",\"label\":\"work\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"work\",\"label\":\"work\",\"kind\":\"inference\"}]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[]}]}}"
+        },
+        "diagnostics": {
+          "status": 200,
+          "json": {
+            "items": [
+              {
+                "runId": "01M60JDGMV4JD2AE3SXEPAAX9Y",
+                "code": "HISTORY_UNREADABLE",
+                "reason": "Stored run event does not conform: run 01M60JDGMV4JD2AE3SXEPAAX9Y, seq 7, type harness.session"
+              }
+            ],
+            "nextCursor": null
+          },
+          "text": "{\"items\":[{\"runId\":\"01M60JDGMV4JD2AE3SXEPAAX9Y\",\"code\":\"HISTORY_UNREADABLE\",\"reason\":\"Stored run event does not conform: run 01M60JDGMV4JD2AE3SXEPAAX9Y, seq 7, type harness.session\"}],\"nextCursor\":null}"
+        }
+      }
+    },
+    {
+      "id": "ended legacy-event-head",
+      "ok": true,
+      "detail": {
+        "pid": 27404,
+        "exit": 0
+      }
+    },
+    {
+      "id": "ended pinned-create",
+      "ok": true,
+      "detail": {
+        "pid": 19312,
+        "exit": 0
+      }
+    },
+    {
+      "id": "pinned runtime none refused claude/inference",
+      "ok": true,
+      "detail": {
+        "answer": {
+          "status": 200,
+          "json": {
+            "id": "01M60JDSD9GNYC1PW9YYYW3BHQ",
+            "ownerId": "local",
+            "loopId": "01M60JDRX1P7C37EXA8BB729AP",
+            "versionId": "01M60JDRX1P7C37EXA8BB729AQ",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 pinned claude/inference",
+              "label": "QA205 pinned claude/inference v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "claude": {
+                      "model": "claude-haiku-5-5",
+                      "effort": "low"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60JDSD9GNYC1PW9YYYW3BHR",
+            "status": "running",
+            "currentNodeId": "hold",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M60JDSD9GNYC1PW9YYYW3BHQ:5",
+              "nodeId": "hold",
+              "kind": "input",
+              "prompt": "QA gate",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-28T06:16:12.457Z",
+            "startedAt": "2026-10-28T06:16:12.718Z",
+            "lastEventSeq": 8
+          },
+          "text": "{\"id\":\"01M60JDSD9GNYC1PW9YYYW3BHQ\",\"ownerId\":\"local\",\"loopId\":\"01M60JDRX1P7C37EXA8BB729AP\",\"versionId\":\"01M60JDRX1P7C37EXA8BB729AQ\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 pinned claude/inference\",\"label\":\"QA205 pinned claude/inference v1\",\"defaults\":{\"owner\":{\"byHarness\":{\"claude\":{\"model\":\"claude-haiku-5-5\",\"effort\":\"low\"}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60JDSD9GNYC1PW9YYYW3BHR\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60JDSD9GNYC1PW9YYYW3BHQ:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:16:12.457Z\",\"startedAt\":\"2026-10-28T06:16:12.718Z\",\"lastEventSeq\":8}"
+        },
+        "done": {
+          "id": "01M60JDSD9GNYC1PW9YYYW3BHQ",
+          "ownerId": "local",
+          "loopId": "01M60JDRX1P7C37EXA8BB729AP",
+          "versionId": "01M60JDRX1P7C37EXA8BB729AQ",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 pinned claude/inference",
+            "label": "QA205 pinned claude/inference v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-haiku-5-5",
+                    "effort": "low"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60JDSD9GNYC1PW9YYYW3BHR",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "EVALUATION_INVALID_CONFIGURATION",
+            "message": "The selected reasoning effort is not supported by this model",
+            "nodeId": "work",
+            "resumable": false,
+            "details": {
+              "code": "EFFORT_UNSUPPORTED",
+              "path": "effort"
+            }
+          },
+          "createdAt": "2026-10-28T06:16:12.457Z",
+          "startedAt": "2026-10-28T06:16:12.718Z",
+          "finishedAt": "2026-10-28T06:16:20.082Z",
+          "finalizedAt": "2026-10-28T06:16:20.097Z",
+          "lastEventSeq": 12,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "hold",
+                "label": "Hold",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "work",
+                "label": "work",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "cliDelta": 0
+      }
+    },
+    {
+      "id": "pinned runtime none refused claude/loop",
+      "ok": true,
+      "detail": {
+        "answer": {
+          "status": 200,
+          "json": {
+            "id": "01M60JDT4N387K5DJ32YT2CFHY",
+            "ownerId": "local",
+            "loopId": "01M60JDSYXYQNN1V8E9KS3Q79B",
+            "versionId": "01M60JDSYXYQNN1V8E9KS3Q79C",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 pinned claude/loop",
+              "label": "QA205 pinned claude/loop v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "claude": {
+                      "model": "claude-haiku-5-5",
+                      "effort": "low"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60JDT4N387K5DJ32YT2CFHZ",
+            "status": "running",
+            "currentNodeId": "hold",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M60JDT4N387K5DJ32YT2CFHY:5",
+              "nodeId": "hold",
+              "kind": "input",
+              "prompt": "QA gate",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-10-28T06:16:13.205Z",
+            "startedAt": "2026-10-28T06:16:13.383Z",
+            "lastEventSeq": 8
+          },
+          "text": "{\"id\":\"01M60JDT4N387K5DJ32YT2CFHY\",\"ownerId\":\"local\",\"loopId\":\"01M60JDSYXYQNN1V8E9KS3Q79B\",\"versionId\":\"01M60JDSYXYQNN1V8E9KS3Q79C\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 pinned claude/loop\",\"label\":\"QA205 pinned claude/loop v1\",\"defaults\":{\"owner\":{\"byHarness\":{\"claude\":{\"model\":\"claude-haiku-5-5\",\"effort\":\"low\"}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60JDT4N387K5DJ32YT2CFHZ\",\"status\":\"running\",\"currentNodeId\":\"hold\",\"iteration\":1,\"waiting\":{\"waitId\":\"01M60JDT4N387K5DJ32YT2CFHY:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA gate\",\"startedSeq\":5},\"createdAt\":\"2026-10-28T06:16:13.205Z\",\"startedAt\":\"2026-10-28T06:16:13.383Z\",\"lastEventSeq\":8}"
+        },
+        "done": {
+          "id": "01M60JDT4N387K5DJ32YT2CFHY",
+          "ownerId": "local",
+          "loopId": "01M60JDSYXYQNN1V8E9KS3Q79B",
+          "versionId": "01M60JDSYXYQNN1V8E9KS3Q79C",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 pinned claude/loop",
+            "label": "QA205 pinned claude/loop v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-haiku-5-5",
+                    "effort": "low"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60JDT4N387K5DJ32YT2CFHZ",
+          "status": "failed",
+          "currentNodeId": "work",
+          "iteration": 1,
+          "failure": {
+            "code": "EVALUATION_INVALID_CONFIGURATION",
+            "message": "The default reasoning effort is not supported by its model",
+            "nodeId": "work",
+            "resumable": false,
+            "details": {
+              "code": "EFFORT_UNSUPPORTED",
+              "path": "effort",
+              "level": "loop",
+              "harness": "claude"
+            }
+          },
+          "createdAt": "2026-10-28T06:16:13.205Z",
+          "startedAt": "2026-10-28T06:16:13.383Z",
+          "finishedAt": "2026-10-28T06:16:20.368Z",
+          "finalizedAt": "2026-10-28T06:16:20.374Z",
+          "lastEventSeq": 12,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "hold",
+                "label": "Hold",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "work",
+                "label": "work",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "work",
+                    "label": "work",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "cliDelta": 0
+      }
+    },
+    {
+      "id": "pinned runtime none refused claude/owner",
+      "ok": false,
+      "detail": {
+        "answer": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+            "title": "stored run invalid",
+            "status": 500,
+            "code": "STORED_RUN_INVALID",
+            "detail": "Stored run 01M60JDTRQAA0283HECR8WPD2X does not conform to the run record contract"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M60JDTRQAA0283HECR8WPD2X does not conform to the run record contract\"}"
+        },
+        "done": {
+          "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+          "title": "stored run invalid",
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "detail": "Stored run 01M60JDTRQAA0283HECR8WPD2X does not conform to the run record contract"
+        },
+        "cliDelta": 0
+      }
+    },
+    {
+      "id": "pinned runtime none refused claude/process",
+      "ok": false,
+      "detail": {
+        "answer": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+            "title": "stored run invalid",
+            "status": 500,
+            "code": "STORED_RUN_INVALID",
+            "detail": "Stored run 01M60JDVCDF7NCMXQ74MQ40XB3 does not conform to the run record contract"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M60JDVCDF7NCMXQ74MQ40XB3 does not conform to the run record contract\"}"
+        },
+        "done": {
+          "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+          "title": "stored run invalid",
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "detail": "Stored run 01M60JDVCDF7NCMXQ74MQ40XB3 does not conform to the run record contract"
+        },
+        "cliDelta": 0
+      }
+    },
+    {
+      "id": "pinned runtime none refused codex/process",
+      "ok": false,
+      "detail": {
+        "answer": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+            "title": "stored run invalid",
+            "status": 500,
+            "code": "STORED_RUN_INVALID",
+            "detail": "Stored run 01M60JDW6C5RGZM8H5ZTH3FQP8 does not conform to the run record contract"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M60JDW6C5RGZM8H5ZTH3FQP8 does not conform to the run record contract\"}"
+        },
+        "done": {
+          "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+          "title": "stored run invalid",
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "detail": "Stored run 01M60JDW6C5RGZM8H5ZTH3FQP8 does not conform to the run record contract"
+        },
+        "cliDelta": 0
+      }
+    },
+    {
+      "id": "ended pinned-reopened",
+      "ok": true,
+      "detail": {
+        "pid": 1344,
+        "exit": 0
+      }
+    }
+  ]
+}

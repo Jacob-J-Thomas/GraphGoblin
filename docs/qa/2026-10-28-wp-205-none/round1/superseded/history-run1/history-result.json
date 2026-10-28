@@ -1,0 +1,588 @@
+{
+  "scenario": "history",
+  "passed": 11,
+  "failed": 1,
+  "observations": 1,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "P-1 runs A and B fail HARNESS_SESSION_MISSING with failure.missingSession.effort none",
+      "ok": true,
+      "detail": {
+        "put": 200,
+        "A": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"02d90fb8-3d3c-4f9e-ba26-204d2fb0f875\" from resume-previous is missing. Choose Start fresh session for node \"w2\" to continue without its prior provider conversation.",
+          "nodeId": "w2",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M60KVW0EYZDZZK04KN0G6RZW:18",
+            "turnId": "01M60KVYTYXBQHV45CQZ4SJ2RH",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "02d90fb8-3d3c-4f9e-ba26-204d2fb0f875"
+          },
+          "missingSession": {
+            "visitId": "01M60KVW0EYZDZZK04KN0G6RZW:18",
+            "harness": "codex",
+            "sessionId": "02d90fb8-3d3c-4f9e-ba26-204d2fb0f875",
+            "origin": "resume-previous",
+            "model": "gpt-6-luna",
+            "effort": "none"
+          }
+        },
+        "B": {
+          "code": "HARNESS_SESSION_MISSING",
+          "message": "The codex session \"4029f942-3e48-4114-9cae-3364685eab08\" from resume-previous is missing. Choose Start fresh session for node \"w2\" to continue without its prior provider conversation.",
+          "nodeId": "w2",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_SESSION_MISSING"
+          },
+          "inference": {
+            "visitId": "01M60KVXBA47WY7393M0XMZK5S:18",
+            "turnId": "01M60KVZ4KS8GRGTTZDCHZ967S",
+            "submission": "session-missing",
+            "promptKind": "authored",
+            "sessionId": "4029f942-3e48-4114-9cae-3364685eab08"
+          },
+          "missingSession": {
+            "visitId": "01M60KVXBA47WY7393M0XMZK5S:18",
+            "harness": "codex",
+            "sessionId": "4029f942-3e48-4114-9cae-3364685eab08",
+            "origin": "resume-previous",
+            "model": "gpt-6-luna",
+            "effort": "none"
+          }
+        }
+      }
+    },
+    {
+      "id": "P-2 run C (LLM decision at none) succeeds; run A recovers with a fresh session and succeeds",
+      "ok": true,
+      "detail": {
+        "C": "succeeded",
+        "Cfailure": null,
+        "recover": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "A": "succeeded"
+      }
+    },
+    {
+      "id": "P-3 every read is 200 and the run events carry effort none in run.queued, harness.session, run.failed, run.resumed and decision.made",
+      "ok": false,
+      "detail": {
+        "run A": 200,
+        "events A": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run B": 200,
+        "events B": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run C": 200,
+        "events C": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run S": 200,
+        "events S": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "observation A": 200,
+        "observation C": 200,
+        "GET /runs": 200,
+        "event re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        },
+        "webhook re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        },
+        "efforts A": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 22,
+            "type": "run.failed",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 23,
+            "type": "run.resumed",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 26,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          }
+        ],
+        "efforts B": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 22,
+            "type": "run.failed",
+            "efforts": [
+              "none"
+            ]
+          }
+        ],
+        "efforts C": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 6,
+            "type": "decision.made",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "node.finished",
+            "efforts": [
+              "none",
+              "none"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "P-4 no real provider: every turn reached the fake CLI",
+      "ok": true,
+      "detail": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": true,
+          "mode": "spec"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": true,
+          "mode": "spec"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": false,
+          "mode": "spec"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        }
+      ]
+    },
+    {
+      "id": "P-5 gateway drains to exit 0",
+      "ok": true
+    },
+    {
+      "id": "H-1 run-history minimal only: startup and the reads that meet it",
+      "ok": null,
+      "detail": {
+        "run A": 500,
+        "events A": {
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "message": null
+        },
+        "run B": 500,
+        "events B": {
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "message": null
+        },
+        "run C": 500,
+        "events C": {
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "message": null
+        },
+        "run S": 500,
+        "events S": {
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "message": null
+        },
+        "observation A": 500,
+        "observation C": 500,
+        "GET /runs": 200,
+        "event re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        },
+        "webhook re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        }
+      }
+    },
+    {
+      "id": "H-2 the SELECT finds every run-history place: runs, run_events (5 types), harness_sessions, both receipts",
+      "ok": true,
+      "detail": [
+        "runs 01M60KVW0EYZDZZK04KN0G6RZW",
+        "runs 01M60KVXBA47WY7393M0XMZK5S",
+        "runs 01M60KVZNRMYEY2H790W3NRWQP",
+        "runs 01M60KW1GK61EBMWBGTXFK9NH1",
+        "runs 01M60KW1M1YTKG2PG5ZB2WK05M",
+        "runs 01M60KW1MQC46XVS97W5A0JJDB",
+        "runs 01M60KW1Q679AAFZ68FQF4TTPJ",
+        "runs 01M60KW3DE50VHTZTG7DWBPWB5",
+        "run_events 01M60KVW0EYZDZZK04KN0G6RZW#1 run.queued",
+        "run_events 01M60KVW0EYZDZZK04KN0G6RZW#7 harness.session",
+        "run_events 01M60KVXBA47WY7393M0XMZK5S#1 run.queued",
+        "run_events 01M60KVXBA47WY7393M0XMZK5S#7 harness.session",
+        "run_events 01M60KVW0EYZDZZK04KN0G6RZW#22 run.failed",
+        "run_events 01M60KVXBA47WY7393M0XMZK5S#22 run.failed",
+        "run_events 01M60KVZNRMYEY2H790W3NRWQP#1 run.queued",
+        "run_events 01M60KVZNRMYEY2H790W3NRWQP#6 decision.made",
+        "run_events 01M60KVZNRMYEY2H790W3NRWQP#7 node.finished",
+        "run_events 01M60KVW0EYZDZZK04KN0G6RZW#23 run.resumed",
+        "run_events 01M60KVW0EYZDZZK04KN0G6RZW#26 harness.session",
+        "run_events 01M60KW1GK61EBMWBGTXFK9NH1#1 run.queued",
+        "run_events 01M60KW1M1YTKG2PG5ZB2WK05M#1 run.queued",
+        "run_events 01M60KW1MQC46XVS97W5A0JJDB#1 run.queued",
+        "run_events 01M60KW1Q679AAFZ68FQF4TTPJ#1 run.queued",
+        "run_events 01M60KW3DE50VHTZTG7DWBPWB5#1 run.queued",
+        "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w1/1",
+        "harness_sessions 01M60KVXBA47WY7393M0XMZK5S/w1/1",
+        "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w2/1",
+        "harness_sessions 01M60KVXBA47WY7393M0XMZK5S/w2/1",
+        "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w2/2",
+        "webhook_receipts 01M60KW1M0QNQJC947XPC2DT3R",
+        "webhook_receipts 01M60KW1MP6BNAGV7HBP6FAAQS",
+        "webhook_receipts 01M60KW3DE50VHTZTG7DWBPWB4",
+        "event_receipts 01M60KW1GK61EBMWBGTXFK9NH0"
+      ]
+    },
+    {
+      "id": "H-3 gateway drains to exit 0",
+      "ok": true
+    },
+    {
+      "id": "F-1 the SELECT finds all eight places",
+      "ok": true,
+      "detail": {
+        "places": [
+          "loop_versions",
+          "settings",
+          "model_catalog",
+          "runs",
+          "run_events",
+          "harness_sessions",
+          "webhook_receipts",
+          "event_receipts"
+        ],
+        "rows": 40,
+        "found": [
+          "loop_versions 01M60KVTB6M00DZFHVK4KME6NQ",
+          "loop_versions 01M60KVTSD9VMJBD5GVW51J4NW",
+          "loop_versions 01M60KVVGR1M83MQX2D3ABDGBX",
+          "loop_versions 01M60KW1NJFETHTMDFQVT4JT4B",
+          "loop_versions 01M60KW1Q679AAFZ68FQF4TTPM",
+          "settings defaults",
+          "model_catalog codex/gpt-5-handadded",
+          "runs 01M60KVW0EYZDZZK04KN0G6RZW",
+          "runs 01M60KVXBA47WY7393M0XMZK5S",
+          "runs 01M60KVZNRMYEY2H790W3NRWQP",
+          "runs 01M60KW1GK61EBMWBGTXFK9NH1",
+          "runs 01M60KW1M1YTKG2PG5ZB2WK05M",
+          "runs 01M60KW1MQC46XVS97W5A0JJDB",
+          "runs 01M60KW1Q679AAFZ68FQF4TTPJ",
+          "runs 01M60KW3DE50VHTZTG7DWBPWB5",
+          "run_events 01M60KVW0EYZDZZK04KN0G6RZW#1 run.queued",
+          "run_events 01M60KVW0EYZDZZK04KN0G6RZW#7 harness.session",
+          "run_events 01M60KVXBA47WY7393M0XMZK5S#1 run.queued",
+          "run_events 01M60KVXBA47WY7393M0XMZK5S#7 harness.session",
+          "run_events 01M60KVW0EYZDZZK04KN0G6RZW#22 run.failed",
+          "run_events 01M60KVXBA47WY7393M0XMZK5S#22 run.failed",
+          "run_events 01M60KVZNRMYEY2H790W3NRWQP#1 run.queued",
+          "run_events 01M60KVZNRMYEY2H790W3NRWQP#6 decision.made",
+          "run_events 01M60KVZNRMYEY2H790W3NRWQP#7 node.finished",
+          "run_events 01M60KVW0EYZDZZK04KN0G6RZW#23 run.resumed",
+          "run_events 01M60KVW0EYZDZZK04KN0G6RZW#26 harness.session",
+          "run_events 01M60KW1GK61EBMWBGTXFK9NH1#1 run.queued",
+          "run_events 01M60KW1M1YTKG2PG5ZB2WK05M#1 run.queued",
+          "run_events 01M60KW1MQC46XVS97W5A0JJDB#1 run.queued",
+          "run_events 01M60KW1Q679AAFZ68FQF4TTPJ#1 run.queued",
+          "run_events 01M60KW3DE50VHTZTG7DWBPWB5#1 run.queued",
+          "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w1/1",
+          "harness_sessions 01M60KVXBA47WY7393M0XMZK5S/w1/1",
+          "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w2/1",
+          "harness_sessions 01M60KVXBA47WY7393M0XMZK5S/w2/1",
+          "harness_sessions 01M60KVW0EYZDZZK04KN0G6RZW/w2/2",
+          "webhook_receipts 01M60KW1M0QNQJC947XPC2DT3R",
+          "webhook_receipts 01M60KW1MP6BNAGV7HBP6FAAQS",
+          "webhook_receipts 01M60KW3DE50VHTZTG7DWBPWB4",
+          "event_receipts 01M60KW1GK61EBMWBGTXFK9NH0"
+        ]
+      }
+    },
+    {
+      "id": "F-2 startup refuses the store (a loop version names minimal)",
+      "ok": true,
+      "detail": "  Reason:   The format-4 store is damaged: stored loop version 01M60KVTB6M00DZFHVK4KME6NQ is not a valid definition"
+    },
+    {
+      "id": "F-3 each hand statement changes rows, the snapshot transaction restores the trigger, and the SELECT is empty",
+      "ok": true,
+      "detail": {
+        "affected": {
+          "loop_versions": 4,
+          "settings": 1,
+          "model_catalog": 1,
+          "runs": 8,
+          "run_events": 16,
+          "harness_sessions": 5,
+          "webhook_receipts": 3,
+          "event_receipts": 1
+        },
+        "snapshotAffected": 1,
+        "left": 0,
+        "triggerRestored": true
+      }
+    },
+    {
+      "id": "F-4 after the hand fix every read is 200, the history reads effort none, and re-sent event and webhook behave as before",
+      "ok": true,
+      "detail": {
+        "run A": 200,
+        "events A": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run B": 200,
+        "events B": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run C": 200,
+        "events C": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "run S": 200,
+        "events S": {
+          "status": 200,
+          "code": null,
+          "message": null
+        },
+        "observation A": 200,
+        "observation C": 200,
+        "GET /runs": 200,
+        "event re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        },
+        "webhook re-sent": {
+          "status": 202,
+          "code": null,
+          "message": null
+        },
+        "efforts A": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 22,
+            "type": "run.failed",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 23,
+            "type": "run.resumed",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 26,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          }
+        ],
+        "efforts B": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "harness.session",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 22,
+            "type": "run.failed",
+            "efforts": [
+              "none"
+            ]
+          }
+        ],
+        "efforts C": [
+          {
+            "seq": 1,
+            "type": "run.queued",
+            "efforts": [
+              "none",
+              "low"
+            ]
+          },
+          {
+            "seq": 6,
+            "type": "decision.made",
+            "efforts": [
+              "none"
+            ]
+          },
+          {
+            "seq": 7,
+            "type": "node.finished",
+            "efforts": [
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "none"
+              }
+            }
+          }
+        },
+        "catalog": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
+        "loops": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "id": "F-5 gateway drains to exit 0",
+      "ok": true
+    }
+  ],
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-history-cEMJE3",
+  "ids": {
+    "A": "01M60KVTB6M00DZFHVK4KME6NP",
+    "B": "01M60KVTSD9VMJBD5GVW51J4NV",
+    "C": "01M60KVVGR1M83MQX2D3ABDGBW",
+    "E": "01M60KW1FV10BZBTMY7EPTZ680",
+    "W": "01M60KW1HR9SW26YQVXDMQ5F62",
+    "S": "01M60KW1NJFETHTMDFQVT4JT4A"
+  }
+}
