@@ -29,8 +29,9 @@ import { RouteEditingContext, type RouteBase, type RouteEditing } from './route-
 import type { RouteChannel } from './route-channels.js';
 import type { Box, Point } from './routing-geometry.js';
 import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-labels.js';
-import { roundedPath, routeMessage } from './routing.js';
+import { roundedPath } from './routing.js';
 import { followEdgeLabel } from './edge-label-placement.js';
+import { edgeLabelText } from './edge-label-text.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -89,19 +90,13 @@ export const OrthogonalEdge = memo(function OrthogonalEdge({
   );
   if (!route && !data?.forward) return null; // A backward edge's handles are not measured yet.
   const textLabel = typeof label === 'string' ? label : '';
-  const message = route ? routeMessage(route) : '';
-  const fullLabel = message ? `${textLabel || 'Connection'}: ${message}` : textLabel;
+  const { full: fullLabel, visible: visibleLabel } = edgeLabelText(textLabel, route);
   let path: string;
   let labelAt: Point;
-  let visibleLabel = fullLabel;
   let labelBox: Box | undefined;
   if (route) {
     path = roundedPath(route.points, route.radii);
     labelAt = route.label;
-    // Fit text on the straight segment; the edge's accessible name and title keep the full port.
-    const capacity = Math.floor(route.labelWidth / LABEL_CHARACTER_WIDTH);
-    if (fullLabel.length > capacity && !message)
-      visibleLabel = `${fullLabel.slice(0, Math.max(0, capacity - 1))}…`;
     labelBox = route.labelBounds ?? pill(labelAt, visibleLabel);
   } else {
     const [smooth, x, y] = getSmoothStepPath({

@@ -1,0 +1,100 @@
+$ vitest run src/editor/edge-label-placement.test.ts src/editor/Canvas.test.tsx
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+
+ ❯ src/editor/edge-label-placement.test.ts (15 tests | 2 failed) 42ms
+   ❯ placeEdgeLabels (12)
+     × keeps a clear default on a short vertical jog even when the pill covers its corners 15ms
+     × moves a default pill when an unlabelled edge segment crosses it 3ms
+ ❯ src/editor/Canvas.test.tsx (32 tests | 1 failed) 1850ms
+   ❯ Canvas handlers (18)
+     × does not resettle labels for a committed card position or an issue refresh 58ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/Canvas.test.tsx > Canvas handlers > does not resettle labels for a committed card position or an issue refresh
+AssertionError: expected "measure" to not be called at all, but actually been called 2 times
+Received:
+  1st measure call:
+    Array [
+      "gg:backward-routing",
+      Object {
+        "detail": Object {
+          "checks": 31,
+          "edges": 5,
+          "expansions": 0,
+          "labelMs": 0.7973000000001775,
+          "nodes": 4,
+          "preparationMs": 0,
+          "rerouted": 2,
+          "routingMs": 0,
+        },
+        "duration": 0.7973000000001775,
+        "start": 6921.0758,
+      },
+    ]
+  2nd measure call:
+    Array [
+      "gg:backward-routing",
+      Object {
+        "detail": Object {
+          "checks": 31,
+          "edges": 5,
+          "expansions": 0,
+          "labelMs": 0.25499999999919964,
+          "nodes": 4,
+          "preparationMs": 0,
+          "rerouted": 2,
+          "routingMs": 0,
+        },
+        "duration": 0.25499999999919964,
+        "start": 6924.566900000001,
+      },
+    ]
+Number of calls: 2
+ ❯ src/editor/Canvas.test.tsx:105:25
+    103|     view.rerender(<Canvas definition={committed} issues={[]} />);
+    104|     view.rerender(<Canvas definition={committed} issues={[{...ISSUE,no…
+    105|     expect(measure).not.toHaveBeenCalled();
+       |                         ^
+    106|     measure.mockRestore();
+    107|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > keeps a clear default on a short vertical jog even when the pill covers its corners
+AssertionError: expected { x: 100, y: 21 } to deeply equal { x: 100, y: 5 }
+- Expected
++ Received
+  {
+    "x": 100,
+-   "y": 5,
++   "y": 21,
+  }
+ ❯ src/editor/edge-label-placement.test.ts:30:51
+     28|     const jog = { ...path('jog', 0), preferred: {x:100,y:5},
+     29|       points:[{x:0,y:0},{x:100,y:0},{x:100,y:10},{x:200,y:10}] };
+     30|     expect(placeEdgeLabels([jog]).get('jog')?.at).toEqual(jog.preferre…
+       |                                                   ^
+     31|   });
+     32|   it('moves a default pill when an unlabelled edge segment crosses it'…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  src/editor/edge-label-placement.test.ts > placeEdgeLabels > moves a default pill when an unlabelled edge segment crosses it
+AssertionError: expected { x: 250, y: 100 } to not deeply equal { x: 250, y: 100 }
+Compared values have no visual difference.
+ ❯ src/editor/edge-label-placement.test.ts:36:27
+     34|     const crossing={...path('crossing',100,''),points:[{x:250,y:0},{x:…
+     35|     const result=placeEdgeLabels([own,crossing]).get('label')!;
+     36|     expect(result.at).not.toEqual(own.preferred);
+       |                           ^
+     37|     expect(overlapsBox(result.box,expand(bounds(crossing.points),2))).…
+     38|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 44 passed (47)
+   Start at  04:01:39
+   Duration  8.12s (environment 47%, setup 19%, tests 16%, transform 11%, import 8%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+  × "pnpm recursive run" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1

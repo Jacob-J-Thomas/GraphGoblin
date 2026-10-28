@@ -9,6 +9,7 @@ import { resolve } from 'node:path';
 import type { APIRequestContext, Locator, Page, TestInfo } from '@playwright/test';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { expect, test } from './fixtures.js';
+import { COALESCE_MS } from '../src/editor/history.js';
 
 test.use({ trace: 'off' });
 
@@ -268,6 +269,7 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
   page,
   request,
 }) => {
+  await page.clock.install();
   const loopId = await createLoop(request);
   await openLoop(page, loopId);
   await select(page, 'return');
@@ -287,17 +289,22 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
   );
   expect(ratio(ring, canvas)).toBeGreaterThanOrEqual(3);
   const y = async () => (await storedRoute(request, loopId, 'return'))?.[1];
-  // This test exercises one quick sequence of nudges. Keep its logical time within the
-  // 1s history grouping window even when HTTP assertions take longer on the shared host.
-  // setFixedTime changes Date.now only; autosave timers and animation frames still run.
-  await page.clock.setFixedTime(new Date());
+  // Coalescing reads performance.now. Pause that clock too, then advance timers by less than
+  // the grouping window for each autosave; HTTP assertions cannot split the nudge sequence.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 10_000));
+  const save = async () => {
+    await page.clock.runFor(COALESCE_MS - 1);
+    const at = await page.evaluate(() => performance.now());
+    await saved(page);
+    expect(await page.evaluate(() => performance.now())).toBe(at);
+  };
   await page.keyboard.press('ArrowDown');
-  await saved(page);
+  await save();
   const first = (await y())!;
   expect(first % 22).toBe(0);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Shift+ArrowDown');
-  await saved(page);
+  await save();
   expect(await y()).toBe(first + 22 * 6);
   // Focus stays on the moved handle; Left/Right do nothing to a horizontal segment.
   await expect(lane).toBeFocused();
@@ -313,17 +320,17 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
   await expect(edge(page, 'return')).toHaveClass(/selected/);
   // One undo takes the whole run of nudges back; redo repeats it.
   await page.keyboard.press('Control+z');
-  await saved(page);
+  await save();
   expect(await y()).toBeUndefined();
   await page.keyboard.press('Control+Shift+z');
-  await saved(page);
+  await save();
   expect(await y()).toBe(first + 22 * 6);
   // Reset route: keyboard-reachable after the handles, and it focuses the edge again.
   await edge(page, 'return').focus();
   for (let i = 0; i < 6; i += 1) await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Reset route', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
-  await saved(page);
+  await save();
   expect(await y()).toBeUndefined();
   await expect(edge(page, 'return')).toBeFocused();
   await expect(page.getByRole('button', { name: 'Reset route', exact: true })).toHaveCount(0);

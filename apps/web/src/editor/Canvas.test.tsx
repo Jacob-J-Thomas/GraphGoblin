@@ -93,6 +93,25 @@ describe('Canvas handlers', () => {
 
   const data = (id: string) => flow().nodes!.find((n) => n.id === id)!.data;
 
+  it('does not resettle labels for a committed card position or an issue refresh', () => {
+    const definition = decisionBackRoute();
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    const view = renderCanvas([]);
+    const measure = vi.spyOn(performance, 'measure');
+    const committed = {
+      ...definition,
+      nodes: definition.nodes.map((node) => ({
+        ...node,
+        ui: { x: (node.ui?.x ?? 0) + 10, y: node.ui?.y ?? 0 },
+      })),
+    };
+    view.rerender(<Canvas definition={committed} issues={[]} />);
+    view.rerender(<Canvas definition={committed} issues={[{ ...ISSUE, nodeId: 'done' }]} />);
+    expect(measure).not.toHaveBeenCalled();
+    measure.mockRestore();
+  });
+
   it('maps the definition to nodes with ports and issues, and edges with labels', () => {
     renderCanvas();
     const prep = flow().nodes!.find((n) => n.id === 'prep')!;

@@ -66,7 +66,7 @@ import { portWidthLimits } from './port-targets.js';
 import { NODE_CARD_SIZE } from './routing-geometry.js';
 import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-placement.js';
 import { ForwardEdge } from './ForwardEdge.js';
-import { LABEL_CHARACTER_WIDTH } from './routing-labels.js';
+import { edgeLabelText } from './edge-label-text.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -463,25 +463,31 @@ export function Canvas({
   const { routes } = plan;
   const [placeLabels] = useState(createLabelPlacementCache);
   const moving = !!nodeDrag || !!routeDrag || Object.keys(dragging).length > 0;
+  // Card issues and committed ui positions do not change port text. This primitive dependency
+  // stays equal across those refreshes; its collection is memoized away during drag frames.
+  const portText = useMemo(
+    () =>
+      JSON.stringify(
+        plan.edges.map((edge) =>
+          edge.port === 'out'
+            ? ''
+            : (cardData.get(edge.source)?.portLabels[edge.port] ?? edge.port),
+        ),
+      ),
+    [plan.edges, cardData],
+  );
   const labels = useMemo(() => {
     const start = performance.now();
     const result = placeLabels(moving, () => {
       const byId = new Map(plan.nodes.map((node) => [node.id, node]));
+      const texts = JSON.parse(portText) as string[];
       return {
-        paths: definition.edges.flatMap((edge) => {
-          const from = byId.get(edge.from.node)?.outputs[edge.from.port];
-          const to = byId.get(edge.to.node)?.input;
+        paths: plan.edges.flatMap((edge, i) => {
+          const from = byId.get(edge.source)?.outputs[edge.port];
+          const to = byId.get(edge.target)?.input;
           if (!from || !to) return [];
           const route = routes.get(edge.id);
-          const port = cardData.get(edge.from.node)?.portLabels[edge.from.port] ?? edge.from.port;
-          const text = edge.from.port === 'out' ? '' : port;
-          const message = route ? routeMessage(route) : '';
-          let fullLabel = message ? `${text || 'Connection'}: ${message}` : text;
-          if (route && !message) {
-            const capacity = Math.floor(route.labelWidth / LABEL_CHARACTER_WIDTH);
-            if (fullLabel.length > capacity)
-              fullLabel = `${fullLabel.slice(0, Math.max(0, capacity - 1))}…`;
-          }
+          const { visible } = edgeLabelText(texts[i]!, route);
           const [, x, y] = getSmoothStepPath({
             sourceX: from.x,
             sourceY: from.y,
@@ -494,7 +500,7 @@ export function Canvas({
           return [
             {
               id: edge.id,
-              text: fullLabel,
+              text: visible,
               points: route?.points ?? forwardPoints(from, to),
               preferred: route?.label ?? { x, y },
               fixed: !!route,
@@ -506,7 +512,7 @@ export function Canvas({
     });
     measureLabels(performance.now() - start);
     return result;
-  }, [definition.edges, cardData, plan.nodes, routes, moving, placeLabels, measureLabels]);
+  }, [plan.edges, portText, plan.nodes, routes, moving, placeLabels, measureLabels]);
   // The route editor reads the latest card boxes when a drag ends or a nudge lands.
   const planRef = useRef(plan);
   useLayoutEffect(() => {

@@ -1,0 +1,102 @@
+label=newspecs-main dist=%USERPROFILE%\AppData\Local\Temp\gg-rev425b-main-dist node=v22.23.4 specs=e2e/edge-labels.spec.ts e2e/palette-placement.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:21352) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards (11.2s)
+(node:60168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart (14.8s)
+
+
+  1) [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards 
+
+    Error: expect(locator).toBeAttached() failed
+
+    Locator: locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader')
+    Expected: attached
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeAttached" locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader') with timeout 10000ms
+      - waiting for locator('.react-flow__edge[data-id="yes"]').locator('.gg-edge-label-leader')
+
+
+      62 |   const leader = edge.locator('.gg-edge-label-leader');
+      63 |   // A vertical SVG stroke has a zero-width layout box; check its painted stroke instead.
+    > 64 |   await expect(leader).toBeAttached();
+         |                        ^
+      65 |   expect(
+      66 |     await leader.evaluate((element) => {
+      67 |       const style = getComputedStyle(element);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a7fe9d475cc7387df\apps\web\e2e\edge-labels.spec.ts:64:24
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\edge-labels-a-squeezed-for-5df7b-out-below-surrounding-cards-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "node-decision / node-wait",
+    + ]
+
+      167 |   await page.screenshot({ path: screenshot });
+      168 |   await testInfo.attach('canvas', { path: screenshot, contentType: 'image/png' });
+    > 169 |   expect.soft(await intersections(page.locator('[data-testid^="node-"]'))).toEqual([]);
+          |                                                                            ^
+      170 |   expect.soft(await intersections(page.locator('.react-flow__edge-textwrapper'))).toEqual([]);
+      171 | });
+      172 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a7fe9d475cc7387df\apps\web\e2e\palette-placement.spec.ts:169:76
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Finish / Limit reached",
+    + ]
+
+      168 |   await testInfo.attach('canvas', { path: screenshot, contentType: 'image/png' });
+      169 |   expect.soft(await intersections(page.locator('[data-testid^="node-"]'))).toEqual([]);
+    > 170 |   expect.soft(await intersections(page.locator('.react-flow__edge-textwrapper'))).toEqual([]);
+          |                                                                                   ^
+      171 | });
+      172 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\agent-a7fe9d475cc7387df\apps\web\e2e\palette-placement.spec.ts:170:83
+
+    attachment #1: canvas (image/png) ──────────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\palette-placement-palette--84505-eps-converging-labels-apart-chromium\attachments\canvas-4a8fd977044a47554a5ea6f37f8ecb5fa853571c.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\palette-placement-palette--84505-eps-converging-labels-apart-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\palette-placement-palette--84505-eps-converging-labels-apart-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-rev425b-pw-newspecs-main\palette-placement-palette--84505-eps-converging-labels-apart-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards 
+    [chromium] › e2e\palette-placement.spec.ts:60:1 › palette authoring clears a three-output Decision and keeps converging labels apart 
+exit=1

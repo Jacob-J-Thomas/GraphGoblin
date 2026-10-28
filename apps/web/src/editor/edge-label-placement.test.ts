@@ -5,7 +5,7 @@ import {
   placeEdgeLabels,
   type EdgeLabelPath,
 } from './edge-label-placement.js';
-import { distance, intersectsBox, overlapsBox } from './routing-geometry.js';
+import { bounds, distance, expand, intersectsBox, overlapsBox } from './routing-geometry.js';
 
 const path = (id: string, y: number, text = 'Limit reached'): EdgeLabelPath => ({
   id,
@@ -24,6 +24,32 @@ const separate = (paths: readonly EdgeLabelPath[]) => {
 };
 
 describe('placeEdgeLabels', () => {
+  it('keeps a clear default on a short vertical jog even when the pill covers its corners', () => {
+    const jog = {
+      ...path('jog', 0),
+      preferred: { x: 100, y: 5 },
+      points: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 10 },
+        { x: 200, y: 10 },
+      ],
+    };
+    expect(placeEdgeLabels([jog]).get('jog')?.at).toEqual(jog.preferred);
+  });
+  it('moves a default pill when an unlabelled edge segment crosses it', () => {
+    const own = path('label', 100);
+    const crossing = {
+      ...path('crossing', 100, ''),
+      points: [
+        { x: 250, y: 0 },
+        { x: 250, y: 500 },
+      ],
+    };
+    const result = placeEdgeLabels([own, crossing]).get('label')!;
+    expect(result.at).not.toEqual(own.preferred);
+    expect(overlapsBox(result.box, expand(bounds(crossing.points), 2))).toBe(false);
+  });
   it('separates Finish and Limit reached on lanes into the same target only 20px apart', () => {
     separate([path('finish', 100, 'Finish'), path('limit', 120)]);
   });
@@ -48,7 +74,7 @@ describe('placeEdgeLabels', () => {
     expect(placeEdgeLabels([path('one', 100)]).get('one')?.at).toEqual({ x: 250, y: 100 });
     expect(placeEdgeLabels([path('empty', 100, '')]).size).toBe(0);
   });
-  it('keeps pills off rounded corners when a segment runs in reverse', () => {
+  it('keeps a displaced pill off rounded corners when a segment runs in reverse', () => {
     const reversed = {
       ...path('reverse', 100, 'Finish'),
       preferred: { x: 0, y: 100 },
@@ -58,7 +84,11 @@ describe('placeEdgeLabels', () => {
         { x: 0, y: 110 },
       ],
     };
-    expect(placeEdgeLabels([reversed]).get('reverse')?.at).toEqual({ x: 40, y: 100 });
+    expect(
+      placeEdgeLabels([reversed], [{ id: 'cover', left: -1, right: 1, top: 99, bottom: 101 }]).get(
+        'reverse',
+      )?.at,
+    ).toEqual({ x: 40, y: 100 });
   });
   it('keeps a squeezed callout near its own edge with a leader clear of several cards', () => {
     const cards = [
@@ -90,7 +120,7 @@ describe('placeEdgeLabels', () => {
   it('uses the closest free interval along reversed paths, with room for rounded corners', () => {
     const bent = {
       ...path('bent', 100),
-      preferred: { x: 250, y: 200 },
+      preferred: { x: 250, y: 100 },
       points: [
         { x: 500, y: 100 },
         { x: 0, y: 100 },
@@ -155,12 +185,10 @@ describe('placeEdgeLabels', () => {
         { x: 1, y: 1 },
       ],
     ];
-    for (const [i, points] of cases.entries()) {
+    for (const points of cases) {
       const result = placeEdgeLabels([{ ...path('tiny', 0), points }]).get('tiny')!;
-      if (i === 1 || i === 2) {
-        expect(result.anchor).toBeDefined();
-        expect(distance(result.anchor!, result.at)).toBeLessThanOrEqual(96);
-      } else expect(result.anchor).toBeUndefined();
+      expect(result.at).toEqual({ x: 250, y: 0 });
+      expect(result.anchor).toBeUndefined();
     }
   });
   it('does not draw a misleading leader when the entire path is covered', () => {
@@ -202,14 +230,14 @@ describe('label drag cache', () => {
   });
   it('follows a moved label along its own segment and resolves neighbours again on release', () => {
     const place = createLabelPlacementCache();
-    const paths = [path('a', 100), path('b', 100)];
+    const paths = [path('a', 100), path('b', 120)];
     const before = place(false, () => ({ paths, cards: [] }));
     expect(before.has('a')).toBe(false);
     const shifted = before.get('b')!;
     expect(shifted.attachment).toBeDefined();
     const moved = followEdgeLabel(shifted, [
-      { x: 10, y: 120 },
-      { x: 510, y: 120 },
+      { x: 10, y: 140 },
+      { x: 510, y: 140 },
     ]);
     expect(moved.at).toEqual({ x: shifted.at.x + 10, y: shifted.at.y + 20 });
     expect(moved.box.left).toBe(shifted.box.left + 10);

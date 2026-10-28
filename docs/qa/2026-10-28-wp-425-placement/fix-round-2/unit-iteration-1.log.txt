@@ -1,0 +1,34 @@
+$ vitest run src/editor/edge-label-placement.test.ts src/editor/edge-label-text.test.ts src/editor/Canvas.test.tsx src/editor/OrthogonalEdge.test.tsx
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-425-placement/apps/web
+
+ ❯ src/editor/edge-label-placement.test.ts (15 tests | 1 failed) 50ms
+   ❯ label drag cache (3)
+     × follows a moved label along its own segment and resolves neighbours again on release 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/edge-label-placement.test.ts > label drag cache > follows a moved label along its own segment and resolves neighbours again on release
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ src/editor/edge-label-placement.test.ts:217:29
+    215|     const paths = [path('a', 100), path('b', 100)];
+    216|     const before = place(false, () => ({ paths, cards: [] }));
+    217|     expect(before.has('a')).toBe(false);
+       |                             ^
+    218|     const shifted = before.get('b')!;
+    219|     expect(shifted.attachment).toBeDefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 61 passed (62)
+   Start at  04:04:30
+   Duration  15.26s (environment 58%, setup 17%, tests 12%, transform 7%, import 7%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+  × "pnpm recursive run" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-425-
+  │ placement\apps\web
+Exit code: 1

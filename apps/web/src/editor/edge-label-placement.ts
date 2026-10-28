@@ -91,23 +91,12 @@ export function placeEdgeLabels(
     const envelope = labelBox(path.id, path.text, { x: 0, y: 0 });
     const preferredBox = labelBox(path.id, path.text, path.preferred);
     let best: EdgeLabelPosition | undefined;
-    const fitsPreferred = path.points.slice(1).some((b, j) => {
-      const a = path.points[j]!;
-      const horizontal = a.y === b.y;
-      if (!horizontal && a.x !== b.x) return false;
-      const along = horizontal ? 'x' : 'y';
-      const across = horizontal ? 'y' : 'x';
-      const half = horizontal ? envelope.right : envelope.bottom;
-      const forward = a[along] < b[along];
-      const start = j === 0 ? 0 : 10;
-      const end = j === path.points.length - 2 ? 0 : 10;
-      return (
-        path.preferred[across] === a[across] &&
-        path.preferred[along] >= Math.min(a[along], b[along]) + half + (forward ? start : end) &&
-        path.preferred[along] <= Math.max(a[along], b[along]) - half - (forward ? end : start)
-      );
-    });
-    if (path.fixed || (fitsPreferred && !obstacles.query(preferredBox).length))
+    // A short jog or a rounded corner alone is not a reason to move xyflow's label.
+    if (
+      path.fixed ||
+      (!obstacles.query(preferredBox).length &&
+        !lanes.query(preferredBox).some((lane) => lane.id !== path.id))
+    )
       best = { at: path.preferred, box: preferredBox };
     else
       for (let i = 1; i < path.points.length; i += 1) {
@@ -124,8 +113,10 @@ export function placeEdgeLabels(
         const high = Math.max(a[along], b[along]) - half - (forward ? endCorner : startCorner);
         if (low > high) continue;
         const region = expand(bounds([a, b]), Math.max(envelope.right, envelope.bottom));
-        const blocked = obstacles
-          .query(region)
+        const blocked = [
+          ...obstacles.query(region),
+          ...lanes.query(region).filter((lane) => lane.id !== path.id),
+        ]
           .filter((box) =>
             horizontal
               ? a.y + envelope.bottom >= box.top && a.y - envelope.bottom <= box.bottom
