@@ -44,7 +44,7 @@ The output records server, plugin and process names, enabled flags and feature s
 
 - **MCP servers:** `mcp_servers.<name>.enabled=false` per server, with the names read from `codex mcp list --json` run in the turn's working directory.
 - **Plugins:** `features.plugins=false`. One plugin alone cannot be turned back on, only all of them with `features.plugins=true`.
-- **Personal features:** `features.apps=false`, `features.memories=false` and `features.hooks=false`.
+- **Personal features:** `features.apps=false`, `features.memories=false`, `features.hooks=false`, `features.multi_agent=false` and `features.goals=false`. The last two were added by the coordinator's decision of 2026-10-28; see "Follow-up" below.
 - **The turn-completion program:** `notify=[]`.
 
 **Alternatives examined and not used.**
@@ -68,7 +68,7 @@ All changes are in `packages/adapter-codex`:
 The `--config` order of a turn:
 
 1. the server switches;
-2. `features.plugins=false`, `features.apps=false`, `features.memories=false`, `features.hooks=false` and `notify=[]`;
+2. `features.plugins=false`, `features.apps=false`, `features.memories=false`, `features.hooks=false`, `features.multi_agent=false`, `features.goals=false` and `notify=[]`;
 3. the node's overrides;
 4. the thread options.
 
@@ -128,7 +128,22 @@ The plugin servers stayed off. The run succeeded, replied DONE, and the command 
 
 **Product dry runs (no provider).** Turns pointed by node override at the local holding server. Main: the same five extension processes. Fix: `codex.exe` and `conhost.exe` only. Evidence: [codex-main-dryrun.log.txt](codex-main-dryrun.log.txt), [codex-fix-dryrun.log.txt](codex-fix-dryrun.log.txt).
 
-**Builds.** Real turns 2 to 4 ran on the first fix commit `7553cce4`. The final build (`6abe20a1`) differs only in reading the listing's JSON from stdout alone. Its product dry run (`codex-fix-dryrun`, rerun on that build) gives the same `--config` arguments and the same tree.
+**Builds.** Real turns 2 to 4 ran on the first fix commit `7553cce4`. Commit `6abe20a1` changed only how the listing's JSON is read (stdout alone). Its product dry run (`codex-fix-dryrun`, rerun on that build) gives the same `--config` arguments and the same tree.
+
+**Follow-up: `multi_agent` and `goals` off (coordinator decision, 2026-10-28; no new real turn).** The product dry run on the final build is [codex-fix-features-dryrun.log.txt](codex-fix-features-dryrun.log.txt). The turn CLI received:
+
+```
+mcp_servers.node_repl.enabled=false, features.plugins=false, features.apps=false,
+features.memories=false, features.hooks=false, features.multi_agent=false, features.goals=false,
+notify=[], <the node's model_provider overrides pointing at the local holding server>,
+model_reasoning_effort="low", sandbox_workspace_write.network_access=false, web_search="disabled", approval_policy="never"
+```
+
+The listing CLI received `mcp list --json` with the same six `features.<name>=false`. The tree under the gateway was `codex.exe` and `conhost.exe` only.
+
+- **Accepted by the CLI:** `codex features list -c features.multi_agent=false -c features.goals=false` reports both `false`, and `code_mode_host` `true`.
+- **Not verified:** whether the model loses the sub-agent tools; that needs a real turn, which the coordinator did not ask for. The model-visible context (`codex debug prompt-input`, [prompt-sections.log.txt](prompt-sections.log.txt)) is unchanged by the two switches: it keeps its `multi_agent_role` and `multi_agent_mode` sections.
+- **Discarded first attempt:** in that run, `jusched.exe` and `jucheck.exe` appeared "under" the gateway only because the gateway reused the PID of their long-gone parent. The run was repeated, and the log holds the repeat.
 
 ### Code-mode host
 
@@ -213,6 +228,8 @@ To show them red, `cli.ts`, `harness.ts` and `options.ts` were restored from `a4
 
 `stops before the turn when the run is cancelled during the listing` passed on `main` too. It covers the new abort path and is not a red-before test.
 
+**Red before for the follow-up.** The test `switches off sub-agents and goals unless the node turns one back on` was added with the default lists extended, and run on `96efaed8` before `ISOLATED_FEATURES` changed. It failed with "expected [ 'features.plugins=false', …(8) ] to include 'features.multi_agent=false'". So did the exact-list tests (11 failed in `isolation.test.ts` and `harness.test.ts`). All pass after the change.
+
 The fake CLI also writes a warning to stderr before the listing's JSON, as the real CLI does under a temporary `CODEX_HOME`. The first commit (`7553cce4`) parsed the combined output. The second commit (`6abe20a1`) parses stdout alone; the CLI runner now also returns stdout.
 
 Changed tests:
@@ -241,7 +258,7 @@ All gates ran on the final state, with Node v22.23.4 first on `PATH`, `GG_TEST_P
 | `pnpm check:layers`                                                        | Layer rules: OK                                                                                                                                |
 | `pnpm check:deps`                                                          | 0 errors; 3 `no-orphans` warnings on files this change does not touch (`drizzle.config.ts`, `e2e/shutdown.config.ts`, `check-templates.d.mts`) |
 | `pnpm format:check`                                                        | all files use Prettier style                                                                                                                   |
-| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                   | 597 passed, 4 skipped; lines 99.39%, branches 95.31%                                                                                           |
+| `pnpm --filter @graphgoblin/adapter-codex test:coverage`                   | 598 passed, 4 skipped; lines 99.39%, branches 95.31%                                                                                           |
 | `pnpm --filter @graphgoblin/infrastructure test:coverage`                  | 871 passed; lines 98.12%, branches 94.31% (no change in this package)                                                                          |
 | `pnpm --filter @graphgoblin/engine test:coverage`                          | 1763 passed; lines 96.94%, branches 91.2% (no change in this package)                                                                          |
 | `pnpm --filter @graphgoblin/api exec vitest run --coverage --maxWorkers=2` | 1683 passed, 14 skipped; lines 96.22%, branches 90.88%                                                                                         |
@@ -253,7 +270,7 @@ All gates ran on the final state, with Node v22.23.4 first on `PATH`, `GG_TEST_P
 ## 8. Open points
 
 1. **Still inherited from `config.toml`, owner's call.** Project trust, model providers and profiles, `service_tier` (this machine has `priority`), `personality` (`pragmatic`), `shell_environment_policy`, `prevent_idle_sleep`, the skills under `CODEX_HOME` and the personal `AGENTS.md` (empty here). `skills.include_instructions` exists in the binary but was not evaluated.
-2. **`multi_agent` and `goals` stay at the CLI defaults (on).** The brief listed `multi_agent` among "personal features", but it is a CLI default rather than a personal install or personal state. Turning it off in loops is a one-line change to `ISOLATED_FEATURES` if the owner wants loop turns to spawn no sub-agents.
+2. **`multi_agent` and `goals` are off by decision (2026-10-28).** Two reasons: both are set in the machine's personal `[features]`, and sub-agent spawning changes what an unattended turn can do. A node turns sub-agents back on with `{"features": {"multi_agent": true}}`. Whether a real turn then lacks the sub-agent tools is not observed (no real turn was run for this follow-up).
 3. **One plugin cannot be re-enabled alone.** The CLI cannot turn on a single plugin while `features.plugins=false`. A node can only turn all of the machine's plugins back on.
 4. **One extra CLI run per Codex turn.** The listing took about 0.1 to 0.5 s in the probes, and it also runs for each structured decision call.
 5. **Machine-specific evidence.** The listing and switches were verified on this machine's Codex configuration. A future CLI that changes `mcp list --json` fails turns closed with a message naming the listing.
@@ -261,5 +278,5 @@ All gates ran on the final state, with Node v22.23.4 first on `PATH`, `GG_TEST_P
 
 ## Files
 
-- `scripts/`: `lib.mjs` (gateway, process tree, redaction, session cleanup), `codex-turn.mjs`, `claude-turn.mjs`, `claude-debug-turn.mjs`, `cli-investigation.mjs`, `notify-probe.mjs`, `remove-sessions.mjs`, `redact-file.mjs`.
+- `scripts/`: `lib.mjs` (gateway, process tree, redaction, session cleanup), `codex-turn.mjs`, `claude-turn.mjs`, `claude-debug-turn.mjs`, `cli-investigation.mjs`, `notify-probe.mjs`, `prompt-sections.mjs`, `remove-sessions.mjs`, `redact-file.mjs`.
 - Logs: `codex-*.log.txt` and `codex-*-result.json` (one set per run), `codex-*-gateway.log.txt` (the API's HTTP request log), `claude-*.log.txt`, `claude-*-result.json`, `cli-investigation.log.txt`, `notify-probe.log.txt`, `red-before.log.txt`. All are UTF-8 with profile paths, the machine name and credential-shaped strings redacted, and none exceeds 1,000,000 bytes.

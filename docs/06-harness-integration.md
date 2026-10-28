@@ -199,12 +199,12 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
 
-The machine's extensions are switched off for every loop turn ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory. It starts the turn with every listed MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.plugins`, `features.apps`, `features.memories` and `features.hooks` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; servers are therefore disabled by name.
+The machine's extensions are switched off for every loop turn ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory. It starts the turn with every listed MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.plugins`, `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; servers are therefore disabled by name.
 
 A loop turn still inherits from the machine:
 
 - the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
-- the CLI's built-in features at their defaults, such as `multi_agent`, `goals` and the code-mode host (`codex-code-mode-host.exe`);
+- the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
 - the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`.
 
 | Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                                                                          |

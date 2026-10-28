@@ -23,6 +23,8 @@ const DEFAULTS = [
   'features.apps=false',
   'features.memories=false',
   'features.hooks=false',
+  'features.multi_agent=false',
+  'features.goals=false',
   'notify=[]',
 ];
 const THREAD = [
@@ -43,6 +45,10 @@ const LISTING = [
   'features.memories=false',
   '--config',
   'features.hooks=false',
+  '--config',
+  'features.multi_agent=false',
+  '--config',
+  'features.goals=false',
 ];
 
 const directories: string[] = [];
@@ -137,6 +143,21 @@ describe('Codex loop turns without the machine personal extensions', () => {
       'approval_policy="untrusted"',
       ...THREAD,
     ]);
+  }, 30_000);
+
+  it('switches off sub-agents and goals unless the node turns one back on', async () => {
+    const defaults = await fakeTurn([]);
+    await expect(defaults.session.result).resolves.toMatchObject({ finalText: 'Recorded' });
+    const args = await configArgs(defaults.files.argv);
+    expect(args).toContain('features.multi_agent=false');
+    expect(args).toContain('features.goals=false');
+
+    const node = await fakeTurn([], { features: { multi_agent: true } });
+    await expect(node.session.result).resolves.toMatchObject({ finalText: 'Recorded' });
+    const overridden = await configArgs(node.files.argv);
+    expect(overridden).toContain('features.multi_agent=true');
+    expect(overridden).not.toContain('features.multi_agent=false');
+    expect(overridden).toContain('features.goals=false');
   }, 30_000);
 
   it('switches them off on a resumed conversation too', async () => {

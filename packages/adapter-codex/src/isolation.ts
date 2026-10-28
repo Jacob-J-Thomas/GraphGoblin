@@ -6,8 +6,8 @@ import type { CliCommand, CliRunner } from './cli.js';
  *
  * The CLI loads `~/.codex/config.toml` (and a trusted project's `.codex/config.toml`) for every
  * turn. Without these defaults a loop turn starts the machine's MCP servers, installed and remote
- * plugins (with their own MCP servers), ChatGPT apps, memories, lifecycle hooks and the `notify`
- * program. Verified against CLI 0.160.0 (docs/qa/2026-10-28-wp-423-isolation):
+ * plugins (with their own MCP servers), ChatGPT apps, memories, goals, sub-agents, lifecycle hooks
+ * and the `notify` program. Verified against CLI 0.160.0 (docs/qa/2026-10-28-wp-423-isolation):
  *
  * - `features.<name>=false` switches a feature off; `features.plugins=false` removes every local
  *   and remote plugin and the MCP servers they bring.
@@ -26,8 +26,21 @@ import type { CliCommand, CliRunner } from './cli.js';
 
 type Config = NonNullable<CodexOptions['config']>;
 
-/** Features that bring the machine's own installs, account connectors or personal state. */
-export const ISOLATED_FEATURES = ['plugins', 'apps', 'memories', 'hooks'] as const;
+/**
+ * Features that bring the machine's own installs, account connectors or personal state into a
+ * turn, or change what an unattended turn can do: plugins, ChatGPT apps, memories, lifecycle
+ * hooks, sub-agent spawning (`multi_agent`) and goals. The CLI's own code-mode host
+ * (`code_mode_host`) is its tool host, not an extension, and stays on: without it a turn runs no
+ * command.
+ */
+export const ISOLATED_FEATURES = [
+  'plugins',
+  'apps',
+  'memories',
+  'hooks',
+  'multi_agent',
+  'goals',
+] as const;
 
 /** The defaults every loop turn starts from, before the node's overrides. */
 export function isolationDefaults(): Config {

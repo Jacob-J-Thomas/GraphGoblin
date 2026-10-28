@@ -139,7 +139,14 @@ describe('CodexHarness.start', () => {
       codexPathOverride: '/opt/codex',
       env: { PATH: '/bin' },
       config: {
-        features: { plugins: false, apps: false, memories: false, hooks: false },
+        features: {
+          plugins: false,
+          apps: false,
+          memories: false,
+          hooks: false,
+          multi_agent: false,
+          goals: false,
+        },
         notify: [],
       },
     });
@@ -184,7 +191,14 @@ describe('CodexHarness.start', () => {
     // Node overrides layer over the isolation defaults key path by key path; dotted keys are
     // paths, as the CLI reads every `--config` key.
     expect(codex.runs[1]?.clientOptions.config).toEqual({
-      features: { plugins: false, apps: false, memories: true, hooks: false },
+      features: {
+        plugins: false,
+        apps: false,
+        memories: true,
+        hooks: false,
+        multi_agent: false,
+        goals: false,
+      },
       notify: ['notify.exe'],
       mcp_servers: { docs: { command: 'npx', args: ['docs-mcp'] } },
       list: [1, 'a'],
