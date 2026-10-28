@@ -464,7 +464,7 @@ it.skipIf(process.platform !== 'linux')(
     const pidFile = join(a.f.dataDir, 'harness-pid');
     await writeFile(
       binary,
-      `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log('codex-cli 0.160.0');process.exit(0)}if(process.argv.includes('--help')){console.log('--json --model --sandbox --cd --skip-git-repo-check --output-schema --config');process.exit(0)}if(process.argv.includes('login')){console.log('Logged in using ChatGPT');process.exit(0)}require('node:fs').writeFileSync(${JSON.stringify(pidFile)},String(process.pid));console.log(JSON.stringify({type:'thread.started',thread_id:'controlled-session'}));console.log(JSON.stringify({type:'turn.started'}));setInterval(()=>{},1000);`,
+      `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log('codex-cli 0.160.0');process.exit(0)}if(process.argv.includes('--help')){console.log('--json --model --sandbox --cd --skip-git-repo-check --output-schema --config');process.exit(0)}if(process.argv.includes('login')){console.log('Logged in using ChatGPT');process.exit(0)}if(process.argv.includes('mcp')&&process.argv.includes('list')){console.log('[]');process.exit(0)}require('node:fs').writeFileSync(${JSON.stringify(pidFile)},String(process.pid));console.log(JSON.stringify({type:'thread.started',thread_id:'controlled-session'}));console.log(JSON.stringify({type:'turn.started'}));setInterval(()=>{},1000);`,
     );
     await chmod(binary, 0o700);
     // Use a new process with this fixture executable, never an installed provider.

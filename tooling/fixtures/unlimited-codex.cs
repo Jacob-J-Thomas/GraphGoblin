@@ -8,6 +8,8 @@ public static class UnlimitedCodexFixture {
     if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return 0; }
     if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return 0; }
     if (Array.IndexOf(args, "login") >= 0 && Array.IndexOf(args, "status") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return 0; }
+    // The MCP listing before each turn (ADR-0063): no servers configured.
+    if (args.Length >= 2 && args[0] == "mcp" && args[1] == "list") { Console.WriteLine("[]"); return 0; }
     if (args.Length == 0 || args[0] != "exec") { Console.Error.WriteLine("Fixture refuses unknown commands"); return 2; }
     var pidFile = Environment.GetEnvironmentVariable("GG_WP_F3_PID_FILE");
     if (!String.IsNullOrEmpty(pidFile)) File.WriteAllText(pidFile, Process.GetCurrentProcess().Id.ToString());
