@@ -81,6 +81,16 @@ export function layerConfig(...layers: Config[]): Config {
   return layers.reduce<Config>((acc, layer) => merge(acc, expand(layer)), {});
 }
 
+/** The CLI's own words for a failure: its non-empty lines joined, bounded to 300 characters. */
+function excerpt(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' | ')
+    .slice(0, 300);
+}
+
 /** A server name usable as one `--config` key segment. */
 const SERVER_NAME = /^[A-Za-z0-9_-]+$/;
 
@@ -122,14 +132,20 @@ export async function configuredServers(
       /enoent/i.test(result.spawnError) ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
       `the CLI did not run (${result.spawnError}).`,
     );
-  const firstLine = result.output.trim().split(/\r?\n/)[0]?.slice(0, 300) ?? '';
   if (result.code !== 0)
-    throw listingFailure('HARNESS_TURN_FAILED', `mcp list exited ${result.code}: ${firstLine}`);
+    throw listingFailure(
+      'HARNESS_TURN_FAILED',
+      `mcp list exited ${result.code}: ${excerpt(result.output)}`,
+    );
+  // Only stdout carries the JSON; warnings or logs the CLI writes to stderr are not part of it.
   let listed: unknown;
   try {
-    listed = JSON.parse(result.output);
+    listed = JSON.parse(result.stdout);
   } catch {
-    throw listingFailure('HARNESS_TURN_FAILED', `mcp list printed no JSON: ${firstLine}`);
+    throw listingFailure(
+      'HARNESS_TURN_FAILED',
+      `mcp list printed no JSON: ${excerpt(result.stdout)}`,
+    );
   }
   if (
     !Array.isArray(listed) ||

@@ -23,7 +23,10 @@ export interface CliCommand {
 
 export interface CliResult {
   code: number | null;
+  /** stdout and stderr together, in arrival order: preflight reads diagnostics from either. */
   output: string;
+  /** stdout alone, for machine-readable output (the MCP listing's JSON). */
+  stdout: string;
   /** Set when the process could not be started at all (missing binary, permissions). */
   spawnError?: string;
 }
@@ -63,6 +66,7 @@ export function cliFor(codexBinary: string): CliCommand {
 export const runCli: CliRunner = (cli, args, timeoutMs, signal) =>
   new Promise((resolve) => {
     let output = '';
+    let stdout = '';
     let settled = false;
     const finish = (result: CliResult): void => {
       if (settled) return;
@@ -80,15 +84,18 @@ export const runCli: CliRunner = (cli, args, timeoutMs, signal) =>
     });
     const timer = setTimeout(() => {
       child.kill();
-      finish({ code: null, output, spawnError: `timed out after ${timeoutMs} ms` });
+      finish({ code: null, output, stdout, spawnError: `timed out after ${timeoutMs} ms` });
     }, timeoutMs);
-    const collect = (chunk: Buffer): void => {
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString('utf8');
+      output += text;
+      stdout += text;
+    });
+    child.stderr?.on('data', (chunk: Buffer) => {
       output += chunk.toString('utf8');
-    };
-    child.stdout?.on('data', collect);
-    child.stderr?.on('data', collect);
-    child.on('error', (error) => finish({ code: null, output, spawnError: error.message }));
-    child.on('close', (code) => finish({ code, output }));
+    });
+    child.on('error', (error) => finish({ code: null, output, stdout, spawnError: error.message }));
+    child.on('close', (code) => finish({ code, output, stdout }));
   });
 
 /** Fresh names tried before collisions fail a no-turn check. */

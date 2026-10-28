@@ -540,18 +540,19 @@ describe('cancellation', () => {
 
 describe('preflight', () => {
   const runner =
-    (responses: Record<string, Awaited<ReturnType<CliRunner>>>): CliRunner =>
-    (_cli, args) =>
-      Promise.resolve(
+    (responses: Record<string, Omit<Awaited<ReturnType<CliRunner>>, 'stdout'>>): CliRunner =>
+    (_cli, args) => {
+      const response =
         responses[args.join(' ')] ??
-          (args.includes('--help')
-            ? {
-                code: 0,
-                output:
-                  '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
-              }
-            : { code: 1, output: '' }),
-      );
+        (args.includes('--help')
+          ? {
+              code: 0,
+              output:
+                '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+            }
+          : { code: 1, output: '' });
+      return Promise.resolve({ ...response, stdout: response.output });
+    };
 
   it('reports version and login for a healthy install', async () => {
     const harness = new CodexHarness({

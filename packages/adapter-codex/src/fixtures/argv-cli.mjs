@@ -6,8 +6,9 @@
 //
 // Before each turn the harness lists the machine's MCP servers with `<binary> mcp list --json`
 // (ADR-0063). This fake answers it as CLI 0.160.0 does, with one entry per server named in
-// GG_FAKE_CODEX_MCP (a JSON array of names, default none); GG_FAKE_CODEX_LISTING records that
-// call's arguments and working directory; GG_FAKE_CODEX_MCP_EXIT makes it fail with that code.
+// GG_FAKE_CODEX_MCP (a JSON array of names, default none), after a warning on stderr;
+// GG_FAKE_CODEX_LISTING records that call's arguments and working directory;
+// GG_FAKE_CODEX_MCP_EXIT makes it fail with that code.
 import { readFileSync, writeFileSync, writeSync } from 'node:fs';
 import { basename } from 'node:path';
 import process from 'node:process';
@@ -20,6 +21,9 @@ if (command === 'mcp' && process.argv.includes('list')) {
       process.env.GG_FAKE_CODEX_LISTING,
       JSON.stringify({ argv: ['mcp', ...process.argv.slice(2)], cwd: process.cwd() }),
     );
+  // The real CLI can warn on stderr (for example about PATH aliases under a temporary
+  // CODEX_HOME); only stdout carries the JSON.
+  writeSync(2, 'WARNING: proceeding, even though we could not create PATH aliases\n');
   const exit = Number(process.env.GG_FAKE_CODEX_MCP_EXIT ?? 0);
   if (exit) {
     writeSync(2, 'Error: failed to load configuration\n');

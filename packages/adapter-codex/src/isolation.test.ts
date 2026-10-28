@@ -158,9 +158,8 @@ describe('Codex loop turns without the machine personal extensions', () => {
     await expect(session.result).rejects.toMatchObject({
       code: 'HARNESS_TURN_FAILED',
       submission: 'definitely-not-submitted',
-      message: expect.stringMatching(
-        /^Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 2: Error: failed to load configuration$/,
-      ),
+      message:
+        "Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 2: WARNING: proceeding, even though we could not create PATH aliases | Error: failed to load configuration",
     });
     expect(existsSync(files.argv)).toBe(false);
   }, 30_000);
@@ -181,34 +180,33 @@ describe('the MCP listing before each turn', () => {
     return { harness, calls };
   }
 
+  /** A completed listing whose stdout is `stdout`, after a warning on stderr. */
+  const listed = (stdout: string): CliResult => ({
+    code: 0,
+    output: `WARNING: on stderr\n${stdout}`,
+    stdout,
+  });
+
   it.each([
     [
-      { code: null, output: '', spawnError: 'spawn C:/missing/codex.exe ENOENT' },
+      { code: null, output: '', stdout: '', spawnError: 'spawn C:/missing/codex.exe ENOENT' },
       'HARNESS_NOT_INSTALLED',
       'the CLI did not run (spawn C:/missing/codex.exe ENOENT).',
     ],
     [
-      { code: null, output: '', spawnError: 'timed out after 15000 ms' },
+      { code: null, output: '', stdout: '', spawnError: 'timed out after 15000 ms' },
       'HARNESS_TURN_FAILED',
       'the CLI did not run (timed out after 15000 ms).',
     ],
     [
-      { code: 0, output: 'Loaded.\nnot json' },
+      listed('Loaded.\nnot json'),
       'HARNESS_TURN_FAILED',
-      'mcp list printed no JSON: Loaded.',
+      'mcp list printed no JSON: Loaded. | not json',
     ],
+    [listed('{"name":"docs"}'), 'HARNESS_TURN_FAILED', 'mcp list printed an unexpected shape.'],
+    [listed('[{"enabled":true}]'), 'HARNESS_TURN_FAILED', 'mcp list printed an unexpected shape.'],
     [
-      { code: 0, output: '{"name":"docs"}' },
-      'HARNESS_TURN_FAILED',
-      'mcp list printed an unexpected shape.',
-    ],
-    [
-      { code: 0, output: '[{"enabled":true}]' },
-      'HARNESS_TURN_FAILED',
-      'mcp list printed an unexpected shape.',
-    ],
-    [
-      { code: 0, output: '[{"name":"docs"},{"name":"team.docs"}]' },
+      listed('[{"name":"docs"},{"name":"team.docs"}]'),
       'HARNESS_TURN_FAILED',
       'the server name "team.docs" cannot be switched off through --config.',
     ],
@@ -239,9 +237,7 @@ describe('the MCP listing before each turn', () => {
     const { harness } = harnessWith(
       (signal) =>
         new Promise((resolve) =>
-          signal?.addEventListener('abort', () => resolve({ code: 0, output: '[]' }), {
-            once: true,
-          }),
+          signal?.addEventListener('abort', () => resolve(listed('[]')), { once: true }),
         ),
     );
     const session = harness.start(request(directory), new AbortController().signal);
