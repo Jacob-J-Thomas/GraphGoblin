@@ -63,17 +63,24 @@ describe('loadConfig', () => {
   });
 
   it.each([
-    { env: { GG_JEV_API_KEY: 'test-primary-key' }, expected: 'test-primary-key' },
-    { env: { JEV_API_KEY: 'test-fallback-key' }, expected: 'test-fallback-key' },
+    {
+      env: { GG_JEV_API_KEY: 'test-primary-key' },
+      expected: { value: 'test-primary-key', source: 'GG_JEV_API_KEY' },
+    },
+    {
+      env: { JEV_API_KEY: 'test-fallback-key' },
+      expected: { value: 'test-fallback-key', source: 'JEV_API_KEY' },
+    },
     {
       env: { GG_JEV_API_KEY: 'test-primary-key', JEV_API_KEY: 'test-fallback-key' },
-      expected: 'test-primary-key',
+      expected: { value: 'test-primary-key', source: 'GG_JEV_API_KEY' },
     },
+    { env: {}, expected: undefined },
     { env: { GG_JEV_API_KEY: '' }, expected: undefined },
     { env: { JEV_API_KEY: '' }, expected: undefined },
     { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, expected: undefined },
-  ])('resolves the Jev environment seed ($env)', ({ env, expected }) => {
-    expect(loadConfig(env).jevApiKey).toBe(expected);
+  ])('resolves the Jev environment seed and its source ($env)', ({ env, expected }) => {
+    expect(loadConfig(env).jevApiKey).toEqual(expected);
   });
 });
 
