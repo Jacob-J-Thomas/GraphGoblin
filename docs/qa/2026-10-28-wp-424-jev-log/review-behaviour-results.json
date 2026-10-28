@@ -1,0 +1,146 @@
+{
+  "node": "v22.23.4",
+  "results": [
+    {
+      "id": "a1-jev-only",
+      "store": "store-a",
+      "port": 6340,
+      "pid": 47732,
+      "envJevVariables": {
+        "JEV_API_KEY": "<review-fake-key>"
+      },
+      "secrets": [
+        {
+          "name": "jev-api-key",
+          "updatedAt": "2026-10-28T05:00:40.996Z"
+        }
+      ],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 9,
+      "seedLines": [
+        "seeded jev-api-key from JEV_API_KEY"
+      ],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    },
+    {
+      "id": "a2-both-existing-secret",
+      "store": "store-a",
+      "port": 6341,
+      "pid": 51300,
+      "envJevVariables": {
+        "JEV_API_KEY": "<review-fake-key>",
+        "GG_JEV_API_KEY": "<review-fake-key-gg>"
+      },
+      "secrets": [
+        {
+          "name": "jev-api-key",
+          "updatedAt": "2026-10-28T05:00:40.996Z"
+        }
+      ],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 8,
+      "seedLines": [],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    },
+    {
+      "id": "c1-gg-only-fresh",
+      "store": "store-c",
+      "port": 6342,
+      "pid": 24520,
+      "envJevVariables": {
+        "GG_JEV_API_KEY": "<review-fake-key-gg>"
+      },
+      "secrets": [
+        {
+          "name": "jev-api-key",
+          "updatedAt": "2026-10-28T05:00:48.445Z"
+        }
+      ],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 9,
+      "seedLines": [
+        "seeded jev-api-key from GG_JEV_API_KEY"
+      ],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    },
+    {
+      "id": "d1-both-fresh",
+      "store": "store-d",
+      "port": 6343,
+      "pid": 21848,
+      "envJevVariables": {
+        "GG_JEV_API_KEY": "<review-fake-key-gg>",
+        "JEV_API_KEY": "<review-fake-key>"
+      },
+      "secrets": [
+        {
+          "name": "jev-api-key",
+          "updatedAt": "2026-10-28T05:00:52.731Z"
+        }
+      ],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 9,
+      "seedLines": [
+        "seeded jev-api-key from GG_JEV_API_KEY"
+      ],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    },
+    {
+      "id": "e1-empty-gg-with-fallback-fresh",
+      "store": "store-e",
+      "port": 6344,
+      "pid": 15736,
+      "envJevVariables": {
+        "GG_JEV_API_KEY": "<empty>",
+        "JEV_API_KEY": "<review-fake-key>"
+      },
+      "secrets": [],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 8,
+      "seedLines": [],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    },
+    {
+      "id": "f1-neither-fresh",
+      "store": "store-f",
+      "port": 6345,
+      "pid": 28784,
+      "envJevVariables": {},
+      "secrets": [],
+      "drainStatus": 202,
+      "exitCode": 0,
+      "logLineCount": 8,
+      "seedLines": [],
+      "levelsSeen": [
+        30
+      ],
+      "logContainsFakeKey": false,
+      "storeFilesContainingFakeKey": []
+    }
+  ]
+}

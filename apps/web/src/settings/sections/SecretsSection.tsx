@@ -150,8 +150,8 @@ export function SecretsSection() {
                         {s.name === 'jev-api-key' ? (
                           <p>
                             Removing jev-api-key turns Jev decisions off until the key is set again.
-                            If GG_JEV_API_KEY is set, startup re-seeds the deleted secret at the
-                            next server start.
+                            If GG_JEV_API_KEY is set, or JEV_API_KEY when GG_JEV_API_KEY is unset,
+                            startup re-seeds the deleted secret at the next server start.
                           </p>
                         ) : null}
                       </>

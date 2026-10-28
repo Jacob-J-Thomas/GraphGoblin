@@ -477,8 +477,8 @@ export async function createContainer(
               .catch(refuseStore);
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
-              await ownerSecrets.set(JEV_SECRET, config.jevApiKey);
-              logger.info({}, 'seeded jev-api-key from GG_JEV_API_KEY');
+              await ownerSecrets.set(JEV_SECRET, config.jevApiKey.value);
+              logger.info({}, `seeded jev-api-key from ${config.jevApiKey.source}`);
             }
             await catalog.seed();
             await manager.start();
