@@ -1,0 +1,46 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/packages/adapter-codex
+
+ ❯ src/effort.test.ts (11 tests | 1 failed) 1086ms
+   ❯ the provider name for effort none (5)
+     × sends none as minimal to a family whose entry names the level minimal 106ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/effort.test.ts > the provider name for effort none > sends none as minimal to a family whose entry names the level minimal
+AssertionError: expected [ 'model_reasoning_effort="none"' ] to deeply equal [ 'model_reasoning_effort="minimal"' ]
+
+- Expected
++ Received
+
+  [
+-   "model_reasoning_effort=\"minimal\"",
++   "model_reasoning_effort=\"none\"",
+  ]
+
+ ❯ src/effort.test.ts:86:83
+     84|   it('sends none as minimal to a family whose entry names the level mi…
+     85|     const families = [{ prefix: 'gpt-5-legacy', none: 'minimal' as con…
+     86|     expect(effortArguments(await argvFor('gpt-5-legacy-mini', 'none', …
+       |                                                                                   ^
+     87|       'model_reasoning_effort="minimal"',
+     88|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  23:32:20
+   Duration  5.07s (transform 44%, import 33%, tests 23%)
+
+  Transform  transforming modules took 2.11s · 44% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a65ec1cd773b204b7\packages\adapter-codex
+

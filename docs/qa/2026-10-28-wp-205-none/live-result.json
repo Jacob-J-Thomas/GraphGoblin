@@ -1,0 +1,115 @@
+{
+  "scenario": "live",
+  "passed": 6,
+  "failed": 0,
+  "observations": 2,
+  "realTurns": [
+    {
+      "n": 1,
+      "harness": "codex",
+      "model": "gpt-6-luna",
+      "effort": "none",
+      "runId": "01M60E1YZMJ972Y6K3JETG63VK",
+      "prompt": "one line"
+    }
+  ],
+  "checks": [
+    {
+      "id": "L-1 the real gpt-6-luna turn at none completed and the run succeeded",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "failure": null,
+        "eventTypes": [
+          "run.queued",
+          "run.started",
+          "node.started",
+          "node.finished",
+          "node.started",
+          "harness.turn",
+          "harness.session",
+          "harness.submission",
+          "node.progress",
+          "harness.usage",
+          "node.finished",
+          "node.started",
+          "exit.evaluated",
+          "node.finished",
+          "run.finished"
+        ]
+      }
+    },
+    {
+      "id": "L-2 the run record shows the requested effort none (harness.session)",
+      "ok": true,
+      "detail": [
+        {
+          "type": "harness.session",
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "mode": "fresh"
+        }
+      ]
+    },
+    {
+      "id": "L-3 the node output (final text, first 80 characters)",
+      "ok": null,
+      "detail": {
+        "text": "null"
+      }
+    },
+    {
+      "id": "L-4 the Codex CLI received --config model_reasoning_effort=\"none\" (codex.exe command line)",
+      "ok": true,
+      "detail": [
+        {
+          "pid": 33380,
+          "parentIsGateway": true,
+          "model": "gpt-6-luna",
+          "effortArgument": "model_reasoning_effort=\\\"none\\\""
+        }
+      ]
+    },
+    {
+      "id": "L-5 the gateway debug log names the canonical effort and the provider name",
+      "ok": true,
+      "detail": [
+        {
+          "level": 20,
+          "model": "gpt-6-luna",
+          "effort": "none",
+          "providerEffort": "none",
+          "msg": "codex: reasoning effort sent to the CLI"
+        }
+      ]
+    },
+    {
+      "id": "L-6 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "L-7 the CLI session record of this turn (turn_context model and effort only)",
+      "ok": null,
+      "detail": [
+        {
+          "file": "rollout-2026-10-27T23-59-54-01a180e0-fff0-78b3-8995-e8c258cd533b.jsonl",
+          "turnContext": [
+            "model=gpt-6-luna",
+            "reasoning_effort=none",
+            "effort=none"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L-8 the Codex session records this check created (cwd inside its store) are removed; no other session touched",
+      "ok": true,
+      "detail": [
+        "rollout-2026-10-27T23-59-54-01a180e0-fff0-78b3-8995-e8c258cd533b.jsonl"
+      ]
+    }
+  ],
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-live-XikqCw"
+}

@@ -1,0 +1,130 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/packages/infrastructure
+
+ ❯ src/sqlite/storage.test.ts (44 tests | 2 failed) 6326ms
+   ❯ settings, api keys, model catalog (3)
+     × seeds the model catalog once and answers allow-list questions 71ms
+   ❯ migration 0003 model catalog max effort (18)
+     × does not reapply the migration but seeding restores current harness efforts 216ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/storage.test.ts > settings, api keys, model catalog > seeds the model catalog once and answers allow-list questions
+AssertionError: expected { 'gpt-5.5': [ 'low', …(3) ], …(7) } to deeply equal { 'gpt-5.5': [ 'low', …(3) ], …(7) }
+
+- Expected
++ Received
+
+@@ -4,59 +4,52 @@
+      "medium",
+      "high",
+      "xhigh",
+    ],
+    "gpt-5.6-luna": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-terra": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-astra": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-luna": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6.1-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+
+ ❯ src/sqlite/storage.test.ts:864:7
+    862|         entries.filter((m) => m.harness === 'codex').map((m) => [m.mod…
+    863|       ),
+    864|     ).toEqual({
+       |       ^
+    865|       'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+    866|       'gpt-5.6-luna': noneToMax,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/sqlite/storage.test.ts > migration 0003 model catalog max effort > does not reapply the migration but seeding restores current harness efforts
+AssertionError: expected { harness: 'codex', …(6) } to deeply equal { harness: 'codex', …(6) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,9 @@
+  {
+    "defaultEffort": "low",
+    "displayName": "GPT-6 Luna",
+    "efforts": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+
+ ❯ src/sqlite/storage.test.ts:1158:81
+    1156|       // The startup seed replaces stored harness efforts, so such a s…
+    1157|       // Luna on its next start, with no data migration.
+    1158|       expect((await catalog.list()).find((entry) => entry.model === ro…
+       |                                                                                 ^
+    1159|         ...row,
+    1160|         source: 'harness',
+ ❯ withUpgrade src/sqlite/storage.test.ts:961:7
+ ❯ src/sqlite/storage.test.ts:1146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 42 passed (44)
+   Start at  23:32:35
+   Duration  10.48s (tests 62%, import 22%, transform 16%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a65ec1cd773b204b7\packages\infrastructure
+

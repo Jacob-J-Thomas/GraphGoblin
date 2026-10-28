@@ -1,0 +1,141 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/web
+
+ ❯ src/settings/sections/DefaultsSection.test.tsx (13 tests | 1 failed) 1240ms
+   ❯ Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) (7)
+     × offers the server default model efforts with no model selected, none first as no reasoning 61ms
+ ❯ src/forms/fields/model.test.tsx (39 tests | 1 failed) 15625ms
+   ❯ catalog field controls (30)
+     × lists none first and labels it as no reasoning (#205) 405ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/fields/model.test.tsx > catalog field controls > lists none first and labels it as no reasoning (#205)
+AssertionError: expected [ [ '', 'Default (low)' ], …(3) ] to deeply equal [ [ '', 'Default (low)' ], …(3) ]
+
+- Expected
++ Received
+
+@@ -3,11 +3,11 @@
+      "",
+      "Default (low)",
+    ],
+    [
+      "none",
+-     "none (no reasoning)",
++     "none",
+    ],
+    [
+      "low",
+      "low",
+    ],
+
+ ❯ src/forms/fields/model.test.tsx:562:58
+    560|     await user.selectOptions(model(), 'alpha');
+    561|     const options = within(effort()).getAllByRole<HTMLOptionElement>('…
+    562|     expect(options.map((o) => [o.value, o.textContent])).toEqual([
+       |                                                          ^
+    563|       ['', 'Default (low)'],
+    564|       ['none', 'none (no reasoning)'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/settings/sections/DefaultsSection.test.tsx > Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2) > offers the server default model efforts with no model selected, none first as no reasoning
+TestingLibraryElementError: Unable to find an accessible element with the role "option" and name "none (no reasoning)"
+
+Here are the accessible roles:
+
+  option:
+
+  Name "(server default)":
+  <option
+    value=""
+  />
+
+  --------------------------------------------------option:
+
+  Name "none":
+  <option />
+
+  --------------------------------------------------option:
+
+  Name "low":
+  <option />
+
+  --------------------------------------------------option:
+
+  Name "medium":
+  <option />
+
+  --------------------------------------------------option:
+
+  Name "high":
+  <option />
+
+  --------------------------------------------------option:
+
+  Name "xhigh":
+  <option />
+
+  --------------------------------------------------option:
+
+  Name "max":
+  <option />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<select
+  class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"
+  id="default-effort-codex"
+>
+  <option
+    value=""
+  >
+    (server default)
+  </option>
+  <option>
+    none
+  </option>
+  <option>
+    low
+  </option>
+  <option>
+    medium
+  </option>
+  <option>
+    high
+  </option>
+  <option>
+    xhigh
+  </option>
+  <option>
+    max
+  </option>
+</select>
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/settings/sections/DefaultsSection.test.tsx:202:34
+    200|     renderWith(<DefaultsSection />, '/', codexOnly());
+    201|     await waitFor(() => expect(offered()).toEqual(['', ...noneToMax]));
+    202|     expect(within(codexEffort()).getByRole('option', { name: 'none (no…
+       |                                  ^
+    203|       'none',
+    204|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 50 passed (52)
+   Start at  23:33:18
+   Duration  27.84s (tests 41%, transform 23%, environment 21%, import 9%, setup 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a65ec1cd773b204b7\apps\web
+
