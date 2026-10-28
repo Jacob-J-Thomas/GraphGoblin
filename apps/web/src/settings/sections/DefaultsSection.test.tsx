@@ -167,8 +167,8 @@ describe('Defaults readiness lines', () => {
 });
 
 describe('Codex default effort follows the model it applies to (#205, PR #426 QA D-1, O-2)', () => {
-  const toMax = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
-  const lunaFull: FakeApi['catalog'][number] = { ...luna, efforts: [...toMax] };
+  const noneToMax = ['none', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+  const lunaFull: FakeApi['catalog'][number] = { ...luna, efforts: [...noneToMax] };
   const gpt55: FakeApi['catalog'][number] = {
     ...luna,
     model: 'gpt-5.5',
@@ -196,9 +196,12 @@ describe('Codex default effort follows the model it applies to (#205, PR #426 QA
       },
     ]);
 
-  it('offers the server default model efforts with no model selected, never minimal', async () => {
+  it('offers the server default model efforts with no model selected, none first as no reasoning', async () => {
     renderWith(<DefaultsSection />, '/', codexOnly());
-    await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+    await waitFor(() => expect(offered()).toEqual(['', ...noneToMax]));
+    expect(within(codexEffort()).getByRole('option', { name: 'none (no reasoning)' })).toHaveValue(
+      'none',
+    );
   });
 
   it('offers only the efforts every model shares while the server default model is unknown', async () => {
@@ -214,17 +217,26 @@ describe('Codex default effort follows the model it applies to (#205, PR #426 QA
     await waitFor(() => expect(offered()).toEqual(['', 'low', 'medium', 'high', 'xhigh']));
   });
 
-  it.each([{ model: 'gpt-6-luna' }, {}])(
-    'explains a stored minimal default its model does not offer (%j)',
+  it.each([{ model: 'gpt-5.5' }, {}])(
+    'explains a stored none default its model does not offer (%j)',
     async (model) => {
-      renderWith(<DefaultsSection />, '/', codexOnly({ codex: { ...model, effort: 'minimal' } }));
+      const api = codexOnly({ codex: { ...model, effort: 'none' } });
+      // Without a model here, the effort applies to the server default model.
+      api.override(
+        'GET /system/model-defaults',
+        () =>
+          new Response(JSON.stringify({ byHarness: { codex: { model: 'gpt-5.5' } } }), {
+            headers: { 'content-type': 'application/json' },
+          }),
+      );
+      renderWith(<DefaultsSection />, '/', api);
       const message =
-        'Effort minimal is not supported by Luna. Choose a supported effort or Default.';
+        'Effort none is not supported by GPT-5.5. Choose a supported effort or Default.';
       await waitFor(() => expect(codexEffort()).toHaveAccessibleDescription(message));
-      expect(codexEffort()).toHaveValue('minimal');
+      expect(codexEffort()).toHaveValue('none');
       expect(
         within(codexEffort()).getByRole('option', {
-          name: 'minimal (not supported by this model)',
+          name: 'none (not supported by this model)',
         }),
       ).toBeDisabled();
       expect(screen.getByText(message)).toHaveClass('text-status-warn-fg');
@@ -236,7 +248,7 @@ describe('Codex default effort follows the model it applies to (#205, PR #426 QA
     const api = codexOnly({ codex: { model: 'gpt-6-luna' } });
     api.override('PUT /settings', () => refusal('EFFORT_UNSUPPORTED', 'effort'));
     renderWith(<DefaultsSection />, '/', api);
-    await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+    await waitFor(() => expect(offered()).toEqual(['', ...noneToMax]));
     await user.selectOptions(codexEffort(), 'max');
     const message =
       'Not saved. Effort max is not supported by Luna. Choose a supported effort or Default.';
@@ -251,7 +263,7 @@ describe('Codex default effort follows the model it applies to (#205, PR #426 QA
     const api = codexOnly();
     api.override('PUT /settings', () => refusal('EFFORT_UNSUPPORTED', 'effort'));
     renderWith(<DefaultsSection />, '/', api);
-    await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+    await waitFor(() => expect(offered()).toEqual(['', ...noneToMax]));
     await user.selectOptions(codexEffort(), 'xhigh');
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Not saved. Effort xhigh is not supported by Luna. Choose a supported effort or Default.',
@@ -263,7 +275,7 @@ describe('Codex default effort follows the model it applies to (#205, PR #426 QA
     const api = codexOnly({ codex: { model: 'gpt-6-luna' } });
     api.override('PUT /settings', () => refusal('MODEL_NOT_IN_CATALOG', 'model'));
     renderWith(<DefaultsSection />, '/', api);
-    await waitFor(() => expect(offered()).toEqual(['', ...toMax]));
+    await waitFor(() => expect(offered()).toEqual(['', ...noneToMax]));
     await user.selectOptions(codexEffort(), 'high');
     expect(await screen.findByText(/invalid harness defaults/)).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();

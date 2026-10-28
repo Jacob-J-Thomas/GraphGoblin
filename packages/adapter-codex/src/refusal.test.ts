@@ -16,6 +16,8 @@ const inherited = Object.fromEntries(
       entry[1] !== undefined && !['NODE_OPTIONS', 'NODE_V8_COVERAGE'].includes(entry[0]),
   ),
 );
+// The provider's recorded refusal of a request at the old effort `minimal` (F2 LP-5). The fake CLI
+// replays it whatever effort the request names; only its handling is under test here.
 const PROVIDER_MESSAGE =
   "Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.";
 
@@ -62,7 +64,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       {
         workingDirectory: await workspace(),
         model: 'gpt-6-luna',
-        effort: 'minimal',
+        effort: 'none',
         options: { sandbox: 'read-only', approval: 'never' },
         turn: { prompt: 'Controlled fixture; no provider call' },
       },
@@ -142,7 +144,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
         {
           workingDirectory: await workspace(),
           model: 'gpt-6-luna',
-          effort: 'minimal',
+          effort: 'none',
           options: { sandbox: 'read-only', approval: 'never' },
           turn: { prompt: 'Controlled fixture; no provider call' },
         },
@@ -177,7 +179,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
           label: 'Infer',
           config: {
             model: 'gpt-6-luna',
-            effort: 'minimal',
+            effort: 'none',
             prompt: { template: 'The complete authored task' },
           },
         }),
@@ -223,7 +225,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
         {
           workingDirectory: await workspace(),
           model: 'gpt-6-luna',
-          effort: 'minimal',
+          effort: 'none',
           options: { sandbox: 'read-only', approval: 'never' },
           turn: { prompt: 'Controlled fixture; no provider call' },
         },
@@ -262,7 +264,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
             label: 'Infer',
             config: {
               model: 'gpt-6-luna',
-              effort: 'minimal',
+              effort: 'none',
               prompt: { template: 'The complete authored task' },
             },
           }),

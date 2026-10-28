@@ -1,6 +1,6 @@
 # ADR-0020 - Clean design over backward compatibility until release
 
-Date: 2026-10-04. Status: Accepted. For format changes of stored data, the one-off-migration sentence below is superseded by [ADR-0042](ADR-0042-explicit-resets-replace-conversion.md): older stores are refused and reset explicitly; Drizzle schema migrations within the current format are unchanged.
+Date: 2026-10-04. Status: Accepted. For format changes of stored data, the one-off-migration sentence below is superseded by [ADR-0042](ADR-0042-explicit-resets-replace-conversion.md): older stores are refused and reset explicitly; Drizzle schema migrations within the current format are unchanged. For stored content within the current format it is superseded by [ADR-0062](ADR-0062-stored-data-corrected-by-hand-before-1.0.md): no data migration; the CHANGELOG names the hand fix.
 
 ## Context
 

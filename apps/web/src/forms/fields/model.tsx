@@ -175,6 +175,11 @@ function sharedEfforts(entries: readonly ModelCatalogEntry[]): readonly string[]
   );
 }
 
+/** An effort choice's label: the level itself, with what `none` means. */
+export function effortOptionLabel(effort: string): string {
+  return effort === 'none' ? 'none (no reasoning)' : effort;
+}
+
 /**
  * A kept explicit effort the selected model does not offer, for the Effort field and the editor's
  * issue list alike. The choice is never changed for the user; they pick another effort or Default.
@@ -534,7 +539,7 @@ function CatalogField({
           value: entry.model,
           label: `${entry.displayName} (${entry.model})`,
         }))
-      : efforts.map((effort) => ({ value: effort, label: effort }));
+      : efforts.map((effort) => ({ value: effort, label: effortOptionLabel(effort) }));
   const unknownDefault = defaultsPending ? 'checking…' : 'unavailable';
   const inheritedEffort =
     query.data === undefined

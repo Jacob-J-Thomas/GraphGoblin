@@ -226,13 +226,13 @@ describe('Claude public integration', () => {
       }
     },
   );
-  it.each([CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL])(
-    'refuses an unsupported %s effort at authoring and never sends it',
+  it.each(['claude-opus-5-5', CLAUDE_FABLE_MODEL, CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL])(
+    'refuses effort none, which Claude Code does not offer, for %s at authoring and never sends it',
     async (model) => {
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
-        payload: { definition: definition(model, { effort: 'minimal' }) },
+        payload: { definition: definition(model, { effort: 'none' }) },
       });
       expect(created.statusCode).toBe(400);
       expect(created.body).toContain('EFFORT_UNSUPPORTED');
@@ -244,7 +244,7 @@ describe('Claude public integration', () => {
         const refused = await t.app.inject({
           method,
           url,
-          payload: { definition: definition(model, { effort: 'minimal' }) },
+          payload: { definition: definition(model, { effort: 'none' }) },
         });
         expect(refused.statusCode).toBe(method === 'PUT' ? 400 : 200);
         expect(refused.body).toContain('EFFORT_UNSUPPORTED');
@@ -253,7 +253,7 @@ describe('Claude public integration', () => {
       const defaults = await t.app.inject({
         method: 'PUT',
         url: '/settings',
-        payload: { defaults: { byHarness: { claude: { model, effort: 'minimal' } } } },
+        payload: { defaults: { byHarness: { claude: { model, effort: 'none' } } } },
       });
       expect(defaults.statusCode).toBe(400);
       expect(defaults.body).toContain('EFFORT_UNSUPPORTED');

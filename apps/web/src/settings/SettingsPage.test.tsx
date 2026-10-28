@@ -558,7 +558,7 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
   });
 
-  it.each([undefined, 'minimal'])(
+  it.each([undefined, 'none'])(
     'bounds inherited Claude default efforts without materializing a model, preserving saved %s',
     async (savedEffort) => {
       const api = seeded();
@@ -568,7 +568,7 @@ describe('SettingsPage', () => {
           source: 'harness',
           model: 'opus',
           displayName: 'Opus',
-          efforts: ['minimal', 'low', 'high', 'xhigh'],
+          efforts: ['none', 'low', 'high', 'xhigh'],
           defaultEffort: 'high',
           enabled: true,
         },
@@ -586,8 +586,8 @@ describe('SettingsPage', () => {
           source: 'harness',
           model: 'disabled',
           displayName: 'Disabled',
-          efforts: ['minimal'],
-          defaultEffort: 'minimal',
+          efforts: ['none'],
+          defaultEffort: 'none',
           enabled: false,
         },
         {
@@ -595,8 +595,8 @@ describe('SettingsPage', () => {
           source: 'harness',
           model: 'unverified',
           displayName: 'Unverified',
-          efforts: ['minimal'],
-          defaultEffort: 'minimal',
+          efforts: ['none'],
+          defaultEffort: 'none',
           enabled: true,
         },
       );
@@ -617,11 +617,11 @@ describe('SettingsPage', () => {
           },
           {
             model: 'disabled',
-            efforts: ['minimal'],
+            efforts: ['none'],
           },
           {
             model: 'unreported',
-            efforts: ['minimal'],
+            efforts: ['none'],
           },
         ],
       });
@@ -647,9 +647,8 @@ describe('SettingsPage', () => {
         'low',
         'high',
       ]);
-      if (savedEffort)
-        expect(within(effort).getByRole('option', { name: /minimal/ })).toBeDisabled();
-      else expect(within(effort).queryByRole('option', { name: /^minimal$/ })).toBeNull();
+      if (savedEffort) expect(within(effort).getByRole('option', { name: /none/ })).toBeDisabled();
+      else expect(within(effort).queryByRole('option', { name: /^none/ })).toBeNull();
       expect(
         api.calls.filter((call) => call.method === 'PUT' && call.path === '/settings'),
       ).toEqual([]);

@@ -20,6 +20,7 @@ import {
 } from '@openai/codex-sdk';
 import { bundledCli, cliFor, preflightCli, runCli, type CliRunner } from './cli.js';
 import { TurnAccumulator } from './events.js';
+import type { CodexEffortFamily } from './effort-names.js';
 import { clientOptions, threadOptions, type ResolvedSettings } from './options.js';
 import { EventQueue } from './queue.js';
 
@@ -47,6 +48,11 @@ export interface CodexHarnessOptions {
   model?: string;
   /** Effort when a request names none. Default `low`. */
   effort?: Effort;
+  /**
+   * The provider's name for the canonical effort `none`, per model family. Default
+   * `CODEX_EFFORT_FAMILIES`; a model of no listed family receives the canonical name.
+   */
+  effortFamilies?: readonly CodexEffortFamily[];
   /** Environment for the CLI. Default: inherit this process's environment. */
   env?: Record<string, string>;
   /** Timeout for each preflight CLI call. Default 15 s. */
@@ -158,9 +164,18 @@ export class CodexHarness implements HarnessPort {
     const client = this.clientFactory(
       clientOptions(settings.options, this.options.codexBinary, this.options.env),
     );
+    const perThread = threadOptions(settings, this.options.effortFamilies);
+    logger?.debug(
+      {
+        model: settings.model,
+        effort: settings.effort,
+        providerEffort: perThread.modelReasoningEffort,
+      },
+      'codex: reasoning effort sent to the CLI',
+    );
     const thread = resumeId
-      ? client.resumeThread(resumeId, threadOptions(settings))
-      : client.startThread(threadOptions(settings));
+      ? client.resumeThread(resumeId, perThread)
+      : client.startThread(perThread);
 
     const controller = new AbortController();
     // After an abort the CLI's output must end within the acknowledgement bound. A descendant that

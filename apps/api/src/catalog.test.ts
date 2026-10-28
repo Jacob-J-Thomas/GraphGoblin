@@ -366,7 +366,7 @@ describe('advisory model validation', () => {
   });
 });
 
-describe('Codex efforts are sent unchanged and offered per model (#205)', () => {
+describe('Codex efforts are offered per model, with none as the lowest level (#205)', () => {
   function withEffort(
     place: 'inference' | 'decision',
     model: string,
@@ -400,59 +400,131 @@ describe('Codex efforts are sent unchanged and offered per model (#205)', () => 
     return { ...definition, nodes: [definition.nodes[0]!, node, definition.nodes[2]!] };
   }
 
-  it('lists exactly the efforts the Codex CLI catalog gives each model: no minimal, no max for GPT-5.5', async () => {
+  it('offers none to max for GPT-6 and GPT-5.6 models and low to xhigh for GPT-5.5', async () => {
     const { items } = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>();
     const codex = items.filter((entry) => entry.harness === 'codex');
-    const toMax: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+    const noneToMax: Effort[] = ['none', 'low', 'medium', 'high', 'xhigh', 'max'];
     expect(Object.fromEntries(codex.map((entry) => [entry.model, entry.efforts]))).toEqual({
       'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
-      'gpt-5.6-luna': toMax,
-      'gpt-5.6-sol': toMax,
-      'gpt-5.6-terra': toMax,
-      'gpt-6-astra': toMax,
-      'gpt-6-luna': toMax,
-      'gpt-6-sol': toMax,
-      'gpt-6.1-sol': toMax,
+      'gpt-5.6-luna': noneToMax,
+      'gpt-5.6-sol': noneToMax,
+      'gpt-5.6-terra': noneToMax,
+      'gpt-6-astra': noneToMax,
+      'gpt-6-luna': noneToMax,
+      'gpt-6-sol': noneToMax,
+      'gpt-6.1-sol': noneToMax,
     });
   });
 
   it.each(['inference', 'decision'] as const)(
-    'refuses minimal for every seeded Codex model (%s, and as a default) before any request',
+    'accepts none for every GPT-6 and GPT-5.6 model (%s) and requests it under its canonical name',
     async (place) => {
       const { items } = (await t.app.inject('/model-catalog')).json<{
         items: ModelCatalogEntry[];
       }>();
-      const models = items.filter((entry) => entry.harness === 'codex').map((e) => e.model);
-      expect(models).toHaveLength(8);
+      const models = items
+        .filter((entry) => entry.harness === 'codex' && entry.model !== 'gpt-5.5')
+        .map((e) => e.model);
+      expect(models).toHaveLength(7);
       for (const model of models) {
-        const refused = await t.app.inject({
+        const created = await t.app.inject({
           method: 'POST',
           url: '/loops',
-          payload: { definition: withEffort(place, model, 'minimal') },
+          payload: { definition: withEffort(place, model, 'none') },
         });
-        expect(refused.statusCode, model).toBe(400);
-        expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+        expect(created.statusCode, created.body).toBe(201);
+        expect(created.json().issues, model).toEqual([]);
         const defaults = await t.app.inject({
           method: 'PUT',
           url: '/settings',
-          payload: { defaults: { byHarness: { codex: { model, effort: 'minimal' } } } },
+          payload: { defaults: { byHarness: { codex: { model, effort: 'none' } } } },
         });
-        expect(defaults.statusCode, model).toBe(400);
-        expect(defaults.body).toContain('EFFORT_UNSUPPORTED');
+        expect(defaults.statusCode, model).toBe(200);
       }
+      const loopId = await t.publishLoop(withEffort(place, 'gpt-6-luna', 'none'));
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      // The request and the run record carry the effort the user chose; only the Codex adapter
+      // turns it into the provider's name for the model's family.
+      const requested = place === 'inference' ? t.harness.started : t.codex.routes;
+      expect(requested.map(({ model, effort }) => ({ model, effort }))).toEqual([
+        { model: 'gpt-6-luna', effort: 'none' },
+      ]);
+    },
+  );
+
+  it.each(['inference', 'decision'] as const)(
+    'refuses none for GPT-5.5 (%s, and as a default) before any request',
+    async (place) => {
+      const refused = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: withEffort(place, 'gpt-5.5', 'none') },
+      });
+      expect(refused.statusCode).toBe(400);
+      expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+      const loopId = await t.publishLoop(withEffort(place, 'gpt-5.5', 'low'));
+      for (const [method, url] of [
+        ['PUT', `/loops/${loopId}/draft`],
+        ['POST', `/loops/${loopId}/validate`],
+      ] as const) {
+        const response = await t.app.inject({
+          method,
+          url,
+          payload: { definition: withEffort(place, 'gpt-5.5', 'none') },
+        });
+        expect(response.statusCode).toBe(method === 'PUT' ? 400 : 200);
+        expect(response.body).toContain('EFFORT_UNSUPPORTED');
+      }
+      const defaults = { byHarness: { codex: { model: 'gpt-5.5', effort: 'none' as const } } };
+      const owner = await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaults } });
+      expect(owner.statusCode).toBe(400);
+      expect(owner.body).toContain('EFFORT_UNSUPPORTED');
+      const loop = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: { ...modelLoop(place), settings: { defaults } } },
+      });
+      expect(loop.statusCode).toBe(400);
+      expect(loop.body).toContain('EFFORT_UNSUPPORTED');
       expect(t.harness.started).toEqual([]);
       expect(t.codex.routes).toEqual([]);
     },
   );
 
+  it('refuses minimal as an unknown effort, not as a catalog refusal', async () => {
+    const refused = await t.app.inject({
+      method: 'POST',
+      url: '/loops',
+      payload: {
+        definition: withEffort('inference', 'gpt-6-luna', 'minimal' as unknown as Effort),
+      },
+    });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(refused.body).not.toContain('EFFORT_UNSUPPORTED');
+    const defaults = await t.app.inject({
+      method: 'PUT',
+      url: '/settings',
+      payload: { defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'minimal' } } } },
+    });
+    expect(defaults.statusCode).toBe(400);
+    expect(defaults.body).not.toContain('EFFORT_UNSUPPORTED');
+  });
+
   it.each(['inference', 'decision'] as const)(
-    'fails a stored minimal (%s) from before this catalog without any provider request',
+    'fails a stored GPT-5.5 none (%s) from a catalog that listed it without any provider request',
     async (place) => {
-      // A store from before this change: its seeded GPT-6 Luna row still listed minimal when the
-      // loop was published. The next start refreshes the harness rows from the shipped catalog.
-      const luna = await t.container.repos.catalog.findOne('codex', 'gpt-6-luna');
-      await t.container.repos.catalog.upsert({ ...luna!, efforts: ['minimal', ...luna!.efforts] });
-      const loopId = await t.publishLoop(withEffort(place, 'gpt-6-luna', 'minimal'));
+      // A version published while the GPT-5.5 row listed none (for example a hand-edited row).
+      // The next start refreshes the harness rows from the shipped catalog.
+      const gpt55 = await t.container.repos.catalog.findOne('codex', 'gpt-5.5');
+      await t.container.repos.catalog.upsert({ ...gpt55!, efforts: ['none', ...gpt55!.efforts] });
+      const loopId = await t.publishLoop(withEffort(place, 'gpt-5.5', 'none'));
       await t.container.repos.catalog.seed();
       const started = await t.app.inject({
         method: 'POST',
@@ -478,19 +550,18 @@ describe('Codex efforts are sent unchanged and offered per model (#205)', () => 
   );
 
   it.each(['loop', 'owner'] as const)(
-    'fails a run inheriting a stored %s-default minimal with the same details shape, without any request',
+    'fails a run inheriting a stored %s-default GPT-5.5 none with the same details shape, without any request',
     async (level) => {
-      // Defaults saved while the seeded GPT-6 Luna row still listed minimal (PR #426 QA O-1).
-      const luna = await t.container.repos.catalog.findOne('codex', 'gpt-6-luna');
-      await t.container.repos.catalog.upsert({ ...luna!, efforts: ['minimal', ...luna!.efforts] });
-      const minimal = { byHarness: { codex: { model: 'gpt-6-luna', effort: 'minimal' as const } } };
+      const gpt55 = await t.container.repos.catalog.findOne('codex', 'gpt-5.5');
+      await t.container.repos.catalog.upsert({ ...gpt55!, efforts: ['none', ...gpt55!.efforts] });
+      const none = { byHarness: { codex: { model: 'gpt-5.5', effort: 'none' as const } } };
       const inference = modelLoop('inference');
       const loopId = await t.publishLoop(
-        level === 'loop' ? { ...inference, settings: { defaults: minimal } } : inference,
+        level === 'loop' ? { ...inference, settings: { defaults: none } } : inference,
       );
       if (level === 'owner')
         expect(
-          (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaults: minimal } }))
+          (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaults: none } }))
             .statusCode,
         ).toBe(200);
       await t.container.repos.catalog.seed();

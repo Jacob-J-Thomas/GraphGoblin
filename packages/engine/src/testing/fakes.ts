@@ -993,7 +993,7 @@ export class FakeModelCatalog {
     model,
     source: 'harness',
     displayName: model,
-    efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+    efforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
     defaultEffort: 'low',
     enabled: true,
   }));

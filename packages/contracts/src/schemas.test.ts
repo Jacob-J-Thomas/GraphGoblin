@@ -53,7 +53,7 @@ describe('common schemas', () => {
   });
 
   it('exposes the canonical effort scale', () => {
-    expect(EffortSchema.options).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+    expect(EffortSchema.options).toEqual(['none', 'low', 'medium', 'high', 'xhigh', 'max']);
   });
 
   it('parses JSON patch documents', () => {

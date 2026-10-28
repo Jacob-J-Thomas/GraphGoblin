@@ -1,5 +1,6 @@
 import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
-import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
+import type { CodexOptions, ModelReasoningEffort, ThreadOptions } from '@openai/codex-sdk';
+import { CODEX_EFFORT_FAMILIES, codexEffortName, type CodexEffortFamily } from './effort-names.js';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
@@ -20,10 +21,11 @@ import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
  * | `workingDirectory`     | `--cd <dir>`                                       |
  * | `skipGitRepoCheck`     | `--skip-git-repo-check`                            |
  *
- * The effort is sent unchanged, so the effort a run records is the effort the CLI receives. CLI
- * 0.160.0 passes `model_reasoning_effort` through to the request as `reasoning.effort` without
- * checking it; the model catalog limits each model to the efforts the CLI's own catalog lists
- * (`low` to `max`, no `minimal`; docs/06-harness-integration.md).
+ * The run records the canonical effort; the CLI receives the provider's name for it, which differs
+ * only for `none` in a family that calls that level `minimal` (`effort-names.ts`). CLI 0.160.0
+ * passes `model_reasoning_effort` through to the request as `reasoning.effort` without checking
+ * it; the model catalog limits each model to the efforts it offers
+ * (docs/06-harness-integration.md).
  */
 
 export interface ResolvedSettings {
@@ -33,11 +35,20 @@ export interface ResolvedSettings {
   workingDirectory?: string;
 }
 
-export function threadOptions(settings: ResolvedSettings): ThreadOptions {
+export function threadOptions(
+  settings: ResolvedSettings,
+  effortFamilies: readonly CodexEffortFamily[] = CODEX_EFFORT_FAMILIES,
+): ThreadOptions {
   const { options } = settings;
   return {
     model: settings.model,
-    modelReasoningEffort: settings.effort,
+    // SDK 0.160.0 types this field without `none`; it writes the value into the CLI argument as
+    // is, and the CLI forwards it unchanged (verified live for `gpt-6-luna`, #205).
+    modelReasoningEffort: codexEffortName(
+      settings.model,
+      settings.effort,
+      effortFamilies,
+    ) as ModelReasoningEffort,
     sandboxMode: options.sandbox,
     approvalPolicy: options.approval,
     networkAccessEnabled: options.networkAccess ?? false,
