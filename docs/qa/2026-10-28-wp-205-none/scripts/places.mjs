@@ -15,9 +15,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import * as L from './lib.mjs';
+
+// Output folder: round1 (default) or the round named by ROUND (for example ROUND=round2).
+const ROUND = process.env.ROUND ?? 'round1';
 import { FIX, SELECT, SNAPSHOT_FIX, SNAPSHOT_TRIGGER, recipe } from './effort-sql.mjs';
 
-const rec = new L.Recorder('round1/places');
+const rec = new L.Recorder(`${ROUND}/places`);
 fs.writeFileSync(path.join(L.OUT, 'round1', 'hand-fix.sql.txt'), recipe());
 const dir = L.makeStore('places');
 const cli = path.join(dir, 'fake-cli');
@@ -44,7 +47,7 @@ const start = async (label) => {
 };
 const stop = async (g) => {
   const code = g.failedStart === undefined ? await g.stop() : g.exitCode();
-  g.copyLog(`round1/places-${g.label}-gateway.log.txt`);
+  g.copyLog(`${ROUND}/places-${g.label}-gateway.log.txt`);
   return code;
 };
 const sql = (statement, args = []) => L.withDb(dir, async (db) => db.execute({ sql: statement, args }));

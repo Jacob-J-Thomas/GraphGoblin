@@ -2,6 +2,8 @@
 
 Date: 2026-10-28. Branch `worktree-agent-a65ec1cd773b204b7`, based on `main` at `a4fee9a9`. Runtime: the project-scoped Node v22.23.4 (`%USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe`), pnpm 12.8.1, Codex CLI 0.160.0 (bundled with the SDK), Claude Code 2.1.308. Implementer: a Claude worker. Real provider turns used: **1** (Codex `gpt-6-luna`, one-line prompt).
 
+> **Round 2 (at the end) makes the hand-correction SQL safe on damaged rows; its claim in round 1 that a damaged row is skipped is corrected there.**
+>
 > **Round 1 (below) supersedes three statements of the first round:** the hand-correction SQL is now path-scoped and covers every typed effort place (the four text-`replace` statements in "Upgrade check" are withdrawn); `CodexHarnessOptions.effortFamilies` and the `CodexEffortFamily` export are removed (the family table is fixed); and a refused `GG_DEFAULTS` now names its code, harness, model and effort. See [QA round 1](#qa-round-1) and [Review round 1](#review-round-1).
 
 ## What changed and why
@@ -201,3 +203,39 @@ Project Node v22.23.4, `GG_TEST_PORT_START=7300 GG_TEST_PORT_COUNT=40`, after `p
 - The recipe names the two harnesses `codex` and `claude`; a new harness id would need its own paths.
 - A run that ran at `minimal` keeps that word in untyped thread values and node outputs (for example a decision's recorded provenance); they are left as recorded.
 - The review's engine timing failure (`recovery.test.ts`, 2,150 ms against 2,000 ms) and the API worker crash in `shutdown-choice.test.ts` (`0xC0000005`) are in untouched files; see the gates above for this round's runs.
+
+## Review round 2
+
+Scan 2 of `eaeaebcd` ([REVIEW-2.md](REVIEW-2.md), `review2-*` evidence and `review2-scripts/`, included unchanged) confirmed scan-1 findings 1 to 3 and QA Q205-1/Q205-2 resolved, and found one P2: the catalog and run `UPDATE`s guarded their `WHERE` predicates with `json_valid`, but a valid sibling column could select the row while the `SET` read a malformed column, so the statement failed `SQLITE_ERROR: malformed JSON` and stopped the recipe. My round-1 sentence that "a damaged row is skipped rather than failing the statement" was therefore wrong for those two statements. The QA re-check of the same head passed with no open defects ([../2026-10-28-wp-205-qa/RECHECK.md](../2026-10-28-wp-205-qa/RECHECK.md), included unchanged). 0 real turns.
+
+### What changed in the recipe
+
+[scripts/effort-sql.mjs](scripts/effort-sql.mjs) now generates statements that never read damaged data, measured rather than assumed:
+
+- **Every `SET` value is guarded by its own column:** `col = CASE WHEN json_valid(col) THEN <correction> ELSE col END`, in every statement, so a malformed sibling of a corrected column is left byte for byte. A NULL `runs.failure` stays NULL.
+- **Every array element is type-checked before it is read.** A `json_each` element is passed to `json_extract` only inside `CASE WHEN n.type = 'object'`; an unguarded string element fails the same way as malformed JSON (probe below). Arrays are rebuilt only when they hold the expected type (nodes and diagnostics: objects; catalog efforts: strings), otherwise left as they are.
+- **No value is ever re-inserted.** A value is changed by `json_replace(x, CASE WHEN json_extract(src, p) = 'minimal' THEN p ELSE '$[#]' END, 'none')`: `'$[#]'` is a position `json_replace` never finds, so a non-matching value is never read back and re-written (which could have turned an object into a string).
+- **The SELECT lists damaged rows instead of failing.** Eight `unreadable` branches list every row whose JSON column the statements read is malformed (`loop_versions.definition`, the `defaults` setting, `model_catalog.efforts`, `runs.pinned`, `runs.failure`, `run_events.payload`, both receipt intents). A row of valid JSON but the wrong shape that still names `minimal` on a typed path stays listed after the statements. The CHANGELOG says both need a repair by hand.
+
+The CHANGELOG `sql` block and [round1/hand-fix.sql.txt](round1/hand-fix.sql.txt) are regenerated from the generator; the statement order and the one-statement-per-line layout are unchanged, so the review's parsers read it as before.
+
+### Guard behaviour, measured on libsql's SQLite 3.45.1
+
+A probe (`node` with `@libsql/client` in memory, before writing the generator) showed: `CASE WHEN json_valid(x) THEN json_extract(x, …) ELSE … END`, the same with a correlated `json_each(x)` subquery, and a nested `CASE` around a `json_group_array` rebuild all skip malformed input (`not-json`, `{`, empty, `"unterminated`, `[1,`) without error; `json_replace(x, '$[#]', 'none')` returns objects, arrays and scalars unchanged; a two-column `UPDATE` with per-column `CASE` guards corrects the valid column and keeps the malformed one; `json_extract` on a string element of `json_each` fails `malformed JSON` unless guarded by `n.type = 'object'`.
+
+### Verification
+
+1. **The review's own drivers on the new CHANGELOG text** (copied to a temp folder, run with this worktree as the current directory; [round2/review2-sql-checks-rerun.log.txt](round2/review2-sql-checks-rerun.log.txt), [round2/review2-real-guards-rerun.log.txt](round2/review2-real-guards-rerun.log.txt)). `sql-checks.mjs`: 21 of 21 normal checks pass (discovery, byte comparisons, catalog order and duplicate removal, sessions, trigger, empty discovery), and the three malformed cases now record `selectError: null, updateError: null`. `real-guards.mjs`, on copies of real base-written product-schema stores: all three cases complete without error. Its checks assert that the error reproduces, so they now report FAIL, which is the fix.
+2. **[scripts/guards.mjs](scripts/guards.mjs), a damage matrix on a copy of a real product-schema store** (the last `places.mjs` store; [round2/guards.log.txt](round2/guards.log.txt), 5 of 5). Typed `minimal` everywhere and, at once, damage in every column the statements read: the review's three cases (D1 to D3), a malformed published definition (D4) and draft snapshot (D12), nodes holding a string element beside an inference node at `minimal` (D5), malformed owner defaults (D6), a malformed `harness.session` payload (D7), decision diagnostics holding a string element with the provenance at `minimal` beside them (D8), a malformed webhook intent (D9), catalog efforts that are an object (D10) or hold a number (D11), and a pinned owner effort that is an object beside a process effort at `minimal`. The whole recipe from the CHANGELOG completes (G-1); all twelve damaged cells are byte for byte unchanged (G-2); every valid typed value beside them is corrected, including the catalog default beside malformed efforts, the event receipt's typed paths (its authored thread keeps `minimal`), all session rows, and the trigger is restored (G-3); the SELECT lists the eight malformed cells as `unreadable` before and after (G-4); afterwards it lists only those and the four wrong-shaped rows that still name `minimal` (D5, D8, D10, D11) (G-5). The first run failed two checks of mine (it compared D8's whole payload, whose valid provenance is meant to change, and read the receipt's authored thread as uncorrected); [round2/guards-run1.log.txt](round2/guards-run1.log.txt) keeps it.
+3. **[scripts/places.mjs](scripts/places.mjs) again** with `ROUND=round2` ([round2/places.log.txt](round2/places.log.txt), 12 of 12): all eight places listed, startup refused, each statement changes rows, 143 rows byte for byte restored with authored `minimal`, every read 200.
+4. **[scripts/reviewer-fixtures.mjs](scripts/reviewer-fixtures.mjs) again** with `ROUND=round2`: the base build wrote fresh legacy stores (2 of 2) and the head ran the recipe as read from the CHANGELOG (3 of 3: both stores corrected and read 200; the authored variable default neither listed nor changed).
+
+### Gates (round 2)
+
+Round 2 changed only the CHANGELOG recipe block and sentence, and this record (scripts and evidence); no product code, test or numbered doc. Logs in [round2/gates/](round2/gates/).
+
+| Gate                                                                                     | Result                           |
+| ---------------------------------------------------------------------------------------- | -------------------------------- |
+| `pnpm check:docs`                                                                        | "Generated docs are up to date." |
+| `pnpm format:check` (whole repository, after `prettier --write` on the changed Markdown) | pass                             |
+| Record redaction check (both record folders)                                             | 0 findings                       |

@@ -14,6 +14,9 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import * as L from './lib.mjs';
 
+// Output folder: round1 (default) or the round named by ROUND (for example ROUND=round2).
+const ROUND = process.env.ROUND ?? 'round1';
+
 const phase = process.argv[2];
 const scratch = path.join(os.tmpdir(), 'gg-205-base');
 const base = path.join(scratch, 'base');
@@ -73,7 +76,7 @@ registerHooks({resolve(s,c,n){
   fs.writeFileSync(path.join(scratch, 'base-loader.mjs'), loader);
   console.log(JSON.stringify({ base: 'a4fee9a9', transpiled: count, loader: path.join(scratch, 'base-loader.mjs') }));
 } else if (phase === 'base') {
-  const rec = new L.Recorder('round1/reviewer-base');
+  const rec = new L.Recorder(`${ROUND}/reviewer-base`);
   const { createTestApp } = await import(pathToFileURL(path.join(base, 'apps/api/dist/testing/test-app.js')).href);
   const make = async (name) => {
     const store = L.makeStore(name);
@@ -124,7 +127,7 @@ registerHooks({resolve(s,c,n){
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
   rec.finish(state);
 } else if (phase === 'head') {
-  const rec = new L.Recorder('round1/reviewer-head');
+  const rec = new L.Recorder(`${ROUND}/reviewer-head`);
   const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
   const { find, correct } = changelogRecipe();
   rec.log('recipe read from the CHANGELOG', { findCharacters: find.length, correctCharacters: correct.length });
@@ -151,7 +154,7 @@ registerHooks({resolve(s,c,n){
         { found, left, remaining, reads, startup: g.failedStart === undefined ? 'listening' : g.failedStart },
       );
       await g.stop();
-      g.copyLog(`round1/reviewer-${name}-gateway.log.txt`);
+      g.copyLog(`${ROUND}/reviewer-${name}-gateway.log.txt`);
     }
     // sql-scope.mjs: authored JSON that names effort minimal outside a typed path.
     const { createTestApp } = await import(pathToFileURL(path.join(L.ROOT, 'apps/api/dist/testing/test-app.js')).href);

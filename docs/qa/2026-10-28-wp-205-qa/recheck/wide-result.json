@@ -1,0 +1,902 @@
+{
+  "scenario": "wide",
+  "passed": 21,
+  "failed": 0,
+  "observations": 1,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "base made actual missing-session failure A",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"49124fe5-3187-4933-b59a-67b17e4e1b8c\" from resume-previous is missing. Choose Start fresh session for node \"two\" to continue without its prior provider conversation.",
+        "nodeId": "two",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M60RXMHC1ZNFWCT7CH4AT6NF:18",
+          "turnId": "01M60RXPGRRMYFP9QEV6JB4H6H",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "49124fe5-3187-4933-b59a-67b17e4e1b8c"
+        },
+        "missingSession": {
+          "visitId": "01M60RXMHC1ZNFWCT7CH4AT6NF:18",
+          "harness": "codex",
+          "sessionId": "49124fe5-3187-4933-b59a-67b17e4e1b8c",
+          "origin": "resume-previous",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "base made actual missing-session failure B",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"938655ea-bfdc-41fd-95d0-52910bbb5e71\" from resume-previous is missing. Choose Start fresh session for node \"two\" to continue without its prior provider conversation.",
+        "nodeId": "two",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M60RXNR22BGMHB3V9W096HFV:18",
+          "turnId": "01M60RXPTHE4AKMQY99AT17PPN",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "938655ea-bfdc-41fd-95d0-52910bbb5e71"
+        },
+        "missingSession": {
+          "visitId": "01M60RXNR22BGMHB3V9W096HFV:18",
+          "harness": "codex",
+          "sessionId": "938655ea-bfdc-41fd-95d0-52910bbb5e71",
+          "origin": "resume-previous",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "id": "base made real decision event",
+      "ok": true,
+      "detail": {
+        "status": "succeeded",
+        "decision": {
+          "provenance": {
+            "kind": "llm",
+            "provider": "codex",
+            "classifierId": null,
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "finish",
+            "confidence": 0.9,
+            "reasoning": "QA controlled route"
+          },
+          "portId": "finish",
+          "diagnostics": [],
+          "runId": "01M60RXQCM7K0AZSJX7PVCHHAA",
+          "seq": 6,
+          "ts": "2026-10-28T08:09:46.610Z",
+          "type": "decision.made",
+          "nodeId": "work"
+        }
+      }
+    },
+    {
+      "id": "base recovery writes fresh-session event",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "done": "succeeded"
+      }
+    },
+    {
+      "id": "base receipt accepted E",
+      "ok": true,
+      "detail": {
+        "id": "01M60RXRBB36WTET6EN2VAKWKX",
+        "ownerId": "local",
+        "type": "qa205b",
+        "payload": {
+          "authored": {
+            "effort": "minimal"
+          }
+        },
+        "dedupeKey": "qa205b-1",
+        "source": "api",
+        "receivedAt": "2026-10-28T08:09:47.115Z",
+        "runIds": [],
+        "admissionId": "01M60RXRBB36WTET6EN2VAKWKY",
+        "target": {
+          "loopId": "01M60RXRAKGXKNVMQVQA3E28NF",
+          "versionId": "01M60RXRAKGXKNVMQVQA3E28NG",
+          "triggerNodeId": "start"
+        },
+        "delivery": {
+          "state": "pending",
+          "attempts": 0,
+          "nextAttemptAt": "2026-10-28T08:09:47.115Z"
+        },
+        "duplicate": false
+      }
+    },
+    {
+      "id": "base receipt accepted W",
+      "ok": true,
+      "detail": {
+        "accepted": true
+      }
+    },
+    {
+      "id": "all base run/event/thread reads healthy",
+      "ok": true,
+      "detail": {
+        "A": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "B": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "C": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "S": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        }
+      }
+    },
+    {
+      "id": "gateway ended wide-base",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "published SELECT finds every planted history/session/receipt row, all five event kinds",
+      "ok": true,
+      "detail": {
+        "expected": [
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#7",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#7",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#22",
+            "type": "run.failed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#22",
+            "type": "run.failed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA#6",
+            "type": "decision.made"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#23",
+            "type": "run.resumed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#26",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXRBCNHYJ32TE22KCPM4P#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3H#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXRGCNAET6QE7SFNN44NR#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXNR22BGMHB3V9W096HFV"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXRBCNHYJ32TE22KCPM4P"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3H"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXRGCNAET6QE7SFNN44NR"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXNR22BGMHB3V9W096HFV/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXNR22BGMHB3V9W096HFV/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/2"
+          },
+          {
+            "place": "webhook_receipts",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3G"
+          },
+          {
+            "place": "event_receipts",
+            "match": "01M60RXRBB36WTET6EN2VAKWKY"
+          },
+          {
+            "place": "loop_versions",
+            "match": "01M60RXRGCNAET6QE7SFNN44NT"
+          },
+          {
+            "place": "settings",
+            "match": "defaults"
+          },
+          {
+            "place": "model_catalog",
+            "match": "codex/qa205b-custom"
+          },
+          {
+            "place": "loop_versions",
+            "match": "01M60RXM7BRCKQRVWAP849MZKS"
+          }
+        ],
+        "found": [
+          {
+            "place": "runs",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXRBCNHYJ32TE22KCPM4P"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3H"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXRGCNAET6QE7SFNN44NR"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#7 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#7 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#22 run.failed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#22 run.failed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA#6 decision.made"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#23 run.resumed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#26 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXRBCNHYJ32TE22KCPM4P#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3H#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXRGCNAET6QE7SFNN44NR#1 run.queued"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/2"
+          },
+          {
+            "place": "webhook_receipts",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3G"
+          },
+          {
+            "place": "event_receipts",
+            "ref": "01M60RXRBB36WTET6EN2VAKWKY"
+          }
+        ],
+        "kinds": ["run.queued", "harness.session", "run.failed", "decision.made", "run.resumed"]
+      }
+    },
+    {
+      "id": "typed legacy history is refused before hand fix",
+      "ok": null,
+      "detail": {
+        "A": {
+          "run": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "events": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "thread": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          }
+        },
+        "B": {
+          "run": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "events": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "thread": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          }
+        },
+        "C": {
+          "run": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "events": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "thread": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          }
+        },
+        "S": {
+          "run": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "events": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          },
+          "thread": {
+            "status": 500,
+            "code": "STORED_RUN_INVALID"
+          }
+        }
+      }
+    },
+    {
+      "id": "gateway ended wide-history-invalid",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "full SELECT covers all eight places and no authored-only row",
+      "ok": true,
+      "detail": {
+        "expected": [
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#7",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#7",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#22",
+            "type": "run.failed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXNR22BGMHB3V9W096HFV#22",
+            "type": "run.failed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA#6",
+            "type": "decision.made"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#23",
+            "type": "run.resumed"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF#26",
+            "type": "harness.session"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXRBCNHYJ32TE22KCPM4P#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3H#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "run_events",
+            "match": "01M60RXRGCNAET6QE7SFNN44NR#1",
+            "type": "run.queued"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXNR22BGMHB3V9W096HFV"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXQCM7K0AZSJX7PVCHHAA"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXRBCNHYJ32TE22KCPM4P"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3H"
+          },
+          {
+            "place": "runs",
+            "match": "01M60RXRGCNAET6QE7SFNN44NR"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXNR22BGMHB3V9W096HFV/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXNR22BGMHB3V9W096HFV/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "match": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/2"
+          },
+          {
+            "place": "webhook_receipts",
+            "match": "01M60RXREFPB3BYHVVXNFMVE3G"
+          },
+          {
+            "place": "event_receipts",
+            "match": "01M60RXRBB36WTET6EN2VAKWKY"
+          },
+          {
+            "place": "loop_versions",
+            "match": "01M60RXRGCNAET6QE7SFNN44NT"
+          },
+          {
+            "place": "settings",
+            "match": "defaults"
+          },
+          {
+            "place": "model_catalog",
+            "match": "codex/qa205b-custom"
+          },
+          {
+            "place": "loop_versions",
+            "match": "01M60RXM7BRCKQRVWAP849MZKS"
+          }
+        ],
+        "found": [
+          {
+            "place": "loop_versions",
+            "ref": "01M60RXM7BRCKQRVWAP849MZKS published"
+          },
+          {
+            "place": "loop_versions",
+            "ref": "01M60RXRGCNAET6QE7SFNN44NT snapshot"
+          },
+          {
+            "place": "settings",
+            "ref": "defaults"
+          },
+          {
+            "place": "model_catalog",
+            "ref": "codex/qa205b-custom"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXRBCNHYJ32TE22KCPM4P"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3H"
+          },
+          {
+            "place": "runs",
+            "ref": "01M60RXRGCNAET6QE7SFNN44NR"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#7 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#7 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#22 run.failed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV#22 run.failed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXQCM7K0AZSJX7PVCHHAA#6 decision.made"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#23 run.resumed"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF#26 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXRBCNHYJ32TE22KCPM4P#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3H#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M60RXRGCNAET6QE7SFNN44NR#1 run.queued"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV/one/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXNR22BGMHB3V9W096HFV/two/1"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M60RXMHC1ZNFWCT7CH4AT6NF/two/2"
+          },
+          {
+            "place": "webhook_receipts",
+            "ref": "01M60RXREFPB3BYHVVXNFMVE3G"
+          },
+          {
+            "place": "event_receipts",
+            "ref": "01M60RXRBB36WTET6EN2VAKWKY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "typed minimal snapshot/version/default still refuses startup",
+      "ok": true,
+      "detail": {
+        "exit": 1,
+        "log": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205b-wide-gP0NJU.\n  Database: %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205b-wide-gP0NJU\\graphgoblin.db\n  Found:    format 4, but the store is damaged or unfinished\n  Requires: format 4\n  Reason:   The format-4 store is damaged: stored loop version 01M60RXM7BRCKQRVWAP849MZKS is not a valid definition\nNo stored data was changed. This build does not convert stores from other formats.\nRepair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205b-wide-gP0NJU\"\n"
+      }
+    },
+    {
+      "id": "gateway ended wide-all-invalid",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "verbatim CHANGELOG updates and snapshot transaction clear discovery",
+      "ok": true,
+      "detail": {
+        "remaining": [],
+        "recipeHash": "780aae9b1c59f9fe2eef2ba271c8db4909d09c5c65f0054069409314c8cbf703"
+      }
+    },
+    {
+      "id": "authored-only definition and both thread columns byte-identical; mixed prompt unchanged",
+      "ok": true,
+      "detail": {
+        "authoredDefinitionSHA256": [
+          "89d92602455a0a44b0a5fe2853f5fdd6f6b6cdbed21388612e5f15ca6e719c3e"
+        ],
+        "promptBefore": [
+          "Reply READY; authored word minimal and JSON {\"effort\":\"minimal\"} must remain literal."
+        ],
+        "promptAfter": [
+          "Reply READY; authored word minimal and JSON {\"effort\":\"minimal\"} must remain literal."
+        ]
+      }
+    },
+    {
+      "id": "snapshot trigger restored exactly",
+      "ok": true,
+      "detail": "CREATE TRIGGER `loop_versions_snapshot_immutable` BEFORE UPDATE ON `loop_versions`\nWHEN OLD.status = 'snapshot'\nBEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes'); END"
+    },
+    {
+      "id": "every run/events/thread read returns 200 after repair",
+      "ok": true,
+      "detail": {
+        "A": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "B": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "C": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        },
+        "S": {
+          "run": 200,
+          "events": 200,
+          "thread": 200
+        }
+      }
+    },
+    {
+      "id": "repaired typed history fields all show canonical none",
+      "ok": true,
+      "detail": [
+        ["run.queued", "none"],
+        ["run.queued", "none"],
+        ["harness.session", "none"],
+        ["run.failed", "none"],
+        ["run.resumed", "none"],
+        ["harness.session", "none"],
+        ["failure B", "none"],
+        ["run.queued", "none"],
+        ["run.queued", "none"],
+        ["harness.session", "none"],
+        ["run.failed", "none"],
+        ["run.queued", "none"],
+        ["run.queued", "none"],
+        ["decision.made", "none"],
+        ["run.queued", "none"],
+        ["run.queued", "none"]
+      ]
+    },
+    {
+      "id": "harness_sessions now none",
+      "ok": true,
+      "detail": [
+        {
+          "run_id": "01M60RXMHC1ZNFWCT7CH4AT6NF",
+          "node_id": "one",
+          "effort": "none"
+        },
+        {
+          "run_id": "01M60RXNR22BGMHB3V9W096HFV",
+          "node_id": "one",
+          "effort": "none"
+        },
+        {
+          "run_id": "01M60RXMHC1ZNFWCT7CH4AT6NF",
+          "node_id": "two",
+          "effort": "none"
+        },
+        {
+          "run_id": "01M60RXNR22BGMHB3V9W096HFV",
+          "node_id": "two",
+          "effort": "none"
+        },
+        {
+          "run_id": "01M60RXMHC1ZNFWCT7CH4AT6NF",
+          "node_id": "two",
+          "effort": "none"
+        }
+      ]
+    },
+    {
+      "id": "authored variable default and word minimal remain served",
+      "ok": true,
+      "detail": {
+        "payload": {
+          "type": "object",
+          "default": {
+            "effort": "minimal"
+          }
+        }
+      }
+    },
+    {
+      "id": "gateway ended wide-repaired",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "recipeHash": "780aae9b1c59f9fe2eef2ba271c8db4909d09c5c65f0054069409314c8cbf703",
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205b-wide-gP0NJU",
+  "runs": {
+    "A": "01M60RXMHC1ZNFWCT7CH4AT6NF",
+    "B": "01M60RXNR22BGMHB3V9W096HFV",
+    "C": "01M60RXQCM7K0AZSJX7PVCHHAA",
+    "S": "01M60RXRGCNAET6QE7SFNN44NR"
+  },
+  "loops": {
+    "authored": "01M60RXKSRPBD8SQXDS5RXFXGZ",
+    "A": "01M60RXM7BRCKQRVWAP849MZKR",
+    "B": "01M60RXNE63Z3598EHK1CX5QP3",
+    "C": "01M60RXQ2FD0G7AB08G01CTT14",
+    "E": "01M60RXRAKGXKNVMQVQA3E28NF",
+    "W": "01M60RXRCBVBGASQR6EN91XRT5",
+    "S": "01M60RXRF88J4DX1Q0DPS2M784"
+  }
+}

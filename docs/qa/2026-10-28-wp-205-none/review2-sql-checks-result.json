@@ -1,0 +1,225 @@
+{
+  "scenario": "sql-checks",
+  "passed": 21,
+  "failed": 0,
+  "observations": 3,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "discovery covers all eight places; ignores custom settings and authored node.finished",
+      "ok": true,
+      "detail": {
+        "rows": [
+          {
+            "place": "loop_versions",
+            "ref": "lv draft"
+          },
+          {
+            "place": "loop_versions",
+            "ref": "snap snapshot"
+          },
+          {
+            "place": "settings",
+            "ref": "defaults"
+          },
+          {
+            "place": "model_catalog",
+            "ref": "codex/dedup"
+          },
+          {
+            "place": "model_catalog",
+            "ref": "codex/replace"
+          },
+          {
+            "place": "runs",
+            "ref": "r"
+          },
+          {
+            "place": "run_events",
+            "ref": "r#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "r#2 run.failed"
+          },
+          {
+            "place": "run_events",
+            "ref": "r#3 run.resumed"
+          },
+          {
+            "place": "run_events",
+            "ref": "r#4 harness.session"
+          },
+          {
+            "place": "run_events",
+            "ref": "r#5 decision.made"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "r/worker/1"
+          },
+          {
+            "place": "webhook_receipts",
+            "ref": "receipt"
+          },
+          {
+            "place": "event_receipts",
+            "ref": "receipt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "path scoped loop_versions id='lv' definition preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped loop_versions id='snap' definition preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped settings key='defaults' value preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped settings key='custom' value preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped model_catalog model='dedup' efforts preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped model_catalog model='replace' efforts preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped runs id='r' pinned preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped runs id='r' failure preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=1 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=2 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=3 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=4 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=5 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped run_events seq=6 payload preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped webhook_receipts id='receipt' intent preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "path scoped event_receipts id='receipt' intent preserves element order and all authored fields",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "catalog default efforts corrected",
+      "ok": true
+    },
+    {
+      "id": "session effort corrected",
+      "ok": true
+    },
+    {
+      "id": "snapshot trigger exact after transaction",
+      "ok": true
+    },
+    {
+      "id": "discovery empty after full recipe",
+      "ok": true
+    },
+    {
+      "id": "malformed catalog efforts",
+      "ok": null,
+      "detail": {
+        "selectError": null,
+        "updateError": "SQLITE_ERROR: malformed JSON"
+      }
+    },
+    {
+      "id": "malformed run pin",
+      "ok": null,
+      "detail": {
+        "selectError": null,
+        "updateError": "SQLITE_ERROR: malformed JSON"
+      }
+    },
+    {
+      "id": "malformed run failure",
+      "ok": null,
+      "detail": {
+        "selectError": null,
+        "updateError": "SQLITE_ERROR: malformed JSON"
+      }
+    }
+  ]
+}

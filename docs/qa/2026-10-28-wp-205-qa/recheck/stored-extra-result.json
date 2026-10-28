@@ -1,0 +1,52 @@
+{
+  "scenario": "stored-extra",
+  "passed": 2,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "original Q205-1: CHANGELOG SELECT now lists the legacy event",
+      "ok": true,
+      "detail": {
+        "listed": [
+          {
+            "place": "run_events",
+            "ref": "01M60RXD51FT0TZXBFSRCQSZJG#7 harness.session"
+          }
+        ],
+        "events": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+            "title": "stored event invalid",
+            "status": 500,
+            "code": "STORED_EVENT_INVALID",
+            "detail": "Stored run event does not conform: run 01M60RXD51FT0TZXBFSRCQSZJG, seq 7, type harness.session"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-event-invalid\",\"title\":\"stored event invalid\",\"status\":500,\"code\":\"STORED_EVENT_INVALID\",\"detail\":\"Stored run event does not conform: run 01M60RXD51FT0TZXBFSRCQSZJG, seq 7, type harness.session\"}"
+        }
+      }
+    },
+    {
+      "id": "verbatim CHANGELOG repair restores original run, events and thread; effort none",
+      "ok": true,
+      "detail": {
+        "statuses": [200, 200, 200],
+        "session": {
+          "runId": "01M60RXD51FT0TZXBFSRCQSZJG",
+          "seq": 7,
+          "ts": "2026-10-28T08:09:36.150Z",
+          "type": "harness.session",
+          "nodeId": "work",
+          "harness": "codex",
+          "sessionId": "05ef9ff9-c782-429b-9e52-aae41d5146d2",
+          "mode": "fresh",
+          "model": "gpt-6-luna",
+          "effort": "none"
+        }
+      }
+    }
+  ],
+  "recipeHash": "780aae9b1c59f9fe2eef2ba271c8db4909d09c5c65f0054069409314c8cbf703"
+}

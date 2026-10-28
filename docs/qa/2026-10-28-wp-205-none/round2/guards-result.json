@@ -1,0 +1,121 @@
+{
+  "scenario": "round2/guards",
+  "passed": 5,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "G-1 the whole published recipe completes on the damaged store: no statement fails",
+      "ok": true,
+      "detail": {
+        "error": null
+      }
+    },
+    {
+      "id": "G-2 every damaged cell (malformed or wrong-shaped) is byte for byte unchanged",
+      "ok": true,
+      "detail": [
+        {
+          "label": "D1 malformed catalog efforts beside default minimal (review case 1)",
+          "unchanged": true
+        },
+        {
+          "label": "D2 malformed failure beside a pinned minimal (review case 2)",
+          "unchanged": true
+        },
+        {
+          "label": "D3 malformed pinned beside a missing-session minimal (review case 3)",
+          "unchanged": true
+        },
+        {
+          "label": "D4 malformed published definition",
+          "unchanged": true
+        },
+        {
+          "label": "D5 nodes holding a string element beside an inference node at minimal",
+          "unchanged": true
+        },
+        {
+          "label": "D6 malformed owner defaults",
+          "unchanged": true
+        },
+        {
+          "label": "D7 malformed harness.session payload",
+          "unchanged": true
+        },
+        {
+          "label": "D8 decision diagnostics holding a string element",
+          "unchanged": true
+        },
+        {
+          "label": "D9 malformed webhook receipt intent",
+          "unchanged": true
+        },
+        {
+          "label": "D10 catalog efforts that are an object",
+          "unchanged": true
+        },
+        {
+          "label": "D11 catalog efforts holding a number",
+          "unchanged": true
+        },
+        {
+          "label": "D12 malformed draft snapshot",
+          "unchanged": true
+        }
+      ]
+    },
+    {
+      "id": "G-3 valid typed values beside damaged cells are corrected",
+      "ok": true,
+      "detail": {
+        "D2 pinned beside the malformed failure": "none",
+        "D3 failure beside the malformed pinned": "none",
+        "D8 decision provenance beside string diagnostics": "none",
+        "D1 catalog default beside malformed efforts": "none",
+        "object effort kept, process effort corrected": "{\"owner\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":{\"odd\":\"minimal\"}}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"none\"}}}}",
+        "event receipt intent": "corrected",
+        "harness_sessions left at minimal": 0,
+        "triggerRestored": true
+      }
+    },
+    {
+      "id": "G-4 the SELECT lists the eight malformed cells as unreadable before and after the statements",
+      "ok": true,
+      "detail": {
+        "unreadable": [
+          "unreadable loop_versions 01M60Q9QF3JC8W78D4QAJMCH6T definition",
+          "unreadable loop_versions 01M60Q9TY1E7H77R747VHB9AWB definition",
+          "unreadable model_catalog codex/gpt-6-sol efforts",
+          "unreadable run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#7 payload",
+          "unreadable runs 01M60Q9RA8TJGBKRWCY3DZ1PHR failure",
+          "unreadable runs 01M60Q9RV5YYQ2NMESGH709S1X pinned",
+          "unreadable settings defaults value",
+          "unreadable webhook_receipts 01M60Q9TWNSDJ34PGYFE8FV64Q intent"
+        ]
+      }
+    },
+    {
+      "id": "G-5 after the statements the SELECT lists only the unreadable cells and the wrong-shaped rows that still name minimal (D5 nodes, D8 diagnostics, D10, D11)",
+      "ok": true,
+      "detail": {
+        "remaining": [
+          "loop_versions 01M60Q9TX7XM814A52A0HJCZM5 draft",
+          "model_catalog codex/shape-number",
+          "model_catalog codex/shape-object",
+          "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#6 decision.made"
+        ],
+        "expected": [
+          "loop_versions 01M60Q9TX7XM814A52A0HJCZM5 draft",
+          "model_catalog codex/shape-number",
+          "model_catalog codex/shape-object",
+          "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#6 decision.made"
+        ],
+        "beforeRows": 38
+      }
+    }
+  ],
+  "source": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-places-ao7X1S",
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-guards-jc8M0y"
+}
