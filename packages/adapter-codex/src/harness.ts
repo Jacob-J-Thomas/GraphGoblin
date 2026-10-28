@@ -11,33 +11,22 @@ import {
   type HarnessTurnRequest,
   type Logger,
 } from '@graphgoblin/engine';
+import type { ThreadEvent } from '@openai/codex-sdk';
 import {
-  Codex,
-  type CodexOptions,
-  type ThreadEvent,
-  type ThreadOptions,
-  type TurnOptions,
-} from '@openai/codex-sdk';
-import { bundledCli, cliFor, preflightCli, runCli, type CliRunner } from './cli.js';
+  bundledCli,
+  cliFor,
+  preflightCli,
+  runCli,
+  type CliCommand,
+  type CliRunner,
+} from './cli.js';
+import { isolatedClient, type CodexClientFactory } from './client.js';
 import { TurnAccumulator } from './events.js';
+import { configuredServers } from './isolation.js';
 import { clientOptions, threadOptions, type ResolvedSettings } from './options.js';
 import { EventQueue } from './queue.js';
 
-/** The slice of the SDK's `Thread` the harness uses. Tests substitute a fixture replayer. */
-export interface CodexThreadLike {
-  runStreamed(
-    input: string,
-    options?: TurnOptions,
-  ): Promise<{ events: AsyncIterable<ThreadEvent | { type: string }> }>;
-}
-
-/** The slice of the SDK's `Codex` client the harness uses. */
-export interface CodexClientLike {
-  startThread(options?: ThreadOptions): CodexThreadLike;
-  resumeThread(id: string, options?: ThreadOptions): CodexThreadLike;
-}
-
-export type CodexClientFactory = (options: CodexOptions) => CodexClientLike;
+export type { CodexClientFactory, CodexClientLike, CodexThreadLike } from './client.js';
 
 export interface CodexHarnessOptions {
   /** Path to a `codex` executable (or a `.js` launcher). Default: the CLI bundled with the SDK. */
@@ -49,16 +38,19 @@ export interface CodexHarnessOptions {
   effort?: Effort;
   /** Environment for the CLI. Default: inherit this process's environment. */
   env?: Record<string, string>;
-  /** Timeout for each preflight CLI call. Default 15 s. */
+  /** Timeout for each direct CLI call: preflight checks and the MCP listing before a turn. Default 15 s. */
   preflightTimeoutMs?: number;
   /**
    * Acknowledgement bound after a turn is aborted: the CLI's output must end within it, or the
    * turn fails `HARNESS_TERMINATION_UNCONFIRMED`. Default 5 s, the harness bound of ADR-0049.
    */
   cancelGraceMs?: number;
-  /** Injected for tests. Default: `new Codex(options)`. */
+  /**
+   * Injected for tests. Default: the SDK's `Codex`, started after listing the machine's MCP
+   * servers so each turn runs with them switched off (ADR-0063).
+   */
   clientFactory?: CodexClientFactory;
-  /** Injected for tests. Default: spawn the CLI. */
+  /** Injected for tests. Default: spawn the CLI (preflight and the per-turn MCP listing). */
   cliRunner?: CliRunner;
 }
 
@@ -108,17 +100,35 @@ export class CodexHarness implements HarnessPort {
   constructor(private readonly options: CodexHarnessOptions = {}) {
     this.model = options.model ?? DEFAULT_MODEL;
     this.effort = options.effort ?? DEFAULT_EFFORT;
-    this.clientFactory = options.clientFactory ?? ((o) => new Codex(o));
     this.cliRunner = options.cliRunner ?? runCli;
+    this.clientFactory =
+      options.clientFactory ??
+      ((o) =>
+        isolatedClient(o, (workingDirectory, signal) =>
+          configuredServers(
+            this.cli(),
+            this.cliRunner,
+            this.cliTimeoutMs,
+            workingDirectory,
+            signal,
+          ),
+        ));
+  }
+
+  private get cliTimeoutMs(): number {
+    return this.options.preflightTimeoutMs ?? 15_000;
+  }
+
+  /** The CLI sessions use, with the sessions' environment: preflight and the MCP listing run it. */
+  private cli(): CliCommand | undefined {
+    const cli = this.options.codexBinary ? cliFor(this.options.codexBinary) : bundledCli();
+    return cli && this.options.env ? { ...cli, env: this.options.env } : cli;
   }
 
   preflight(): Promise<HarnessPreflight> {
-    const cli = this.options.codexBinary ? cliFor(this.options.codexBinary) : bundledCli();
-    return preflightCli(
-      cli && this.options.env ? { ...cli, env: this.options.env } : cli,
-      this.cliRunner,
-      this.options.preflightTimeoutMs ?? 15_000,
-    ).catch(() => readinessFailure('codex', 'unknown'));
+    return preflightCli(this.cli(), this.cliRunner, this.cliTimeoutMs).catch(() =>
+      readinessFailure('codex', 'unknown'),
+    );
   }
 
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
@@ -158,9 +168,18 @@ export class CodexHarness implements HarnessPort {
     const client = this.clientFactory(
       clientOptions(settings.options, this.options.codexBinary, this.options.env),
     );
+    const perThread = threadOptions(settings);
+    logger?.debug(
+      {
+        model: settings.model,
+        effort: settings.effort,
+        providerEffort: perThread.modelReasoningEffort,
+      },
+      'codex: reasoning effort sent to the CLI',
+    );
     const thread = resumeId
-      ? client.resumeThread(resumeId, threadOptions(settings))
-      : client.startThread(threadOptions(settings));
+      ? client.resumeThread(resumeId, perThread)
+      : client.startThread(perThread);
 
     const controller = new AbortController();
     // After an abort the CLI's output must end within the acknowledgement bound. A descendant that

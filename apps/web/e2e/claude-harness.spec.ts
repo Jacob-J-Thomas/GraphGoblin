@@ -188,7 +188,7 @@ for (const [model, displayName, effort] of [
     await modelField.selectOption(model);
     await expect(modelField).toHaveValue(model);
     const effortField = dialog.getByLabel('Effort', { exact: true });
-    // Exactly the catalog's supported efforts for this model; minimal is never offered for Claude.
+    // Exactly the catalog's supported efforts for this model; Claude Code has no none level (#205).
     await expect(effortField.locator('option')).toHaveText([
       'Default (unavailable)',
       'low',
@@ -245,7 +245,7 @@ for (const [model, displayName, effort] of [
     const unsupported = inferenceLoop(displayName + ' unsupported', 'claude');
     const node = unsupported.nodes.find((item) => item.id === 'infer');
     if (!node || !('config' in node)) throw new Error('missing inference node');
-    Object.assign(node.config, { model, effort: 'minimal' });
+    Object.assign(node.config, { model, effort: 'none' });
     for (const [method, url] of [
       ['post', instance.url + '/loops'],
       ['put', instance.url + '/loops/' + loop.id + '/draft'],

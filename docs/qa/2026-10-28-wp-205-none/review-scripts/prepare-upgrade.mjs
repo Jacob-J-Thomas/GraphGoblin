@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+const root=process.cwd(), scratch=path.dirname(fileURLToPath(import.meta.url)), src=path.join(root,'docs/qa/2026-10-28-wp-205-none/scripts'), out=path.join(scratch,'evidence');fs.mkdirSync(out,{recursive:true});
+let lib=fs.readFileSync(path.join(src,'lib.mjs'),'utf8');
+lib=lib.replace(/export const OUT = .*;/,`export const OUT = ${JSON.stringify(out)};`).replace(/export const ROOT = .*;/,`export const ROOT = ${JSON.stringify(root)};`).replaceAll('gg-205-','gg-rev205-').replaceAll('6300','6360').replaceAll('6309','6369');
+lib=lib.replace("const child = spawn(NODE, [path.join(ROOT, 'apps', 'api', 'dist', 'main.js')], {",`const child = spawn(NODE, process.env.REVIEW_BASE === '1' ? ['--import', ${JSON.stringify(pathToFileURL(path.join(scratch,'base-loader.mjs')).href)}, ${JSON.stringify(path.join(scratch,'base/apps/api/dist/main.js'))}] : [path.join(ROOT, 'apps', 'api', 'dist', 'main.js')], {`);
+fs.writeFileSync(path.join(scratch,'lib.mjs'),lib);
+let upgrade=fs.readFileSync(path.join(src,'upgrade.mjs'),'utf8').replaceAll('gg-205-','gg-rev205-').replace(/\b630([0-9])\b/g,(_,d)=>String(6362+(Number(d)%8)));
+const changelog=fs.readFileSync(path.join(root,'CHANGELOG.md'),'utf8');
+const select=changelog.match(/`(SELECT 'loop_versions'[^`]+);`/)[1];
+upgrade=upgrade.replace("const phase = process.argv[2];",`const FIND_MINIMAL = ${JSON.stringify(select)};\nconst phase = process.argv[2];`);
+upgrade=upgrade.replaceAll("const { u1, u2, ids } = JSON.parse(fs.readFileSync(STATE, 'utf8'));",`const { u1, u2, ids } = JSON.parse(fs.readFileSync(STATE, 'utf8'));\n    const foundMinimal=await L.withDb(u2,async db=>(await db.execute(FIND_MINIMAL)).rows);\n    rec.check('REVIEW SELECT finds both loop versions, owner defaults and hand-added catalog row',foundMinimal.length===4,foundMinimal);`);
+upgrade=upgrade.replace("const g2 = await L.startGateway({ dir: u2, port: 6366, label: 'u2-snap-minimal', rec });",`const foundSnapshot=await L.withDb(u2,async db=>(await db.execute(FIND_MINIMAL)).rows);\n    rec.check('REVIEW SELECT finds the immutable draft snapshot',foundSnapshot.length===1 && foundSnapshot[0].id===snapshotId,foundSnapshot);\n    const g2 = await L.startGateway({ dir: u2, port: 6366, label: 'u2-snap-minimal', rec });`);
+upgrade=upgrade.replace('rec.finish({',`if(phase==='b'||phase==='snap'){const state=JSON.parse(fs.readFileSync(STATE,'utf8'));const remaining=await L.withDb(state.u2,async db=>(await db.execute(FIND_MINIMAL)).rows);rec.check('REVIEW CHANGELOG SELECT finds no minimal after every hand correction',remaining.length===0,remaining);}\n  rec.finish({`);
+fs.writeFileSync(path.join(scratch,'upgrade.mjs'),upgrade);
+console.log('Prepared independent upgrade scripts; archive base + current built head, ports 6362..6369; own gg-rev205 stores only.');

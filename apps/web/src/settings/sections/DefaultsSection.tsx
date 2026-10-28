@@ -21,7 +21,11 @@ import { harnessReadiness, readinessLine, type HarnessReadiness } from '../../ap
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import { Card, FieldGroup, FieldRow, HelpText, Label, Select } from '../../components/ui/index.js';
-import { inheritedClaudeEfforts, unsupportedEffortMessage } from '../../forms/fields/model.js';
+import {
+  effortOptionLabel,
+  inheritedClaudeEfforts,
+  unsupportedEffortMessage,
+} from '../../forms/fields/model.js';
 import { MutationError } from '../shared.js';
 
 interface HarnessDefaults {
@@ -303,7 +307,9 @@ export function DefaultsSection() {
                             </option>
                           ) : null}
                           {effortOptions.map((value) => (
-                            <option key={value}>{value}</option>
+                            <option key={value} value={value}>
+                              {effortOptionLabel(value)}
+                            </option>
                           ))}
                         </Select>
                         {harness === 'claude' ? (

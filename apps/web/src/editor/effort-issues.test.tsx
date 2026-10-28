@@ -21,16 +21,11 @@ const codex = (model: string, displayName: string, efforts: Effort[]): ModelCata
   enabled: true,
   source: 'harness',
 });
-const luna = codex('gpt-6-luna', 'GPT-6 Luna', [
-  'minimal',
-  'low',
-  'medium',
-  'high',
-  'xhigh',
-  'max',
-]);
-const gpt55 = codex('gpt-5.5', 'GPT-5.5', ['minimal', 'low', 'medium', 'high', 'xhigh']);
-const message = 'Effort max is not supported by GPT-5.5. Choose a supported effort or Default.';
+const luna = codex('gpt-6-luna', 'GPT-6 Luna', ['none', 'low', 'medium', 'high', 'xhigh', 'max']);
+const gpt55 = codex('gpt-5.5', 'GPT-5.5', ['low', 'medium', 'high', 'xhigh']);
+const unsupported = (effort: string) =>
+  `Effort ${effort} is not supported by GPT-5.5. Choose a supported effort or Default.`;
+const message = unsupported('max');
 
 function definition(kind: 'inference' | 'llm', model?: string, effort?: string) {
   const source = minimalLoop();
@@ -72,46 +67,50 @@ function definition(kind: 'inference' | 'llm', model?: string, effort?: string) 
 }
 
 describe.each(['inference', 'llm'] as const)('a %s node', (kind) => {
-  it('keeps a chosen max after a switch to GPT-5.5, names it on the field and the node, and clears when changed', async () => {
-    const api = new FakeApi();
-    api.catalog = [luna, gpt55];
-    const loop = api.addLoop(definition(kind, 'gpt-6-luna', 'max'));
-    renderApp(`/loops/${loop.id}/edit`, api);
-    fireEvent.click(await screen.findByTestId('node-work'));
-    const dialog = screen.getByRole('dialog');
-    const model = within(dialog).getByLabelText('Model', { exact: true });
-    const effort = within(dialog).getByLabelText('Effort', { exact: true });
-    await waitFor(() => expect(effort).toHaveValue('max'));
-    expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull();
+  it.each(['max', 'none'] as const)(
+    'keeps a chosen %s after a switch to GPT-5.5, names it on the field and the node, and clears when changed',
+    async (kept) => {
+      const message = unsupported(kept);
+      const api = new FakeApi();
+      api.catalog = [luna, gpt55];
+      const loop = api.addLoop(definition(kind, 'gpt-6-luna', kept));
+      renderApp(`/loops/${loop.id}/edit`, api);
+      fireEvent.click(await screen.findByTestId('node-work'));
+      const dialog = screen.getByRole('dialog');
+      const model = within(dialog).getByLabelText('Model', { exact: true });
+      const effort = within(dialog).getByLabelText('Effort', { exact: true });
+      await waitFor(() => expect(effort).toHaveValue(kept));
+      expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull();
 
-    fireEvent.change(model, { target: { value: 'gpt-5.5' } });
-    // The choice is kept, and the field says why it cannot be used and what to do.
-    await waitFor(() => expect(effort).toHaveAccessibleDescription(new RegExp(message)));
-    expect(effort).toHaveValue('max');
-    const badge = within(dialog).getByRole('button', { name: '1 issue on work' });
-    fireEvent.click(badge);
-    const popover = await screen.findByRole('dialog', { name: 'Issues on work' });
-    expect(within(popover).getByText(message)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+      fireEvent.change(model, { target: { value: 'gpt-5.5' } });
+      // The choice is kept, and the field says why it cannot be used and what to do.
+      await waitFor(() => expect(effort).toHaveAccessibleDescription(new RegExp(message)));
+      expect(effort).toHaveValue(kept);
+      const badge = within(dialog).getByRole('button', { name: '1 issue on work' });
+      fireEvent.click(badge);
+      const popover = await screen.findByRole('dialog', { name: 'Issues on work' });
+      expect(within(popover).getByText(message)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
 
-    fireEvent.change(effort, { target: { value: 'xhigh' } });
-    await waitFor(() =>
-      expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull(),
-    );
-    expect(effort).not.toHaveAccessibleDescription(/not supported/);
+      fireEvent.change(effort, { target: { value: 'xhigh' } });
+      await waitFor(() =>
+        expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull(),
+      );
+      expect(effort).not.toHaveAccessibleDescription(/not supported/);
 
-    fireEvent.change(model, { target: { value: 'gpt-6-luna' } });
-    fireEvent.change(effort, { target: { value: 'max' } });
-    fireEvent.change(model, { target: { value: 'gpt-5.5' } });
-    await waitFor(() =>
-      expect(within(dialog).getByRole('button', { name: '1 issue on work' })).toBeInTheDocument(),
-    );
-    fireEvent.change(effort, { target: { value: '' } });
-    await waitFor(() =>
-      expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull(),
-    );
-    expect(effort).not.toHaveAccessibleDescription(new RegExp(message));
-  });
+      fireEvent.change(model, { target: { value: 'gpt-6-luna' } });
+      fireEvent.change(effort, { target: { value: kept } });
+      fireEvent.change(model, { target: { value: 'gpt-5.5' } });
+      await waitFor(() =>
+        expect(within(dialog).getByRole('button', { name: '1 issue on work' })).toBeInTheDocument(),
+      );
+      fireEvent.change(effort, { target: { value: '' } });
+      await waitFor(() =>
+        expect(within(dialog).queryByRole('button', { name: /issues? on work/ })).toBeNull(),
+      );
+      expect(effort).not.toHaveAccessibleDescription(new RegExp(message));
+    },
+  );
 });
 
 describe('unsupportedEffortIssues', () => {

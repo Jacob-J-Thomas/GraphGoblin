@@ -16,6 +16,8 @@ const inherited = Object.fromEntries(
       entry[1] !== undefined && !['NODE_OPTIONS', 'NODE_V8_COVERAGE'].includes(entry[0]),
   ),
 );
+// The provider's recorded refusal of a request at the old effort `minimal` (F2 LP-5). The fake CLI
+// replays it whatever effort the request names; only its handling is under test here.
 const PROVIDER_MESSAGE =
   "Unsupported value: 'minimal' is not supported with the 'gpt-6-luna' model. Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'.";
 
@@ -24,6 +26,14 @@ afterEach(async () => {
   for (const directory of directories.splice(0))
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
 });
+
+/** The SDK client lists MCP servers in the turn's working directory first (ADR-0063). */
+async function inWorkspace(loop: ReturnType<typeof singleNodeLoop>) {
+  return {
+    ...loop,
+    settings: { workingDirectory: { kind: 'fixed' as const, path: await workspace() } },
+  };
+}
 
 async function workspace(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'gg-codex-refusal-'));
@@ -62,7 +72,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       {
         workingDirectory: await workspace(),
         model: 'gpt-6-luna',
-        effort: 'minimal',
+        effort: 'none',
         options: { sandbox: 'read-only', approval: 'never' },
         turn: { prompt: 'Controlled fixture; no provider call' },
       },
@@ -142,7 +152,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
         {
           workingDirectory: await workspace(),
           model: 'gpt-6-luna',
-          effort: 'minimal',
+          effort: 'none',
           options: { sandbox: 'read-only', approval: 'never' },
           turn: { prompt: 'Controlled fixture; no provider call' },
         },
@@ -171,16 +181,18 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
     e.ports.harnesses.codex = codex;
     try {
       const version = e.publish(
-        singleNodeLoop('Provider refusal', {
-          id: 'infer',
-          kind: 'inference',
-          label: 'Infer',
-          config: {
-            model: 'gpt-6-luna',
-            effort: 'minimal',
-            prompt: { template: 'The complete authored task' },
-          },
-        }),
+        await inWorkspace(
+          singleNodeLoop('Provider refusal', {
+            id: 'infer',
+            kind: 'inference',
+            label: 'Infer',
+            config: {
+              model: 'gpt-6-luna',
+              effort: 'none',
+              prompt: { template: 'The complete authored task' },
+            },
+          }),
+        ),
       );
       const run = await e.runToIdle(version.loopId);
       expect(run.failure).toMatchObject({
@@ -223,7 +235,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
         {
           workingDirectory: await workspace(),
           model: 'gpt-6-luna',
-          effort: 'minimal',
+          effort: 'none',
           options: { sandbox: 'read-only', approval: 'never' },
           turn: { prompt: 'Controlled fixture; no provider call' },
         },
@@ -256,16 +268,18 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       e.ports.harnesses.codex = harness(failure, { stderr: 'repeat' }).codex;
       try {
         const version = e.publish(
-          singleNodeLoop('Repeated refusal ' + failure, {
-            id: 'infer',
-            kind: 'inference',
-            label: 'Infer',
-            config: {
-              model: 'gpt-6-luna',
-              effort: 'minimal',
-              prompt: { template: 'The complete authored task' },
-            },
-          }),
+          await inWorkspace(
+            singleNodeLoop('Repeated refusal ' + failure, {
+              id: 'infer',
+              kind: 'inference',
+              label: 'Infer',
+              config: {
+                model: 'gpt-6-luna',
+                effort: 'none',
+                prompt: { template: 'The complete authored task' },
+              },
+            }),
+          ),
         );
         const run = await e.runToIdle(version.loopId);
         expect(run.failure).toEqual({

@@ -1,0 +1,322 @@
+{
+  "scenario": "round1/places",
+  "passed": 12,
+  "failed": 0,
+  "observations": 1,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "P-1 the fixtures exist: A and B missing session (B stays failed), C decided, A recovered fresh, event and webhook admitted, a draft snapshot run",
+      "ok": true,
+      "detail": {
+        "B": "HARNESS_SESSION_MISSING",
+        "C": "succeeded",
+        "recover": 200,
+        "A": "succeeded",
+        "event": 202,
+        "webhook": 202
+      }
+    },
+    {
+      "id": "P-2 every read is 200",
+      "ok": true,
+      "detail": {
+        "run A": 200,
+        "events A": 200,
+        "thread A": 200,
+        "run B": 200,
+        "events B": 200,
+        "thread B": 200,
+        "run C": 200,
+        "events C": 200,
+        "thread C": 200,
+        "run S": 200,
+        "events S": 200,
+        "thread S": 200,
+        "observation A": 200,
+        "observation C": 200,
+        "GET /runs": 200,
+        "GET /settings": 200,
+        "GET /model-catalog": 200,
+        "loop A": 200,
+        "loop B": 200,
+        "loop C": 200,
+        "loop S": 200
+      }
+    },
+    {
+      "id": "P-3 no real provider: every turn reached the fake CLI",
+      "ok": true,
+      "detail": [
+        {
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        },
+        {
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        },
+        {
+          "effort": "none",
+          "resume": true,
+          "mode": "spec"
+        },
+        {
+          "effort": "none",
+          "resume": true,
+          "mode": "spec"
+        },
+        {
+          "effort": "none",
+          "resume": false,
+          "mode": "spec"
+        },
+        {
+          "effort": "none",
+          "resume": false,
+          "mode": "success"
+        }
+      ]
+    },
+    {
+      "id": "P-4 gateway drains to exit 0",
+      "ok": true
+    },
+    {
+      "id": "P-5 authored JSON holds {\"effort\":\"minimal\"} in loop variables, run input, threads, events and receipts, and the SELECT finds none of it",
+      "ok": true,
+      "detail": {
+        "selectRows": [],
+        "authoredRows": [
+          "loop_versions 01M60Q9QF3JC8W78D4QAJMCH6T published",
+          "loop_versions 01M60Q9QT4RQZ5R8V015F54B8E published",
+          "runs 01M60Q9RA8TJGBKRWCY3DZ1PHR initial_thread",
+          "runs 01M60Q9RA8TJGBKRWCY3DZ1PHR thread_snapshot",
+          "runs 01M60Q9RV5YYQ2NMESGH709S1X initial_thread",
+          "runs 01M60Q9RV5YYQ2NMESGH709S1X thread_snapshot",
+          "runs 01M60Q9TTBY6RHQC5MG4PA1XB1 initial_thread",
+          "runs 01M60Q9TTBY6RHQC5MG4PA1XB1 thread_snapshot",
+          "runs 01M60Q9TWNSDJ34PGYFE8FV64R initial_thread",
+          "runs 01M60Q9TWNSDJ34PGYFE8FV64R thread_snapshot",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#1 run.queued",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#4 node.finished",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#1 run.queued",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#4 node.finished",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#14 input.received",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#15 run.woken",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#17 node.finished",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#14 input.received",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#15 run.woken",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#17 node.finished",
+          "run_events 01M60Q9TTBY6RHQC5MG4PA1XB1#1 run.queued",
+          "run_events 01M60Q9TTBY6RHQC5MG4PA1XB1#4 node.finished",
+          "run_events 01M60Q9TWNSDJ34PGYFE8FV64R#1 run.queued",
+          "run_events 01M60Q9TWNSDJ34PGYFE8FV64R#4 node.finished",
+          "webhook_receipts 01M60Q9TWNSDJ34PGYFE8FV64Q",
+          "event_receipts 01M60Q9TTACPMYKVE5AN1WPEDJ"
+        ]
+      }
+    },
+    {
+      "id": "H-1 typed run-history minimal only: the server starts; the reads that meet it",
+      "ok": null,
+      "detail": {
+        "run A": 500,
+        "events A": 500,
+        "thread A": 500,
+        "run B": 500,
+        "events B": 500,
+        "thread B": 500,
+        "run C": 500,
+        "events C": 500,
+        "thread C": 500,
+        "run S": 500,
+        "events S": 500,
+        "thread S": 500,
+        "observation A": 500,
+        "observation C": 500,
+        "GET /runs": 200,
+        "GET /settings": 200,
+        "GET /model-catalog": 200,
+        "loop A": 200,
+        "loop B": 200,
+        "loop C": 200,
+        "loop S": 200
+      }
+    },
+    {
+      "id": "H-2 the SELECT lists runs (pinned, failure), run_events of all five typed kinds, harness_sessions and both receipts",
+      "ok": true,
+      "detail": [
+        "runs 01M60Q9RA8TJGBKRWCY3DZ1PHR",
+        "runs 01M60Q9RV5YYQ2NMESGH709S1X",
+        "runs 01M60Q9SY88EC9G7JMJ9H3H8TR",
+        "runs 01M60Q9TTBY6RHQC5MG4PA1XB1",
+        "runs 01M60Q9TWNSDJ34PGYFE8FV64R",
+        "runs 01M60Q9TY1E7H77R747VHB9AW9",
+        "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#1 run.queued",
+        "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#7 harness.session",
+        "run_events 01M60Q9RV5YYQ2NMESGH709S1X#1 run.queued",
+        "run_events 01M60Q9RV5YYQ2NMESGH709S1X#7 harness.session",
+        "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#22 run.failed",
+        "run_events 01M60Q9RV5YYQ2NMESGH709S1X#22 run.failed",
+        "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#1 run.queued",
+        "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#6 decision.made",
+        "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#23 run.resumed",
+        "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#26 harness.session",
+        "run_events 01M60Q9TTBY6RHQC5MG4PA1XB1#1 run.queued",
+        "run_events 01M60Q9TWNSDJ34PGYFE8FV64R#1 run.queued",
+        "run_events 01M60Q9TY1E7H77R747VHB9AW9#1 run.queued",
+        "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w1/1",
+        "harness_sessions 01M60Q9RV5YYQ2NMESGH709S1X/w1/1",
+        "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w2/1",
+        "harness_sessions 01M60Q9RV5YYQ2NMESGH709S1X/w2/1",
+        "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w2/2",
+        "webhook_receipts 01M60Q9TWNSDJ34PGYFE8FV64Q",
+        "event_receipts 01M60Q9TTACPMYKVE5AN1WPEDJ"
+      ]
+    },
+    {
+      "id": "H-3 gateway drains to exit 0",
+      "ok": true
+    },
+    {
+      "id": "F-1 the SELECT lists all eight places, the snapshot included",
+      "ok": true,
+      "detail": {
+        "places": [
+          "loop_versions",
+          "settings",
+          "model_catalog",
+          "runs",
+          "run_events",
+          "harness_sessions",
+          "webhook_receipts",
+          "event_receipts"
+        ],
+        "rows": 33,
+        "found": [
+          "loop_versions 01M60Q9QF3JC8W78D4QAJMCH6T published",
+          "loop_versions 01M60Q9QT4RQZ5R8V015F54B8E published",
+          "loop_versions 01M60Q9R1QVH6MAK1TZ5D68TVN published",
+          "loop_versions 01M60Q9TX7XM814A52A0HJCZM5 draft",
+          "loop_versions 01M60Q9TY1E7H77R747VHB9AWB snapshot",
+          "settings defaults",
+          "model_catalog codex/gpt-5-handadded",
+          "runs 01M60Q9RA8TJGBKRWCY3DZ1PHR",
+          "runs 01M60Q9RV5YYQ2NMESGH709S1X",
+          "runs 01M60Q9SY88EC9G7JMJ9H3H8TR",
+          "runs 01M60Q9TTBY6RHQC5MG4PA1XB1",
+          "runs 01M60Q9TWNSDJ34PGYFE8FV64R",
+          "runs 01M60Q9TY1E7H77R747VHB9AW9",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#1 run.queued",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#7 harness.session",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#1 run.queued",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#7 harness.session",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#22 run.failed",
+          "run_events 01M60Q9RV5YYQ2NMESGH709S1X#22 run.failed",
+          "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#1 run.queued",
+          "run_events 01M60Q9SY88EC9G7JMJ9H3H8TR#6 decision.made",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#23 run.resumed",
+          "run_events 01M60Q9RA8TJGBKRWCY3DZ1PHR#26 harness.session",
+          "run_events 01M60Q9TTBY6RHQC5MG4PA1XB1#1 run.queued",
+          "run_events 01M60Q9TWNSDJ34PGYFE8FV64R#1 run.queued",
+          "run_events 01M60Q9TY1E7H77R747VHB9AW9#1 run.queued",
+          "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w1/1",
+          "harness_sessions 01M60Q9RV5YYQ2NMESGH709S1X/w1/1",
+          "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w2/1",
+          "harness_sessions 01M60Q9RV5YYQ2NMESGH709S1X/w2/1",
+          "harness_sessions 01M60Q9RA8TJGBKRWCY3DZ1PHR/w2/2",
+          "webhook_receipts 01M60Q9TWNSDJ34PGYFE8FV64Q",
+          "event_receipts 01M60Q9TTACPMYKVE5AN1WPEDJ"
+        ]
+      }
+    },
+    {
+      "id": "F-2 startup refuses the store, naming a loop version",
+      "ok": true,
+      "detail": "  Reason:   The format-4 store is damaged: stored loop version 01M60Q9QF3JC8W78D4QAJMCH6T is not a valid definition"
+    },
+    {
+      "id": "F-3 each statement changes rows; afterwards every row equals its state before H byte for byte, authored {\"effort\":\"minimal\"} included; the SELECT is empty; the trigger is restored",
+      "ok": true,
+      "detail": {
+        "affected": {
+          "loop_versions": 4,
+          "settings": 1,
+          "model_catalog": 1,
+          "runs": 6,
+          "run_events": 13,
+          "harness_sessions": 5,
+          "webhook_receipts": 1,
+          "event_receipts": 1
+        },
+        "snapshotAffected": 1,
+        "left": [],
+        "triggerRestored": true,
+        "rowsCompared": 143,
+        "differing": []
+      }
+    },
+    {
+      "id": "F-4 after the correction every read is 200, and the authored variable default and run input still say effort minimal",
+      "ok": true,
+      "detail": {
+        "reads": {
+          "run A": 200,
+          "events A": 200,
+          "thread A": 200,
+          "run B": 200,
+          "events B": 200,
+          "thread B": 200,
+          "run C": 200,
+          "events C": 200,
+          "thread C": 200,
+          "run S": 200,
+          "events S": 200,
+          "thread S": 200,
+          "observation A": 200,
+          "observation C": 200,
+          "GET /runs": 200,
+          "GET /settings": 200,
+          "GET /model-catalog": 200,
+          "loop A": 200,
+          "loop B": 200,
+          "loop C": 200,
+          "loop S": 200
+        },
+        "variables": {
+          "payload": {
+            "type": "object",
+            "default": {
+              "effort": "minimal"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F-5 gateway drains to exit 0",
+      "ok": true
+    }
+  ],
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-places-ao7X1S",
+  "ids": {
+    "A": "01M60Q9QF3JC8W78D4QAJMCH6S",
+    "B": "01M60Q9QT4RQZ5R8V015F54B8D",
+    "C": "01M60Q9R1QVH6MAK1TZ5D68TVM",
+    "E": "01M60Q9TSSN59PSRTJX85HWPJQ",
+    "W": "01M60Q9TV2BFJWTB46MSADXKNV",
+    "S": "01M60Q9TX7XM814A52A0HJCZM4"
+  },
+  "runs": {
+    "A": "01M60Q9RA8TJGBKRWCY3DZ1PHR",
+    "Await": "01M60Q9RA8TJGBKRWCY3DZ1PHR:12",
+    "B": "01M60Q9RV5YYQ2NMESGH709S1X",
+    "Bwait": "01M60Q9RV5YYQ2NMESGH709S1X:12",
+    "C": "01M60Q9SY88EC9G7JMJ9H3H8TR",
+    "S": "01M60Q9TY1E7H77R747VHB9AW9"
+  }
+}

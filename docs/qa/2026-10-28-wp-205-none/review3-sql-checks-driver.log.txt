@@ -1,0 +1,28 @@
+COMMAND: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe %USERPROFILE%\AppData\Local\Temp\gg-rev205c-review\sql-checks.mjs
+2026-10-28T08:46:50.604Z +0.1s CHECK PASS discovery covers all eight places; ignores custom settings and authored node.finished {"rows":[{"place":"loop_versions","ref":"lv draft"},{"place":"loop_versions","ref":"snap snapshot"},{"place":"settings","ref":"defaults"},{"place":"model_catalog","ref":"codex/dedup"},{"place":"model_catalog","ref":"codex/replace"},{"place":"runs","ref":"r"},{"place":"run_events","ref":"r#1 run.queued"},{"place":"run_events","ref":"r#2 run.failed"},{"place":"run_events","ref":"r#3 run.resumed"},{"place":"run_events","ref":"r#4 harness.session"},{"place":"run_events","ref":"r#5 decision.made"},{"place":"harness_sessions","ref":"r/worker/1"},{"place":"webhook_receipts","ref":"receipt"},{"place":"event_receipts","ref":"receipt"}]}
+2026-10-28T08:46:50.646Z +0.1s CHECK PASS path scoped loop_versions id='lv' definition preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.646Z +0.1s CHECK PASS path scoped loop_versions id='snap' definition preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.647Z +0.1s CHECK PASS path scoped settings key='defaults' value preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.648Z +0.1s CHECK PASS path scoped settings key='custom' value preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.649Z +0.1s CHECK PASS path scoped model_catalog model='dedup' efforts preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.649Z +0.1s CHECK PASS path scoped model_catalog model='replace' efforts preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.650Z +0.1s CHECK PASS path scoped runs id='r' pinned preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.651Z +0.1s CHECK PASS path scoped runs id='r' failure preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.652Z +0.1s CHECK PASS path scoped run_events seq=1 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.652Z +0.1s CHECK PASS path scoped run_events seq=2 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.653Z +0.1s CHECK PASS path scoped run_events seq=3 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.653Z +0.1s CHECK PASS path scoped run_events seq=4 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.654Z +0.1s CHECK PASS path scoped run_events seq=5 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.655Z +0.1s CHECK PASS path scoped run_events seq=6 payload preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.655Z +0.1s CHECK PASS path scoped webhook_receipts id='receipt' intent preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.656Z +0.1s CHECK PASS path scoped event_receipts id='receipt' intent preserves element order and all authored fields {"equal":true}
+2026-10-28T08:46:50.657Z +0.1s CHECK PASS catalog default efforts corrected
+2026-10-28T08:46:50.657Z +0.1s CHECK PASS session effort corrected
+2026-10-28T08:46:50.658Z +0.1s CHECK PASS snapshot trigger exact after transaction
+2026-10-28T08:46:50.660Z +0.2s CHECK PASS discovery empty after full recipe
+2026-10-28T08:46:50.702Z +0.2s OBSERVE malformed catalog efforts {"selectError":null,"updateError":null}
+2026-10-28T08:46:50.752Z +0.2s OBSERVE malformed run pin {"selectError":null,"updateError":null}
+2026-10-28T08:46:50.790Z +0.3s OBSERVE malformed run failure {"selectError":null,"updateError":null}
+2026-10-28T08:46:50.792Z +0.3s DONE passed=21 failed=0 observations=3 realTurns=0
+
+EXIT=0

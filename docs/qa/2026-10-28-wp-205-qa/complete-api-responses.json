@@ -1,0 +1,448 @@
+[
+  {
+    "label": "claude/loop/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.claude.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/loop/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid evaluator or model configuration",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.claude.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/loop/validate",
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.claude.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The selected reasoning effort is not supported by this model",
+          "nodeId": "work",
+          "path": "config.effort"
+        }
+      ],
+      "publishable": false
+    }
+  },
+  {
+    "label": "claude/loop/publish",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-invalid",
+      "title": "loop invalid",
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "detail": "the draft has structural errors",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "message": "The default reasoning effort is not supported by its model",
+          "path": "settings.defaults.byHarness.claude.effort"
+        },
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "label": "codex/owner/none",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid harness defaults",
+      "errors": [
+        {
+          "level": "owner",
+          "harness": "codex",
+          "resolution": {
+            "status": "invalid",
+            "code": "EFFORT_UNSUPPORTED",
+            "path": "effort",
+            "message": "The default reasoning effort is not supported by its model"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "label": "claude/owner/none",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+      "title": "evaluation invalid configuration",
+      "status": 400,
+      "code": "EVALUATION_INVALID_CONFIGURATION",
+      "detail": "invalid harness defaults",
+      "errors": [
+        {
+          "level": "owner",
+          "harness": "claude",
+          "resolution": {
+            "status": "invalid",
+            "code": "EFFORT_UNSUPPORTED",
+            "path": "effort",
+            "message": "The default reasoning effort is not supported by its model"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/inference/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/inference/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/inference/validate",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/decision/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort/value",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/decision/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort/value",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/decision/validate",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort/value",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/loop/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/codex/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/loop/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/codex/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/codex/loop/validate",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/codex/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/inference/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/inference/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/inference/validate",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/loop/create",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/claude/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/loop/draft",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/claude/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/claude/loop/validate",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/settings/defaults/byHarness/claude/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/settings/codex",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "a known setting has an invalid value",
+      "errors": [
+        {
+          "path": "/defaults/byHarness/codex/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/settings/claude",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "a known setting has an invalid value",
+      "errors": [
+        {
+          "path": "/defaults/byHarness/claude/effort",
+          "message": "Invalid option: expected one of \"none\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""
+        }
+      ]
+    }
+  },
+  {
+    "label": "minimal/catalog",
+    "status": 404,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/not-found",
+      "title": "not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "POST /model-catalog does not exist"
+    }
+  }
+]

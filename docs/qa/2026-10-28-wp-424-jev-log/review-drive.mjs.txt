@@ -1,0 +1,147 @@
+// Reviewer behaviour driver for WP-424. Starts the built API on disposable stores with an exact
+// environment, records the startup log, lists secret names, drains the gateway and checks that
+// the fake key never appears in any log line or store file.
+// Usage: node drive.mjs <worktree> <storesRoot> <outDir>
+import { spawn } from 'node:child_process';
+import { createWriteStream, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [worktree, storesRoot, outDir] = process.argv.slice(2);
+if (!worktree || !storesRoot || !outDir) throw new Error('usage: drive.mjs <worktree> <storesRoot> <outDir>');
+const mainJs = join(worktree, 'apps', 'api', 'dist', 'main.js');
+const FAKE = 'review-fake-key';
+const FAKE_GG = 'review-fake-key-gg';
+mkdirSync(storesRoot, { recursive: true });
+mkdirSync(outDir, { recursive: true });
+
+function baseEnv() {
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (/^GG_/i.test(k) || /^JEV_API_KEY$/i.test(k) || /^LIVE/i.test(k)) continue;
+    env[k] = v;
+  }
+  return env;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function waitHealthy(port, child) {
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) throw new Error(`gateway exited early with ${child.exitCode}`);
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/healthz`);
+      if (res.ok) return;
+    } catch {
+      // not listening yet
+    }
+    await sleep(250);
+  }
+  throw new Error('gateway did not become healthy');
+}
+
+function waitExit(child, ms) {
+  return new Promise((resolve) => {
+    if (child.exitCode !== null) return resolve(child.exitCode);
+    const t = setTimeout(() => resolve('timeout'), ms);
+    child.once('exit', (code) => {
+      clearTimeout(t);
+      resolve(code);
+    });
+  });
+}
+
+function filesContaining(dir, needle) {
+  const hits = [];
+  const walk = (d) => {
+    for (const name of readdirSync(d)) {
+      const p = join(d, name);
+      const s = statSync(p);
+      if (s.isDirectory()) walk(p);
+      else if (readFileSync(p).includes(Buffer.from(needle, 'utf8'))) hits.push(p);
+    }
+  };
+  walk(dir);
+  return hits;
+}
+
+async function scenario({ id, store, port, extra }) {
+  const dataDir = join(storesRoot, store);
+  const env = {
+    ...baseEnv(),
+    GG_DATA_DIR: dataDir,
+    GG_PORT: String(port),
+    GG_HOST: '127.0.0.1',
+    GG_LOG_LEVEL: 'trace',
+    GG_WEB_DIST: '',
+    ...extra,
+  };
+  const logPath = join(outDir, `review-gateway-${id}.log.txt`);
+  const out = createWriteStream(logPath);
+  const child = spawn(process.execPath, [mainJs], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  child.stdout.pipe(out, { end: false });
+  child.stderr.pipe(out, { end: false });
+  const result = {
+    id,
+    store,
+    port,
+    pid: child.pid,
+    envJevVariables: Object.fromEntries(
+      Object.entries(extra).map(([k, v]) => [k, v === '' ? '<empty>' : v === FAKE ? '<review-fake-key>' : '<review-fake-key-gg>']),
+    ),
+  };
+  try {
+    await waitHealthy(port, child);
+    const secrets = await (await fetch(`http://127.0.0.1:${port}/secrets`)).json();
+    result.secrets = secrets.items.map((s) => ({ name: s.name, updatedAt: s.updatedAt ?? s.updated_at ?? null }));
+    const drain = await fetch(`http://127.0.0.1:${port}/system/shutdown`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'drain' }),
+    });
+    result.drainStatus = drain.status;
+    result.exitCode = await waitExit(child, 60_000);
+  } catch (error) {
+    result.error = String(error);
+    if (child.exitCode === null) {
+      child.kill();
+      result.exitCode = await waitExit(child, 10_000);
+      result.killedByDriver = true;
+    }
+  }
+  await sleep(200);
+  out.end();
+  await new Promise((r) => out.once('close', r));
+  const text = readFileSync(logPath, 'utf8');
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  const msgs = lines.map((l) => {
+    try {
+      return JSON.parse(l).msg;
+    } catch {
+      return `<non-json> ${l.slice(0, 120)}`;
+    }
+  });
+  result.logLineCount = lines.length;
+  result.seedLines = msgs.filter((m) => typeof m === 'string' && m.startsWith('seeded jev-api-key'));
+  result.levelsSeen = [...new Set(lines.map((l) => { try { return JSON.parse(l).level; } catch { return 'non-json'; } }))];
+  result.logContainsFakeKey = text.toLowerCase().includes(FAKE);
+  result.storeFilesContainingFakeKey = filesContaining(dataDir, FAKE).map((p) => p.slice(storesRoot.length + 1));
+  return result;
+}
+
+const scenarios = [
+  { id: 'a1-jev-only', store: 'store-a', port: 6340, extra: { JEV_API_KEY: FAKE } },
+  { id: 'a2-both-existing-secret', store: 'store-a', port: 6341, extra: { JEV_API_KEY: FAKE, GG_JEV_API_KEY: FAKE_GG } },
+  { id: 'c1-gg-only-fresh', store: 'store-c', port: 6342, extra: { GG_JEV_API_KEY: FAKE_GG } },
+  { id: 'd1-both-fresh', store: 'store-d', port: 6343, extra: { GG_JEV_API_KEY: FAKE_GG, JEV_API_KEY: FAKE } },
+  { id: 'e1-empty-gg-with-fallback-fresh', store: 'store-e', port: 6344, extra: { GG_JEV_API_KEY: '', JEV_API_KEY: FAKE } },
+  { id: 'f1-neither-fresh', store: 'store-f', port: 6345, extra: {} },
+];
+
+const results = [];
+for (const s of scenarios) {
+  const r = await scenario(s);
+  results.push(r);
+  console.log(JSON.stringify(r));
+}
+writeFileSync(join(outDir, 'review-behaviour-results.json'), JSON.stringify({ node: process.version, results }, null, 2) + '\n');

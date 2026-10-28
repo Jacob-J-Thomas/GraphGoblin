@@ -1,0 +1,2410 @@
+{
+  "checks": [
+    {
+      "name": "ordinary-baseline second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R4TZYK2RGXKYHMWM3HM8V",
+        "ownerId": "local",
+        "loopId": "01M60R4TBJ4KYWANQQYRCAG28D",
+        "versionId": "01M60R4TBKM749S1ATRJE2NWHX",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "ordinary-baseline",
+          "label": "ordinary-baseline v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R4TZYK2RGXKYHMWM3HM8W",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:10.622Z",
+        "startedAt": "2026-10-28T07:56:11.044Z",
+        "finishedAt": "2026-10-28T07:56:11.423Z",
+        "finalizedAt": "2026-10-28T07:56:11.432Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "ordinary-baseline isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "ordinary-baseline listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:11.2224605Z",
+          "kind": "listing",
+          "pid": 57636,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R4TZYK2RGXKYHMWM3HM8V",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R4TZYK2RGXKYHMWM3HM8V"
+      }
+    },
+    {
+      "name": "ordinary-baseline thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "ordinary-baseline gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 7,
+        "last": {
+          "at": "2026-10-28T07:56:11.484Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "listed proto refuses before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"__proto__\" cannot be switched off through --config.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M60R4W88NMRM3ED4EVEY8G1F:5",
+            "turnId": "01M60R4WN96PGSGP2HHDECTTQE",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "listed proto Resume offered but still no exec",
+      "ok": true,
+      "value": {
+        "response": {
+          "status": 200,
+          "json": {
+            "id": "01M60R4W88NMRM3ED4EVEY8G1F",
+            "ownerId": "local",
+            "loopId": "01M60R4VWV3903MHQSBCA57FJP",
+            "versionId": "01M60R4VWV3903MHQSBCA57FJQ",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "listed-proto",
+              "label": "listed-proto v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60R4W88NMRM3ED4EVEY8G1G",
+            "status": "running",
+            "currentNodeId": "infer",
+            "iteration": 1,
+            "createdAt": "2026-10-28T07:56:11.912Z",
+            "startedAt": "2026-10-28T07:56:12.272Z",
+            "lastEventSeq": 10
+          }
+        },
+        "run": {
+          "id": "01M60R4W88NMRM3ED4EVEY8G1F",
+          "ownerId": "local",
+          "loopId": "01M60R4VWV3903MHQSBCA57FJP",
+          "versionId": "01M60R4VWV3903MHQSBCA57FJQ",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "listed-proto",
+            "label": "listed-proto v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60R4W88NMRM3ED4EVEY8G1G",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"__proto__\" cannot be switched off through --config.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M60R4W88NMRM3ED4EVEY8G1F:5",
+              "turnId": "01M60R4WN96PGSGP2HHDECTTQE",
+              "submission": "definitely-not-submitted",
+              "promptKind": "authored"
+            }
+          },
+          "createdAt": "2026-10-28T07:56:11.912Z",
+          "startedAt": "2026-10-28T07:56:12.272Z",
+          "finishedAt": "2026-10-28T07:56:12.745Z",
+          "finalizedAt": "2026-10-28T07:56:12.752Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "after-listed-proto second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R4XGADAW43PFFTVS1R46K",
+        "ownerId": "local",
+        "loopId": "01M60R4X4AS8SWWKZK789T5TJM",
+        "versionId": "01M60R4X4AS8SWWKZK789T5TJN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-listed-proto",
+          "label": "after-listed-proto v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R4XGADAW43PFFTVS1R46M",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:13.194Z",
+        "startedAt": "2026-10-28T07:56:13.638Z",
+        "finishedAt": "2026-10-28T07:56:13.928Z",
+        "finalizedAt": "2026-10-28T07:56:13.933Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-listed-proto isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-listed-proto listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:13.7691147Z",
+          "kind": "listing",
+          "pid": 51744,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R4XGADAW43PFFTVS1R46K",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R4XGADAW43PFFTVS1R46K"
+      }
+    },
+    {
+      "name": "after-listed-proto thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-listed-proto gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 16,
+        "last": {
+          "at": "2026-10-28T07:56:14.025Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "listed constructor refuses before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"constructor\" cannot be switched off through --config.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M60R4YQC9Q2X7J858QDBMCH1:5",
+            "turnId": "01M60R4Z5NQYPRHGM7WG12JSJ0",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "listed constructor Resume offered but still no exec",
+      "ok": true,
+      "value": {
+        "response": {
+          "status": 200,
+          "json": {
+            "id": "01M60R4YQC9Q2X7J858QDBMCH1",
+            "ownerId": "local",
+            "loopId": "01M60R4YBQRG623NEEXXCRXDMV",
+            "versionId": "01M60R4YBQRG623NEEXXCRXDMW",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "listed-constructor",
+              "label": "listed-constructor v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60R4YQC9Q2X7J858QDBMCH2",
+            "status": "running",
+            "currentNodeId": "infer",
+            "iteration": 1,
+            "createdAt": "2026-10-28T07:56:14.444Z",
+            "startedAt": "2026-10-28T07:56:14.853Z",
+            "lastEventSeq": 10
+          }
+        },
+        "run": {
+          "id": "01M60R4YQC9Q2X7J858QDBMCH1",
+          "ownerId": "local",
+          "loopId": "01M60R4YBQRG623NEEXXCRXDMV",
+          "versionId": "01M60R4YBQRG623NEEXXCRXDMW",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "listed-constructor",
+            "label": "listed-constructor v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60R4YQC9Q2X7J858QDBMCH2",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"constructor\" cannot be switched off through --config.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M60R4YQC9Q2X7J858QDBMCH1:5",
+              "turnId": "01M60R4Z5NQYPRHGM7WG12JSJ0",
+              "submission": "definitely-not-submitted",
+              "promptKind": "authored"
+            }
+          },
+          "createdAt": "2026-10-28T07:56:14.444Z",
+          "startedAt": "2026-10-28T07:56:14.853Z",
+          "finishedAt": "2026-10-28T07:56:15.318Z",
+          "finalizedAt": "2026-10-28T07:56:15.325Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "after-listed-constructor second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R505HEBFSEYQ2C2VZSG4B",
+        "ownerId": "local",
+        "loopId": "01M60R4ZQCCP727T0P6KX00V1T",
+        "versionId": "01M60R4ZQCCP727T0P6KX00V1V",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-listed-constructor",
+          "label": "after-listed-constructor v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R505HEBFSEYQ2C2VZSG4C",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:15.921Z",
+        "startedAt": "2026-10-28T07:56:17.411Z",
+        "finishedAt": "2026-10-28T07:56:17.882Z",
+        "finalizedAt": "2026-10-28T07:56:17.889Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-listed-constructor isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-listed-constructor listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:17.5714494Z",
+          "kind": "listing",
+          "pid": 49180,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R505HEBFSEYQ2C2VZSG4B",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R505HEBFSEYQ2C2VZSG4B"
+      }
+    },
+    {
+      "name": "after-listed-constructor thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-listed-constructor gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 29,
+        "last": {
+          "at": "2026-10-28T07:56:17.913Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "listed prototype refuses before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"prototype\" cannot be switched off through --config.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M60R52H1PQPRTM5ZS95H0NJY:5",
+            "turnId": "01M60R52ZAY3PN9VQCPYBRWKYW",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "listed prototype Resume offered but still no exec",
+      "ok": true,
+      "value": {
+        "response": {
+          "status": 200,
+          "json": {
+            "id": "01M60R52H1PQPRTM5ZS95H0NJY",
+            "ownerId": "local",
+            "loopId": "01M60R525R1NA68P4WFWZXHD2M",
+            "versionId": "01M60R525R1NA68P4WFWZXHD2N",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "listed-prototype",
+              "label": "listed-prototype v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60R52H1PQPRTM5ZS95H0NJZ",
+            "status": "running",
+            "currentNodeId": "infer",
+            "iteration": 1,
+            "createdAt": "2026-10-28T07:56:18.337Z",
+            "startedAt": "2026-10-28T07:56:18.743Z",
+            "lastEventSeq": 10
+          }
+        },
+        "run": {
+          "id": "01M60R52H1PQPRTM5ZS95H0NJY",
+          "ownerId": "local",
+          "loopId": "01M60R525R1NA68P4WFWZXHD2M",
+          "versionId": "01M60R525R1NA68P4WFWZXHD2N",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "listed-prototype",
+            "label": "listed-prototype v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60R52H1PQPRTM5ZS95H0NJZ",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"prototype\" cannot be switched off through --config.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M60R52H1PQPRTM5ZS95H0NJY:5",
+              "turnId": "01M60R52ZAY3PN9VQCPYBRWKYW",
+              "submission": "definitely-not-submitted",
+              "promptKind": "authored"
+            }
+          },
+          "createdAt": "2026-10-28T07:56:18.337Z",
+          "startedAt": "2026-10-28T07:56:18.743Z",
+          "finishedAt": "2026-10-28T07:56:19.156Z",
+          "finalizedAt": "2026-10-28T07:56:19.163Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "after-listed-prototype second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R53S01AF4E1VGEX7DSJET",
+        "ownerId": "local",
+        "loopId": "01M60R53CP2TE03ECEJR4APPDK",
+        "versionId": "01M60R53CP2TE03ECEJR4APPDM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-listed-prototype",
+          "label": "after-listed-prototype v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R53S01AF4E1VGEX7DSJEV",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:19.616Z",
+        "startedAt": "2026-10-28T07:56:20.008Z",
+        "finishedAt": "2026-10-28T07:56:20.273Z",
+        "finalizedAt": "2026-10-28T07:56:20.278Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-listed-prototype isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-listed-prototype listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:20.1438906Z",
+          "kind": "listing",
+          "pid": 20676,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R53S01AF4E1VGEX7DSJET",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R53S01AF4E1VGEX7DSJET"
+      }
+    },
+    {
+      "name": "after-listed-prototype thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-listed-prototype gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 37,
+        "last": {
+          "at": "2026-10-28T07:56:20.160Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "listed space refuses before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"team docs\" cannot be switched off through --config.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M60R54W306F3JAR2CMPQ5WJY:5",
+            "turnId": "01M60R555YQJAAH9JJZTBYQ6EJ",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "listed space Resume offered but still no exec",
+      "ok": true,
+      "value": {
+        "response": {
+          "status": 200,
+          "json": {
+            "id": "01M60R54W306F3JAR2CMPQ5WJY",
+            "ownerId": "local",
+            "loopId": "01M60R54J1KBPD14MMWNENQYVA",
+            "versionId": "01M60R54J2V8YR9MMCA00CF5PS",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "listed-space",
+              "label": "listed-space v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60R54W306F3JAR2CMPQ5WJZ",
+            "status": "running",
+            "currentNodeId": "infer",
+            "iteration": 1,
+            "createdAt": "2026-10-28T07:56:20.739Z",
+            "startedAt": "2026-10-28T07:56:21.003Z",
+            "lastEventSeq": 10
+          }
+        },
+        "run": {
+          "id": "01M60R54W306F3JAR2CMPQ5WJY",
+          "ownerId": "local",
+          "loopId": "01M60R54J1KBPD14MMWNENQYVA",
+          "versionId": "01M60R54J2V8YR9MMCA00CF5PS",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "listed-space",
+            "label": "listed-space v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60R54W306F3JAR2CMPQ5WJZ",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"team docs\" cannot be switched off through --config.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M60R54W306F3JAR2CMPQ5WJY:5",
+              "turnId": "01M60R555YQJAAH9JJZTBYQ6EJ",
+              "submission": "definitely-not-submitted",
+              "promptKind": "authored"
+            }
+          },
+          "createdAt": "2026-10-28T07:56:20.739Z",
+          "startedAt": "2026-10-28T07:56:21.003Z",
+          "finishedAt": "2026-10-28T07:56:21.405Z",
+          "finalizedAt": "2026-10-28T07:56:21.410Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "after-listed-space second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R55ZPM2WDSJ14Q7S4THBE",
+        "ownerId": "local",
+        "loopId": "01M60R55K08Q55HVKJ3M50FAQ6",
+        "versionId": "01M60R55K08Q55HVKJ3M50FAQ7",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-listed-space",
+          "label": "after-listed-space v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R55ZPM2WDSJ14Q7S4THBF",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:21.878Z",
+        "startedAt": "2026-10-28T07:56:22.413Z",
+        "finishedAt": "2026-10-28T07:56:22.749Z",
+        "finalizedAt": "2026-10-28T07:56:22.755Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-listed-space isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-listed-space listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:22.6160819Z",
+          "kind": "listing",
+          "pid": 8716,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R55ZPM2WDSJ14Q7S4THBE",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R55ZPM2WDSJ14Q7S4THBE"
+      }
+    },
+    {
+      "name": "after-listed-space thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-listed-space gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 46,
+        "last": {
+          "at": "2026-10-28T07:56:22.644Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "listed quote refuses before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"say\\\"hi\\\"\" cannot be switched off through --config.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M60R57FA1ABD3WTY18HZF367:5",
+            "turnId": "01M60R57WKJJDSKNHB19QVX3Q1",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "listed quote Resume offered but still no exec",
+      "ok": true,
+      "value": {
+        "response": {
+          "status": 200,
+          "json": {
+            "id": "01M60R57FA1ABD3WTY18HZF367",
+            "ownerId": "local",
+            "loopId": "01M60R56X4Y17RHDD7YBG7VQB4",
+            "versionId": "01M60R56X4Y17RHDD7YBG7VQB5",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "listed-quote",
+              "label": "listed-quote v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60R57FA1ABD3WTY18HZF368",
+            "status": "running",
+            "currentNodeId": "infer",
+            "iteration": 1,
+            "createdAt": "2026-10-28T07:56:23.402Z",
+            "startedAt": "2026-10-28T07:56:23.785Z",
+            "lastEventSeq": 10
+          }
+        },
+        "run": {
+          "id": "01M60R57FA1ABD3WTY18HZF367",
+          "ownerId": "local",
+          "loopId": "01M60R56X4Y17RHDD7YBG7VQB4",
+          "versionId": "01M60R56X4Y17RHDD7YBG7VQB5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "listed-quote",
+            "label": "listed-quote v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M60R57FA1ABD3WTY18HZF368",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the server name \"say\\\"hi\\\"\" cannot be switched off through --config.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M60R57FA1ABD3WTY18HZF367:5",
+              "turnId": "01M60R57WKJJDSKNHB19QVX3Q1",
+              "submission": "definitely-not-submitted",
+              "promptKind": "authored"
+            }
+          },
+          "createdAt": "2026-10-28T07:56:23.402Z",
+          "startedAt": "2026-10-28T07:56:23.785Z",
+          "finishedAt": "2026-10-28T07:56:24.082Z",
+          "finalizedAt": "2026-10-28T07:56:24.088Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Infer",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "after-listed-quote second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R58FTJPVQX6ASNJARR47H",
+        "ownerId": "local",
+        "loopId": "01M60R58670KMKRA1E0DVR14WW",
+        "versionId": "01M60R58670KMKRA1E0DVR14WX",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-listed-quote",
+          "label": "after-listed-quote v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R58FTJPVQX6ASNJARR47J",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:24.442Z",
+        "startedAt": "2026-10-28T07:56:24.735Z",
+        "finishedAt": "2026-10-28T07:56:24.928Z",
+        "finalizedAt": "2026-10-28T07:56:24.932Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-listed-quote isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-listed-quote listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:24.8329050Z",
+          "kind": "listing",
+          "pid": 36024,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R58FTJPVQX6ASNJARR47H",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R58FTJPVQX6ASNJARR47H"
+      }
+    },
+    {
+      "name": "after-listed-quote thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-listed-quote gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 54,
+        "last": {
+          "at": "2026-10-28T07:56:24.785Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "override dotted-proto pinned refusal before submission",
+      "ok": true,
+      "value": {
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The Codex config override key \"probe.__proto__.qa423bLeak\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+          },
+          "inference": {
+            "visitId": "01M60R59DD53JCXDNDH12QPSHM:5",
+            "turnId": "01M60R59RMZP4QA6YVV2G060WK",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "execCalls": 0
+      }
+    },
+    {
+      "name": "override dotted-proto Resume refused",
+      "ok": true,
+      "value": {
+        "status": 409,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+          "title": "failure not resumable",
+          "status": 409,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    },
+    {
+      "name": "after-override-dotted-proto second ordinary turn succeeds",
+      "ok": true,
+      "value": {
+        "id": "01M60R5A7XNR27KY3SPACT7NN0",
+        "ownerId": "local",
+        "loopId": "01M60R59X67XF33P71Y83JE3BG",
+        "versionId": "01M60R59X67XF33P71Y83JE3BH",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "after-override-dotted-proto",
+          "label": "after-override-dotted-proto v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M60R5A7XNR27KY3SPACT7NN1",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-28T07:56:26.237Z",
+        "startedAt": "2026-10-28T07:56:26.579Z",
+        "finishedAt": "2026-10-28T07:56:26.936Z",
+        "finalizedAt": "2026-10-28T07:56:26.951Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after-override-dotted-proto isolation and order",
+      "ok": true,
+      "value": {
+        "expected": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]"
+        ],
+        "actual": [
+          "mcp_servers.toString.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "features.plugins=false",
+          "features.apps=false",
+          "features.memories=false",
+          "features.hooks=false",
+          "features.multi_agent=false",
+          "features.goals=false",
+          "notify=[]",
+          "model_reasoning_effort=\"low\"",
+          "sandbox_workspace_write.network_access=false",
+          "web_search=\"disabled\"",
+          "approval_policy=\"never\""
+        ]
+      }
+    },
+    {
+      "name": "after-override-dotted-proto listing flags/cwd",
+      "ok": true,
+      "value": {
+        "listing": {
+          "at": "2026-10-28T07:56:26.7797610Z",
+          "kind": "listing",
+          "pid": 31544,
+          "cwd": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R5A7XNR27KY3SPACT7NN0",
+          "argv": [
+            "mcp",
+            "list",
+            "--json",
+            "--config",
+            "features.plugins=false",
+            "--config",
+            "features.apps=false",
+            "--config",
+            "features.memories=false",
+            "--config",
+            "features.hooks=false",
+            "--config",
+            "features.multi_agent=false",
+            "--config",
+            "features.goals=false"
+          ],
+          "prompt": null
+        },
+        "turnWorkingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU\\workspaces\\01M60R5A7XNR27KY3SPACT7NN0"
+      }
+    },
+    {
+      "name": "after-override-dotted-proto thread policy",
+      "ok": true,
+      "value": [
+        "mcp_servers.toString.enabled=false",
+        "mcp_servers.node_repl.enabled=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.memories=false",
+        "features.hooks=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "notify=[]",
+        "model_reasoning_effort=\"low\"",
+        "sandbox_workspace_write.network_access=false",
+        "web_search=\"disabled\"",
+        "approval_policy=\"never\""
+      ]
+    },
+    {
+      "name": "after-override-dotted-proto gateway Object.prototype unchanged",
+      "ok": true,
+      "value": {
+        "sampleCount": 62,
+        "last": {
+          "at": "2026-10-28T07:56:26.973Z",
+          "pid": 1884,
+          "label": "sample",
+          "names": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ],
+          "changed": [],
+          "removed": []
+        }
+      }
+    },
+    {
+      "name": "rejection driver completed",
+      "ok": false,
+      "value": "Error: create {\"status\":400,\"json\":{\"type\":\"https://graphgoblin.dev/problems/malformed-body\",\"title\":\"malformed body\",\"status\":400,\"code\":\"MALFORMED_BODY\",\"detail\":\"Body is not valid JSON but content-type is set to 'application/json'\"}}\n    at Module.publish (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-423/docs/qa/2026-10-28-wp-423-qa/recheck/lib.mjs:36:119)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-423/docs/qa/2026-10-28-wp-423-qa/recheck/rejections.mjs:17:14)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-423/docs/qa/2026-10-28-wp-423-qa/recheck/rejections.mjs:55:36"
+    }
+  ],
+  "passed": 47,
+  "failed": 1,
+  "process": {
+    "pid": 1884,
+    "exit": {
+      "code": 0,
+      "signal": null
+    }
+  },
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423b-rejections-Rt1vdU",
+  "targets": [
+    {
+      "name": "listed-proto",
+      "id": "01M60R4W88NMRM3ED4EVEY8G1F",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "__proto__",
+      "allowed": true
+    },
+    {
+      "name": "listed-constructor",
+      "id": "01M60R4YQC9Q2X7J858QDBMCH1",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "constructor",
+      "allowed": true
+    },
+    {
+      "name": "listed-prototype",
+      "id": "01M60R52H1PQPRTM5ZS95H0NJY",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "prototype",
+      "allowed": true
+    },
+    {
+      "name": "listed-space",
+      "id": "01M60R54W306F3JAR2CMPQ5WJY",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "team docs",
+      "allowed": true
+    },
+    {
+      "name": "listed-quote",
+      "id": "01M60R57FA1ABD3WTY18HZF367",
+      "code": "HARNESS_TURN_FAILED",
+      "cause": "say\"hi\"",
+      "allowed": true
+    },
+    {
+      "name": "override-dotted-proto",
+      "id": "01M60R59DD53JCXDNDH12QPSHM",
+      "code": "HARNESS_TURN_FAILED",
+      "adapter": "HARNESS_INVALID_CONFIGURATION",
+      "allowed": false
+    }
+  ],
+  "realProviderTurns": 0
+}

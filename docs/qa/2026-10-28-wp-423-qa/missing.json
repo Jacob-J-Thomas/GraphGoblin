@@ -1,0 +1,284 @@
+{
+  "run": {
+    "id": "01M60K6SPPKR9NB0Y9WY91EKWP",
+    "ownerId": "local",
+    "loopId": "01M60K5E30TJZ23KMTF94VQC4D",
+    "versionId": "01M60K5E30TJZ23KMTF94VQC4E",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "plain-one",
+      "label": "plain-one v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M60K6SPPKR9NB0Y9WY91EKWQ",
+    "status": "failed",
+    "currentNodeId": "infer",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_NOT_INSTALLED",
+      "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-matrix-Vcx2zy\\not-installed.exe ENOENT).",
+      "nodeId": "infer",
+      "resumable": true,
+      "inference": {
+        "visitId": "01M60K6SPPKR9NB0Y9WY91EKWP:3",
+        "turnId": "01M60K6SRSP1DQENXCC1PAGXK0",
+        "submission": "definitely-not-submitted",
+        "promptKind": "authored"
+      }
+    },
+    "createdAt": "2026-10-28T06:29:51.958Z",
+    "startedAt": "2026-10-28T06:29:51.980Z",
+    "finishedAt": "2026-10-28T06:29:52.052Z",
+    "finalizedAt": "2026-10-28T06:29:52.060Z",
+    "lastEventSeq": 7,
+    "recovery": {
+      "observedSeq": 7,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "infer",
+          "label": "Infer",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "kind": "inference"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": []
+        }
+      ],
+      "replayOf": {
+        "runId": "01M60K5EDCTCJSBQN71K7NE2WM",
+        "nodeId": "infer"
+      }
+    }
+  },
+  "events": [
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 1,
+      "ts": "2026-10-28T06:29:51.958Z",
+      "type": "run.queued",
+      "versionId": "01M60K5E30TJZ23KMTF94VQC4E",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "plain-one",
+        "label": "plain-one v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "replayOf": {
+        "runId": "01M60K5EDCTCJSBQN71K7NE2WM",
+        "nodeId": "infer"
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M60K6SPPKR9NB0Y9WY91EKWP",
+          "loopId": "01M60K5E30TJZ23KMTF94VQC4D",
+          "versionId": "01M60K5E30TJZ23KMTF94VQC4E",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M60K6SPPKR9NB0Y9WY91EKWQ",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-28T06:29:07.628Z"
+          },
+          "replayOf": {
+            "runId": "01M60K5EDCTCJSBQN71K7NE2WM",
+            "nodeId": "infer"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-28T06:29:07.906Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-28T06:29:07.906Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 2,
+      "ts": "2026-10-28T06:29:51.985Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 3,
+      "ts": "2026-10-28T06:29:52.005Z",
+      "type": "node.started",
+      "nodeId": "infer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "b33fb2748b71a85d"
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 4,
+      "ts": "2026-10-28T06:29:52.025Z",
+      "type": "harness.turn",
+      "nodeId": "infer",
+      "visitId": "01M60K6SPPKR9NB0Y9WY91EKWP:3",
+      "turnId": "01M60K6SRSP1DQENXCC1PAGXK0",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "QA423 synthetic task"
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 5,
+      "ts": "2026-10-28T06:29:52.035Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60K6SPPKR9NB0Y9WY91EKWP:3",
+      "turnId": "01M60K6SRSP1DQENXCC1PAGXK0",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 6,
+      "ts": "2026-10-28T06:29:52.038Z",
+      "type": "harness.submission",
+      "nodeId": "infer",
+      "visitId": "01M60K6SPPKR9NB0Y9WY91EKWP:3",
+      "turnId": "01M60K6SRSP1DQENXCC1PAGXK0",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+      "seq": 7,
+      "ts": "2026-10-28T06:29:52.049Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_NOT_INSTALLED",
+        "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-matrix-Vcx2zy\\not-installed.exe ENOENT).",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M60K6SPPKR9NB0Y9WY91EKWP:3",
+          "turnId": "01M60K6SRSP1DQENXCC1PAGXK0",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M60K6SPPKR9NB0Y9WY91EKWP",
+        "nodeId": "infer",
+        "attempt": 1,
+        "harness": "codex",
+        "status": "failed",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-28T06:29:52.041Z"
+      }
+    ]
+  }
+}

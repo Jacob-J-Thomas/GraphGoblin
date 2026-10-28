@@ -1,0 +1,56 @@
+{
+  "version": "bundled pinned 0.160.0",
+  "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa423-cli-name-validation-tOpxuR",
+  "providerTurns": 0,
+  "records": [
+    {
+      "name": "baseline",
+      "args": [
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"__proto__\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"qa423-command-that-does-not-exist\",\n      \"args\": [],\n      \"env\": null,\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\\" (codex_home: AbsolutePathBuf(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa423-cli-name-validation-tOpxuR\"))\n"
+    },
+    {
+      "name": "empty-table",
+      "args": [
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "mcp_servers={}"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"__proto__\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"qa423-command-that-does-not-exist\",\n      \"args\": [],\n      \"env\": null,\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\\" (codex_home: AbsolutePathBuf(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa423-cli-name-validation-tOpxuR\"))\n"
+    },
+    {
+      "name": "disabled-by-name",
+      "args": [
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "mcp_servers.__proto__.enabled=false"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"__proto__\",\n    \"enabled\": false,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"qa423-command-that-does-not-exist\",\n      \"args\": [],\n      \"env\": null,\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\\" (codex_home: AbsolutePathBuf(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa423-cli-name-validation-tOpxuR\"))\n"
+    }
+  ]
+}

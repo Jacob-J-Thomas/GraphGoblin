@@ -1,0 +1,1989 @@
+{
+  "scenario": "upgrade",
+  "passed": 18,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "base catalog has no none/minimal",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "displayName": "Claude Fable 5.1",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "displayName": "Claude Haiku 5.5",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "displayName": "Claude Opus 5.5",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true,
+          "ecosystemDefault": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "displayName": "Claude Sonnet 5.5",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "displayName": "GPT-5.5",
+          "efforts": ["low", "medium", "high", "xhigh"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "displayName": "GPT-5.6 Luna",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "low",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "displayName": "GPT-5.6 Sol",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "displayName": "GPT-5.6 Terra",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "displayName": "GPT-6 Astra",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "displayName": "GPT-6 Luna",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "low",
+          "enabled": true,
+          "ecosystemDefault": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "displayName": "GPT-6 Sol",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "displayName": "GPT-6.1 Sol",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true,
+          "ecosystemDefault": false
+        }
+      ]
+    },
+    {
+      "id": "ends clean-base",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "clean main store upgrades: seed refresh, disabled preserved, loops/defaults byte-equivalent",
+      "ok": true,
+      "detail": {
+        "before": {
+          "loops": [
+            {
+              "loop": {
+                "id": "01M60HYJS31MQTP7BGJP7CCQJG",
+                "ownerId": "local",
+                "name": "QA205 base inference",
+                "currentVersionId": "01M60HYJS31MQTP7BGJP7CCQJH",
+                "createdAt": "2026-10-28T06:07:54.147Z",
+                "updatedAt": "2026-10-28T06:07:54.489Z"
+              },
+              "current": {
+                "id": "01M60HYJS31MQTP7BGJP7CCQJH",
+                "loopId": "01M60HYJS31MQTP7BGJP7CCQJG",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base inference",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "codex",
+                        "model": "gpt-6-luna",
+                        "effort": "max",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.147Z",
+                "publishedAt": "2026-10-28T06:07:54.489Z"
+              },
+              "draftToken": "a30b5780460e5924"
+            },
+            {
+              "loop": {
+                "id": "01M60HYK4AWV48GVYWVCTWSYN5",
+                "ownerId": "local",
+                "name": "QA205 base decision",
+                "currentVersionId": "01M60HYK4AWV48GVYWVCTWSYN6",
+                "createdAt": "2026-10-28T06:07:54.506Z",
+                "updatedAt": "2026-10-28T06:07:54.774Z"
+              },
+              "current": {
+                "id": "01M60HYK4AWV48GVYWVCTWSYN6",
+                "loopId": "01M60HYK4AWV48GVYWVCTWSYN5",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base decision",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "decision",
+                      "config": {
+                        "kind": "llm",
+                        "instructions": "Always choose the route with id \"finish\".",
+                        "harness": "codex",
+                        "model": {
+                          "mode": "explicit",
+                          "value": "gpt-5.5"
+                        },
+                        "effort": {
+                          "mode": "explicit",
+                          "value": "xhigh"
+                        },
+                        "routes": [
+                          {
+                            "id": "finish",
+                            "label": "Finish"
+                          },
+                          {
+                            "id": "other",
+                            "label": "Other"
+                          }
+                        ],
+                        "context": {
+                          "messages": "last",
+                          "includeLastOutput": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "finish"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e3",
+                      "from": {
+                        "node": "work",
+                        "port": "other"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.506Z",
+                "publishedAt": "2026-10-28T06:07:54.774Z"
+              },
+              "draftToken": "856c72da20f05c33"
+            },
+            {
+              "loop": {
+                "id": "01M60HYKD5HZ415J1PM14ZPV3A",
+                "ownerId": "local",
+                "name": "QA205 base loop default",
+                "currentVersionId": "01M60HYKD5HZ415J1PM14ZPV3B",
+                "createdAt": "2026-10-28T06:07:54.789Z",
+                "updatedAt": "2026-10-28T06:07:55.212Z"
+              },
+              "current": {
+                "id": "01M60HYKD5HZ415J1PM14ZPV3B",
+                "loopId": "01M60HYKD5HZ415J1PM14ZPV3A",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base loop default",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {
+                        "codex": {
+                          "model": "gpt-5.6-sol",
+                          "effort": "low"
+                        }
+                      }
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "codex",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.789Z",
+                "publishedAt": "2026-10-28T06:07:55.212Z"
+              },
+              "draftToken": "a97784ec8fad5fdc"
+            },
+            {
+              "loop": {
+                "id": "01M60HYKTWJF5AD0WWXSA4MMFY",
+                "ownerId": "local",
+                "name": "QA205 base Claude",
+                "draftVersionId": "01M60HYKTWJF5AD0WWXSA4MMFZ",
+                "createdAt": "2026-10-28T06:07:55.228Z",
+                "updatedAt": "2026-10-28T06:07:55.228Z"
+              },
+              "draft": {
+                "id": "01M60HYKTWJF5AD0WWXSA4MMFZ",
+                "loopId": "01M60HYKTWJF5AD0WWXSA4MMFY",
+                "version": 1,
+                "status": "draft",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base Claude",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "claude",
+                        "model": "claude-haiku-5-5",
+                        "effort": "medium",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:55.228Z"
+              },
+              "draftToken": "baf4491babda9159"
+            }
+          ],
+          "settings": {
+            "defaults": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-sonnet-5-5",
+                  "effort": "high"
+                }
+              }
+            }
+          }
+        },
+        "after": {
+          "loops": [
+            {
+              "loop": {
+                "id": "01M60HYJS31MQTP7BGJP7CCQJG",
+                "ownerId": "local",
+                "name": "QA205 base inference",
+                "currentVersionId": "01M60HYJS31MQTP7BGJP7CCQJH",
+                "createdAt": "2026-10-28T06:07:54.147Z",
+                "updatedAt": "2026-10-28T06:07:54.489Z"
+              },
+              "current": {
+                "id": "01M60HYJS31MQTP7BGJP7CCQJH",
+                "loopId": "01M60HYJS31MQTP7BGJP7CCQJG",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base inference",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "codex",
+                        "model": "gpt-6-luna",
+                        "effort": "max",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.147Z",
+                "publishedAt": "2026-10-28T06:07:54.489Z"
+              },
+              "draftToken": "a30b5780460e5924"
+            },
+            {
+              "loop": {
+                "id": "01M60HYK4AWV48GVYWVCTWSYN5",
+                "ownerId": "local",
+                "name": "QA205 base decision",
+                "currentVersionId": "01M60HYK4AWV48GVYWVCTWSYN6",
+                "createdAt": "2026-10-28T06:07:54.506Z",
+                "updatedAt": "2026-10-28T06:07:54.774Z"
+              },
+              "current": {
+                "id": "01M60HYK4AWV48GVYWVCTWSYN6",
+                "loopId": "01M60HYK4AWV48GVYWVCTWSYN5",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base decision",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "decision",
+                      "config": {
+                        "kind": "llm",
+                        "instructions": "Always choose the route with id \"finish\".",
+                        "harness": "codex",
+                        "model": {
+                          "mode": "explicit",
+                          "value": "gpt-5.5"
+                        },
+                        "effort": {
+                          "mode": "explicit",
+                          "value": "xhigh"
+                        },
+                        "routes": [
+                          {
+                            "id": "finish",
+                            "label": "Finish"
+                          },
+                          {
+                            "id": "other",
+                            "label": "Other"
+                          }
+                        ],
+                        "context": {
+                          "messages": "last",
+                          "includeLastOutput": true
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "finish"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e3",
+                      "from": {
+                        "node": "work",
+                        "port": "other"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.506Z",
+                "publishedAt": "2026-10-28T06:07:54.774Z"
+              },
+              "draftToken": "856c72da20f05c33"
+            },
+            {
+              "loop": {
+                "id": "01M60HYKD5HZ415J1PM14ZPV3A",
+                "ownerId": "local",
+                "name": "QA205 base loop default",
+                "currentVersionId": "01M60HYKD5HZ415J1PM14ZPV3B",
+                "createdAt": "2026-10-28T06:07:54.789Z",
+                "updatedAt": "2026-10-28T06:07:55.212Z"
+              },
+              "current": {
+                "id": "01M60HYKD5HZ415J1PM14ZPV3B",
+                "loopId": "01M60HYKD5HZ415J1PM14ZPV3A",
+                "version": 1,
+                "status": "published",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base loop default",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {
+                        "codex": {
+                          "model": "gpt-5.6-sol",
+                          "effort": "low"
+                        }
+                      }
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "codex",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:54.789Z",
+                "publishedAt": "2026-10-28T06:07:55.212Z"
+              },
+              "draftToken": "a97784ec8fad5fdc"
+            },
+            {
+              "loop": {
+                "id": "01M60HYKTWJF5AD0WWXSA4MMFY",
+                "ownerId": "local",
+                "name": "QA205 base Claude",
+                "draftVersionId": "01M60HYKTWJF5AD0WWXSA4MMFZ",
+                "createdAt": "2026-10-28T06:07:55.228Z",
+                "updatedAt": "2026-10-28T06:07:55.228Z"
+              },
+              "draft": {
+                "id": "01M60HYKTWJF5AD0WWXSA4MMFZ",
+                "loopId": "01M60HYKTWJF5AD0WWXSA4MMFY",
+                "version": 1,
+                "status": "draft",
+                "definition": {
+                  "schemaVersion": 4,
+                  "name": "QA205 base Claude",
+                  "settings": {
+                    "workingDirectory": {
+                      "kind": "temp"
+                    },
+                    "defaults": {
+                      "byHarness": {}
+                    },
+                    "maxNodeVisits": 10,
+                    "runDeadlineSeconds": null,
+                    "structuredTimeoutMs": null,
+                    "subloopDepthLimit": 8
+                  },
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "label": "Start",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "trigger",
+                      "config": {
+                        "type": "manual",
+                        "exposeTo": ["ui", "api", "mcp"]
+                      }
+                    },
+                    {
+                      "id": "work",
+                      "label": "work",
+                      "ui": {
+                        "x": 260,
+                        "y": 80
+                      },
+                      "kind": "inference",
+                      "config": {
+                        "harness": "claude",
+                        "model": "claude-haiku-5-5",
+                        "effort": "medium",
+                        "session": {
+                          "policy": "fresh"
+                        },
+                        "prompt": {
+                          "template": "Reply with exactly the word READY and nothing else."
+                        },
+                        "input": [],
+                        "harnessOptions": {
+                          "sandbox": "read-only",
+                          "approval": "never"
+                        },
+                        "output": {
+                          "captureTranscript": "artifact",
+                          "toMessages": "final",
+                          "transforms": []
+                        }
+                      }
+                    },
+                    {
+                      "id": "done",
+                      "label": "Done",
+                      "ui": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "kind": "exit",
+                      "config": {
+                        "outcome": "success",
+                        "returns": "none",
+                        "destinations": [
+                          {
+                            "kind": "caller"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "id": "e1",
+                      "from": {
+                        "node": "start",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "work",
+                        "port": "in"
+                      }
+                    },
+                    {
+                      "id": "e2",
+                      "from": {
+                        "node": "work",
+                        "port": "out"
+                      },
+                      "to": {
+                        "node": "done",
+                        "port": "in"
+                      }
+                    }
+                  ]
+                },
+                "createdAt": "2026-10-28T06:07:55.228Z"
+              },
+              "draftToken": "baf4491babda9159"
+            }
+          ],
+          "settings": {
+            "defaults": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-sonnet-5-5",
+                  "effort": "high"
+                }
+              }
+            }
+          }
+        },
+        "catalog": [
+          {
+            "harness": "claude",
+            "model": "claude-fable-5-1",
+            "source": "harness",
+            "displayName": "Claude Fable 5.1",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "claude",
+            "model": "claude-haiku-5-5",
+            "source": "harness",
+            "displayName": "Claude Haiku 5.5",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "claude",
+            "model": "claude-opus-5-5",
+            "source": "harness",
+            "displayName": "Claude Opus 5.5",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true,
+            "ecosystemDefault": true
+          },
+          {
+            "harness": "claude",
+            "model": "claude-sonnet-5-5",
+            "source": "harness",
+            "displayName": "Claude Sonnet 5.5",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.5",
+            "source": "harness",
+            "displayName": "GPT-5.5",
+            "efforts": ["low", "medium", "high", "xhigh"],
+            "defaultEffort": "medium",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-luna",
+            "source": "harness",
+            "displayName": "GPT-5.6 Luna",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "low",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-sol",
+            "source": "harness",
+            "displayName": "GPT-5.6 Sol",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-terra",
+            "source": "harness",
+            "displayName": "GPT-5.6 Terra",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-astra",
+            "source": "harness",
+            "displayName": "GPT-6 Astra",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": false,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "source": "harness",
+            "displayName": "GPT-6 Luna",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "low",
+            "enabled": true,
+            "ecosystemDefault": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "source": "harness",
+            "displayName": "GPT-6 Sol",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true,
+            "ecosystemDefault": false
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "source": "harness",
+            "displayName": "GPT-6.1 Sol",
+            "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true,
+            "ecosystemDefault": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "upgrade did not reach providers",
+      "ok": true
+    },
+    {
+      "id": "ends clean-head",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "ends dirty-base",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "CHANGELOG SELECT sees all requested locations",
+      "ok": true,
+      "detail": [
+        {
+          "'loop_versions'": "loop_versions",
+          "id": "01M60HYYD9M5C7CFXETJC371FB"
+        },
+        {
+          "'loop_versions'": "loop_versions",
+          "id": "01M60HYZ75X4DYDSHAS22PWG6T"
+        },
+        {
+          "'loop_versions'": "settings",
+          "id": "defaults"
+        },
+        {
+          "'loop_versions'": "model_catalog",
+          "id": "qa-old-custom"
+        },
+        {
+          "'loop_versions'": "runs",
+          "id": "01M60HYZ8CSD7N0Q51HWWVVS9B"
+        }
+      ]
+    },
+    {
+      "id": "minimal loop version refuses startup naming row",
+      "ok": true,
+      "detail": {
+        "log": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf.\n  Database: %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf\\graphgoblin.db\n  Found:    format 4, but the store is damaged or unfinished\n  Requires: format 4\n  Reason:   The format-4 store is damaged: stored loop version 01M60HYYD9M5C7CFXETJC371FB is not a valid definition\nNo stored data was changed. This build does not convert stores from other formats.\nRepair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf\"\n",
+        "scan": [
+          {
+            "'loop_versions'": "loop_versions",
+            "id": "01M60HYYD9M5C7CFXETJC371FB"
+          },
+          {
+            "'loop_versions'": "loop_versions",
+            "id": "01M60HYZ75X4DYDSHAS22PWG6T"
+          },
+          {
+            "'loop_versions'": "settings",
+            "id": "defaults"
+          },
+          {
+            "'loop_versions'": "model_catalog",
+            "id": "qa-old-custom"
+          },
+          {
+            "'loop_versions'": "runs",
+            "id": "01M60HYZ8CSD7N0Q51HWWVVS9B"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ends dirty-step0",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "minimal owner defaults refuses startup naming defaults",
+      "ok": true,
+      "detail": {
+        "log": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf.\n  Database: %USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf\\graphgoblin.db\n  Found:    format 4, but the store is damaged or unfinished\n  Requires: format 4\n  Reason:   The format-4 store is damaged: owner harness defaults are invalid\nNo stored data was changed. This build does not convert stores from other formats.\nRepair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa205-upgrade-minimal-QvPYUf\"\n",
+        "scan": [
+          {
+            "'loop_versions'": "settings",
+            "id": "defaults"
+          },
+          {
+            "'loop_versions'": "model_catalog",
+            "id": "qa-old-custom"
+          },
+          {
+            "'loop_versions'": "runs",
+            "id": "01M60HYZ8CSD7N0Q51HWWVVS9B"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ends dirty-step1",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "minimal custom catalog starts but catalog read is 500 RESPONSE_INVALID",
+      "ok": true,
+      "detail": {
+        "status": 500,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/response-invalid",
+          "title": "response invalid",
+          "status": 500,
+          "code": "RESPONSE_INVALID",
+          "detail": "the server produced a response that does not match its schema"
+        },
+        "text": "{\"type\":\"https://graphgoblin.dev/problems/response-invalid\",\"title\":\"response invalid\",\"status\":500,\"code\":\"RESPONSE_INVALID\",\"detail\":\"the server produced a response that does not match its schema\"}"
+      }
+    },
+    {
+      "id": "ends dirty-step2",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "minimal pinned run starts but read is 500 STORED_RUN_INVALID",
+      "ok": true,
+      "detail": {
+        "status": 500,
+        "json": {
+          "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+          "title": "stored run invalid",
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "detail": "Stored run 01M60HYZ8CSD7N0Q51HWWVVS9B does not conform to the run record contract"
+        },
+        "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M60HYZ8CSD7N0Q51HWWVVS9B does not conform to the run record contract\"}"
+      }
+    },
+    {
+      "id": "ends dirty-step3",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "published SQL repairs all requested places; API serves everything; SELECT empty",
+      "ok": true,
+      "detail": {
+        "catalog": {
+          "status": 200,
+          "json": {
+            "items": [
+              {
+                "harness": "claude",
+                "model": "claude-fable-5-1",
+                "source": "harness",
+                "displayName": "Claude Fable 5.1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "high",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "claude",
+                "model": "claude-haiku-5-5",
+                "source": "harness",
+                "displayName": "Claude Haiku 5.5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "high",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "claude",
+                "model": "claude-opus-5-5",
+                "source": "harness",
+                "displayName": "Claude Opus 5.5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "high",
+                "enabled": true,
+                "ecosystemDefault": true
+              },
+              {
+                "harness": "claude",
+                "model": "claude-sonnet-5-5",
+                "source": "harness",
+                "displayName": "Claude Sonnet 5.5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "high",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-5.5",
+                "source": "harness",
+                "displayName": "GPT-5.5",
+                "efforts": ["low", "medium", "high", "xhigh"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-5.6-luna",
+                "source": "harness",
+                "displayName": "GPT-5.6 Luna",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "low",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-5.6-sol",
+                "source": "harness",
+                "displayName": "GPT-5.6 Sol",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-5.6-terra",
+                "source": "harness",
+                "displayName": "GPT-5.6 Terra",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-6-astra",
+                "source": "harness",
+                "displayName": "GPT-6 Astra",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-6-luna",
+                "source": "harness",
+                "displayName": "GPT-6 Luna",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "low",
+                "enabled": true,
+                "ecosystemDefault": true
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-6-sol",
+                "source": "harness",
+                "displayName": "GPT-6 Sol",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "gpt-6.1-sol",
+                "source": "harness",
+                "displayName": "GPT-6.1 Sol",
+                "efforts": ["none", "low", "medium", "high", "xhigh", "max"],
+                "defaultEffort": "medium",
+                "enabled": true,
+                "ecosystemDefault": false
+              },
+              {
+                "harness": "codex",
+                "model": "qa-old-custom",
+                "source": "harness",
+                "displayName": "QA old custom",
+                "efforts": ["none", "low"],
+                "defaultEffort": "none",
+                "enabled": true,
+                "ecosystemDefault": false
+              }
+            ]
+          },
+          "text": "{\"items\":[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"claude\",\"model\":\"claude-opus-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Opus 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true,\"ecosystemDefault\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true,\"ecosystemDefault\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true,\"ecosystemDefault\":false},{\"harness\":\"codex\",\"model\":\"qa-old-custom\",\"source\":\"harness\",\"displayName\":\"QA old custom\",\"efforts\":[\"none\",\"low\"],\"defaultEffort\":\"none\",\"enabled\":true,\"ecosystemDefault\":false}]}"
+        },
+        "a": {
+          "status": 200,
+          "json": {
+            "loop": {
+              "id": "01M60HYYD9M5C7CFXETJC371FA",
+              "ownerId": "local",
+              "name": "QA205 stored inference",
+              "currentVersionId": "01M60HYYD9M5C7CFXETJC371FB",
+              "createdAt": "2026-10-28T06:08:06.057Z",
+              "updatedAt": "2026-10-28T06:08:06.863Z"
+            },
+            "current": {
+              "id": "01M60HYYD9M5C7CFXETJC371FB",
+              "loopId": "01M60HYYD9M5C7CFXETJC371FA",
+              "version": 1,
+              "status": "published",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "QA205 stored inference",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {},
+                "nodes": [
+                  {
+                    "id": "start",
+                    "label": "Start",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": ["ui", "api", "mcp"]
+                    }
+                  },
+                  {
+                    "id": "work",
+                    "label": "work",
+                    "ui": {
+                      "x": 260,
+                      "y": 80
+                    },
+                    "kind": "inference",
+                    "config": {
+                      "harness": "codex",
+                      "model": "gpt-6-luna",
+                      "effort": "none",
+                      "session": {
+                        "policy": "fresh"
+                      },
+                      "prompt": {
+                        "template": "Reply with exactly the word READY and nothing else."
+                      },
+                      "input": [],
+                      "harnessOptions": {
+                        "sandbox": "read-only",
+                        "approval": "never"
+                      },
+                      "output": {
+                        "captureTranscript": "artifact",
+                        "toMessages": "final",
+                        "transforms": []
+                      }
+                    }
+                  },
+                  {
+                    "id": "done",
+                    "label": "Done",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "none",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "e1",
+                    "from": {
+                      "node": "start",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "work",
+                      "port": "in"
+                    }
+                  },
+                  {
+                    "id": "e2",
+                    "from": {
+                      "node": "work",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-10-28T06:08:06.057Z",
+              "publishedAt": "2026-10-28T06:08:06.863Z"
+            },
+            "draftToken": "1e799452c02648ba"
+          },
+          "text": "{\"loop\":{\"id\":\"01M60HYYD9M5C7CFXETJC371FA\",\"ownerId\":\"local\",\"name\":\"QA205 stored inference\",\"currentVersionId\":\"01M60HYYD9M5C7CFXETJC371FB\",\"createdAt\":\"2026-10-28T06:08:06.057Z\",\"updatedAt\":\"2026-10-28T06:08:06.863Z\"},\"current\":{\"id\":\"01M60HYYD9M5C7CFXETJC371FB\",\"loopId\":\"01M60HYYD9M5C7CFXETJC371FA\",\"version\":1,\"status\":\"published\",\"definition\":{\"schemaVersion\":4,\"name\":\"QA205 stored inference\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"work\",\"label\":\"work\",\"ui\":{\"x\":260,\"y\":80},\"kind\":\"inference\",\"config\":{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"effort\":\"none\",\"session\":{\"policy\":\"fresh\"},\"prompt\":{\"template\":\"Reply with exactly the word READY and nothing else.\"},\"input\":[],\"harnessOptions\":{\"sandbox\":\"read-only\",\"approval\":\"never\"},\"output\":{\"captureTranscript\":\"artifact\",\"toMessages\":\"final\",\"transforms\":[]}}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"work\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"work\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-10-28T06:08:06.057Z\",\"publishedAt\":\"2026-10-28T06:08:06.863Z\"},\"draftToken\":\"1e799452c02648ba\"}"
+        },
+        "b": {
+          "status": 200,
+          "json": {
+            "loop": {
+              "id": "01M60HYZ75X4DYDSHAS22PWG6S",
+              "ownerId": "local",
+              "name": "QA205 stored decision",
+              "draftVersionId": "01M60HYZ75X4DYDSHAS22PWG6T",
+              "createdAt": "2026-10-28T06:08:06.885Z",
+              "updatedAt": "2026-10-28T06:08:06.885Z"
+            },
+            "draft": {
+              "id": "01M60HYZ75X4DYDSHAS22PWG6T",
+              "loopId": "01M60HYZ75X4DYDSHAS22PWG6S",
+              "version": 1,
+              "status": "draft",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "QA205 stored decision",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {},
+                "nodes": [
+                  {
+                    "id": "start",
+                    "label": "Start",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": ["ui", "api", "mcp"]
+                    }
+                  },
+                  {
+                    "id": "work",
+                    "label": "work",
+                    "ui": {
+                      "x": 260,
+                      "y": 80
+                    },
+                    "kind": "decision",
+                    "config": {
+                      "kind": "llm",
+                      "instructions": "Always choose the route with id \"finish\".",
+                      "harness": "codex",
+                      "model": {
+                        "mode": "explicit",
+                        "value": "gpt-6-luna"
+                      },
+                      "effort": {
+                        "mode": "explicit",
+                        "value": "none"
+                      },
+                      "routes": [
+                        {
+                          "id": "finish",
+                          "label": "Finish"
+                        },
+                        {
+                          "id": "other",
+                          "label": "Other"
+                        }
+                      ],
+                      "context": {
+                        "messages": "last",
+                        "includeLastOutput": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "done",
+                    "label": "Done",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "none",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "e1",
+                    "from": {
+                      "node": "start",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "work",
+                      "port": "in"
+                    }
+                  },
+                  {
+                    "id": "e2",
+                    "from": {
+                      "node": "work",
+                      "port": "finish"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  },
+                  {
+                    "id": "e3",
+                    "from": {
+                      "node": "work",
+                      "port": "other"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-10-28T06:08:06.885Z"
+            },
+            "draftToken": "c0eee587d144e9be"
+          },
+          "text": "{\"loop\":{\"id\":\"01M60HYZ75X4DYDSHAS22PWG6S\",\"ownerId\":\"local\",\"name\":\"QA205 stored decision\",\"draftVersionId\":\"01M60HYZ75X4DYDSHAS22PWG6T\",\"createdAt\":\"2026-10-28T06:08:06.885Z\",\"updatedAt\":\"2026-10-28T06:08:06.885Z\"},\"draft\":{\"id\":\"01M60HYZ75X4DYDSHAS22PWG6T\",\"loopId\":\"01M60HYZ75X4DYDSHAS22PWG6S\",\"version\":1,\"status\":\"draft\",\"definition\":{\"schemaVersion\":4,\"name\":\"QA205 stored decision\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"work\",\"label\":\"work\",\"ui\":{\"x\":260,\"y\":80},\"kind\":\"decision\",\"config\":{\"kind\":\"llm\",\"instructions\":\"Always choose the route with id \\\"finish\\\".\",\"harness\":\"codex\",\"model\":{\"mode\":\"explicit\",\"value\":\"gpt-6-luna\"},\"effort\":{\"mode\":\"explicit\",\"value\":\"none\"},\"routes\":[{\"id\":\"finish\",\"label\":\"Finish\"},{\"id\":\"other\",\"label\":\"Other\"}],\"context\":{\"messages\":\"last\",\"includeLastOutput\":true}}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"work\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"work\",\"port\":\"finish\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}},{\"id\":\"e3\",\"from\":{\"node\":\"work\",\"port\":\"other\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-10-28T06:08:06.885Z\"},\"draftToken\":\"c0eee587d144e9be\"}"
+        },
+        "settings": {
+          "status": 200,
+          "json": {
+            "defaults": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "none"
+                }
+              }
+            }
+          },
+          "text": "{\"defaults\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"none\"}}}}"
+        },
+        "run": {
+          "status": 200,
+          "json": {
+            "id": "01M60HYZ8CSD7N0Q51HWWVVS9B",
+            "ownerId": "local",
+            "loopId": "01M60HYZ7JR4RT4EY06RJSRFBN",
+            "versionId": "01M60HYZ7JR4RT4EY06RJSRFBP",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 no provider",
+              "label": "QA205 no provider v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "none"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "none"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M60HYZ8CSD7N0Q51HWWVVS9C",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-28T06:08:06.924Z",
+            "startedAt": "2026-10-28T06:08:06.955Z",
+            "finishedAt": "2026-10-28T06:08:07.043Z",
+            "finalizedAt": "2026-10-28T06:08:07.053Z",
+            "lastEventSeq": 8,
+            "recovery": {
+              "observedSeq": 8,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_FINISHED",
+                "message": "This run has finished. Resume only continues paused runs or supported failures."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": []
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "text": "{\"id\":\"01M60HYZ8CSD7N0Q51HWWVVS9B\",\"ownerId\":\"local\",\"loopId\":\"01M60HYZ7JR4RT4EY06RJSRFBN\",\"versionId\":\"01M60HYZ7JR4RT4EY06RJSRFBP\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA205 no provider\",\"label\":\"QA205 no provider v1\",\"defaults\":{\"owner\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"none\"}}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"none\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M60HYZ8CSD7N0Q51HWWVVS9C\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"createdAt\":\"2026-10-28T06:08:06.924Z\",\"startedAt\":\"2026-10-28T06:08:06.955Z\",\"finishedAt\":\"2026-10-28T06:08:07.043Z\",\"finalizedAt\":\"2026-10-28T06:08:07.053Z\",\"lastEventSeq\":8,\"recovery\":{\"observedSeq\":8,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[]}]}}"
+        }
+      }
+    },
+    {
+      "id": "ends dirty-fixed",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "upgrade driver exception",
+      "ok": false,
+      "detail": "Error: start {\"status\":404,\"json\":{\"type\":\"https://graphgoblin.dev/problems/loop-not-found\",\"title\":\"loop not found\",\"status\":404,\"code\":\"LOOP_NOT_FOUND\",\"detail\":\"loop 01M60J0HFCSZQ25HC4W7WRBNX3 has no published version\"},\"text\":\"{\\\"type\\\":\\\"https://graphgoblin.dev/problems/loop-not-found\\\",\\\"title\\\":\\\"loop not found\\\",\\\"status\\\":404,\\\"code\\\":\\\"LOOP_NOT_FOUND\\\",\\\"detail\\\":\\\"loop 01M60J0HFCSZQ25HC4W7WRBNX3 has no published version\\\"}\"}\n    at Module.run (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-205/docs/qa/2026-10-28-wp-205-qa/scripts/qa.mjs:17:32)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-205/docs/qa/2026-10-28-wp-205-qa/scripts/upgrade.mjs:60:2"
+    },
+    {
+      "id": "ends snapshot-base",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

@@ -633,7 +633,7 @@ describe('settings, secrets, api keys, catalog, events', () => {
     expect(catalog.items.map((m) => m.model)).toContain('gpt-6-luna');
     expect(
       catalog.items.find((m) => m.harness === 'codex' && m.model === 'gpt-6-luna')?.efforts,
-    ).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+    ).toEqual(['none', 'low', 'medium', 'high', 'xhigh', 'max']);
     await t.container.repos.catalog.upsert({
       harness: 'codex',
       model: 'gpt-7-test',

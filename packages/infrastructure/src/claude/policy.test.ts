@@ -95,7 +95,7 @@ describe('approved native Windows Claude policy', () => {
       '',
     ])
       expect(() => resolvedClaudeSettings({ model, effort: 'xhigh' })).toThrow(/model/);
-    expect(() => resolvedClaudeSettings({ model: 'claude-opus-5-5', effort: 'minimal' })).toThrow(
+    expect(() => resolvedClaudeSettings({ model: 'claude-opus-5-5', effort: 'none' })).toThrow(
       /effort/,
     );
   });

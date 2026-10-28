@@ -253,6 +253,7 @@ test('confirmed force interrupts a controlled native harness, releases ownership
 if(process.argv.includes('--version')){console.log('codex-cli 0.160.0');process.exit(0)}
 if(process.argv.includes('--help')){console.log('--json --model --sandbox --cd --skip-git-repo-check --output-schema --config');process.exit(0)}
 if(process.argv.includes('login')){console.log('Logged in using ChatGPT');process.exit(0)}
+if(process.argv.includes('mcp')&&process.argv.includes('list')){console.log('[]');process.exit(0)}
 require('node:fs').writeFileSync(process.env.SHUTDOWN_FAKE_PID,String(process.pid));
 console.log(JSON.stringify({type:'thread.started',thread_id:'shutdown-controlled-session'}));
 console.log(JSON.stringify({type:'turn.started'}));setInterval(()=>{},1000);setTimeout(()=>process.exit(0),180000);

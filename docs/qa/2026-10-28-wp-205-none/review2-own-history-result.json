@@ -1,0 +1,135 @@
+{
+  "scenario": "own-history",
+  "passed": 14,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "history SELECT finds every base-written typed row",
+      "ok": true,
+      "detail": {
+        "expected": [
+          "harness_sessions|01M3Y7RKG0ABRT3WGA60XXPN95/work/1",
+          "loop_versions|01M3Y7RKG0ABRT3WGA60XXPN94 published",
+          "model_catalog|codex/gpt-6-luna",
+          "run_events|01M3Y7RKG0ABRT3WGA60XXPN95#1 run.queued",
+          "run_events|01M3Y7RKG0ABRT3WGA60XXPN95#7 harness.session",
+          "runs|01M3Y7RKG0ABRT3WGA60XXPN95",
+          "settings|defaults"
+        ],
+        "actual": [
+          "harness_sessions|01M3Y7RKG0ABRT3WGA60XXPN95/work/1",
+          "loop_versions|01M3Y7RKG0ABRT3WGA60XXPN94 published",
+          "model_catalog|codex/gpt-6-luna",
+          "run_events|01M3Y7RKG0ABRT3WGA60XXPN95#1 run.queued",
+          "run_events|01M3Y7RKG0ABRT3WGA60XXPN95#7 harness.session",
+          "runs|01M3Y7RKG0ABRT3WGA60XXPN95",
+          "settings|defaults"
+        ]
+      }
+    },
+    {
+      "id": "history SELECT empty after complete CHANGELOG recipe",
+      "ok": true
+    },
+    {
+      "id": "history snapshot trigger restored byte-identically",
+      "ok": true
+    },
+    {
+      "id": "history head starts",
+      "ok": true
+    },
+    {
+      "id": "history read /runs/01M3Y7RKG0ABRT3WGA60XXPN95",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    },
+    {
+      "id": "history read /runs/01M3Y7RKG0ABRT3WGA60XXPN95/events?limit=1000",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    },
+    {
+      "id": "history read /runs/01M3Y7RKG0ABRT3WGA60XXPN95/thread",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    },
+    {
+      "id": "missing SELECT finds every base-written typed row",
+      "ok": true,
+      "detail": {
+        "expected": [
+          "harness_sessions|01M3Y7RKG05957STNBR2YDKKXM/first/1",
+          "harness_sessions|01M3Y7RKG05957STNBR2YDKKXM/second/1",
+          "loop_versions|01M3Y7RKG05957STNBR2YDKKXK published",
+          "model_catalog|codex/gpt-6-luna",
+          "run_events|01M3Y7RKG05957STNBR2YDKKXM#15 run.failed",
+          "run_events|01M3Y7RKG05957STNBR2YDKKXM#7 harness.session",
+          "runs|01M3Y7RKG05957STNBR2YDKKXM"
+        ],
+        "actual": [
+          "harness_sessions|01M3Y7RKG05957STNBR2YDKKXM/first/1",
+          "harness_sessions|01M3Y7RKG05957STNBR2YDKKXM/second/1",
+          "loop_versions|01M3Y7RKG05957STNBR2YDKKXK published",
+          "model_catalog|codex/gpt-6-luna",
+          "run_events|01M3Y7RKG05957STNBR2YDKKXM#15 run.failed",
+          "run_events|01M3Y7RKG05957STNBR2YDKKXM#7 harness.session",
+          "runs|01M3Y7RKG05957STNBR2YDKKXM"
+        ]
+      }
+    },
+    {
+      "id": "missing SELECT empty after complete CHANGELOG recipe",
+      "ok": true
+    },
+    {
+      "id": "missing snapshot trigger restored byte-identically",
+      "ok": true
+    },
+    {
+      "id": "missing head starts",
+      "ok": true
+    },
+    {
+      "id": "missing read /runs/01M3Y7RKG05957STNBR2YDKKXM",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    },
+    {
+      "id": "missing read /runs/01M3Y7RKG05957STNBR2YDKKXM/events?limit=1000",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    },
+    {
+      "id": "missing read /runs/01M3Y7RKG05957STNBR2YDKKXM/thread",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "code": null,
+        "message": null
+      }
+    }
+  ]
+}

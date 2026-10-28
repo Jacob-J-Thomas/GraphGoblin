@@ -853,27 +853,32 @@ describe('settings, api keys, model catalog', () => {
     expect(await catalog.seed()).toBe(0);
     const entries = await catalog.list();
     expect(entries.map((m) => m.model)).toContain('gpt-6-luna');
-    // Each seeded Codex model offers exactly the canonical efforts that Codex CLI 0.160.0's own
-    // compiled model catalog lists for it: none lists minimal, and GPT-5.5 stops at xhigh (#205).
+    // GPT-6 and GPT-5.6 models offer none (no reasoning) to max; GPT-5.5 offers low to xhigh, as
+    // Codex CLI 0.160.0's own compiled model catalog lists for it; Claude Code has no level below
+    // low (#205).
+    const noneToMax = ['none', 'low', 'medium', 'high', 'xhigh', 'max'];
     expect(
       Object.fromEntries(
         entries.filter((m) => m.harness === 'codex').map((m) => [m.model, m.efforts]),
       ),
     ).toEqual({
       'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
-      'gpt-5.6-luna': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-5.6-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-5.6-terra': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-6-astra': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-6-luna': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-6-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
-      'gpt-6.1-sol': ['low', 'medium', 'high', 'xhigh', 'max'],
+      'gpt-5.6-luna': noneToMax,
+      'gpt-5.6-sol': noneToMax,
+      'gpt-5.6-terra': noneToMax,
+      'gpt-6-astra': noneToMax,
+      'gpt-6-luna': noneToMax,
+      'gpt-6-sol': noneToMax,
+      'gpt-6.1-sol': noneToMax,
     });
+    for (const entry of entries.filter((m) => m.harness === 'claude'))
+      expect(entry.efforts).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
     for (const entry of entries.filter((m) => m.harness === 'codex'))
       expect(entry.efforts).toContain(entry.defaultEffort);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'low')).toBe(true);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(true);
-    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'minimal')).toBe(false);
+    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'none')).toBe(true);
+    expect(await catalog.isAllowed('codex', 'gpt-5.5', 'none')).toBe(false);
     expect(await catalog.isAllowed('codex', 'gpt-5.5', 'max')).toBe(false);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna')).toBe(true);
     expect(await catalog.isAllowed('codex', 'nope')).toBe(false);
@@ -1140,19 +1145,20 @@ describe('migration 0003 model catalog max effort', () => {
     const row = legacyEntry();
     await withUpgrade([row], async (current) => {
       const catalog = new SqliteModelCatalog(current.db);
+      // The seeded GPT-6 Luna row of a store written before #205's none (base a4fee9a9).
       await catalog.upsert({
         ...row,
         source: 'harness',
-        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       });
       await current.migrate();
       await catalog.seed();
-      // The startup seed replaces stored harness efforts, so a store from before #205's F2 fix
-      // stops offering minimal for GPT-6 Luna on its next start.
+      // The startup seed replaces stored harness efforts, so such a store offers none for GPT-6
+      // Luna on its next start, with no data migration.
       expect((await catalog.list()).find((entry) => entry.model === row.model)).toEqual({
         ...row,
         source: 'harness',
-        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        efforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       });
     });
   });

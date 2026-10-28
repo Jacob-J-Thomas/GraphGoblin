@@ -1,0 +1,5 @@
+import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {fileURLToPath} from 'node:url';
+const scratch=path.dirname(fileURLToPath(import.meta.url)),out=path.join(process.cwd(),'docs/qa/2026-10-28-wp-205-none');
+for(const gate of ['layers','deps','migrations','tokens','docs']){const src=path.join(out,`review-check:${gate}.log.txt`);if(fs.existsSync(src)){const text=fs.readFileSync(src,'utf8').split(os.homedir()).join('%USERPROFILE%').split(path.basename(os.homedir())).join('%USERNAME%');fs.writeFileSync(path.join(out,`review-check-${gate}.log.txt`),text);console.log('Preserved check:'+gate+' log as a regular file');}}
+const accidental=path.join(out,'review-check');if(fs.existsSync(accidental)&&fs.statSync(accidental).isFile()&&fs.statSync(accidental).size===0)fs.unlinkSync(accidental);
+const p=path.join(scratch,'run.mjs');fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace('`review-${name}.log.txt`',"`review-${name.replaceAll(':','-')}.log.txt`"));

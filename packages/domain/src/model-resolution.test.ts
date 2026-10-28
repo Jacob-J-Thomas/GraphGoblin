@@ -223,7 +223,7 @@ describe('independent Claude model defaults', () => {
     expect(resolveHarnessModel({ ...claudeBase, model: 'opus' })).toMatchObject({
       code: 'MODEL_NOT_IN_CATALOG',
     });
-    expect(resolveHarnessModel({ ...claudeBase, effort: 'minimal' })).toMatchObject({
+    expect(resolveHarnessModel({ ...claudeBase, effort: 'none' })).toMatchObject({
       code: 'EFFORT_UNSUPPORTED',
     });
     expect(
@@ -236,7 +236,7 @@ describe('independent Claude model defaults', () => {
       const defaults = {
         ...claudeBase,
         loopDefaults: { byHarness: { claude: { model: opus.model, effort: 'low' as const } } },
-        [level]: { byHarness: { claude: { model: 'codex-model', effort: 'minimal' } } },
+        [level]: { byHarness: { claude: { model: 'codex-model', effort: 'none' } } },
       };
       expect(validateHarnessDefaults(defaults)).toEqual(
         expect.arrayContaining([
@@ -248,7 +248,7 @@ describe('independent Claude model defaults', () => {
       );
       const effortDefaults = {
         ...claudeBase,
-        [level]: { byHarness: { claude: { model: opus.model, effort: 'minimal' as const } } },
+        [level]: { byHarness: { claude: { model: opus.model, effort: 'none' as const } } },
       };
       expect(validateHarnessDefaults(effortDefaults)).toEqual(
         expect.arrayContaining([

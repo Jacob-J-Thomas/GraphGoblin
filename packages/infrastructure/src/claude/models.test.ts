@@ -30,7 +30,7 @@ describe('exact Claude model capabilities', () => {
           model: entry.model,
           effort,
         });
-      expect(() => resolvedClaudeSettings({ model: entry.model, effort: 'minimal' })).toThrow(
+      expect(() => resolvedClaudeSettings({ model: entry.model, effort: 'none' })).toThrow(
         /effort/,
       );
       expect(() => resolvedClaudeSettings({ model: entry.model })).toThrow(/effort/);

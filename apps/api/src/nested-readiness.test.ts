@@ -488,7 +488,11 @@ describe('manual admission over pinned nested definitions', () => {
               codexBinary: process.execPath,
               cliRunner: async (cli, args) => {
                 const result = await runFixture(args, cli.cwd!);
-                return { code: result.code, output: result.stdout + result.stderr };
+                return {
+                  code: result.code,
+                  output: result.stdout + result.stderr,
+                  stdout: result.stdout,
+                };
               },
             });
       const harness = id === 'claude' ? claude : codex;

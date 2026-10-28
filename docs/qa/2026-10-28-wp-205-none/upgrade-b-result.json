@@ -1,0 +1,411 @@
+{
+  "scenario": "upgrade-b",
+  "passed": 14,
+  "failed": 0,
+  "observations": 2,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "B-1 the startup seed refresh offers none to max for GPT-6 and GPT-5.6, keeps low to xhigh for GPT-5.5 and low to max for Claude (API)",
+      "ok": true,
+      "detail": {
+        "claude/claude-fable-5-1": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-haiku-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-opus-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "claude/claude-sonnet-5-5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.5": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "codex/gpt-5.6-luna": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.6-sol": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-5.6-terra": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-astra": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-luna": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6-sol": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "codex/gpt-6.1-sol": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      }
+    },
+    {
+      "id": "B-2 the stored rows hold the same lists, and gpt-6-astra stays disabled while every other row stays enabled",
+      "ok": true,
+      "detail": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 0
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ]
+    },
+    {
+      "id": "B-3 the stored loops and owner defaults read back unchanged",
+      "ok": true,
+      "detail": {
+        "loops": {
+          "P1": {
+            "status": 200,
+            "issues": null
+          },
+          "P2": {
+            "status": 200,
+            "issues": null
+          },
+          "P3": {
+            "status": 200,
+            "issues": null
+          },
+          "D1": {
+            "status": 200,
+            "issues": null
+          }
+        },
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "high"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "B-4 the new build saves and publishes a GPT-6 Luna inference node at none",
+      "ok": true,
+      "detail": {
+        "create": {
+          "status": 201,
+          "code": null,
+          "message": null,
+          "issues": []
+        },
+        "publish": 200
+      }
+    },
+    {
+      "id": "B-5 none on GPT-5.5 and on Claude is refused EFFORT_UNSUPPORTED at every save point",
+      "ok": true,
+      "detail": {
+        "inference gpt-5.5 none": {
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": null
+        },
+        "decision gpt-5.5 none": {
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": null
+        },
+        "inference claude none": {
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": null
+        },
+        "settings gpt-5.5 none": {
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": null
+        },
+        "settings claude none": {
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": null
+        }
+      }
+    },
+    {
+      "id": "B-6 minimal is not an effort any more: request validation refuses it (400), not the catalog",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "message": null
+      }
+    },
+    {
+      "id": "B-7 U1 head gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B-8 with a stored minimal in a loop version the head build refuses to start, names the version, and changes nothing",
+      "ok": true,
+      "detail": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-205-upgrade-u2-hmw6gJ. |   Reason:   The format-4 store is damaged: stored loop version 01M60C76355G19CZPR7PSQ5RGM is not a valid definition | No stored data was changed. This build does not convert stores from other formats."
+    },
+    {
+      "id": "B-9 with a stored minimal only in the owner defaults the head build refuses to start (owner harness defaults are invalid)",
+      "ok": true,
+      "detail": {
+        "versionsFixed": 2,
+        "reason": "GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\\AppData\\Local\\Temp\\gg-205-upgrade-u2-hmw6gJ. |   Reason:   The format-4 store is damaged: owner harness defaults are invalid | No stored data was changed. This build does not convert stores from other formats."
+      }
+    },
+    {
+      "id": "B-10 the head build with a stored minimal only in a hand-added catalog row",
+      "ok": null,
+      "detail": {
+        "settingsFixed": 1,
+        "startup": "listening",
+        "catalog": {
+          "status": 500,
+          "code": "RESPONSE_INVALID",
+          "message": null
+        },
+        "M1": 200,
+        "run": "succeeded"
+      }
+    },
+    {
+      "id": "B-11 U2 (catalog minimal) gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B-12 after the three hand-fix statements the head build reads the catalog row, the owner default and both loops at none",
+      "ok": true,
+      "detail": {
+        "catalogFixed": 1,
+        "catalog": {
+          "harness": "codex",
+          "model": "gpt-5-handadded",
+          "source": "harness",
+          "displayName": "GPT-5 hand-added",
+          "efforts": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ],
+          "defaultEffort": "none",
+          "enabled": true,
+          "ecosystemDefault": false
+        },
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "none"
+              }
+            }
+          }
+        },
+        "M1": 200,
+        "M2": 200,
+        "run": 200
+      }
+    },
+    {
+      "id": "B-13 U2 fixed gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "B-14 the head build with a stored minimal only in a run record",
+      "ok": null,
+      "detail": {
+        "pinnedMinimal": 1,
+        "startup": "listening",
+        "run": {
+          "status": 500,
+          "code": "STORED_RUN_INVALID",
+          "message": null
+        },
+        "list": {
+          "status": 200,
+          "code": null,
+          "message": null
+        }
+      }
+    },
+    {
+      "id": "B-15 the run-record statement fixes it and the run reads back",
+      "ok": true,
+      "detail": {
+        "runFixed": 1,
+        "run": {
+          "status": 200,
+          "code": null,
+          "message": null
+        }
+      }
+    },
+    {
+      "id": "B-16 U2 gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ]
+}

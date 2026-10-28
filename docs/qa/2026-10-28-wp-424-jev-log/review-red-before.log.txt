@@ -1,0 +1,100 @@
+Reviewer red-before check for WP-424 at af3b6ebc91c1b60faa438721088cb31a557c9268.
+apps/api/src/config.ts and apps/api/src/container.ts were temporarily restored from a4fee9a9 (main) with
+git checkout a4fee9a9 -- <both files>, the branch tests were run, and both files were restored with
+git checkout HEAD -- <both files>; git status was clean afterwards.
+Command (apps/api): pnpm exec vitest run src/units.test.ts src/container.test.ts -t "Jev"
+Environment: Node v22.23.4 (project runtime), JEV_API_KEY unset, no GG_* except GG_TEST_PORT_START=7460 GG_TEST_PORT_COUNT=40.
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-aad0f10876b4c997b/apps/api
+
+ ❯ src/units.test.ts (15 tests | 3 failed | 8 skipped) 25ms
+   ❯ loadConfig (10)
+     × resolves the Jev environment seed and its source ({ GG_JEV_API_KEY: 'test-primary-key' }) 17ms
+     × resolves the Jev environment seed and its source ({ JEV_API_KEY: 'test-fallback-key' }) 2ms
+     × resolves the Jev environment seed and its source ({ …(2) }) 1ms
+ ❯ src/container.test.ts (28 tests | 1 failed | 16 skipped) 4259ms
+   ❯ Jev key at boot (10)
+     × seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key 177ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/container.test.ts > Jev key at boot > seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key
+AssertionError: expected [ { level: 'info', …(2) } ] to deeply equal [ { level: 'info', obj: {}, …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "level": "info",
+-     "msg": "seeded jev-api-key from JEV_API_KEY",
++     "msg": "seeded jev-api-key from GG_JEV_API_KEY",
+      "obj": {},
+    },
+  ]
+
+ ❯ src/container.test.ts:505:68
+    503|       );
+    504|       expect(await jevAvailable(container)).toBe(true);
+    505|       expect(logger.lines.filter((line) => line.level === 'info')).toE…
+       |                                                                    ^
+    506|         { level: 'info', obj: {}, msg: 'seeded jev-api-key from JEV_AP…
+    507|       ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ GG_JEV_API_KEY: 'test-primary-key' })
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ …(2) })
+AssertionError: expected 'test-primary-key' to deeply equal { value: 'test-primary-key', …(1) }
+
+- Expected:
+{
+  "source": "GG_JEV_API_KEY",
+  "value": "test-primary-key",
+}
+
++ Received:
+"test-primary-key"
+
+ ❯ src/units.test.ts:83:39
+     81|     { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, e…
+     82|   ])('resolves the Jev environment seed and its source ($env)', ({ env…
+     83|     expect(loadConfig(env).jevApiKey).toEqual(expected);
+       |                                       ^
+     84|   });
+     85| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ JEV_API_KEY: 'test-fallback-key' })
+AssertionError: expected 'test-fallback-key' to deeply equal { value: 'test-fallback-key', …(1) }
+
+- Expected:
+{
+  "source": "JEV_API_KEY",
+  "value": "test-fallback-key",
+}
+
++ Received:
+"test-fallback-key"
+
+ ❯ src/units.test.ts:83:39
+     81|     { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, e…
+     82|   ])('resolves the Jev environment seed and its source ($env)', ({ env…
+     83|     expect(loadConfig(env).jevApiKey).toEqual(expected);
+       |                                       ^
+     84|   });
+     85| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 15 passed | 24 skipped (43)
+   Start at  23:45:36
+   Duration  11.20s (import 50%, transform 26%, tests 24%)
+
+  Transform  transforming modules took 4.59s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

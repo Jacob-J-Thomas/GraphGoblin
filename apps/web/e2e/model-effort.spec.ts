@@ -25,6 +25,51 @@ function inheritedInference(name: string, config: Record<string, unknown> = {}) 
   };
 }
 
+/** start -> one Codex inference node or LLM decision `work` -> done. */
+function codexNodeLoop(
+  name: string,
+  kind: 'inference' | 'llm',
+  { model, effort }: { model: string; effort?: string },
+) {
+  const source = minimalLoop();
+  return LoopDefinitionSchema.parse({
+    ...source,
+    name,
+    nodes: [
+      source.nodes[0],
+      {
+        id: 'work',
+        label: 'Work',
+        kind: kind === 'inference' ? kind : 'decision',
+        ui: { x: 260, y: 80 },
+        config:
+          kind === 'inference'
+            ? { prompt: { template: 'Choose' }, model, ...(effort ? { effort } : {}) }
+            : {
+                kind: 'llm',
+                harness: 'codex',
+                instructions: 'Choose',
+                model: { mode: 'explicit', value: model },
+                effort: effort ? { mode: 'explicit', value: effort } : { mode: 'inherit' },
+                routes: [
+                  { id: 'yes', label: 'Yes' },
+                  { id: 'no', label: 'No' },
+                ],
+              },
+      },
+      source.nodes[1],
+    ],
+    edges: [
+      { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+      ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map((port) => ({
+        id: port,
+        from: { node: 'work', port },
+        to: { node: 'done' },
+      })),
+    ],
+  });
+}
+
 test('open inherited labels refresh on focus after another tab saves Settings and match the next request', async ({
   page,
   request,
@@ -315,7 +360,7 @@ for (const kind of ['inference', 'llm'] as const) {
   }
 }
 
-test('Codex effort choices follow the model: no minimal, max is offered and requested unchanged, but not for GPT-5.5', async ({
+test('Codex effort choices follow the model: none first as no reasoning, max requested unchanged, neither for GPT-5.5', async ({
   page,
   request,
 }) => {
@@ -335,11 +380,11 @@ test('Codex effort choices follow the model: no minimal, max is offered and requ
     effort
       .locator('option')
       .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
-  // The Codex CLI's own model catalog lists no minimal for any model, and the provider refuses it
-  // for GPT-6 Luna (F2 LP-5), so it is never offered.
-  expect(await offered()).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+  // GPT-6 and GPT-5.6 models offer none (no reasoning) as their lowest level (#205).
+  expect(await offered()).toEqual(['', 'none', 'low', 'medium', 'high', 'xhigh', 'max']);
+  await expect(effort.locator('option[value="none"]')).toHaveText('none (no reasoning)');
   await effort.selectOption('max');
-  // GPT-5.5 tops out at xhigh in the Codex CLI's own model catalog, so max is not a choice there.
+  // GPT-5.5 offers low to xhigh, as the Codex CLI's own model catalog lists for it.
   await model.selectOption('gpt-5.5');
   await expect(effort.locator('option:checked')).toHaveText('max (not supported by this model)');
   await expect(effort).toHaveAccessibleDescription(/not supported/);
@@ -362,6 +407,60 @@ test('Codex effort choices follow the model: no minimal, max is offered and requ
     .poll(async () => (await control(request, '/harness/requests', { instanceId }))['started'])
     .toMatchObject([{ model: 'gpt-6-luna', effort: 'max' }]);
 });
+
+for (const kind of ['inference', 'llm'] as const) {
+  test(`${kind}: none is chosen, kept and named on GPT-5.5, published on GPT-6 Luna and requested as none`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const instanceId = String(instance['instanceId']);
+    const definition = codexNodeLoop(`205 none ${kind}`, kind, { model: 'gpt-6-luna' });
+    const created = await request.post(url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.goto(url + `/app/loops/${loop.id}/edit`);
+    const dialog = await openNode(page, 'work');
+    const model = dialog.getByLabel('Model', { exact: true });
+    const effort = dialog.getByLabel('Effort', { exact: true });
+    await effort.selectOption('none');
+    await expect(effort.locator('option:checked')).toHaveText('none (no reasoning)');
+    // GPT-5.5 has no level below low: the choice is kept and explained, never changed.
+    await model.selectOption('gpt-5.5');
+    await expect(effort).toHaveValue('none');
+    await expect(effort.locator('option:checked')).toHaveText('none (not supported by this model)');
+    await expect(effort).toHaveAccessibleDescription(
+      /Effort none is not supported by GPT-5\.5\. Choose a supported effort or Default\./,
+    );
+    await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
+    await page.screenshot({ path: test.info().outputPath(`none-on-gpt-5.5-${kind}.png`) });
+    await model.selectOption('gpt-6-luna');
+    await expect(dialog.getByRole('button', { name: /issues? on work/ })).toHaveCount(0);
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+    await page.reload();
+    await expect((await openNode(page, 'work')).getByLabel('Effort', { exact: true })).toHaveValue(
+      'none',
+    );
+    await closeNode(page);
+    expect(
+      (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
+    ).toBe(202);
+    // The request and the run record carry the effort the user chose.
+    await expect
+      .poll(async () => {
+        const result = await control(
+          request,
+          kind === 'llm' ? '/deciders/requests' : '/harness/requests',
+          { instanceId },
+        );
+        return result[kind === 'llm' ? 'routes' : 'started'];
+      })
+      .toMatchObject([{ model: 'gpt-6-luna', effort: 'none' }]);
+  });
+}
 
 for (const kind of ['inference', 'llm'] as const) {
   test(`${kind}: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen`, async ({
@@ -441,7 +540,7 @@ for (const kind of ['inference', 'llm'] as const) {
 }
 
 for (const kind of ['inference', 'llm'] as const) {
-  test(`${kind}: a Codex minimal saved before the catalog change is named on the field and the node until a supported effort is chosen`, async ({
+  test(`${kind}: a GPT-5.5 none saved while a catalog listed it is named on the field and the node until a supported effort is chosen`, async ({
     page,
     request,
   }) => {
@@ -451,71 +550,36 @@ for (const kind of ['inference', 'llm'] as const) {
     const catalog = (await (await request.get(url + '/model-catalog')).json()) as {
       items: Record<string, unknown>[];
     };
-    const { ecosystemDefault: _, ...luna } = catalog.items.find(
-      (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+    const { ecosystemDefault: _, ...gpt55 } = catalog.items.find(
+      (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-5.5',
     )!;
-    expect(luna['efforts']).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
-    // A draft saved while the shipped catalog still offered minimal (before #205's F2 fix); the next
-    // start restores the shipped efforts.
+    expect(gpt55['efforts']).toEqual(['low', 'medium', 'high', 'xhigh']);
+    // A draft saved while the GPT-5.5 row listed none (for example a hand-edited catalog row); the
+    // next start restores the shipped efforts.
     await control(request, '/catalog/upsert', {
-      ...luna,
+      ...gpt55,
       instanceId,
-      efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+      efforts: ['none', 'low', 'medium', 'high', 'xhigh'],
     });
-    const source = minimalLoop();
-    const definition = LoopDefinitionSchema.parse({
-      ...source,
-      name: `205 kept minimal ${kind}`,
-      nodes: [
-        source.nodes[0],
-        {
-          id: 'work',
-          label: 'Work',
-          kind: kind === 'inference' ? kind : 'decision',
-          ui: { x: 260, y: 80 },
-          config:
-            kind === 'inference'
-              ? { prompt: { template: 'Choose' }, model: 'gpt-6-luna', effort: 'minimal' }
-              : {
-                  kind: 'llm',
-                  harness: 'codex',
-                  instructions: 'Choose',
-                  model: { mode: 'explicit', value: 'gpt-6-luna' },
-                  effort: { mode: 'explicit', value: 'minimal' },
-                  routes: [
-                    { id: 'yes', label: 'Yes' },
-                    { id: 'no', label: 'No' },
-                  ],
-                },
-        },
-        source.nodes[1],
-      ],
-      edges: [
-        { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
-        ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map((port) => ({
-          id: port,
-          from: { node: 'work', port },
-          to: { node: 'done' },
-        })),
-      ],
+    const definition = codexNodeLoop(`205 kept none ${kind}`, kind, {
+      model: 'gpt-5.5',
+      effort: 'none',
     });
     const created = await request.post(url + '/loops', { data: { definition } });
     expect(created.status()).toBe(201);
     const { loop } = (await created.json()) as { loop: { id: string } };
-    await control(request, '/catalog/upsert', { ...luna, instanceId });
+    await control(request, '/catalog/upsert', { ...gpt55, instanceId });
     await page.goto(url + `/app/loops/${loop.id}/edit`);
     const dialog = await openNode(page, 'work');
     const effort = dialog.getByLabel('Effort', { exact: true });
     // The saved choice is kept, never changed for the user, and explained on the field and node.
-    await expect(effort).toHaveValue('minimal');
-    await expect(effort.locator('option:checked')).toHaveText(
-      'minimal (not supported by this model)',
-    );
+    await expect(effort).toHaveValue('none');
+    await expect(effort.locator('option:checked')).toHaveText('none (not supported by this model)');
     await expect(effort).toHaveAccessibleDescription(
-      /Effort minimal is not supported by GPT-6 Luna\. Choose a supported effort or Default\./,
+      /Effort none is not supported by GPT-5\.5\. Choose a supported effort or Default\./,
     );
     await expect(dialog.getByRole('button', { name: '1 issue on work' })).toBeVisible();
-    await page.screenshot({ path: test.info().outputPath(`kept-minimal-${kind}.png`) });
+    await page.screenshot({ path: test.info().outputPath(`kept-none-${kind}.png`) });
     await closeNode(page);
     // The saved draft cannot be published; the refusal names the node and the reason.
     await page.getByRole('button', { name: 'Publish', exact: true }).click();
@@ -540,11 +604,11 @@ for (const kind of ['inference', 'llm'] as const) {
         );
         return result[kind === 'llm' ? 'routes' : 'started'];
       })
-      .toMatchObject([{ model: 'gpt-6-luna', effort: 'low' }]);
+      .toMatchObject([{ model: 'gpt-5.5', effort: 'low' }]);
   });
 }
 
-test('Settings Codex default effort follows the server default model and names an unsupported effort', async ({
+test('Settings Codex default effort follows the default model, lists none first, and names an unsupported effort', async ({
   page,
   request,
 }) => {
@@ -554,58 +618,59 @@ test('Settings Codex default effort follows the server default model and names a
   const catalog = (await (await request.get(url + '/model-catalog')).json()) as {
     items: Record<string, unknown>[];
   };
-  const { ecosystemDefault: _, ...luna } = catalog.items.find(
-    (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-6-luna',
+  const { ecosystemDefault: _, ...gpt55 } = catalog.items.find(
+    (entry) => entry['harness'] === 'codex' && entry['model'] === 'gpt-5.5',
   )!;
-  const withMinimal = {
-    ...luna,
+  const withNone = {
+    ...gpt55,
     instanceId,
-    efforts: ['minimal', ...(luna['efforts'] as string[])],
+    efforts: ['none', ...(gpt55['efforts'] as string[])],
   };
-  const message =
-    'Effort minimal is not supported by GPT-6 Luna. Choose a supported effort or Default.';
+  const message = 'Effort none is not supported by GPT-5.5. Choose a supported effort or Default.';
   await page.goto(url + '/app/settings');
+  const model = page.getByLabel('Default model', { exact: true });
   const effort = page.getByLabel('Default effort', { exact: true });
   const offered = () =>
     effort
       .locator('option')
       .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
   // Default model "(server default)" is the process default, GPT-6 Luna (PR #426 QA D-1).
-  await expect(page.getByLabel('Default model', { exact: true })).toHaveValue('');
-  await expect.poll(offered).toEqual(['', 'low', 'medium', 'high', 'xhigh', 'max']);
+  await expect(model).toHaveValue('');
+  await expect.poll(offered).toEqual(['', 'none', 'low', 'medium', 'high', 'xhigh', 'max']);
+  await expect(effort.locator('option[value="none"]')).toHaveText('none (no reasoning)');
+  await model.selectOption('gpt-5.5');
+  await expect.poll(offered).toEqual(['', 'low', 'medium', 'high', 'xhigh']);
 
-  // A catalog this page read before the server stopped offering minimal: the refusal names the
-  // effort and model on the field, not only a generic footer.
-  await control(request, '/catalog/upsert', withMinimal);
+  // A catalog this page read while GPT-5.5 listed none: the refusal names the effort and model on
+  // the field, not only a generic footer.
+  await control(request, '/catalog/upsert', withNone);
   await page.reload();
-  await expect.poll(offered).toContain('minimal');
-  await control(request, '/catalog/upsert', { ...luna, instanceId });
-  await effort.selectOption('minimal');
+  await expect.poll(offered).toContain('none');
+  await control(request, '/catalog/upsert', { ...gpt55, instanceId });
+  await effort.selectOption('none');
   await expect(page.getByRole('alert').filter({ hasText: 'Not saved.' })).toHaveText(
     `Not saved. ${message}`,
   );
   await expect(effort).toHaveAccessibleDescription(new RegExp(message));
   await expect(page.getByText(/invalid harness defaults/)).toHaveCount(0);
 
-  // A minimal default stored before the upgrade is kept and explained (QA O-2).
-  await control(request, '/catalog/upsert', withMinimal);
+  // A none default stored while the row listed it is kept and explained (QA O-2).
+  await control(request, '/catalog/upsert', withNone);
   expect(
     (
       await request.put(url + '/settings', {
-        data: { defaults: { byHarness: { codex: { effort: 'minimal' } } } },
+        data: { defaults: { byHarness: { codex: { model: 'gpt-5.5', effort: 'none' } } } },
       })
     ).status(),
   ).toBe(200);
-  await control(request, '/catalog/upsert', { ...luna, instanceId });
+  await control(request, '/catalog/upsert', { ...gpt55, instanceId });
   await page.reload();
-  await expect(effort).toHaveValue('minimal');
-  await expect(effort.locator('option:checked')).toHaveText(
-    'minimal (not supported by this model)',
-  );
+  await expect(effort).toHaveValue('none');
+  await expect(effort.locator('option:checked')).toHaveText('none (not supported by this model)');
   await expect(effort).toHaveAccessibleDescription(message);
   await page
     .getByRole('region', { name: 'codex defaults' })
-    .screenshot({ path: test.info().outputPath('settings-kept-minimal.png') });
+    .screenshot({ path: test.info().outputPath('settings-kept-none.png') });
   await effort.selectOption('low');
   await expect
     .poll(
@@ -614,7 +679,7 @@ test('Settings Codex default effort follows the server default model and names a
           'defaults'
         ],
     )
-    .toEqual({ byHarness: { codex: { effort: 'low' } } });
+    .toEqual({ byHarness: { codex: { model: 'gpt-5.5', effort: 'low' } } });
   await expect(effort).not.toHaveAccessibleDescription(/not supported/);
 });
 

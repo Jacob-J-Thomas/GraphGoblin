@@ -1,0 +1,72 @@
+{
+  "scenario": "settings-inherited",
+  "passed": 3,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "server-default model: HTTP400 names refused none on field",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "request": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "effort": "none"
+              }
+            }
+          }
+        },
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid harness defaults",
+          "errors": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "description": "Not saved. Effort none is not supported by GPT-6 Luna. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "stored Settings none kept and explained",
+      "ok": true,
+      "detail": {
+        "value": "none",
+        "label": "none (not supported by this model)",
+        "description": "Effort none is not supported by GPT-5.5. Choose a supported effort or Default."
+      }
+    },
+    {
+      "id": "low repairs Settings and clears explanation",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "json": {
+          "defaults": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-5.5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "text": "{\"defaults\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-5.5\",\"effort\":\"low\"}}}}"
+      }
+    }
+  ]
+}

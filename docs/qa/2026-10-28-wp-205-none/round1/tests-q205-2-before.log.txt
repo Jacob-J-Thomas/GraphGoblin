@@ -1,0 +1,171 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api
+
+ ❯ src/defaults-startup.test.ts (2 tests | 2 failed) 8309ms
+   × prints the GG_DEFAULTS codex effort refusal without a stack and exits 1 5138ms
+   × prints the GG_DEFAULTS claude effort refusal without a stack and exits 1 3168ms
+ ❯ src/container.test.ts (31 tests | 3 failed | 28 skipped) 108ms
+   ❯ configuration admission before startup writes (6)
+     × refuses a GG_DEFAULTS codex effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2) 48ms
+     × refuses a GG_DEFAULTS claude effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2) 36ms
+     × names every refused GG_DEFAULTS harness and keeps the first as details 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/container.test.ts > configuration admission before startup writes > refuses a GG_DEFAULTS codex effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2)
+AssertionError: expected Error: Invalid GG_DEFAULTS: The default r… to match object { …(3) }
+
+- Expected
++ Received
+
+- {
+-   "code": "EVALUATION_INVALID_CONFIGURATION",
+-   "details": {
+-     "code": "EFFORT_UNSUPPORTED",
+-     "harness": "codex",
+-     "level": "process",
+-     "path": "effort",
+-   },
+-   "message": "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).
+-   codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"none\"): The default reasoning effort is not supported by its model.
+- No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.",
++ Error {
++   "message": "Invalid GG_DEFAULTS: The default reasoning effort is not supported by its model",
+  }
+
+ ❯ src/container.test.ts:661:23
+    659|         (error: unknown) => error,
+    660|       );
+    661|       expect(refusal).toMatchObject({
+       |                       ^
+    662|         code: 'EVALUATION_INVALID_CONFIGURATION',
+    663|         details: { code: 'EFFORT_UNSUPPORTED', path: 'effort', level: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/container.test.ts > configuration admission before startup writes > refuses a GG_DEFAULTS claude effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2)
+AssertionError: expected Error: Invalid GG_DEFAULTS: The default r… to match object { …(3) }
+
+- Expected
++ Received
+
+- {
+-   "code": "EVALUATION_INVALID_CONFIGURATION",
+-   "details": {
+-     "code": "EFFORT_UNSUPPORTED",
+-     "harness": "claude",
+-     "level": "process",
+-     "path": "effort",
+-   },
+-   "message": "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).
+-   claude: EFFORT_UNSUPPORTED at effort (model \"claude-haiku-5-5\", effort \"none\"): The default reasoning effort is not supported by its model.
+- No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.",
++ Error {
++   "message": "Invalid GG_DEFAULTS: The default reasoning effort is not supported by its model",
+  }
+
+ ❯ src/container.test.ts:661:23
+    659|         (error: unknown) => error,
+    660|       );
+    661|       expect(refusal).toMatchObject({
+       |                       ^
+    662|         code: 'EVALUATION_INVALID_CONFIGURATION',
+    663|         details: { code: 'EFFORT_UNSUPPORTED', path: 'effort', level: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/container.test.ts > configuration admission before startup writes > names every refused GG_DEFAULTS harness and keeps the first as details
+AssertionError: expected Error: Invalid GG_DEFAULTS: The default m… to match object { details: { …(4) } }
+
+- Expected
++ Received
+
+- {
+-   "details": {
+-     "code": "MODEL_NOT_IN_CATALOG",
+-     "harness": "codex",
+-     "level": "process",
+-     "path": "model",
+-   },
++ Error {
++   "message": "Invalid GG_DEFAULTS: The default model is not in the catalog; The default reasoning effort is not supported by its model",
+  }
+
+ ❯ src/container.test.ts:689:21
+    687|       (error: unknown) => error,
+    688|     );
+    689|     expect(refusal).toMatchObject({
+       |                     ^
+    690|       details: { code: 'MODEL_NOT_IN_CATALOG', path: 'model', level: '…
+    691|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/defaults-startup.test.ts > prints the GG_DEFAULTS codex effort refusal without a stack and exits 1
+AssertionError: expected [ …(4) ] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).",
+-   "  codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"none\"): The default reasoning effort is not supported by its model.",
+-   "No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.",
++   "Error: Invalid GG_DEFAULTS: The default reasoning effort is not supported by its model",
++   "    at createContainer (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/container.js:87:19)",
++   "    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/main.js:48:23",
++   "    at async main (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/main.js:97:16)",
+  ]
+
+ ❯ src/defaults-startup.test.ts:28:48
+     26|     const { code } = await child.waitForExit();
+     27|     expect(code).toBe(1);
+     28|     expect(child.stderr.trim().split(/\r?\n/)).toEqual([
+       |                                                ^
+     29|       'GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVA…
+     30|       `  ${harness}: EFFORT_UNSUPPORTED at effort (model "${model}", e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/defaults-startup.test.ts > prints the GG_DEFAULTS claude effort refusal without a stack and exits 1
+AssertionError: expected [ …(4) ] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).",
+-   "  claude: EFFORT_UNSUPPORTED at effort (model \"claude-haiku-5-5\", effort \"none\"): The default reasoning effort is not supported by its model.",
+-   "No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.",
++   "Error: Invalid GG_DEFAULTS: The default reasoning effort is not supported by its model",
++   "    at createContainer (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/container.js:87:19)",
++   "    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/main.js:48:23",
++   "    at async main (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api/dist/main.js:97:16)",
+  ]
+
+ ❯ src/defaults-startup.test.ts:28:48
+     26|     const { code } = await child.waitForExit();
+     27|     expect(code).toBe(1);
+     28|     expect(child.stderr.trim().split(/\r?\n/)).toEqual([
+       |                                                ^
+     29|       'GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVA…
+     30|       `  ${harness}: EFFORT_UNSUPPORTED at effort (model "${model}", e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 28 skipped (33)
+   Start at  01:35:22
+   Duration  10.59s (tests 45%, transform 29%, import 26%)
+
+  Transform  transforming modules took 5.40s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a65ec1cd773b204b7\apps\api
+

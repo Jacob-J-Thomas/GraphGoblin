@@ -60,7 +60,7 @@ export interface ApiConfig {
   /** Absolute path of the built web app to serve under /app/, if configured. */
   webDist?: string;
   /** Seeds the local owner's Jev secret at startup only when it is absent. */
-  jevApiKey?: string;
+  jevApiKey?: { value: string; source: 'GG_JEV_API_KEY' | 'JEV_API_KEY' };
 }
 
 export class ConfigurationUpgradeRequiredError extends Error {
@@ -115,6 +115,7 @@ export function loadConfig(
   const dataDir = resolve(e.GG_DATA_DIR || defaultDataDir());
   const webDist = e.GG_WEB_DIST ?? options.webDistFallback;
   const jevApiKey = e.GG_JEV_API_KEY ?? env.JEV_API_KEY;
+  const jevApiKeySource = e.GG_JEV_API_KEY !== undefined ? 'GG_JEV_API_KEY' : 'JEV_API_KEY';
   return {
     host: e.GG_HOST,
     port: e.GG_PORT,
@@ -133,6 +134,6 @@ export function loadConfig(
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
     ...(e.GG_CLAUDE_BINARY ? { claudeBinary: e.GG_CLAUDE_BINARY } : {}),
     ...(webDist ? { webDist: resolve(webDist) } : {}),
-    ...(jevApiKey ? { jevApiKey } : {}),
+    ...(jevApiKey ? { jevApiKey: { value: jevApiKey, source: jevApiKeySource } } : {}),
   };
 }

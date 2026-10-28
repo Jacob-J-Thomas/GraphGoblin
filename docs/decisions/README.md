@@ -67,3 +67,6 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0057: Observe execution outcome and durable finalization separately](ADR-0057-execution-and-delivery-finalization.md) exposes the existing finalization marker as `finalizedAt` and extends the stream completion rule to wait for it, so readers tell execution end apart from delivery pending, delivered and failed.
 
 [ADR-0059: Uncertain script recovery](ADR-0059-uncertain-script-recovery.md) records dispatch provenance, explicit retry consent and authoritative resumed observation (#321).
+
+[ADR-0062: Stored data is corrected by hand before 1.0](ADR-0062-stored-data-corrected-by-hand-before-1.0.md) supersedes ADR-0020's one-off-migration sentence for stored content: no automatic data migrations; the CHANGELOG upgrade note names the hand fix, and Drizzle migrations remain for schema changes only (#205).
+[ADR-0063: Loop turns run without the machine's personal extensions](ADR-0063-loop-turns-without-personal-extensions.md) switches off the machine's Codex MCP servers, plugins, apps, memories, goals, sub-agents, hooks and `notify` program for every loop turn, lets a node turn a server back on through its config overrides, and records what a turn still inherits (#423).

@@ -1,0 +1,19 @@
+{
+  "scenario": "final-checks",
+  "passed": 1,
+  "failed": 1,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "inspector session effort none codex/gpt-6-luna/none",
+      "ok": true,
+      "detail": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M60HWJG5YWHS9KWE4EAQY25P\nsucceeded\nloop\nchild runs\nResume\nReplay...\n\nResume unavailable: This run has finished. Resume only continues paused runs or supported failures.\n\nExit evaluation\n\nDone (done): Exited: success\n\nNo value was returned: Returns is None, so no destination received anything (caller from the exit). This is the exit’s configuration, not a failure.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nStructured completion: Unlimited.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nHistory retained.\n\nReview delete-ready history\nWithdraw delete-ready mark\n1 selected\nExecution context\n\nQA205 codex/gpt-6-luna/none v1 · version ID 01M60HWJ5ZAYCJHN51T5ZMMMKG\n\nExact run record\nPinned definition JSON\nFinalization\n\nFully finalized.\n\nExecution: succeeded. Delivery is tracked separately.\n\nTimeline (15 events, complete)\nLoad older\nPrevious rows\nNext rows\nLoad newer\nFollow live\nShowing events 1–15 of the retained window.\nFollowing paused. Showing events 1–15 of the retained window.\nEvent sequence \nGo to event\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nStart (start) (trigger) attempt 1\n#4\nnode.finished\nStart (start) → out, 2 changes, 1 ms\n#5\nnode.started\nwork (work) (inference) attempt 1\n#6\nharness.turn\nwork (work)\n#7\nharness.session\nwork (work)\n#8\nharness.submission\nwork (work)\n#9\nnode.progress\nwork (work)\n#10\nharness.usage\nwork (work)\n#11\nnode.finished\nwork (work) → out, 5 changes, 277 ms\n#12\nnode.started\nDone (done) (exit) attempt 1\n#13\nexit.evaluated\nDone (done): Exited: success\n#14\nnode.finished\nDone (done), 0 changes, 1 ms\n#15\nrun.finished\nsucceeded (success)\nExact recorded event #7\n{\n  \"runId\": \"01M60HWJG5YWHS9KWE4EAQY25P\",\n  \"seq\": 7,\n  \"ts\": \"2026-10-28T06:06:48.818Z\",\n  \"type\": \"harness.session\",\n  \"nodeId\": \"work\",\n  \"harness\": \"codex\",\n  \"sessionId\": \"a234619f-7046-48b7-8a7b-4a81ea84418c\",\n  \"mode\": \"fresh\",\n  \"model\": \"gpt-6-luna\",\n  \"effort\": \"none\"\n}\nDownload JSON\nThread at event 7\nMessages (0)\nVariables\n{}\nFull thread JSON\n\nActivity below covers the retained history window. Earlier activity is available through Load older.\n\nNode progress (2 nodes)"
+    },
+    {
+      "id": "final-checks exception",
+      "ok": false,
+      "detail": "locator.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('details').filter({ has: getByText('Exact recorded event #7', { exact: true }) })\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-205\\docs\\qa\\2026-10-28-wp-205-qa\\scripts\\final-checks.mjs:13:96"
+    }
+  ]
+}

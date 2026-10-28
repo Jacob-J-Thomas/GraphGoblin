@@ -1,0 +1,72 @@
+{
+  "scenario": "real-guards",
+  "passed": 3,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "real current-schema catalog independently reproduces unguarded SET read",
+      "ok": true,
+      "detail": {
+        "selected": [
+          {
+            "place": "loop_versions",
+            "ref": "01M3Y7RKG0ABRT3WGA60XXPN94 published"
+          },
+          {
+            "place": "settings",
+            "ref": "defaults"
+          },
+          {
+            "place": "model_catalog",
+            "ref": "codex/gpt-6-luna"
+          },
+          {
+            "place": "runs",
+            "ref": "01M3Y7RKG0ABRT3WGA60XXPN95"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M3Y7RKG0ABRT3WGA60XXPN95#1 run.queued"
+          },
+          {
+            "place": "run_events",
+            "ref": "01M3Y7RKG0ABRT3WGA60XXPN95#7 harness.session"
+          },
+          {
+            "place": "harness_sessions",
+            "ref": "01M3Y7RKG0ABRT3WGA60XXPN95/work/1"
+          }
+        ],
+        "error": "SQLITE_ERROR: malformed JSON"
+      }
+    },
+    {
+      "id": "real current-schema failure independently reproduces unguarded SET read",
+      "ok": true,
+      "detail": {
+        "selected": [
+          {
+            "place": "runs",
+            "ref": "01M3Y7RKG05957STNBR2YDKKXM"
+          }
+        ],
+        "error": "SQLITE_ERROR: malformed JSON"
+      }
+    },
+    {
+      "id": "real current-schema pinned independently reproduces unguarded SET read",
+      "ok": true,
+      "detail": {
+        "selected": [
+          {
+            "place": "runs",
+            "ref": "01M3Y7RKG05957STNBR2YDKKXM"
+          }
+        ],
+        "error": "SQLITE_ERROR: malformed JSON"
+      }
+    }
+  ]
+}

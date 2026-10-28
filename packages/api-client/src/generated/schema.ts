@@ -94,7 +94,7 @@ export interface paths {
                                 [key: string]: {
                                     model?: string | undefined;
                                     /** @enum {string} */
-                                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                    effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                                 };
                             };
                         };
@@ -391,7 +391,7 @@ export interface paths {
                                 }[] | undefined;
                                 models?: {
                                     model: string;
-                                    efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                                    efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                                 }[] | undefined;
                                 /** @enum {string} */
                                 harness: "codex" | "claude";
@@ -2220,9 +2220,9 @@ export interface paths {
                                 /** @enum {string} */
                                 source: "harness" | "litellm";
                                 displayName: string;
-                                efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                                efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                                 /** @enum {string} */
-                                defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                                 enabled: boolean;
                                 ecosystemDefault: boolean;
                             }[];
@@ -2265,9 +2265,9 @@ export interface paths {
                 content: {
                     "application/json": {
                         displayName: string;
-                        efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                        efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                         /** @enum {string} */
-                        defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                         enabled?: boolean | undefined;
                         /** @enum {string} */
                         source?: ("harness" | "litellm") | undefined;
@@ -2287,9 +2287,9 @@ export interface paths {
                             /** @enum {string} */
                             source: "harness" | "litellm";
                             displayName: string;
-                            efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                            efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                             /** @enum {string} */
-                            defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                             enabled: boolean;
                         };
                     };
@@ -2358,9 +2358,9 @@ export interface paths {
                             /** @enum {string} */
                             source: "harness" | "litellm";
                             displayName: string;
-                            efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                            efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                             /** @enum {string} */
-                            defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                             enabled: boolean;
                         };
                     };
@@ -3063,7 +3063,7 @@ export interface components {
                         [key: string]: {
                             model?: string | undefined;
                             /** @enum {string} */
-                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                         };
                     } | undefined;
                 } | undefined;
@@ -3282,7 +3282,7 @@ export interface components {
                         /** @constant */
                         mode: "explicit";
                         /** @enum {string} */
-                        value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        value: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
                     maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
@@ -3382,7 +3382,7 @@ export interface components {
                     harness?: ("codex" | "claude") | undefined;
                     model?: string | undefined;
                     /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                     /**
                      * @default {
                      *       "policy": "fresh"
@@ -4183,7 +4183,7 @@ export interface components {
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
                 model: string;
                 /** @enum {string} */
-                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                effort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
             } | undefined;
         };
         WaitSpecInput: {
@@ -4222,7 +4222,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4232,7 +4232,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4338,7 +4338,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4348,7 +4348,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4663,7 +4663,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4673,7 +4673,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
                     };
@@ -4776,7 +4776,7 @@ export interface components {
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
                 model: string;
                 /** @enum {string} */
-                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                effort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                 nodeId: string;
                 failureSeq: number;
                 /** @constant */
@@ -5011,7 +5011,7 @@ export interface components {
             mode: "fresh" | "resumed";
             model?: string | undefined;
             /** @enum {string} */
-            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+            effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
         } | {
             runId: string;
             seq: number;
@@ -5037,7 +5037,7 @@ export interface components {
                 provider: string | null;
                 classifierId: string | null;
                 model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+                effort: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
             observation: {
                 /** @constant */
@@ -5206,7 +5206,7 @@ export interface components {
                 provider: string | null;
                 classifierId: string | null;
                 model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+                effort: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
             code: string;
             message: string;
@@ -5423,7 +5423,7 @@ export interface components {
                         [key: string]: {
                             model?: string | undefined;
                             /** @enum {string} */
-                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                         };
                     };
                 };
@@ -5638,7 +5638,7 @@ export interface components {
                         /** @constant */
                         mode: "explicit";
                         /** @enum {string} */
-                        value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        value: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
                     maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
@@ -5736,7 +5736,7 @@ export interface components {
                     harness: "codex" | "claude";
                     model?: string | undefined;
                     /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                     /**
                      * @default {
                      *       "policy": "fresh"
@@ -6528,7 +6528,7 @@ export interface components {
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
                 model: string;
                 /** @enum {string} */
-                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                effort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
             } | undefined;
         };
         WaitSpec: {
@@ -6567,7 +6567,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -6577,7 +6577,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -6683,7 +6683,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -6693,7 +6693,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -7008,7 +7008,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -7018,7 +7018,7 @@ export interface components {
                             [key: string]: {
                                 model?: string | undefined;
                                 /** @enum {string} */
-                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
                     };
@@ -7121,7 +7121,7 @@ export interface components {
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
                 model: string;
                 /** @enum {string} */
-                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                effort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                 nodeId: string;
                 failureSeq: number;
                 /** @constant */
@@ -7356,7 +7356,7 @@ export interface components {
             mode: "fresh" | "resumed";
             model?: string | undefined;
             /** @enum {string} */
-            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+            effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
         } | {
             runId: string;
             seq: number;
@@ -7382,7 +7382,7 @@ export interface components {
                 provider: string | null;
                 classifierId: string | null;
                 model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+                effort: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
             observation: {
                 /** @constant */
@@ -7551,7 +7551,7 @@ export interface components {
                 provider: string | null;
                 classifierId: string | null;
                 model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+                effort: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
             code: string;
             message: string;

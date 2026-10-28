@@ -1,0 +1,983 @@
+Reviewer coverage run for WP-424 at af3b6ebc91c1b60faa438721088cb31a557c9268.
+Command (worktree root): pnpm test:coverage --filter @graphgoblin/api -- --maxWorkers=2
+Environment: JEV_API_KEY unset, no GG_* except GG_TEST_PORT_START=7460 GG_TEST_PORT_COUNT=40. First line: node --version.
+v22.23.4
+$ turbo run test:coverage --filter @graphgoblin/api -- --maxWorkers=2
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/api
+   • Running test:coverage in 1 package
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 361771226061b9a4
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache miss, executing 1e25ae6f3456e0d3
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing d65a39f410b01c55
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache miss, executing 5972fb5286ba1dc2
+@graphgoblin/adapter-codex:build: cache miss, executing 1c7e2e0d94a1d668
+@graphgoblin/infrastructure:build: cache miss, executing 45535ddb7ad73abb
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 5cd168864c48ff4c
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:test:coverage: cache miss, executing a7204280b9920bc9
+@graphgoblin/api:test:coverage: $ vitest run --coverage --maxWorkers=2
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-aad0f10876b4c997b/apps/api
+@graphgoblin/api:test:coverage:       Coverage enabled with v8
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  ✓ src/triggers.test.ts (83 tests) 27858ms
+@graphgoblin/api:test:coverage:    ✓ arming on publish (3)
+@graphgoblin/api:test:coverage:      ✓ creates schedules and endpoints, keeps webhook paths, and disables old versions 1072ms
+@graphgoblin/api:test:coverage:    ✓ cron triggers (3)
+@graphgoblin/api:test:coverage:      ✓ starts a run when a schedule comes due 543ms
+@graphgoblin/api:test:coverage:      ✓ applies the missed-fire policy after an outage 693ms
+@graphgoblin/api:test:coverage:    ✓ boot (5)
+@graphgoblin/api:test:coverage:      ✓ re-arms every published loop and catches up on missed fires 640ms
+@graphgoblin/api:test:coverage:      ✓ keeps body business and content receipts durable after a stopped database restart 544ms
+@graphgoblin/api:test:coverage:      ✓ recovers a claimed body delivery across a real SQLite close/reopen and consumes redelivery once 515ms
+@graphgoblin/api:test:coverage:      ✓ recovers a lost acknowledgement body delivery across a real SQLite close/reopen and consumes redelivery once 479ms
+@graphgoblin/api:test:coverage:    ✓ webhooks (9)
+@graphgoblin/api:test:coverage:      ✓ starts a run for a correctly signed delivery 560ms
+@graphgoblin/api:test:coverage:      ✓ rejects bad signatures, stale or missing timestamps, unknown tokens, and replays 351ms
+@graphgoblin/api:test:coverage:      ✓ acknowledges formerly ignored payloads and quietly exits inside the admitted run 1056ms
+@graphgoblin/api:test:coverage:      ✓ reports downstream expression errors in an admitted run after 202 and keeps its key consumed 840ms
+@graphgoblin/api:test:coverage:      ✓ dedupes authored keys after timestamp freshness windows 509ms
+@graphgoblin/api:test:coverage:      ✓ rate limits each endpoint 446ms
+@graphgoblin/api:test:coverage:    ✓ event triggers (2)
+@graphgoblin/api:test:coverage:      ✓ fires one matching event trigger before downstream checks and lists its delivery 519ms
+@graphgoblin/api:test:coverage:      ✓ starts event triggers from external Events only; finished runs publish none (#242) 900ms
+@graphgoblin/api:test:coverage:    ✓ poll triggers (3)
+@graphgoblin/api:test:coverage:      ✓ probes over HTTP and fires once per new dedupe key 342ms
+@graphgoblin/api:test:coverage:      ✓ probes with scripts, fires without a dedupe key, and logs failures 356ms
+@graphgoblin/api:test:coverage:      ✓ skips overlapping polls, polls on an interval, and disarms with the loop 1415ms
+@graphgoblin/api:test:coverage:    ✓ body signing and durable admission (30)
+@graphgoblin/api:test:coverage:      ✓ verifies raw body without timestamp and admits equal content with distinct authored keys 371ms
+@graphgoblin/api:test:coverage:      ✓ keeps quiet-run and pending keys consumed 631ms
+@graphgoblin/api:test:coverage:      ✓ reserves an old webhook key from items-mode poll admission when recovery is after-lookup 343ms
+@graphgoblin/api:test:coverage:      ✓ reserves an old webhook key from items-mode poll admission when recovery is still-pending 315ms
+@graphgoblin/api:test:coverage:      ✓ allows unkeyed content after downstream check correction, and rejects invalid signatures before JSON 337ms
+@graphgoblin/api:test:coverage:    ✓ bounded items-mode poll integration (3)
+@graphgoblin/api:test:coverage:      ✓ validates all candidates before one indexed lookup, drains cap across sweeps, and uses item payloads 645ms
+@graphgoblin/api:test:coverage:    ✓ unified signed webhook admission and Allow (14)
+@graphgoblin/api:test:coverage:      ✓ allows identical concurrent unkeyed hmac-sha256 bytes, but deduplicates an authored key 404ms
+@graphgoblin/api:test:coverage:      ✓ allows identical concurrent unkeyed hmac-sha256-body bytes, but deduplicates an authored key 371ms
+@graphgoblin/api:test:coverage:    ✓ general webhook configuration and unsigned intake (10)
+@graphgoblin/api:test:coverage:      ✓ applies Allow to concurrent unsigned repeats while consuming an explicit key once 338ms
+@graphgoblin/api:test:coverage:      ✓ applies the limiter/bound/decoding to None without accepting an authenticated identity 317ms
+@graphgoblin/api:test:coverage:  ✓ src/classifiers.test.ts (40 tests) 10916ms
+@graphgoblin/api:test:coverage:    ✓ classifier catalog HTTP API (15)
+@graphgoblin/api:test:coverage:      ✓ requires secrets:write to attach a secret and permits settings-only edits that clear it 1503ms
+@graphgoblin/api:test:coverage:    ✓ classifier runtime hot reload (10)
+@graphgoblin/api:test:coverage:      ✓ rejects Jev probabilities with an undeclared secret key before any run read 335ms
+@graphgoblin/api:test:coverage:      ✓ sanitizes real built-in Jev validation paths and error bodies (HTTP 400) 303ms
+@graphgoblin/api:test:coverage:      ✓ sanitizes a real Codex turn failure before persisting it for run readers 372ms
+@graphgoblin/api:test:coverage:      ✓ never exposes an echoed classifier bearer to runs:read (recordAlternatives true) 543ms
+@graphgoblin/api:test:coverage:      ✓ never exposes an echoed classifier bearer to runs:read (recordAlternatives false) 613ms
+@graphgoblin/api:test:coverage:      ✓ uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references 1292ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/reset.test.ts (77 tests | 1 skipped) 63244ms
+@graphgoblin/api:test:coverage:    ✓ reset dry run (5)
+@graphgoblin/api:test:coverage:      ✓ lists the manifest of a current store and changes nothing 5487ms
+@graphgoblin/api:test:coverage:      ✓ names an older store by what it found 5291ms
+@graphgoblin/api:test:coverage:      ✓ keeps every run workspace when the store cannot be read 5207ms
+@graphgoblin/api:test:coverage:    ✓ confirmed reset (6)
+@graphgoblin/api:test:coverage:      ✓ removes exactly the manifest of an old store, following no link, and keeps everything else 11386ms
+@graphgoblin/api:test:coverage:      ✓ removes the database and artifacts of an unreadable store and keeps its workspaces 16341ms
+@graphgoblin/api:test:coverage:      ✓ reports exactly what was removed when removal stops part of the way, and a rerun finishes 934ms
+@graphgoblin/api:test:coverage:    ✓ refused resets change nothing (38)
+@graphgoblin/api:test:coverage:      ✓ refuses a confirmed reset with a directory named graphgoblin.db and leaves a stale lock and every other byte in place 490ms
+@graphgoblin/api:test:coverage:      ✓ refuses a confirmed reset with a database that is not a local file and leaves a stale lock and every other byte in place 354ms
+@graphgoblin/api:test:coverage:      ✓ refuses a confirmed reset with another directory named by --data-dir and leaves a stale lock and every other byte in place 374ms
+@graphgoblin/api:test:coverage:      ✓ refuses a confirmed reset with invalid configuration and leaves a stale lock and every other byte in place 365ms
+@graphgoblin/api:test:coverage:      ✓ compares names the way a case-insensitive volume does: reserved names in any case are refused and the database is listed once 1374ms
+@graphgoblin/api:test:coverage:      ✓ refuses a stream of the data directory as --data-dir and as a database ancestor 519ms
+@graphgoblin/api:test:coverage:      ✓ refuses a database path that names a stream of a file 1628ms
+@graphgoblin/api:test:coverage:      ✓ lists the artifact directory and the sidecars under their stored spelling 304ms
+@graphgoblin/api:test:coverage:      ✓ refuses a database name with a trailing dot or space, which Windows resolves to another name 1061ms
+@graphgoblin/api:test:coverage:      ✓ refuses a reset that puts the database inside the artifact directory 1629ms
+@graphgoblin/api:test:coverage:      ✓ refuses a reset that has a directory where the database should be 654ms
+@graphgoblin/api:test:coverage:  ✓ src/adversarial.test.ts (34 tests) 19756ms
+@graphgoblin/api:test:coverage:    ✓ adversarial API invariants (34)
+@graphgoblin/api:test:coverage:      ✓ 12: every advertised private route rejects missing and revoked credentials 1695ms
+@graphgoblin/api:test:coverage:      ✓ ADV-008: every advertised route against every scope 3583ms
+@graphgoblin/api:test:coverage:      ✓ 12: every mutating route rejects a valid key with no write scopes 594ms
+@graphgoblin/api:test:coverage:      ✓ 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 606ms
+@graphgoblin/api:test:coverage:      ✓ 13: timestamp window boundary -299999 ms 320ms
+@graphgoblin/api:test:coverage:      ✓ 13: timestamp window boundary 299999 ms 332ms
+@graphgoblin/api:test:coverage:      ✓ 13: byte limit, 61st delivery and deleted endpoint are rejected 749ms
+@graphgoblin/api:test:coverage:      ✓ 14: exits cannot chain loops through Events; external Event intake still starts runs 505ms
+@graphgoblin/api:test:coverage:      ✓ 4: deletion is refused while a version is pinned by an active run 469ms
+@graphgoblin/api:test:coverage:      ✓ 16: disconnect during replay validation unsubscribes before headers are sent 4409ms
+@graphgoblin/api:test:coverage:      ✓ 16: 1000 persisted events stream in sequence without duplicates 399ms
+@graphgoblin/api:test:coverage:      ✓ 18: secrets never appear in read responses or invalid-request errors 466ms
+@graphgoblin/api:test:coverage:      ✓ ADV-004 review: a parent started during a DELETE never pins the deleted loop 513ms
+@graphgoblin/api:test:coverage:      ✓ ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 639ms
+@graphgoblin/api:test:coverage:      ✓ ADV-009: every ULID id route validates before repository lookup 512ms
+@graphgoblin/api:test:coverage:  ✓ src/container.test.ts (28 tests) 14415ms
+@graphgoblin/api:test:coverage:    ✓ default adapters (6)
+@graphgoblin/api:test:coverage:      ✓ registers the Codex harness, structured completions, and the Codex evaluator and classifier registry 993ms
+@graphgoblin/api:test:coverage:      ✓ shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes 340ms
+@graphgoblin/api:test:coverage:    ✓ Jev key at boot (10)
+@graphgoblin/api:test:coverage:      ✓ seeds before recovery, refreshes metadata, and preserves a disabled built-in across real restarts 455ms
+@graphgoblin/api:test:coverage:    ✓ configuration admission before startup writes (3)
+@graphgoblin/api:test:coverage:      ✓ reads existing manual catalog entries without changing database bytes or rows on invalid effort 6039ms
+@graphgoblin/api:test:coverage:    ✓ refuses malformed current definitions before master-key creation or database writes 2634ms
+@graphgoblin/api:test:coverage:  ✓ src/wait-identity.test.ts (34 tests) 12796ms
+@graphgoblin/api:test:coverage:    ✓ observed wait identities over real SQLite and API (3)
+@graphgoblin/api:test:coverage:      ✓ rejects visit A answers at visit B without mutation, and accepts B once 1450ms
+@graphgoblin/api:test:coverage:      ✓ resets signal observations on a genuine heartbeat revisit 390ms
+@graphgoblin/api:test:coverage:      ✓ cannot lose a timer delivered synchronously by the injected timer port around parking 460ms
+@graphgoblin/api:test:coverage:    ✓ durable wait boundaries (18)
+@graphgoblin/api:test:coverage:      ✓ keeps the observed identity when SQLite is closed and reopened 494ms
+@graphgoblin/api:test:coverage:      ✓ recovers an event-first park and its passed deadline at 50 ms polling 517ms
+@graphgoblin/api:test:coverage:      ✓ recovers an event-first park and its passed deadline at 1000 ms polling 504ms
+@graphgoblin/api:test:coverage:      ✓ acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 496ms
+@graphgoblin/api:test:coverage:      ✓ handles deadline 0, context 256000, polling 50 301ms
+@graphgoblin/api:test:coverage:      ✓ handles deadline 1000, context 8, polling 50 311ms
+@graphgoblin/api:test:coverage:      ✓ handles deadline 1000, context 256000, polling 50 327ms
+@graphgoblin/api:test:coverage:      ✓ handles deadline -1000, context 256000, polling 1000 305ms
+@graphgoblin/api:test:coverage:      ✓ retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 531ms
+@graphgoblin/api:test:coverage:    ✓ wait rejection and acknowledgement boundaries (4)
+@graphgoblin/api:test:coverage:      ✓ recovers a paused event-first park before its snapshot/status commit without advancing it 567ms
+@graphgoblin/api:test:coverage:      ✓ closes and reopens SQLite after the wake but before timer acknowledgement 530ms
+@graphgoblin/api:test:coverage:    ✓ redelivery queues a durable wake after its committed status response was lost 306ms
+@graphgoblin/api:test:coverage:    ✓ retry repairs a durable input answer after its status transition failed 380ms
+@graphgoblin/api:test:coverage:    ✓ retry repairs a durable signal answer after its status transition failed 338ms
+@graphgoblin/api:test:coverage:    ✓ acknowledges timers for unreadable event history and keeps healthy work available 385ms
+@graphgoblin/api:test:coverage:  ✓ src/api.test.ts (20 tests) 5519ms
+@graphgoblin/api:test:coverage:    ✓ engine request errors through ordinary routes (1)
+@graphgoblin/api:test:coverage:      ✓ maps engine-origin missing loop, trigger and unpublished version precisely 773ms
+@graphgoblin/api:test:coverage:    ✓ system routes (2)
+@graphgoblin/api:test:coverage:      ✓ serves health, version, openapi, and preflight 398ms
+@graphgoblin/api:test:coverage:    ✓ runs (3)
+@graphgoblin/api:test:coverage:      ✓ starts a run, lists, reads the thread and events, and streams nothing when complete 309ms
+@graphgoblin/api:test:coverage:      ✓ controls a waiting run: input validation, signals, pause, resume, cancel 483ms
+@graphgoblin/api:test:coverage:      ✓ hides runs of other owners and serves artifacts 370ms
+@graphgoblin/api:test:coverage:    ✓ settings, secrets, api keys, catalog, events (3)
+@graphgoblin/api:test:coverage:      ✓ publishes and lists same-millisecond inbound events in reverse creation order 320ms
+@graphgoblin/api:test:coverage:    ✓ authentication (2)
+@graphgoblin/api:test:coverage:      ✓ requires a key when configured, except for public routes 790ms
+@graphgoblin/api:test:coverage:  ✓ src/recovery-eligibility.test.ts (33 tests) 10274ms
+@graphgoblin/api:test:coverage:    ✓ server recovery eligibility (#256) (33)
+@graphgoblin/api:test:coverage:      ✓ refuses an interleaved parked Resume as typed stale without unpausing its recorded wait 977ms
+@graphgoblin/api:test:coverage:      ✓ keeps GET recovery reads bounded as history grows by eleven thousand events 1520ms
+@graphgoblin/api:test:coverage:      ✓ returns one recovery state with latest history during a concurrent retry 302ms
+@graphgoblin/api:test:coverage:      ✓ returns one recovery state with captured history during a concurrent retry 302ms
+@graphgoblin/api:test:coverage:      ✓ explains paused Replay, cancelled recovery and unsupported failures 398ms
+@graphgoblin/api:test:coverage:      ✓ requires separate missing-session and uncertain-script choices 407ms
+@graphgoblin/api:test:coverage:      ✓ refuses Replay paths into an uncertain script even without a dispatch marker 335ms
+@graphgoblin/api:test:coverage:      ✓ refuses a stale repeated replay command after its first fork was returned 379ms
+@graphgoblin/api:test:coverage:      ✓ admits one Replay per observed intent, records exact identities and preserves source history 333ms
+@graphgoblin/api:test:coverage:  ✓ src/targeted-events.test.ts (37 tests) 10296ms
+@graphgoblin/api:test:coverage:    ✓ targeted Events (#343) (3)
+@graphgoblin/api:test:coverage:      ✓ refuses a missing target without broadcasting 759ms
+@graphgoblin/api:test:coverage:    ✓ requires explicit disambiguation and scopes identical request keys to each recipient 369ms
+@graphgoblin/api:test:coverage:    ✓ reuses one original delivery across concurrent keyed retries and admits unkeyed repeats 489ms
+@graphgoblin/api:test:coverage:    ✓ keeps one delivery for identical unnamed-entry retries when publication replaces the entry 441ms
+@graphgoblin/api:test:coverage:    ✓ recovers the same intent after atomic admission failure: BEFORE INSERT ON run_events 385ms
+@graphgoblin/api:test:coverage:    ✓ recovers the same intent after atomic admission failure: BEFORE UPDATE OF status ON event_receipts WHEN NEW.status='admitted' 421ms
+@graphgoblin/api:test:coverage:    ✓ bounds persistent admission failures and keeps failed keyed deliveries truthful 356ms
+@graphgoblin/api:test:coverage:    ✓ runs independent requests concurrently within configured capacity 482ms
+@graphgoblin/api:test:coverage:    ✓ keeps URL webhook acknowledgements and targeting; refuses deep input with a safe logged code 315ms
+@graphgoblin/api:test:coverage:    ✓ admits the shared receipt nesting boundary and refuses the next container before saving 402ms
+@graphgoblin/api:test:coverage:    ✓ releases the authored node key after EVENT_ADMISSION_EXHAUSTED for a new request key 397ms
+@graphgoblin/api:test:coverage:    ✓ preserves the literal request key "x" across retries and run admission 302ms
+@graphgoblin/api:test:coverage:    ✓ admits a later due Event in the same sweep despite persistent first-receipt metadata failure 329ms
+@graphgoblin/api:test:coverage:  ✓ src/catalog.test.ts (34 tests) 5488ms
+@graphgoblin/api:test:coverage:    ✓ catalog ownership and toggle routes (11)
+@graphgoblin/api:test:coverage:      ✓ identifies the adapters ecosystem defaults without changing catalog enablement 628ms
+@graphgoblin/api:test:coverage:    ✓ Codex efforts are sent unchanged and offered per model (#205) (9)
+@graphgoblin/api:test:coverage:      ✓ fails a stored minimal (inference) from before this catalog without any provider request 345ms
+@graphgoblin/api:test:coverage:  ✓ src/history-cleanup.test.ts (25 tests) 12940ms
+@graphgoblin/api:test:coverage:    ✓ exposes measured storage state without granting deletion consent 673ms
+@graphgoblin/api:test:coverage:    ✓ reclaims workspaces while retaining an unused terminal template run (early-exit) 502ms
+@graphgoblin/api:test:coverage:    ✓ reclaims workspaces while retaining an unused terminal template run (empty-render) 740ms
+@graphgoblin/api:test:coverage:    ✓ uses an aliased data directory for temp workspaces, transcripts and pressure cleanup 326ms
+@graphgoblin/api:test:coverage:    ✓ refuses noncanonical artifact references before retained input can depend on them 370ms
+@graphgoblin/api:test:coverage:    ✓ protects a waiting run workspace configured through a direct junction 380ms
+@graphgoblin/api:test:coverage:    ✓ protects a waiting run workspace configured through a missing-descendant junction 391ms
+@graphgoblin/api:test:coverage:    ✓ protects a waiting run workspace configured through a containing junction 401ms
+@graphgoblin/api:test:coverage:    ✓ deletes disposable owned outputs and approved rows while retained shared artifacts remain retrievable 354ms
+@graphgoblin/api:test:coverage:    ✓ reclaims approved workspaces through the API with 1000 retained workspace users 6296ms
+@graphgoblin/api:test:coverage:  ✓ src/preflight.test.ts (32 tests) 4076ms
+@graphgoblin/api:test:coverage:    ✓ allows read-only CLI preflight alongside a container without changing its lock 658ms
+@graphgoblin/api:test:coverage:    ✓ graphgoblin-api --preflight (9)
+@graphgoblin/api:test:coverage:      ✓ checks an installation that has started once 546ms
+@graphgoblin/api:test:coverage:      ✓ warns about a database under directories start will create, and start creates them 510ms
+@graphgoblin/api:test:coverage:      ✓ fails on a store start would refuse, naming it and the reset, without changing it 430ms
+@graphgoblin/api:test:coverage:      ✓ leaves every byte of a store it refuses untouched, write-ahead log included 518ms
+@graphgoblin/api:test:coverage:    ✓ GET /system/preflight (1)
+@graphgoblin/api:test:coverage:      ✓ reports on the running installation and requires credentials when keys are required 931ms
+@graphgoblin/api:test:coverage:  ✓ src/nested-readiness.test.ts (19 tests) 7855ms
+@graphgoblin/api:test:coverage:    ✓ manual admission over pinned nested definitions (19)
+@graphgoblin/api:test:coverage:      ✓ rejects a signed-out child before the parent mutation or any run is recorded 841ms
+@graphgoblin/api:test:coverage:      ✓ shares one probe between same-harness parent and child nodes 508ms
+@graphgoblin/api:test:coverage:      ✓ starts probes for distinct parent/child harnesses concurrently 534ms
+@graphgoblin/api:test:coverage:      ✓ checks the published child, ignoring an unready-harness draft 418ms
+@graphgoblin/api:test:coverage:      ✓ honors the configured nesting limit 1 362ms
+@graphgoblin/api:test:coverage:      ✓ checks a twice-referenced child once when ready 515ms
+@graphgoblin/api:test:coverage:      ✓ keeps the child pin when a new version publishes while its probe is pending 490ms
+@graphgoblin/api:test:coverage:      ✓ freezes a draft root before probing and executes that same snapshot 378ms
+@graphgoblin/api:test:coverage:      ✓ uses the claude executable fixture through public nested admission 884ms
+@graphgoblin/api:test:coverage:      ✓ uses the codex executable fixture through public nested admission 1177ms
+@graphgoblin/api:test:coverage:  ✓ src/edges.test.ts (13 tests) 4746ms
+@graphgoblin/api:test:coverage:    ✓ scopes (1)
+@graphgoblin/api:test:coverage:      ✓ rejects every write route for a key without the matching scope 1890ms
+@graphgoblin/api:test:coverage:    ✓ loop and run route branches (4)
+@graphgoblin/api:test:coverage:      ✓ starts runs with every optional body field, signals without a payload, and delivers caller return defaults 539ms
+@graphgoblin/api:test:coverage:    ✓ composition defaults (1)
+@graphgoblin/api:test:coverage:      ✓ opens a file database, generates a master key, and runs with default ports 336ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-process.test.ts (11 tests | 5 skipped) 89591ms
+@graphgoblin/api:test:coverage:    ✓ native drain rechecks a wake during delivery cleanup and completes its required child before closing controls 8916ms
+@graphgoblin/api:test:coverage:    ✓ native racing Events retain admitted work or reusable keys through drain and restart 11181ms
+@graphgoblin/api:test:coverage:    ✓ native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work 14530ms
+@graphgoblin/api:test:coverage:    ✓ native drain preserves durable timer, paused input, and parked parent/child across restart 12945ms
+@graphgoblin/api:test:coverage:    ✓ native force preserves durable timer, paused input, and parked parent/child across restart 12508ms
+@graphgoblin/api:test:coverage:    ✓ native Event refusal leaves its dedupe key available after restart 12443ms
+@graphgoblin/api:test:coverage:  ✓ src/definition-pins.test.ts (3 tests) 3392ms
+@graphgoblin/api:test:coverage:    ✓ runs pin their definition across edits, Settings changes and a restart (1)
+@graphgoblin/api:test:coverage:      ✓ keeps published and draft runs on their start definition and defaults 2028ms
+@graphgoblin/api:test:coverage:    ✓ classifier bindings are pinned at start (2)
+@graphgoblin/api:test:coverage:      ✓ calls the provider model a waiting run pinned, after a catalog edit and a restart 952ms
+@graphgoblin/api:test:coverage:      ✓ starts and runs a classifier whose catalog id is an Object property name 409ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/template-drafts.test.ts (23 tests) 11038ms
+@graphgoblin/api:test:coverage:    ✓ editable template starting points (18)
+@graphgoblin/api:test:coverage:      ✓ creates exactly one ordinary starter draft without credentials, readiness or repository settings 1038ms
+@graphgoblin/api:test:coverage:      ✓ creates independent qa copies, keeps supplied names literal, and does not alter the package 349ms
+@graphgoblin/api:test:coverage:      ✓ saves normal prompt edits before defaults are configured and publishes after explicit configuration 435ms
+@graphgoblin/api:test:coverage:      ✓ still rejects explicit invalid choices and preserves the previous draft 338ms
+@graphgoblin/api:test:coverage:      ✓ refuses unknown templates and invalid requests without creating anything 323ms
+@graphgoblin/api:test:coverage:      ✓ uses loops:write and keeps the newly created implementation draft owner scoped 650ms
+@graphgoblin/api:test:coverage:      ✓ uses loops:write and keeps the newly created review draft owner scoped 549ms
+@graphgoblin/api:test:coverage:      ✓ uses loops:write and keeps the newly created qa draft owner scoped 534ms
+@graphgoblin/api:test:coverage:    ✓ bounded manual starting-point execution (5)
+@graphgoblin/api:test:coverage:      ✓ plans, implements and verifies a supplied task through distinct turns 1303ms
+@graphgoblin/api:test:coverage:      ✓ reviews, fixes, then reviews again and preserves the prior findings as context 986ms
+@graphgoblin/api:test:coverage:      ✓ exhausts repeated review findings without returning approval 837ms
+@graphgoblin/api:test:coverage:      ✓ assesses QA evidence with a separate challenge and reports missing evidence as failure 558ms
+@graphgoblin/api:test:coverage:      ✓ exhausts one unsound QA rerun without claiming a passing assessment 1200ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-console.test.ts (3 tests) 49565ms
+@graphgoblin/api:test:coverage:    ✓ one terminal Ctrl+C drains while a running Codex turn keeps running, then completes when it finishes 14101ms
+@graphgoblin/api:test:coverage:    ✓ a later terminal Ctrl+C explicitly forces the running Codex turn 14626ms
+@graphgoblin/api:test:coverage:    ✓ force over a Codex CLI whose tool process keeps its output open fails cleanup and offers Force exit 18718ms
+@graphgoblin/api:test:coverage:  ✓ src/claude.test.ts (15 tests) 4844ms
+@graphgoblin/api:test:coverage:    ✓ Claude public integration (15)
+@graphgoblin/api:test:coverage:      ✓ keeps safe policy/model facts in the public typed preflight response 791ms
+@graphgoblin/api:test:coverage:      ✓ runs exact claude-opus-5-5 inference and preserves normal output/usage 399ms
+@graphgoblin/api:test:coverage:      ✓ keeps the saved claude-sonnet-5-5 model and each supported effort identical through reopen and the harness request 726ms
+@graphgoblin/api:test:coverage:      ✓ keeps the saved claude-haiku-5-5 model and each supported effort identical through reopen and the harness request 954ms
+@graphgoblin/api:test:coverage:  ✓ src/guide-examples.test.ts (16 tests) 5760ms
+@graphgoblin/api:test:coverage:    ✓ executable guide examples (16)
+@graphgoblin/api:test:coverage:      ✓ inventories every fence in guides 02 and 03 804ms
+@graphgoblin/api:test:coverage:      ✓ validates settings, imports the draft definition, saves, exports, publishes and executes it 383ms
+@graphgoblin/api:test:coverage:      ✓ executes the exact first-summary and API input, including its prompt and return mapping 525ms
+@graphgoblin/api:test:coverage:      ✓ replays the documented node in replay-bash 386ms
+@graphgoblin/api:test:coverage:      ✓ replays the documented node in replay-powershell 401ms
+@graphgoblin/api:test:coverage:      ✓ resumes a fake external failure with resume-bash; refuses a finished run 376ms
+@graphgoblin/api:test:coverage:      ✓ resumes a fake external failure with resume-powershell; refuses a finished run 367ms
+@graphgoblin/api:test:coverage:      ✓ reads the documented events request in events-powershell 438ms
+@graphgoblin/api:test:coverage:      ✓ reads the documented events request in reconnect-bash 371ms
+@graphgoblin/api:test:coverage:      ✓ runs the bounded-repeat example to exactly three passes and an Exhausted exit 322ms
+@graphgoblin/api:test:coverage:  ✓ src/qa.test.ts (10 tests) 2665ms
+@graphgoblin/api:test:coverage:    ✓ owner defaults (Settings) reach the engine at run start (2)
+@graphgoblin/api:test:coverage:      ✓ uses the saved defaults for the next run and the configuration after they are removed 971ms
+@graphgoblin/api:test:coverage:    ✓ run.queued carries the initial thread (1)
+@graphgoblin/api:test:coverage:      ✓ records the seeded thread of a subloop child on its first event 317ms
+@graphgoblin/api:test:coverage:  ✓ src/sse.test.ts (9 tests) 8524ms
+@graphgoblin/api:test:coverage:    ✓ SSE event stream (9)
+@graphgoblin/api:test:coverage:      ✓ rejects corrupt stored events before SSE headers during replay and releases its subscription 848ms
+@graphgoblin/api:test:coverage:      ✓ streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1018ms
+@graphgoblin/api:test:coverage:      ✓ replays history, tails live events, and closes after the run finishes 605ms
+@graphgoblin/api:test:coverage:      ✓ closing when the run is terminal (3)
+@graphgoblin/api:test:coverage:        ✓ ends promptly after the terminal event when the run finishes mid-stream 735ms
+@graphgoblin/api:test:coverage:      ✓ stops writing when the client disconnects 4298ms
+@graphgoblin/api:test:coverage:  ✓ src/model-readiness.test.ts (16 tests) 2752ms
+@graphgoblin/api:test:coverage:    ✓ public authoring readiness (10)
+@graphgoblin/api:test:coverage:      ✓ maps unknown to a readiness issue, permits saving, and blocks publication 739ms
+@graphgoblin/api:test:coverage:  ✓ src/triggers/webhook-body.test.ts (16 tests) 23ms
+@graphgoblin/api:test:coverage:  ✓ src/templates/catalog-boundary.test.ts (29 tests) 1286ms
+@graphgoblin/api:test:coverage:  ✓ src/sse-catchup.test.ts (13 tests) 8076ms
+@graphgoblin/api:test:coverage:    ✓ durable SSE catch-up (13)
+@graphgoblin/api:test:coverage:      ✓ keeps a fast real-socket memory reader complete while every replay page appends more events 2023ms
+@graphgoblin/api:test:coverage:      ✓ keeps a fast real-socket sqlite reader complete while every replay page appends more events 4521ms
+@graphgoblin/api:test:coverage:      ✓ handles a SQLite gap beyond the replay cursor without consuming a control id 375ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/run-paging.test.ts (29 tests) 6246ms
+@graphgoblin/api:test:coverage:    ✓ ordinary run paging (29)
+@graphgoblin/api:test:coverage:      ✓ returns an empty final page 892ms
+@graphgoblin/api:test:coverage:      ✓ returns 500 items plus a cursor for the lookahead row and then a final null cursor 1092ms
+@graphgoblin/api:test:coverage:      ✓ keeps filter parent=2RPPNXBH1B9H3F1K4K6FJNSS4B unchanged across every limit-one page 514ms
+@graphgoblin/api:test:coverage:      ✓ publishes the cursor description and bound in OpenAPI 401ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/templates.test.ts (13 tests) 4222ms
+@graphgoblin/api:test:coverage:    ✓ template API without runtime authority (13)
+@graphgoblin/api:test:coverage:      ✓ reads only manifests without provider, script or credential probes 759ms
+@graphgoblin/api:test:coverage:      ✓ removes configured actions from routing and OpenAPI without allocating state 367ms
+@graphgoblin/api:test:coverage:      ✓ keeps ordinary returns and the unwrapped durable finalization marker 345ms
+@graphgoblin/api:test:coverage:      ✓ preserves ordinary script cancel and finalization 431ms
+@graphgoblin/api:test:coverage:      ✓ preserves ordinary script timeout and finalization 1338ms
+@graphgoblin/api:test:coverage:  ✓ src/deletion-eligibility.test.ts (9 tests) 8394ms
+@graphgoblin/api:test:coverage:    ✓ previews only the explicit selection without changing history 954ms
+@graphgoblin/api:test:coverage:    ✓ persists identical success/failure consent with actor and time across reopening, scopes it to the selection, and withdraws it 1177ms
+@graphgoblin/api:test:coverage:    ✓ refuses a mixed protected selection atomically and reports each reason without silently dropping it 666ms
+@graphgoblin/api:test:coverage:    ✓ rejects malformed, unconfirmed, missing and foreign selections without approving the valid subset 779ms
+@graphgoblin/api:test:coverage:    ✓ allows one competing confirmation and refuses the stale one 1164ms
+@graphgoblin/api:test:coverage:    ✓ rolls back a failed bulk write, and records only the authorized authenticated confirming actor 962ms
+@graphgoblin/api:test:coverage:    ✓ requires related history together and revokes approvals on new dependencies and withdrawal 826ms
+@graphgoblin/api:test:coverage:    ✓ keeps ADR-0033 loop deletion as separate explicit consent and detaches a retained child 937ms
+@graphgoblin/api:test:coverage:    ✓ revokes the source when replay creates dependent history and leaves retained artifact bytes retrievable 928ms
+@graphgoblin/api:test:coverage:  ✓ src/sse-completion.test.ts (13 tests) 5174ms
+@graphgoblin/api:test:coverage:    ✓ authoritative SSE completion (13)
+@graphgoblin/api:test:coverage:      ✓ replays a real failed, resumed and succeeded run through its current outcome 1194ms
+@graphgoblin/api:test:coverage:      ✓ does not complete a cursor past the tail when a resume races the confirmation 1514ms
+@graphgoblin/api:test:coverage:      ✓ rechecks a pending finalization at most every 250 ms, even with frequent heartbeats 1207ms
+@graphgoblin/api:test:coverage:  ✓ src/retired-event-destination.test.ts (5 tests) 1926ms
+@graphgoblin/api:test:coverage:    ✓ a stored definition with an Event destination (#242) (5)
+@graphgoblin/api:test:coverage:      ✓ is refused on every read of the loop and its versions with a per-loop diagnostic 886ms
+@graphgoblin/api:test:coverage:      ✓ is refused before a run starts, and a parent calling it fails before any child exists 307ms
+@graphgoblin/api:test:coverage:  ✓ src/pinned-run-restart.test.ts (2 tests) 25029ms
+@graphgoblin/api:test:coverage:    ✓ current-format runs through the API (1)
+@graphgoblin/api:test:coverage:      ✓ recovers a current-format pinned run across restart mid-run without migration 11280ms
+@graphgoblin/api:test:coverage:    ✓ pinned child runs across a real API restart (1)
+@graphgoblin/api:test:coverage:      ✓ retains a child pin through a real API restart and Replay while new runs use the new publish 13746ms
+@graphgoblin/api:test:coverage:  ✓ src/create-api-key.test.ts (12 tests) 3461ms
+@graphgoblin/api:test:coverage:    ✓ graphgoblin-api --create-api-key (5)
+@graphgoblin/api:test:coverage:      ✓ creates a key in a fresh data directory and prints the token once, to stdout only 535ms
+@graphgoblin/api:test:coverage:      ✓ opens a required-key server with the printed key 1672ms
+@graphgoblin/api:test:coverage:      ✓ refuses to write while a server holds the directory, then succeeds after stop 957ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/run-history.test.ts (3 tests) 6596ms
+@graphgoblin/api:test:coverage:    ✓ browses opaque run-scoped history in both directions and resolves threads beyond the browser window 4207ms
+@graphgoblin/api:test:coverage:    ✓ reads the latest cancellation and the request that led to it, whatever history the browser holds 301ms
+@graphgoblin/api:test:coverage:    ✓ resolves a historical thread without decoding events past the requested boundary 2082ms
+@graphgoblin/api:test:coverage:  ✓ src/gates.test.ts (15 tests) 3077ms
+@graphgoblin/api:test:coverage:    ✓ decision gate API admission (15)
+@graphgoblin/api:test:coverage:      ✓ returns the visit-cap warning on all five admission paths while allowing an early non-repeat 951ms
+@graphgoblin/api:test:coverage: subloop kill landings:
+@graphgoblin/api:test:coverage: delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+@graphgoblin/api:test:coverage: delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+@graphgoblin/api:test:coverage: delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+@graphgoblin/api:test:coverage: delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+@graphgoblin/api:test:coverage: delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+@graphgoblin/api:test:coverage: delay 100: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+@graphgoblin/api:test:coverage: delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+@graphgoblin/api:test:coverage: delay 250: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+@graphgoblin/api:test:coverage:  ✓ src/reset/reset-locked-plan.test.ts (8 tests) 11080ms
+@graphgoblin/api:test:coverage:    ✓ confirmed reset retains the run IDs until their workspaces can be removed (7)
+@graphgoblin/api:test:coverage:      ✓ refuses after a real built copy owner is killed during the locked read 9745ms
+@graphgoblin/api:test:coverage:    ✓ names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory 489ms
+@graphgoblin/api:test:coverage:  ✓ src/durable-events.test.ts (6 tests) 2662ms
+@graphgoblin/api:test:coverage:    ✓ user content in durable events (2)
+@graphgoblin/api:test:coverage:      ✓ rejects a non-slug signal name before generating an event 777ms
+@graphgoblin/api:test:coverage:    ✓ damaged history diagnostics (4)
+@graphgoblin/api:test:coverage:      ✓ pages diagnostics across run and event bounds and rejects malformed cursors 895ms
+@graphgoblin/api:test:coverage:  ✓ src/triggers/github-recipe.test.ts (5 tests) 4040ms
+@graphgoblin/api:test:coverage:    ✓ documented GitHub polling recipe with a controlled local CLI (5)
+@graphgoblin/api:test:coverage:      ✓ curates all pages, drains five then the tail, and retains seen keys through a stopped restart 2054ms
+@graphgoblin/api:test:coverage:      ✓ refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private 374ms
+@graphgoblin/api:test:coverage:      ✓ refuses the child-buffer byte boundary before lookup or admission 351ms
+@graphgoblin/api:test:coverage:      ✓ refuses the final-array byte boundary before lookup or admission 390ms
+@graphgoblin/api:test:coverage:      ✓ observes only current state and cannot reconstruct a label transition between snapshots 869ms
+@graphgoblin/api:test:coverage:  ↓ src/live.test.ts (3 tests | 3 skipped)
+@graphgoblin/api:test:coverage:  ✓ src/subloop-restart.test.ts (3 tests) 77137ms
+@graphgoblin/api:test:coverage:    ✓ awaited subloops across process death (#242) (3)
+@graphgoblin/api:test:coverage:      ✓ a hard kill around child completion leaves every parent one continuation after restart 57159ms
+@graphgoblin/api:test:coverage:      ✓ the built API recovers a child finished while down with one continuation per parent 10283ms
+@graphgoblin/api:test:coverage:      ✓ the built API recovers a parent interrupted mid-wake with one continuation per parent 9691ms
+@graphgoblin/api:test:coverage:  ✓ src/data-dir-lock.test.ts (34 tests) 1322ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-controller.test.ts (8 tests) 579ms
+@graphgoblin/api:test:coverage:  ✓ src/sse-bounds.test.ts (7 tests) 1941ms
+@graphgoblin/api:test:coverage:    ✓ bounded SSE transport (7)
+@graphgoblin/api:test:coverage:      ✓ fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 1561ms
+@graphgoblin/api:test:coverage: {"level":30,"time":1793163159697,"pid":60440,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5695"}
+@graphgoblin/api:test:coverage: {"level":30,"time":1793163159698,"pid":60440,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5695,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-I7ATdl","requireApiKey":true,"msg":"GraphGoblin API listening"}
+@graphgoblin/api:test:coverage: {"level":30,"time":1793163159730,"pid":60440,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+@graphgoblin/api:test:coverage: {"level":30,"time":1793163159736,"pid":60440,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":5.283599999999751,"msg":"request completed"}
+@graphgoblin/api:test:coverage: stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > node.progress refusal preserves uncertainty across a real restart and deliberate retry
+@graphgoblin/api:test:coverage: {"boundary":"node.progress","failure":"SCRIPT_OUTCOME_UNCERTAIN","script":{"visitId":"01M60DMZ4SKB19B61V3NPNVX80:5","dispatchId":"01M60DMZ768W8XHE9AS53KY326","state":"outcome-uncertain"},"recovered":"SCRIPT_OUTCOME_UNCERTAIN","markerAfterResume":2,"store":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-d1-int-outcome-V5LKCh"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > node.finished refusal preserves uncertainty across a real restart and deliberate retry
+@graphgoblin/api:test:coverage: {"boundary":"node.finished","failure":"SCRIPT_OUTCOME_UNCERTAIN","script":{"visitId":"01M60DN9N40A5BVCKZMF5EENP7:5","dispatchId":"01M60DN9R16HSH3DDAZ3M6MJSG","state":"outcome-uncertain"},"recovered":"SCRIPT_OUTCOME_UNCERTAIN","markerAfterResume":2,"store":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-d1-int-outcome-5wRzTf"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > a constructed pre-change unfinished script history never automatically repeats its effect
+@graphgoblin/api:test:coverage: {"boundary":"pre-change-history","status":"failed","failure":{"code":"SCRIPT_OUTCOME_UNCERTAIN","message":"The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.","nodeId":"script","resumable":true,"script":{"visitId":"01M60DNKPJ891K262RQ56H685G:5","state":"outcome-uncertain"}},"markerBeforeChoice":1,"store":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-d1-int-outcome-w5GWpn"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  ✓ src/main.test.ts (9 tests | 4 skipped) 32378ms
+@graphgoblin/api:test:coverage:    ✓ built API entry and startup failures (6)
+@graphgoblin/api:test:coverage:      ✓ holds ownership while listening and releases it on supported HTTP close 704ms
+@graphgoblin/api:test:coverage:      ✓ serves authenticated requests using a binary-created key and refuses a competing process 8880ms
+@graphgoblin/api:test:coverage:      ✓ dispatches the API-key and preflight CLIs with their real exit codes 11138ms
+@graphgoblin/api:test:coverage:      ✓ releases ownership on a real corrupt-database startup fault before HTTP setup 5365ms
+@graphgoblin/api:test:coverage:      ✓ releases ownership after a real occupied-port listen failure 6289ms
+@graphgoblin/api:test:coverage:  ✓ src/script-persistence-restart.test.ts (3 tests) 34159ms
+@graphgoblin/api:test:coverage:    ✓ script outcomes survive storage failure and upgrade (#321) (3)
+@graphgoblin/api:test:coverage:      ✓ node.progress refusal preserves uncertainty across a real restart and deliberate retry 10458ms
+@graphgoblin/api:test:coverage:      ✓ node.finished refusal preserves uncertainty across a real restart and deliberate retry 10215ms
+@graphgoblin/api:test:coverage:      ✓ a constructed pre-change unfinished script history never automatically repeats its effect 13484ms
+@graphgoblin/api:test:coverage:  ✓ src/structured-deadline.test.ts (7 tests) 4122ms
+@graphgoblin/api:test:coverage:    ✓ API reports a stalled structured node as timed out and releases its run slot 1927ms
+@graphgoblin/api:test:coverage:    ✓ API repair completion handles late with the configured completion deadline 348ms
+@graphgoblin/api:test:coverage:    ✓ API route completion handles fast with the configured completion deadline 338ms
+@graphgoblin/api:test:coverage:    ✓ API route completion handles late with the configured completion deadline 487ms
+@graphgoblin/api:test:coverage:    ✓ API route completion handles cancel with the configured completion deadline 512ms
+@graphgoblin/api:test:coverage:  ✓ src/drafts.test.ts (10 tests) 3489ms
+@graphgoblin/api:test:coverage:    ✓ draft version tokens (If-Match) (9)
+@graphgoblin/api:test:coverage:      ✓ exposes the token as a body field and an ETag on GET and PUT 741ms
+@graphgoblin/api:test:coverage:      ✓ keeps saves without If-Match unconditional, and accepts * and weak or listed tags 333ms
+@graphgoblin/api:test:coverage:      ✓ keeps a publish from landing inside a draft save, so a published version never changes 429ms
+@graphgoblin/api:test:coverage:      ✓ answers 422 for an invalid draft and 409 when there is nothing to publish 708ms
+@graphgoblin/api:test:coverage:  ✓ src/loop-deletion.test.ts (9 tests) 2655ms
+@graphgoblin/api:test:coverage:    ✓ DELETE /loops/:id (9)
+@graphgoblin/api:test:coverage:      ✓ removes armed schedules and webhook endpoints and disarms polls only after commit 956ms
+@graphgoblin/api:test:coverage:      ✓ keeps a cross-loop parent and its published subloop reference after deleting the child 446ms
+@graphgoblin/api:test:coverage:  ✓ src/replay.test.ts (4 tests) 2367ms
+@graphgoblin/api:test:coverage:    ✓ POST /runs/{id}/replay (4)
+@graphgoblin/api:test:coverage:      ✓ exposes the executable seed through replay events and the queued thread route without changing source bytes 1297ms
+@graphgoblin/api:test:coverage:      ✓ forks a finished run at a node and runs it from there 504ms
+@graphgoblin/api:test:coverage:      ✓ requires the runs:write scope 330ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-choice.test.ts (5 tests) 2075ms
+@graphgoblin/api:test:coverage:    ✓ rejects a stale tab force instead of acknowledging a newly failed cleanup 1175ms
+@graphgoblin/api:test:coverage:  ✓ src/missing-session.test.ts (6 tests) 6694ms
+@graphgoblin/api:test:coverage:    ✓ explicit missing-session API recovery (3)
+@graphgoblin/api:test:coverage:      ✓ records the choice and starts fresh with the same task and model; plain Resume refuses 1584ms
+@graphgoblin/api:test:coverage:      ✓ rejects wrong node, stale failure, wrong scope and wrong owner without recording a choice 437ms
+@graphgoblin/api:test:coverage:      ✓ accepts one concurrent choice and durably attributes an API-key caller 503ms
+@graphgoblin/api:test:coverage:    ✓ allows an explicit parent Resume after its missing-session child was explicitly recovered (success) 1115ms
+@graphgoblin/api:test:coverage:    ✓ allows an explicit parent Resume after its missing-session child was explicitly recovered (failure) 1986ms
+@graphgoblin/api:test:coverage:    ✓ allows an explicit parent Resume after its missing-session child was explicitly recovered (exhausted) 1063ms
+@graphgoblin/api:test:coverage:  ✓ src/primitive-classifiers.test.ts (6 tests) 2758ms
+@graphgoblin/api:test:coverage:    ✓ primitive classifier API admission and execution (6)
+@graphgoblin/api:test:coverage:      ✓ executes the selected HTTP noul primitive with catalog provenance 1486ms
+@graphgoblin/api:test:coverage:      ✓ executes the selected HTTP score primitive with catalog provenance 391ms
+@graphgoblin/api:test:coverage:  ✓ src/retired-event-startup.test.ts (2 tests) 21541ms
+@graphgoblin/api:test:coverage:    ✓ cold start over a stored retired Event destination (#242) (2)
+@graphgoblin/api:test:coverage:      ✓ starts with a published version holding one, refuses that loop per loop and serves the rest 9892ms
+@graphgoblin/api:test:coverage:      ✓ starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 11646ms
+@graphgoblin/api:test:coverage: child admission kill: delay=0ms snapshots=24022 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+@graphgoblin/api:test:coverage: child admission disposal after observer close: 34.05040000000008ms
+@graphgoblin/api:test:coverage:  ✓ src/prompt-failure-boundaries.test.ts (10 tests) 5924ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative codex evidence at missing over an earlier event 2087ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative codex evidence at termination over an earlier event 409ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative codex evidence at cancel over an earlier event 407ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative codex evidence at cleanup over an earlier event 333ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative claude evidence at missing over an earlier event 413ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative claude evidence at termination over an earlier event 436ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative claude evidence at cancel over an earlier event 350ms
+@graphgoblin/api:test:coverage:    ✓ keeps later authoritative claude evidence at cleanup over an earlier event 380ms
+@graphgoblin/api:test:coverage:    ✓ retains the committed codex repair when its append then throws 567ms
+@graphgoblin/api:test:coverage:    ✓ retains the committed claude repair when its append then throws 534ms
+@graphgoblin/api:test:coverage:  ✓ src/prompt-provenance.test.ts (11 tests) 5467ms
+@graphgoblin/api:test:coverage:    ✓ inference recovery contract over the API (11)
+@graphgoblin/api:test:coverage:      ✓ blocks sync codex missing-session repair refusal with retriable=false 1825ms
+@graphgoblin/api:test:coverage:      ✓ blocks promise codex missing-session repair refusal with retriable=false 406ms
+@graphgoblin/api:test:coverage:      ✓ blocks iterator codex missing-session repair refusal with retriable=false 332ms
+@graphgoblin/api:test:coverage:      ✓ blocks sync codex missing-session repair refusal with retriable=true 343ms
+@graphgoblin/api:test:coverage:      ✓ blocks promise codex missing-session repair refusal with retriable=true 368ms
+@graphgoblin/api:test:coverage:      ✓ blocks iterator codex missing-session repair refusal with retriable=true 337ms
+@graphgoblin/api:test:coverage:      ✓ blocks sync claude missing-session repair refusal with retriable=false 379ms
+@graphgoblin/api:test:coverage:      ✓ blocks sync claude missing-session repair refusal with retriable=true 344ms
+@graphgoblin/api:test:coverage:      ✓ exposes definitely-not-submitted and enforces its resume policy 492ms
+@graphgoblin/api:test:coverage:      ✓ exposes delivery-uncertain and enforces its resume policy 319ms
+@graphgoblin/api:test:coverage:      ✓ exposes session-missing and enforces its resume policy 315ms
+@graphgoblin/api:test:coverage: child admission kill: delay=5ms snapshots=23954 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+@graphgoblin/api:test:coverage: child admission disposal after observer close: 20.181900000003225ms
+@graphgoblin/api:test:coverage: stderr | src/script-restart.test.ts > script effects across a real API kill (#321) > before-dispatch never repeats an effect without an explicit resume
+@graphgoblin/api:test:coverage: {"boundary":"before-dispatch","markerCount":1,"status":"succeeded"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: child admission kill: delay=25ms snapshots=19878 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+@graphgoblin/api:test:coverage: child admission disposal after observer close: 18.50340000000142ms
+@graphgoblin/api:test:coverage:  ✓ src/child-creation-restart.test.ts (3 tests) 51442ms
+@graphgoblin/api:test:coverage:    ✓ child admission across a real API kill (#320) (3)
+@graphgoblin/api:test:coverage:      ✓ kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 21353ms
+@graphgoblin/api:test:coverage:      ✓ kill 5ms after admission never exposes an unlinked child and recovers one child per nested parent visit 17248ms
+@graphgoblin/api:test:coverage:      ✓ kill 25ms after admission never exposes an unlinked child and recovers one child per nested parent visit 12838ms
+@graphgoblin/api:test:coverage: stderr | src/script-restart.test.ts > script effects across a real API kill (#321) > after-dispatch never repeats an effect without an explicit resume
+@graphgoblin/api:test:coverage: {"boundary":"after-dispatch","markerCount":1,"status":"failed","failure":"SCRIPT_OUTCOME_UNCERTAIN"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: stderr | src/script-restart.test.ts > script effects across a real API kill (#321) > after-completion never repeats an effect without an explicit resume
+@graphgoblin/api:test:coverage: {"boundary":"after-completion","markerCount":1,"status":"succeeded"}
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  ✓ src/script-restart.test.ts (3 tests) 34141ms
+@graphgoblin/api:test:coverage:    ✓ script effects across a real API kill (#321) (3)
+@graphgoblin/api:test:coverage:      ✓ before-dispatch never repeats an effect without an explicit resume 11264ms
+@graphgoblin/api:test:coverage:      ✓ after-dispatch never repeats an effect without an explicit resume 11450ms
+@graphgoblin/api:test:coverage:      ✓ after-completion never repeats an effect without an explicit resume 11421ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/reset-identity.test.ts (3 tests) 737ms
+@graphgoblin/api:test:coverage:    ✓ reset CLI planned identities (3)
+@graphgoblin/api:test:coverage:      ✓ refuses a database replaced at Removing and keeps the replacement 328ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/reset-copy-lifecycle.test.ts (3 tests) 21997ms
+@graphgoblin/api:test:coverage:    ✓ reset private-copy ownership across process death (3)
+@graphgoblin/api:test:coverage:      ✓ reaps a marked dead owner on the next reset and preserves live and unrelated directories 3035ms
+@graphgoblin/api:test:coverage:      ✓ cleans a copy after a killed reset (confirmed=false) 4607ms
+@graphgoblin/api:test:coverage:      ✓ cleans a copy after a killed reset (confirmed=true) 11083ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown.test.ts (4 tests) 4032ms
+@graphgoblin/api:test:coverage:    ✓ keeps input, status and cancellation reachable while refusing independent starts during drain 1936ms
+@graphgoblin/api:test:coverage:    ✓ offers a choice, waits without a hidden timer, then forces the executor while preserving input parks 1467ms
+@graphgoblin/api:test:coverage:    ✓ rejects wait without a drain with the current phase 351ms
+@graphgoblin/api:test:coverage:  ✓ src/triggers/poll-depth.test.ts (5 tests) 6362ms
+@graphgoblin/api:test:coverage:    ✓ structurally refused poll candidates over HTTP and real SQLite (5)
+@graphgoblin/api:test:coverage:      ✓ admits both later candidates when the first has 1100 nested arrays 2732ms
+@graphgoblin/api:test:coverage:      ✓ admits both later candidates when the first has 3000 nested arrays 728ms
+@graphgoblin/api:test:coverage:      ✓ admits the SQLite boundary and refuses the next depth without blocking the tail 831ms
+@graphgoblin/api:test:coverage:      ✓ silently skips a consumed key even when its payload later exceeds the depth bound 865ms
+@graphgoblin/api:test:coverage:      ✓ keeps middle refusals unconsumed and successful keys deduplicated across store reopen 1202ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/event-paging.test.ts (6 tests) 1718ms
+@graphgoblin/api:test:coverage:    ✓ inbound event paging over real SQLite (6)
+@graphgoblin/api:test:coverage:      ✓ re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation 846ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/loop-summaries.test.ts (10 tests) 4732ms
+@graphgoblin/api:test:coverage:    ✓ loop-specific run summaries over real SQLite (10)
+@graphgoblin/api:test:coverage:      ✓ does not publish a stale running badge when the latest event log is unreadable 1434ms
+@graphgoblin/api:test:coverage:      ✓ isolates damaged latest-run status and identifies it through diagnostics 470ms
+@graphgoblin/api:test:coverage:      ✓ isolates damaged latest-run pinned and identifies it through diagnostics 404ms
+@graphgoblin/api:test:coverage:      ✓ isolates damaged latest-run pinned and identifies it through diagnostics 313ms
+@graphgoblin/api:test:coverage:      ✓ finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history 790ms
+@graphgoblin/api:test:coverage:  ✓ src/units.test.ts (15 tests) 2024ms
+@graphgoblin/api:test:coverage:    ✓ emitOpenApi (1)
+@graphgoblin/api:test:coverage:      ✓ writes a document with the expected paths 1830ms
+@graphgoblin/api:test:coverage:  ✓ src/readiness-evidence.test.ts (9 tests) 23796ms
+@graphgoblin/api:test:coverage:    ✓ CLI evidence through Settings preflight and draft validation (9)
+@graphgoblin/api:test:coverage:      ✓ auth-network preserves auth for both harnesses 3790ms
+@graphgoblin/api:test:coverage:      ✓ quota-network preserves quota for both harnesses 2214ms
+@graphgoblin/api:test:coverage:      ✓ stdout-quota-warning preserves quota for both harnesses 2131ms
+@graphgoblin/api:test:coverage:      ✓ auth-empty preserves unknown for both harnesses 3558ms
+@graphgoblin/api:test:coverage:      ✓ auth-unrecognised preserves unknown for both harnesses 1892ms
+@graphgoblin/api:test:coverage:      ✓ auth-zero-stdout preserves auth for both harnesses 1915ms
+@graphgoblin/api:test:coverage:      ✓ auth-zero-stderr preserves auth for both harnesses 1836ms
+@graphgoblin/api:test:coverage:      ✓ ready preserves ready for both harnesses 2148ms
+@graphgoblin/api:test:coverage:      ✓ auth preserves auth for both harnesses 4306ms
+@graphgoblin/api:test:coverage:  ✓ src/thread-history.test.ts (4 tests) 3934ms
+@graphgoblin/api:test:coverage:    ✓ reconciles persisted failure, unfinished resume and success without writing on reads 2406ms
+@graphgoblin/api:test:coverage:    ✓ does not apply the resumed script patch when that attempt is cancelled 528ms
+@graphgoblin/api:test:coverage:    ✓ reopens the persisted failed history and reconciles reads without writing its stale snapshot 648ms
+@graphgoblin/api:test:coverage:    ✓ REST preserves a different open visit at a persisted delayed-duplicate checkpoint 347ms
+@graphgoblin/api:test:coverage:  ✓ src/webhook-keys.test.ts (12 tests) 7064ms
+@graphgoblin/api:test:coverage:    ✓ uniform webhook keys: none undefined (4)
+@graphgoblin/api:test:coverage:      ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 2219ms
+@graphgoblin/api:test:coverage:      ✓ uses payload and credential-free header bindings; invalid key expressions stay expression failures 460ms
+@graphgoblin/api:test:coverage:      ✓ never invents a key and permits repeated unkeyed bodies 441ms
+@graphgoblin/api:test:coverage:      ✓ consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 432ms
+@graphgoblin/api:test:coverage:    ✓ uniform webhook keys: hmac-sha256 body (4)
+@graphgoblin/api:test:coverage:      ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 900ms
+@graphgoblin/api:test:coverage:      ✓ never invents a key and permits repeated unkeyed bodies 332ms
+@graphgoblin/api:test:coverage:    ✓ uniform webhook keys: hmac-sha256 timestamp-body (4)
+@graphgoblin/api:test:coverage:      ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 823ms
+@graphgoblin/api:test:coverage:      ✓ never invents a key and permits repeated unkeyed bodies 309ms
+@graphgoblin/api:test:coverage:      ✓ consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 346ms
+@graphgoblin/api:test:coverage: [before-receipt] fixture
+@graphgoblin/api:test:coverage: [before-receipt] key
+@graphgoblin/api:test:coverage: [before-receipt] key-created
+@graphgoblin/api:test:coverage: [before-receipt] storage
+@graphgoblin/api:test:coverage: [before-receipt] start
+@graphgoblin/api:test:coverage: [before-receipt] ready
+@graphgoblin/api:test:coverage: [before-receipt] post
+@graphgoblin/api:test:coverage: [before-receipt] kill
+@graphgoblin/api:test:coverage: [before-receipt] killed
+@graphgoblin/api:test:coverage: [before-receipt] storage
+@graphgoblin/api:test:coverage: [before-receipt] start
+@graphgoblin/api:test:coverage: [before-receipt] ready
+@graphgoblin/api:test:coverage: [before-receipt] kill
+@graphgoblin/api:test:coverage: [before-receipt] killed
+@graphgoblin/api:test:coverage: [pending-before-run] fixture
+@graphgoblin/api:test:coverage: [pending-before-run] key
+@graphgoblin/api:test:coverage: [pending-before-run] key-created
+@graphgoblin/api:test:coverage: [pending-before-run] storage
+@graphgoblin/api:test:coverage: [pending-before-run] start
+@graphgoblin/api:test:coverage: [pending-before-run] ready
+@graphgoblin/api:test:coverage: [pending-before-run] post
+@graphgoblin/api:test:coverage: [pending-before-run] kill
+@graphgoblin/api:test:coverage: [pending-before-run] killed
+@graphgoblin/api:test:coverage: [pending-before-run] storage
+@graphgoblin/api:test:coverage: [pending-before-run] start
+@graphgoblin/api:test:coverage:  ✓ src/reset/store-facts.test.ts (11 tests) 45036ms
+@graphgoblin/api:test:coverage:    ✓ reading a store for a reset (11)
+@graphgoblin/api:test:coverage:      ✓ reads the format marker and run IDs of current and older stores from a private copy 18572ms
+@graphgoblin/api:test:coverage:      ✓ reports an unreadable store with the reason instead of failing 13545ms
+@graphgoblin/api:test:coverage:      ✓ bounds the reader stdout stream 1309ms
+@graphgoblin/api:test:coverage:      ✓ bounds the reader stderr stream 826ms
+@graphgoblin/api:test:coverage:      ✓ reports the stderr of a reader that exits unsuccessfully 430ms
+@graphgoblin/api:test:coverage:      ✓ reads a copy in this process and reports a reader started without a path 4503ms
+@graphgoblin/api:test:coverage: [pending-before-run] ready
+@graphgoblin/api:test:coverage: [pending-before-run] kill
+@graphgoblin/api:test:coverage: [pending-before-run] killed
+@graphgoblin/api:test:coverage: [after-run] fixture
+@graphgoblin/api:test:coverage: [after-run] key
+@graphgoblin/api:test:coverage:  ✓ src/triggers/poll-items.test.ts (6 tests) 53ms
+@graphgoblin/api:test:coverage: [after-run] key-created
+@graphgoblin/api:test:coverage: [after-run] start
+@graphgoblin/api:test:coverage: [after-run] ready
+@graphgoblin/api:test:coverage: [after-run] post
+@graphgoblin/api:test:coverage: [after-run] kill
+@graphgoblin/api:test:coverage: [after-run] killed
+@graphgoblin/api:test:coverage: [after-run] storage
+@graphgoblin/api:test:coverage: [after-run] start
+@graphgoblin/api:test:coverage:  ✓ src/api-key-scopes.test.ts (31 tests) 6343ms
+@graphgoblin/api:test:coverage:    ✓ API-key creation in local trusted mode (4)
+@graphgoblin/api:test:coverage:      ✓ allows omitted scopes default to wildcard without credentials 1602ms
+@graphgoblin/api:test:coverage:      ✓ allows explicit wildcard without credentials 319ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/tree.test.ts (7 tests) 150ms
+@graphgoblin/api:test:coverage: [after-run] ready
+@graphgoblin/api:test:coverage: [after-run] kill
+@graphgoblin/api:test:coverage: [after-run] killed
+@graphgoblin/api:test:coverage:  ✓ src/targeted-events-restart.test.ts (3 tests) 45022ms
+@graphgoblin/api:test:coverage:    ✓ recovers targeted Event identities across process death: before-receipt 14543ms
+@graphgoblin/api:test:coverage:    ✓ recovers targeted Event identities across process death: pending-before-run 16630ms
+@graphgoblin/api:test:coverage:    ✓ recovers targeted Event identities across process death: after-run 13846ms
+@graphgoblin/api:test:coverage:  ↓ src/perf.test.ts (1 test | 1 skipped)
+@graphgoblin/api:test:coverage:  ✓ src/subloop-failure.test.ts (2 tests) 1987ms
+@graphgoblin/api:test:coverage:    ✓ subloop child failures over the API (#251) (2)
+@graphgoblin/api:test:coverage:      ✓ a provider failure in a child fails the parent visibly, and resuming the parent resumes the child 1554ms
+@graphgoblin/api:test:coverage:      ✓ cancelling a child cancels the parent that awaits it 430ms
+@graphgoblin/api:test:coverage:  ✓ src/static.test.ts (11 tests) 1418ms
+@graphgoblin/api:test:coverage:  ✓ src/decision-admission.test.ts (8 tests) 1656ms
+@graphgoblin/api:test:coverage:    ✓ evaluator-specific decision admission (8)
+@graphgoblin/api:test:coverage:      ✓ agrees across create, import, save, validate and publish for expression 748ms
+@graphgoblin/api:test:coverage:  ✓ src/prompt-evidence-matrix.test.ts (148 tests) 44987ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok 1086ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after 336ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before 347ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after 360ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=ok 312ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=before 310ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=after 387ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=ok 333ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=before 388ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=after 377ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=ok 418ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=before 430ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=after 386ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=ok 363ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=before 308ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=after 319ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=ok 406ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=before 443ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=after 417ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=false storage=ok 370ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=false storage=before 366ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=false storage=after 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=true storage=ok 315ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=true storage=before 354ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TIMEOUT retry=true storage=after 801ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=ok 333ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=before 343ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=after 759ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=ok 386ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=before 320ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=after 302ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=before 335ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=ok 343ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=before 347ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=after 343ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=ok 334ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=before 338ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=after 343ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok 303ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=ok 324ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=after 301ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=false storage=before 317ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=true storage=ok 331ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=true storage=after 355ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=ok 309ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=before 320ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=after 350ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=ok 586ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=before 371ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=after 416ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=false storage=ok 357ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=false storage=before 349ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=false storage=after 336ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=true storage=ok 311ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=true storage=before 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TIMEOUT retry=true storage=after 379ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=ok 350ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=before 314ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=after 327ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_INSTALLED retry=true storage=ok 317ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_NOT_INSTALLED retry=true storage=after 321ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=ok 349ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=ok 319ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=before 335ms
+@graphgoblin/api:test:coverage:    ✓ keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=after 334ms
+@graphgoblin/api:test:coverage:    ✓ retries exact HTTP codex repair after append/read faults afterCommit=false 331ms
+@graphgoblin/api:test:coverage:    ✓ retries exact HTTP codex repair after append/read faults afterCommit=true 331ms
+@graphgoblin/api:test:coverage:    ✓ retries exact HTTP claude repair after append/read faults afterCommit=false 323ms
+@graphgoblin/api:test:coverage:    ✓ retries exact HTTP claude repair after append/read faults afterCommit=true 504ms
+@graphgoblin/api:test:coverage:  ✓ src/api-key-current.test.ts (8 tests) 1971ms
+@graphgoblin/api:test:coverage:    ✓ current API key in required-key mode (7)
+@graphgoblin/api:test:coverage:      ✓ flags exactly the authenticated key for two clients, with revoked and foreign-owner records 761ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/store-copy.test.ts (6 tests) 208ms
+@graphgoblin/api:test:coverage:  ✓ src/repair-start.test.ts (4 tests) 1989ms
+@graphgoblin/api:test:coverage:    ✓ resubmits the exact saved repair after a synchronous restorable refusal 1187ms
+@graphgoblin/api:test:coverage:  ✓ src/history-cleanup-process.test.ts (2 tests) 6262ms
+@graphgoblin/api:test:coverage:    ✓ recovers durable resource jobs after a real process dies at prepared 3620ms
+@graphgoblin/api:test:coverage:    ✓ recovers durable resource jobs after a real process dies at quarantined 2639ms
+@graphgoblin/api:test:coverage:  ✓ src/provider-refusal.test.ts (3 tests) 2005ms
+@graphgoblin/api:test:coverage:    ✓ records a Codex request the provider refused with its own cause and offers no Resume (#243) 1082ms
+@graphgoblin/api:test:coverage:    ✓ records the refusal "Error: invalid value for reasoning.effort: 'minimal'." repeated on stderr as the refusal, with Resume refused and Replay allowed 485ms
+@graphgoblin/api:test:coverage:    ✓ records the refusal "Thread not found in referenced input." repeated on stderr as the refusal, with Resume refused and Replay allowed 436ms
+@graphgoblin/api:test:coverage:  ✓ src/cron-preview.test.ts (13 tests) 2205ms
+@graphgoblin/api:test:coverage:    ✓ cron preview endpoint (13)
+@graphgoblin/api:test:coverage:      ✓ equals the scheduler across the March DST boundary without arming anything 722ms
+@graphgoblin/api:test:coverage:  ✓ src/loop-definition.test.ts (5 tests) 1675ms
+@graphgoblin/api:test:coverage:    ✓ canonical loop definition inputs (5)
+@graphgoblin/api:test:coverage:      ✓ reports each unknown root key with its own escaped pointer and message 916ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-admission.test.ts (3 tests) 1373ms
+@graphgoblin/api:test:coverage:    ✓ B2 refuses an Event before consuming its dedupe key during drain 797ms
+@graphgoblin/api:test:coverage:    ✓ rejects force after a drain observation failure with 409 and the current phase 314ms
+@graphgoblin/api:test:coverage:  ✓ src/reset/reset-sockets.test.ts (3 tests) 1263ms
+@graphgoblin/api:test:coverage:  ✓ src/finalization.test.ts (2 tests) 6403ms
+@graphgoblin/api:test:coverage:    ✓ keeps terminal and consumed-cursor streams live until HTTP 200 finalization 3773ms
+@graphgoblin/api:test:coverage:    ✓ keeps terminal and consumed-cursor streams live until HTTP 400 finalization 2615ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/run-event-paging.test.ts (5 tests) 3361ms
+@graphgoblin/api:test:coverage:    ✓ run-event page boundaries over file-backed SQLite (5)
+@graphgoblin/api:test:coverage:      ✓ returns the unchanged requested page when only its lookahead payload is {} 1640ms
+@graphgoblin/api:test:coverage:      ✓ returns the unchanged requested page when only its lookahead payload is {invalid-json 382ms
+@graphgoblin/api:test:coverage:      ✓ reports corruption inside the requested page after=1 limit=1 366ms
+@graphgoblin/api:test:coverage:      ✓ reports corruption inside the requested page after=0 limit=3 423ms
+@graphgoblin/api:test:coverage:      ✓ uses sequence existence through exhaustion and retains owner scoping 544ms
+@graphgoblin/api:test:coverage:  ✓ src/model-issues-draft.test.ts (3 tests) 28ms
+@graphgoblin/api:test:coverage:  ✓ src/harness-switch.test.ts (2 tests) 1352ms
+@graphgoblin/api:test:coverage:    ✓ saves, validates, publishes and starts the explicit switched codex choice without runtime substitution 1049ms
+@graphgoblin/api:test:coverage:    ✓ saves, validates, publishes and starts the explicit switched claude choice without runtime substitution 300ms
+@graphgoblin/api:test:coverage:  ✓ src/templates/catalog-package.test.ts (4 tests) 781ms
+@graphgoblin/api:test:coverage:    ✓ ships only declared starting-point assets and removes stale files on rebuild 624ms
+@graphgoblin/api:test:coverage: {"status":"draft","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+@graphgoblin/api:test:coverage:  ✓ src/prompt-sdk-storage-matrix.test.ts (360 tests) 115417ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=ok 1062ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=before 380ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=after 380ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=ok 331ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=before 330ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=after 712ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=ok 643ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=before 342ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=true storage=before 327ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=true storage=after 394ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=false storage=before 329ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=false storage=after 411ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=true storage=ok 447ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=true storage=before 300ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=false storage=ok 502ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=false storage=before 333ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=true storage=before 329ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=false storage=before 432ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=ok 310ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=before 309ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=after 343ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=false storage=ok 342ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=ok 353ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=after 354ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=ok 410ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=before 374ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=ok 340ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=before 371ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=after 345ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=ok 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=before 345ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=after 318ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=ok 305ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=ok 393ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=before 417ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=after 418ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=ok 421ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=before 370ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=after 355ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=ok 398ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=before 350ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=after 326ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=ok 325ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=before 374ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=after 330ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=ok 357ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=before 371ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=after 363ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=ok 354ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=before 318ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=after 363ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=ok 347ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=before 359ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=after 386ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=ok 340ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=before 317ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=after 378ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=ok 351ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=before 686ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=after 364ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=false storage=ok 311ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=false storage=after 354ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=ok 372ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=before 399ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=after 384ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=ok 460ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=before 390ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=after 330ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=true storage=before 309ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=true storage=after 300ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=false storage=ok 335ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=false storage=before 323ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=true storage=ok 303ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=true storage=after 358ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=ok 301ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=before 394ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=after 374ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=ok 340ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=before 403ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=after 614ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=ok 739ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=before 411ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=after 313ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=ok 488ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=before 349ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=after 451ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=ok 576ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=before 480ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=after 614ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=ok 542ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=before 359ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=after 329ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=false storage=before 307ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=false storage=after 322ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=true storage=ok 311ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=true storage=after 304ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=ok 469ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=before 346ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=after 389ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=ok 451ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=before 414ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=after 395ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=ok 346ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=before 330ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=after 340ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=ok 322ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=before 338ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=after 419ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=ok 327ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=before 363ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=after 341ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=true storage=before 337ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=true storage=after 338ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=ok 400ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=before 353ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=after 392ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=ok 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=before 335ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=after 327ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=ok 351ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=before 496ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=after 427ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=ok 449ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=before 544ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=after 388ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=ok 653ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=before 441ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=after 373ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=ok 336ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=before 392ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=after 381ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=ok 318ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=before 387ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=after 384ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=ok 353ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=before 361ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=after 750ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=ok 365ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=before 470ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=after 772ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=ok 400ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=before 414ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=after 381ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=ok 783ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=before 520ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=after 480ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=ok 428ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=before 375ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=after 429ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=ok 307ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=after 317ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=ok 378ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=before 414ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=after 314ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=before 328ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=after 356ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=ok 353ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=before 314ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=after 332ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=ok 329ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=after 398ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=before 454ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=after 372ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=ok 400ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=before 360ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=after 799ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=false storage=ok 397ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=false storage=after 315ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=true storage=after 304ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=false storage=after 387ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=true storage=ok 385ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=true storage=before 305ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=false storage=ok 374ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=false storage=before 344ms
+@graphgoblin/api:test:coverage:    ✓ keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=true storage=after 313ms
+@graphgoblin/api:test:coverage:  ✓ src/artifact-integrity.test.ts (2 tests) 1102ms
+@graphgoblin/api:test:coverage:    ✓ returns missing for noncanonical artifact references in stored history through the download route 832ms
+@graphgoblin/api:test:coverage: {"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+@graphgoblin/api:test:coverage:  ✓ src/triggers/poll-http-bounds.test.ts (2 tests) 108ms
+@graphgoblin/api:test:coverage: {"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+@graphgoblin/api:test:coverage:  ✓ src/triggers/poll-probe.test.ts (6 tests) 42ms
+@graphgoblin/api:test:coverage:  ✓ src/claude-effort-readiness.test.ts (5 tests) 1448ms
+@graphgoblin/api:test:coverage:    ✓ refuses capability-only unsupported high before manual admission (explicit=false) 667ms
+@graphgoblin/api:test:coverage: {"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+@graphgoblin/api:test:coverage:  ✓ src/run-json-values.test.ts (9 tests) 4753ms
+@graphgoblin/api:test:coverage:    ✓ run result snapshots over file SQLite (9)
+@graphgoblin/api:test:coverage:      ✓ preserves absent through execution, rejected updates and reopen 1071ms
+@graphgoblin/api:test:coverage:      ✓ preserves null through execution, rejected updates and reopen 422ms
+@graphgoblin/api:test:coverage:      ✓ preserves false through execution, rejected updates and reopen 406ms
+@graphgoblin/api:test:coverage:      ✓ preserves zero through execution, rejected updates and reopen 531ms
+@graphgoblin/api:test:coverage:      ✓ preserves empty string through execution, rejected updates and reopen 546ms
+@graphgoblin/api:test:coverage:      ✓ preserves array through execution, rejected updates and reopen 505ms
+@graphgoblin/api:test:coverage:      ✓ preserves object through execution, rejected updates and reopen 480ms
+@graphgoblin/api:test:coverage:      ✓ preserves nested null through execution, rejected updates and reopen 384ms
+@graphgoblin/api:test:coverage:      ✓ preserves settings null and falsy JSON values across reopen 403ms
+@graphgoblin/api:test:coverage:  ✓ src/concurrency.test.ts (1 test) 1045ms
+@graphgoblin/api:test:coverage:    ✓ admits three identities to real SQLite, runs at cap two, then starts the queued identity after completion 1043ms
+@graphgoblin/api:test:coverage:  ✓ src/stored-loop-defaults.test.ts (4 tests) 33114ms
+@graphgoblin/api:test:coverage:    ✓ reopens and exports a stored draft missing structuredTimeoutMs 11966ms
+@graphgoblin/api:test:coverage:    ✓ reopens and exports a stored published missing structuredTimeoutMs 1091ms
+@graphgoblin/api:test:coverage:    ✓ reopens and exports a stored draft missing runDeadlineSeconds 8798ms
+@graphgoblin/api:test:coverage:    ✓ reopens and exports a stored published missing runDeadlineSeconds 11256ms
+@graphgoblin/api:test:coverage: Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+@graphgoblin/api:test:coverage: Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+@graphgoblin/api:test:coverage:  ✓ src/templates/scripts.test.ts (3 tests) 677ms
+@graphgoblin/api:test:coverage:    ✓ template gate validates shipped drafts and refuses both broken graphs and undeclared assets 372ms
+@graphgoblin/api:test:coverage:  ✓ src/webhook-delivery-lifecycle.test.ts (2 tests) 3048ms
+@graphgoblin/api:test:coverage:    ✓ loop deletion stops a webhook during in-flight without orphan events 839ms
+@graphgoblin/api:test:coverage:    ✓ loop deletion stops a webhook during backoff without orphan events 2198ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-signals.test.ts (2 tests) 13ms
+@graphgoblin/api:test:coverage:  ✓ src/ids.test.ts (2 tests) 52ms
+@graphgoblin/api:test:coverage:  ✓ src/shutdown-startup.test.ts (1 test) 959ms
+@graphgoblin/api:test:coverage:    ✓ a stop requested during startup leaves independent queued work unstarted on the same store 956ms
+@graphgoblin/api:test:coverage:  ✓ src/routes/model-defaults.test.ts (1 test) 594ms
+@graphgoblin/api:test:coverage:    ✓ exposes the actual process defaults separately from owner overrides 593ms
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  Test Files  103 passed | 2 skipped (105)
+@graphgoblin/api:test:coverage:       Tests  1684 passed | 14 skipped (1698)
+@graphgoblin/api:test:coverage:    Start at  23:46:51
+@graphgoblin/api:test:coverage:    Duration  750.06s (tests 82%, import 17%, transform 1%)
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:     Isolate  105 workers spawned · ~361ms startup each (spawn + environment, per file)
+@graphgoblin/api:test:coverage:              at least ~18.60s faster with isolate: false — reuses workers across files instead of one per file
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  % Coverage report from v8
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/api:test:coverage: Statements   : 94.74% ( 3104/3276 )
+@graphgoblin/api:test:coverage: Branches     : 90.98% ( 2029/2230 )
+@graphgoblin/api:test:coverage: Functions    : 91.7% ( 575/627 )
+@graphgoblin/api:test:coverage: Lines        : 96.22% ( 2832/2943 )
+@graphgoblin/api:test:coverage: ================================================================================
+
+ Tasks:    8 successful, 8 total
+Cached:    0 cached, 8 total
+  Time:    13m14.269s 
+
+exit 0
