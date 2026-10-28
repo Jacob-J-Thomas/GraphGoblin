@@ -142,7 +142,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
 
   // PR #426 review B2: the structured 400 decides before any message heuristic.
   it.each([
-    ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
     ['missing-thread', 'Thread not found in referenced input.'],
   ] as const)(
     'keeps the %s provider refusal as a refusal with its own text',
@@ -215,7 +215,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
   it.each(
     (
       [
-        ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
+        ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
         ['missing-thread', 'Thread not found in referenced input.'],
       ] as const
     ).flatMap(([failure, text]) =>
@@ -259,7 +259,7 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
   );
 
   it.each([
-    ['invalid-value', "Error: invalid value for reasoning.effort: 'none'."],
+    ['invalid-value', "Error: invalid value for reasoning.effort: 'minimal'."],
     ['missing-thread', 'Thread not found in referenced input.'],
   ] as const)(
     'fails the run on the %s refusal repeated on stderr as a refusal, never a missing session',
