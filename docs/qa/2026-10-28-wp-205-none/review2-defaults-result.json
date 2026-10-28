@@ -1,0 +1,67 @@
+{
+  "scenario": "defaults",
+  "passed": 6,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "built codex startup exits 1 with code, model, effort, no stack",
+      "ok": true,
+      "detail": {
+        "exit": 1,
+        "lines": [
+          "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).",
+          "  codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"none\"): The default reasoning effort is not supported by its model.",
+          "No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again."
+        ]
+      }
+    },
+    {
+      "id": "codex startup writes no database or master key",
+      "ok": true
+    },
+    {
+      "id": "codex public container has exact process refusal details",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort",
+          "level": "process",
+          "harness": "codex"
+        }
+      }
+    },
+    {
+      "id": "built claude startup exits 1 with code, model, effort, no stack",
+      "ok": true,
+      "detail": {
+        "exit": 1,
+        "lines": [
+          "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).",
+          "  claude: EFFORT_UNSUPPORTED at effort (model \"claude-haiku-5-5\", effort \"none\"): The default reasoning effort is not supported by its model.",
+          "No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again."
+        ]
+      }
+    },
+    {
+      "id": "claude startup writes no database or master key",
+      "ok": true
+    },
+    {
+      "id": "claude public container has exact process refusal details",
+      "ok": true,
+      "detail": {
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "details": {
+          "code": "EFFORT_UNSUPPORTED",
+          "path": "effort",
+          "level": "process",
+          "harness": "claude"
+        }
+      }
+    }
+  ]
+}

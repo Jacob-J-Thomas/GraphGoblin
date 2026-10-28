@@ -24,6 +24,7 @@ import {
   Td,
   Th,
 } from '../../components/ui/index.js';
+import { effortOptionLabel } from '../../forms/fields/model.js';
 import { cn } from '../../lib/utils.js';
 import {
   EnableSwitch,
@@ -102,7 +103,9 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
             onChange={(e) => setDefaultEffort(e.target.value as Effort)}
           >
             {EFFORTS.map((e) => (
-              <option key={e}>{e}</option>
+              <option key={e} value={e}>
+                {effortOptionLabel(e)}
+              </option>
             ))}
           </Select>
         </FieldGroup>
@@ -118,7 +121,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
                   setEfforts(ev.target.checked ? [...efforts, e] : efforts.filter((x) => x !== e))
                 }
               />
-              {e}
+              {effortOptionLabel(e)}
             </label>
           ))}
         </div>

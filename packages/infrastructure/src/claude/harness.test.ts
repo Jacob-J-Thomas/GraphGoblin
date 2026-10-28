@@ -346,10 +346,8 @@ describe('Claude existing harness contract', () => {
       // An unsupported effort is refused before any CLI process starts.
       const refused = fixture();
       await expect(
-        refused.harness.start(
-          { ...request, model, effort: 'minimal' },
-          new AbortController().signal,
-        ).result,
+        refused.harness.start({ ...request, model, effort: 'none' }, new AbortController().signal)
+          .result,
       ).rejects.toMatchObject({ code: 'HARNESS_INVALID_CONFIGURATION' });
       expect(refused.calls).toHaveLength(0);
     },
@@ -418,7 +416,7 @@ describe('Claude existing harness contract', () => {
     for (const req of [
       { ...request, options: HarnessOptionsSchema.parse({ sandbox: 'workspace-write' }) },
       { ...request, model: 'gpt-6-luna' },
-      { ...request, effort: 'minimal' as const },
+      { ...request, effort: 'none' as const },
       { ...request, capabilities: { plugins: ['plugin'] } },
     ]) {
       const { harness, calls } = fixture();

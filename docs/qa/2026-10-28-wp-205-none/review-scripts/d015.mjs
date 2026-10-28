@@ -1,0 +1,5 @@
+import {spawn,spawnSync} from 'node:child_process';import {once} from 'node:events';import fs from 'node:fs';import path from 'node:path';
+const child=spawn(process.execPath,['-e','process.stdin.resume()'],{windowsHide:true,stdio:['pipe','ignore','pipe']});await once(child,'spawn');
+const result=spawnSync('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,encoding:'utf8',timeout:5000});
+const log=JSON.stringify({scope:'Only this review probe child',pid:child.pid,status:result.status,error:result.error?{code:result.error.code,message:result.error.message}:null,stdout:result.stdout,stderr:result.stderr},null,2)+'\n';
+fs.writeFileSync(path.join(process.cwd(),'docs/qa/2026-10-28-wp-205-none/review-d015.log.txt'),log);console.log(log);child.stdin.end();if(child.exitCode===null)await once(child,'exit');

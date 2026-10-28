@@ -1,0 +1,5 @@
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const scratch=path.dirname(fileURLToPath(import.meta.url)), file=path.join(scratch,'lib.mjs'), cli=path.join(scratch,'probe-only-cli.mjs');
+fs.writeFileSync(cli,`const a=process.argv.slice(2);if(a.includes('--version'))console.log('codex-cli 0.160.0');else if(a.includes('--help'))console.log('--json --model --sandbox --cd --skip-git-repo-check --output-schema --config');else if(a.join(' ')==='login status')console.log('Logged in (controlled fixture)');else throw new Error('Probe-only fixture refuses every turn command');`);
+let lib=fs.readFileSync(file,'utf8');lib=lib.replace("GG_DATA_DIR: dir,",`GG_CODEX_BINARY: ${JSON.stringify(cli)},\n    GG_DATA_DIR: dir,`);fs.writeFileSync(file,lib);
+for(const name of ['upgrade-a.log.txt','upgrade-a-result.json','upgrade-a-u1-gateway.log.txt']){const p=path.join(scratch,'evidence',name);if(fs.existsSync(p))fs.copyFileSync(p,path.join(scratch,'evidence','initial-auth-'+name));}

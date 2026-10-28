@@ -1,0 +1,25 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/packages/engine
+      Coverage enabled with v8
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  62 passed (62)
+      Tests  1763 passed (1763)
+   Start at  00:05:26
+   Duration  50.21s (tests 51%, import 40%, transform 7%, worker 2%)
+
+    Isolate  62 workers spawned · ~584ms startup each (spawn + environment, per file)
+             at least ~2.71s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.65% ( 3585/3748 )
+Branches     : 91.2% ( 2975/3262 )
+Functions    : 97.76% ( 656/671 )
+Lines        : 96.94% ( 3268/3371 )
+================================================================================

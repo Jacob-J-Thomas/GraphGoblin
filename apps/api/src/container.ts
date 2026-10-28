@@ -66,6 +66,7 @@ import {
 import type { ApiConfig } from './config.js';
 import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
 import { acquireDataDirLock } from './data-dir-lock.js';
+import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
@@ -215,11 +216,9 @@ export async function createContainer(
       processDefaults: config.defaults,
       catalog: startupCatalog,
     });
-    if (configurationIssues.length)
-      throw new Error(
-        'Invalid GG_DEFAULTS: ' +
-          configurationIssues.map((issue) => issue.resolution.message).join('; '),
-      );
+    const [firstIssue, ...moreIssues] = configurationIssues;
+    if (firstIssue)
+      throw new ProcessDefaultsRefusedError([firstIssue, ...moreIssues], config.defaults);
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;

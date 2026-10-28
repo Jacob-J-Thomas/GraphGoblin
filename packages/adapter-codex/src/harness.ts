@@ -168,9 +168,18 @@ export class CodexHarness implements HarnessPort {
     const client = this.clientFactory(
       clientOptions(settings.options, this.options.codexBinary, this.options.env),
     );
+    const perThread = threadOptions(settings);
+    logger?.debug(
+      {
+        model: settings.model,
+        effort: settings.effort,
+        providerEffort: perThread.modelReasoningEffort,
+      },
+      'codex: reasoning effort sent to the CLI',
+    );
     const thread = resumeId
-      ? client.resumeThread(resumeId, threadOptions(settings))
-      : client.startThread(threadOptions(settings));
+      ? client.resumeThread(resumeId, perThread)
+      : client.startThread(perThread);
 
     const controller = new AbortController();
     // After an abort the CLI's output must end within the acknowledgement bound. A descendant that

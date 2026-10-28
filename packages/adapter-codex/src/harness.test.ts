@@ -303,7 +303,35 @@ describe('CodexHarness.start', () => {
       request({ capabilities: { skills: ['review'] } }),
       new AbortController().signal,
     ).result;
-    expect(log.debug).toHaveBeenCalledOnce();
+    expect(
+      log.debug.mock.calls.filter(([, message]) =>
+        /capability slugs ignored/.test(String(message)),
+      ),
+    ).toEqual([
+      [
+        { capabilities: { skills: ['review'] } },
+        'codex: capability slugs ignored; no capability profile resolver is configured',
+      ],
+    ]);
+  });
+
+  it('logs the canonical effort beside the name the CLI receives, at debug level', async () => {
+    const codex = ReplayCodex.fromFixtures('message');
+    const log = logger();
+    const harness = new CodexHarness({ clientFactory: codex.factory, logger: log });
+    await harness.start(
+      request({ model: 'gpt-6-luna', effort: 'none' }),
+      new AbortController().signal,
+    ).result;
+    expect(log.debug).toHaveBeenCalledWith(
+      { model: 'gpt-6-luna', effort: 'none', providerEffort: 'none' },
+      'codex: reasoning effort sent to the CLI',
+    );
+    expect(codex.runs[0]?.threadOptions).toMatchObject({
+      model: 'gpt-6-luna',
+      modelReasoningEffort: 'none',
+    });
+    expect(log.info).not.toHaveBeenCalled();
   });
 });
 

@@ -139,7 +139,7 @@ try {
                 ? {}
                 : {
                     ...(scenario === 'effort-only' ? {} : { model: oldModel }),
-                    effort: from === 'codex' ? 'minimal' : 'high',
+                    effort: from === 'codex' ? 'none' : 'high',
                   }),
               prompt: { template: 'Synthetic switch QA' },
               harnessOptions: { sandbox: 'read-only', approval: 'never' },

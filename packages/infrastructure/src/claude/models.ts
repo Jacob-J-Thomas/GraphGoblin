@@ -7,6 +7,10 @@ export const CLAUDE_HAIKU_MODEL = 'claude-haiku-5-5';
 export interface ClaudeCatalogModel extends ClaudeModelCapability {
   displayName: string;
 }
+/**
+ * Claude Code 2.1.308 documents `--effort <level>` as `low`, `medium`, `high`, `xhigh` or `max`.
+ * It has no zero-reasoning level, so the canonical `none` is not offered for any Claude model.
+ */
 const ALL_EFFORTS: ClaudeModelCapability['efforts'] = ['low', 'medium', 'high', 'xhigh', 'max'];
 /**
  * Exact identities admitted through the same model and effort checks, each with its supported

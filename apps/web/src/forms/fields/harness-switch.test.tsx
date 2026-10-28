@@ -39,7 +39,7 @@ it('reports a failed preflight lookup instead of using cached readiness or retry
   const { client, select } = setup();
   const lookup = vi.fn().mockRejectedValue(new Error('preflight unavailable'));
   await expect(client.fetchQuery({ queryKey: keys.preflight, queryFn: lookup })).rejects.toThrow();
-  const choice = await select('claude', 'old-model', 'minimal', {}, vi.fn());
+  const choice = await select('claude', 'old-model', 'none', {}, vi.fn());
   expect(choice).toEqual({
     message: expect.stringMatching(/Could not check Claude readiness.*Retry Claude preflight/),
   });
@@ -51,7 +51,7 @@ it('reports invalid loop defaults separately from valid Settings defaults', asyn
   const choice = await select(
     'claude',
     'old-model',
-    'minimal',
+    'none',
     { byHarness: { claude: { effort: 'invalid' } } },
     vi.fn(),
   );
@@ -67,7 +67,7 @@ it('keeps an absent effort absent when changing an explicit model', async () => 
   });
 });
 
-it.each(['low', 'minimal'])(
+it.each(['low', 'none'])(
   'keeps model inheritance and handles explicit effort %s without fetching',
   async (effort) => {
     const { client, select } = setup();
@@ -84,7 +84,7 @@ it.each(['low', 'minimal'])(
 it('retains an effort-only selection when catalog support is unknown', async () => {
   const { client, select } = setup();
   client.removeQueries({ queryKey: keys.catalog });
-  const selection = await select('claude', undefined, 'minimal', {}, vi.fn());
+  const selection = await select('claude', undefined, 'none', {}, vi.fn());
   expect(selection).not.toHaveProperty('effort');
   expect(selection.message).toMatch(/still loading/);
 });
@@ -103,7 +103,7 @@ it('waits for an initial lookup that rejects, then reports failure without a sec
     })
     .catch(() => undefined);
   const waiting = vi.fn();
-  const selection = select('claude', 'old-model', 'minimal', {}, waiting);
+  const selection = select('claude', 'old-model', 'none', {}, waiting);
   expect(waiting).toHaveBeenCalledOnce();
   reject(new Error('no transport'));
   await lookup;
@@ -135,7 +135,7 @@ it('chooses a loop model over distinct Settings and ecosystem models and takes l
     await select(
       'codex',
       'claude-opus-5-5',
-      'minimal',
+      'none',
       {
         byHarness: { codex: { model: 'gpt-6-astra', effort: 'low' } },
       },
@@ -164,7 +164,7 @@ it('never queues a rewrite after a known catalog failure while another first che
       }),
   });
   const waiting = vi.fn();
-  const selection = select('claude', 'authored', 'minimal', {}, waiting);
+  const selection = select('claude', 'authored', 'none', {}, waiting);
   client.setQueryData(keys.catalog, catalog);
   resolve(preflight);
   await pending;
@@ -191,7 +191,7 @@ it('does not treat an in-flight retry of a failed initial catalog as its first l
       }),
   });
   const waiting = vi.fn();
-  const selection = select('claude', 'authored', 'minimal', {}, waiting);
+  const selection = select('claude', 'authored', 'none', {}, waiting);
   resolve(catalog);
   await retry;
   expect(await selection).not.toHaveProperty('model');
@@ -222,7 +222,7 @@ it('never rewrites after an initial lookup fails and recovers while another firs
         resolve = done;
       }),
   });
-  const selection = select('claude', 'authored', 'minimal', {}, vi.fn());
+  const selection = select('claude', 'authored', 'none', {}, vi.fn());
   reject(new Error('catalog unavailable'));
   await initialCatalog;
   client.setQueryData(keys.catalog, catalog);
@@ -239,7 +239,7 @@ it('retains an effort-only authored value after a failed catalog lookup', async 
       queryFn: () => Promise.reject(new Error('catalog failed')),
     }),
   ).rejects.toThrow();
-  const selection = await select('claude', undefined, 'minimal', {}, vi.fn());
+  const selection = await select('claude', undefined, 'none', {}, vi.fn());
   expect(selection).not.toHaveProperty('model');
   expect(selection).not.toHaveProperty('effort');
   expect(selection.message).toMatch(/Retry model catalog/);
@@ -257,7 +257,7 @@ it('waits for first checks for an effort-only node without pinning its inherited
       }),
   });
   const waiting = vi.fn();
-  const selection = select('claude', undefined, 'minimal', {}, waiting);
+  const selection = select('claude', undefined, 'none', {}, waiting);
   resolve({});
   await pending;
   expect(await selection).toEqual({ effort: 'high', message: undefined });

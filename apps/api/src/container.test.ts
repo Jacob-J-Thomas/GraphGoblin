@@ -647,6 +647,57 @@ describe('configuration admission before startup writes', () => {
     for (const name of ['gg.db', 'master.key', 'graphgoblin.lock'])
       await expect(access(join(dataDir, name))).rejects.toThrow();
   });
+  it.each([
+    ['codex', 'gpt-5.5'],
+    ['claude', 'claude-haiku-5-5'],
+  ] as const)(
+    'refuses a GG_DEFAULTS %s effort none its model does not offer with EFFORT_UNSUPPORTED, naming harness, model and effort (#205 QA Q205-2)',
+    async (harness, model) => {
+      const refusal = await createContainer(
+        config({
+          GG_DEFAULTS: JSON.stringify({ byHarness: { [harness]: { model, effort: 'none' } } }),
+        }),
+        { startTimers: false },
+      ).then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+      expect(refusal).toMatchObject({
+        code: 'EVALUATION_INVALID_CONFIGURATION',
+        details: { code: 'EFFORT_UNSUPPORTED', path: 'effort', level: 'process', harness },
+        message: [
+          'GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).',
+          `  ${harness}: EFFORT_UNSUPPORTED at effort (model "${model}", effort "none"): The default reasoning effort is not supported by its model.`,
+          'No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.',
+        ].join('\n'),
+      });
+      for (const name of ['gg.db', 'master.key', 'graphgoblin.lock'])
+        await expect(access(join(dataDir, name))).rejects.toThrow();
+    },
+  );
+  it('names every refused GG_DEFAULTS harness and keeps the first as details', async () => {
+    const refusal = await createContainer(
+      config({
+        GG_DEFAULTS: JSON.stringify({
+          byHarness: {
+            codex: { model: 'not-in-catalog' },
+            claude: { model: 'claude-opus-5-5', effort: 'none' },
+          },
+        }),
+      }),
+      { startTimers: false },
+    ).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(refusal).toMatchObject({
+      details: { code: 'MODEL_NOT_IN_CATALOG', path: 'model', level: 'process', harness: 'codex' },
+    });
+    expect((refusal as Error).message.split('\n').slice(1, 3)).toEqual([
+      '  codex: MODEL_NOT_IN_CATALOG at model (model "not-in-catalog"): The default model is not in the catalog.',
+      '  claude: EFFORT_UNSUPPORTED at effort (model "claude-opus-5-5", effort "none"): The default reasoning effort is not supported by its model.',
+    ]);
+  });
   it('reads existing manual catalog entries without changing database bytes or rows on invalid effort', async () => {
     const valid = config();
     const first = await createContainer(valid, { startTimers: false });

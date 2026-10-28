@@ -1,0 +1,286 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a65ec1cd773b204b7/apps/api
+
+ ❯ src/claude.test.ts (17 tests | 4 failed) 4099ms
+   ❯ Claude public integration (17)
+     × refuses effort none, which Claude Code does not offer, for claude-opus-5-5 at authoring and never sends it 103ms
+     × refuses effort none, which Claude Code does not offer, for claude-fable-5-1 at authoring and never sends it 90ms
+     × refuses effort none, which Claude Code does not offer, for claude-sonnet-5-5 at authoring and never sends it 155ms
+     × refuses effort none, which Claude Code does not offer, for claude-haiku-5-5 at authoring and never sends it 96ms
+ ❯ src/catalog.test.ts (37 tests | 10 failed) 4697ms
+   ❯ Codex efforts are offered per model, with none as the lowest level (#205) (12)
+     × offers none to max for GPT-6 and GPT-5.6 models and low to xhigh for GPT-5.5 138ms
+     × accepts none for every GPT-6 and GPT-5.6 model (inference) and requests it under its canonical name 94ms
+     × accepts none for every GPT-6 and GPT-5.6 model (decision) and requests it under its canonical name 109ms
+     × refuses none for GPT-5.5 (inference, and as a default) before any request 96ms
+     × refuses none for GPT-5.5 (decision, and as a default) before any request 98ms
+     × refuses minimal as an unknown effort, not as a catalog refusal 99ms
+     × fails a stored GPT-5.5 none (inference) from a catalog that listed it without any provider request 83ms
+     × fails a stored GPT-5.5 none (decision) from a catalog that listed it without any provider request 78ms
+     × fails a run inheriting a stored loop-default GPT-5.5 none with the same details shape, without any request 82ms
+     × fails a run inheriting a stored owner-default GPT-5.5 none with the same details shape, without any request 101ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > offers none to max for GPT-6 and GPT-5.6 models and low to xhigh for GPT-5.5
+AssertionError: expected { 'gpt-5.5': [ 'low', …(3) ], …(7) } to deeply equal { 'gpt-5.5': [ 'low', …(3) ], …(7) }
+
+- Expected
++ Received
+
+@@ -4,59 +4,52 @@
+      "medium",
+      "high",
+      "xhigh",
+    ],
+    "gpt-5.6-luna": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-5.6-terra": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-astra": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-luna": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ],
+    "gpt-6.1-sol": [
+-     "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+
+ ❯ src/catalog.test.ts:407:84
+    405|     const codex = items.filter((entry) => entry.harness === 'codex');
+    406|     const noneToMax: Effort[] = ['none', 'low', 'medium', 'high', 'xhi…
+    407|     expect(Object.fromEntries(codex.map((entry) => [entry.model, entry…
+       |                                                                                    ^
+    408|       'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+    409|       'gpt-5.6-luna': noneToMax,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > accepts none for every GPT-6 and GPT-5.6 model (inference) and requests it under its canonical name
+AssertionError: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ src/catalog.test.ts:435:50
+    433|           payload: { definition: withEffort(place, model, 'none') },
+    434|         });
+    435|         expect(created.statusCode, created.body).toBe(201);
+       |                                                  ^
+    436|         expect(created.json().issues, model).toEqual([]);
+    437|         const defaults = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > accepts none for every GPT-6 and GPT-5.6 model (decision) and requests it under its canonical name
+AssertionError: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort/value","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ src/catalog.test.ts:435:50
+    433|           payload: { definition: withEffort(place, model, 'none') },
+    434|         });
+    435|         expect(created.statusCode, created.body).toBe(201);
+       |                                                  ^
+    436|         expect(created.json().issues, model).toEqual([]);
+    437|         const defaults = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > refuses none for GPT-5.5 (inference, and as a default) before any request
+AssertionError: expected '{"type":"https://graphgoblin.dev/prob…' to contain 'EFFORT_UNSUPPORTED'
+
+Expected: "EFFORT_UNSUPPORTED"
+Received: "{"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}"
+
+ ❯ src/catalog.test.ts:470:28
+    468|       });
+    469|       expect(refused.statusCode).toBe(400);
+    470|       expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+       |                            ^
+    471|       const loopId = await t.publishLoop(withEffort(place, 'gpt-5.5', …
+    472|       for (const [method, url] of [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > refuses none for GPT-5.5 (decision, and as a default) before any request
+AssertionError: expected '{"type":"https://graphgoblin.dev/prob…' to contain 'EFFORT_UNSUPPORTED'
+
+Expected: "EFFORT_UNSUPPORTED"
+Received: "{"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort/value","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}"
+
+ ❯ src/catalog.test.ts:470:28
+    468|       });
+    469|       expect(refused.statusCode).toBe(400);
+    470|       expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+       |                            ^
+    471|       const loopId = await t.publishLoop(withEffort(place, 'gpt-5.5', …
+    472|       for (const [method, url] of [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > refuses minimal as an unknown effort, not as a catalog refusal
+AssertionError: expected { …(6) } to match object { code: 'VALIDATION_FAILED' }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VALIDATION_FAILED",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+  }
+
+ ❯ src/catalog.test.ts:509:28
+    507|     });
+    508|     expect(refused.statusCode).toBe(400);
+    509|     expect(refused.json()).toMatchObject({ code: 'VALIDATION_FAILED' }…
+       |                            ^
+    510|     expect(refused.body).not.toContain('EFFORT_UNSUPPORTED');
+    511|     const defaults = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > fails a stored GPT-5.5 none (inference) from a catalog that listed it without any provider request
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:107:45
+    105|         headers,
+    106|       });
+    107|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    108|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    109|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/catalog.test.ts:527:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > fails a stored GPT-5.5 none (decision) from a catalog that listed it without any provider request
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort/value","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:107:45
+    105|         headers,
+    106|       });
+    107|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    108|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    109|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/catalog.test.ts:527:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > fails a run inheriting a stored loop-default GPT-5.5 none with the same details shape, without any request
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/settings/defaults/byHarness/codex/effort","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:107:45
+    105|         headers,
+    106|       });
+    107|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    108|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    109|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/catalog.test.ts:559:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  src/catalog.test.ts > Codex efforts are offered per model, with none as the lowest level (#205) > fails a run inheriting a stored owner-default GPT-5.5 none with the same details shape, without any request
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ src/catalog.test.ts:566:11
+    564|           (await t.app.inject({ method: 'PUT', url: '/settings', paylo…
+    565|             .statusCode,
+    566|         ).toBe(200);
+       |           ^
+    567|       await t.container.repos.catalog.seed();
+    568|       const started = await t.app.inject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  src/claude.test.ts > Claude public integration > refuses effort none, which Claude Code does not offer, for claude-opus-5-5 at authoring and never sends it
+ FAIL  src/claude.test.ts > Claude public integration > refuses effort none, which Claude Code does not offer, for claude-fable-5-1 at authoring and never sends it
+ FAIL  src/claude.test.ts > Claude public integration > refuses effort none, which Claude Code does not offer, for claude-sonnet-5-5 at authoring and never sends it
+ FAIL  src/claude.test.ts > Claude public integration > refuses effort none, which Claude Code does not offer, for claude-haiku-5-5 at authoring and never sends it
+AssertionError: expected '{"type":"https://graphgoblin.dev/prob…' to contain 'EFFORT_UNSUPPORTED'
+
+Expected: "EFFORT_UNSUPPORTED"
+Received: "{"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/effort","message":"Invalid option: expected one of \"minimal\"|\"low\"|\"medium\"|\"high\"|\"xhigh\"|\"max\""}]}"
+
+ ❯ src/claude.test.ts:238:28
+    236|       });
+    237|       expect(created.statusCode).toBe(400);
+    238|       expect(created.body).toContain('EFFORT_UNSUPPORTED');
+       |                            ^
+    239|       const loopId = await t.publishLoop(definition(model));
+    240|       for (const [method, url] of [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 40 passed (54)
+   Start at  23:32:54
+   Duration  13.21s (import 36%, tests 35%, transform 29%)
+
+  Transform  transforming modules took 7.31s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\%USERNAME%\source\repos\GraphGoblin\.claude\worktrees\agent-
+  │ a65ec1cd773b204b7\apps\api
+

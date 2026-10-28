@@ -140,7 +140,7 @@ describe('form controls in the schema-driven form', () => {
     const schema = z.object({
       outcome: z.enum(['success', 'failure']),
       target: z.enum(['messages', 'vars', 'all']).optional(),
-      effort: z.enum(['minimal', 'low', 'medium', 'high', 'xhigh']),
+      effort: z.enum(['none', 'low', 'medium', 'high', 'xhigh']),
       tag: z.literal(['a', 'b']).describe('Which tag'),
     });
     render(<Harness schema={schema} initial={{}} spy={spy} />);

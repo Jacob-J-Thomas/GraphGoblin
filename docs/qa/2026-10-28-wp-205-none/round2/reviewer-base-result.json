@@ -1,0 +1,70 @@
+{
+  "scenario": "round2/reviewer-base",
+  "passed": 2,
+  "failed": 0,
+  "observations": 0,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "base history: the base build stores a run whose owner default and session are at minimal",
+      "ok": true,
+      "detail": {
+        "types": [
+          "run.queued",
+          "run.started",
+          "node.started",
+          "node.finished",
+          "node.started",
+          "harness.turn",
+          "harness.session",
+          "harness.submission",
+          "node.progress",
+          "harness.usage",
+          "node.finished",
+          "node.started",
+          "exit.evaluated",
+          "node.finished",
+          "run.finished"
+        ]
+      }
+    },
+    {
+      "id": "base missing: the base build stores missing-session evidence at minimal",
+      "ok": true,
+      "detail": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"fake-session-1\" from resume-previous is missing. Choose Start fresh session for node \"second\" to continue without its prior provider conversation.",
+        "nodeId": "second",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M3Y7RKG0A1CT9845TN90QG6W:11",
+          "turnId": "01M3Y7RKG0A1CT9845TN90QG71",
+          "submission": "session-missing",
+          "promptKind": "authored",
+          "sessionId": "fake-session-1"
+        },
+        "missingSession": {
+          "visitId": "01M3Y7RKG0A1CT9845TN90QG6W:11",
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "origin": "resume-previous",
+          "model": "gpt-6-luna",
+          "effort": "minimal"
+        }
+      }
+    }
+  ],
+  "history": {
+    "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-rev-history-bJcXTe",
+    "loopId": "01M3Y7RKG0A02MQX96XKQ5M7T8",
+    "runId": "01M3Y7RKG0A02MQX96XKQ5M7TA"
+  },
+  "missing": {
+    "store": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-205-rev-missing-1VNtQL",
+    "loopId": "01M3Y7RKG0A1CT9845TN90QG6T",
+    "runId": "01M3Y7RKG0A1CT9845TN90QG6W"
+  }
+}

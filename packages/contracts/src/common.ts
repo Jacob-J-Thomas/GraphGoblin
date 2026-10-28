@@ -39,8 +39,13 @@ export const JsonPointerSchema = z
   .regex(/^(\/([^/~]|~0|~1)*)*$/, 'must be an RFC 6901 JSON Pointer');
 export type JsonPointer = z.infer<typeof JsonPointerSchema>;
 
-/** Canonical reasoning-effort scale. Adapters map it onto what their harness accepts. */
-export const EffortSchema = z.enum(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+/**
+ * Canonical reasoning-effort scale. `none` is the one lowest level, no reasoning; providers that
+ * name that level differently (`minimal`) get their name from the adapter, which maps the
+ * canonical effort onto what its harness accepts. The model catalog says which levels each model
+ * offers.
+ */
+export const EffortSchema = z.enum(['none', 'low', 'medium', 'high', 'xhigh', 'max']);
 export type Effort = z.infer<typeof EffortSchema>;
 
 /** Harness families; models and native session ids remain scoped to the selected family. */

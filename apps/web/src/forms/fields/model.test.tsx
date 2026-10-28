@@ -124,7 +124,7 @@ describe('catalog field controls', () => {
     },
   );
 
-  it.each([undefined, 'minimal'])(
+  it.each([undefined, 'none'])(
     'bounds inherited Claude effort choices and preserves the saved value %s',
     async (savedEffort) => {
       const api = new FakeApi();
@@ -182,17 +182,17 @@ describe('catalog field controls', () => {
         '',
         ...supportedEfforts,
       ]);
-      if (savedEffort === 'minimal') {
+      if (savedEffort === 'none') {
         expect(
-          within(effort()).getByRole('option', { name: /minimal.*not supported/ }),
+          within(effort()).getByRole('option', { name: 'none (not supported by this model)' }),
         ).toBeDisabled();
         expect(effort()).toHaveAccessibleDescription(
           endsWith(
-            'Effort minimal is not supported by Display claude-opus-5-5. Choose a supported effort or Default.',
+            'Effort none is not supported by Display claude-opus-5-5. Choose a supported effort or Default.',
           ),
         );
       } else {
-        expect(within(effort()).queryByRole('option', { name: /^minimal$/ })).toBeNull();
+        expect(within(effort()).queryByRole('option', { name: /^none/ })).toBeNull();
       }
       expect(change).not.toHaveBeenCalled();
       await user.selectOptions(effort(), 'xhigh');
@@ -554,6 +554,23 @@ describe('catalog field controls', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/settings');
   });
 
+  it('lists none first and labels it as no reasoning (#205)', async () => {
+    const { user, change } = setup({}, [{ ...entry('alpha'), efforts: ['none', 'low', 'high'] }]);
+    await ready();
+    await user.selectOptions(model(), 'alpha');
+    const options = within(effort()).getAllByRole<HTMLOptionElement>('option');
+    expect(options.map((o) => [o.value, o.textContent])).toEqual([
+      ['', 'Default (low)'],
+      ['none', 'none (no reasoning)'],
+      ['low', 'low'],
+      ['high', 'high'],
+    ]);
+    await user.selectOptions(effort(), 'none');
+    expect(change).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: 'alpha', effort: 'none' }),
+      expect.objectContaining({ path: 'effort', kind: 'commit' }),
+    );
+  });
   it('selects one entry by display name and id, restricts effort, and clears back to unset', async () => {
     const { user, change } = setup();
     await ready();
@@ -950,6 +967,33 @@ describe('catalog field controls', () => {
     expect(within(claudeEffort).getByRole('option', { name: 'xhigh' })).toBeInTheDocument();
     expect(within(codexEffort).queryByRole('option', { name: 'xhigh' })).toBeNull();
     expect(change).not.toHaveBeenCalled();
+  });
+
+  it('lists none first as no reasoning in a loop default effort (#205)', async () => {
+    const api = new FakeApi();
+    api.catalog = [{ ...entry('alpha'), efforts: ['none', 'low', 'high'] }];
+    const { container } = renderWith(
+      <SchemaForm
+        schema={LoopSettingsSchema}
+        value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
+        label="Settings"
+        onChange={vi.fn()}
+        controls={LOOP_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+    const codexEffort = container.querySelector<HTMLSelectElement>(
+      '[data-field="defaults.byHarness.codex.effort"] select',
+    )!;
+    await waitFor(() =>
+      expect(
+        within(codexEffort)
+          .getAllByRole<HTMLOptionElement>('option')
+          .slice(1)
+          .map((option) => option.textContent),
+      ).toEqual(['none (no reasoning)', 'low', 'high']),
+    );
   });
 
   it('does not offer Claude model choices from static capabilities when CLI preflight is not ready', async () => {
