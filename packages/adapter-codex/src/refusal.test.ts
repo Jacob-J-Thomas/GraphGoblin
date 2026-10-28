@@ -181,18 +181,6 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
     e.ports.harnesses.codex = codex;
     try {
       const version = e.publish(
-<<<<<<< HEAD
-        singleNodeLoop('Provider refusal', {
-          id: 'infer',
-          kind: 'inference',
-          label: 'Infer',
-          config: {
-            model: 'gpt-6-luna',
-            effort: 'none',
-            prompt: { template: 'The complete authored task' },
-          },
-        }),
-=======
         await inWorkspace(
           singleNodeLoop('Provider refusal', {
             id: 'infer',
@@ -205,7 +193,6 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
             },
           }),
         ),
->>>>>>> origin/main
       );
       const run = await e.runToIdle(version.loopId);
       expect(run.failure).toMatchObject({
@@ -281,18 +268,6 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       e.ports.harnesses.codex = harness(failure, { stderr: 'repeat' }).codex;
       try {
         const version = e.publish(
-<<<<<<< HEAD
-          singleNodeLoop('Repeated refusal ' + failure, {
-            id: 'infer',
-            kind: 'inference',
-            label: 'Infer',
-            config: {
-              model: 'gpt-6-luna',
-              effort: 'none',
-              prompt: { template: 'The complete authored task' },
-            },
-          }),
-=======
           await inWorkspace(
             singleNodeLoop('Repeated refusal ' + failure, {
               id: 'infer',
@@ -305,7 +280,6 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
               },
             }),
           ),
->>>>>>> origin/main
         );
         const run = await e.runToIdle(version.loopId);
         expect(run.failure).toEqual({
