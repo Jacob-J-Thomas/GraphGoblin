@@ -1,9 +1,11 @@
 import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
 import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
+import { isolationDefaults, layerConfig } from './isolation.js';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
- * explicitly so the machine's `~/.codex/config.toml` defaults never leak into a loop.
+ * explicitly so the machine's `~/.codex/config.toml` defaults for it never apply to a loop; the
+ * machine's extensions are switched off by the isolation defaults (isolation.ts, ADR-0063).
  *
  * Verified against `@openai/codex-sdk` 0.160.0 (`dist/index.js`, `CodexExec.run`): the per-thread
  * options are turned into these CLI arguments, which come after any `config` overrides and so win
@@ -72,21 +74,22 @@ export function sanitizeConfig(value: unknown): ConfigValue | undefined {
 }
 
 /**
- * Client options: `harnessOptions.configOverrides` become the SDK's `config` (dotted `--config`
- * keys). The explicit thread options above are emitted after them, so overrides cannot weaken the
- * sandbox, approval, model, or effort a node declared.
+ * Client options: the SDK's `config` (dotted `--config` keys) is the isolation defaults of
+ * ADR-0063 with `harnessOptions.configOverrides` layered over them, so a node can turn an
+ * inherited extension back on. The explicit thread options above are emitted after them, so
+ * overrides cannot weaken the sandbox, approval, model, or effort a node declared.
  */
 export function clientOptions(
   options: HarnessOptions,
   codexBinary: string | undefined,
   env: Record<string, string> | undefined,
 ): CodexOptions {
-  const config = sanitizeConfig(options.configOverrides ?? {}) as NonNullable<
+  const overrides = sanitizeConfig(options.configOverrides ?? {}) as NonNullable<
     CodexOptions['config']
   >;
   return {
     ...(codexBinary ? { codexPathOverride: codexBinary } : {}),
     ...(env ? { env } : {}),
-    ...(Object.keys(config).length ? { config } : {}),
+    config: layerConfig(isolationDefaults(), overrides),
   };
 }

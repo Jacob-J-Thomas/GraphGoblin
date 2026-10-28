@@ -25,6 +25,14 @@ afterEach(async () => {
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
 });
 
+/** The SDK client lists MCP servers in the turn's working directory first (ADR-0063). */
+async function inWorkspace(loop: ReturnType<typeof singleNodeLoop>) {
+  return {
+    ...loop,
+    settings: { workingDirectory: { kind: 'fixed' as const, path: await workspace() } },
+  };
+}
+
 async function workspace(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'gg-codex-refusal-'));
   directories.push(directory);
@@ -171,16 +179,18 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
     e.ports.harnesses.codex = codex;
     try {
       const version = e.publish(
-        singleNodeLoop('Provider refusal', {
-          id: 'infer',
-          kind: 'inference',
-          label: 'Infer',
-          config: {
-            model: 'gpt-6-luna',
-            effort: 'minimal',
-            prompt: { template: 'The complete authored task' },
-          },
-        }),
+        await inWorkspace(
+          singleNodeLoop('Provider refusal', {
+            id: 'infer',
+            kind: 'inference',
+            label: 'Infer',
+            config: {
+              model: 'gpt-6-luna',
+              effort: 'minimal',
+              prompt: { template: 'The complete authored task' },
+            },
+          }),
+        ),
       );
       const run = await e.runToIdle(version.loopId);
       expect(run.failure).toMatchObject({
@@ -256,16 +266,18 @@ describe('a failure the Codex event stream reports before the CLI exits non-zero
       e.ports.harnesses.codex = harness(failure, { stderr: 'repeat' }).codex;
       try {
         const version = e.publish(
-          singleNodeLoop('Repeated refusal ' + failure, {
-            id: 'infer',
-            kind: 'inference',
-            label: 'Infer',
-            config: {
-              model: 'gpt-6-luna',
-              effort: 'minimal',
-              prompt: { template: 'The complete authored task' },
-            },
-          }),
+          await inWorkspace(
+            singleNodeLoop('Repeated refusal ' + failure, {
+              id: 'infer',
+              kind: 'inference',
+              label: 'Infer',
+              config: {
+                model: 'gpt-6-luna',
+                effort: 'minimal',
+                prompt: { template: 'The complete authored task' },
+              },
+            }),
+          ),
         );
         const run = await e.runToIdle(version.loopId);
         expect(run.failure).toEqual({

@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import type { HarnessPreflight } from '@graphgoblin/engine';
 
 /**
- * Running the Codex CLI directly, for `preflight` only. Sessions go through the SDK.
+ * Running the Codex CLI directly, for `preflight` and the MCP server listing before each turn
+ * (isolation.ts). Sessions go through the SDK.
  */
 
 export interface CliCommand {
@@ -27,7 +28,13 @@ export interface CliResult {
   spawnError?: string;
 }
 
-export type CliRunner = (cli: CliCommand, args: string[], timeoutMs: number) => Promise<CliResult>;
+/** `signal` ends the call early (the per-turn MCP listing passes the turn's own signal). */
+export type CliRunner = (
+  cli: CliCommand,
+  args: string[],
+  timeoutMs: number,
+  signal?: AbortSignal,
+) => Promise<CliResult>;
 
 /**
  * The CLI the SDK runs when no `codexPathOverride` is given: the `@openai/codex` package the SDK
@@ -53,7 +60,7 @@ export function cliFor(codexBinary: string): CliCommand {
     : { command: codexBinary, prefix: [] };
 }
 
-export const runCli: CliRunner = (cli, args, timeoutMs) =>
+export const runCli: CliRunner = (cli, args, timeoutMs, signal) =>
   new Promise((resolve) => {
     let output = '';
     let settled = false;
@@ -67,6 +74,7 @@ export const runCli: CliRunner = (cli, args, timeoutMs) =>
       windowsHide: true,
       ...(cli.cwd ? { cwd: cli.cwd } : {}),
       ...(cli.env ? { env: cli.env } : {}),
+      ...(signal ? { signal } : {}),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
     });
