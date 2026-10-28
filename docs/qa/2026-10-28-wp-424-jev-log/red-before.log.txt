@@ -1,0 +1,107 @@
+Command: pnpm.cmd --filter @graphgoblin/api exec vitest run src/units.test.ts src/container.test.ts --maxWorkers=2 -t Jev (environment|key at boot)
+Node: v22.23.4
+Node executable: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe
+pnpm: 12.8.1
+GG_TEST_PORT_START=7380 GG_TEST_PORT_COUNT=40; inherited GG_*, JEV_API_KEY and LIVE* stripped; LIVE=0 LIVE_CLAUDE=0; TURBO_ENV_MODE=loose
+Disposable temp root: %USERPROFILE%\AppData\Local\Temp\gg-424-e3d8cd583cbb48ef8b1ae427893730cc
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-424-jev-log/apps/api
+
+ ❯ src/units.test.ts (15 tests | 3 failed | 8 skipped) 19ms
+   ❯ loadConfig (10)
+     × resolves the Jev environment seed and its source ({ GG_JEV_API_KEY: 'test-primary-key' }) 12ms
+     × resolves the Jev environment seed and its source ({ JEV_API_KEY: 'test-fallback-key' }) 1ms
+     × resolves the Jev environment seed and its source ({ …(2) }) 1ms
+ ❯ src/container.test.ts (28 tests | 1 failed | 18 skipped) 1891ms
+   ❯ Jev key at boot (10)
+     × seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key 143ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/container.test.ts > Jev key at boot > seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key
+AssertionError: expected [ { level: 'info', …(2) } ] to deeply equal [ { level: 'info', obj: {}, …(1) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+      "level": "info",
+-     "msg": "seeded jev-api-key from JEV_API_KEY",
++     "msg": "seeded jev-api-key from GG_JEV_API_KEY",
+      "obj": {},
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/container.test.ts:502:68
+    500|       );
+    501|       expect(await jevAvailable(container)).toBe(true);
+    502|       expect(logger.lines.filter((line) => line.level === 'info')).toE…
+       |                                                                    ^
+    503|         { level: 'info', obj: {}, msg: 'seeded jev-api-key from JEV_AP…
+    504|       ]);
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ GG_JEV_API_KEY: 'test-primary-key' })
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ …(2) })
+AssertionError: expected 'test-primary-key' to deeply equal { value: 'test-primary-key', …(1) }
+System.Management.Automation.RemoteException
+- Expected:
+{
+  "source": "GG_JEV_API_KEY",
+  "value": "test-primary-key",
+}
+System.Management.Automation.RemoteException
++ Received:
+"test-primary-key"
+System.Management.Automation.RemoteException
+ ❯ src/units.test.ts:83:39
+     81|     { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, e…
+     82|   ])('resolves the Jev environment seed and its source ($env)', ({ env…
+     83|     expect(loadConfig(env).jevApiKey).toEqual(expected);
+       |                                       ^
+     84|   });
+     85| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/units.test.ts > loadConfig > resolves the Jev environment seed and its source ({ JEV_API_KEY: 'test-fallback-key' })
+AssertionError: expected 'test-fallback-key' to deeply equal { value: 'test-fallback-key', …(1) }
+System.Management.Automation.RemoteException
+- Expected:
+{
+  "source": "JEV_API_KEY",
+  "value": "test-fallback-key",
+}
+System.Management.Automation.RemoteException
++ Received:
+"test-fallback-key"
+System.Management.Automation.RemoteException
+ ❯ src/units.test.ts:83:39
+     81|     { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, e…
+     82|   ])('resolves the Jev environment seed and its source ($env)', ({ env…
+     83|     expect(loadConfig(env).jevApiKey).toEqual(expected);
+       |                                       ^
+     84|   });
+     85| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 13 passed | 26 skipped (43)
+   Start at  23:23:49
+   Duration  8.67s (import 44%, transform 43%, tests 13%)
+
+  Transform  transforming modules took 6.49s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-424-jev-
+  │ log\apps\api
+System.Management.Automation.RemoteException
+Exit code: 1; elapsed seconds: 9.84

@@ -1,0 +1,67 @@
+Reviewer behaviour run for WP-424 on the built API (apps/api/dist/main.js).
+Node v22.23.4; driver strips every inherited GG_*, JEV_API_KEY and LIVE* variable, then sets GG_DATA_DIR, GG_PORT, GG_HOST=127.0.0.1, GG_LOG_LEVEL=trace, GG_WEB_DIST='' and the Jev variables named per scenario.
+Fake values: JEV_API_KEY='review-fake-key', GG_JEV_API_KEY='review-fake-key-gg' (the substring check for 'review-fake-key' covers both).
+
+===== review-gateway-a1-jev-only =====
+{"level":30,"time":1793163641000,"pid":47732,"hostname":"%COMPUTERNAME%","msg":"seeded jev-api-key from JEV_API_KEY"}
+{"level":30,"time":1793163641460,"pid":47732,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6340"}
+{"level":30,"time":1793163641460,"pid":47732,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6340,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-a","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163641491,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6340","remoteAddress":"127.0.0.1","remotePort":65087},"msg":"incoming request"}
+{"level":30,"time":1793163641495,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":4.217200000000048,"msg":"request completed"}
+{"level":30,"time":1793163641501,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6340","remoteAddress":"127.0.0.1","remotePort":65088},"msg":"incoming request"}
+{"level":30,"time":1793163641502,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":1.581800000000385,"msg":"request completed"}
+{"level":30,"time":1793163641508,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6340","remoteAddress":"127.0.0.1","remotePort":65087},"msg":"incoming request"}
+{"level":30,"time":1793163641513,"pid":47732,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":5.353799999999865,"msg":"request completed"}
+
+===== review-gateway-a2-both-existing-secret =====
+{"level":30,"time":1793163645293,"pid":51300,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6341"}
+{"level":30,"time":1793163645294,"pid":51300,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6341,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-a","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163645511,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6341","remoteAddress":"127.0.0.1","remotePort":65108},"msg":"incoming request"}
+{"level":30,"time":1793163645516,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":4.555599999999686,"msg":"request completed"}
+{"level":30,"time":1793163645517,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6341","remoteAddress":"127.0.0.1","remotePort":65109},"msg":"incoming request"}
+{"level":30,"time":1793163645519,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":1.7851999999998043,"msg":"request completed"}
+{"level":30,"time":1793163645521,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6341","remoteAddress":"127.0.0.1","remotePort":65108},"msg":"incoming request"}
+{"level":30,"time":1793163645528,"pid":51300,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":6.400500000000193,"msg":"request completed"}
+
+===== review-gateway-c1-gg-only-fresh =====
+{"level":30,"time":1793163648449,"pid":24520,"hostname":"%COMPUTERNAME%","msg":"seeded jev-api-key from GG_JEV_API_KEY"}
+{"level":30,"time":1793163648946,"pid":24520,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6342"}
+{"level":30,"time":1793163648946,"pid":24520,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6342,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-c","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163649193,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6342","remoteAddress":"127.0.0.1","remotePort":65129},"msg":"incoming request"}
+{"level":30,"time":1793163649200,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":5.7503999999999,"msg":"request completed"}
+{"level":30,"time":1793163649201,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6342","remoteAddress":"127.0.0.1","remotePort":65130},"msg":"incoming request"}
+{"level":30,"time":1793163649203,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":1.938199999999597,"msg":"request completed"}
+{"level":30,"time":1793163649205,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6342","remoteAddress":"127.0.0.1","remotePort":65129},"msg":"incoming request"}
+{"level":30,"time":1793163649211,"pid":24520,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":5.844499999999698,"msg":"request completed"}
+
+===== review-gateway-d1-both-fresh =====
+{"level":30,"time":1793163652735,"pid":21848,"hostname":"%COMPUTERNAME%","msg":"seeded jev-api-key from GG_JEV_API_KEY"}
+{"level":30,"time":1793163653256,"pid":21848,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6343"}
+{"level":30,"time":1793163653257,"pid":21848,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6343,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-d","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163653471,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6343","remoteAddress":"127.0.0.1","remotePort":65149},"msg":"incoming request"}
+{"level":30,"time":1793163653476,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":4.803100000000086,"msg":"request completed"}
+{"level":30,"time":1793163653478,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6343","remoteAddress":"127.0.0.1","remotePort":65150},"msg":"incoming request"}
+{"level":30,"time":1793163653480,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":2.150000000000091,"msg":"request completed"}
+{"level":30,"time":1793163653482,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6343","remoteAddress":"127.0.0.1","remotePort":65149},"msg":"incoming request"}
+{"level":30,"time":1793163653489,"pid":21848,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":7.015300000000025,"msg":"request completed"}
+
+===== review-gateway-e1-empty-gg-with-fallback-fresh =====
+{"level":30,"time":1793163657616,"pid":15736,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6344"}
+{"level":30,"time":1793163657616,"pid":15736,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6344,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-e","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163657753,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6344","remoteAddress":"127.0.0.1","remotePort":62560},"msg":"incoming request"}
+{"level":30,"time":1793163657760,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":6.349499999999807,"msg":"request completed"}
+{"level":30,"time":1793163657762,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6344","remoteAddress":"127.0.0.1","remotePort":62561},"msg":"incoming request"}
+{"level":30,"time":1793163657763,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":1.555199999999786,"msg":"request completed"}
+{"level":30,"time":1793163657765,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6344","remoteAddress":"127.0.0.1","remotePort":62560},"msg":"incoming request"}
+{"level":30,"time":1793163657773,"pid":15736,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":8.159099999999853,"msg":"request completed"}
+
+===== review-gateway-f1-neither-fresh =====
+{"level":30,"time":1793163662056,"pid":28784,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:6345"}
+{"level":30,"time":1793163662056,"pid":28784,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":6345,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-rev424-stores\\store-f","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1793163662256,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"127.0.0.1:6345","remoteAddress":"127.0.0.1","remotePort":62587},"msg":"incoming request"}
+{"level":30,"time":1793163662264,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":7.0052999999998065,"msg":"request completed"}
+{"level":30,"time":1793163662265,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-2","req":{"method":"GET","url":"/secrets","host":"127.0.0.1:6345","remoteAddress":"127.0.0.1","remotePort":62588},"msg":"incoming request"}
+{"level":30,"time":1793163662267,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-2","res":{"statusCode":200},"responseTime":2.3101999999998952,"msg":"request completed"}
+{"level":30,"time":1793163662269,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-3","req":{"method":"POST","url":"/system/shutdown","host":"127.0.0.1:6345","remoteAddress":"127.0.0.1","remotePort":62587},"msg":"incoming request"}
+{"level":30,"time":1793163662278,"pid":28784,"hostname":"%COMPUTERNAME%","reqId":"req-3","res":{"statusCode":202},"responseTime":8.197699999999713,"msg":"request completed"}
+
