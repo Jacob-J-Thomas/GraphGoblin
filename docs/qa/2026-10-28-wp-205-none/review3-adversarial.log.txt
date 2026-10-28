@@ -1,0 +1,37 @@
+2026-10-28T08:52:25.294Z +0.1s CHECK PASS malformed JSON in every read column; valid siblings corrected and all damage preserved {"before":{"typed":4,"unreadable":9},"after":{"typed":0,"unreadable":9},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.380Z +0.2s CHECK PASS NULL in every JSON column, including a snapshot; nullable session effort remains NULL {"before":{"typed":0,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.455Z +0.3s CHECK PASS NULL siblings do not block correction of catalog default, valid pinned or valid failure {"before":{"typed":3,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.506Z +0.3s CHECK PASS CASE guards skip malformed input "" {"before":{"typed":0,"unreadable":1},"after":{"typed":0,"unreadable":1},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.552Z +0.4s CHECK PASS CASE guards skip malformed input "not-json" {"before":{"typed":0,"unreadable":1},"after":{"typed":0,"unreadable":1},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.599Z +0.4s CHECK PASS CASE guards skip malformed input "\"unterminated" {"before":{"typed":0,"unreadable":1},"after":{"typed":0,"unreadable":1},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.645Z +0.5s CHECK PASS CASE guards skip malformed input "[1," {"before":{"typed":0,"unreadable":1},"after":{"typed":0,"unreadable":1},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.692Z +0.5s CHECK PASS CASE guards skip malformed input "{" {"before":{"typed":0,"unreadable":1},"after":{"typed":0,"unreadable":1},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.742Z +0.5s CHECK PASS mixed node element types are preserved; valid defaults corrected and unresolved node remains discoverable {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.835Z +0.6s CHECK PASS snapshot mixed node array preserved and trigger restored {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.930Z +0.7s CHECK PASS mixed diagnostic types preserved; top provenance corrected and unresolved diagnostic remains discoverable {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:25.980Z +0.8s CHECK PASS mixed catalog elements preserved while default corrected {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.031Z +0.8s CHECK PASS wrong catalog shape stays discoverable {"a":"minimal"} {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.083Z +0.9s CHECK PASS wrong catalog shape stays discoverable "minimal" {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.137Z +0.9s CHECK PASS wrong catalog shape stays discoverable ["minimal",null] {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.188Z +1.0s CHECK PASS object instead of nodes array stays discoverable and valid default corrected {"before":{"typed":1,"unreadable":0},"after":{"typed":1,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.238Z +1.0s CHECK PASS missing nodes path is not inserted when a default is corrected {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.288Z +1.1s CHECK PASS missing settings path is not inserted when inference effort corrected {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.338Z +1.1s CHECK PASS decision diagnostics absent preserved without insertion {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.387Z +1.2s CHECK PASS decision diagnostics null preserved without insertion {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.437Z +1.2s CHECK PASS decision diagnostics [] preserved without insertion {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.487Z +1.3s CHECK PASS decision diagnostics {} preserved without insertion {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.535Z +1.3s CHECK PASS non-string sibling efforts keep exact JSON types and authored values {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.584Z +1.4s CHECK PASS settings preserve object and array effort values beside one canonical minimal {"before":{"typed":1,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.657Z +1.5s CHECK PASS receipt and event paths do not create absent defaults or fresh-session properties {"before":{"typed":3,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:26.659Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve {} {"sentinel":"{}","missing":"{}"}
+2026-10-28T08:52:26.660Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve [] {"sentinel":"[]","missing":"[]"}
+2026-10-28T08:52:26.661Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve [1,2] {"sentinel":"[1,2]","missing":"[1,2]"}
+2026-10-28T08:52:26.663Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve "scalar" {"sentinel":"\"scalar\"","missing":"\"scalar\""}
+2026-10-28T08:52:26.664Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve 1 {"sentinel":"1","missing":"1"}
+2026-10-28T08:52:26.666Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve true {"sentinel":"true","missing":"true"}
+2026-10-28T08:52:26.667Z +1.5s CHECK PASS json_replace absent paths and sentinel preserve null {"sentinel":"null","missing":"null"}
+2026-10-28T08:52:26.712Z +1.5s OBSERVE large definition fixture {"nodes":500,"bytes":5237916,"expectedSHA256":"75e05aae7381964e038bbac817fbaecc90bca5607838439256a9f97308689e00"}
+2026-10-28T08:52:27.380Z +2.2s CHECK PASS large 500-node definition with 1 MB authored default and exact large-integer token {"before":{"typed":2,"unreadable":0},"after":{"typed":0,"unreadable":0},"triggerOK":true,"mismatches":[]}
+2026-10-28T08:52:27.381Z +2.2s CHECK PASS independently parsed CHANGELOG text matches checked-in hand recipe byte for byte {"bytes":20938}
+2026-10-28T08:52:27.384Z +2.2s CHECK PASS generated recipe matches published CHANGELOG verbatim
+2026-10-28T08:52:27.386Z +2.2s DONE passed=35 failed=0 observations=1 realTurns=0

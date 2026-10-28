@@ -1,0 +1,501 @@
+{
+  "scenario": "adversarial",
+  "passed": 35,
+  "failed": 0,
+  "observations": 1,
+  "realTurns": [],
+  "checks": [
+    {
+      "id": "malformed JSON in every read column; valid siblings corrected and all damage preserved",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 4,
+          "unreadable": 9
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 9
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "NULL in every JSON column, including a snapshot; nullable session effort remains NULL",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "NULL siblings do not block correction of catalog default, valid pinned or valid failure",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 3,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "CASE guards skip malformed input \"\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "CASE guards skip malformed input \"not-json\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "CASE guards skip malformed input \"\\\"unterminated\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "CASE guards skip malformed input \"[1,\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "CASE guards skip malformed input \"{\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 1
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "mixed node element types are preserved; valid defaults corrected and unresolved node remains discoverable",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "snapshot mixed node array preserved and trigger restored",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "mixed diagnostic types preserved; top provenance corrected and unresolved diagnostic remains discoverable",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "mixed catalog elements preserved while default corrected",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "wrong catalog shape stays discoverable {\"a\":\"minimal\"}",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "wrong catalog shape stays discoverable \"minimal\"",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "wrong catalog shape stays discoverable [\"minimal\",null]",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "object instead of nodes array stays discoverable and valid default corrected",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "missing nodes path is not inserted when a default is corrected",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "missing settings path is not inserted when inference effort corrected",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "decision diagnostics absent preserved without insertion",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "decision diagnostics null preserved without insertion",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "decision diagnostics [] preserved without insertion",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "decision diagnostics {} preserved without insertion",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "non-string sibling efforts keep exact JSON types and authored values",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "settings preserve object and array effort values beside one canonical minimal",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 1,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "receipt and event paths do not create absent defaults or fresh-session properties",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 3,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve {}",
+      "ok": true,
+      "detail": {
+        "sentinel": "{}",
+        "missing": "{}"
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve []",
+      "ok": true,
+      "detail": {
+        "sentinel": "[]",
+        "missing": "[]"
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve [1,2]",
+      "ok": true,
+      "detail": {
+        "sentinel": "[1,2]",
+        "missing": "[1,2]"
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve \"scalar\"",
+      "ok": true,
+      "detail": {
+        "sentinel": "\"scalar\"",
+        "missing": "\"scalar\""
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve 1",
+      "ok": true,
+      "detail": {
+        "sentinel": "1",
+        "missing": "1"
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve true",
+      "ok": true,
+      "detail": {
+        "sentinel": "true",
+        "missing": "true"
+      }
+    },
+    {
+      "id": "json_replace absent paths and sentinel preserve null",
+      "ok": true,
+      "detail": {
+        "sentinel": "null",
+        "missing": "null"
+      }
+    },
+    {
+      "id": "large definition fixture",
+      "ok": null,
+      "detail": {
+        "nodes": 500,
+        "bytes": 5237916,
+        "expectedSHA256": "75e05aae7381964e038bbac817fbaecc90bca5607838439256a9f97308689e00"
+      }
+    },
+    {
+      "id": "large 500-node definition with 1 MB authored default and exact large-integer token",
+      "ok": true,
+      "detail": {
+        "before": {
+          "typed": 2,
+          "unreadable": 0
+        },
+        "after": {
+          "typed": 0,
+          "unreadable": 0
+        },
+        "triggerOK": true,
+        "mismatches": []
+      }
+    },
+    {
+      "id": "independently parsed CHANGELOG text matches checked-in hand recipe byte for byte",
+      "ok": true,
+      "detail": {
+        "bytes": 20938
+      }
+    },
+    {
+      "id": "generated recipe matches published CHANGELOG verbatim",
+      "ok": true
+    }
+  ]
+}
