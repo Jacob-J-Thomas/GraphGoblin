@@ -1,6 +1,6 @@
 import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
 import type { CodexOptions, ThreadOptions } from '@openai/codex-sdk';
-import { isolationDefaults, layerConfig } from './isolation.js';
+import { isolationDefaults, layerConfig, overrideRefusal, table, unplainKey } from './isolation.js';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
@@ -63,7 +63,8 @@ export function sanitizeConfig(value: unknown): ConfigValue | undefined {
     return value.map(sanitizeConfig).filter((v): v is ConfigValue => v !== undefined);
   }
   if (value && typeof value === 'object') {
-    const out: Record<string, ConfigValue> = {};
+    // Authored keys such as `__proto__` stay own keys (QA423-01).
+    const out = table();
     for (const [key, child] of Object.entries(value)) {
       const clean = sanitizeConfig(child);
       if (key && clean !== undefined) out[key] = clean;
@@ -84,6 +85,9 @@ export function clientOptions(
   codexBinary: string | undefined,
   env: Record<string, string> | undefined,
 ): CodexOptions {
+  // A key the loop cannot pass as plain `--config` segments refuses the turn (review round 1).
+  const unplain = unplainKey(options.configOverrides ?? {});
+  if (unplain !== undefined) throw overrideRefusal(unplain);
   const overrides = sanitizeConfig(options.configOverrides ?? {}) as NonNullable<
     CodexOptions['config']
   >;

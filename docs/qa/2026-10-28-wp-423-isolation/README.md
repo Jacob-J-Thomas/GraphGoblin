@@ -275,6 +275,67 @@ All gates ran on the final state, with Node v22.23.4 first on `PATH`, `GG_TEST_P
 4. **One extra CLI run per Codex turn.** The listing took about 0.1 to 0.5 s in the probes, and it also runs for each structured decision call.
 5. **Machine-specific evidence.** The listing and switches were verified on this machine's Codex configuration. A future CLI that changes `mcp list --json` fails turns closed with a message naming the listing.
 6. **Shared files.** `docs/06` changes only the "never leak" paragraph and the `configOverrides` and capabilities rows, kept within the table's column width so that no other row is re-padded. #205 edits the `effort` row of the same table; if its cell grows past 260 characters, Prettier re-pads the whole table there. The CHANGELOG gets one bullet at the top of Unreleased.
+7. **The contract layer drops a top-level `__proto__` key** (outside this package). The harness option schema's `z.record` silently drops a top-level `__proto__` key in `configOverrides`; a nested one survives to the adapter. Such a key is now refused by the adapter, so the silent drop at the contract layer cannot weaken isolation. Refusing it at validation and publication, rather than at the turn, would be a contracts change.
+
+## 9. QA round 1 (independent behaviour QA of `a1991104`: FAIL, QA423-01)
+
+The QA record is [../2026-10-28-wp-423-qa/README.md](../2026-10-28-wp-423-qa/README.md), with its drivers and logs. It ran no real provider turn.
+
+- **Passed:** argument order and layering, node re-enable, every listing failure with recovery, structured and resumed turns, shutdown and recovery, and Claude unchanged.
+- **Native tree termination:** unobservable in its sandbox (D-015, `taskkill` "Access denied").
+- **Defect QA423-01 (P2):** a listed MCP server named `__proto__` got no `mcp_servers.__proto__.enabled=false`, and the turn ran with that server enabled.
+  - **Cause:** the merge in `isolation.ts` built plain objects. Assigning `__proto__` to a plain object changes its prototype instead of adding a key, so the SDK serialised an empty `mcp_servers={}`.
+
+## 10. Review round 1 (independent code review of `a1991104`: CHANGES REQUIRED)
+
+The review record is [REVIEW.md](REVIEW.md). It reproduced QA423-01 through the public harness and widened it:
+
+- **Prototype pollution:** a node override key `review.__proto__.<x>` walked into `Object.prototype` and changed it for the whole process.
+- **Requested fix:** build the configuration from prototype-free storage; reject `__proto__`, `constructor`, `prototype` and any segment that is not a plain TOML key, for listed servers, override keys and features; refuse the turn with the documented code.
+- **Everything else passed:** adapter coverage, and API coverage apart from one unrelated port-collision failure that passed on an isolated rerun. Native force-stop was unobservable in its sandbox.
+
+## 11. Fix for QA423-01 and review round 1
+
+**What changed.** All in `packages/adapter-codex`:
+
+- **Prototype-free tables.** `isolation.ts` builds every configuration table without a prototype (`table()`). That covers the defaults, the server switches, the layering (`expand`, `merge`) and `sanitizeConfig` in `options.ts`. No key can reach a prototype or read an inherited member.
+- **One rule for every segment.** `plainSegment()` accepts one plain TOML key (letters, digits, `_`, `-`) that is not `__proto__`, `constructor` or `prototype`.
+  - **Listed servers** are an array checked in full before any argument is built. A failing name refuses the turn with `HARNESS_TURN_FAILED`, definitely not submitted and resumable after the machine's configuration is fixed.
+  - **Node override keys** are checked before anything is sanitised or merged (`unplainKey()` splits dotted keys as the CLI does and walks nested tables, including tables inside arrays). A failing key refuses the turn with `HARNESS_INVALID_CONFIGURATION`, definitely not submitted. The run records a non-resumable `HARNESS_TURN_FAILED` with that adapter code.
+  - **The feature list** is a constant of plain keys. A node's `features.<x>` override passes through the same override check.
+- **Unchanged by design:** `toString` and similar names are ordinary keys and are passed as such, in prototype-free tables.
+
+**Red before.** On `a1991104`, with `isolation.ts` and `options.ts` restored and the final tests in place, 12 tests failed ([red-before-round1.log.txt](red-before-round1.log.txt)):
+
+- `does not start the turn when a listed server is named __proto__`, `… named constructor` and `… named prototype`;
+- `refuses the turn for an override with a dotted __proto__ segment`, `… a __proto__ server`, `… a constructor server`, `… a prototype feature`, `… a key with a space`, `… a key with a quote`, `… an empty segment` and `… a key inside an array table`;
+- `records a refused override key as a pinned, non-resumable run failure` (engine path).
+
+The dotted `__proto__` case also asserts that `Object.prototype` gains no key. The test file's `afterEach` removes that key, because the unfixed code adds it.
+
+**Guards that pass before and after:**
+
+- `switches off a listed server named toString like any other`;
+- the listing table cases `refuses to start on … "team docs"` and `… "say\"hi\""`.
+
+**Gates:**
+
+| Gate                                                                | Result                                               |
+| ------------------------------------------------------------------- | ---------------------------------------------------- |
+| adapter-codex `test:coverage`                                       | 613 passed, 4 skipped; lines 99.41%, branches 95.51% |
+| adapter-codex typecheck and lint                                    | clean                                                |
+| `pnpm build`                                                        | passed                                               |
+| API tests that drive the Codex harness (`--maxWorkers=2`, 10 files) | 491 passed                                           |
+
+The API tests were run for confidence only: no fake CLI changed in this round, so the full API coverage run was not required.
+
+**Docs.**
+
+- **ADR-0063:** the segment rule and both refusal codes.
+- **docs/06:** one paragraph after the isolation paragraph.
+- **Guide:** 02 gets a sentence; 07 gets an extended row and a new row for the refused override key.
+- **CHANGELOG:** one sentence in the existing bullet.
+- **Whitespace:** trailing blank lines removed from two logs (the review's `git diff --check` note).
 
 ## Files
 

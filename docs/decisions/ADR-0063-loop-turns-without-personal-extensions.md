@@ -41,7 +41,14 @@ On the owner's machine `multi_agent` and `goals` are set in the personal `[featu
 
 A node turns one of the machine's servers back on with `{"mcp_servers": {"<name>": {"enabled": true}}}`, and a server of its own with `mcp_servers.<name>.*` as before. `{"features": {"plugins": true}}` turns all of the machine's plugins back on, and `{"features": {"multi_agent": true}}` sub-agents. The CLI cannot enable a single plugin while the plugin feature is off.
 
-If the listing fails, or a listed name cannot be written as one `--config` key segment, the turn does not start: `HARNESS_TURN_FAILED`, or `HARNESS_NOT_INSTALLED` when the CLI is missing, recorded as definitely not submitted. Starting the turn anyway could start servers the decision excludes. The listing reuses the preflight timeout (15 s by default) and the turn's abort signal.
+Every key segment the loop passes through `--config` must be one plain TOML key: letters, digits, `_` or `-`. It must also not be `__proto__`, `constructor` or `prototype`, names a JavaScript object treats as its prototype rather than as data. This applies to listed server names and to the node's override keys, with dotted keys split as the CLI splits them. The configuration is built from prototype-free tables.
+
+QA423-01 found a listed server named `__proto__` left enabled. The review then found that an override key `x.__proto__.y` changed `Object.prototype`. Both now refuse the turn before anything is merged, as follows:
+
+- **The listing fails, or a listed name breaks the rule:** `HARNESS_TURN_FAILED` (or `HARNESS_NOT_INSTALLED` when the CLI is missing), recorded as definitely not submitted and resumable. The cause is the machine's configuration, so the owner can fix it and resume. Starting the turn anyway could start servers the decision excludes.
+- **An override key breaks the rule:** the adapter refuses with `HARNESS_INVALID_CONFIGURATION`, a pinned refusal, definitely not submitted. The run records `HARNESS_TURN_FAILED` with that adapter code and is not resumable: the node itself must change.
+
+The listing reuses the preflight timeout (15 s by default) and the turn's abort signal.
 
 The Claude adapter already applies the same policy. Its launch flags are `--safe-mode`, `--setting-sources ""` and `--strict-mcp-config`. Its runtime check refuses a session that reports any MCP server, any plugin other than the two CLI built-ins, or any non-bundled skill. CLI 2.1.308's own debug log for a turn with these flags reports claude.ai connectors disabled, installed plugins and their hooks not loaded, 0 hooks registered and skill directory discovery skipped. The owner's user-scope MCP server and claude.ai connectors did not start. No Claude change was needed.
 

@@ -201,6 +201,8 @@ Every behaviour-affecting setting a node has is passed as a per-thread option on
 
 The machine's extensions are switched off for every loop turn ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory. It starts the turn with every listed MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.plugins`, `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; servers are therefore disabled by name.
 
+Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. A listed name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). An override key that breaks it is refused by the adapter with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted.
+
 A loop turn still inherits from the machine:
 
 - the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;

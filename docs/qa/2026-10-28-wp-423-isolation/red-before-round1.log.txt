@@ -1,0 +1,130 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-a6d410b9ee903e1ee/packages/adapter-codex
+
+ ❯ src/isolation.test.ts (27 tests | 12 failed) 3230ms
+   ❯ Codex loop turns without the machine personal extensions (17)
+     × does not start the turn when a listed server is named __proto__ 182ms
+     × does not start the turn when a listed server is named constructor 171ms
+     × does not start the turn when a listed server is named prototype 238ms
+     × refuses the turn for an override with a dotted __proto__ segment 205ms
+     × refuses the turn for an override with a __proto__ server 179ms
+     × refuses the turn for an override with a constructor server 185ms
+     × refuses the turn for an override with a prototype feature 174ms
+     × refuses the turn for an override with a key with a space 190ms
+     × refuses the turn for an override with a key with a quote 178ms
+     × refuses the turn for an override with an empty segment 94ms
+     × refuses the turn for an override with a key inside an array table 181ms
+   × records a refused override key as a pinned, non-resumable run failure 61ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > does not start the turn when a listed server is named __proto__
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > does not start the turn when a listed server is named constructor
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > does not start the turn when a listed server is named prototype
+AssertionError: promise resolved "{ finalText: 'Recorded', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "finalText": "Recorded",
++   "items": [
++     {
++       "detail": {
++         "id": "answer",
++         "text": "Recorded",
++         "type": "agent_message",
++       },
++       "id": "answer",
++       "summary": "Recorded",
++       "type": "message",
++     },
++   ],
++   "usage": {
++     "cachedInputTokens": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "reasoningOutputTokens": 0,
++   },
+  }
+
+ ❯ src/isolation.test.ts:178:35
+    176|     async (name) => {
+    177|       const { files, session } = await fakeTurn(['normal', name, 'othe…
+    178|       await expect(session.result).rejects.toMatchObject({
+       |                                   ^
+    179|         code: 'HARNESS_TURN_FAILED',
+    180|         submission: 'definitely-not-submitted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a dotted __proto__ segment
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a __proto__ server
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a constructor server
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a prototype feature
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a key with a space
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a key with a quote
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with an empty segment
+ FAIL  src/isolation.test.ts > Codex loop turns without the machine personal extensions > refuses the turn for an override with a key inside an array table
+AssertionError: expected undefined to match object { …(4) }
+
+- Expected:
+{
+  "code": "HARNESS_INVALID_CONFIGURATION",
+  "message": StringMatching /^The Codex config override key ".+" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, "_" or "-", and not __proto__, constructor or prototype\.$/,
+  "retriable": false,
+  "submission": "definitely-not-submitted",
+}
+
++ Received:
+undefined
+
+ ❯ src/isolation.test.ts:229:23
+    227|       // A turn that did start (the defect) is awaited so no fake CLI …
+    228|       await started?.catch(() => undefined);
+    229|       expect(refusal).toMatchObject({
+       |                       ^
+    230|         code: 'HARNESS_INVALID_CONFIGURATION',
+    231|         retriable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/isolation.test.ts > records a refused override key as a pinned, non-resumable run failure
+AssertionError: expected { code: 'HARNESS_NOT_INSTALLED', …(4) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TURN_FAILED",
+-   "details": {
+-     "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+-   },
++   "code": "HARNESS_NOT_INSTALLED",
+    "inference": {
+      "submission": "definitely-not-submitted",
+    },
+-   "message": StringContaining "harness turn failed: The Codex config override key \"features.prototype\" cannot be passed through --config",
+-   "resumable": false,
++   "message": "Codex could not list the machine's MCP servers, so the turn did not start: the CLI did not run (spawn %USERPROFILE%\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe ENOENT).",
++   "resumable": true,
+  }
+
+ ❯ src/isolation.test.ts:293:25
+    291|     );
+    292|     const run = await e.runToIdle(version.loopId);
+    293|     expect(run.failure).toMatchObject({
+       |                         ^
+    294|       code: 'HARNESS_TURN_FAILED',
+    295|       message: expect.stringContaining(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 15 passed (27)
+   Start at  02:45:11
+   Duration  5.87s (tests 58%, import 22%, transform 20%)

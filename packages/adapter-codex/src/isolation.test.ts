@@ -3,6 +3,7 @@ import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { CliResult, CliRunner } from './cli.js';
 import { CodexHarness } from './harness.js';
 
@@ -55,6 +56,8 @@ const directories: string[] = [];
 afterEach(async () => {
   for (const directory of directories.splice(0))
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+  // Undo the prototype change the review's reproduction makes on code without the fix.
+  Reflect.deleteProperty(Object.prototype, 'gg_rev423_marker');
 });
 
 async function workspace(): Promise<string> {
@@ -77,13 +80,8 @@ function request(workingDirectory: string, configOverrides?: Record<string, unkn
   };
 }
 
-/** One turn through the real SDK and the fake CLI; the fake's machine has `servers` configured. */
-async function fakeTurn(
-  servers: string[],
-  configOverrides?: Record<string, unknown>,
-  fake: Record<string, string> = {},
-  resumeId?: string,
-) {
+/** The real SDK on the fake CLI, whose machine has `servers` configured. */
+async function fakeHarness(servers: string[], fake: Record<string, string> = {}) {
   const directory = await workspace();
   const files = { argv: join(directory, 'argv.json'), listing: join(directory, 'listing.json') };
   const harness = new CodexHarness({
@@ -97,6 +95,17 @@ async function fakeTurn(
       ...fake,
     },
   });
+  return { directory, files, harness };
+}
+
+/** One turn through the real SDK and the fake CLI; the fake's machine has `servers` configured. */
+async function fakeTurn(
+  servers: string[],
+  configOverrides?: Record<string, unknown>,
+  fake: Record<string, string> = {},
+  resumeId?: string,
+) {
+  const { directory, files, harness } = await fakeHarness(servers, fake);
   const signal = new AbortController().signal;
   const session = resumeId
     ? harness.resume(resumeId, request(directory, configOverrides), signal)
@@ -160,6 +169,78 @@ describe('Codex loop turns without the machine personal extensions', () => {
     expect(overridden).toContain('features.goals=false');
   }, 30_000);
 
+  // QA423-01: a listed server whose name is a JavaScript prototype member must never be left
+  // enabled; the loop refuses the turn instead of passing such a name.
+  it.each(['__proto__', 'constructor', 'prototype'])(
+    'does not start the turn when a listed server is named %s',
+    async (name) => {
+      const { files, session } = await fakeTurn(['normal', name, 'other']);
+      await expect(session.result).rejects.toMatchObject({
+        code: 'HARNESS_TURN_FAILED',
+        submission: 'definitely-not-submitted',
+        message: `Codex could not list the machine's MCP servers, so the turn did not start: the server name "${name}" cannot be switched off through --config.`,
+      });
+      expect(existsSync(files.argv)).toBe(false);
+    },
+    30_000,
+  );
+
+  it('switches off a listed server named toString like any other', async () => {
+    const { files, session } = await fakeTurn(['normal', 'toString'], {
+      'mcp_servers.normal.enabled': true,
+    });
+    await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
+    expect(await configArgs(files.argv)).toEqual([
+      'mcp_servers.normal.enabled=true',
+      'mcp_servers.toString.enabled=false',
+      ...DEFAULTS,
+      ...THREAD,
+    ]);
+  }, 30_000);
+
+  // Review round 1: a node override key is authored data. A segment that is not one plain key,
+  // or is a prototype member, refuses the turn; none reaches the merge, so none can change
+  // Object.prototype (`review.__proto__.<x>` did before).
+  it.each([
+    ['a dotted __proto__ segment', { 'review.__proto__.gg_rev423_marker': true }],
+    ['a __proto__ server', JSON.parse('{"mcp_servers":{"__proto__":{"enabled":true}}}')],
+    ['a constructor server', { mcp_servers: { constructor: { enabled: true } } }],
+    ['a prototype feature', { 'features.prototype': true }],
+    ['a key with a space', { mcp_servers: { 'team docs': { enabled: true } } }],
+    ['a key with a quote', { 'features."plugins"': true }],
+    ['an empty segment', { 'features..plugins': true }],
+    ['a key inside an array table', { list: [{ ok: 1 }, { 'not plain': 2 }] }],
+  ] as const)(
+    'refuses the turn for an override with %s',
+    async (_case, overrides) => {
+      const { directory, files, harness } = await fakeHarness(['docs']);
+      let refusal: unknown;
+      let started: Promise<unknown> | undefined;
+      try {
+        started = harness.start(
+          request(directory, overrides as Record<string, unknown>),
+          new AbortController().signal,
+        ).result;
+      } catch (error) {
+        refusal = error;
+      }
+      // A turn that did start (the defect) is awaited so no fake CLI outlives the test.
+      await started?.catch(() => undefined);
+      expect(refusal).toMatchObject({
+        code: 'HARNESS_INVALID_CONFIGURATION',
+        retriable: false,
+        submission: 'definitely-not-submitted',
+        message: expect.stringMatching(
+          /^The Codex config override key ".+" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, "_" or "-", and not __proto__, constructor or prototype\.$/,
+        ),
+      });
+      expect(Object.hasOwn(Object.prototype, 'gg_rev423_marker')).toBe(false);
+      expect(existsSync(files.listing)).toBe(false);
+      expect(existsSync(files.argv)).toBe(false);
+    },
+    30_000,
+  );
+
   it('switches them off on a resumed conversation too', async () => {
     const { files, session } = await fakeTurn(['node_repl'], undefined, {}, 'argv-thread');
     await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
@@ -185,6 +266,46 @@ describe('Codex loop turns without the machine personal extensions', () => {
     expect(existsSync(files.argv)).toBe(false);
   }, 30_000);
 });
+
+it('records a refused override key as a pinned, non-resumable run failure', async () => {
+  const e = await createTestEngine();
+  const { files, harness } = await fakeHarness(['docs']);
+  e.ports.harnesses.codex = harness;
+  try {
+    const version = e.publish(
+      singleNodeLoop('Refused override key', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          model: 'gpt-6-luna',
+          effort: 'low',
+          harnessOptions: {
+            sandbox: 'read-only',
+            approval: 'never',
+            configOverrides: { 'features.prototype': true },
+          },
+          prompt: { template: 'The complete authored task' },
+        },
+      }),
+    );
+    const run = await e.runToIdle(version.loopId);
+    expect(run.failure).toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      message: expect.stringContaining(
+        'harness turn failed: The Codex config override key "features.prototype" cannot be passed through --config',
+      ),
+      resumable: false,
+      details: { adapterCode: 'HARNESS_INVALID_CONFIGURATION' },
+      inference: { submission: 'definitely-not-submitted' },
+    });
+    await expect(e.manager.resume(run.id)).rejects.toThrow();
+    expect(existsSync(files.listing)).toBe(false);
+    expect(existsSync(files.argv)).toBe(false);
+  } finally {
+    e.manager.stop();
+  }
+}, 60_000);
 
 describe('the MCP listing before each turn', () => {
   /** A harness whose listing is answered by `respond`; the turn itself would need a missing CLI. */
@@ -230,6 +351,16 @@ describe('the MCP listing before each turn', () => {
       listed('[{"name":"docs"},{"name":"team.docs"}]'),
       'HARNESS_TURN_FAILED',
       'the server name "team.docs" cannot be switched off through --config.',
+    ],
+    [
+      listed('[{"name":"docs"},{"name":"team docs"}]'),
+      'HARNESS_TURN_FAILED',
+      'the server name "team docs" cannot be switched off through --config.',
+    ],
+    [
+      listed('[{"name":"say\\"hi\\""}]'),
+      'HARNESS_TURN_FAILED',
+      'the server name "say\\"hi\\"" cannot be switched off through --config.',
     ],
   ] as const)('refuses to start on %j', async (result, code, reason) => {
     const directory = await workspace();

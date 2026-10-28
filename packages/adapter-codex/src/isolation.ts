@@ -22,9 +22,62 @@ import type { CliCommand, CliRunner } from './cli.js';
  * `configOverrides` (so a node turns one server back on with `mcp_servers.<name>.enabled=true`,
  * or every plugin with `features.plugins=true`), then the SDK's thread options, which no override
  * can weaken.
+ *
+ * Every key segment that reaches `--config`, a listed server name or a node override key, must be
+ * one plain TOML key (letters, digits, `_`, `-`) and not `__proto__`, `constructor` or
+ * `prototype` (QA423-01, review round 1). Anything else refuses the turn before it starts, and
+ * the configuration is built from prototype-free tables.
  */
 
 type Config = NonNullable<CodexOptions['config']>;
+type ConfigValue = Config[string];
+
+const isTable = (value: unknown): value is Config =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** Names a JavaScript object treats as its prototype or constructor rather than as data. */
+const PROTOTYPE_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** One plain TOML key the loop may pass through `--config`. */
+export function plainSegment(segment: string): boolean {
+  return /^[A-Za-z0-9_-]+$/.test(segment) && !PROTOTYPE_SEGMENTS.has(segment);
+}
+
+/**
+ * The first key path in an authored configuration with a segment that is not plain, if any.
+ * Dotted keys are split as the CLI splits them; tables inside arrays are checked too.
+ */
+export function unplainKey(value: unknown, prefix = ''): string | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = unplainKey(item, prefix);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (!isTable(value)) return undefined;
+  for (const [key, child] of Object.entries(value)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (!key.split('.').every(plainSegment)) return path;
+    const found = unplainKey(child, path);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+/** A node override the loop refuses to pass: the pinned definition cannot run as authored. */
+export function overrideRefusal(path: string): Error {
+  return Object.assign(
+    new Error(
+      `The Codex config override key ${JSON.stringify(path.slice(0, 200))} cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, "_" or "-", and not __proto__, constructor or prototype.`,
+    ),
+    {
+      code: 'HARNESS_INVALID_CONFIGURATION',
+      retriable: false,
+      submission: 'definitely-not-submitted' as const,
+    },
+  );
+}
 
 /**
  * Features that bring the machine's own installs, account connectors or personal state into a
@@ -42,43 +95,55 @@ export const ISOLATED_FEATURES = [
   'goals',
 ] as const;
 
+/**
+ * A configuration table whose keys are all its own (QA423-01). Server names and authored keys
+ * such as `__proto__`, `constructor` or `toString` are ordinary keys to the CLI. A table without
+ * a prototype stores and reads them as ordinary keys; on a plain object, assigning `__proto__`
+ * changes the prototype instead and the key is lost, and the other names read inherited members.
+ */
+export function table(entries: Iterable<readonly [string, ConfigValue]> = []): Config {
+  const out = Object.create(null) as Config;
+  for (const [key, value] of entries) out[key] = value;
+  return out;
+}
+
 /** The defaults every loop turn starts from, before the node's overrides. */
 export function isolationDefaults(): Config {
-  return {
-    features: Object.fromEntries(ISOLATED_FEATURES.map((name) => [name, false])),
-    notify: [],
-  };
+  return table([
+    ['features', table(ISOLATED_FEATURES.map((name) => [name, false] as const))],
+    ['notify', []],
+  ]);
 }
 
-/** `mcp_servers.<name>.enabled=false` for each server the machine configures. */
+/** `mcp_servers.<name>.enabled=false` for each server the machine configures, in listed order. */
 export function serverSwitches(names: readonly string[]): Config {
   return names.length
-    ? { mcp_servers: Object.fromEntries(names.map((name) => [name, { enabled: false }])) }
-    : {};
+    ? table([
+        ['mcp_servers', table(names.map((name) => [name, table([['enabled', false]])] as const))],
+      ])
+    : table();
 }
-
-const isTable = (value: unknown): value is Config =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Dotted keys become nested tables, as the CLI splits every `--config` key on dots. */
 function expand(config: Config): Config {
-  const out: Config = {};
+  const out = table();
   for (const [key, raw] of Object.entries(config)) {
     const value = isTable(raw) ? expand(raw) : raw;
     const path = key.split('.');
     const leaf = path.pop()!;
-    let table = out;
+    let current = out;
     for (const part of path) {
-      const next = table[part];
-      table = table[part] = isTable(next) ? next : {};
+      const next = current[part];
+      current = current[part] = isTable(next) ? next : table();
     }
-    table[leaf] = isTable(value) && isTable(table[leaf]) ? merge(table[leaf], value) : value;
+    const existing = current[leaf];
+    current[leaf] = isTable(value) && isTable(existing) ? merge(existing, value) : value;
   }
   return out;
 }
 
 function merge(base: Config, override: Config): Config {
-  const out: Config = { ...base };
+  const out = table(Object.entries(base));
   for (const [key, value] of Object.entries(override)) {
     const current = out[key];
     out[key] = isTable(current) && isTable(value) ? merge(current, value) : value;
@@ -91,7 +156,7 @@ function merge(base: Config, override: Config): Config {
  * tables merge, as the CLI layers its own configuration.
  */
 export function layerConfig(...layers: Config[]): Config {
-  return layers.reduce<Config>((acc, layer) => merge(acc, expand(layer)), {});
+  return layers.reduce<Config>((acc, layer) => merge(acc, expand(layer)), table());
 }
 
 /** The CLI's own words for a failure: its non-empty lines joined, bounded to 300 characters. */
@@ -103,9 +168,6 @@ function excerpt(text: string): string {
     .join(' | ')
     .slice(0, 300);
 }
-
-/** A server name usable as one `--config` key segment. */
-const SERVER_NAME = /^[A-Za-z0-9_-]+$/;
 
 function listingFailure(
   code: 'HARNESS_NOT_INSTALLED' | 'HARNESS_TURN_FAILED',
@@ -166,7 +228,9 @@ export async function configuredServers(
   )
     throw listingFailure('HARNESS_TURN_FAILED', 'mcp list printed an unexpected shape.');
   const names = listed.map((entry) => (entry as { name: string }).name);
-  const unusable = names.find((name) => !SERVER_NAME.test(name));
+  // Validated before any argument is built: a name the loop cannot pass as one plain key stops
+  // the turn rather than leaving that server enabled (QA423-01).
+  const unusable = names.find((name) => !plainSegment(name));
   if (unusable !== undefined)
     throw listingFailure(
       'HARNESS_TURN_FAILED',
