@@ -1,0 +1,161 @@
+## codex --version
+codex-cli 0.160.0
+
+## codex exec --help: configuration switches
+-c, --config <key=value>
+--enable <FEATURE>
+--disable <FEATURE>
+--strict-config
+-p, --profile <CONFIG_PROFILE_V2>
+--ignore-user-config
+
+## codex exec --help: --ignore-user-config text
+Do not load `$CODEX_HOME/config.toml`; auth still uses `CODEX_HOME`
+
+## mcp list --json (no override)
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c mcp_servers={}
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c mcp_servers=[]
+{"exit":1,"error":"Error: failed to load bootstrap configuration | Caused by: | invalid type: sequence, expected a map | in `mcp_servers`"}
+
+## mcp list --json -c mcp_servers.node_repl.enabled=false
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:off"]
+
+## mcp list --json -c mcp_servers.unknown_gg423.enabled=false
+{"exit":1,"error":"Error: failed to load bootstrap configuration | Caused by: | invalid transport | in `mcp_servers.unknown_gg423`"}
+
+## mcp list --json -c mcp_servers.node_repl.enabled=false -c mcp_servers.node_repl.enabled=true
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c mcp_servers.node_repl.enabled=true -c mcp_servers.node_repl.enabled=false
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:off"]
+
+## mcp list --json -c mcp_servers.node_repl.enabled=false -c mcp_servers.node_repl={enabled=true}
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c features.apps=false
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c features.plugins=false
+["node_repl:on"]
+
+## mcp list --json -c plugins."graphgoblin@graphgoblin-local".enabled=false
+["codex_app:off","cua_repl:on","graphgoblin:on","node_repl:on"]
+
+## mcp list --json -c plugins.graphgoblin@graphgoblin-local.enabled=false
+["codex_app:off","cua_repl:on","node_repl:on"]
+
+## mcp list --json -c features.plugins=false -c plugins.graphgoblin@graphgoblin-local.enabled=true
+["node_repl:on"]
+
+## mcp list --json -c features.plugins=false -c features.apps=false -c features.memories=false -c features.hooks=false
+["node_repl:on"]
+
+## mcp list --json -c features.plugins=false -c features.apps=false -c features.memories=false -c features.hooks=false -c mcp_servers.node_repl.enabled=false
+["node_repl:off"]
+
+## plugin list --json (no override)
+{"installed":28,"enabledByMarketplace":{"personal":1,"openai-primary-runtime":5,"openai-bundled":6,"graphgoblin-local":1,"openai-curated-remote":15}}
+
+## plugin list --json -c plugins={}
+{"installed":28,"enabledByMarketplace":{"personal":1,"openai-primary-runtime":5,"openai-bundled":6,"graphgoblin-local":1,"openai-curated-remote":15}}
+
+## plugin list --json -c features.plugins=false
+{"installed":0,"enabledByMarketplace":{}}
+
+## plugin marketplace list (no override)
+{"marketplaces":["personal","openai-primary-runtime","openai-bundled","openai-curated","graphgoblin-local"]}
+
+## plugin marketplace list -c marketplaces={}
+{"marketplaces":["personal","openai-primary-runtime","openai-bundled","openai-curated","graphgoblin-local"]}
+
+## plugin marketplace list -c features.plugins=false
+{"output":"No plugin marketplaces in scope."}
+
+## features list: where the machine configuration differs from the CLI defaults (empty CODEX_HOME)
+{"memories":{"default":"false","machine":"true"},"prevent_idle_sleep":{"default":"false","machine":"true"}}
+
+## features list (CLI defaults, empty CODEX_HOME)
+{"plugins":"true","apps":"true","memories":"false","hooks":"true","multi_agent":"true","goals":"true","code_mode_host":"true","remote_plugin":"true"}
+
+## features list (machine configuration)
+{"plugins":"true","apps":"true","memories":"true","hooks":"true","multi_agent":"true","goals":"true","code_mode_host":"true","remote_plugin":"true"}
+
+## features list -c features.plugins=false -c features.apps=false -c features.memories=false -c features.hooks=false
+{"plugins":"false","apps":"false","memories":"false","hooks":"false","multi_agent":"true","goals":"true","code_mode_host":"true","remote_plugin":"true"}
+
+## project layer: mcp list --json run in the trusted project
+["home_server:on","project_server:on"]
+
+## project layer: mcp list --json run elsewhere
+["home_server:on"]
+
+## project layer: codex -C <project> mcp list --json run elsewhere
+["home_server"]
+
+## dry run, machine configuration, no override
+codex.exe 29028
+  conhost.exe 49092
+  node_repl.exe 35884
+    conhost.exe 35728
+      RadeonSoftware.exe 61084
+  node.exe 46760
+    conhost.exe 18924
+    node_repl.exe 45808
+  cmd.exe 53584
+    conhost.exe 37952
+    node.exe 15064
+  node.exe 4376
+    conhost.exe 58740
+
+## dry run, -c features.plugins=false only
+codex.exe 58644
+  conhost.exe 31524
+  node_repl.exe 34560
+    conhost.exe 12524
+
+## dry run, -c mcp_servers.node_repl.enabled=false only
+codex.exe 54064
+  conhost.exe 20832
+  node.exe 58164
+    conhost.exe 27728
+    node_repl.exe 47956
+  cmd.exe 8932
+    conhost.exe 15492
+    node.exe 25720
+  node.exe 28432
+    conhost.exe 2804
+
+## dry run, the isolation defaults and mcp_servers.node_repl.enabled=false
+codex.exe 45944
+  conhost.exe 9388
+
+## dry run, temporary CODEX_HOME with a trusted project: exec --cd <project> from another process cwd (two ping.exe: home and project servers)
+codex.exe 37920
+  conhost.exe 10568
+  PING.EXE 57288
+    conhost.exe 58608
+  PING.EXE 54784
+    conhost.exe 30088
+  git.exe 9044
+    conhost.exe 28724
+    git.exe 33660
+      git.exe 42512
+        git-remote-https.exe 58044
+      git.exe 30528
+
+## dry run, temporary CODEX_HOME: exec --cd <elsewhere> from the project as process cwd (one ping.exe: home server only)
+codex.exe 25184
+  conhost.exe 26792
+  PING.EXE 42744
+    conhost.exe 39036
+  git.exe 25820
+    conhost.exe 3044
+    git.exe 50656
+      git.exe 6488
+        git-remote-https.exe 34716
+      git.exe 41240
+

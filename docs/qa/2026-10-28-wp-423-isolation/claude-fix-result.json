@@ -1,0 +1,38 @@
+{
+  "scenario": "claude-fix",
+  "passed": 1,
+  "failed": 1,
+  "realTurns": [
+    {
+      "harness": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "label": "fix",
+      "runId": "01M60EHAE7Z3N45ZZRGS837QEK"
+    }
+  ],
+  "checks": [
+    {
+      "id": "the run succeeded",
+      "ok": true,
+      "detail": {
+        "status": "succeeded"
+      }
+    },
+    {
+      "id": "no process other than conhost.exe ran under the turn CLI",
+      "ok": false,
+      "detail": {
+        "names": [
+          "conhost.exe",
+          "reg.exe",
+          "where.exe",
+          "conhost.exe",
+          "claude.exe",
+          "conhost.exe"
+        ]
+      }
+    }
+  ],
+  "label": "fix"
+}
