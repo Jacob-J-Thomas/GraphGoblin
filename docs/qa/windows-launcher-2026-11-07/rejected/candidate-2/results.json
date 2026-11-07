@@ -1,0 +1,384 @@
+{
+  "since": "2026-11-07T20:13:20.094Z",
+  "endedAt": "2026-11-07T20:14:58.881Z",
+  "repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+  "runRoot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z",
+  "results": [
+    {
+      "name": "L01-L03 cold warm concurrent native launch",
+      "startedAt": "2026-11-07T20:13:20.732Z",
+      "detail": {
+        "oldPid": 369552,
+        "concurrentPid": 373864,
+        "clicks": [
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 373412,
+            "startedAt": "2026-11-07T20:13:31.341Z",
+            "exitAt": "2026-11-07T20:13:44.339Z",
+            "endedAt": "2026-11-07T20:13:44.339Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 275264,
+            "startedAt": "2026-11-07T20:13:31.346Z",
+            "exitAt": "2026-11-07T20:13:38.067Z",
+            "endedAt": "2026-11-07T20:13:38.067Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 366576,
+            "startedAt": "2026-11-07T20:13:31.352Z",
+            "exitAt": "2026-11-07T20:13:42.727Z",
+            "endedAt": "2026-11-07T20:13:42.727Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 372984,
+            "startedAt": "2026-11-07T20:13:31.365Z",
+            "exitAt": "2026-11-07T20:13:41.161Z",
+            "endedAt": "2026-11-07T20:13:41.161Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          }
+        ]
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:13:49.359Z"
+    },
+    {
+      "name": "L04 wrong HTTP listener survives refusal",
+      "startedAt": "2026-11-07T20:13:49.360Z",
+      "detail": {
+        "requests": [
+          "/healthz"
+        ],
+        "output": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\2-wrong-listener\\GraphGoblin.exe.json"
+          ],
+          "pid": 226952,
+          "startedAt": "2026-11-07T20:13:49.375Z",
+          "exitAt": "2026-11-07T20:13:51.266Z",
+          "endedAt": "2026-11-07T20:13:51.266Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\2-wrong-listener\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:13:51.268Z"
+    },
+    {
+      "name": "L05 wrong genuine store and public config refused",
+      "startedAt": "2026-11-07T20:13:51.269Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate-v2\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\3-correct-store\\\\GraphGoblin.exe.json\"],\"pid\":374044,\"startedAt\":\"2026-11-07T20:13:51.284Z\",\"exitAt\":\"2026-11-07T20:13:54.514Z\",\"endedAt\":\"2026-11-07T20:13:54.515Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\3-correct-store\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\3-correct-store\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:206:56\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:152:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:205:3",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:13:57.574Z"
+    },
+    {
+      "name": "L06 separate data dirs sharing physical DB refuse second owner",
+      "startedAt": "2026-11-07T20:13:57.575Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate-v2\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\4-db-owner\\\\GraphGoblin.exe.json\"],\"pid\":374356,\"startedAt\":\"2026-11-07T20:13:57.589Z\",\"exitAt\":\"2026-11-07T20:14:00.709Z\",\"endedAt\":\"2026-11-07T20:14:00.709Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\4-db-owner\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\4-db-owner\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:216:51\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:152:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:215:3",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:03.211Z"
+    },
+    {
+      "name": "L06b hard-linked DB spellings cannot create two owners",
+      "startedAt": "2026-11-07T20:14:03.212Z",
+      "detail": {
+        "files": [
+          {
+            "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\store\\graphgoblin.db",
+            "dev": 2894493802,
+            "ino": 16044073678494348,
+            "nlink": 2,
+            "size": 360448
+          },
+          {
+            "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\alias\\same-store.db",
+            "dev": 2894493802,
+            "ino": 16044073678494348,
+            "nlink": 2,
+            "size": 360448
+          }
+        ],
+        "first": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\GraphGoblin.exe.json"
+          ],
+          "pid": 372868,
+          "startedAt": "2026-11-07T20:14:11.429Z",
+          "exitAt": "2026-11-07T20:14:14.694Z",
+          "endedAt": "2026-11-07T20:14:14.694Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\gateway.log. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        "second": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\6-hardlink-contender\\GraphGoblin.exe.json"
+          ],
+          "pid": 267312,
+          "startedAt": "2026-11-07T20:14:14.700Z",
+          "exitAt": "2026-11-07T20:14:21.133Z",
+          "endedAt": "2026-11-07T20:14:21.133Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\6-hardlink-contender\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\6-hardlink-contender\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        "owners": [
+          {
+            "config": {
+              "Repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+              "Node": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+              "DataDir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\store",
+              "Port": 4860,
+              "Environment": {
+                "GG_REQUIRE_API_KEY": "false",
+                "GG_SHUTDOWN_GRACE_MS": "600",
+                "GG_TIMER_POLL_MS": "50",
+                "GG_JEV_API_KEY": "",
+                "GG_LOG_LEVEL": "info"
+              },
+              "StartupTimeoutSeconds": 15,
+              "WindowTimeoutSeconds": 5,
+              "file": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\5-hardlink-original\\GraphGoblin.exe.json"
+            },
+            "health": {
+              "unreachable": "fetch failed"
+            }
+          },
+          {
+            "config": {
+              "Repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+              "Node": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+              "DataDir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\6-hardlink-contender\\store",
+              "Port": 4861,
+              "Environment": {
+                "GG_REQUIRE_API_KEY": "false",
+                "GG_SHUTDOWN_GRACE_MS": "600",
+                "GG_TIMER_POLL_MS": "50",
+                "GG_JEV_API_KEY": "",
+                "GG_LOG_LEVEL": "info",
+                "GG_DB_URL": "file:C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-2026-11-07T20-13-20-090Z/5-hardlink-original/alias/same-store.db"
+              },
+              "StartupTimeoutSeconds": 15,
+              "WindowTimeoutSeconds": 5,
+              "file": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\6-hardlink-contender\\GraphGoblin.exe.json"
+            },
+            "health": {
+              "unreachable": "fetch failed"
+            }
+          }
+        ]
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:21.138Z"
+    },
+    {
+      "name": "L07 stale owner reclaimed malformed owner retained",
+      "startedAt": "2026-11-07T20:14:21.139Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:14:27.213Z",
+          "status": 200,
+          "identity": "77c36d587a236b6ca17223c60ea449bf80864bfd5c6795255b0336eecc65285b",
+          "pid": 266124,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "dead": {
+          "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+          "args": [
+            "-e",
+            "process.exit(0)"
+          ],
+          "pid": 277824,
+          "startedAt": "2026-11-07T20:14:21.146Z",
+          "exitAt": "2026-11-07T20:14:21.237Z",
+          "endedAt": "2026-11-07T20:14:21.237Z",
+          "code": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "eofFailure": false
+        },
+        "output": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\8-malformed\\GraphGoblin.exe.json"
+          ],
+          "pid": 373320,
+          "startedAt": "2026-11-07T20:14:28.659Z",
+          "exitAt": "2026-11-07T20:14:32.087Z",
+          "endedAt": "2026-11-07T20:14:32.087Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\8-malformed\\gateway.log. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\8-malformed\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [
+        {
+          "port": 4860,
+          "result": "retained",
+          "error": "Expected property name or '}' in JSON at position 1 (line 1 column 2)"
+        }
+      ],
+      "endedAt": "2026-11-07T20:14:32.089Z"
+    },
+    {
+      "name": "L08 configuration runtime and child startup failures",
+      "startedAt": "2026-11-07T20:14:32.090Z",
+      "detail": [
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\9-invalid-env\\GraphGoblin.exe.json"
+          ],
+          "pid": 371752,
+          "startedAt": "2026-11-07T20:14:32.162Z",
+          "exitAt": "2026-11-07T20:14:33.981Z",
+          "endedAt": "2026-11-07T20:14:33.981Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "The Node 22 runtime or launcher configuration is invalid. Check the configured runtime and GG_* overrides.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\9-invalid-env\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\10-missing-node\\GraphGoblin.exe.json"
+          ],
+          "pid": 374320,
+          "startedAt": "2026-11-07T20:14:34.052Z",
+          "exitAt": "2026-11-07T20:14:34.202Z",
+          "endedAt": "2026-11-07T20:14:34.203Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\10-missing-node\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v2\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\11-child-failure\\GraphGoblin.exe.json"
+          ],
+          "pid": 374116,
+          "startedAt": "2026-11-07T20:14:34.216Z",
+          "exitAt": "2026-11-07T20:14:40.682Z",
+          "endedAt": "2026-11-07T20:14:40.682Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\11-child-failure\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-13-20-090Z\\11-child-failure\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      ],
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:40.684Z"
+    },
+    {
+      "name": "W01 actual disposable browser close keeps parent child native tree alive",
+      "startedAt": "2026-11-07T20:14:40.685Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate-v2\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\12-browser-close\\\\GraphGoblin.exe.json\"],\"pid\":374180,\"startedAt\":\"2026-11-07T20:14:40.697Z\",\"exitAt\":\"2026-11-07T20:14:43.947Z\",\"endedAt\":\"2026-11-07T20:14:43.947Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\12-browser-close\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\12-browser-close\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:273:56\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:152:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:272:3",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:46.460Z"
+    },
+    {
+      "name": "W02 native launcher drain wait completion relaunch persistence",
+      "startedAt": "2026-11-07T20:14:46.461Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate-v2\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\13-drain-wait\\\\GraphGoblin.exe.json\"],\"pid\":363468,\"startedAt\":\"2026-11-07T20:14:46.497Z\",\"exitAt\":\"2026-11-07T20:14:50.324Z\",\"endedAt\":\"2026-11-07T20:14:50.324Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\13-drain-wait\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\13-drain-wait\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:295:53\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:152:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:294:3",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:52.830Z"
+    },
+    {
+      "name": "W03 native force descendant interruption relaunch evidence",
+      "startedAt": "2026-11-07T20:14:52.831Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate-v2\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\14-force\\\\GraphGoblin.exe.json\"],\"pid\":366888,\"startedAt\":\"2026-11-07T20:14:52.841Z\",\"exitAt\":\"2026-11-07T20:14:56.262Z\",\"endedAt\":\"2026-11-07T20:14:56.262Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4860 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\14-force\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-13-20-090Z\\\\14-force\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:314:48\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:152:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:313:3",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:14:58.775Z"
+    }
+  ],
+  "cleanup": [],
+  "notRun": [
+    "S01 installer/shortcut fields",
+    "S02 actual owner desktop/taskbar pin/relaunch"
+  ],
+  "evidenceBoundary": "Native launcher --ensure-gateway, real built API, provider-free native script trees, disposable headed Chromium. No owner Chrome PWA or taskbar mutation."
+}

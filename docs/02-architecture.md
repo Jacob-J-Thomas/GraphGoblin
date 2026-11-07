@@ -121,6 +121,11 @@ The engine must boot and pass its full test suite with fake implementations of e
 
 The API binds to localhost by default. Codex authentication is whatever `codex login` set up on the machine. GraphGoblin stores no Codex credentials.
 
+The optional [Windows launcher](decisions/ADR-0064-windows-desktop-launcher.md) is transient native
+desktop/taskbar glue: it starts or reuses this built gateway, waits for identity and readiness,
+opens/focuses its installed Chrome PWA and exits. It adds no resident supervisor or MCP daemon.
+MCP stdio remains client-owned and HTTP remains an explicitly selected transport.
+
 ### Post-1.0: hosted (Draft)
 
 The executor already hands each node execution to a `Runner`. In 1.0 the only runner is in-process. Later, a remote runner is a small agent on a developer machine or in a container that pulls node executions and pushes events over the same event protocol, like a self-hosted CI runner. Combined with owner ids on every table, the auth-provider interface, Postgres-compatible SQL, and a scheduler lease, this is what makes the hosted version a small change rather than a rewrite.

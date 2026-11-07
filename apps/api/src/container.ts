@@ -65,7 +65,7 @@ import {
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
 import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
-import { acquireDataDirLock } from './data-dir-lock.js';
+import { acquireDataDirLock, acquireDatabaseLock, type DataDirLock } from './data-dir-lock.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { UlidIds } from './ids.js';
@@ -170,6 +170,7 @@ export async function createContainer(
   // Own the directory before even opening SQLite or generating the master key. Direct container
   // callers get the same protection as main(); ownership lasts until stop() finishes.
   const lock = await acquireDataDirLock(config.dataDir);
+  let databaseLock: DataDirLock | undefined;
   let opened: DatabaseHandle | undefined;
   try {
     const logger = overrides.logger ?? silentLogger;
@@ -180,6 +181,11 @@ export async function createContainer(
     }
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
+    // A fresh external parent must stay absent when pure defaults admission fails. Once the
+    // database lock is held, inspect/validate again: another writer may have created it meanwhile.
+    if (dbFile && !existsSync(dbFile))
+      validateProcessDefaults(config.defaults, DEFAULT_MODEL_CATALOG);
+    if (dbFile) databaseLock = await acquireDatabaseLock(dbFile);
     // An unsupported store stops startup with the data directory, the found and required formats
     // and the explicit reset command; nothing is converted or removed (ADR-0042).
     const refuseStore = explainStoreRefusal({
@@ -210,21 +216,14 @@ export async function createContainer(
         readonlyClient.close();
       }
     }
-    const configurationIssues = validateHarnessDefaults({
-      loopDefaults: { byHarness: {} },
-      ownerDefaults: { byHarness: {} },
-      processDefaults: config.defaults,
-      catalog: startupCatalog,
-    });
-    const [firstIssue, ...moreIssues] = configurationIssues;
-    if (firstIssue)
-      throw new ProcessDefaultsRefusedError([firstIssue, ...moreIssues], config.defaults);
+    validateProcessDefaults(config.defaults, startupCatalog);
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;
     const { db } = handle;
     startupReadiness ??= await guardCurrentStore(handle.client).catch(refuseStore);
-    // A data-directory lock cannot protect a database reached through GG_DB_URL elsewhere.
+    // Retain conservative preflight validation for external databases, even though the database
+    // sidecar now protects their writer ownership independently of the directory lock.
     const databaseRelativePath = dbFile
       ? relative(await realpath(config.dataDir), await realpath(dbFile))
       : undefined;
@@ -402,7 +401,11 @@ export async function createContainer(
         try {
           handle.close();
         } finally {
-          await lock.release();
+          try {
+            await databaseLock?.release();
+          } finally {
+            await lock.release();
+          }
           shutdown.stopped();
         }
       })();
@@ -510,8 +513,25 @@ export async function createContainer(
     try {
       opened?.close();
     } finally {
-      await lock.release();
+      try {
+        await databaseLock?.release();
+      } finally {
+        await lock.release();
+      }
     }
     throw error;
   }
+}
+
+function validateProcessDefaults(
+  defaults: HarnessDefaults,
+  catalog: typeof DEFAULT_MODEL_CATALOG,
+): void {
+  const [firstIssue, ...moreIssues] = validateHarnessDefaults({
+    loopDefaults: { byHarness: {} },
+    ownerDefaults: { byHarness: {} },
+    processDefaults: defaults,
+    catalog,
+  });
+  if (firstIssue) throw new ProcessDefaultsRefusedError([firstIssue, ...moreIssues], defaults);
 }

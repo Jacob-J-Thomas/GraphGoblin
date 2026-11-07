@@ -56,6 +56,56 @@ Then start the API from the repository root and open the address it printed:
 pnpm.cmd start
 ```
 
+## Optional Windows desktop and taskbar launcher
+
+After building the checkout, start it once with the intended configuration and install
+`http://127.0.0.1:4747/app/` as a Chrome app. Then configure the launcher with that app's original
+Chrome shortcut and the exact Node 22 runtime you use for GraphGoblin:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install-windows-launcher.ps1 `
+  -NodePath 'C:\path\to\node22\node.exe' `
+  -DataDir 'D:\graphgoblin-data' `
+  -PwaShortcut 'C:\path\to\Chrome Apps\GraphGoblin.lnk'
+```
+
+The default launcher directory is `%LOCALAPPDATA%\GraphGoblin\Launcher`. The script compiles a
+small .NET Framework executable and creates desktop and Start-menu shortcuts. It uses the
+existing build and installed PWA; it does not install Chrome, Node, the PWA or providers. Save the
+original Chrome shortcut elsewhere before replacing a desktop shortcut that points directly at
+Chrome. Supply `-RepoPath`, `-Port`, `-InstallDir`, `-DesktopShortcut` or `-StartMenuShortcut` when
+needed. A different port requires installing the PWA from that exact IPv4 loopback origin; the
+installer and launcher verify its Chrome app ID against the shipped `/app/` manifest identity.
+
+For process settings beyond the explicit paths and port, invoke the script from PowerShell with
+`-Environment @{ GG_REQUIRE_API_KEY = 'true'; GG_DB_URL = 'file:D:/graphgoblin-data/graphgoblin.db' }`.
+Only supplied overrides are persisted; shell `GG_*` variables are not copied. The launcher clears
+inherited `GG_*`, supplies its configured host/port/store/web directory and prepends the selected
+Node directory to PATH. Preserve required overrides when reconfiguring. The JSON next to the
+executable is per-user configuration; keep credentials in GraphGoblin's existing credential/secret
+stores rather than adding them to shortcuts.
+
+Use the new desktop shortcut. Once its PWA window opens, remove the old direct Chrome taskbar pin
+and pin the new running GraphGoblin button. Both routes now go through readiness before opening
+or focusing the installed PWA. The launcher gives the PWA window its own stable taskbar identity
+and relaunch command; simply pinning Chrome's original shortcut bypasses this step. The optional
+`-PinnedShortcut` parameter can rewrite a known existing GraphGoblin pin file, but Explorer may
+cache the old route, so verify an actual cold taskbar click or replace the pin. The installer does
+not claim a successful taskbar test from a shortcut-file update.
+
+An ordinary taskbar click while its PWA is already open focuses that window. If you deliberately
+stopped the gateway while leaving the PWA open, use the desktop shortcut or the taskbar's
+**Open new window** action to invoke readiness again. Focusing a window does not supervise or
+restart a stopped/crashed backend.
+
+Repeated/concurrent clicks reuse one matching gateway. An older build with only plain health, an
+unrelated listener or a different configured store is refused with a diagnostic. Stop an older
+gateway through deliberate shutdown before the first launch of this version. Closing every
+GraphGoblin window leaves gateway execution running. Launching during drain reopens the PWA for
+the existing shutdown controls; it never cancels or forces that drain. See
+[launcher troubleshooting](07-troubleshooting.md#windows-launcher) and
+[ADR-0064](../decisions/ADR-0064-windows-desktop-launcher.md).
+
 ## Run the container image
 
 The image holds the API, the web app, and the Codex CLI, for one user on a trusted network. Build and start it with Docker Compose from the repository root:
@@ -116,7 +166,7 @@ export GG_DEFAULTS='{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}
 pnpm start
 ```
 
-Run one API process per data directory. The API takes `<data-directory>/graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port. A dead PID's lock, or one naming this process's own PID without an in-process hold, is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key`, which takes the same lock to write the database. Read-only `--preflight` can run alongside a server. If you override `GG_DB_URL`, processes using that same database must also use the same `GG_DATA_DIR`.
+Run one API process per data directory and SQLite database file. The API takes `<data-directory>/graphgoblin.lock` and `<database-file>.graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port or with another `GG_DATA_DIR` pointing at the same external database. Directory junction/symlink aliases resolve to the same ownership path; a database with multiple hard links is refused. A dead PID's lock, or one naming this process's own PID without an in-process hold, is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key` or a confirmed reset, which take the same writer locks. Read-only `--preflight` can run alongside a server. Keep the same `GG_DATA_DIR` with an external `GG_DB_URL` so the database and its master key/artifacts stay together.
 
 `pnpm --filter @graphgoblin/api start` is equivalent. The start scripts run the built entry point. Its source and runtime paths are:
 
@@ -207,6 +257,7 @@ Under the configured data directory, the API creates these files and directories
   graphgoblin.db-wal    (may exist while SQLite uses WAL)
   graphgoblin.db-shm    (may exist)
   graphgoblin.lock      (PID and start time; held while the API owns the directory)
+  graphgoblin.db.graphgoblin.lock  (exclusive SQLite-file owner; next to an external GG_DB_URL too)
   master.key
   artifacts/<kind>/<content-hash>
   workspaces/<run-id>/

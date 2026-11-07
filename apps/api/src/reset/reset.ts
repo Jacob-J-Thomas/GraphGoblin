@@ -3,7 +3,13 @@ import { resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from '../config.js';
-import { acquireDataDirLock, dataDirLockState, type DataDirLock } from '../data-dir-lock.js';
+import {
+  acquireDataDirLock,
+  acquireDatabaseLock,
+  dataDirLockState,
+  databaseLockState,
+  type DataDirLock,
+} from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
 import { cleanupStaleStoreCopies } from './store-copy.js';
@@ -607,7 +613,25 @@ export async function resetDataDirectory(
     throw new ResetRefusedError(
       `another GraphGoblin process holds ${state.path}; stop it before resetting`,
     );
-  const preview = await planReset({ dataDir, database, readStore: io.readStore });
+  const checkDatabaseOwnership = async (file: string): Promise<void> => {
+    const state = await databaseLockState(file);
+    if (state.state === 'held')
+      throw new ResetRefusedError(
+        `another GraphGoblin process holds ${state.path}; stop it before resetting`,
+      );
+  };
+  const preview = await planReset({
+    dataDir,
+    database,
+    readStore: async (file) => {
+      // The plan first validates the physical ancestors and regular file without following
+      // links. Preserve that refusal guidance before canonical ownership lookup or store reads.
+      await checkDatabaseOwnership(file);
+      return io.readStore(file);
+    },
+  });
+  // A missing database never invokes readStore, but a live creator may already own its sidecar.
+  await checkDatabaseOwnership(databaseFile);
   if (!args.confirmed) {
     io.write(formatPlan(preview, { dryRun: true, configured }));
     io.write(
@@ -620,6 +644,7 @@ export async function resetDataDirectory(
     return 0;
   }
   let lock: DataDirLock;
+  let databaseLock: DataDirLock | undefined;
   try {
     lock = await acquireDataDirLock(dataDir);
   } catch (error) {
@@ -627,6 +652,7 @@ export async function resetDataDirectory(
   }
   let failure: unknown;
   try {
+    databaseLock = await acquireDatabaseLock(databaseFile);
     // Plan again under the lock, so GraphGoblin cannot change the manifest concurrently. External
     // processes do not obey this lock; removeEntry rechecks the planned filesystem identities.
     const plan = await planReset({ dataDir, database, readStore: io.readStore });
@@ -657,11 +683,19 @@ export async function resetDataDirectory(
     }
   } catch (error) {
     // The store changed between the read-only plan and the lock: nothing has been removed.
-    await lock.release();
+    try {
+      await databaseLock?.release();
+    } finally {
+      await lock.release();
+    }
     throw new ResetRefusedError(message(error));
   }
   try {
-    await lock.release();
+    try {
+      await databaseLock?.release();
+    } finally {
+      await lock.release();
+    }
   } catch (error) {
     throw new ResetIncompleteError(
       `${failure ? message(failure) + '\n' : ''}  Could not remove graphgoblin.lock: ${message(error)}`,

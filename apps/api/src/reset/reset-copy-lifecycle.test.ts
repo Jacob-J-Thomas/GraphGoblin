@@ -190,9 +190,19 @@ describe('reset private-copy ownership across process death', () => {
             throw error;
           });
         expect(await readFile(join(unrelated, 'keep.txt'), 'utf8')).toBe('unrelated bytes');
+        const databaseLock = join(data, 'graphgoblin.db.graphgoblin.lock');
+        if (confirmed) {
+          // Abrupt death retains both writer locks. Only validated ownership metadata is
+          // excepted from the byte-for-byte no-data-change assertion below.
+          const owner: unknown = JSON.parse(await readFile(databaseLock, 'utf8'));
+          expect(owner).toMatchObject({ pid: child.pid, token: expect.any(String) });
+        } else {
+          await expect(access(databaseLock)).rejects.toMatchObject({ code: 'ENOENT' });
+        }
         const after = await snapshotTree(data);
-        expect(after.filter((r) => r.path !== 'graphgoblin.lock')).toEqual(
-          before.filter((r) => r.path !== 'graphgoblin.lock'),
+        const ownershipFiles = new Set(['graphgoblin.lock', 'graphgoblin.db.graphgoblin.lock']);
+        expect(after.filter((r) => !ownershipFiles.has(r.path))).toEqual(
+          before.filter((r) => !ownershipFiles.has(r.path)),
         );
       } finally {
         if (child.exitCode === null && child.signalCode === null) {

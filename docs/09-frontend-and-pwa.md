@@ -1,13 +1,23 @@
 # 09 - Frontend and PWA
 
-The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery state,
-retry metadata, safe pinned configuration and run links; acknowledgement does not imply run
-creation or deduplication of unkeyed repeats. Its per-delivery **Webhook configuration** disclosure
-shows authentication recipe, secret names, body/extraction/key settings or unavailable history.
+## Windows desktop entry point
+
+The optional [Windows launcher](guide/01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher)
+starts or reuses the configured built gateway before opening/focusing its installed Chrome PWA.
+The desktop/Start-menu shortcut and actual PWA window share a launcher AppUserModelID and native
+relaunch command, so a pin of that window goes through readiness on a cold start. Its app ID is
+validated against the configured IPv4 loopback origin and current `/app/` manifest ID. Browser
+closure only stops observation; matching gateways in a drain or failure phase remain available
+for existing shutdown controls. See [ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
 
 ## Shape (Decided)
 
 A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. It talks to the API only through the generated typed client and to run state only through SSE. It contains no business rules: validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.
+
+The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery state,
+retry metadata, safe pinned configuration and run links; acknowledgement does not imply run
+creation or deduplication of unkeyed repeats. Its per-delivery **Webhook configuration** disclosure
+shows authentication recipe, secret names, body/extraction/key settings or unavailable history.
 
 ## Screens (Decided list, Draft details)
 

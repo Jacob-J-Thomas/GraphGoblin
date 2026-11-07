@@ -1,0 +1,1796 @@
+{
+  "since": "2026-11-07T20:36:05.567Z",
+  "endedAt": "2026-11-07T20:38:19.331Z",
+  "repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+  "runRoot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z",
+  "results": [
+    {
+      "name": "L01-L03 cold warm concurrent native launch",
+      "startedAt": "2026-11-07T20:36:06.436Z",
+      "detail": {
+        "oldPid": 385020,
+        "concurrentPid": 378072,
+        "clicks": [
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 383908,
+            "startedAt": "2026-11-07T20:36:15.917Z",
+            "exitAt": "2026-11-07T20:36:22.693Z",
+            "endedAt": "2026-11-07T20:36:22.694Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 376552,
+            "startedAt": "2026-11-07T20:36:15.922Z",
+            "exitAt": "2026-11-07T20:36:25.903Z",
+            "endedAt": "2026-11-07T20:36:25.903Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 385764,
+            "startedAt": "2026-11-07T20:36:15.927Z",
+            "exitAt": "2026-11-07T20:36:20.964Z",
+            "endedAt": "2026-11-07T20:36:20.964Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          },
+          {
+            "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+            "args": [
+              "--ensure-gateway",
+              "--config",
+              "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\1-cold warm Unicode Ω\\GraphGoblin.exe.json"
+            ],
+            "pid": 260212,
+            "startedAt": "2026-11-07T20:36:15.931Z",
+            "exitAt": "2026-11-07T20:36:24.317Z",
+            "endedAt": "2026-11-07T20:36:24.317Z",
+            "code": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "eofFailure": false
+          }
+        ]
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:36:30.478Z"
+    },
+    {
+      "name": "L04 wrong HTTP listener survives refusal",
+      "startedAt": "2026-11-07T20:36:30.479Z",
+      "detail": {
+        "requests": [
+          "/healthz"
+        ],
+        "output": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\2-wrong-listener\\GraphGoblin.exe.json"
+          ],
+          "pid": 385560,
+          "startedAt": "2026-11-07T20:36:30.491Z",
+          "exitAt": "2026-11-07T20:36:32.127Z",
+          "endedAt": "2026-11-07T20:36:32.128Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\2-wrong-listener\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:36:32.130Z"
+    },
+    {
+      "name": "L04b eight silent TCP listener refusals without child startup",
+      "status": "NOT RUN",
+      "reason": "case filter"
+    },
+    {
+      "name": "L05 wrong genuine store and public config refused",
+      "startedAt": "2026-11-07T20:36:32.131Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:36:36.270Z",
+          "status": 200,
+          "identity": "0ed11f63dc6452c6209e4781c7dd3900b5689c609d7abaf793c34d2394579170",
+          "pid": 382424,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "wrongStore": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\4-wrong-store\\GraphGoblin.exe.json"
+          ],
+          "pid": 385908,
+          "startedAt": "2026-11-07T20:36:37.555Z",
+          "exitAt": "2026-11-07T20:36:39.434Z",
+          "endedAt": "2026-11-07T20:36:39.434Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\4-wrong-store\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        "wrongConfig": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\5-wrong-config\\GraphGoblin.exe.json"
+          ],
+          "pid": 367880,
+          "startedAt": "2026-11-07T20:36:39.446Z",
+          "exitAt": "2026-11-07T20:36:41.320Z",
+          "endedAt": "2026-11-07T20:36:41.320Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4860 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\5-wrong-config\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:36:41.464Z"
+    },
+    {
+      "name": "L06 separate data dirs sharing physical DB refuse second owner",
+      "startedAt": "2026-11-07T20:36:41.465Z",
+      "detail": {
+        "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+        "args": [
+          "--ensure-gateway",
+          "--config",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\7-db-contender\\GraphGoblin.exe.json"
+        ],
+        "pid": 381888,
+        "startedAt": "2026-11-07T20:36:47.255Z",
+        "exitAt": "2026-11-07T20:36:51.214Z",
+        "endedAt": "2026-11-07T20:36:51.214Z",
+        "code": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\7-db-contender\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\7-db-contender\\GraphGoblin.exe.json\r\n",
+        "eofFailure": false
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:36:51.419Z"
+    },
+    {
+      "name": "L06b hard-linked DB spellings cannot create two owners",
+      "startedAt": "2026-11-07T20:36:51.421Z",
+      "detail": {
+        "files": [
+          {
+            "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\store\\graphgoblin.db",
+            "dev": 2894493802,
+            "ino": 6192449493805075,
+            "nlink": 2,
+            "size": 4096
+          },
+          {
+            "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\alias\\same-store.db",
+            "dev": 2894493802,
+            "ino": 6192449493805075,
+            "nlink": 2,
+            "size": 4096
+          }
+        ],
+        "first": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\GraphGoblin.exe.json"
+          ],
+          "pid": 355576,
+          "startedAt": "2026-11-07T20:36:57.540Z",
+          "exitAt": "2026-11-07T20:37:01.190Z",
+          "endedAt": "2026-11-07T20:37:01.190Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        "second": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\9-hardlink-contender\\GraphGoblin.exe.json"
+          ],
+          "pid": 377664,
+          "startedAt": "2026-11-07T20:37:01.210Z",
+          "exitAt": "2026-11-07T20:37:05.284Z",
+          "endedAt": "2026-11-07T20:37:05.284Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\9-hardlink-contender\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\9-hardlink-contender\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        "owners": [
+          {
+            "config": {
+              "Repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+              "Node": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+              "DataDir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\store",
+              "Port": 4860,
+              "Environment": {
+                "GG_REQUIRE_API_KEY": "false",
+                "GG_SHUTDOWN_GRACE_MS": "600",
+                "GG_TIMER_POLL_MS": "50",
+                "GG_JEV_API_KEY": "",
+                "GG_LOG_LEVEL": "info"
+              },
+              "StartupTimeoutSeconds": 15,
+              "WindowTimeoutSeconds": 5,
+              "file": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\8-hardlink-original\\GraphGoblin.exe.json"
+            },
+            "health": {
+              "unreachable": "fetch failed"
+            }
+          },
+          {
+            "config": {
+              "Repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+              "Node": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+              "DataDir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\9-hardlink-contender\\store",
+              "Port": 4861,
+              "Environment": {
+                "GG_REQUIRE_API_KEY": "false",
+                "GG_SHUTDOWN_GRACE_MS": "600",
+                "GG_TIMER_POLL_MS": "50",
+                "GG_JEV_API_KEY": "",
+                "GG_LOG_LEVEL": "info",
+                "GG_DB_URL": "file:C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-2026-11-07T20-36-05-563Z/8-hardlink-original/alias/same-store.db"
+              },
+              "StartupTimeoutSeconds": 15,
+              "WindowTimeoutSeconds": 5,
+              "file": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\9-hardlink-contender\\GraphGoblin.exe.json"
+            },
+            "health": {
+              "unreachable": "fetch failed"
+            }
+          }
+        ]
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:37:05.291Z"
+    },
+    {
+      "name": "L07 stale owner reclaimed malformed owner retained",
+      "startedAt": "2026-11-07T20:37:05.292Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:37:10.375Z",
+          "status": 200,
+          "identity": "130c9d9fe39e28faea1059752cfa8d143afff887f71a4f9ca8b19d8ba314ba13",
+          "pid": 384384,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "dead": {
+          "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+          "args": [
+            "-e",
+            "process.exit(0)"
+          ],
+          "pid": 379540,
+          "startedAt": "2026-11-07T20:37:05.301Z",
+          "exitAt": "2026-11-07T20:37:05.483Z",
+          "endedAt": "2026-11-07T20:37:05.483Z",
+          "code": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "eofFailure": false
+        },
+        "output": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\11-malformed\\GraphGoblin.exe.json"
+          ],
+          "pid": 386036,
+          "startedAt": "2026-11-07T20:37:11.864Z",
+          "exitAt": "2026-11-07T20:37:16.195Z",
+          "endedAt": "2026-11-07T20:37:16.195Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\11-malformed\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\11-malformed\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [
+        {
+          "port": 4860,
+          "result": "retained",
+          "error": "Expected property name or '}' in JSON at position 1 (line 1 column 2)"
+        }
+      ],
+      "endedAt": "2026-11-07T20:37:16.198Z"
+    },
+    {
+      "name": "L08 configuration runtime and child startup failures",
+      "startedAt": "2026-11-07T20:37:16.198Z",
+      "detail": [
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\12-invalid-env\\GraphGoblin.exe.json"
+          ],
+          "pid": 374724,
+          "startedAt": "2026-11-07T20:37:16.218Z",
+          "exitAt": "2026-11-07T20:37:17.872Z",
+          "endedAt": "2026-11-07T20:37:17.872Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "The Node 22 runtime or launcher configuration is invalid. Check the configured runtime and GG_* overrides.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\12-invalid-env\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\13-missing-node\\GraphGoblin.exe.json"
+          ],
+          "pid": 381380,
+          "startedAt": "2026-11-07T20:37:17.883Z",
+          "exitAt": "2026-11-07T20:37:17.977Z",
+          "endedAt": "2026-11-07T20:37:17.977Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\13-missing-node\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate-v4\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\14-child-failure\\GraphGoblin.exe.json"
+          ],
+          "pid": 381208,
+          "startedAt": "2026-11-07T20:37:17.987Z",
+          "exitAt": "2026-11-07T20:37:21.894Z",
+          "endedAt": "2026-11-07T20:37:21.894Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "GraphGoblin exited during startup. Inspect C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\14-child-failure\\gateway.log. Existing store locks and data were left to the gateway's normal ownership checks.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\14-child-failure\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      ],
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:37:21.896Z"
+    },
+    {
+      "name": "W01 actual disposable browser close keeps parent child native tree alive",
+      "startedAt": "2026-11-07T20:37:21.896Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:37:26.041Z",
+          "status": 200,
+          "identity": "3da9ad34170f22782d70f0fc3464394b7beec055772ba2b5369d3164f12de69e",
+          "pid": 385132,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "manifest": {
+          "origin": "http://127.0.0.1:4860",
+          "directory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\15-browser-close\\workload",
+          "parentLoop": "01M6VVNZMZNFP0S363T6NFP6YW",
+          "childLoop": "01M6VVNZKCBS59P205FH23Y945",
+          "parentId": "01M6VVNZNYWZN25ER0NQYFV1B6",
+          "childId": "01M6VVNZRYPWQMSJXBKAGWRC8Y",
+          "release": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\15-browser-close\\workload\\release",
+          "pids": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-36-05-563Z\\15-browser-close\\workload\\script-pids.json",
+          "tree": {
+            "root": 385432,
+            "descendant": 384028
+          },
+          "preparedAt": "2026-11-07T20:37:28.292Z"
+        },
+        "snapshot": {
+          "at": "2026-11-07T20:37:32.884Z",
+          "parent": {
+            "id": "01M6VVNZNYWZN25ER0NQYFV1B6",
+            "ownerId": "local",
+            "loopId": "01M6VVNZMZNFP0S363T6NFP6YW",
+            "versionId": "01M6VVNZMZNFP0S363T6NFP6YX",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent launcher parent",
+              "label": "Independent launcher parent v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M6VVNZNYWZN25ER0NQYFV1B7",
+            "status": "waiting",
+            "currentNodeId": "child",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M6VVNZNYWZN25ER0NQYFV1B6:5",
+              "nodeId": "child",
+              "kind": "child",
+              "childRunId": "01M6VVNZRYPWQMSJXBKAGWRC8Y",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-11-07T20:37:27.870Z",
+            "startedAt": "2026-11-07T20:37:27.901Z",
+            "lastEventSeq": 7,
+            "recovery": {
+              "observedSeq": 7,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_ACTIVE",
+                "message": "This run is still active. Pause it before continuing with Resume."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "child",
+                      "label": "Required child",
+                      "kind": "subloop"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "child",
+                  "label": "Required child",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "child",
+                      "label": "Required child",
+                      "kind": "subloop"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "REPLAY_NODE_NOT_REACHED",
+                    "message": "This run never reached this node."
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "child": {
+            "id": "01M6VVNZRYPWQMSJXBKAGWRC8Y",
+            "ownerId": "local",
+            "loopId": "01M6VVNZKCBS59P205FH23Y945",
+            "versionId": "01M6VVNZKDZTHG2AQWHG0MCYB1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent launcher native child",
+              "label": "Independent launcher native child v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M6VVNZNYWZN25ER0NQYFV1B6",
+            "invocationId": "01M6VVNZRYPWQMSJXBKAGWRC8Z",
+            "status": "running",
+            "currentNodeId": "hold",
+            "iteration": 1,
+            "createdAt": "2026-11-07T20:37:27.966Z",
+            "startedAt": "2026-11-07T20:37:27.989Z",
+            "lastEventSeq": 6,
+            "recovery": {
+              "observedSeq": 6,
+              "resume": {
+                "allowed": false,
+                "code": "RUN_ACTIVE",
+                "message": "This run is still active. Pause it before continuing with Resume."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "hold",
+                      "label": "Held native tree",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "hold",
+                  "label": "Held native tree",
+                  "action": {
+                    "allowed": true
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "hold",
+                      "label": "Held native tree",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "REPLAY_NODE_NOT_REACHED",
+                    "message": "This run never reached this node."
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "tree": {
+            "root": {
+              "pid": 385432,
+              "alive": true
+            },
+            "descendant": {
+              "pid": 384028,
+              "alive": true
+            }
+          }
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:37:34.799Z"
+    },
+    {
+      "name": "W02 native launcher drain wait completion relaunch persistence",
+      "startedAt": "2026-11-07T20:37:34.800Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:37:39.687Z",
+          "status": 200,
+          "identity": "ae655cce751e44dd20e9eb4658be35f45f3dc0563e7a5951376bd1cd4c17590b",
+          "pid": 384440,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "next": {
+          "at": "2026-11-07T20:38:00.428Z",
+          "status": 200,
+          "identity": "ae655cce751e44dd20e9eb4658be35f45f3dc0563e7a5951376bd1cd4c17590b",
+          "pid": 384792,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "during": {
+          "at": "2026-11-07T20:37:47.790Z",
+          "parent": {
+            "id": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+            "ownerId": "local",
+            "loopId": "01M6VVPD4S7WYZ395CPHJXJSK0",
+            "versionId": "01M6VVPD4S7WYZ395CPHJXJSK1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent launcher parent",
+              "label": "Independent launcher parent v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M6VVPD5KXVCKTH3FQ15SFRQK",
+            "status": "waiting",
+            "currentNodeId": "child",
+            "iteration": 1,
+            "waiting": {
+              "waitId": "01M6VVPD5KXVCKTH3FQ15SFRQJ:5",
+              "nodeId": "child",
+              "kind": "child",
+              "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y",
+              "startedSeq": 5
+            },
+            "createdAt": "2026-11-07T20:37:41.683Z",
+            "startedAt": "2026-11-07T20:37:41.712Z",
+            "lastEventSeq": 7,
+            "recovery": {
+              "observedSeq": 7,
+              "resume": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "child",
+                      "label": "Required child",
+                      "kind": "subloop"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "child",
+                  "label": "Required child",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "child",
+                      "label": "Required child",
+                      "kind": "subloop"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "child": {
+            "id": "01M6VVPD8P0TDW674ZHRKM076Y",
+            "ownerId": "local",
+            "loopId": "01M6VVPD3FEH84HVK76DW7T793",
+            "versionId": "01M6VVPD3FEH84HVK76DW7T794",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent launcher native child",
+              "label": "Independent launcher native child v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "parentRunId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+            "invocationId": "01M6VVPD8P0TDW674ZHRKM076Z",
+            "status": "running",
+            "currentNodeId": "hold",
+            "iteration": 1,
+            "createdAt": "2026-11-07T20:37:41.782Z",
+            "startedAt": "2026-11-07T20:37:41.810Z",
+            "lastEventSeq": 6,
+            "recovery": {
+              "observedSeq": 6,
+              "resume": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "replayDefault": {
+                "allowed": false,
+                "code": "SHUTTING_DOWN",
+                "message": "The server is shutting down. Try recovery after it restarts."
+              },
+              "replay": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "hold",
+                      "label": "Held native tree",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "hold",
+                  "label": "Held native tree",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": [
+                    {
+                      "nodeId": "hold",
+                      "label": "Held native tree",
+                      "kind": "script"
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "action": {
+                    "allowed": false,
+                    "code": "SHUTTING_DOWN",
+                    "message": "The server is shutting down. Try recovery after it restarts."
+                  },
+                  "effects": []
+                }
+              ]
+            }
+          },
+          "tree": {
+            "root": {
+              "pid": 379444,
+              "alive": true
+            },
+            "descendant": {
+              "pid": 379984,
+              "alive": true
+            }
+          }
+        },
+        "parent": {
+          "id": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+          "ownerId": "local",
+          "loopId": "01M6VVPD4S7WYZ395CPHJXJSK0",
+          "versionId": "01M6VVPD4S7WYZ395CPHJXJSK1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher parent",
+            "label": "Independent launcher parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M6VVPD5KXVCKTH3FQ15SFRQK",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-11-07T20:37:41.683Z",
+          "startedAt": "2026-11-07T20:37:41.712Z",
+          "finishedAt": "2026-11-07T20:37:48.225Z",
+          "finalizedAt": "2026-11-07T20:37:48.231Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "child",
+                "label": "Required child",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "child": {
+          "id": "01M6VVPD8P0TDW674ZHRKM076Y",
+          "ownerId": "local",
+          "loopId": "01M6VVPD3FEH84HVK76DW7T793",
+          "versionId": "01M6VVPD3FEH84HVK76DW7T794",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher native child",
+            "label": "Independent launcher native child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+          "invocationId": "01M6VVPD8P0TDW674ZHRKM076Z",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-11-07T20:37:41.782Z",
+          "startedAt": "2026-11-07T20:37:41.810Z",
+          "finishedAt": "2026-11-07T20:37:48.145Z",
+          "finalizedAt": "2026-11-07T20:37:48.166Z",
+          "lastEventSeq": 12,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "hold",
+                "label": "Held native tree",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 1,
+              "ts": "2026-11-07T20:37:41.683Z",
+              "type": "run.queued",
+              "versionId": "01M6VVPD4S7WYZ395CPHJXJSK1",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Independent launcher parent",
+                "label": "Independent launcher parent v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+                  "loopId": "01M6VVPD4S7WYZ395CPHJXJSK0",
+                  "versionId": "01M6VVPD4S7WYZ395CPHJXJSK1",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M6VVPD5KXVCKTH3FQ15SFRQK",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "user",
+                    "id": "local"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-11-07T20:37:41.683Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              },
+              "subloopVersions": {
+                "01M6VVPD3FEH84HVK76DW7T793": "01M6VVPD3FEH84HVK76DW7T794"
+              }
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 2,
+              "ts": "2026-11-07T20:37:41.717Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 3,
+              "ts": "2026-11-07T20:37:41.738Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 4,
+              "ts": "2026-11-07T20:37:41.750Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:37:41.746Z"
+                  }
+                },
+                {
+                  "op": "add",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:37:41.746Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 5,
+              "ts": "2026-11-07T20:37:41.776Z",
+              "type": "node.started",
+              "nodeId": "child",
+              "kind": "subloop",
+              "attempt": 1,
+              "configHash": "261ca8cc306f34ae"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 6,
+              "ts": "2026-11-07T20:37:41.782Z",
+              "type": "child_run.started",
+              "nodeId": "child",
+              "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 7,
+              "ts": "2026-11-07T20:37:41.797Z",
+              "type": "run.waiting",
+              "nodeId": "child",
+              "wait": {
+                "waitId": "01M6VVPD5KXVCKTH3FQ15SFRQJ:5",
+                "nodeId": "child",
+                "kind": "child",
+                "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y",
+                "startedSeq": 5
+              }
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 8,
+              "ts": "2026-11-07T20:37:48.159Z",
+              "type": "run.woken",
+              "nodeId": "child",
+              "reason": "child",
+              "payload": {
+                "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y",
+                "childFinishedSeq": 12,
+                "status": "succeeded",
+                "outcome": "success"
+              }
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 9,
+              "ts": "2026-11-07T20:37:48.181Z",
+              "type": "node.started",
+              "nodeId": "child",
+              "kind": "subloop",
+              "attempt": 2,
+              "configHash": "261ca8cc306f34ae"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 10,
+              "ts": "2026-11-07T20:37:48.193Z",
+              "type": "child_run.finished",
+              "nodeId": "child",
+              "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y",
+              "outcome": "success",
+              "status": "succeeded"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 11,
+              "ts": "2026-11-07T20:37:48.193Z",
+              "type": "node.finished",
+              "nodeId": "child",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/child",
+                  "value": {
+                    "nodeId": "child",
+                    "value": {
+                      "status": "succeeded",
+                      "outcome": "success",
+                      "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y"
+                    },
+                    "at": "2026-11-07T20:37:48.191Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "child",
+                    "value": {
+                      "status": "succeeded",
+                      "outcome": "success",
+                      "childRunId": "01M6VVPD8P0TDW674ZHRKM076Y"
+                    },
+                    "at": "2026-11-07T20:37:48.191Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/counters/usage",
+                  "value": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 7
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 12,
+              "ts": "2026-11-07T20:37:48.213Z",
+              "type": "node.started",
+              "nodeId": "done",
+              "kind": "exit",
+              "attempt": 1,
+              "configHash": "caacd31f1376b30f"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 13,
+              "ts": "2026-11-07T20:37:48.219Z",
+              "type": "exit.evaluated",
+              "nodeId": "done",
+              "outcome": "success"
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 14,
+              "ts": "2026-11-07T20:37:48.219Z",
+              "type": "node.finished",
+              "nodeId": "done",
+              "patch": [],
+              "durationMs": 2
+            },
+            {
+              "runId": "01M6VVPD5KXVCKTH3FQ15SFRQJ",
+              "seq": 15,
+              "ts": "2026-11-07T20:37:48.219Z",
+              "type": "run.finished",
+              "status": "succeeded",
+              "outcome": "success"
+            }
+          ],
+          "nextAfter": 15,
+          "hasMore": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:38:02.216Z"
+    },
+    {
+      "name": "W03 native force descendant interruption relaunch evidence",
+      "startedAt": "2026-11-07T20:38:02.218Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:38:07.672Z",
+          "status": 200,
+          "identity": "671fe4ce1a32062ad54913b96b027054d862d8e2c282b1280fe44cb21a1728c3",
+          "pid": 381004,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "next": {
+          "at": "2026-11-07T20:38:16.658Z",
+          "status": 200,
+          "identity": "671fe4ce1a32062ad54913b96b027054d862d8e2c282b1280fe44cb21a1728c3",
+          "pid": 385592,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "parent": {
+          "id": "01M6VVQ82FGRHWQHRRPP38KTFP",
+          "ownerId": "local",
+          "loopId": "01M6VVQ81KNBFYJA4NACYY2N5E",
+          "versionId": "01M6VVQ81M6CC7DZHPSNDJXHCY",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher parent",
+            "label": "Independent launcher parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M6VVQ82FGRHWQHRRPP38KTFQ",
+          "status": "failed",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M6VVQ82FGRHWQHRRPP38KTFP:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M6VVQ857V8V79VE79TQ95P26",
+            "startedSeq": 5
+          },
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "subloop child 01M6VVQ857V8V79VE79TQ95P26 failed: Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "child",
+            "resumable": false,
+            "details": {
+              "childRunId": "01M6VVQ857V8V79VE79TQ95P26",
+              "childNodeId": "hold",
+              "childDetails": {
+                "attempt": 1,
+                "effectMayHaveHappened": true
+              }
+            },
+            "script": {
+              "visitId": "01M6VVQ857V8V79VE79TQ95P26:5",
+              "dispatchId": "01M6VVQ877GNJE4XCQB2NGPZPY",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:09.231Z",
+          "startedAt": "2026-11-07T20:38:09.262Z",
+          "finishedAt": "2026-11-07T20:38:16.414Z",
+          "finalizedAt": "2026-11-07T20:38:16.422Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "child",
+                "label": "Required child",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 11,
+              "nodeId": "child"
+            }
+          }
+        },
+        "child": {
+          "id": "01M6VVQ857V8V79VE79TQ95P26",
+          "ownerId": "local",
+          "loopId": "01M6VVQ8051RV0VY6KJN6MZB49",
+          "versionId": "01M6VVQ8051RV0VY6KJN6MZB4A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher native child",
+            "label": "Independent launcher native child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP",
+          "invocationId": "01M6VVQ857V8V79VE79TQ95P27",
+          "status": "failed",
+          "currentNodeId": "hold",
+          "iteration": 1,
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "hold",
+            "resumable": false,
+            "details": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            },
+            "script": {
+              "visitId": "01M6VVQ857V8V79VE79TQ95P26:5",
+              "dispatchId": "01M6VVQ877GNJE4XCQB2NGPZPY",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:09.319Z",
+          "startedAt": "2026-11-07T20:38:09.335Z",
+          "finishedAt": "2026-11-07T20:38:11.604Z",
+          "finalizedAt": "2026-11-07T20:38:11.614Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M6VVQ82FGRHWQHRRPP38KTFP. Open that parent to review its recovery choices.",
+              "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M6VVQ82FGRHWQHRRPP38KTFP. Open that parent to review its recovery choices.",
+              "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VVQ82FGRHWQHRRPP38KTFP. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP"
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "hold",
+                "label": "Held native tree",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VVQ82FGRHWQHRRPP38KTFP. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP"
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VVQ82FGRHWQHRRPP38KTFP. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP"
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 1,
+              "ts": "2026-11-07T20:38:09.319Z",
+              "type": "run.queued",
+              "versionId": "01M6VVQ8051RV0VY6KJN6MZB4A",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Independent launcher native child",
+                "label": "Independent launcher native child v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M6VVQ857V8V79VE79TQ95P26",
+                  "loopId": "01M6VVQ8051RV0VY6KJN6MZB49",
+                  "versionId": "01M6VVQ8051RV0VY6KJN6MZB4A",
+                  "parentRunId": "01M6VVQ82FGRHWQHRRPP38KTFP",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M6VVQ857V8V79VE79TQ95P27",
+                  "source": "subloop",
+                  "caller": {
+                    "kind": "run",
+                    "id": "01M6VVQ82FGRHWQHRRPP38KTFP"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-11-07T20:38:09.319Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {
+                  "start": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:38:09.287Z"
+                  }
+                },
+                "lastOutput": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-07T20:38:09.287Z"
+                },
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              },
+              "subloopVersions": {
+                "01M6VVQ8051RV0VY6KJN6MZB49": "01M6VVQ8051RV0VY6KJN6MZB4A"
+              }
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 2,
+              "ts": "2026-11-07T20:38:09.343Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 3,
+              "ts": "2026-11-07T20:38:09.348Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 4,
+              "ts": "2026-11-07T20:38:09.356Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "replace",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:38:09.353Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:38:09.353Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 2
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 5,
+              "ts": "2026-11-07T20:38:09.371Z",
+              "type": "node.started",
+              "nodeId": "hold",
+              "kind": "script",
+              "attempt": 1,
+              "configHash": "6f528590e60ee55d"
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 6,
+              "ts": "2026-11-07T20:38:09.383Z",
+              "type": "script.dispatched",
+              "nodeId": "hold",
+              "visitId": "01M6VVQ857V8V79VE79TQ95P26:5",
+              "dispatchId": "01M6VVQ877GNJE4XCQB2NGPZPY"
+            },
+            {
+              "runId": "01M6VVQ857V8V79VE79TQ95P26",
+              "seq": 7,
+              "ts": "2026-11-07T20:38:11.602Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "RUN_INTERRUPTED_BY_STOP",
+                "message": "Explicit force-stop interrupted this run; external effects may have happened",
+                "nodeId": "hold",
+                "resumable": false,
+                "details": {
+                  "attempt": 1,
+                  "effectMayHaveHappened": true
+                },
+                "script": {
+                  "visitId": "01M6VVQ857V8V79VE79TQ95P26:5",
+                  "dispatchId": "01M6VVQ877GNJE4XCQB2NGPZPY",
+                  "state": "outcome-uncertain"
+                }
+              }
+            }
+          ],
+          "nextAfter": 7,
+          "hasMore": false
+        }
+      },
+      "status": "PASS",
+      "cleanup": [],
+      "endedAt": "2026-11-07T20:38:19.327Z"
+    }
+  ],
+  "cleanup": [],
+  "notRun": [
+    "S01 installer/shortcut fields",
+    "S02 actual owner desktop/taskbar pin/relaunch"
+  ],
+  "evidenceBoundary": "Native launcher --ensure-gateway, real built API, provider-free native script trees, disposable headed Chromium. No owner Chrome PWA or taskbar mutation."
+}

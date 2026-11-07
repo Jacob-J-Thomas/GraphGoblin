@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, open, readFile, unlink } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdir, open, readFile, stat, unlink } from 'node:fs/promises';
+import { basename, dirname, resolve } from 'node:path';
+import { canonicalPath } from './canonical-path.js';
 
 const heldPaths = new Set<string>();
 const acquiringPaths = new Set<string>();
@@ -69,8 +70,9 @@ async function removeStale(path: string): Promise<void> {
  */
 export async function dataDirLockState(
   dataDir: string,
+  filename = 'graphgoblin.lock',
 ): Promise<{ state: 'free' } | { state: 'held'; path: string }> {
-  const path = resolve(dataDir, 'graphgoblin.lock');
+  const path = resolve(canonicalPath(dataDir), filename);
   for (const file of [`${path}.reclaim`, path])
     if (heldPaths.has(file) || acquiringPaths.has(path) || (await lockFileState(file)) === 'held')
       return { state: 'held', path: file };
@@ -120,8 +122,11 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
  * this PID is stale unless held here (container restarts reuse PIDs); other PIDs must be dead.
  * The short-lived recovery guard follows the same rule after interrupted reclamation.
  */
-export async function acquireDataDirLock(dataDir: string): Promise<DataDirLock> {
-  const path = resolve(dataDir, 'graphgoblin.lock');
+export async function acquireDataDirLock(
+  dataDir: string,
+  filename = 'graphgoblin.lock',
+): Promise<DataDirLock> {
+  const path = resolve(canonicalPath(dataDir), filename);
   // Reserve pending acquisitions too, before any asynchronous filesystem operation.
   if (heldPaths.has(path) || acquiringPaths.has(path)) throw held(path);
   acquiringPaths.add(path);
@@ -142,4 +147,23 @@ export async function acquireDataDirLock(dataDir: string): Promise<DataDirLock> 
   } finally {
     acquiringPaths.delete(path);
   }
+}
+
+/** A shared external SQLite file has one owner even when data directories differ. */
+export async function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock> {
+  const file = canonicalPath(databaseFile);
+  const info = await stat(file).catch((error: unknown) => {
+    if (hasCode(error, 'ENOENT')) return undefined;
+    throw error;
+  });
+  if (info && info.nlink > 1)
+    throw new Error(
+      `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
+    );
+  return acquireDataDirLock(dirname(file), `${basename(file)}.graphgoblin.lock`);
+}
+
+export function databaseLockState(databaseFile: string): ReturnType<typeof dataDirLockState> {
+  const file = canonicalPath(databaseFile);
+  return dataDirLockState(dirname(file), `${basename(file)}.graphgoblin.lock`);
 }

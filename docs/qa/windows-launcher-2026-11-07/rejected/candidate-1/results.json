@@ -1,0 +1,628 @@
+{
+  "since": "2026-11-07T20:04:53.041Z",
+  "endedAt": "2026-11-07T20:06:07.496Z",
+  "repo": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin",
+  "runRoot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z",
+  "results": [
+    {
+      "name": "L01-L03 cold warm concurrent native launch",
+      "startedAt": "2026-11-07T20:04:53.726Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:173:12\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:171:3",
+      "endedAt": "2026-11-07T20:05:05.252Z"
+    },
+    {
+      "name": "L04 wrong HTTP listener survives refusal",
+      "startedAt": "2026-11-07T20:05:05.253Z",
+      "detail": {
+        "requests": [
+          "/healthz"
+        ],
+        "output": {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\2-wrong-listener\\GraphGoblin.exe.json"
+          ],
+          "pid": 370540,
+          "startedAt": "2026-11-07T20:05:05.264Z",
+          "exitAt": "2026-11-07T20:05:07.051Z",
+          "endedAt": "2026-11-07T20:05:07.051Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Port 4861 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\2-wrong-listener\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      },
+      "status": "PASS",
+      "endedAt": "2026-11-07T20:05:07.053Z"
+    },
+    {
+      "name": "L05 wrong genuine store and public config refused",
+      "startedAt": "2026-11-07T20:05:07.055Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\3-correct-store\\\\GraphGoblin.exe.json\"],\"pid\":266516,\"startedAt\":\"2026-11-07T20:05:07.065Z\",\"exitAt\":\"2026-11-07T20:05:10.333Z\",\"endedAt\":\"2026-11-07T20:05:10.333Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4861 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\3-correct-store\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:187:56\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:186:3",
+      "endedAt": "2026-11-07T20:05:10.334Z"
+    },
+    {
+      "name": "L06 separate data dirs sharing physical DB refuse second owner",
+      "startedAt": "2026-11-07T20:05:10.335Z",
+      "detail": {
+        "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate\\GraphGoblin.exe",
+        "args": [
+          "--ensure-gateway",
+          "--config",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\5-db-contender\\GraphGoblin.exe.json"
+        ],
+        "pid": 370668,
+        "startedAt": "2026-11-07T20:05:16.000Z",
+        "exitAt": "2026-11-07T20:05:19.659Z",
+        "endedAt": "2026-11-07T20:05:19.659Z",
+        "code": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "Process was not started by this object, so requested information cannot be determined.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\5-db-contender\\GraphGoblin.exe.json\r\n",
+        "eofFailure": false
+      },
+      "status": "PASS",
+      "endedAt": "2026-11-07T20:05:19.814Z"
+    },
+    {
+      "name": "L06b hard-linked DB spellings cannot create two owners",
+      "startedAt": "2026-11-07T20:05:19.815Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\6-hardlink-original\\\\GraphGoblin.exe.json\"],\"pid\":364952,\"startedAt\":\"2026-11-07T20:05:19.825Z\",\"exitAt\":\"2026-11-07T20:05:23.128Z\",\"endedAt\":\"2026-11-07T20:05:23.128Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4862 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\6-hardlink-original\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\6-hardlink-original\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:205:50\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:204:3",
+      "endedAt": "2026-11-07T20:05:23.129Z"
+    },
+    {
+      "name": "L07 stale owner reclaimed malformed owner retained",
+      "startedAt": "2026-11-07T20:05:23.130Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: {\"command\":\"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-candidate\\\\GraphGoblin.exe\",\"args\":[\"--ensure-gateway\",\"--config\",\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\7-stale\\\\GraphGoblin.exe.json\"],\"pid\":370144,\"startedAt\":\"2026-11-07T20:05:23.246Z\",\"exitAt\":\"2026-11-07T20:05:26.647Z\",\"endedAt\":\"2026-11-07T20:05:26.647Z\",\"code\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"Port 4862 is occupied but the configured GraphGoblin gateway is not ready: Timeout. Inspect C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\7-stale\\\\gateway.log. No process was stopped.\\r\\n\\r\\nConfiguration: C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-07-launcher\\\\independent-qa\\\\run-2026-11-07T20-04-53-037Z\\\\7-stale\\\\GraphGoblin.exe.json\\r\\n\",\"eofFailure\":false}\n\n1 !== 0\n\n    at boot (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:115:42)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:233:15\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:229:3",
+      "endedAt": "2026-11-07T20:05:26.648Z"
+    },
+    {
+      "name": "L08 configuration runtime and child startup failures",
+      "startedAt": "2026-11-07T20:05:26.649Z",
+      "detail": [
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\8-invalid-env\\GraphGoblin.exe.json"
+          ],
+          "pid": 370000,
+          "startedAt": "2026-11-07T20:05:26.658Z",
+          "exitAt": "2026-11-07T20:05:28.252Z",
+          "endedAt": "2026-11-07T20:05:28.252Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "The Node 22 runtime or launcher configuration is invalid. Check the configured runtime and GG_* overrides.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\8-invalid-env\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\9-missing-node\\GraphGoblin.exe.json"
+          ],
+          "pid": 369976,
+          "startedAt": "2026-11-07T20:05:28.265Z",
+          "exitAt": "2026-11-07T20:05:28.375Z",
+          "endedAt": "2026-11-07T20:05:28.375Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\9-missing-node\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        },
+        {
+          "command": "C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher\\GraphGoblin\\.tmp\\windows-launcher-candidate\\GraphGoblin.exe",
+          "args": [
+            "--ensure-gateway",
+            "--config",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\10-child-failure\\GraphGoblin.exe.json"
+          ],
+          "pid": 368036,
+          "startedAt": "2026-11-07T20:05:28.388Z",
+          "exitAt": "2026-11-07T20:05:32.075Z",
+          "endedAt": "2026-11-07T20:05:32.075Z",
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Process was not started by this object, so requested information cannot be determined.\r\n\r\nConfiguration: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-2026-11-07T20-04-53-037Z\\10-child-failure\\GraphGoblin.exe.json\r\n",
+          "eofFailure": false
+        }
+      ],
+      "status": "PASS",
+      "endedAt": "2026-11-07T20:05:32.077Z"
+    },
+    {
+      "name": "W01 actual disposable browser close keeps parent child native tree alive",
+      "startedAt": "2026-11-07T20:05:32.077Z",
+      "status": "FAIL",
+      "error": "browserType.launch: Executable doesn't exist at C:\\Users\\98jak\\AppData\\Local\\ms-playwright\\chromium-1243\\chrome-win64\\chrome.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\n    at C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-native.mjs:258:32\n    at async test (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-07-launcher\\independent-qa\\run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:252:3",
+      "endedAt": "2026-11-07T20:05:39.346Z"
+    },
+    {
+      "name": "W02 native launcher drain wait completion relaunch persistence",
+      "startedAt": "2026-11-07T20:05:39.348Z",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:278:65\n    at async test (file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:146:22)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-07-launcher/independent-qa/run-native.mjs:273:3",
+      "endedAt": "2026-11-07T20:05:52.442Z"
+    },
+    {
+      "name": "W03 native force descendant interruption relaunch evidence",
+      "startedAt": "2026-11-07T20:05:52.443Z",
+      "detail": {
+        "h": {
+          "at": "2026-11-07T20:05:56.943Z",
+          "status": 200,
+          "identity": "d5e016df467541fda035c6eaeff2ecdffc83c8b3f96c8825b7df5543f22ddf4e",
+          "pid": 371616,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "next": {
+          "at": "2026-11-07T20:06:05.191Z",
+          "status": 200,
+          "identity": "d5e016df467541fda035c6eaeff2ecdffc83c8b3f96c8825b7df5543f22ddf4e",
+          "pid": 371316,
+          "phase": "running",
+          "body": "{\"status\":\"ok\"}"
+        },
+        "parent": {
+          "id": "01M6VSWAFZ8KM18HG04X81NPHS",
+          "ownerId": "local",
+          "loopId": "01M6VSWAF50EGZ5ZV9B2X8154B",
+          "versionId": "01M6VSWAF50EGZ5ZV9B2X8154C",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher parent",
+            "label": "Independent launcher parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M6VSWAFZ8KM18HG04X81NPHT",
+          "status": "failed",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M6VSWAFZ8KM18HG04X81NPHS:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+            "startedSeq": 5
+          },
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "subloop child 01M6VSWAJPD1DTD1W8KYAM9K9K failed: Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "child",
+            "resumable": false,
+            "details": {
+              "childRunId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "childNodeId": "hold",
+              "childDetails": {
+                "attempt": 1,
+                "effectMayHaveHappened": true
+              }
+            },
+            "script": {
+              "visitId": "01M6VSWAJPD1DTD1W8KYAM9K9K:5",
+              "dispatchId": "01M6VSWAMT6BT338712BRYMS0Q",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-11-07T20:05:58.399Z",
+          "startedAt": "2026-11-07T20:05:58.427Z",
+          "finishedAt": "2026-11-07T20:06:04.589Z",
+          "finalizedAt": "2026-11-07T20:06:04.596Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "child",
+                "label": "Required child",
+                "action": {
+                  "allowed": false,
+                  "code": "SCRIPT_CONSENT_REQUIRED",
+                  "message": "This path runs the current uncertain script again. Explicitly confirm that its effect may repeat."
+                },
+                "effects": [
+                  {
+                    "nodeId": "child",
+                    "label": "Required child",
+                    "kind": "subloop"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ],
+            "scriptConsent": {
+              "failureSeq": 11,
+              "nodeId": "child"
+            }
+          }
+        },
+        "child": {
+          "id": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+          "ownerId": "local",
+          "loopId": "01M6VSWADSRE88J5PRMRAJAX2M",
+          "versionId": "01M6VSWADSRE88J5PRMRAJAX2N",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent launcher native child",
+            "label": "Independent launcher native child v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS",
+          "invocationId": "01M6VSWAJPD1DTD1W8KYAM9K9M",
+          "status": "failed",
+          "currentNodeId": "hold",
+          "iteration": 1,
+          "failure": {
+            "code": "RUN_INTERRUPTED_BY_STOP",
+            "message": "Explicit force-stop interrupted this run; external effects may have happened",
+            "nodeId": "hold",
+            "resumable": false,
+            "details": {
+              "attempt": 1,
+              "effectMayHaveHappened": true
+            },
+            "script": {
+              "visitId": "01M6VSWAJPD1DTD1W8KYAM9K9K:5",
+              "dispatchId": "01M6VSWAMT6BT338712BRYMS0Q",
+              "state": "outcome-uncertain"
+            }
+          },
+          "createdAt": "2026-11-07T20:05:58.486Z",
+          "startedAt": "2026-11-07T20:05:58.503Z",
+          "finishedAt": "2026-11-07T20:06:00.290Z",
+          "finalizedAt": "2026-11-07T20:06:00.299Z",
+          "lastEventSeq": 7,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M6VSWAFZ8KM18HG04X81NPHS. Open that parent to review its recovery choices.",
+              "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS"
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "PARENT_RECOVERY_REQUIRED",
+              "message": "Recovery belongs to parent run 01M6VSWAFZ8KM18HG04X81NPHS. Open that parent to review its recovery choices.",
+              "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS"
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VSWAFZ8KM18HG04X81NPHS. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS"
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "hold",
+                "label": "Held native tree",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VSWAFZ8KM18HG04X81NPHS. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS"
+                },
+                "effects": [
+                  {
+                    "nodeId": "hold",
+                    "label": "Held native tree",
+                    "kind": "script"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "PARENT_RECOVERY_REQUIRED",
+                  "message": "Recovery belongs to parent run 01M6VSWAFZ8KM18HG04X81NPHS. Open that parent to review its recovery choices.",
+                  "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS"
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "events": {
+          "items": [
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 1,
+              "ts": "2026-11-07T20:05:58.486Z",
+              "type": "run.queued",
+              "versionId": "01M6VSWADSRE88J5PRMRAJAX2N",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Independent launcher native child",
+                "label": "Independent launcher native child v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+                  "loopId": "01M6VSWADSRE88J5PRMRAJAX2M",
+                  "versionId": "01M6VSWADSRE88J5PRMRAJAX2N",
+                  "parentRunId": "01M6VSWAFZ8KM18HG04X81NPHS",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M6VSWAJPD1DTD1W8KYAM9K9M",
+                  "source": "subloop",
+                  "caller": {
+                    "kind": "run",
+                    "id": "01M6VSWAFZ8KM18HG04X81NPHS"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-11-07T20:05:58.486Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {
+                  "start": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:05:58.454Z"
+                  }
+                },
+                "lastOutput": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-07T20:05:58.454Z"
+                },
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              },
+              "subloopVersions": {
+                "01M6VSWADSRE88J5PRMRAJAX2M": "01M6VSWADSRE88J5PRMRAJAX2N"
+              }
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 2,
+              "ts": "2026-11-07T20:05:58.511Z",
+              "type": "run.started",
+              "attempt": 1
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 3,
+              "ts": "2026-11-07T20:05:58.517Z",
+              "type": "node.started",
+              "nodeId": "start",
+              "kind": "trigger",
+              "attempt": 1,
+              "configHash": "527dee9c4254fe4e"
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 4,
+              "ts": "2026-11-07T20:05:58.525Z",
+              "type": "node.finished",
+              "nodeId": "start",
+              "patch": [
+                {
+                  "op": "replace",
+                  "path": "/outputs/start",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:05:58.522Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-11-07T20:05:58.522Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 3
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 5,
+              "ts": "2026-11-07T20:05:58.541Z",
+              "type": "node.started",
+              "nodeId": "hold",
+              "kind": "script",
+              "attempt": 1,
+              "configHash": "719853d2f400a5cd"
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 6,
+              "ts": "2026-11-07T20:05:58.554Z",
+              "type": "script.dispatched",
+              "nodeId": "hold",
+              "visitId": "01M6VSWAJPD1DTD1W8KYAM9K9K:5",
+              "dispatchId": "01M6VSWAMT6BT338712BRYMS0Q"
+            },
+            {
+              "runId": "01M6VSWAJPD1DTD1W8KYAM9K9K",
+              "seq": 7,
+              "ts": "2026-11-07T20:06:00.287Z",
+              "type": "run.failed",
+              "failure": {
+                "code": "RUN_INTERRUPTED_BY_STOP",
+                "message": "Explicit force-stop interrupted this run; external effects may have happened",
+                "nodeId": "hold",
+                "resumable": false,
+                "details": {
+                  "attempt": 1,
+                  "effectMayHaveHappened": true
+                },
+                "script": {
+                  "visitId": "01M6VSWAJPD1DTD1W8KYAM9K9K:5",
+                  "dispatchId": "01M6VSWAMT6BT338712BRYMS0Q",
+                  "state": "outcome-uncertain"
+                }
+              }
+            }
+          ],
+          "nextAfter": 7,
+          "hasMore": false
+        }
+      },
+      "status": "PASS",
+      "endedAt": "2026-11-07T20:06:07.150Z"
+    }
+  ],
+  "cleanup": [
+    {
+      "port": 4860,
+      "pid": 368256,
+      "status": "managed-force-cleanup"
+    },
+    {
+      "port": 4862,
+      "pid": 273176,
+      "status": "managed-force-cleanup"
+    },
+    {
+      "port": 4863,
+      "pid": 370508,
+      "status": "REQUIRES-INSPECTION",
+      "error": "Expected values to be strictly equal:\n\n370948 !== 370508\n"
+    }
+  ],
+  "notRun": [
+    "S01 installer/shortcut fields",
+    "S02 actual owner desktop/taskbar pin/relaunch"
+  ],
+  "evidenceBoundary": "Native launcher --ensure-gateway, real built API, provider-free native script trees, disposable headed Chromium. No owner Chrome PWA or taskbar mutation."
+}
