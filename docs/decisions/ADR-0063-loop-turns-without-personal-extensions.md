@@ -2,6 +2,8 @@
 
 Date: 2026-10-28. Status: accepted (owner decision 2026-10-27, option A; #423).
 
+Update 2026-11-07: [ADR-0065](ADR-0065-codex-inherits-configured-plugins.md) supersedes the Codex plugin-off default and confirms inheritance of ordinary settings, skills and personal instructions (D2). Other isolation defaults and Claude's policy below remain in force. The remainder records the original decision and evidence.
+
 ## Context
 
 The final integrated check found every real Codex loop turn starting the machine's own Codex extensions inside the turn's process tree: `node_repl.exe`, plugin MCP servers under `node.exe` and `cmd.exe` ([F2 record](../qa/2026-10-27-final-f2-live/README.md), observation O1). They come from the user's `~/.codex/config.toml`, which the CLI loads for every invocation: `[mcp_servers.*]`, `[plugins.*]` and marketplaces, `[features]` such as `memories` and `apps`, and a `notify` program. [docs/06](../06-harness-integration.md) said per-thread options keep the machine's `config.toml` defaults from leaking into a loop. That held for model, effort, sandbox and approval, not for extensions.

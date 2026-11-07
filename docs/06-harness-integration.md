@@ -199,7 +199,11 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
 
-The machine's extensions are switched off for every loop turn ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory. It starts the turn with every listed MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.plugins`, `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; servers are therefore disabled by name.
+Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0065](decisions/ADR-0065-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected: a globally disabled feature or individually disabled plugin stays disabled. A node opts out with `harnessOptions.configOverrides = {"features":{"plugins":false}}`; an explicit `true` enables the feature while respecting individually disabled plugins. Fresh turns, resumes and structured decision calls use this policy.
+
+Other extension isolation remains ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory **with plugins switched off only for discovery**, so plugin-owned servers are not listed and then suppressed. It starts the turn with every listed standalone MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; standalone servers are therefore disabled by name and remain available through explicit node overrides.
+
+Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded; [#442](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/442) tracks diagnostics for that limit.
 
 Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. A listed name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). An override key that breaks it is refused by the adapter with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted.
 
@@ -207,7 +211,7 @@ A loop turn still inherits from the machine:
 
 - the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
 - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
-- the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`.
+- the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
 
 | Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                                                                          |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -259,6 +263,8 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no network and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+Configured plugins are inherited through the common harness, including their tools; the
+read-only sandbox controls local commands rather than validating plugin behavior.
 `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks for `{ route, confidence, reasoning }`,
 where route is an enum of declared route IDs. Schemas follow strict structured-output
 rules; the adapter validates the entire answer and confidence bounds without clamping

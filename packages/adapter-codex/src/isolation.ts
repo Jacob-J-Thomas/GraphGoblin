@@ -2,12 +2,12 @@ import type { CodexOptions } from '@openai/codex-sdk';
 import type { CliCommand, CliRunner } from './cli.js';
 
 /**
- * Loop turns run without the machine's personal Codex extensions (ADR-0063).
+ * Codex turns inherit configured plugins (ADR-0065), with other extensions isolated (ADR-0063).
  *
  * The CLI loads `~/.codex/config.toml` (and a trusted project's `.codex/config.toml`) for every
- * turn. Without these defaults a loop turn starts the machine's MCP servers, installed and remote
- * plugins (with their own MCP servers), ChatGPT apps, memories, goals, sub-agents, lifecycle hooks
- * and the `notify` program. Verified against CLI 0.160.0 (docs/qa/2026-10-28-wp-423-isolation):
+ * turn. The CLI resolves installed and remote plugins, including their enabled/disabled state
+ * and their own MCP servers. These defaults still switch off standalone MCP servers, ChatGPT
+ * apps, memories, goals, sub-agents, lifecycle hooks and the `notify` program.
  *
  * - `features.<name>=false` switches a feature off; `features.plugins=false` removes every local
  *   and remote plugin and the MCP servers they bring.
@@ -20,8 +20,8 @@ import type { CliCommand, CliRunner } from './cli.js';
  *
  * Order of the `--config` arguments: server switches, these defaults, then the node's own
  * `configOverrides` (so a node turns one server back on with `mcp_servers.<name>.enabled=true`,
- * or every plugin with `features.plugins=true`), then the SDK's thread options, which no override
- * can weaken.
+ * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which no
+ * override can weaken.
  *
  * Every key segment that reaches `--config`, a listed server name or a node override key, must be
  * one plain TOML key (letters, digits, `_`, `-`) and not `__proto__`, `constructor` or
@@ -81,19 +81,12 @@ export function overrideRefusal(path: string): Error {
 
 /**
  * Features that bring the machine's own installs, account connectors or personal state into a
- * turn, or change what an unattended turn can do: plugins, ChatGPT apps, memories, lifecycle
+ * turn, or change what an unattended turn can do: ChatGPT apps, memories, lifecycle
  * hooks, sub-agent spawning (`multi_agent`) and goals. The CLI's own code-mode host
  * (`code_mode_host`) is its tool host, not an extension, and stays on: without it a turn runs no
  * command.
  */
-export const ISOLATED_FEATURES = [
-  'plugins',
-  'apps',
-  'memories',
-  'hooks',
-  'multi_agent',
-  'goals',
-] as const;
+export const ISOLATED_FEATURES = ['apps', 'memories', 'hooks', 'multi_agent', 'goals'] as const;
 
 /**
  * A configuration table whose keys are all its own (QA423-01). Server names and authored keys
@@ -161,12 +154,14 @@ export function layerConfig(...layers: Config[]): Config {
 
 /** The CLI's own words for a failure: its non-empty lines joined, bounded to 300 characters. */
 function excerpt(text: string): string {
-  return text
+  const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean)
-    .join(' | ')
-    .slice(0, 300);
+    .filter(Boolean);
+  // A long startup warning (for example PATH aliases under a temporary CODEX_HOME) must not
+  // consume the bound and hide the configuration error the owner needs to repair.
+  const error = lines.findIndex((line) => /^error:/i.test(line));
+  return (error < 0 ? lines : lines.slice(error)).join(' | ').slice(0, 300);
 }
 
 function listingFailure(
@@ -181,12 +176,16 @@ function listingFailure(
   );
 }
 
-/** The listing switches off the same features as the turn, so plugin servers are not listed. */
+/**
+ * Discovery must exclude plugin servers even though execution inherits plugins. Otherwise those
+ * servers would be listed and disabled by serverSwitches, suppressing an enabled plugin's tools.
+ * Never derive this list only from the execution defaults (ADR-0065).
+ */
 export const LISTING_ARGS = [
   'mcp',
   'list',
   '--json',
-  ...ISOLATED_FEATURES.flatMap((name) => ['--config', `features.${name}=false`]),
+  ...['plugins', ...ISOLATED_FEATURES].flatMap((name) => ['--config', `features.${name}=false`]),
 ];
 
 /**

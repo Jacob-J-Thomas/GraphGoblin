@@ -6,8 +6,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { CliResult, CliRunner } from './cli.js';
 import { CodexHarness } from './harness.js';
+import { CodexStructured } from './structured.js';
 
-// Loop turns run without the machine's personal Codex extensions (ADR-0063). The real SDK spawns
+// Plugins inherit CLI configuration; other extensions stay isolated (ADR-0065). The real SDK spawns
 // `<codexBinary> mcp list --json` (the harness's listing) and `<codexBinary> exec ...` (the turn);
 // this Node executable with the preloaded fake CLI answers the listing like CLI 0.160.0 and
 // records the turn's exact arguments, so these assertions cover the SDK's own argument building.
@@ -20,7 +21,6 @@ const inherited = Object.fromEntries(
 );
 
 const DEFAULTS = [
-  'features.plugins=false',
   'features.apps=false',
   'features.memories=false',
   'features.hooks=false',
@@ -118,8 +118,8 @@ async function configArgs(file: string): Promise<string[]> {
   return argv.filter((_arg, index) => argv[index - 1] === '--config');
 }
 
-describe('Codex loop turns without the machine personal extensions', () => {
-  it('switches off every configured MCP server, plugins, apps, memories, hooks and notify', async () => {
+describe('Codex plugin inheritance with standalone extension isolation', () => {
+  it('inherits plugin configuration while switching off standalone MCP servers and other extensions', async () => {
     const { directory, files, session } = await fakeTurn(['node_repl', 'docs']);
     await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
     expect(await configArgs(files.argv)).toEqual([
@@ -128,6 +128,8 @@ describe('Codex loop turns without the machine personal extensions', () => {
       ...DEFAULTS,
       ...THREAD,
     ]);
+    expect(await configArgs(files.argv)).not.toContain('features.plugins=true');
+    expect(await configArgs(files.argv)).not.toContain('features.plugins=false');
     const listing = JSON.parse(await readFile(files.listing, 'utf8')) as {
       argv: string[];
       cwd: string;
@@ -142,14 +144,43 @@ describe('Codex loop turns without the machine personal extensions', () => {
       mcp_servers: { node_repl: { enabled: true } },
       'features.plugins': true,
       approval_policy: 'untrusted',
+      model: 'wrong-model',
+      model_reasoning_effort: 'xhigh',
+      sandbox_mode: 'danger-full-access',
+      sandbox_workspace_write: { network_access: true },
+      web_search: 'live',
     });
     await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
     expect(await configArgs(files.argv)).toEqual([
       'mcp_servers.node_repl.enabled=true',
       'mcp_servers.docs.enabled=false',
+      ...DEFAULTS.slice(0, -1),
       'features.plugins=true',
-      ...DEFAULTS.slice(1),
+      'notify=[]',
       'approval_policy="untrusted"',
+      'model="wrong-model"',
+      'model_reasoning_effort="xhigh"',
+      'sandbox_mode="danger-full-access"',
+      'sandbox_workspace_write.network_access=true',
+      'web_search="live"',
+      ...THREAD,
+    ]);
+    const argv = JSON.parse(await readFile(files.argv, 'utf8')) as string[];
+    expect(argv.indexOf('--model')).toBeGreaterThan(argv.indexOf('model="wrong-model"'));
+    expect(argv[argv.indexOf('--model') + 1]).toBe('gpt-6-luna');
+    expect(argv.indexOf('--sandbox')).toBeGreaterThan(
+      argv.indexOf('sandbox_mode="danger-full-access"'),
+    );
+    expect(argv[argv.indexOf('--sandbox') + 1]).toBe('read-only');
+  }, 30_000);
+
+  it('lets a node explicitly disable inherited plugins', async () => {
+    const { files, session } = await fakeTurn([], { features: { plugins: false } });
+    await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
+    expect(await configArgs(files.argv)).toEqual([
+      ...DEFAULTS.slice(0, -1),
+      'features.plugins=false',
+      'notify=[]',
       ...THREAD,
     ]);
   }, 30_000);
@@ -241,7 +272,7 @@ describe('Codex loop turns without the machine personal extensions', () => {
     30_000,
   );
 
-  it('switches them off on a resumed conversation too', async () => {
+  it('isolates standalone servers on resumed conversations while inheriting plugins', async () => {
     const { files, session } = await fakeTurn(['node_repl'], undefined, {}, 'argv-thread');
     await expect(session.result).resolves.toMatchObject({ finalText: 'Recorded' });
     const argv = JSON.parse(await readFile(files.argv, 'utf8')) as string[];
@@ -253,6 +284,29 @@ describe('Codex loop turns without the machine personal extensions', () => {
     ]);
   }, 30_000);
 
+  it('inherits plugins on structured calls through the common adapter too', async () => {
+    const { directory, files, harness } = await fakeHarness(['docs']);
+    await expect(
+      new CodexStructured(harness).complete(
+        {
+          workingDirectory: directory,
+          model: 'gpt-6-luna',
+          effort: 'low',
+          prompt: 'Controlled structured fixture; no provider call',
+          schema: { type: 'object', properties: {}, additionalProperties: false },
+        },
+        new AbortController().signal,
+      ),
+    ).resolves.toMatchObject({ value: 'Recorded' });
+    expect(await configArgs(files.argv)).toEqual([
+      'mcp_servers.docs.enabled=false',
+      ...DEFAULTS,
+      ...THREAD,
+    ]);
+    const argv = JSON.parse(await readFile(files.argv, 'utf8')) as string[];
+    expect(argv).toContain('--output-schema');
+  }, 30_000);
+
   it('does not start the turn when the MCP servers cannot be listed', async () => {
     const { files, session } = await fakeTurn(['node_repl'], undefined, {
       GG_FAKE_CODEX_MCP_EXIT: '2',
@@ -261,7 +315,7 @@ describe('Codex loop turns without the machine personal extensions', () => {
       code: 'HARNESS_TURN_FAILED',
       submission: 'definitely-not-submitted',
       message:
-        "Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 2: WARNING: proceeding, even though we could not create PATH aliases | Error: failed to load configuration",
+        "Codex could not list the machine's MCP servers, so the turn did not start: mcp list exited 2: Error: failed to load configuration",
     });
     expect(existsSync(files.argv)).toBe(false);
   }, 30_000);
@@ -330,6 +384,15 @@ describe('the MCP listing before each turn', () => {
   });
 
   it.each([
+    [
+      {
+        code: 1,
+        output: `WARNING: ${'temporary path '.repeat(40)}\nError: failed to load configuration\nCaused by:\ninvalid type: string, expected a boolean in plugins.fixture.enabled`,
+        stdout: '',
+      },
+      'HARNESS_TURN_FAILED',
+      'mcp list exited 1: Error: failed to load configuration | Caused by: | invalid type: string, expected a boolean in plugins.fixture.enabled',
+    ],
     [
       { code: null, output: '', stdout: '', spawnError: 'spawn C:/missing/codex.exe ENOENT' },
       'HARNESS_NOT_INSTALLED',

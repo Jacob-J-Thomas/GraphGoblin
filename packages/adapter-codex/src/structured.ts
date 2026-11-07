@@ -26,7 +26,8 @@ function parseLoose(text: string): unknown {
 
 /**
  * `StructuredPort` over Codex: one fresh thread per call with an output schema, a read-only
- * sandbox, approval `never`, no network, and no web search, so the call cannot change files.
+ * sandbox, approval `never`, no network, and no web search for local commands. Configured plugins
+ * are inherited as on other Codex turns; plugin tools follow the CLI's plugin policy (ADR-0065).
  * Without a working directory it runs in an empty temporary directory, so the model sees no
  * project files. Schema validation stays with the engine.
  */

@@ -105,7 +105,7 @@ codex plugin add graphgoblin@graphgoblin-local
 
 Set `GG_API_URL` and, when required, `GG_API_KEY` before starting Codex. The plugin passes those variables to MCP. Its MCP tool timeout is 660 seconds to accommodate the longest wait call.
 
-The plugin and any `codex mcp add` server serve your own Codex sessions. Codex turns inside a loop run without them, as without every other plugin and MCP server in your Codex configuration ([ADR-0063](../decisions/ADR-0063-loop-turns-without-personal-extensions.md)). A node that needs the `graphgoblin` server added with `codex mcp add` turns it back on with the config override `{"mcp_servers": {"graphgoblin": {"enabled": true}}}`. The plugin's copy comes back only with `{"features": {"plugins": true}}`, which turns on all of your plugins.
+Codex turns inside a loop inherit your enabled configured plugins, including this plugin's tools, while disabled plugins stay disabled ([ADR-0065](../decisions/ADR-0065-codex-inherits-configured-plugins.md)). A node opts out with `{"features":{"plugins":false}}` in **Config overrides**. Independently configured `codex mcp add` servers remain off by default ([ADR-0063](../decisions/ADR-0063-loop-turns-without-personal-extensions.md)); a node that needs the standalone `graphgoblin` server turns it back on with `{"mcp_servers": {"graphgoblin": {"enabled": true}}}`.
 
 To remove the plugin and its marketplace:
 
