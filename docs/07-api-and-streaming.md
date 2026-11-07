@@ -1,5 +1,12 @@
 # 07 - API, streaming, and MCP
 
+The public `/healthz` JSON body remains `{status: "ok"}`. Its response headers also publish
+`X-GraphGoblin-Instance` (an opaque non-secret runtime/configuration fingerprint),
+`X-GraphGoblin-Pid` and `X-GraphGoblin-Phase`. The optional Windows launcher compares the expected
+identity and checks the built `/app/` shell before opening its PWA. These headers identify local
+configuration; they are not authentication and disclose no raw paths or credentials. See
+[ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
+
 ## Principles (Decided)
 
 - Every capability is an HTTP endpoint first. The web app and the MCP server consume the same API through the generated client.

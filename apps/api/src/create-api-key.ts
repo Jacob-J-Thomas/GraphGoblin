@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { SqliteApiKeys, databaseFilePath, openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from './config.js';
 import { LOCAL_OWNER } from './container.js';
-import { acquireDataDirLock } from './data-dir-lock.js';
+import { acquireDataDirLock, acquireDatabaseLock, type DataDirLock } from './data-dir-lock.js';
 import { UlidIds } from './ids.js';
 
 /**
@@ -81,11 +81,13 @@ export async function createApiKey(
   args: CreateApiKeyArgs,
 ): Promise<{ id: string; token: string; scopes: string[] }> {
   const lock = await acquireDataDirLock(config.dataDir);
+  let databaseLock: DataDirLock | undefined;
   try {
     if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
       await mkdir(config.dataDir, { recursive: true });
     }
     const dbFile = databaseFilePath(config.dbUrl);
+    if (dbFile) databaseLock = await acquireDatabaseLock(dbFile);
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
     const handle = openDatabase({ url: config.dbUrl });
     try {
@@ -98,7 +100,11 @@ export async function createApiKey(
       handle.close();
     }
   } finally {
-    await lock.release();
+    try {
+      await databaseLock?.release();
+    } finally {
+      await lock.release();
+    }
   }
 }
 

@@ -1,5 +1,17 @@
 # 10 - Testing and quality
 
+`pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
+compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
+gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,
+configuration/store/listener refusal, shared external SQLite ownership, preserved malformed locks,
+detached lifetime and stdout/stderr EOF, normal drain and cold relaunch. Native shell-link readback
+and HWND COM property-store checks execute the read-back relaunch command through the launcher.
+The cross-process HWND case reads/exercises metadata after the stamping process has exited.
+Eight repeated silent-TCP trials require refusal without a gateway log write or store acquisition.
+They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
+tracked separately with native shell evidence. No live provider turn or owner service/store is
+used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
+
 The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
@@ -14,7 +26,7 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 
 `tooling` uses Vitest rather than the Node test runner for ordinary unit tests, so the same V8 provider and all four shared thresholds apply without a second coverage implementation. `pnpm lint` discovers its lint script through the existing Turbo task. Tooling lint covers maintained `.mjs` scripts, perf modules and configs; declaration files and the deliberately malformed TypeScript design-token fixtures are outside that JavaScript invocation. The acceptance test suites `tooling/scripts/reset.acceptance.mjs` and `upgrade.acceptance.mjs` remain independent `node --test` checks of the built app, and are excluded as test code from tooling coverage. Their current-format migration checks remain maintained; only the historical format converters were retired.
 
-The tooling denominator includes every runtime `.mjs` under `scripts/` and `perf/`, plus `vitest.shared.mjs`. Only `*.test.mjs`, the two `*.acceptance.mjs` test suites and the existing fixture directory are excluded. Turbo builds the API and web before tooling tests; direct package commands require `pnpm build` first. Native CLI coverage is attached with Vitest's `autoAttachSubprocess`; production helpers are loaded natively so parent and child V8 byte offsets agree. The numerical gate remains enforced even when a native or load failure prevents a full local pass.
+The tooling denominator includes every runtime `.mjs` under `scripts/` and `perf/`, plus `vitest.shared.mjs`. Only `*.test.mjs`, executable `*.acceptance.mjs` test suites and the existing fixture directory are excluded. Turbo builds the API and web before tooling tests; direct package commands require `pnpm build` first. Native CLI coverage is attached with Vitest's `autoAttachSubprocess`; production helpers are loaded natively so parent and child V8 byte offsets agree. The numerical gate remains enforced even when a native or load failure prevents a full local pass.
 
 Maintained auxiliary generators are measured explicitly: API-client `scripts/codegen.ts` and `scripts/generate.ts`, web `scripts/generate-icons.mjs`, API `scripts/check-templates.mjs`, and the API's `src/templates/copy-catalog.ts` build entry. Optional output directories let their tests generate into disposable destinations, check exact output and refuse malformed inputs or blocked paths without touching committed outputs. The web's `scripts/**/*.test.ts` include also runs integration assertions over the engine; it does not imply that one-off QA drivers are product source. `scripts/replay-seed-fixture.ts` is an integration corpus, and `scripts/replay-seed-repro.ts` is a historical disposable investigation driver; neither is maintained runtime. The adapter's `packages/adapter-codex/scripts/record.mjs` is a manually invoked provider recorder (`pnpm --filter @graphgoblin/adapter-codex record`), outside ordinary coverage because it requires an authenticated installed provider and spends usage. It is not a provider-free regression gate. No converter or recorder is silently represented as tested runtime.
 

@@ -11,12 +11,14 @@ import {
 import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
+import { instanceIdentity } from '../instance-identity.js';
 
 const ShutdownSnapshotSchema = ShutdownStateSchema.extend({ controlToken: z.string() });
 
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
+  const identity = instanceIdentity(container.config);
   app.get(
     '/system/storage',
     {
@@ -97,7 +99,12 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
         response: { 200: z.object({ status: z.literal('ok') }) },
       },
     },
-    () => ({ status: 'ok' as const }),
+    (_request, reply) => {
+      reply.header('X-GraphGoblin-Instance', identity);
+      reply.header('X-GraphGoblin-Pid', process.pid);
+      reply.header('X-GraphGoblin-Phase', container.shutdown.state().phase);
+      return { status: 'ok' as const };
+    },
   );
 
   app.get(

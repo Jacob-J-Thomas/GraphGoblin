@@ -1,5 +1,37 @@
 # Troubleshoot
 
+## Windows launcher
+
+The launcher reports the failed step in a dialog and records it in `launcher.log` next to
+`GraphGoblin.exe`. `gateway.log` there retains stdout/stderr from gateways it started, including
+startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
+
+- **Port belongs to another or differently configured service:** check the configured checkout,
+  Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
+  older builds too. Stop the intended old gateway through its deliberate shutdown before launching
+  the new build. It never stops an unrelated listener.
+- **Existing process owns the store:** it may be starting, serving another port or releasing its
+  store. Wait for it or correct the configuration. Do not delete ownership files to make it start.
+- **Exited during startup:** read `gateway.log`; common causes are a held/malformed store lock,
+  invalid settings or unsupported stored data. Correct the stated cause and retry. No reset is
+  implicit in a launch.
+- **Readiness deadline elapsed:** the process is left running. Check its log and launch again to
+  observe readiness; there is no automatic kill/restart loop.
+- **PWA belongs to another origin:** install the Chrome app from the exact configured
+  `http://127.0.0.1:<port>/app/` and configure the launcher with its original shortcut. `localhost`
+  and `127.0.0.1`, or two ports, are different PWA identities.
+- **Gateway ready but PWA did not open:** check Chrome's installed app, profile and executable;
+  rerun the configuration script. The gateway keeps running.
+- **Taskbar cold click opens disconnected Chrome directly:** remove the old direct Chrome pin,
+  open through the new desktop launcher and pin that running GraphGoblin button. Verify the cold
+  taskbar route; rewriting a pin file alone may leave Explorer's cached direct Chrome command.
+
+For a readiness diagnostic, run
+`GraphGoblin.exe --config <absolute-config.json> --ensure-gateway`. It starts/reuses the configured
+gateway without opening a PWA and reports failures to stderr instead of a dialog. It obeys the same
+ownership and readiness rules. A normal click during a drain reopens the PWA for existing shutdown
+controls; closing that PWA leaves execution running.
+
 Read the run's failure banner and event log first. Record the run ID, failing node, code, and message before changing anything. Use the [failure-code reference](03-run-and-observe.md#act-on-failure-reasons) for every contract code.
 
 ## Inference prompt delivery

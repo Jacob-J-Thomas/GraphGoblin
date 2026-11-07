@@ -10,6 +10,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  windows-launcher:
+    name: Windows launcher
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Native Windows launcher acceptance
+        run: pnpm test:windows-launcher
+      - name: Upload native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-launcher
+          path: .tmp/windows-launcher-*/
+          if-no-files-found: warn
   gates:
     name: Gates
     runs-on: ubuntu-latest
