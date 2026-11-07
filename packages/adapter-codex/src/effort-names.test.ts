@@ -39,6 +39,7 @@ describe('the shipped family table', () => {
       { prefix: 'gpt-5.6', none: 'none' },
     ]);
     expect(codexEffortName('gpt-6.1-sol', 'none')).toBe('none');
+    expect(codexEffortName('gpt-6.1-terra', 'none')).toBe('none');
     expect(codexEffortName('gpt-5.5', 'none')).toBe('none');
   });
 });
