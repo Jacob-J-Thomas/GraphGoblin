@@ -181,6 +181,10 @@ export async function createContainer(
     }
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
+    // A fresh external parent must stay absent when pure defaults admission fails. Once the
+    // database lock is held, inspect/validate again: another writer may have created it meanwhile.
+    if (dbFile && !existsSync(dbFile))
+      validateProcessDefaults(config.defaults, DEFAULT_MODEL_CATALOG);
     if (dbFile) databaseLock = await acquireDatabaseLock(dbFile);
     // An unsupported store stops startup with the data directory, the found and required formats
     // and the explicit reset command; nothing is converted or removed (ADR-0042).
@@ -212,15 +216,7 @@ export async function createContainer(
         readonlyClient.close();
       }
     }
-    const configurationIssues = validateHarnessDefaults({
-      loopDefaults: { byHarness: {} },
-      ownerDefaults: { byHarness: {} },
-      processDefaults: config.defaults,
-      catalog: startupCatalog,
-    });
-    const [firstIssue, ...moreIssues] = configurationIssues;
-    if (firstIssue)
-      throw new ProcessDefaultsRefusedError([firstIssue, ...moreIssues], config.defaults);
+    validateProcessDefaults(config.defaults, startupCatalog);
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;
@@ -525,4 +521,17 @@ export async function createContainer(
     }
     throw error;
   }
+}
+
+function validateProcessDefaults(
+  defaults: HarnessDefaults,
+  catalog: typeof DEFAULT_MODEL_CATALOG,
+): void {
+  const [firstIssue, ...moreIssues] = validateHarnessDefaults({
+    loopDefaults: { byHarness: {} },
+    ownerDefaults: { byHarness: {} },
+    processDefaults: defaults,
+    catalog,
+  });
+  if (firstIssue) throw new ProcessDefaultsRefusedError([firstIssue, ...moreIssues], defaults);
 }

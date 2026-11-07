@@ -613,12 +613,25 @@ export async function resetDataDirectory(
     throw new ResetRefusedError(
       `another GraphGoblin process holds ${state.path}; stop it before resetting`,
     );
-  const databaseState = await databaseLockState(databaseFile);
-  if (databaseState.state === 'held')
-    throw new ResetRefusedError(
-      `another GraphGoblin process holds ${databaseState.path}; stop it before resetting`,
-    );
-  const preview = await planReset({ dataDir, database, readStore: io.readStore });
+  const checkDatabaseOwnership = async (file: string): Promise<void> => {
+    const state = await databaseLockState(file);
+    if (state.state === 'held')
+      throw new ResetRefusedError(
+        `another GraphGoblin process holds ${state.path}; stop it before resetting`,
+      );
+  };
+  const preview = await planReset({
+    dataDir,
+    database,
+    readStore: async (file) => {
+      // The plan first validates the physical ancestors and regular file without following
+      // links. Preserve that refusal guidance before canonical ownership lookup or store reads.
+      await checkDatabaseOwnership(file);
+      return io.readStore(file);
+    },
+  });
+  // A missing database never invokes readStore, but a live creator may already own its sidecar.
+  await checkDatabaseOwnership(databaseFile);
   if (!args.confirmed) {
     io.write(formatPlan(preview, { dryRun: true, configured }));
     io.write(
