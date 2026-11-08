@@ -1,0 +1,377 @@
+{
+  "snapshotUtc": "2026-11-08T17:55:32Z",
+  "candidateState": "dirty-intermediate",
+  "notReleaseApproval": true,
+  "boundaries": {
+    "repairPrCreated": false,
+    "liveCutoverPerformed": false,
+    "mergeAuthorized": false,
+    "autoMergeAllowed": false,
+    "attachmentsDeferredIssue": 451
+  },
+  "realOllama": {
+    "originalAlias": "ollama-profile-qualification.json",
+    "version": "0.32.15",
+    "model": "qwen3.5:9b-q4_K_M",
+    "contextProfile": "ollama-0.32.15/qwen35-gpt2/single-user-v1",
+    "contextTokens": 4096,
+    "outputReserveTokens": 1024,
+    "trials": [
+      {
+        "name": "greeting",
+        "promptBytes": 32,
+        "promptEvalCount": 19,
+        "conservativeBound": 544,
+        "boundPassed": true,
+        "outputTokens": 9,
+        "latencyMs": 6810
+      },
+      {
+        "name": "json-looking-text",
+        "promptBytes": 63,
+        "promptEvalCount": 26,
+        "conservativeBound": 575,
+        "boundPassed": true,
+        "outputTokens": 6,
+        "latencyMs": 677
+      },
+      {
+        "name": "number-looking-text",
+        "promptBytes": 26,
+        "promptEvalCount": 20,
+        "conservativeBound": 538,
+        "boundPassed": true,
+        "outputTokens": 3,
+        "latencyMs": 469
+      },
+      {
+        "name": "unicode",
+        "promptBytes": 1476,
+        "promptEvalCount": 405,
+        "conservativeBound": 1988,
+        "boundPassed": true,
+        "outputTokens": 2,
+        "latencyMs": 2270
+      },
+      {
+        "name": "near-byte-ceiling",
+        "promptBytes": 2425,
+        "promptEvalCount": 526,
+        "conservativeBound": 2937,
+        "boundPassed": true,
+        "outputTokens": 4,
+        "latencyMs": 3050
+      },
+      {
+        "name": "syntax-dense",
+        "promptBytes": 1766,
+        "promptEvalCount": 1125,
+        "conservativeBound": 2278,
+        "boundPassed": true,
+        "outputTokens": 2,
+        "latencyMs": 5883
+      },
+      {
+        "name": "schema",
+        "promptBytes": 43,
+        "promptEvalCount": 21,
+        "conservativeBound": 681,
+        "boundPassed": true,
+        "outputTokens": 9,
+        "latencyMs": 861
+      }
+    ],
+    "claim": "Bounded actual-runtime trials; no universal model support or immutable executed-weight identity claim."
+  },
+  "realCoexistence": {
+    "originalAlias": "voice-coexistence-qualification.json",
+    "originalPassed": false,
+    "transcriptionLatencyMs": 934,
+    "qwenOutputTokens": 232,
+    "qwenLatencyMs": 14772,
+    "nativeExitCode": 0,
+    "minimumOsReportedUnusedBytes": 84934656,
+    "totalMemoryBytes": 17179869184,
+    "disposition": "Original false retained. Architecture rejected unused/free-byte threshold as suitability gate; successful measured work is not a guarantee for arbitrary recording/load."
+  },
+  "laterProductionLocalProbe": {
+    "originalAlias": "candidate-api-acceptance.json",
+    "checkedAt": "2026-11-08T16:56:32.830Z",
+    "route": "local",
+    "suitable": true,
+    "latencyMs": 521,
+    "osReportedUnusedBytes": 548601856
+  },
+  "candidateApiAcceptance": {
+    "originalAlias": "candidate-api-acceptance.json",
+    "completedAt": "2026-11-08T16:56:37.549Z",
+    "checkCount": 11,
+    "allPassed": true,
+    "checks": [
+      {
+        "name": "Same-machine pairing readiness without PUBLIC_URL",
+        "passed": true
+      },
+      {
+        "name": "Published Ollama text readiness",
+        "passed": true
+      },
+      {
+        "name": "Real Qwen text response",
+        "passed": true
+      },
+      {
+        "name": "Real Qwen conversation continuity",
+        "passed": true
+      },
+      {
+        "name": "JSON-looking text remains a string in deterministic envelope",
+        "passed": true
+      },
+      {
+        "name": "Qualified local transcription measured by production probe",
+        "passed": true
+      },
+      {
+        "name": "Voice staging does not publish",
+        "passed": true
+      },
+      {
+        "name": "Published voice normalizer enables local route",
+        "passed": true
+      },
+      {
+        "name": "Uploaded canonical audio can be recovered read-only",
+        "passed": true
+      },
+      {
+        "name": "Real audio+caption \u2192 local STT \u2192 Qwen \u2192 response",
+        "passed": true
+      },
+      {
+        "name": "Required input rejected instead of silently truncated",
+        "passed": true
+      }
+    ],
+    "frozenInitialProseCount": 12,
+    "countDiscrepancy": "Actual JSON records 11; frozen initial prose says 12 and is not rewritten.",
+    "liveCloudUsed": false
+  },
+  "copyRehearsal": {
+    "originalAlias": "successful-copy-rehearsal-summary",
+    "status": "passed",
+    "fixtureOnly": true,
+    "targetHarness": "codex",
+    "protectedNonChatLoops": 13,
+    "originalVersionsHistorySettingsSecretsPreserved": true,
+    "fakeHarnessTurns": 1,
+    "fixtureTranscriptionCalls": 2,
+    "nativeProcessCalls": 0,
+    "networkCalls": 0,
+    "nativeTranscriptionQualified": false,
+    "mustNotPromoteCopyToLive": true
+  },
+  "packageCoverageRun": {
+    "originalAlias": "test-coverage.log",
+    "entireGatePassed": false,
+    "packages": {
+      "contracts": {
+        "tests": "304 passed (304)",
+        "branches": ": 95.57% ( 216/226 )",
+        "lines": ": 99.59% ( 496/498 )"
+      },
+      "domain": {
+        "tests": "362 passed (362)",
+        "branches": ": 98.1% ( 1189/1212 )",
+        "lines": ": 99.49% ( 1181/1187 )"
+      },
+      "engine": {
+        "tests": "1795 passed (1795)",
+        "branches": ": 91.33% ( 3131/3428 )",
+        "lines": ": 97% ( 3366/3470 )"
+      },
+      "adapter-codex": {
+        "tests": "642 passed | 4 skipped (646)",
+        "branches": ": 95.41% ( 479/502 )",
+        "lines": ": 99.23% ( 520/524 )"
+      },
+      "adapter-jev": {
+        "tests": "34 passed | 5 skipped (39)",
+        "branches": ": 96.77% ( 60/62 )",
+        "lines": ": 98.8% ( 83/84 )"
+      },
+      "infrastructure": {
+        "tests": "1145 passed | 8 skipped (1153)",
+        "branches": ": 93.26% ( 3252/3487 )",
+        "lines": ": 97.78% ( 3801/3887 )"
+      },
+      "api": {
+        "tests": "1875 passed | 24 skipped (1899)",
+        "branches": ": 90.76% ( 2890/3184 )",
+        "lines": ": 95.91% ( 3735/3894 )"
+      },
+      "api-client": {
+        "tests": "102 passed (102)",
+        "branches": ": 97.28% ( 215/221 )",
+        "lines": ": 100% ( 315/315 )"
+      },
+      "tooling": {
+        "tests": "7 failed | 117 passed (124)"
+      }
+    },
+    "remainingFailure": "Tooling performance harness: seven failures involving macOS CPU-clock/browser assumptions; unavailable msedge executable among them. Repair/rerun pending.",
+    "webCoverage": "First run had four failures; later separate full run passed 2355 tests, 194 files."
+  },
+  "independentReviews": {
+    "pairing": {
+      "completedResult": true,
+      "model": "claude-fable-5-1",
+      "originalAlias": "fable-pairing-review-result.json"
+    },
+    "chat": {
+      "completedResult": true,
+      "model": "claude-fable-5-1",
+      "originalAlias": "fable-chat-review-result.json"
+    },
+    "core": {
+      "completedResult": true,
+      "model": "claude-fable-5-1",
+      "originalAlias": "fable-core-review-result.json"
+    },
+    "settings-pwa": {
+      "completedResult": true,
+      "model": "claude-fable-5-1",
+      "originalAlias": "fable-settings-pwa-review-result.json"
+    },
+    "browser-qa": {
+      "completedResult": false,
+      "model": "claude-fable-5-1",
+      "originalAlias": "fable-browser-qa-result.json"
+    }
+  },
+  "fableBrowser": {
+    "initialReportPresent": false,
+    "resetLocal": "2026-11-08 14:20 America/Chicago",
+    "plannedResumeLocal": "2026-11-08 14:25 America/Chicago",
+    "rootInitialWithheldUntilFableInitialFrozen": true,
+    "finalChangedCandidateReviewPending": true
+  },
+  "proxy": {
+    "originalAlias": "proxy-test-receipt.json",
+    "passed": 17,
+    "failed": 0,
+    "disposableListenersOnly": true,
+    "liveGatewayContacted": false,
+    "productionProxyStarted": false,
+    "realPhoneTrustVerified": false
+  },
+  "unverified": [
+    "Physical microphone/phone/Safari capture and interruption",
+    "Phone keyboard/IME and home-Wi-Fi installation/trust",
+    "Live cloud credential/transcription and billing",
+    "Final independent browser initial/cross-critique",
+    "Final exact-candidate full gates/review/deployment/owner QA"
+  ],
+  "separatePackageCoverage": {
+    "web": {
+      "originalAlias": "web-coverage-second.log",
+      "testFilesPassed": 194,
+      "testsPassed": 2355,
+      "testsSkipped": 0,
+      "branchesPercent": 93.98,
+      "linesPercent": 98.49
+    },
+    "mcp": {
+      "originalAlias": "mcp-coverage.log",
+      "testFilesPassed": 11,
+      "testsPassed": 55,
+      "testsSkipped": 2,
+      "branchesPercent": 94.04,
+      "linesPercent": 96.74
+    }
+  },
+  "laterRecordedGates": {
+    "templates": "passed",
+    "licenses": "passed: 226 packages checked",
+    "generatedDocs": "passed",
+    "contrast": "passed: zero enforced failing pairs",
+    "build": "passed: 11 tasks",
+    "upgrade": "passed",
+    "recoveryProcess": "passed",
+    "format": "rerun pending after active performance-harness edit",
+    "completeRepositoryGate": "not green"
+  },
+  "chatRestart": {
+    "firstOriginalAlias": "test-chat-restart.log",
+    "firstResult": "failed on stale upload-identity fixture",
+    "laterOriginalAlias": "test-chat-restart-repaired.log",
+    "laterResult": "passed: native process restart; same-run uncertain recovery held without replay",
+    "fixtureChanges": "canonical WAV, upload identity and finalText",
+    "originalFailurePreserved": true
+  },
+  "chromiumCapture": {
+    "result": "passed 2/2",
+    "durationSeconds": 14.3,
+    "originalAlias": "recorder-browser.log",
+    "testFile": "apps/web/e2e/chat-voice.spec.ts",
+    "media": "Real Chromium native AudioWorklet with public fake microphone audio",
+    "providers": "Fixture native Script transcription plus FakeHarness inference; no real Whisper/Qwen/cloud call in these cases",
+    "assertions": [
+      "Stop retains without upload/admission",
+      "Mic appends exact PCM order",
+      "Final sample acknowledgement before freeze",
+      "Canonical WAV digest and body",
+      "No autosend",
+      "One upload and one native turn admission by Send button or textarea Enter"
+    ],
+    "originalFailureAliases": [
+      "recorder-browser-setup-failure.log",
+      "recorder-browser-selector-failure.log"
+    ],
+    "priorFailures": "Retained test-harness setup/selector failures, not a claimed product defect",
+    "physicalMicVerified": false,
+    "liveCloudVerified": false,
+    "receiptAlias": "recorder-browser.receipt.json",
+    "priorPassingRunAlias": "recorder-browser-preformat-pass.log",
+    "priorPassingDurationSeconds": 13.9,
+    "currentRunMeaning": "Final formatted-source run; supersedes earlier13.9-second pass without discarding it.",
+    "sourceSha256": {
+      "apps/web/e2e/chat-voice.spec.ts": "8ac9ee1263363e820ef1816e6e70efd6870e3edc3b4359abcf26706cb794793e",
+      "apps/web/e2e/server.ts": "9672141b17b8e3607754f0cff428d8cbcbb72e2bf4f9eedffb85c75105ea7e1d",
+      "apps/api/src/testing/test-app.ts": "5247bc452869886ca7af1ac7530e1ea6a8e34acfeba6c2c2627ced41bbc26996",
+      "apps/api/src/chat/voice-sample.ts": "2bc6217fd62bc96aba808d0c929110fa9fe0c18bee7e17ae50435a4a0bc30b1f",
+      "apps/web/src/chat/recorder.ts": "1baa9d0837aea88404dea8c2037dcd2d2c4e36ecd7ab01743ca62d48b6be9306",
+      "apps/web/src/chat/pcm.ts": "12a36613127daa666d040c327d6466e5b5edbf30bc24ea4b4399cac61a382831",
+      "apps/web/src/chat/pcm-worklet.ts": "21cd048b624bed08f688c51f63e4eb0684e16a81992244f61e269fc1b1f39775"
+    },
+    "builtAssetManifestAlias": "recorder-browser.assets.json",
+    "builtAssetManifestSha256": "6228daa505050aed4306b6c19443a80312ea33d5da7ae5d5735987c2ebeb5c74",
+    "builtAssetFileCount": 28,
+    "submissionEvidenceAliases": [
+      "recorder-browser.send.json",
+      "recorder-browser.enter.json"
+    ],
+    "publicSampleSubmissions": [
+      {
+        "submit": "Send button",
+        "sourceSha256": "43e6a960b344dd5408628ca2f11ee444291790f0e52a5b44ea11e98fcc47f591",
+        "uploads": 1,
+        "turns": 1,
+        "frames": 59392,
+        "durationMs": 3712,
+        "sha256": "f91afc828c449aa42fcbeed93676e0156ddde65b038f921a064fac1d5b01946c"
+      },
+      {
+        "submit": "textarea Enter",
+        "sourceSha256": "43e6a960b344dd5408628ca2f11ee444291790f0e52a5b44ea11e98fcc47f591",
+        "uploads": 1,
+        "turns": 1,
+        "frames": 58240,
+        "durationMs": 3640,
+        "sha256": "dbfb854e6d187c8bce3950733c16c1689c75f312ae1cc3b3c258ae450310422a"
+      }
+    ],
+    "traceHandling": "Binary browser traces remain restricted in place; not copied by this packet."
+  },
+  "evidenceIntegrityUpdatedAtUtc": "2026-11-08T17:59:10Z"
+}

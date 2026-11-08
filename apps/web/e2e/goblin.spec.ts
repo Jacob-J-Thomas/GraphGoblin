@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import type { APIRequestContext, Page, TestInfo } from '@playwright/test';
-import type { ChatDevice, ChatPairingCreated, ChatTurn } from '@graphgoblin/contracts';
+import type { ChatDevice, ChatPairingCreated, ChatSession, ChatTurn } from '@graphgoblin/contracts';
 import { control, expect, test } from './fixtures.js';
 
 async function captureDialogMatrix(
@@ -29,7 +29,7 @@ async function captureDialogMatrix(
 async function gateway(request: APIRequestContext) {
   const instance = await control(request, '/apps', {
     requireApiKey: true,
-    env: { GG_GOBLIN_DIST: resolve('dist-goblin'), GG_PUBLIC_URL: 'http://127.0.0.1' },
+    env: { GG_GOBLIN_DIST: resolve('dist-goblin') },
   });
   const url = String(instance['url']);
   const headers = { authorization: `Bearer ${String(instance['token'])}` };
@@ -53,10 +53,7 @@ test('Goblin pairs explicitly, executes a native turn, keeps API data out of its
     instanceId: gatewayApp.instanceId,
     turns: [
       {
-        structured: {
-          protocol: 'graphgoblin.chat.v1',
-          reply: 'Peripheral native reply <b>literal text</b>',
-        },
+        finalText: 'Peripheral native reply <b>literal text</b>',
       },
     ],
   });
@@ -266,6 +263,170 @@ test('peripheral pairing reflows in both themes and at 200% zoom without claimin
   expect(claims).toBe(0);
 });
 
+test('same-Mac loopback pairing without PUBLIC_URL generates, claims, chats, and revokes through the built UI', async ({
+  page,
+  context,
+  request,
+}) => {
+  const instance = await control(request, '/apps', {
+    requireApiKey: true,
+    env: { GG_GOBLIN_DIST: resolve('dist-goblin') },
+  });
+  const url = String(instance['url']);
+  const token = String(instance['token']);
+  const headers = { authorization: `Bearer ${token}` };
+  const loopsResponse = await request.get(`${url}/loops`, { headers });
+  expect(loopsResponse.ok()).toBe(true);
+  const loops = (await loopsResponse.json()) as { items: { id: string; createdAt: string }[] };
+  expect(loops.items).toHaveLength(1);
+  // Pairing expiry is driven by the disposable API's FakeClock, not the host clock.
+  await page.clock.setFixedTime(new Date(loops.items[0]!.createdAt));
+  await page.addInitScript((key) => localStorage.setItem('graphgoblin-api-key', key), token);
+  await control(request, '/harness/script', {
+    instanceId: String(instance['instanceId']),
+    turns: [{ finalText: 'Same-Mac native reply' }],
+  });
+  const mutations: string[] = [];
+  context.on('request', (sent) => {
+    const path = new URL(sent.url()).pathname;
+    if (path.startsWith('/chat/') && sent.method() !== 'GET')
+      mutations.push(`${sent.method()} ${path}`);
+  });
+  await page.goto(`${url}/app/chat/devices`);
+  await page.getByRole('button', { name: 'Pair a device', exact: true }).click();
+  const pairingDialog = page.getByRole('dialog', { name: 'Pair a device', exact: true });
+  await expect(
+    pairingDialog.getByRole('heading', { name: 'This computer only', exact: true }),
+  ).toBeVisible();
+  expect(mutations).toEqual([]);
+  const generated = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/chat/pairings' &&
+      response.request().method() === 'POST',
+  );
+  await pairingDialog.getByRole('button', { name: 'Generate pairing link', exact: true }).click();
+  const response = await generated;
+  expect(response.status()).toBe(201);
+  const pairing = (await response.json()) as ChatPairingCreated;
+  expect(new URL(pairing.url!).origin).toBe(url);
+  expect(new URL(pairing.url!).pathname).toBe('/goblin/');
+  expect(new URL(pairing.url!).hash).toBe(`#pair=${pairing.code}`);
+  expect(mutations).toEqual(['POST /chat/pairings']);
+  const link = pairingDialog.getByRole('link', {
+    name: 'Open Goblin on this computer',
+    exact: true,
+  });
+  await expect(link).toHaveAttribute('href', pairing.url!);
+  const opened = page.waitForEvent('popup');
+  await link.click();
+  const goblin = await opened;
+  const authorization: Promise<void>[] = [];
+  goblin.on('request', (sent) => {
+    const path = new URL(sent.url()).pathname;
+    if (!path.startsWith('/chat/')) return;
+    authorization.push(
+      sent.allHeaders().then((values) => {
+        if (path === '/chat/pairings/claim') expect(values['authorization']).toBeUndefined();
+        else expect(values['authorization']).toMatch(/^Bearer ggd_[\w-]{43}$/);
+      }),
+    );
+  });
+  try {
+    await expect(
+      goblin.getByRole('heading', { name: 'Install Goblin, then pair in the app', exact: true }),
+    ).toBeVisible();
+    expect(new URL(goblin.url()).hash).toBe('');
+    expect(mutations.filter((value) => value.endsWith('/pairings/claim'))).toHaveLength(0);
+    await goblin.getByRole('button', { name: 'Pair this browser instead', exact: true }).click();
+    await goblin.getByLabel('Device name', { exact: true }).fill('Same-Mac browser');
+    await goblin.getByRole('button', { name: 'Pair this browser', exact: true }).click();
+    await expect(goblin.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+    expect(mutations.filter((value) => value.endsWith('/pairings/claim'))).toHaveLength(1);
+    await expect(goblin.getByRole('navigation')).toHaveCount(0);
+    await goblin
+      .getByRole('textbox', { name: 'Message', exact: true })
+      .fill('Same-Mac loopback request');
+    await goblin.getByRole('button', { name: 'Send message', exact: true }).click();
+    await expect(goblin.locator('[data-chat-reply]')).toContainText('Same-Mac native reply');
+    expect(
+      mutations.filter((value) => /POST \/chat\/conversations\/[^/]+\/turns$/.test(value)),
+    ).toHaveLength(1);
+    const sessionResponse = await request.get(`${url}/chat/session`, { headers });
+    expect(sessionResponse.ok()).toBe(true);
+    const ownerSession = (await sessionResponse.json()) as ChatSession;
+    const credential = await goblin.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem('graphgoblin.goblin.device.v1')!) as {
+          deviceToken: string;
+        },
+    );
+    const deviceHeaders = { authorization: `Bearer ${credential.deviceToken}` };
+    expect((await request.get(`${url}/loops`, { headers: deviceHeaders })).status()).toBe(403);
+    await page.bringToFront();
+    await pairingDialog.getByRole('button', { name: 'Done', exact: true }).click();
+    const row = page
+      .getByRole('row')
+      .filter({ has: page.getByText('Same-Mac browser', { exact: true }) });
+    await expect(row.getByText('Active', { exact: true })).toBeVisible();
+    const devicesBefore = (await (
+      await request.get(`${url}/chat/devices`, { headers })
+    ).json()) as { items: ChatDevice[] };
+    expect(devicesBefore.items).toHaveLength(1);
+    expect(devicesBefore.items[0]!.loopId).not.toBe(ownerSession.systemLoopId);
+    await row.getByRole('button', { name: 'Revoke Same-Mac browser', exact: true }).click();
+    const confirm = page.getByRole('alertdialog', {
+      name: 'Revoke “Same-Mac browser”?',
+      exact: true,
+    });
+    await confirm
+      .getByRole('button', { name: 'Confirm revoke Same-Mac browser', exact: true })
+      .click();
+    await expect(row.getByText('Revoked', { exact: true })).toBeVisible();
+    await goblin.bringToFront();
+    // Reload performs a read-only credential check; it must not replay the admitted message.
+    await goblin.reload();
+    await expect(
+      goblin.getByRole('heading', { name: 'This device no longer has access', exact: true }),
+    ).toBeVisible();
+    expect(
+      await goblin.evaluate(() => localStorage.getItem('graphgoblin.goblin.device.v1')),
+    ).toBeNull();
+    expect(
+      await goblin.evaluate(() => sessionStorage.getItem('graphgoblin.goblin.chat.v1')),
+    ).toBeNull();
+    expect((await request.get(`${url}/chat/session`, { headers: deviceHeaders })).status()).toBe(
+      401,
+    );
+    const retained = (await (await request.get(`${url}/chat/devices`, { headers })).json()) as {
+      items: ChatDevice[];
+    };
+    expect(retained.items[0]).toMatchObject({
+      id: devicesBefore.items[0]!.id,
+      loopId: devicesBefore.items[0]!.loopId,
+    });
+    expect(retained.items[0]!.revokedAt).toBeTruthy();
+    const historyResponse = await request.get(
+      `${url}/runs?loopId=${devicesBefore.items[0]!.loopId}`,
+      { headers },
+    );
+    expect(historyResponse.ok()).toBe(true);
+    const history = (await historyResponse.json()) as {
+      items: { status: string; loopId: string }[];
+    };
+    expect(history.items).toHaveLength(1);
+    expect(history.items[0]).toMatchObject({
+      status: 'succeeded',
+      loopId: devicesBefore.items[0]!.loopId,
+    });
+    expect(
+      mutations.filter((value) => /POST \/chat\/conversations\/[^/]+\/turns$/.test(value)),
+    ).toHaveLength(1);
+    await Promise.all(authorization);
+  } finally {
+    await goblin.close();
+  }
+});
+
 test('emulated Home Screen context pairs in separate browser storage and revocation clears access', async ({
   browser,
   page,
@@ -276,8 +437,14 @@ test('emulated Home Screen context pairs in separate browser storage and revocat
   page.on('request', (sent) => {
     if (new URL(sent.url()).pathname === '/chat/pairings/claim') claims.push(sent.url());
   });
-  await page.goto(`${gatewayApp.url}/goblin/#pair=${encodeURIComponent(gatewayApp.pairing.code)}`);
+  await page.goto(`${gatewayApp.url}/goblin/`);
+  await expect(page.getByRole('heading', { name: 'Pair this device', exact: true })).toBeVisible();
+  // Deliver a pairing link to an already open tab: hashchange must prefill and scrub it.
+  await page.evaluate((code) => {
+    window.location.hash = `pair=${encodeURIComponent(code)}`;
+  }, gatewayApp.pairing.code);
   await expect(page.getByRole('button', { name: 'Pair this browser instead' })).toBeVisible();
+  expect(new URL(page.url()).hash).toBe('');
   expect(claims).toEqual([]);
   const installed = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {

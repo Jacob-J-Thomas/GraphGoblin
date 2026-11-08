@@ -9,8 +9,9 @@ Decision routes and temporary boolean predicates use the Codex decider; structur
 ## Native Chat workflow integration (#443)
 
 Native Chat is an entry point into the existing engine, not a second inference implementation.
-The gateway seeds one system loop with **Trigger → Inference → Exit**. It uses normal harness
-selection, model/effort defaults, readiness checks, structured-output validation and repair.
+The gateway seeds one system loop with **Trigger → Inference → Context mutation → Exit**. It uses normal harness
+selection, model/effort defaults and readiness checks. The inference captures plain text; the
+ordinary Context mutation constructs the exact response envelope deterministically.
 Seeding and device pairing make no provider request and do not silently choose a discovered model.
 Each turn pins the published definition and effective defaults through native admission.
 Missing CLI/authentication/model prerequisites produce actionable readiness before a new turn is
@@ -24,17 +25,18 @@ by [ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md), so Codex
 plugins and their tools/services while standalone MCP discovery and other isolation defaults remain.
 Owners may edit the workflow's interior, including its harness, prompt, model, effort,
 scripts, decisions and awaited subloops. Native Chat does not sandbox arbitrary owner-authored
-Script commands or introduce a routing, smart-home or transcription provider.
+Script commands or introduce a smart-home routing provider. Guided transcription is an ordinary
+Script normalizer described below.
 
 The loop boundary uses the canonical `graphgoblin.chat.v1` input schema from
 `packages/contracts/src/chat.ts`. The server supplies `conversationId`, `requestId`, turn counter,
 current input and recent valid history. A text input is `{kind: 'text', text}`. An audio input is
-`{kind: 'audio', audio: {id, mimeType, bytes, path}}`; only the server can resolve the private
+`{kind: 'audio', audio: {id, mimeType, bytes, path}, caption?}`; only the server can resolve the private
 absolute path. A client sends an upload id, never a path or URL. The server limits history to the
 most recent twelve valid completed turn pairs and 64,000 characters, dropping oldest whole pairs.
 
 The boundary requires one manual trigger named `chat-input`, exposed to exactly UI and API, and
-the canonical `chatResponse` variable schema. The inference output transform writes the validated
+the canonical `chatResponse` variable schema. The deterministic Context mutation writes the
 response into `/vars/chatResponse`. Every successful exit returns exactly `vars.chatResponse` to
 exactly the caller. Failure/exhausted exits may return none or that same canonical response; they
 never become successful assistant messages. The public response is exactly
@@ -93,8 +95,9 @@ The normalized text must contain 1–16,000 nonblank UTF-16 code units. For an a
 run without a valid recorded normalizer result becomes `CHAT_AUDIO_NORMALIZATION_INVALID` and
 does not display a reply or enter future history. A model-generated guess is never a transcript.
 The session's **Configured by loop** state establishes this static contract only: an unavailable
-executable or malformed external result still fails at runtime. There is no built-in STT provider,
-browser speech service, runtime transcription fallback or speech synthesis.
+executable or malformed external result still fails at runtime. The guided preset adds tested
+Whisper.cpp and OpenAI routes; arbitrary custom normalizers remain the owner’s responsibility.
+There is no browser speech-recognition fallback or speech synthesis.
 
 Audio files live in the private `<dataDir>/chat-audio/` directory and retain their bytes for the
 owner's normalizer. Unused uploads expire after one hour. Consumed files remain available while
@@ -105,6 +108,57 @@ exceeding the quota refuses an upload without deleting referenced inputs. Deleti
 does not retroactively erase its text from later immutable native histories. See
 [the Chat frontend](09-frontend-and-pwa.md#native-chat-and-the-goblin-pwa-443) and
 [ADR-0065](decisions/ADR-0065-native-chat-system-loops-and-device-pairing.md).
+
+### Plain text capture and context admission (ADR-0068)
+
+`output.capture: 'text'` preserves `finalText` exactly as a string, including JSON-looking answers.
+It cannot be combined with an output schema. Leaving this optional field unset is equivalent to
+`auto`, retaining strict existing
+JSON/schema validation for other workflows; malformed structured output is never salvaged by
+selecting a convenient object. The standard chat seed uses text capture and an editable 300-second
+inference deadline. Existing published loops are not rewritten when the seed changes; reads keep
+omitted capture fields and their existing draft tokens unchanged.
+
+Ollama admission budgets the complete rendered prompt, model wrapper and output reserve before
+sending it. Only recognized standard chat prompts may omit oldest complete history pairs. The
+stored input/history stays intact and the turn exposes retained/omitted counts. Custom prompts
+are never truncated. Required input that cannot fit is refused before dispatch with
+`INFERENCE_CONTEXT_LIMIT`; unknown context profiles produce `INFERENCE_CONTEXT_UNSUPPORTED`.
+
+The initial qualified profile is deliberately narrow: Ollama 0.32.15, Qwen3.5 with the observed
+GPT-2/Qwen35 byte tokenizer, the unmodified single-user renderer, no preset system/messages and
+`none` effort. Its allocation is at most 4096 tokens, with a 1024-token reply reserve, a 512-token
+wrapper allowance and a conservative UTF-8 byte ceiling for prompt/schema input. This is not an
+exact tokenizer count or the model’s advertised maximum. Other discovered models remain visible
+with an unsupported/unverified reason until their profile is qualified; discovery, readiness and
+dispatch share the same policy. Enabled choices/defaults are preserved. Requalification is required
+when the runtime/profile changes; discovery alone is not memory or performance evidence.
+
+### Guided voice preset (ADR-0068)
+
+Settings → Voice saves gateway-owned configuration with revision checks. A pure preview adds the
+ordinary `graphgoblin-voice-normalize` Script with a non-secret configuration snapshot; explicit
+staging checks the reviewed configuration revision and loop draft hash atomically. Publishing is
+separate. Device clones are listed individually. A custom normalizer is opened for manual review,
+never overwritten. An editor handoff refuses dirty/restored/conflicting drafts, pauses autosave
+while staging and preserves Undo after the saved baseline changes.
+
+Local transcription uses a separately qualified Whisper.cpp executable and a verified small
+English model. The guided downloader installs only immutable allowlisted model bytes, with exact
+size/SHA-256, disk bounds and atomic publication; it does not install a compiler, runtime or ffmpeg.
+Runtime/dependency qualification is server-owned private evidence, not a browser claim or a
+version-string check. Unsupported machines can use the guided cloud connection. The setup test
+transcribes a short public speech sample, records latency and unused-memory telemetry and expires its
+result; changing runtime/model/configuration requires another test. Test while the usual Ollama
+model is running before relying on local coexistence.
+
+The cloud adapter uses a dedicated `voice.openai.*` secret and OpenAI transcription. Setup names
+provider billing and requires acknowledgement before uploading the public sample. The chosen route
+is disclosed before Send and pinned before transcription. Auto prefers a suitable local route;
+cloud is used only when explicitly configured/permitted. A failed or uncertain dispatch never
+silently fails over to another provider or retries a command. Text needs neither route. Caption
+text precedes the transcript, and the protected canonical `{text}` check validates the combined
+input before inference or other workflow actions.
 
 ## The harness port (Decided)
 

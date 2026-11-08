@@ -162,3 +162,32 @@ they cannot establish managed drain/force evidence. The real signal cases run on
 A Ctrl+C in the gateway's own console is covered on Windows by
 `apps/api/src/shutdown-console.test.ts`, which delivers a real console control event; every
 provider and tool process has its own hidden console, so only the gateway receives it.
+
+## Chat voice and pairing boundaries (ADR-0068)
+
+Voice configuration, provider probes, model installation, pure loop previews and guarded staging
+require wildcard owner authority; device tokens cannot call those routes. Generic settings writes
+cannot replace reserved voice configuration. A dedicated `voice.openai.*` encrypted gateway secret
+is selected explicitly; inference credentials are never inferred to be transcription credentials.
+Cloud setup states sample upload and billing before execution. Audio route selection happens
+before dispatch and is recorded; uncertain provider outcomes are not retried or sent elsewhere.
+
+Canonical WAV is validated for byte length, PCM format, sample rate, channels, frame alignment and
+sample-derived duration. Durable upload identities bind audience, MIME type, body hash and bytes;
+status reads cannot grant another audience's file. Restart/expiry leaves recovery evidence or a
+retired tombstone rather than reusing an identity. Caption text participates in turn identity and
+canonical input validation. Neither shell caches microphone bytes, transcripts, tokens or API
+responses in its service worker; unsent voice remains bounded in app memory.
+
+Local transcription requires a private server-owned runtime qualification record. The inspector
+checks the executable and dependency real paths/hashes and complete loadable backend inventory.
+Public settings/probe requests cannot attest a runtime. Model-only downloads use immutable official
+allowlisted assets, verified length/SHA-256, HTTPS redirect host restrictions, bounds and atomic
+rename. Compiler/runtime source installation and ffmpeg are outside the preset. The exact permissive
+`Apache-2.0 WITH LLVM-exception` pair is allowed for the reviewed LLVM runtime; no broad exception
+approval is implied. See the [licence evidence](research/licenses.md#guided-voice-assets-and-existing-runtime-qualification-adr-0068).
+
+Pairing authority comes from explicit public URL configuration, or strict configured-and-bound
+loopback for same-machine use. It never comes from request Host or Forwarded headers. Local fallback
+requires required-key mode and the actual bound port; explicit invalid public configuration refuses.
+LAN enrollment uses the trusted HTTPS gateway origin and never embeds an owner credential.

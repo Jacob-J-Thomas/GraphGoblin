@@ -7,7 +7,6 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
 }, testInfo) => {
   const instance = await control(request, '/apps', {
     requireApiKey: true,
-    env: { GG_PUBLIC_URL: 'http://127.0.0.1' },
   });
   const url = String(instance['url']);
   const token = String(instance['token']);
@@ -16,15 +15,13 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
     instanceId: String(instance['instanceId']),
     turns: [
       {
-        structured: {
-          protocol: 'graphgoblin.chat.v1',
-          reply: 'Owner native reply with exact result <strong>plain text</strong>.',
-        },
+        finalText: 'Owner native reply with exact result <strong>plain text</strong>.',
       },
     ],
   });
   await page.addInitScript((key) => localStorage.setItem('graphgoblin-api-key', key), token);
   let posts = 0;
+  let recoveryReads = 0;
   let loseAcknowledgement = true;
   await page.route('**/chat/conversations/*/turns', async (route) => {
     if (route.request().method() === 'POST') {
@@ -39,6 +36,11 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
     }
     await route.continue();
   });
+  await page.route('**/chat/conversations/*/requests/*', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    recoveryReads++;
+    await route.continue();
+  });
   await page.goto(`${url}/app/`);
   await expect(page).toHaveURL(`${url}/app/chat`);
   const nav = page.getByRole('navigation', { name: 'Main' });
@@ -47,13 +49,18 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
     .getByRole('textbox', { name: 'Message', exact: true })
     .fill('Remember one native request.');
   await page.getByRole('button', { name: 'Send message' }).click();
-  await expect(page.getByText('Acknowledgement unknown')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check status', exact: true })).toBeVisible();
   expect(posts).toBe(1);
+  page.once('dialog', (dialog) => {
+    expect(dialog.type()).toBe('beforeunload');
+    void dialog.accept();
+  });
   await page.reload();
   await expect(page.locator('[data-chat-reply]')).toHaveText(
     /Owner native reply with exact result <strong>plain text<\/strong>\./,
   );
   expect(posts).toBe(1);
+  expect(recoveryReads).toBeGreaterThan(0);
   await expect(page.locator('[data-chat-reply] strong')).toHaveCount(0);
   const conversations = (await (
     await request.get(`${url}/chat/conversations`, { headers })
@@ -87,21 +94,28 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
   await expect(page.getByRole('link', { name: 'Open Chat', exact: true }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toHaveCount(0);
   expect(session.systemLoopId).toBeTruthy();
+  await nav.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.setViewportSize({ width: 360, height: 900 });
-  await page.getByRole('button', { name: 'Set up voice messages', exact: true }).click();
-  const setup = page.getByRole('dialog', { name: 'Set up voice messages' });
-  await setup.getByText('Script', { exact: true }).click();
-  await expect(setup.getByRole('radio', { name: 'Script', exact: true })).toBeChecked();
-  await expect(setup.getByRole('textbox', { name: 'Command', exact: true })).toHaveValue('');
-  await expect(setup.getByRole('button', { name: 'Add voice steps' })).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  );
+  const voiceWrites: string[] = [];
+  page.on('request', (sent) => {
+    if (new URL(sent.url()).pathname.startsWith('/chat/voice/') && sent.method() !== 'GET')
+      voiceWrites.push(`${sent.method()} ${new URL(sent.url()).pathname}`);
+  });
+  await page.getByRole('button', { name: 'Set up voice', exact: true }).click();
+  const setup = page.getByRole('dialog', { name: 'Set up voice', exact: true });
+  await expect(setup.getByText('1. Choose a route', { exact: true })).toBeVisible();
+  await expect(setup.getByRole('radio', { name: /On this gateway/ })).toBeVisible();
+  await setup.getByRole('radio', { name: /Cloud provider/ }).check();
+  await setup.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(setup.getByLabel('OpenAI API key', { exact: true })).toHaveValue('');
+  await expect(setup.getByRole('button', { name: 'Save and test', exact: true })).toBeDisabled();
+  await expect(setup.getByText(/OpenAI receives each audio clip/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await page.screenshot({ path: testInfo.outputPath('owner-voice-setup-360.png'), fullPage: true });
-  await setup.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await setup.getByRole('button', { name: 'Close', exact: true }).click();
+  expect(voiceWrites).toEqual([]);
   // The disposable API uses its FakeClock; align the browser for the real expiry display.
   await page.clock.setFixedTime(new Date(turns.items[0]!.createdAt));
   for (const theme of ['dark', 'light']) {
@@ -125,11 +139,16 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
     await page.goto(`${url}/app/chat/devices`);
     await page.getByRole('button', { name: 'Pair a device', exact: true }).first().click();
     const pairing = page.getByRole('dialog', { name: 'Pair a device' });
+    await expect(pairing.getByRole('heading', { name: 'This computer only' })).toBeVisible();
+    await pairing.getByRole('button', { name: 'Generate pairing link', exact: true }).click();
     await expect(
-      pairing.getByText(
-        'On a phone: open it, copy the code, install Goblin, then pair inside the app.',
-      ),
+      pairing.getByText(/For a phone, set up a reachable HTTPS gateway address first\./),
     ).toBeVisible();
+    await expect(pairing.getByLabel('Pairing code', { exact: true })).toHaveText(/^[\w-]{43}$/);
+    const pairingLink = await pairing
+      .getByRole('link', { name: 'Open Goblin on this computer', exact: true })
+      .getAttribute('href');
+    expect(new URL(pairingLink!).origin).toBe(url);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

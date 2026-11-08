@@ -125,7 +125,18 @@ After `pnpm build`, `pnpm test:reset` runs the built API binary against a tempor
 
 Goblin is the separate chat PWA at your gateway’s `/goblin/` address. It installs alongside the GraphGoblin management PWA at `/app/`; each has its own manifest identity, start URL, service-worker scope and update prompt. Goblin has no management navigation or API-key panel. Its device credential is stored separately from the management API key.
 
-Before pairing another device, configure API-key authentication (`GG_REQUIRE_API_KEY=true`) and a public gateway address (`GG_PUBLIC_URL=https://your-gateway.example`). Enrollment links require HTTPS, with HTTP permitted only on loopback addresses for local testing. Configure the listener and network access yourself; pairing does not change them. Sign in to GraphGoblin with a wildcard owner key, open **Chat → Devices → Pair a device**, and copy the link or pairing code. The gateway’s current chat loop must be published and satisfy the chat contract.
+Enable API-key authentication (`GG_REQUIRE_API_KEY=true`), sign in with a wildcard owner key,
+then open **Chat → Devices → Pair a device**. A loopback gateway with no `GG_PUBLIC_URL` can create
+a **This computer only** link immediately; open it in another tab/browser or the installed Goblin
+app on that computer. Test this path before configuring a phone. The gateway’s chat loop must be
+published and satisfy the chat contract.
+
+For other devices on ordinary home Wi-Fi, configure a stable reachable HTTPS gateway origin in
+`GG_PUBLIC_URL`, including its port, and a listener/reverse proxy that serves both shells and the
+API. Trust its certificate on each device before installing or recording. The network pairing
+screen offers QR, link and manual code. A phone’s localhost addresses the phone, not the gateway;
+a computer-only link cannot pair that phone. Pairing checks configuration but does not open ports,
+configure a proxy or install trust certificates. An invalid explicit public URL is refused.
 
 Open the link on the device. The code travels in the URL fragment and Goblin removes that fragment immediately. Install Goblin first, copy the code, then open the installed app and paste it there. Enter a name for this device and choose **Pair**. On the link’s install screen, **Pair this browser instead** opens the browser pairing form; choose **Pair this browser** there to pair that browser explicitly. Safari and an iPhone or iPad Home Screen app can keep separate browser data: pairing Safari does not transfer that connection to the installed app. Opening or installing the shell never uses the pairing code automatically.
 
@@ -133,7 +144,7 @@ A code expires after 10 minutes and is case-sensitive. If the acknowledgement is
 
 Install **Goblin** using your browser’s install option. On iPhone or iPad, use **Share → Add to Home Screen**. Goblin uses the gateway that hosts its shell. To change gateways, open that gateway’s `/goblin/` URL and pair there. The **Open another gateway** field performs navigation to that origin; it does not forward your credential to a remote gateway.
 
-The shell opens offline after installation, and an unsent draft can remain in browser session storage. Sending is blocked offline. Reload and reconnect check an uncertain request with a read-only lookup; they never resend a command automatically. A service worker caches only shell files and fonts. It never caches `/chat` responses, transcripts, credentials or uploads, and it never queues or replays mutations. An update waits for **Update** in the app’s prompt.
+The shell opens offline after installation, and an unsent draft can remain in browser session storage. Sending is blocked offline. Reload and reconnect check an uncertain request with a read-only lookup; they never resend a command automatically. A service worker caches only shell files and fonts. It never caches `/chat` responses, transcripts, credentials or uploads, and it never queues or replays mutations. An update waits for **Update** in the app’s prompt and for every controlled tab to have no unsent voice or unresolved submission. Voice drafts stay in memory only; closing/reloading can lose them. If safe live activation is unavailable, finish or discard drafts and close all app windows to update.
 
 Use **Gateway → Sign out on this device** to remove its local credential and draft. The gateway retains its device record, loop and history. The owner can revoke the device under **Chat → Devices** to stop future access. Invalid and revoked credentials show the same lost-access screen; pair again with a new owner-issued code. Already accepted runs can continue after revocation; the owner can cancel them separately.
 
@@ -143,4 +154,4 @@ The web build produces both `apps/web/dist` and `apps/web/dist-goblin`. The API 
 
 A separate static host can serve `dist-goblin` if a reverse proxy on that **same browser origin** forwards `/chat` to the intended gateway. Serve the shell at `/goblin/`, keep its manifest and worker there, return `index.html` for extensionless `/goblin/…` navigation, and return 404 for absent assets. Forward `/chat` responses and uploads without caching, preserve `Authorization`, and use HTTPS. Set `GG_PUBLIC_URL` to that externally visible origin so enrollment links open its `/goblin/` shell. Do not expose an unauthenticated management API. GraphGoblin keeps proxy trust disabled. Requests through a reverse proxy can therefore share that proxy’s source rate limit; the gateway-wide cap also applies. Forwarded client addresses are not trusted.
 
-For development, `pnpm --filter @graphgoblin/web dev:goblin` serves the peripheral on port 5174 and proxies `/chat` to `GG_API_URL` (default `http://127.0.0.1:4747`). Development does not install a service worker. Audio recording requires a secure browser context; file attachment remains available when the configured loop accepts audio. Transcription is configured in the published loop, with no built-in provider or fallback.
+For development, `pnpm --filter @graphgoblin/web dev:goblin` serves the peripheral on port 5174 and proxies `/chat` to `GG_API_URL` (default `http://127.0.0.1:4747`). Development does not install a service worker. Audio recording requires a secure browser context. The composer supports microphone audio only; non-audio attachments are deferred. Configure Voice in gateway Settings, test the local or cloud connection, preview/stage the ordinary normalizer and publish each applicable chat loop. Local runtime qualification/model setup and cloud credentials belong to the gateway, never the peripheral device.
