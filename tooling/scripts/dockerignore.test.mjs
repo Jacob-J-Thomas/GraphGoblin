@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isExcluded, parseDockerignore } from './dockerignore.mjs';
 
@@ -33,6 +34,7 @@ test('the build context leaves out local data, keys, scratch files, and secrets'
     'node_modules/zod/package.json',
     'apps/web/node_modules/react/index.js',
     'apps/web/dist/index.html',
+    'apps/web/dist-goblin/index.html',
     'packages/engine/coverage/index.html',
     'apps/web/test-results/a.png',
     'apps/web/playwright-report/index.html',
@@ -61,10 +63,46 @@ test('the build context keeps the sources and manifests the image needs', () => 
     'apps/api/src/main.ts',
     'apps/web/src/main.tsx',
     'apps/web/index.html',
+    'apps/web/goblin/index.html',
+    'apps/web/src/goblin/main.tsx',
+    'apps/web/vite.goblin.config.ts',
     'apps/web/src/database-view.tsx',
   ]) {
     assert.equal(isExcluded(rules, path), false, `${path} should be included`);
   }
+});
+
+test('the container Goblin entry remains an absolute file path through Vite aliases', () => {
+  const root = fileURLToPath(new URL('../..', import.meta.url));
+  const dockerfile = readFileSync(new URL('../../Dockerfile', import.meta.url), 'utf8');
+  const buildStage = dockerfile.split(/^FROM .+ AS runtime$/m)[0];
+  const workdir = buildStage.match(/^WORKDIR (\S+)$/m)?.[1];
+  assert.ok(workdir, 'the build stage needs an absolute working directory');
+  assert.equal(posix.isAbsolute(workdir), true);
+  assert.match(buildStage, /^COPY apps \.\/apps$/m);
+
+  const entry = 'apps/web/goblin/index.html';
+  assert.equal(isExcluded(rules, entry), false);
+  assert.match(readFileSync(new URL(`../../${entry}`, import.meta.url), 'utf8'), /main\.tsx/);
+  const containerEntry = posix.join(workdir, entry);
+  // Exercise Vite's actual alias hook: a /src build directory used to rewrite this entry
+  // into apps/web/src/apps/web/goblin/index.html before the HTML could be loaded.
+  const resolved = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `import { resolveConfig } from 'vite';
+const config = await resolveConfig({ configFile: 'vite.goblin.config.ts', logLevel: 'silent' }, 'build');
+const plugin = config.plugins.find((plugin) => plugin.name === 'alias');
+const hook = typeof plugin.resolveId === 'function' ? plugin.resolveId : plugin.resolveId.handler;
+const resolved = await hook.call({ resolve: async () => null, warn() {} }, process.argv[1], undefined, { isEntry: true });
+process.stdout.write(JSON.stringify(resolved?.id ?? process.argv[1]));`,
+      containerEntry,
+    ],
+    { cwd: posix.join(root, 'apps/web'), encoding: 'utf8' },
+  );
+  assert.equal(JSON.parse(resolved), containerEntry);
 });
 
 test('every tracked source file the image builds from stays in the context', () => {

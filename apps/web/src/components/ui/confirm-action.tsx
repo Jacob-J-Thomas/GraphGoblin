@@ -74,7 +74,9 @@ export function ConfirmAction({
     const closeEvents = programmaticClosesRef.current;
     const section = opener.closest<HTMLElement>('section[aria-labelledby]');
     const fallbackId = returnFocusTo ?? section?.getAttribute('aria-labelledby');
-    const scope = section ?? opener.closest('main') ?? opener.ownerDocument.body;
+    // An explicit page fallback can outlive the section removed with its last row.
+    const scope =
+      (returnFocusTo ? undefined : section) ?? opener.closest('main') ?? opener.ownerDocument.body;
     cancelFocusRestoreRef.current();
     restoreRemovedFocusRef.current = (refresh) => {
       cancelFocusRestoreRef.current();

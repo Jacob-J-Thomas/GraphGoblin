@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { bundledWebDist, loadConfig, type ApiConfig } from './config.js';
+import { bundledGoblinDist, bundledWebDist, loadConfig, type ApiConfig } from './config.js';
 import { canonicalPath } from './canonical-path.js';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 
@@ -30,6 +30,7 @@ export function instanceIdentity(config: ApiConfig): string {
           dataDir: canonicalPath(config.dataDir),
           dbUrl: databaseFile ? canonicalPath(databaseFile) : config.dbUrl,
           webDist: config.webDist ? canonicalPath(config.webDist) : undefined,
+          goblinDist: config.goblinDist ? canonicalPath(config.goblinDist) : undefined,
         },
       }),
     )
@@ -41,7 +42,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     if (!launcherRuntimeSupported(process.versions.node))
       throw new Error('Node 22.22.2 or later is required');
-    const config = loadConfig(process.env, { webDistFallback: bundledWebDist() });
+    const config = loadConfig(process.env, {
+      webDistFallback: bundledWebDist(),
+      goblinDistFallback: bundledGoblinDist(),
+    });
     process.stdout.write(instanceIdentity(config) + '\n');
   } catch {
     console.error('Launcher configuration is invalid. Check the configured GG_* overrides.');

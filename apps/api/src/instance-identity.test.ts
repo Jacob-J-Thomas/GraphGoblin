@@ -33,6 +33,7 @@ it('identifies runtime configuration and the actual database, without fingerprin
     { dbUrl: 'file:/external.db' },
     { port: 4832 },
     { webDist: '/other/web' },
+    { goblinDist: '/other/goblin' },
     { requireApiKey: true },
   ]) {
     expect(instanceIdentity({ ...config, ...changed })).not.toBe(identity);

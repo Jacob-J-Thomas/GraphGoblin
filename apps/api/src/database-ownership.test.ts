@@ -161,11 +161,15 @@ it('canonicalizes directory aliases, future database paths and the health identi
     const first = loadConfig({
       GG_DATA_DIR: physical,
       GG_DB_URL: 'file:' + future.replaceAll('\\', '/'),
+      GG_WEB_DIST: join(physical, 'web'),
+      GG_GOBLIN_DIST: join(physical, 'goblin'),
     });
     const second = {
       ...first,
       dataDir: alias,
       dbUrl: 'file:' + join(alias, 'future', 'store.db').replaceAll('\\', '/'),
+      webDist: join(alias, 'web'),
+      goblinDist: join(alias, 'goblin'),
     };
     expect(instanceIdentity(second)).toBe(instanceIdentity(first));
   } finally {

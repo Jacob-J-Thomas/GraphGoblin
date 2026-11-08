@@ -13,7 +13,8 @@ ARG NODE_IMAGE=node:22-bookworm-slim
 FROM ${NODE_IMAGE} AS build
 # The pnpm major pinned by package.json "packageManager".
 RUN npm install --global pnpm@12.8.1 && pnpm --version
-WORKDIR /src
+# Goblin's /src URL alias must not match absolute build entry paths.
+WORKDIR /workspace
 # Only what the build reads; .dockerignore also drops build output, local data, and secrets
 # inside these paths (checked by tooling/scripts/dockerignore.test.mjs).
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json ./

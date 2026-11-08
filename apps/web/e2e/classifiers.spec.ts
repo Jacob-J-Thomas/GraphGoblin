@@ -239,7 +239,7 @@ test('Settings registers, enables, edits, disables, and deletes a classifier fro
   await expect(form.getByRole('alert')).toHaveText(
     'Enter the API root only; GraphGoblin adds /v1/systemone itself.',
   );
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type(target.endpoint);
   const created = page.waitForResponse(
     (r) => r.request().method() === 'PUT' && r.url().endsWith('/classifier-models/kev'),
@@ -288,7 +288,7 @@ test('Settings registers, enables, edits, disables, and deletes a classifier fro
   const editForm = page.getByRole('form', { name: 'Edit classifier kev' });
   await expect(editForm.getByLabel('Display name')).toBeFocused();
   await expect(editForm.getByLabel('Id', { exact: true })).toHaveAttribute('readonly', '');
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('Kev local');
   const edited = page.waitForResponse(
     (r) => r.request().method() === 'PUT' && r.url().endsWith('/classifier-models/kev'),

@@ -374,6 +374,31 @@ describe('LoopsPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('returns focus to Loops when deleting the last ordinary loop removes its whole group', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.addLoop({ ...minimalLoop(), name: 'last ordinary loop' });
+    const gateway = api.addLoop({ ...minimalLoop(), name: 'Gateway chat' });
+    const stored = api.loops.get(gateway.id)!;
+    api.loops.set(gateway.id, {
+      ...stored,
+      loop: {
+        ...stored.loop,
+        system: { kind: 'chat', protocol: 'graphgoblin.chat.v1', audience: { kind: 'gateway' } },
+      },
+    });
+    renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'Delete last ordinary loop' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete last ordinary loop' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Your loops' })).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Loops' })).toHaveFocus());
+    expect(screen.getByRole('heading', { name: 'System loops' })).toBeVisible();
+    await user.tab();
+    expect(screen.getByRole('heading', { name: 'Loops' })).not.toHaveAttribute('tabindex');
+  });
+
   it('shows the exact server count beyond the global page limit', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
