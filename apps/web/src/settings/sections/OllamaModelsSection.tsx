@@ -305,7 +305,7 @@ export function OllamaModelsSection() {
             : 'Turn Ollama on and save to refresh.'}
         </p>
         <p className="text-sm">
-          <a href="#model-defaults" className="underline underline-offset-2">
+          <a href="#model-defaults" className="touch-target underline underline-offset-2">
             Choose the default Ollama model
           </a>
           <span className="text-xs text-muted">

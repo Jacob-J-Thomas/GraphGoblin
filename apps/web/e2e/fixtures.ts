@@ -23,6 +23,22 @@ export const test = base.extend({
 
 export { expect };
 
+/**
+ * Choose a native select's displayed option with actual keyboard typeahead. macOS Chromium does
+ * not change a closed select on ArrowDown/Home/End. Leaving and returning with Tab clears the
+ * native search buffer, so consecutive choices cannot accidentally share a prefix. Enter is not
+ * used: on that browser it can submit the select's form instead of choosing an option.
+ */
+export async function chooseOptionByKeyboard(page: Page, select: Locator, label: string) {
+  await expect(select).toBeFocused();
+  await expect(select.getByRole('option', { name: label, exact: true })).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(select).toBeFocused();
+  await page.keyboard.type(label);
+  await expect(select.getByRole('option', { selected: true })).toHaveText(label);
+}
+
 /** Initialize an explicitly active editor tab before another tab can edit its draft. */
 export async function openDraftTab(page: Page, loopId: string, name: string): Promise<void> {
   // Multi-page traces show renderer work stalled until explicit activation, even while the

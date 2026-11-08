@@ -7,6 +7,7 @@ import { CURRENT_DEFINITION_FORMAT, RunSnapshotSchema } from '@graphgoblin/contr
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
+  chooseOptionByKeyboard,
   closeNode,
   control,
   expect,
@@ -316,8 +317,8 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.getByLabel('New loop name').press('Enter');
   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
 
-  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, the arrow keys change a
-  // focused select (closed, as Edge and Chromium do on Windows and Linux), Esc closes.
+  // Every step from here is a key press: Tab moves, Enter acts, native typeahead chooses a select's
+  // displayed option, and Esc closes. Closed-select arrow behavior differs across platforms.
   await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-wait')).toBeInViewport();
@@ -341,7 +342,7 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   const startForm = page.getByRole('form', { name: 'Connect start' });
   await tabTo(page, startForm.getByLabel('To'));
   await expect(startForm.getByLabel('To')).toHaveValue('done');
-  await page.keyboard.press('ArrowDown');
+  await chooseOptionByKeyboard(page, startForm.getByLabel('To'), 'Wait (wait)');
   await expect(startForm.getByLabel('To')).toHaveValue('wait');
   await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
@@ -356,9 +357,9 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await expect(waitDialog).toBeVisible();
   const waitForm = page.getByRole('form', { name: 'Connect wait' });
   await tabTo(page, waitForm.getByLabel('To'));
-  await page.keyboard.press('ArrowDown');
+  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Wait (wait)');
   await expect(waitForm.getByLabel('To')).toHaveValue('wait');
-  await page.keyboard.press('ArrowUp');
+  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Done (done)');
   await expect(waitForm.getByLabel('To')).toHaveValue('done');
   await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');

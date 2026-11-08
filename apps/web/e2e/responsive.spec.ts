@@ -12,6 +12,7 @@ import type { Locator, Page } from '@playwright/test';
 import { denseGraph } from '../src/__fixtures__/routing.js';
 import {
   approvalLoop,
+  chooseOptionByKeyboard,
   closeNode,
   control,
   expect,
@@ -661,7 +662,7 @@ for (const theme of ['dark', 'light'] as const) {
       await page.keyboard.press('ControlOrMeta+A');
       await page.keyboard.type('Keyboard approval');
       await dialog.getByLabel('To', { exact: true }).focus();
-      await page.keyboard.press('Home'); // Done is the first non-trigger target.
+      await chooseOptionByKeyboard(page, dialog.getByLabel('To', { exact: true }), 'Done (done)');
       await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('done');
       await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
       await expect(dialog.getByText('No outgoing edges.')).toHaveCount(0);
@@ -669,7 +670,11 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(page.getByTestId('node-wait')).toContainText('Keyboard approval');
       dialog = await open('start');
       await dialog.getByLabel('To', { exact: true }).focus();
-      await page.keyboard.press('End'); // Wait is the last target.
+      await chooseOptionByKeyboard(
+        page,
+        dialog.getByLabel('To', { exact: true }),
+        'Keyboard approval (wait)',
+      );
       await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('wait');
       await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
       await page.keyboard.press('Escape');

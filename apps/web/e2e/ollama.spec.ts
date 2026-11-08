@@ -23,6 +23,10 @@ async function metadataServer() {
         authorization: request.headers.authorization,
       });
       response.setHeader('content-type', 'application/json');
+      if (path === '/api/version') {
+        response.end(JSON.stringify({ version: '0.32.15' }));
+        return;
+      }
       if (path === '/api/tags') {
         await held;
         if (state.fail) {
@@ -44,7 +48,17 @@ async function metadataServer() {
           JSON.stringify(
             body.model === unsupportedModel
               ? { capabilities: ['embedding'] }
-              : { capabilities: ['completion', 'thinking'], details: { family: 'qwen35' } },
+              : {
+                  capabilities: ['completion', 'thinking'],
+                  details: { family: 'qwen35' },
+                  template: '{{ .Prompt }}',
+                  model_info: {
+                    'general.architecture': 'qwen35',
+                    'tokenizer.ggml.model': 'gpt2',
+                    'tokenizer.ggml.pre': 'qwen35',
+                    'qwen35.context_length': 262144,
+                  },
+                },
           ),
         );
         return;
@@ -176,7 +190,8 @@ test('Ollama connection discovers models and explicit refresh preserves enabled 
     expect(
       metadata.calls.every(
         (call) =>
-          ['/api/tags', '/api/show'].includes(call.path) && call.authorization === undefined,
+          ['/api/version', '/api/tags', '/api/show'].includes(call.path) &&
+          call.authorization === undefined,
       ),
     ).toBe(true);
     await connection.click();
