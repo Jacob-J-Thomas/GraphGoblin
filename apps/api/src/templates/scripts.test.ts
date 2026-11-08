@@ -1,4 +1,4 @@
-﻿import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+﻿import { cp, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,7 @@ async function copy(input: string, output: string) {
 }
 
 it('template gate validates shipped drafts and refuses both broken graphs and undeclared assets', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-templates-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-a5b-templates-')));
   const input = join(root, 'templates');
   await cp(source, input, { recursive: true });
   await expect(gate(input)).resolves.toBeUndefined();
@@ -45,7 +45,7 @@ it('template gate validates shipped drafts and refuses both broken graphs and un
 });
 
 it('catalog build entry copies independent drafts and refuses an invalid source without damaging an existing catalog', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-copy-catalog-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-a5b-copy-catalog-')));
   const target = join(root, 'catalog');
   await copy(source, target);
   const catalog = new TemplateCatalog(target);

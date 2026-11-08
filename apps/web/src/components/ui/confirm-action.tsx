@@ -10,6 +10,8 @@ export function ConfirmAction({
   action = 'delete',
   name,
   accessibleName,
+  triggerLabel,
+  disabled = false,
   'aria-describedby': describedBy,
   consequences,
   onConfirm,
@@ -17,9 +19,11 @@ export function ConfirmAction({
   onDismiss,
   returnFocusTo,
 }: {
-  action?: 'delete' | 'revoke';
+  action?: 'delete' | 'revoke' | 'sign-out' | 'cancel-request';
   name: string;
   accessibleName?: string;
+  triggerLabel?: string;
+  disabled?: boolean;
   /** Description of the opener, separate from the confirmation's consequences. */
   'aria-describedby'?: string | undefined;
   consequences: ReactNode;
@@ -44,7 +48,14 @@ export function ConfirmAction({
   const cancelFocusRestoreRef = useRef<() => void>(() => {});
   const restoreRemovedFocusRef = useRef<(refresh?: Promise<unknown>) => void>(() => {});
   const id = useId();
-  const verb = action === 'delete' ? 'Delete' : 'Revoke';
+  const verb =
+    action === 'delete'
+      ? 'Delete'
+      : action === 'revoke'
+        ? 'Revoke'
+        : action === 'sign-out'
+          ? 'Sign out on this device'
+          : 'Cancel request';
   const icon = action === 'delete' ? 'trash' : 'cancelled';
 
   const dismiss = () => {
@@ -89,7 +100,7 @@ export function ConfirmAction({
   const confirm = async () => {
     if (busyRef.current) return;
     busyRef.current = true;
-    setPending(true);
+    setPending(action !== 'sign-out');
     setError(undefined);
     failureRef.current = undefined;
     dialogRef.current!.focus();
@@ -111,8 +122,9 @@ export function ConfirmAction({
     <>
       <Button
         ref={triggerRef}
+        disabled={disabled}
         size="sm"
-        variant="destructive-soft"
+        variant={action === 'cancel-request' ? 'outline' : 'destructive-soft'}
         aria-label={accessibleName ?? `${verb} ${name}`}
         aria-describedby={describedBy}
         aria-haspopup="dialog"
@@ -122,7 +134,7 @@ export function ConfirmAction({
         }}
       >
         <Icon name={icon} />
-        {verb}
+        {triggerLabel ?? verb}
       </Button>
       <dialog
         ref={dialogRef}
@@ -168,11 +180,15 @@ export function ConfirmAction({
         className={`fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%_-_2rem)] max-w-[520px] overflow-y-auto rounded-lg border border-strong bg-surface-overlay p-5 text-left whitespace-normal text-default shadow-3 backdrop:bg-surface-inverse/75 ${pending ? 'select-none' : ''}`}
       >
         <h2 id={`${id}-title`} className="mb-3 text-lg font-semibold wrap-anywhere">
-          {verb} “{name}”?
+          {action === 'sign-out'
+            ? 'Sign out on this device?'
+            : action === 'cancel-request'
+              ? 'Cancel this request?'
+              : `${verb} “${name}”?`}
         </h2>
         <div id={`${id}-description`} className="grid gap-3 text-sm wrap-anywhere">
           {consequences}
-          <p>This cannot be undone.</p>
+          {action === 'delete' || action === 'revoke' ? <p>This cannot be undone.</p> : null}
         </div>
         {error ? (
           <Alert className="mt-4" title={`Could not ${action} “${name}”.`}>
@@ -185,14 +201,30 @@ export function ConfirmAction({
             size="sm"
             variant="destructive"
             disabled={pending}
-            aria-label={`Confirm ${action} ${name}`}
+            aria-label={
+              action === 'sign-out'
+                ? 'Sign out'
+                : action === 'cancel-request'
+                  ? 'Cancel request'
+                  : `Confirm ${action} ${name}`
+            }
             onClick={() => void confirm()}
           >
             <Icon name={icon} />
-            {pending ? (action === 'delete' ? 'Deleting…' : 'Revoking…') : `Confirm ${action}`}
+            {pending
+              ? action === 'delete'
+                ? 'Deleting…'
+                : action === 'revoke'
+                  ? 'Revoking…'
+                  : 'Cancelling…'
+              : action === 'sign-out'
+                ? 'Sign out'
+                : action === 'cancel-request'
+                  ? 'Cancel request'
+                  : `Confirm ${action}`}
           </Button>
           <Button ref={keepRef} size="sm" variant="outline" disabled={pending} onClick={dismiss}>
-            Keep
+            {action === 'cancel-request' ? 'Keep running' : 'Keep'}
           </Button>
           <span role="status" className="self-center text-sm text-muted">
             {pending ? 'Please wait…' : ''}

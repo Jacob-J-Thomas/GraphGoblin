@@ -57,7 +57,9 @@ describe('editable template starting points', () => {
           expect(node.config.timeoutSeconds).toBeGreaterThan(0);
         }
       }
-      expect(await app.container.repos.loops.listLoops('local')).toHaveLength(1);
+      expect(
+        (await app.container.repos.loops.listLoops('local')).filter((loop) => !loop.system),
+      ).toHaveLength(1);
       expect(await app.container.repos.loops.listVersions(created.loop.id)).toEqual([
         created.draft,
       ]);
@@ -214,7 +216,9 @@ describe('editable template starting points', () => {
       });
       expect(response.statusCode, response.body).toBe(code);
     }
-    expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+    expect(
+      (await app.container.repos.loops.listLoops('local')).filter((loop) => !loop.system),
+    ).toEqual([]);
   });
 
   it.each(['starter', 'implementation', 'review', 'qa'])(

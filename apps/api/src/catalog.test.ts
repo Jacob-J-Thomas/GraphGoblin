@@ -749,7 +749,11 @@ describe('importing another format', () => {
         detail: `This loop ${document} is format ${String(found)}; this build reads only format ${String(CURRENT_DEFINITION_FORMAT)} and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format ${String(CURRENT_DEFINITION_FORMAT)}.`,
         errors: { foundFormat: found, requiredFormat: CURRENT_DEFINITION_FORMAT },
       });
-      expect((await t.app.inject('/loops')).json().items).toEqual([]);
+      expect(
+        (await t.app.inject('/loops'))
+          .json<{ items: { system?: unknown }[] }>()
+          .items.filter((loop) => !loop.system),
+      ).toEqual([]);
     },
   );
 

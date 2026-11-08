@@ -12,7 +12,13 @@ import {
   type NodeInput,
   type NodeKind,
 } from '@graphgoblin/contracts';
-import { outputPorts, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
+import {
+  outputPorts,
+  validateLoop,
+  systemChatIssues,
+  systemChatLockedIssues,
+  type ValidationIssue,
+} from '@graphgoblin/domain';
 import { hasRepeatRoute } from './decision-gates.js';
 import { setupInstruction } from '../forms/setup-instructions.js';
 
@@ -241,7 +247,10 @@ export type EditorIssue = ValidationIssue & {
 };
 
 /** Schema issues first (they block saving), then the structural rules from `domain`. */
-export function validateDraft(def: LoopDefinitionInput): {
+export function validateDraft(
+  def: LoopDefinitionInput,
+  system = false,
+): {
   issues: EditorIssue[];
   schemaValid: boolean;
 } {
@@ -265,7 +274,19 @@ export function validateDraft(def: LoopDefinitionInput): {
     });
     return { issues, schemaValid: false };
   }
-  return { issues: validateLoop(parsed.data), schemaValid: true };
+  const contract = system ? systemChatIssues(parsed.data) : [];
+  return {
+    issues: [
+      ...validateLoop(parsed.data),
+      ...contract.map(({ nodeId, edgeId, path, ...issue }) => ({
+        ...issue,
+        ...(nodeId ? { nodeId } : {}),
+        ...(edgeId ? { edgeId } : {}),
+        ...(path ? { path } : {}),
+      })),
+    ],
+    schemaValid: !system || systemChatLockedIssues(parsed.data).length === 0,
+  };
 }
 
 /** Identity of an issue for de-duplication. */

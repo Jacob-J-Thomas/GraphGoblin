@@ -5,7 +5,8 @@ import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contract
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { apiKeys, modelCatalog, settings } from './schema.js';
+import { ollamaAvailability } from './ollama-availability.js';
+import { apiKeys, modelCatalog, modelDiscovery, ollamaConnection, settings } from './schema.js';
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -249,6 +250,22 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   })),
 ];
 
+/** Startup-only inspection before pending schema migrations; no discovery tables or writes. */
+export async function readPreMigrationModelCatalog(db: Database): Promise<ModelCatalogEntry[]> {
+  return db
+    .select({
+      harness: modelCatalog.harness,
+      model: modelCatalog.model,
+      source: modelCatalog.source,
+      displayName: modelCatalog.displayName,
+      efforts: modelCatalog.efforts,
+      defaultEffort: modelCatalog.defaultEffort,
+      enabled: modelCatalog.enabled,
+    })
+    .from(modelCatalog)
+    .orderBy(modelCatalog.harness, modelCatalog.model);
+}
+
 export class SqliteModelCatalog {
   constructor(private readonly db: Database) {}
 
@@ -284,16 +301,29 @@ export class SqliteModelCatalog {
     const rows = await this.db
       .select()
       .from(modelCatalog)
+      .leftJoin(
+        modelDiscovery,
+        and(
+          eq(modelCatalog.harness, modelDiscovery.harness),
+          eq(modelCatalog.model, modelDiscovery.model),
+        ),
+      )
+      .leftJoin(ollamaConnection, eq(ollamaConnection.id, 'gateway'))
       .orderBy(modelCatalog.harness, modelCatalog.model);
-    return rows.map((r) => ({
-      harness: r.harness,
-      model: r.model,
-      source: r.source,
-      displayName: r.displayName,
-      efforts: r.efforts,
-      defaultEffort: r.defaultEffort,
-      enabled: r.enabled,
-    }));
+    return rows.map(
+      ({ model_catalog: r, model_discovery: metadata, ollama_connection: connection }) => ({
+        harness: r.harness,
+        model: r.model,
+        source: r.source,
+        displayName: r.displayName,
+        efforts: r.efforts,
+        defaultEffort: r.defaultEffort,
+        enabled: r.enabled,
+        ...(r.harness === 'ollama'
+          ? { availability: ollamaAvailability(connection, metadata) }
+          : {}),
+      }),
+    );
   }
 
   async upsert(entry: ModelCatalogEntry): Promise<void> {
@@ -304,9 +334,28 @@ export class SqliteModelCatalog {
   }
 
   async findOne(harness: string, model: string): Promise<ModelCatalogEntry | undefined> {
-    return this.db.query.modelCatalog.findFirst({
-      where: and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)),
-    });
+    const rows = await this.db
+      .select()
+      .from(modelCatalog)
+      .leftJoin(
+        modelDiscovery,
+        and(
+          eq(modelCatalog.harness, modelDiscovery.harness),
+          eq(modelCatalog.model, modelDiscovery.model),
+        ),
+      )
+      .leftJoin(ollamaConnection, eq(ollamaConnection.id, 'gateway'))
+      .where(and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)))
+      .limit(1);
+    const row = rows[0];
+    return row
+      ? {
+          ...row.model_catalog,
+          ...(row.model_catalog.harness === 'ollama'
+            ? { availability: ollamaAvailability(row.ollama_connection, row.model_discovery) }
+            : {}),
+        }
+      : undefined;
   }
 
   async setEnabled(
@@ -319,7 +368,7 @@ export class SqliteModelCatalog {
       .set({ enabled })
       .where(and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)))
       .returning();
-    return rows[0];
+    return rows[0] ? this.findOne(harness, model) : undefined;
   }
 
   async delete(harness: string, model: string): Promise<boolean> {
@@ -331,10 +380,9 @@ export class SqliteModelCatalog {
   }
 
   async isAllowed(harness: string, model: string, effort?: Effort): Promise<boolean> {
-    const row = await this.db.query.modelCatalog.findFirst({
-      where: and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)),
-    });
-    if (!row || !row.enabled) return false;
+    const row = await this.findOne(harness, model);
+    if (!row || !row.enabled || (row.availability && row.availability.state !== 'available'))
+      return false;
     return effort === undefined || row.efforts.includes(effort);
   }
 }

@@ -120,7 +120,7 @@ test(
       await verifyStoreHead(h.client);
       assert.equal(await h.pendingMigrations(), 0);
       assert.equal((await h.client.execute("SELECT value FROM settings WHERE key='retained'")).rows[0].value, '"exact bytes"');
-      assert.equal((await h.client.execute('SELECT name FROM loops')).rows[0].name, 'retained current loop');
+      assert.equal((await h.client.execute("SELECT name FROM loops WHERE id='01J00000000000000000000001'")).rows[0].name, 'retained current loop');
       const event = (await h.client.execute('SELECT type,payload FROM run_events')).rows[0];
       assert.equal(event.type, 'delivery.finished');
       const delivery = JSON.parse(event.payload).delivery;

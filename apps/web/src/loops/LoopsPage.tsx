@@ -1,8 +1,9 @@
 import { loops } from '@graphgoblin/api-client';
-import type { LoopRecord } from '@graphgoblin/contracts';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ChatDevice } from '@graphgoblin/contracts';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { useOwnerChatClient } from '../app/useOwnerChatClient.js';
 import { useApi } from '../api/context.js';
 import { keys, useCreateTemplateDraft, useLoops, useTemplates } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
@@ -40,7 +41,7 @@ import {
   problemIssues,
 } from '../lib/utils.js';
 
-function PublishState({ loop }: { loop: LoopRecord }) {
+function PublishState({ loop }: { loop: ListedLoop }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
   if (loop.draftVersionId) return <Badge tone="warn">published, unpublished changes</Badge>;
   return <Badge tone="good">published</Badge>;
@@ -156,7 +157,7 @@ function ImportLoop() {
   );
 }
 
-function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number }) {
+function LoopActions({ loop, runCount }: { loop: ListedLoop; runCount: number }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const exportingRef = useRef(false);
@@ -196,24 +197,26 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number })
         <span role="status" className="sr-only">
           {exportLoop.isPending ? `Exporting ${loop.name}…` : ''}
         </span>
-        <ConfirmAction
-          name={loop.name}
-          returnFocusTo="loops-heading"
-          consequences={
-            <p>
-              The loop, all its versions, its triggers and all its runs
-              {` (${runCount})`} will be deleted, including run history and artifact references.
-              Loops using it as a subloop will no longer be able to start it. Cancel active runs
-              first.
-            </p>
-          }
-          onConfirm={async () => {
-            await loops.remove(client, loop.id);
-            await clearLocalDraft(loop.id);
-            await queryClient.invalidateQueries({ queryKey: keys.loops });
-            await queryClient.invalidateQueries({ queryKey: ['runs'] });
-          }}
-        />
+        {!loop.system ? (
+          <ConfirmAction
+            name={loop.name}
+            returnFocusTo="loops-heading"
+            consequences={
+              <p>
+                The loop, all its versions, its triggers and all its runs
+                {` (${runCount})`} will be deleted, including run history and artifact references.
+                Loops using it as a subloop will no longer be able to start it. Cancel active runs
+                first.
+              </p>
+            }
+            onConfirm={async () => {
+              await loops.remove(client, loop.id);
+              await clearLocalDraft(loop.id);
+              await queryClient.invalidateQueries({ queryKey: keys.loops });
+              await queryClient.invalidateQueries({ queryKey: ['runs'] });
+            }}
+          />
+        ) : null}
       </div>
       {exportLoop.isError ? (
         <Alert title={`Could not export “${loop.name}”.`}>{errorMessage(exportLoop.error)}</Alert>
@@ -222,8 +225,118 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number })
   );
 }
 
+type ListedLoop = NonNullable<ReturnType<typeof useLoops>['data']>[number];
+function LoopTable({
+  items,
+  devices,
+  system = false,
+}: {
+  items: ListedLoop[];
+  devices: ChatDevice[] | undefined;
+  system?: boolean;
+}) {
+  return (
+    <Card title={system ? 'System loops' : 'Your loops'} flush>
+      {system ? (
+        <p className="border-b border-default px-5 py-3 text-sm text-muted">
+          GraphGoblin keeps one chat loop for this gateway and one for each paired device, including
+          revoked ones. Change the steps between the chat trigger and its exits.
+        </p>
+      ) : null}
+      {/* Rows stack below 1024 px; the update time sits under the name, so the name
+                  column keeps room for itself at 1024 px. */}
+      <Table stack="lg">
+        <thead>
+          <tr>
+            <Th>Name</Th>
+            <Th>State</Th>
+            <Th>Last run</Th>
+            <Th className="w-px text-right">Actions</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((loop) => {
+            const run = loop.latestRun;
+            return (
+              <tr key={loop.id}>
+                <Td className="min-w-56 wrap-anywhere">
+                  <Link
+                    to={`/loops/${loop.id}/edit`}
+                    className="touch-target text-[15px] font-semibold text-default no-underline hover:underline"
+                  >
+                    {loop.name}
+                  </Link>
+                  {loop.description ? (
+                    <p className="mt-0.5 text-sm text-muted">{loop.description}</p>
+                  ) : null}
+                  {loop.system ? (
+                    <p className="mt-1 text-sm text-muted">
+                      Answers{' '}
+                      <Link
+                        to={
+                          loop.system.audience.kind === 'gateway'
+                            ? '/chat'
+                            : `/chat/devices#device-${loop.system.audience.deviceId}`
+                        }
+                      >
+                        {loop.system.audience.kind === 'gateway'
+                          ? 'Chat on this gateway'
+                          : (devices?.find(
+                              (device) =>
+                                loop.system?.audience.kind === 'device' &&
+                                device.id === loop.system.audience.deviceId,
+                            )?.label ?? 'paired device')}
+                      </Link>
+                      {devices?.some(
+                        (device) =>
+                          loop.system?.audience.kind === 'device' &&
+                          device.id === loop.system.audience.deviceId &&
+                          device.revokedAt,
+                      )
+                        ? ' · Revoked device'
+                        : ''}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-xs text-subtle">
+                    Updated <time dateTime={loop.updatedAt}>{formatDateTime(loop.updatedAt)}</time>
+                  </p>
+                </Td>
+                <Td label="State">
+                  <PublishState loop={loop} />
+                </Td>
+                <Td label="Last run">
+                  {run ? (
+                    <Link to={`/runs/${run.id}`} className="touch-target inline-flex w-fit">
+                      <RunStatusBadge status={run.status} />
+                    </Link>
+                  ) : (
+                    <div className="text-sm text-muted">
+                      <span>{loop.runCount === 0 ? 'never run' : 'latest run unavailable'}</span>
+                      {loop.runCount > 0 ? <p>Check run history diagnostics.</p> : null}
+                    </div>
+                  )}
+                </Td>
+                <Td>
+                  <LoopActions loop={loop} runCount={loop.runCount} />
+                </Td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
+    </Card>
+  );
+}
+
 export function LoopsPage() {
   const loopsQuery = useLoops(5000);
+  const chatClient = useOwnerChatClient();
+  const devices = useQuery({
+    queryKey: ['chat', 'devices'],
+    queryFn: () => chatClient.devices(),
+    enabled: Boolean(loopsQuery.data?.some((loop) => loop.system?.audience.kind === 'device')),
+    retry: false,
+  });
   const templatesQuery = useTemplates();
   const createTemplateDraft = useCreateTemplateDraft();
   const queryClient = useQueryClient();
@@ -264,64 +377,41 @@ export function LoopsPage() {
               No loops yet. Create one above or import an export.
             </p>
           ) : (
-            <Card flush>
-              {/* Rows stack below 1024 px; the update time sits under the name, so the name
-                  column keeps room for itself at 1024 px. */}
-              <Table stack="lg">
-                <thead>
-                  <tr>
-                    <Th>Name</Th>
-                    <Th>State</Th>
-                    <Th>Last run</Th>
-                    <Th className="w-px text-right">Actions</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((loop) => {
-                    const run = loop.latestRun;
-                    return (
-                      <tr key={loop.id}>
-                        <Td className="min-w-56 wrap-anywhere">
-                          <Link
-                            to={`/loops/${loop.id}/edit`}
-                            className="touch-target text-[15px] font-semibold text-default no-underline hover:underline"
-                          >
-                            {loop.name}
-                          </Link>
-                          {loop.description ? (
-                            <p className="mt-0.5 text-sm text-muted">{loop.description}</p>
-                          ) : null}
-                          <p className="mt-1 text-xs text-subtle">
-                            Updated{' '}
-                            <time dateTime={loop.updatedAt}>{formatDateTime(loop.updatedAt)}</time>
-                          </p>
-                        </Td>
-                        <Td label="State">
-                          <PublishState loop={loop} />
-                        </Td>
-                        <Td label="Last run">
-                          {run ? (
-                            <Link to={`/runs/${run.id}`} className="touch-target inline-flex w-fit">
-                              <RunStatusBadge status={run.status} />
-                            </Link>
-                          ) : (
-                            <div className="text-sm text-muted">
-                              <span>
-                                {loop.runCount === 0 ? 'never run' : 'latest run unavailable'}
-                              </span>
-                              {loop.runCount > 0 ? <p>Check run history diagnostics.</p> : null}
-                            </div>
-                          )}
-                        </Td>
-                        <Td>
-                          <LoopActions loop={loop} runCount={loop.runCount} />
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </Card>
+            <div className="grid gap-section">
+              {items.some((loop) => !loop.system) ? (
+                <LoopTable items={items.filter((loop) => !loop.system)} devices={devices.data} />
+              ) : (
+                <p className="text-sm text-muted">
+                  No loops of your own yet. Create one above or import an export.
+                </p>
+              )}
+              {items.some((loop) => loop.system) ? (
+                <LoopTable
+                  system
+                  devices={devices.data}
+                  items={items
+                    .filter((loop) => loop.system)
+                    .toSorted((a, b) => {
+                      const aDevice = devices.data?.find(
+                        (device) =>
+                          a.system?.audience.kind === 'device' &&
+                          device.id === a.system.audience.deviceId,
+                      );
+                      const bDevice = devices.data?.find(
+                        (device) =>
+                          b.system?.audience.kind === 'device' &&
+                          device.id === b.system.audience.deviceId,
+                      );
+                      return (
+                        Number(b.system?.audience.kind === 'gateway') -
+                          Number(a.system?.audience.kind === 'gateway') ||
+                        Number(Boolean(aDevice?.revokedAt)) - Number(Boolean(bDevice?.revokedAt)) ||
+                        (aDevice?.label ?? a.name).localeCompare(bDevice?.label ?? b.name)
+                      );
+                    })}
+                />
+              ) : null}
+            </div>
           )
         }
       </QueryState>

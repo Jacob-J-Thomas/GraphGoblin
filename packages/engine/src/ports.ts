@@ -17,6 +17,7 @@ import type {
   HarnessOptions,
   Capabilities,
   JsonSchema,
+  SystemChatBinding,
   JsonValue,
   LoopVersionRecord,
   ProgressItemStatus,
@@ -151,6 +152,7 @@ export interface RunRepository {
 }
 
 export interface LoopRepository {
+  getSystemChatBinding(loopId: string): Promise<SystemChatBinding | undefined>;
   getVersion(versionId: string): Promise<LoopVersionRecord | undefined>;
   getLatestPublished(loopId: string): Promise<LoopVersionRecord | undefined>;
   getPublished(loopId: string, version: number): Promise<LoopVersionRecord | undefined>;
@@ -214,7 +216,12 @@ export type HarnessEvent =
   | { type: 'turn-complete' }
   | {
       type: 'submitted';
-      marker: 'claude.assistant' | 'claude.result' | 'codex.turn.started' | 'fake.accepted';
+      marker:
+        | 'claude.assistant'
+        | 'claude.result'
+        | 'codex.turn.started'
+        | 'ollama.response'
+        | 'fake.accepted';
     }
   | {
       type: 'error';

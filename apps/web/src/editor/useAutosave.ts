@@ -112,13 +112,17 @@ export function useAutosave(
     enabled = true,
     deviceReady = true,
     serverReconciled = true,
+    system = false,
   }: {
     enabled?: boolean;
     deviceReady?: boolean;
     serverReconciled?: boolean;
+    system?: boolean;
   } = {},
 ): () => Promise<boolean> {
   const queryClient = useQueryClient();
+  const systemRef = useRef(system);
+  systemRef.current = system;
   const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef<
@@ -161,8 +165,8 @@ export function useAutosave(
         if (rev === savedRevision) return true;
         // Where the edits are instead (this device, or this window only) is the device copy's to
         // say, once its write has answered (`saveNotice`).
-        if (!validateDraft(definition).schemaValid) {
-          setSaveState('invalid');
+        if (!validateDraft(definition, systemRef.current).schemaValid) {
+          setSaveState('invalid', systemRef.current ? 'SYSTEM_CHAT_CONTRACT_INVALID' : undefined);
           return false;
         }
         setSaveState('saving');
@@ -178,6 +182,12 @@ export function useAutosave(
           if (conflict) {
             now.setConflict(conflict);
             setSaveState('conflict', CONFLICT_MESSAGE);
+          } else if (
+            systemRef.current &&
+            error instanceof GraphGoblinApiError &&
+            error.code === 'SYSTEM_CHAT_CONTRACT_INVALID'
+          ) {
+            setSaveState('invalid', 'SYSTEM_CHAT_CONTRACT_INVALID');
           } else if (isOfflineError(error)) {
             setSaveState('offline');
             // A save can be the first request to notice an outage. Refresh the active loop
@@ -258,7 +268,7 @@ export function useAutosave(
       if (!last || timer.current === undefined) return;
       clearTimeout(timer.current);
       timer.current = undefined;
-      if (!validateDraft(last.definition).schemaValid) return;
+      if (!validateDraft(last.definition, systemRef.current).schemaValid) return;
       // In conflict the user has not chosen yet: the unsynced local copy waits for the next visit.
       if (latest.current.inConflict) return;
       void serializeSave(last.loopId, async () => {

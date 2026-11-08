@@ -98,6 +98,7 @@ export function blocksPublication(issue: LoopIssue): boolean {
     issue.code.startsWith('HARNESS_READINESS_') ||
     [
       'MODEL_DISABLED',
+      'MODEL_UNAVAILABLE',
       'CLASSIFIER_MODEL_DISABLED',
       'CLASSIFIER_SECRET_MISSING',
       'CLASSIFIER_SECRET_UNREADABLE',

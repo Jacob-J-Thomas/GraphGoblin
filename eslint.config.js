@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '**/dist-goblin/**',
       '**/coverage/**',
       '**/node_modules/**',
       '**/.turbo/**',
@@ -93,6 +94,54 @@ export default tseslint.config(
               group: ['**/packages/*', '**/apps/*', '../../../*'],
               message:
                 'Reach other workspace packages only through their @graphgoblin/* entry points.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Shared chat and the peripheral cannot consult management credentials or compose admin UI.
+    // Owner wrappers live under src/app/ and pass an explicit ChatClient into these modules.
+    files: [
+      'apps/web/src/goblin/**/*.ts',
+      'apps/web/src/goblin/**/*.tsx',
+      'apps/web/src/chat/**/*.ts',
+      'apps/web/src/chat/**/*.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: '@graphgoblin/engine', message: 'The web app must not import the engine.' },
+            {
+              name: '@graphgoblin/infrastructure',
+              message: 'The web app must not import Node infrastructure.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@graphgoblin/engine/*', '@graphgoblin/infrastructure/*'],
+              message: 'The web app must not import the engine or Node infrastructure.',
+            },
+            {
+              group: ['**/packages/*', '**/apps/*', '../../../*'],
+              message:
+                'Reach other workspace packages only through their @graphgoblin/* entry points.',
+            },
+            {
+              group: [
+                '**/api/api-key*',
+                '**/api/ApiKeyPanel*',
+                '**/api/context*',
+                '**/api/queries*',
+                '**/settings/**',
+                '**/editor/**',
+                '**/app/**',
+              ],
+              message:
+                'Chat and Goblin receive explicit credentials and capabilities; management composition belongs in src/app/.',
             },
           ],
         },

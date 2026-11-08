@@ -31,7 +31,12 @@ export type HarnessModelResolution =
       path: 'model' | 'effort';
       message: string;
     }
-  | { status: 'unavailable'; code: 'MODEL_DISABLED'; path: 'model'; message: string };
+  | {
+      status: 'unavailable';
+      code: 'MODEL_DISABLED' | 'MODEL_UNAVAILABLE';
+      path: 'model';
+      message: string;
+    };
 
 /** Inherit each field independently, within one harness, from loop, owner, then process. */
 export function inheritedHarnessDefaults(
@@ -64,6 +69,13 @@ export function resolveHarnessModel(input: HarnessModelResolutionInput): Harness
     };
   const entry = catalog.find((row) => row.harness === harness && row.model === model);
   if (!entry) {
+    if (harness === 'ollama')
+      return {
+        status: 'unavailable',
+        code: 'MODEL_UNAVAILABLE',
+        path: 'model',
+        message: 'Connect Ollama in Settings, refresh models and choose the exact installed model',
+      };
     const mismatch = catalog.some((row) => row.model === model);
     return {
       status: 'invalid',
@@ -74,6 +86,14 @@ export function resolveHarnessModel(input: HarnessModelResolutionInput): Harness
         : 'The selected model is not in the catalog',
     };
   }
+  if (entry.availability && entry.availability.state !== 'available')
+    return {
+      status: 'unavailable',
+      code: 'MODEL_UNAVAILABLE',
+      path: 'model',
+      message:
+        entry.availability.reason ?? 'The selected model is unavailable on the configured service',
+    };
   if (!effort)
     return {
       status: 'invalid',
@@ -129,6 +149,9 @@ export function validateHarnessDefaults(
       HarnessId,
       { model?: string; effort?: Effort },
     ][]) {
+      // Dynamic Ollama discovery cannot make a structurally valid process choice block boot
+      // or prevent its correction. Actual selected-node resolution remains strict.
+      if (level === 'process' && harness === 'ollama' && fields.model !== undefined) continue;
       const lower = levels.slice(index).map(([, entry]) => entry.byHarness[harness]);
       const model = lower.find((entry) => entry?.model !== undefined)?.model;
       const entry = input.catalog.find((row) => row.harness === harness && row.model === model);
@@ -145,6 +168,11 @@ export function validateHarnessDefaults(
         };
       } else if (
         fields.effort !== undefined &&
+        !(
+          harness === 'ollama' &&
+          entry?.availability &&
+          entry.availability.state !== 'available'
+        ) &&
         (!entry || !entry.efforts.includes(fields.effort))
       ) {
         resolution = {

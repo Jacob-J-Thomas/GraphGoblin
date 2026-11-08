@@ -12,7 +12,7 @@ const models = {
   claude: ['claude-opus-5-5', 'claude-fable-5-1'],
 } as const;
 async function setup(
-  from: HarnessId,
+  from: Extract<HarnessId, 'codex' | 'claude'>,
   scenario: string,
   oldEffort = 'none',
   prepare?: (api: FakeApi) => void,

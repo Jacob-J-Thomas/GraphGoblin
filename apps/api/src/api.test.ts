@@ -218,7 +218,9 @@ describe('loops', () => {
     expect(draft.status).toBe('draft');
     expect(issues).toEqual([]);
 
-    expect((await t.app.inject('/loops')).json()).toMatchObject({ items: [{ id: loop.id }] });
+    expect((await t.app.inject('/loops')).json()).toMatchObject({
+      items: expect.arrayContaining([expect.objectContaining({ id: loop.id })]),
+    });
     const detail = (await t.app.inject(`/loops/${loop.id}`)).json<{
       draft?: { id: string };
       current?: unknown;

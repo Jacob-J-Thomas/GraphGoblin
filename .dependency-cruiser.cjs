@@ -2,6 +2,16 @@
 module.exports = {
   forbidden: [
     {
+      name: 'chat-and-goblin-do-not-import-management',
+      severity: 'error',
+      comment:
+        'Owner wrappers pass an explicit transport. Shared chat and Goblin never read owner credentials or render management UI.',
+      from: { path: '^apps/web/src/(chat|goblin)/' },
+      to: {
+        path: '^apps/web/src/(app/|settings/|editor/|api/(api-key|ApiKeyPanel|context|queries))',
+      },
+    },
+    {
       name: 'web-is-browser-only',
       severity: 'error',
       comment:
@@ -52,7 +62,7 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|coverage|node_modules)/' },
+    exclude: { path: '(^|/)(dist|dist-goblin|coverage|node_modules)/' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {

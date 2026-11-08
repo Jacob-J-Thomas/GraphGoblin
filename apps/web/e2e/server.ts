@@ -388,7 +388,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { ok: true };
     case '/structured': {
       const queue = [...((body['responses'] as unknown[] | undefined) ?? [])];
-      target.structured.respondWith(() => (queue.length > 1 ? queue.shift() : queue[0]));
+      selectedInstance(body).app.structured.respondWith(() =>
+        queue.length > 1 ? queue.shift() : queue[0],
+      );
       return { ok: true };
     }
     case '/catalog/upsert':

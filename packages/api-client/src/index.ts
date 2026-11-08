@@ -61,3 +61,4 @@ export {
   type WaitForRunOptions,
   type WaitForRunResult,
 } from './wait.js';
+export { ollama } from './ollama.js';

@@ -1,4 +1,4 @@
-import { EffortSchema, type Effort } from '@graphgoblin/contracts';
+import { EffortSchema, type ModelCatalogEntry } from '@graphgoblin/contracts';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useId, useRef, type AnchorHTMLAttributes, type ReactNode } from 'react';
@@ -9,15 +9,7 @@ import { errorMessage } from '../lib/utils.js';
 
 export const EFFORTS = EffortSchema.options;
 
-export type CatalogEntry = {
-  harness: string;
-  model: string;
-  source: 'harness' | 'litellm';
-  displayName: string;
-  efforts: Effort[];
-  defaultEffort: Effort;
-  enabled: boolean;
-};
+export type CatalogEntry = ModelCatalogEntry;
 
 export function useInvalidate() {
   const queryClient = useQueryClient();

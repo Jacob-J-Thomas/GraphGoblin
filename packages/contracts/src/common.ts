@@ -49,7 +49,7 @@ export const EffortSchema = z.enum(['none', 'low', 'medium', 'high', 'xhigh', 'm
 export type Effort = z.infer<typeof EffortSchema>;
 
 /** Harness families; models and native session ids remain scoped to the selected family. */
-export const HarnessIdSchema = z.enum(['codex', 'claude']);
+export const HarnessIdSchema = z.enum(['codex', 'claude', 'ollama']);
 export type HarnessId = z.infer<typeof HarnessIdSchema>;
 
 /** Shared bound for configured model names and the execution evidence that records them. */

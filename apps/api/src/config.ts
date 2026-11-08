@@ -2,7 +2,11 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HarnessDefaultsSchema, type HarnessDefaults } from '@graphgoblin/contracts';
+import {
+  HarnessDefaultsSchema,
+  OllamaBaseUrlSchema,
+  type HarnessDefaults,
+} from '@graphgoblin/contracts';
 import { z } from 'zod';
 
 const bool = z
@@ -29,11 +33,16 @@ const EnvSchema = z.object({
   GG_PUBLIC_URL: z.string().optional(),
   GG_CODEX_BINARY: z.string().optional(),
   GG_CLAUDE_BINARY: z.string().min(1).optional(),
+  GG_OLLAMA_ENABLED: bool.default(true),
+  GG_OLLAMA_URL: OllamaBaseUrlSchema.transform((value) => new URL(value).origin).prefault(
+    'http://127.0.0.1:11434',
+  ),
   /**
    * Directory of the built web app (apps/web/dist), served at /app/. Unset: the checkout's
    * `apps/web/dist` when it has been built (see `bundledWebDist`). Empty: no web app.
    */
   GG_WEB_DIST: z.string().optional(),
+  GG_GOBLIN_DIST: z.string().optional(),
   GG_JEV_API_KEY: z.string().optional(),
 });
 
@@ -57,8 +66,13 @@ export interface ApiConfig {
   codexBinary?: string;
   /** Explicit owner-installed native Claude Code executable; never downloaded or substituted. */
   claudeBinary?: string;
+  /** Initial fallback only; the saved gateway-wide Ollama connection takes precedence. */
+  ollamaEnabled: boolean;
+  ollamaUrl: string;
   /** Absolute path of the built web app to serve under /app/, if configured. */
   webDist?: string;
+  /** Absolute path of the independent Goblin shell served under /goblin/. */
+  goblinDist?: string;
   /** Seeds the local owner's Jev secret at startup only when it is absent. */
   jevApiKey?: { value: string; source: 'GG_JEV_API_KEY' | 'JEV_API_KEY' };
 }
@@ -88,9 +102,17 @@ export function bundledWebDist(exists: (path: string) => boolean = existsSync): 
   return exists(join(dir, 'index.html')) ? dir : undefined;
 }
 
+export function bundledGoblinDist(
+  exists: (path: string) => boolean = existsSync,
+): string | undefined {
+  const dir = fileURLToPath(new URL('../../web/dist-goblin', import.meta.url));
+  return exists(join(dir, 'index.html')) ? dir : undefined;
+}
+
 export interface LoadConfigOptions {
   /** The web app directory to serve when `GG_WEB_DIST` is unset. */
   webDistFallback?: string | undefined;
+  goblinDistFallback?: string | undefined;
 }
 
 /** Parse configuration from an environment map. Throws with a readable message on bad values. */
@@ -114,6 +136,7 @@ export function loadConfig(
   const e = parsed.data;
   const dataDir = resolve(e.GG_DATA_DIR || defaultDataDir());
   const webDist = e.GG_WEB_DIST ?? options.webDistFallback;
+  const goblinDist = e.GG_GOBLIN_DIST ?? options.goblinDistFallback;
   const jevApiKey = e.GG_JEV_API_KEY ?? env.JEV_API_KEY;
   const jevApiKeySource = e.GG_JEV_API_KEY !== undefined ? 'GG_JEV_API_KEY' : 'JEV_API_KEY';
   return {
@@ -133,7 +156,10 @@ export function loadConfig(
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
     ...(e.GG_CLAUDE_BINARY ? { claudeBinary: e.GG_CLAUDE_BINARY } : {}),
+    ollamaEnabled: e.GG_OLLAMA_ENABLED,
+    ollamaUrl: e.GG_OLLAMA_URL,
     ...(webDist ? { webDist: resolve(webDist) } : {}),
+    ...(goblinDist ? { goblinDist: resolve(goblinDist) } : {}),
     ...(jevApiKey ? { jevApiKey: { value: jevApiKey, source: jevApiKeySource } } : {}),
   };
 }

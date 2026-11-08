@@ -6,7 +6,7 @@ import { renderApp } from '../__fixtures__/render.js';
 import { usePwaStore } from '../pwa/store.js';
 
 describe('App shell', () => {
-  it('redirects to loops and navigates between screens', async () => {
+  it('redirects to Chat and navigates between screens', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     api.inbound = [
@@ -40,7 +40,15 @@ describe('App shell', () => {
       },
     ];
     renderApp('/', api);
-    expect(await screen.findByRole('heading', { name: 'Loops' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Chat' })).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole('link')
+        .filter((link) =>
+          ['Chat', 'Loops', 'Runs', 'Events', 'Settings'].includes(link.textContent ?? ''),
+        )
+        .map((link) => link.textContent),
+    ).toEqual(['Chat', 'Loops', 'Runs', 'Events', 'Settings']);
     await user.click(screen.getByRole('link', { name: 'Events' }));
     expect(await screen.findByText('build.done')).toBeInTheDocument();
     expect(screen.getByText('b1')).toBeInTheDocument();

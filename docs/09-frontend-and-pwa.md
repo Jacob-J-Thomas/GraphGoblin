@@ -12,7 +12,7 @@ for existing shutdown controls. See [ADR-0064](decisions/ADR-0064-windows-deskto
 
 ## Shape (Decided)
 
-A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. It talks to the API only through the generated typed client and to run state only through SSE. It contains no business rules: validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.
+A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. The management application lives at `/app/`; the separate Goblin PWA lives at `/goblin/`. Management resources use the generated typed client, and the run inspector follows native run events through SSE. Both Chat surfaces use the same scoped `/chat` API and poll turn state. Validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.
 
 The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery state,
 retry metadata, safe pinned configuration and run links; acknowledgement does not imply run
@@ -23,12 +23,215 @@ shows authentication recipe, secret names, body/extraction/key settings or unava
 
 | Screen        | Purpose                                                                                                                                        |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat          | Send text or configured audio through the gateway's system loop, follow real native runs, and manage paired Goblin devices                     |
 | Loops         | List, create, import, export, publish state, last run status                                                                                   |
 | Editor        | Canvas with a collapsible palette and loop panel, issue badges on nodes, node editor dialog, version bar with draft, issue counts, and publish |
-| Runs          | List across loops with filters; parent and child relationships; New run, the only place runs start                                             |
+| Runs          | List across loops with filters; parent and child relationships; New run starts an ordinary manual loop                                         |
 | Run inspector | Timeline of events, thread view at any point, per-node diff of the patch, waiting-for-input form, cancel, pause, resume, replay-at-node        |
 | Settings      | Model catalog, classifier models, defaults for model and effort, secrets, API keys, harness preflight status, scheduler status                 |
 | Events        | Inbound events and webhook deliveries, with what they triggered                                                                                |
+
+## Native Chat and the Goblin PWA (#443)
+
+Chat is the management application's first navigation item and index destination at `/app/chat`.
+The empty screen has no invented conversation. Sending starts an ordinary, durable engine run
+through the caller's bound system loop. An assistant message appears only after that run succeeds
+and returns the exact `graphgoblin.chat.v1` response (`{protocol, reply}`). A failed, cancelled,
+exhausted or malformed run stays visible as its actual state or a bounded error. Waiting and paused
+turns remain visible; owners can open the native run inspector to intervene. Chat cancellation
+uses native run cancellation. The peripheral has no pause, resume, replay, signal or input API.
+
+The gateway owns one seeded **system chat loop**. Loops groups system loops separately and the
+editor identifies the gateway or device association. The workflow is editable: prompts, harness,
+model, effort, scripts, decisions and awaited subloops retain their ordinary meaning. The protected
+boundary keeps one manual `chat-input` trigger, canonical input/response schemas, the
+`chatResponse` variable and caller-only success returns. An invalid boundary is refused on draft
+save only when it changes the trigger's locked identity/type/exposure/canonical schema or the
+`chatResponse` variable schema. Other incomplete boundary wiring stays saveable with issues and
+blocks publication/admission, so incomplete exit/wiring edits do not lose autosave changes.
+System loops cannot be deleted (`SYSTEM_LOOP_PROTECTED`). Exporting or cloning a
+definition creates an ordinary loop without its server-owned system binding. See
+[ADR-0065](decisions/ADR-0065-native-chat-system-loops-and-device-pairing.md).
+
+Before sending, check harness readiness in **Settings**, complete any required CLI login or
+Ollama service setup, choose a usable model/default, and publish a contract-valid system loop.
+Chat displays the readiness of that published loop and disables unavailable actions with its
+reason. Seeding and pairing make no model request. The default workflow uses fresh sessions,
+a temporary working directory and the existing harness isolation defaults; it does not inherit
+the machine's personal extensions.
+The actual workflow runs with the gateway owner's configured authority, including any authored
+Script commands. Pairing does not sandbox those commands or undo their side effects.
+
+Owner API clients use `chat:read` and `chat:write` (write includes read); pairing and device
+administration require wildcard owner authority. Device tokens use their own route/membership
+checks rather than owner API-key scopes.
+
+### Pair a Goblin device
+
+An owner configures required-key mode (`GG_REQUIRE_API_KEY=true`) and a canonical `GG_PUBLIC_URL`
+before creating enrollment links. Use HTTPS for a non-loopback gateway; HTTP loopback is for local
+testing. Pairing creation requires a wildcard owner key or the existing trusted local owner.
+Enabling pairing does not change gateway host, authentication or proxy configuration automatically.
+Deployment details are in [Install Goblin and pair a device](guide/08-offline-upgrade.md#install-goblin-and-pair-a-device)
+and [Serve the Goblin shell](guide/08-offline-upgrade.md#serve-the-goblin-shell).
+
+Create an enrollment in owner Chat and open its link on the device, or open the gateway's
+`/goblin/` and enter the enrollment code. The public URL prerequisite also applies when creating
+a manual code. The code lasts ten minutes and admits one device.
+The link carries the code in its fragment, which the client removes from the address immediately
+after capturing it. Opening the link never claims automatically. Install Goblin first, then enter
+the copied code and explicitly pair in the installed app. A browser tab also offers explicit
+**Pair this browser**; that pairs the browser's storage and does not promise to transfer its
+credential to a separately installed Home Screen app. The peripheral generates and saves its own
+device token and claim identity before claiming; retrying an interrupted claim with those same
+values recovers the same device and original label. Rename a device separately.
+The gateway stores only a hash of the token. No owner API key is transferred to Goblin.
+
+Each successful enrollment atomically creates a separate published system loop from the gateway's
+current published definition. Later gateway edits affect future gateway turns; they do not update
+an existing device's loop. Owners can edit and publish each device loop independently. A device
+can read and act only on its own chat conversations, turns and uploads. Its token cannot open
+management loops, native run APIs, Settings, API keys or device administration, including in local
+trusted mode.
+
+Revoking a device blocks subsequent authenticated requests and admissions. Its loop and history
+remain available to the owner and the loop is labelled revoked. Already accepted runs continue;
+the owner can cancel them separately. Signing out in Goblin clears that browser's credential and
+unsent data; it does not revoke the server device.
+**Active** in Devices means unrevoked, not online or model-ready. Last seen is persisted at most
+once per minute; every request still authenticates and checks revocation.
+
+Goblin has its own manifest, installation identity and service-worker scope at `/goblin/`, with
+the name **Goblin**. Its shell has no management navigation or owner-key panel. A connection screen
+can navigate to another gateway, requiring HTTPS except on loopback. It then pairs at that
+gateway's origin; it does not forward credentials across origins. Both entry points share chat
+components in `apps/web/src/chat/` and render responses as text.
+
+### Turn history, uncertain sends and offline use
+
+One conversation admits one active turn at a time. The server supplies recent valid history:
+up to twelve completed user/assistant turn pairs, further bounded to 64,000 characters by dropping
+oldest whole pairs. Chat send clients cannot supply history, a loop id, a native path or another
+audience.
+Text and normalized transcripts accept 1–16,000 nonblank characters; replies accept 1–32,000.
+Length bounds use UTF-16 code units, matching browser fields and contract validation.
+
+The client saves a stable request identity with the canonical input before sending. A lost
+acknowledgement preserves that identity. Reload and reconnect perform a read-only request lookup;
+they never send again automatically. An explicit retry uses the same identity and input, so an
+accepted request cannot create another run. Changing the input under that identity conflicts.
+Deleting a native run's history removes that turn's input/result from Chat while retaining its
+request tombstone: direct turn/request reads return 410 `CHAT_HISTORY_DELETED`, and the old request
+cannot execute again. The conversation and its undeleted turns remain available; deleted turns are
+omitted from the turn list, so gaps in turn counters are valid.
+Only typed `CHAT_HISTORY_DELETED` identifies a deleted turn; `CHAT_AUDIO_EXPIRED` affects an upload.
+An unknown/missing-code 410, a 404 or list omission is not deletion proof: preserve the pending
+identity, conversation, draft and unaffected turns, and use read-only **Check status** recovery.
+Later immutable native runs may already contain the deleted turn's text in
+their frozen history. Deletion does not retroactively erase those copies.
+
+The single-active-turn rule governs new chat admission. Authorized owners retain ordinary native
+Resume recovery, which can change an earlier turn's outcome. The transcript stays ordered by its
+durable turn counter, and any currently nonterminal linked turn blocks a new chat send.
+Generic API starts, draft tests and Subloops may start a system loop with text-only protocol input;
+they cannot submit an audio path. Verified native immutable replay can retain its source audio
+without creating a new chat-turn identity.
+
+Sends are limited to thirty per minute per audience and uploads to six. Pair claims allow ten
+attempts per minute per source with an additional global bound. A rate refusal returns its retry
+delay; it does not authorize automatic command replay.
+The gateway keeps `trustProxy: false`. Behind a reverse proxy, source pairing limits can therefore
+be shared by clients seen at that proxy address; a global pairing limit also applies. Forwarded
+headers do not become trusted merely to separate those clients.
+
+The composer may retain an unsent draft while offline, but Send stays disabled. Reconnecting does
+not send the draft. Neither service worker caches chat API responses, tokens, transcripts or
+uploads, queues mutations, or uses Background Sync. Polling follows active turns and resumes with
+read-only lookups after reload; transient read failures do not authorize replay.
+
+### Audio is configured by the loop
+
+The seeded loop accepts text. Microphone and file controls show audio as unavailable until the
+published loop accepts the canonical text-plus-audio input and places a Script or awaited Subloop
+named `chat-normalize` directly after `chat-input`. That normalizer passes text through and returns
+`{text}` for audio. A protected local expression decision named `chat-normalize-check` validates
+that recorded output before the authored workflow can act; invalid output reaches the protected
+failure exit `chat-normalize-invalid`. The rest of the workflow must use the normalizer's text. See
+[Native Chat workflow integration](06-harness-integration.md#native-chat-workflow-integration-443)
+for its exact output contract.
+
+In the owner system-loop editor, choose **Set up voice messages**, then **Script** or **Subloop**.
+Supply the real program/arguments or an ordinary published child loop; there is no default
+transcriber. The fixed thread/last-output settings and protected check keep the protocol intact.
+**Add voice steps** adds the normalizer/check/failure chain and trigger-schema change as one
+undoable draft edit. Cancel leaves the graph alone. A stale preview or ambiguous starting
+continuation must be reviewed before applying; the editor never guesses where to splice it.
+
+The action opens the real normalizer in the ordinary editor. For an untouched seed it updates the
+exact canonical prompt to consume normalized text; custom prompts stay unchanged, with the exact
+recorded output path shown for review. **Edit normalizer** reopens it. **Turn off voice messages**
+removes the reserved voice steps, reconnects the known valid continuation and restores only a
+recognized seed prompt as one undoable edit. If a partial chain has no single valid continuation,
+**Choose a continuation** asks which ordinary step Chat should run next. Ordinary nodes and
+unrelated edges stay in place. These actions do not publish, execute or test transcription;
+publish normally to change Chat's current capability. The notice distinguishes the draft's voice
+setup from its published version.
+
+**Configured by loop** confirms the published graph shape; it does not claim an external
+transcription command was health-tested. GraphGoblin includes no transcription provider, browser
+speech-recognition fallback or speech synthesis. The microphone requires browser permission and
+recording stops at 120 seconds. Once audio is configured, a file is an alternative when the browser
+cannot record.
+
+Uploads are limited to 10 MiB and recognized WebM, MP4, MPEG, WAV, Ogg or FLAC audio/container MIME
+types. An unused upload expires after one hour; an audience may hold at most three unused uploads.
+Retained audio, including used, unused and in-flight reservations, is capped at 64 MiB per audience
+and 256 MiB per gateway. `CHAT_AUDIO_QUOTA` refuses excess uploads; referenced input is not deleted
+automatically to free space.
+The server resolves a private immutable audio path for the normalizer and never returns that path
+to the device. The transcript appears only from the actual recorded normalizer output. Missing or
+invalid output produces `CHAT_AUDIO_NORMALIZATION_INVALID`, suppressing the reply and future
+history even if the underlying run succeeded. Browser playback uses the locally captured audio;
+the chat API has no audio download endpoint.
+
+## Ollama connection and model discovery (#443)
+
+In Settings' Model catalog, the **Ollama** section below the static catalog has a **Connection**
+disclosure. Enter **Server address**, choose **Use Ollama on this gateway**, then **Save connection**.
+It shows the origin, last successful discovery and any bounded discovery error. Before a connection
+has been saved, `GG_OLLAMA_URL` supplies the origin (default `http://127.0.0.1:11434`) and `GG_OLLAMA_ENABLED`
+defaults to true. Use an HTTP(S) origin without credentials, query, fragment or an `/api` suffix.
+Saving an origin starts discovery immediately; a network failure keeps the valid configuration
+saved and shows its error. Start/install the service outside GraphGoblin. Services requiring
+sign-in are unsupported by this adapter; the gateway's API key is never sent to Ollama.
+An explicit Ollama process model/default can remain configured while discovery is unavailable;
+the gateway and Settings still open, while that selected model blocks new inference until restored.
+Saving **Use Ollama on this gateway** off blocks new Ollama requests and closes open gateway
+requests. Work already accepted on the server may continue; this is not a remote-stop guarantee.
+
+The gateway discovers on startup/connection change and every five minutes while enabled. It does
+not require Settings to stay open. **Refresh Ollama models** next to the Ollama model list checks
+now, shows a pending state, and announces success/failure. A failed or incomplete refresh retains
+the last complete catalog. A successful refresh marks a removed model **missing** and a model with
+unsupported controls **unsupported**, retaining its row and owner-enabled preference. These states
+are distinct from an owner-disabled model. Restoring the model can make the same stored selection
+usable again; discovery never substitutes a model, changes owner defaults or downloads weights.
+Off keeps rows/Enabled choices visible with **Ollama is off in Settings**. After an address change,
+old rows show **Not yet listed at the new address** until a complete scan for that address succeeds.
+A failed new-address scan cannot make the old origin's snapshot available or count it as checked
+at the new origin.
+
+The editor offers Ollama for Inference nodes using the exact discovered model names and supported
+efforts. Its Conversation policy is fresh-only; unsupported tools, context files and same-session
+repair controls are unavailable with an explanation. Incompatible existing fields remain visible
+with issues for correction. **Use Ollama limits** explicitly corrects incompatible policy fields
+as one undoable edit while retaining model and effort. Model unavailability is enforced by
+publication/admission as well as the picker. A readiness probe checks the service without generation
+and does not promise that a model fits memory. Multi-turn Chat works through its explicit bounded history, and configured
+audio is normalized to text before inference. Goblin devices contain no Ollama setup UI.
+
+See [Native Ollama and discovered models](06-harness-integration.md#native-ollama-and-discovered-models-443)
+for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-discovery.md).
 
 ## Editor (Draft)
 
@@ -125,6 +328,7 @@ ended, so pending delivery cannot be finalized by JSON polling alone.
 - `vite-plugin-pwa` with Workbox, `registerType: 'prompt'`.
 - Update flow: the app asks the service-worker registration to check for a new build at registration, on window focus (at most once per 60 seconds, with a throttled focus deferred until that boundary) or becoming visible, hourly while visible, on browser reconnect, and when API reachability returns after an outage. Checks run only while visible, browser-online, and without a known API outage, with at most one check in flight. Scheduled checks and listeners are removed on unmount or page unload; a rejected check warns once per failure streak. A worker already waiting at registration shows the toast on first render. Each trigger also checks for a waiting worker, and the app owns a registration `updatefound`/worker `statechange` listener so later builds still prompt after Later even when Workbox detaches its listener. Each updated worker prompts once; the initial installation does not prompt. The app shows "A new version is available" with Update and Later; Later dismisses the prompt for that worker, Update activates it and reloads when it takes control. No automatic activation.
 - Precache: the app shell only. API responses are never cached by the worker.
+- Chat has a separate `/goblin/` shell/manifest/worker scope alongside `/app/`. Both workers precache only their own shell assets. Chat commands are never queued or replayed offline; reconnect only reads the saved request identity.
 - Offline: the shell opens and unsaved editor drafts persist in IndexedDB. Anything needing the backend shows a clear offline state. Active queries that failed because the API could not be reached retry on the browser's `online` event, including after an offline reload, without navigating. While an active query holds a connectivity error, a public `GET /healthz` probe through the API client's base URL retries after 2 seconds, doubling to a 30-second cap. A successful health response refetches only active connectivity-failed queries without cancelling their in-flight fetches. Recovery is confirmed once per outage only after those reads cease holding connectivity errors; a healthy `/healthz` with a stuck route keeps backing off and leaves the banner stable. There is at most one probe in flight, with a 5-second timeout; probes stop when no query needs recovery, the tab is hidden, or the browser is offline, and resume when visible and online. HTTP 4xx/5xx query errors never start probing. Each fetch keeps the one-retry limit; HTTP errors keep the existing query behaviour. The banner says "You are offline" for browser connectivity and "Cannot reach the GraphGoblin API" for an API outage while the browser is online; confirmed recovery clears API unreachability. Signal sources are active query transport failures, draft-save transport failures, and run-stream transport failures; accepted streams report reachability through the same transition functions. A failed draft save refreshes its active loop read once per revision, and a dropped run stream refreshes its active run read once per outage, so loaded screens also create probe demand. A stream whose last failure was a transport failure restarts at its committed cursor on recovery. Stream outages are reported once until an event advances the cursor or an accepted stream stays open for at least one 15-second heartbeat interval; acceptance alone and repeated short connections do not re-arm them. HTTP refusals, invalid stream frames, and a clean end-of-stream do not create connectivity failures; their retries keep the existing SSE backoff. When no active query needs recovery, the unreachable claim clears after one tick and a fresh check for active failures or reads, without a recovery notification; cached errors are remembered across inactivity and do not reopen an outage until a fresh failure arrives. There is no offline execution.
 - Reconnect: a connectivity error that lands after the browser's `online` event still starts probing, so a no-data fetch also recovers without focus or navigation. The API-unreachable banner is suppressed until the browser reconnect refetch cycle settles or five seconds elapse, whichever comes first. Unrelated active reads do not extend this grace.
 - Install: a web manifest with icons; an install hint in settings.
@@ -133,6 +337,7 @@ ended, so pending delivery cannot be finalized by JSON polling alone.
 
 - Server state: TanStack Query over the generated client.
 - Live run state: a small SSE hook that appends to a per-run event store in Zustand and exposes projections.
+- Chat state: shared chat transport/controller with audience-scoped polling and durable local request identities for read-only acknowledgement recovery. Owner and device credentials use separate browser-storage keys.
 - Editor state: Zustand store holding the draft definition and its in-memory undo history; autosave to the draft endpoint with debounce; local IndexedDB mirror for offline.
 
 ## Accessibility and UX baseline (Draft)

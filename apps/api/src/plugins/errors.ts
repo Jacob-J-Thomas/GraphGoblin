@@ -1,9 +1,16 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { InvalidStoredRunEventError, LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
+import {
+  ChatRepositoryError,
+  SystemChatStorageError,
+  InvalidStoredRunEventError,
+  LoopNotFoundError,
+} from '@graphgoblin/infrastructure/sqlite';
+import { ChatError, CHAT_ERROR_STATUS } from '../chat/errors.js';
 import { DomainError } from '@graphgoblin/domain';
 import { TemplateError } from '../templates/errors.js';
 import {
   ArtifactStoreError,
+  ChatAdmissionError,
   EngineRequestError,
   RecoveryRefusedError,
   LoopUpgradeRequiredError,
@@ -83,6 +90,27 @@ export function registerErrorHandler(app: FastifyInstance): void {
 
   app.setErrorHandler(
     (error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) => {
+      if (error instanceof ChatError)
+        return problem(reply, error.status, error.code, error.message);
+      if (error instanceof SystemChatStorageError)
+        return problem(
+          reply,
+          error.code === 'SYSTEM_LOOP_PROTECTED' ? 409 : 400,
+          error.code,
+          error.message,
+        );
+      if (error instanceof ChatRepositoryError || error instanceof ChatAdmissionError)
+        return problem(
+          reply,
+          CHAT_ERROR_STATUS[error.code] ??
+            (error.code === 'CHAT_DEVICE_REVOKED'
+              ? 401
+              : error.code === 'SYSTEM_CHAT_CONTRACT_INVALID'
+                ? 400
+                : 409),
+          error.code,
+          error.message,
+        );
       if (hasZodFastifySchemaValidationErrors(error)) {
         return problem(
           reply,
@@ -173,7 +201,14 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.message,
         );
       }
-      request.log.error({ err: error }, 'unhandled error');
+      // Database drivers may attach SQL parameters, including enrollment/token hashes. Chat
+      // diagnostics deliberately omit raw causes and request bodies from this boundary.
+      if (
+        (request.url.split('?')[0] ?? '').startsWith('/chat/') ||
+        /^Bearer\s+ggd_/i.test(request.headers.authorization ?? '')
+      )
+        request.log.error({ code: 'CHAT_OPERATION_FAILED' }, 'chat operation failed');
+      else request.log.error({ err: error }, 'unhandled error');
       return problem(reply, 500, 'INTERNAL_ERROR', 'something went wrong on the server');
     },
   );

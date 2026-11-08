@@ -1,6 +1,7 @@
 export const API_PREFIXES = [
   '/api-keys',
   '/classifier-models',
+  '/chat',
   '/events',
   '/harness',
   '/healthz',

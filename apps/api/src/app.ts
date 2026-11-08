@@ -23,6 +23,8 @@ import { registerSystemRoutes } from './routes/system.js';
 import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
 import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
+import { registerChatRoutes } from './routes/chat.js';
+import { registerOllamaRoutes } from './routes/ollama.js';
 
 export interface BuildAppOptions {
   /** Fastify logger option; a pino instance for production, `false` in tests. */
@@ -62,6 +64,7 @@ export async function buildApp(
         { name: 'templates', description: 'Packaged workflow templates and instances' },
         { name: 'loops', description: 'Loop definitions, drafts, versions' },
         { name: 'runs', description: 'Starting, observing, and controlling runs' },
+        { name: 'chat', description: 'Native workflow chat, isolated devices, and enrollment' },
         { name: 'settings', description: 'Owner settings and the model catalog' },
         { name: 'secrets', description: 'Named secrets (values are never returned)' },
         { name: 'api-keys', description: 'Keys for other applications and the MCP server' },
@@ -83,6 +86,8 @@ export async function buildApp(
 
   registerErrorHandler(app);
   registerAuth(app, container);
+  registerChatRoutes(app, container);
+  registerOllamaRoutes(app, container);
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
@@ -92,7 +97,7 @@ export async function buildApp(
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);
   registerTriggerRoutes(app, container);
-  await registerStatic(app, container.config.webDist);
+  await registerStatic(app, container.config.webDist, container.config.goblinDist);
   app.addHook('onListen', (done) => {
     container.historyCleanup.afterListen();
     done();

@@ -1,12 +1,17 @@
 import { ShutdownController, type ShutdownAction } from './shutdown.js';
 import { existsSync } from 'node:fs';
-import { validateHarnessDefaults } from '@graphgoblin/domain';
+import {
+  createSystemChatDefinition,
+  selectSystemChatHarness,
+  validateHarnessDefaults,
+} from '@graphgoblin/domain';
 import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, isAbsolute, relative, sep } from 'node:path';
 import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
 import {
   FsStorageCapacity,
+  ChatAudioStore,
   OwnedRunResources,
   type StorageCapacityPort,
 } from '@graphgoblin/infrastructure/fs';
@@ -16,16 +21,20 @@ import {
   createReturnDelivery,
 } from '@graphgoblin/infrastructure/http';
 import { ProcessScripts } from '@graphgoblin/infrastructure/process';
+import { createOllamaServices, type OllamaServices } from '@graphgoblin/infrastructure/ollama';
 import { CronScheduler, TimerService } from '@graphgoblin/infrastructure/scheduler';
 import {
   DEFAULT_MODEL_CATALOG,
   openReadOnlyDatabaseClient,
   databaseView,
+  readPreMigrationModelCatalog,
   SqliteApiKeys,
+  SqliteChatRepository,
   SqliteEventStore,
   SqliteTriggerAdmission,
   SqliteLoopRepository,
   SqliteModelCatalog,
+  SqliteOllamaRepository,
   SqliteClassifierModels,
   type SqliteRunRepository,
   SqliteDeliveryRunRepository,
@@ -91,6 +100,8 @@ export interface ContainerOverrides {
   ids?: IdPort;
   logger?: Logger;
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
+  /** Explicit service replacement for deterministic lifecycle and transport fixtures. */
+  ollama?: OllamaServices;
   deciders?: DeciderPort[];
   classifiers?: ClassifierRegistryPort;
   structured?: StructuredPort;
@@ -104,6 +115,8 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
+  ollama: OllamaServices;
+  chatAudio: ChatAudioStore;
   historyCleanup: HistoryCleanup;
   templates: { catalog: TemplateCatalog };
   config: ApiConfig;
@@ -125,6 +138,7 @@ export interface Container {
     events: SqliteEventStore;
     settings: SqliteSettings;
     apiKeys: SqliteApiKeys;
+    chat: SqliteChatRepository;
     catalog: SqliteModelCatalog;
     classifiers: SqliteClassifierModels;
     schedules: SqliteScheduleStore;
@@ -201,7 +215,7 @@ export async function createContainer(
         const state = await guardCurrentStore(readonlyClient).catch(refuseStore);
         startupReadiness = state;
         if (state === 'current') {
-          const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
+          const stored = await readPreMigrationModelCatalog(databaseView(readonlyClient));
           startupCatalog = [
             ...stored,
             ...DEFAULT_MODEL_CATALOG.filter(
@@ -245,7 +259,37 @@ export async function createContainer(
     const events = new SqliteEventStore(db, clock);
     const settingsRepo = new SqliteSettings(db, clock);
     const apiKeys = new SqliteApiKeys(db, clock, ids);
+    const chat = new SqliteChatRepository(db, clock, ids);
+    const chatAudio = new ChatAudioStore(config.dataDir);
+    let audioTimer: ReturnType<typeof setInterval> | undefined;
+    let audioCleaning: Promise<void> | undefined;
+    const cleanupAudio = (startup = false): Promise<void> => {
+      audioCleaning ??= (async () => {
+        for (const id of await chat.cleanupAudio(clock.now().toISOString(), 100)) {
+          await chatAudio.remove(id);
+          await chat.audioDeleted(id);
+        }
+        await chatAudio.cleanup({
+          protectedIds: await chat.protectedAudioIds(),
+          olderThanMs: clock.now().getTime() - (startup ? 0 : 60 * 60_000),
+          limit: 100,
+        });
+      })().finally(() => {
+        audioCleaning = undefined;
+      });
+      return audioCleaning;
+    };
     const catalog = new SqliteModelCatalog(db);
+    const ollama =
+      overrides.ollama ??
+      createOllamaServices({
+        repository: new SqliteOllamaRepository(db),
+        clock,
+        logger,
+        defaults: { enabled: config.ollamaEnabled, baseUrl: config.ollamaUrl },
+      });
+    let ollamaStopping: Promise<void> | undefined;
+    const stopOllama = (): Promise<void> => (ollamaStopping ??= ollama.stop());
     const classifiers = new SqliteClassifierModels(db);
     const secretsFor = (ownerId: string): SqliteSecrets =>
       new SqliteSecrets(db, clock, masterKey, ownerId);
@@ -304,7 +348,7 @@ export async function createContainer(
       logger,
       events,
       runs,
-      admission: new SqliteTriggerAdmission(handle.db, events),
+      admission: new SqliteTriggerAdmission(handle.db, events, clock),
       loops,
       sessions,
       harnesses: overrides.harnesses ?? {
@@ -312,6 +356,7 @@ export async function createContainer(
         claude: new ClaudeHarness({
           ...(config.claudeBinary ? { binary: config.claudeBinary } : {}),
         }),
+        ollama: ollama.harness,
       },
       modelCatalog: catalog,
       // LLM evaluation uses Codex; all classifier primitives use the owner registry.
@@ -372,6 +417,7 @@ export async function createContainer(
     });
 
     const prepareShutdown = (): void => {
+      void stopOllama().catch(() => logger.warn({}, 'Ollama discovery could not stop cleanly'));
       void historyCleanup.stop();
       admissionClosed = true;
       manager.closeIndependentAdmission();
@@ -390,6 +436,10 @@ export async function createContainer(
     let disposing: Promise<void> | undefined;
     const dispose = (): Promise<void> => {
       disposing ??= (async () => {
+        clearInterval(audioTimer);
+        await audioCleaning?.catch(() => undefined);
+        await chatAudio.close();
+        await stopOllama();
         await historyCleanup.stop();
         cron.stop();
         polls.stop();
@@ -433,6 +483,8 @@ export async function createContainer(
     };
 
     return {
+      ollama,
+      chatAudio,
       historyCleanup,
       templates,
       config,
@@ -454,6 +506,7 @@ export async function createContainer(
         events,
         settings: settingsRepo,
         apiKeys,
+        chat,
         catalog,
         classifiers,
         schedules,
@@ -483,6 +536,27 @@ export async function createContainer(
               logger.info({}, `seeded jev-api-key from ${config.jevApiKey.source}`);
             }
             await catalog.seed();
+            await chat.ensureGateway(
+              LOCAL_OWNER,
+              createSystemChatDefinition({
+                name: 'Gateway chat',
+                harness: selectSystemChatHarness({
+                  ownerDefaults: await readOwnerDefaults(settingsRepo, LOCAL_OWNER),
+                  processDefaults: config.defaults,
+                }),
+              }),
+            );
+            await chat.recoverAudioReservations();
+            await cleanupAudio(true);
+            if (!admissionClosed) ollama.start();
+            if (overrides.startTimers !== false) {
+              audioTimer = setInterval(() => {
+                void cleanupAudio().catch(() =>
+                  logger.warn({}, 'chat audio cleanup could not finish'),
+                );
+              }, 60_000);
+              audioTimer.unref();
+            }
             await manager.start();
             await historyCleanup.start(overrides.startTimers !== false);
             if (!admissionClosed) {

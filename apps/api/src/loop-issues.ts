@@ -1,5 +1,10 @@
 import { readinessOperation, type ReadinessOperation } from './readiness-operation.js';
-import { nodesOfKind, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
+import {
+  nodesOfKind,
+  systemChatIssues,
+  validateLoop,
+  type ValidationIssue,
+} from '@graphgoblin/domain';
 import type { LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import type { Container } from './container.js';
 import { classifierIssues } from './classifier-issues.js';
@@ -14,6 +19,7 @@ export async function loopPublicationIssues(
   readiness: ReadinessOperation | false = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
   const { loops } = container.repos;
+  const self = selfId ? await loops.getLoop(selfId) : undefined;
   const issues: ValidationIssue[] = [];
   let selfVersion: number | undefined;
   for (const node of nodesOfKind(definition, 'subloop')) {
@@ -54,6 +60,7 @@ export async function loopPublicationIssues(
   }
   return [
     ...validateLoop(definition),
+    ...(self?.ownerId === ownerId && self.system ? systemChatIssues(definition) : []),
     ...container.triggers.checkDefinition(definition),
     ...issues,
     ...(await modelIssues(container, ownerId, definition, readiness)),

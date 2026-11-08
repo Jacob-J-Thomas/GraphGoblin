@@ -22,6 +22,7 @@ import {
   TERMINAL_RUN_STATUSES,
   HarnessDefaultsSchema,
   HarnessPreflightSchema,
+  ModelCatalogEntrySchema,
 } from '@graphgoblin/contracts';
 import {
   useInfiniteQuery,
@@ -181,7 +182,14 @@ export async function refreshModelDefaults(queryClient: QueryClient): Promise<vo
 
 export function useModelCatalog() {
   const client = useApi();
-  return useQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
+  return useQuery({
+    queryKey: keys.catalog,
+    queryFn: async () =>
+      (await modelCatalog.list(client)).map((entry) => ({
+        ...entry,
+        ...ModelCatalogEntrySchema.parse(entry),
+      })),
+  });
 }
 
 /** The owner's classifier models, built-in first, with each one's configured state. */
@@ -192,13 +200,13 @@ export function useClassifierModels() {
 
 type ModelFields = Pick<
   ModelCatalogEntry,
-  'harness' | 'model' | 'enabled' | 'efforts' | 'defaultEffort'
+  'harness' | 'model' | 'enabled' | 'efforts' | 'defaultEffort' | 'availability'
 >;
 
 /**
  * What the API's checks read from the catalogs, as a string for a query key. From the LLM model
  * catalog (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`): each entry's harness and model id, enabled
- * state, efforts, and default effort. From the classifier catalog: each entry's id, display name
+ * state, efforts, default effort, and discovered availability. From the classifier catalog: each entry's id, display name
  * (in the messages), capabilities, enabled and configured state, and the reason it is not
  * configured (which names its secret). A refetch that finds the same catalogs gives the same
  * string, so it does not run the checks again; any change the checks would report gives a new one.
@@ -210,7 +218,14 @@ export function catalogFingerprint(
   classifiers: readonly ClassifierModelSummary[] | undefined,
 ): string {
   return JSON.stringify([
-    models?.map((e) => [e.harness, e.model, e.enabled, e.efforts, e.defaultEffort]) ?? null,
+    models?.map((e) => [
+      e.harness,
+      e.model,
+      e.enabled,
+      e.efforts,
+      e.defaultEffort,
+      e.availability?.state ?? null,
+    ]) ?? null,
     classifiers?.map((e) => [
       e.id,
       e.displayName,

@@ -227,7 +227,13 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     submission: TurnSubmissionSchema,
     // Positive acceptance evidence; absence is never evidence of non-submission.
     marker: z
-      .enum(['claude.assistant', 'claude.result', 'codex.turn.started', 'fake.accepted'])
+      .enum([
+        'claude.assistant',
+        'claude.result',
+        'codex.turn.started',
+        'ollama.response',
+        'fake.accepted',
+      ])
       .optional(),
   }),
   z.strictObject({

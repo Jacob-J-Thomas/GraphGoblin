@@ -18,10 +18,10 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 | 03  | [Domain model](03-domain-model.md)                           | Loops, versions, nodes, runs, events, invocations, the context thread                                           |
 | 04  | [Node catalog](04-node-catalog.md)                           | Every node type: purpose, configuration, ports, engine behaviour                                                |
 | 05  | [Execution engine](05-execution-engine.md)                   | Executor semantics, event sourcing, run lifecycle, resiliency model                                             |
-| 06  | [Harness integration](06-harness-integration.md)             | The harness port, Codex and Claude Code adapters, and later integrations                                        |
+| 06  | [Harness integration](06-harness-integration.md)             | Harness port, Codex/Claude/Ollama inference, model discovery and Chat workflow integration                      |
 | 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex plugin                                                      |
 | 08  | [Triggers and integrations](08-triggers-and-integrations.md) | Manual, cron, webhook, inbound event, polling; security of inbound paths                                        |
-| 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Editor, run inspector, settings, service-worker update flow                                                     |
+| 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Native Chat, paired Goblin PWA, editor, run inspector, settings and service-worker update flow                  |
 | 10  | [Testing and quality](10-testing-and-quality.md)             | Coverage policy, fixtures, adversarial QA agents, CI gates                                                      |
 | 11  | [Security and distribution](11-security-and-distribution.md) | Licensing, credentials, secrets, inbound exposure, retention                                                    |
 | 12  | [Implementation plan](12-implementation-plan.md)             | Milestones M0 to M8 with tasks and acceptance criteria                                                          |

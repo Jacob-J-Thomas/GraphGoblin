@@ -44,6 +44,7 @@ export interface CodeEditorProps {
   invalid?: boolean | undefined;
   /** Sets `aria-required`. */
   required?: boolean | undefined;
+  readOnly?: boolean | undefined;
 }
 
 /** The ARIA and data attributes of the editable content (CodeMirror's `role="textbox"`). */
@@ -54,7 +55,11 @@ function contentAttributes({
   describedBy,
   invalid,
   required,
-}: Pick<CodeEditorProps, 'label' | 'id' | 'language' | 'describedBy' | 'invalid' | 'required'>) {
+  readOnly,
+}: Pick<
+  CodeEditorProps,
+  'label' | 'id' | 'language' | 'describedBy' | 'invalid' | 'required' | 'readOnly'
+>) {
   return EditorView.contentAttributes.of({
     'aria-label': label,
     ...(id ? { id } : {}),
@@ -62,6 +67,7 @@ function contentAttributes({
     ...(invalid ? { 'aria-invalid': 'true' } : {}),
     ...(required ? { 'aria-required': 'true' } : {}),
     'data-language': language,
+    ...(readOnly ? { 'aria-readonly': 'true' } : {}),
   });
 }
 
@@ -83,6 +89,7 @@ export function CodeEditor({
   describedBy,
   invalid = false,
   required = false,
+  readOnly = false,
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -95,11 +102,13 @@ export function CodeEditor({
       doc: value,
       extensions: [
         basicSetup,
+        EditorState.readOnly.of(readOnly),
+        EditorView.editable.of(!readOnly),
         codeTheme,
         languageFor(language),
         EditorView.lineWrapping,
         attributesRef.current.of(
-          contentAttributes({ label, id, language, describedBy, invalid, required }),
+          contentAttributes({ label, id, language, describedBy, invalid, required, readOnly }),
         ),
         EditorView.theme({
           '.cm-content': { minHeight: codeLinesHeight(minLines) },
@@ -121,17 +130,17 @@ export function CodeEditor({
     };
     // The editor is created once per language; value changes are synced below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
+  }, [language, readOnly]);
 
   // A stable collection row can move to a different path/label without recreating its editor, and
   // its description and state follow the field's help and errors.
   useEffect(() => {
     viewRef.current?.dispatch({
       effects: attributesRef.current.reconfigure(
-        contentAttributes({ label, id, language, describedBy, invalid, required }),
+        contentAttributes({ label, id, language, describedBy, invalid, required, readOnly }),
       ),
     });
-  }, [id, label, language, describedBy, invalid, required]);
+  }, [id, label, language, describedBy, invalid, required, readOnly]);
 
   useEffect(() => {
     const editor = viewRef.current as EditorView;

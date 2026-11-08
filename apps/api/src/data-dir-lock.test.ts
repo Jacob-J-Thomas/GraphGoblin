@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { access, readFile, unlink, writeFile } from 'node:fs/promises';
+import { access, readFile, realpath, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,7 +10,8 @@ let dataDir: string;
 let path: string;
 
 beforeEach(async () => {
-  dataDir = join(tmpdir(), `gg-lock-${randomUUID()}`);
+  // Lock identities use physical paths; the platform's temp directory may itself be an alias.
+  dataDir = join(await realpath(tmpdir()), `gg-lock-${randomUUID()}`);
   path = join(dataDir, 'graphgoblin.lock');
   // Acquisition creates a fresh directory. Keep the empty test directory after cleanup.
   await (await acquireDataDirLock(dataDir)).release();

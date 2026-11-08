@@ -2,6 +2,9 @@ import type { ReplayState } from '@graphgoblin/domain';
 import { sql, type AnyColumn } from 'drizzle-orm';
 import type { RunAdmission, WebhookFailureCode, EventFailureCode } from '@graphgoblin/engine';
 import type {
+  OllamaDiscoveryStatus,
+  ModelCatalogAvailability,
+  ChatSendInput,
   ClassifierModelEntry,
   ContextThread,
   Effort,
@@ -474,7 +477,138 @@ export const workspaceReferenceState = sqliteTable('workspace_reference_state', 
   sweeping: integer('sweeping', { mode: 'boolean' }).notNull().default(false),
 });
 
+/** Server-owned bindings; portable loop definitions never carry this authority. */
+export const chatBindings = sqliteTable(
+  'chat_bindings',
+  {
+    ownerId: text('owner_id').notNull(),
+    audienceKey: text('audience_key').notNull(),
+    loopId: text('loop_id').notNull(),
+    protocol: text('protocol').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.ownerId, t.audienceKey] }),
+    uniqueIndex('chat_bindings_loop_idx').on(t.loopId),
+  ],
+);
+export const chatDevices = sqliteTable(
+  'chat_devices',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    label: text('label').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    createdAt: text('created_at').notNull(),
+    lastSeenAt: text('last_seen_at'),
+    revokedAt: text('revoked_at'),
+  },
+  (t) => [
+    uniqueIndex('chat_devices_token_idx').on(t.tokenHash),
+    index('chat_devices_owner_idx').on(t.ownerId, t.createdAt),
+  ],
+);
+export const chatPairings = sqliteTable(
+  'chat_pairings',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    claimId: text('claim_id'),
+    claimedDeviceId: text('claimed_device_id'),
+    claimedTokenHash: text('claimed_token_hash'),
+    claimedAt: text('claimed_at'),
+  },
+  (t) => [uniqueIndex('chat_pairings_code_idx').on(t.codeHash)],
+);
+export const chatConversations = sqliteTable(
+  'chat_conversations',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    audienceKey: text('audience_key').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+    lastTurn: integer('last_turn').notNull().default(0),
+  },
+  (t) => [index('chat_conversations_owner_idx').on(t.ownerId, t.audienceKey, t.createdAt, t.id)],
+);
+export const chatTurns = sqliteTable(
+  'chat_turns',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    audienceKey: text('audience_key').notNull(),
+    conversationId: text('conversation_id').notNull(),
+    requestId: text('request_id').notNull(),
+    requestHash: text('request_hash').notNull(),
+    turn: integer('turn').notNull(),
+    runId: text('run_id').notNull(),
+    input: text('input', { mode: 'json' }).$type<ChatSendInput>(),
+    createdAt: text('created_at').notNull(),
+    historyDeleted: integer('history_deleted', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    uniqueIndex('chat_turns_request_idx').on(t.conversationId, t.requestId),
+    uniqueIndex('chat_turns_counter_idx').on(t.conversationId, t.turn),
+    uniqueIndex('chat_turns_run_idx').on(t.runId),
+  ],
+);
+export const chatAudio = sqliteTable(
+  'chat_audio',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    audienceKey: text('audience_key').notNull(),
+    mimeType: text('mime_type'),
+    bytes: integer('bytes'),
+    sha256: text('sha256'),
+    path: text('path'),
+    expiresAt: text('expires_at').notNull(),
+    consumedTurnId: text('consumed_turn_id'),
+    state: text('state', { enum: ['reserved', 'ready', 'consumed', 'pending-delete'] }).notNull(),
+  },
+  (t) => [
+    index('chat_audio_scope_idx').on(t.ownerId, t.audienceKey, t.state),
+    index('chat_audio_cleanup_idx').on(t.state, t.expiresAt),
+  ],
+);
+
+// Add contract type imports: OllamaDiscoveryStatus, ModelCatalogAvailability
+export const ollamaConnection = sqliteTable('ollama_connection', {
+  id: text('id').primaryKey(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull(),
+  baseUrl: text('base_url').notNull(),
+  revision: integer('revision').notNull(),
+  discovery: text('discovery', { mode: 'json' }).$type<OllamaDiscoveryStatus>().notNull(),
+});
+export const modelDiscovery = sqliteTable(
+  'model_discovery',
+  {
+    harness: text('harness').notNull(),
+    model: text('model').notNull(),
+    digest: text('digest').notNull(),
+    connectionRevision: integer('connection_revision').notNull(),
+    availability: text('availability', { mode: 'json' })
+      .$type<ModelCatalogAvailability>()
+      .notNull(),
+    thinkingByEffort: text('thinking_by_effort', { mode: 'json' })
+      .$type<Partial<Record<Effort, false | string>>>()
+      .notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.harness, t.model] })],
+);
+// Add ollamaConnection, modelDiscovery to schema registry.
+
 export const schema = {
+  ollamaConnection,
+  modelDiscovery,
+  chatBindings,
+  chatDevices,
+  chatPairings,
+  chatConversations,
+  chatTurns,
+  chatAudio,
   workspaceReferences,
   workspaceReferenceState,
   runResources,

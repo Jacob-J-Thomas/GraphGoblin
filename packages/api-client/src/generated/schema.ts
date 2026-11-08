@@ -10,6 +10,683 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/chat/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current chat audience and published workflow capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatSession"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List conversations for the current audience */
+        get: {
+            parameters: {
+                query?: {
+                    before?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ChatConversation"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a conversation for the current audience */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatConversation"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/conversations/{id}/turns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read native-run turns in an audience conversation */
+        get: {
+            parameters: {
+                query?: {
+                    after?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ChatTurn"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Admit one idempotent native workflow turn */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChatSendRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatTurn"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/conversations/{id}/requests/{requestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recover an admission acknowledgement without replay */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatTurn"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/turns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one current chat turn */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatTurn"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/turns/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a turn through the native run manager */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatTurn"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload raw audio for the configured workflow normalizer */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatAudioUpload"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/audio/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard an unused audio upload */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/pairings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a ten-minute device enrollment */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatPairingCreated"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/pairings/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim an enrollment idempotently with a client-generated credential */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChatPairClaimRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatPairClaimResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List paired devices and their editable system loops */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ChatDevice"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a device */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        label: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDevice"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/chat/devices/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke future device access while retaining its loop and history */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDevice"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/harness/ollama/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The gateway Ollama connection and its last discovery result
+         * @description Requires settings:read. The connection belongs to the gateway.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OllamaConnectionView"];
+                    };
+                };
+            };
+        };
+        /**
+         * Save the gateway Ollama connection and discover its models
+         * @description Requires gateway-owner wildcard authority. A discovery failure still returns the saved connection with discovery.state:error. Accepts an HTTP(S) origin without credentials, query, fragment, or API path.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["OllamaConnectionUpdateInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OllamaConnectionView"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/model-catalog/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh the models discovered from the configured Ollama service
+         * @description Requires settings:write. Coalesces with an active Ollama refresh. Does not generate, download, or select a model, or change enabled preferences.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        harness: "ollama";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OllamaDiscoveryStatus"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/storage": {
         parameters: {
             query?: never;
@@ -394,7 +1071,7 @@ export interface paths {
                                     efforts: ("none" | "low" | "medium" | "high" | "xhigh" | "max")[];
                                 }[] | undefined;
                                 /** @enum {string} */
-                                harness: "codex" | "claude";
+                                harness: "codex" | "claude" | "ollama";
                             }[];
                         };
                     };
@@ -444,6 +1121,20 @@ export interface paths {
                                 createdAt: string;
                                 /** Format: date-time */
                                 updatedAt: string;
+                                system?: {
+                                    /** @enum {string} */
+                                    kind: "chat";
+                                    /** @enum {string} */
+                                    protocol: "graphgoblin.chat.v1";
+                                    audience: {
+                                        /** @enum {string} */
+                                        kind: "gateway";
+                                    } | {
+                                        /** @enum {string} */
+                                        kind: "device";
+                                        deviceId: string;
+                                    };
+                                } | undefined;
                                 latestRun: {
                                     id: string;
                                     status: components["schemas"]["RunStatus"];
@@ -2224,6 +2915,13 @@ export interface paths {
                                 /** @enum {string} */
                                 defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                                 enabled: boolean;
+                                availability?: {
+                                    /** @enum {string} */
+                                    state: "available" | "missing" | "unsupported";
+                                    /** Format: date-time */
+                                    checkedAt: string;
+                                    reason?: string | undefined;
+                                } | undefined;
                                 ecosystemDefault: boolean;
                             }[];
                         };
@@ -2291,6 +2989,13 @@ export interface paths {
                             /** @enum {string} */
                             defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                             enabled: boolean;
+                            availability?: {
+                                /** @enum {string} */
+                                state: "available" | "missing" | "unsupported";
+                                /** Format: date-time */
+                                checkedAt: string;
+                                reason?: string | undefined;
+                            } | undefined;
                         };
                     };
                 };
@@ -2362,6 +3067,13 @@ export interface paths {
                             /** @enum {string} */
                             defaultEffort: "none" | "low" | "medium" | "high" | "xhigh" | "max";
                             enabled: boolean;
+                            availability?: {
+                                /** @enum {string} */
+                                state: "available" | "missing" | "unsupported";
+                                /** Format: date-time */
+                                checkedAt: string;
+                                reason?: string | undefined;
+                            } | undefined;
                         };
                     };
                 };
@@ -3005,6 +3717,149 @@ export interface components {
             detail: string;
             replayRunId?: string | undefined;
         };
+        ChatSessionInput: {
+            audience: {
+                /** @constant */
+                kind: "gateway";
+            } | {
+                /** @constant */
+                kind: "device";
+                deviceId: string;
+            };
+            label: string;
+            readiness: {
+                text: {
+                    ready: boolean;
+                    code?: string | undefined;
+                    message?: string | undefined;
+                };
+                audio: {
+                    ready: boolean;
+                    code?: string | undefined;
+                    message?: string | undefined;
+                };
+            };
+            limits: {
+                maxTextCharacters: number;
+                maxAudioBytes: number;
+            };
+            systemLoopId?: string | undefined;
+        };
+        ChatConversationInput: {
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            lastTurn: number;
+        };
+        ChatTurnInput: {
+            id: string;
+            conversationId: string;
+            /** Format: uuid */
+            requestId: string;
+            turn: number;
+            runId: string;
+            /** Format: date-time */
+            createdAt: string;
+            input: {
+                /** @constant */
+                kind: "text";
+                text: string;
+            } | {
+                /** @constant */
+                kind: "audio";
+                audioId: string;
+            };
+            inputTranscript?: string | undefined;
+            /** @enum {string} */
+            runStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+            response?: {
+                /** @constant */
+                protocol: "graphgoblin.chat.v1";
+                reply: string;
+            } | undefined;
+            error?: {
+                code: string;
+                message: string;
+            } | undefined;
+        };
+        ChatSendRequestInput: {
+            /** Format: uuid */
+            requestId: string;
+            input: {
+                /** @constant */
+                kind: "text";
+                text: string;
+            } | {
+                /** @constant */
+                kind: "audio";
+                audioId: string;
+            };
+        };
+        ChatAudioUploadInput: {
+            id: string;
+            mimeType: string;
+            bytes: number;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        ChatDeviceInput: {
+            id: string;
+            label: string;
+            loopId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt?: string | undefined;
+            /** Format: date-time */
+            revokedAt?: string | undefined;
+        };
+        ChatPairingCreatedInput: {
+            id: string;
+            code: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uri */
+            url?: string | undefined;
+        };
+        ChatPairClaimRequestInput: {
+            code: string;
+            /** Format: uuid */
+            claimId: string;
+            deviceToken: string;
+            label: string;
+        };
+        ChatPairClaimResponseInput: {
+            deviceId: string;
+            label: string;
+        };
+        OllamaConnectionUpdateInput: {
+            enabled: boolean;
+            /** Format: uri */
+            baseUrl: string;
+        };
+        OllamaConnectionViewInput: {
+            connection: {
+                enabled: boolean;
+                /** Format: uri */
+                baseUrl: string;
+                revision: number;
+            };
+            discovery: components["schemas"]["OllamaDiscoveryStatusInput"];
+        };
+        OllamaDiscoveryStatusInput: {
+            /** @enum {string} */
+            state: "idle" | "refreshing" | "ready" | "error";
+            /** Format: date-time */
+            lastAttemptAt?: string | undefined;
+            /** Format: date-time */
+            lastSuccessAt?: string | undefined;
+            error?: {
+                code: string;
+                message: string;
+            } | undefined;
+        };
         ClassifierModelSummaryInput: {
             id: string;
             displayName: string;
@@ -3379,7 +4234,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness?: ("codex" | "claude") | undefined;
+                    harness?: ("codex" | "claude" | "ollama") | undefined;
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -4130,6 +4985,20 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            system?: {
+                /** @constant */
+                kind: "chat";
+                /** @constant */
+                protocol: "graphgoblin.chat.v1";
+                audience: {
+                    /** @constant */
+                    kind: "gateway";
+                } | {
+                    /** @constant */
+                    kind: "device";
+                    deviceId: string;
+                };
+            } | undefined;
         };
         LoopVersionRecordInput: {
             id: string;
@@ -4169,7 +5038,7 @@ export interface components {
                 sessionId?: string | undefined;
                 retry?: {
                     /** @enum {string} */
-                    harness: "codex" | "claude";
+                    harness: "codex" | "claude" | "ollama";
                     prompt: string;
                     resumeSessionId?: string | undefined;
                 } | undefined;
@@ -4177,7 +5046,7 @@ export interface components {
             missingSession?: {
                 visitId: string;
                 /** @enum {string} */
-                harness: "codex" | "claude";
+                harness: "codex" | "claude" | "ollama";
                 sessionId?: string | undefined;
                 /** @enum {string} */
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
@@ -4770,7 +5639,7 @@ export interface components {
             freshSession?: {
                 visitId: string;
                 /** @enum {string} */
-                harness: "codex" | "claude";
+                harness: "codex" | "claude" | "ollama";
                 sessionId?: string | undefined;
                 /** @enum {string} */
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
@@ -4977,7 +5846,7 @@ export interface components {
             visitId: string;
             turnId: string;
             /** @enum {string} */
-            harness: "codex" | "claude";
+            harness: "codex" | "claude" | "ollama";
             /** @enum {string} */
             promptKind: "authored" | "repair" | "continuation";
             prompt: string;
@@ -4995,7 +5864,7 @@ export interface components {
             /** @enum {string} */
             submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
             /** @enum {string} */
-            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
+            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "ollama.response" | "fake.accepted") | undefined;
         } | {
             runId: string;
             seq: number;
@@ -5005,7 +5874,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex" | "claude";
+            harness: "codex" | "claude" | "ollama";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";
@@ -5366,6 +6235,149 @@ export interface components {
             code: "SHUTTING_DOWN";
             detail: string;
             replayRunId?: string | undefined;
+        };
+        ChatSession: {
+            audience: {
+                /** @constant */
+                kind: "gateway";
+            } | {
+                /** @constant */
+                kind: "device";
+                deviceId: string;
+            };
+            label: string;
+            readiness: {
+                text: {
+                    ready: boolean;
+                    code?: string | undefined;
+                    message?: string | undefined;
+                };
+                audio: {
+                    ready: boolean;
+                    code?: string | undefined;
+                    message?: string | undefined;
+                };
+            };
+            limits: {
+                maxTextCharacters: number;
+                maxAudioBytes: number;
+            };
+            systemLoopId?: string | undefined;
+        };
+        ChatConversation: {
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            lastTurn: number;
+        };
+        ChatTurn: {
+            id: string;
+            conversationId: string;
+            /** Format: uuid */
+            requestId: string;
+            turn: number;
+            runId: string;
+            /** Format: date-time */
+            createdAt: string;
+            input: {
+                /** @constant */
+                kind: "text";
+                text: string;
+            } | {
+                /** @constant */
+                kind: "audio";
+                audioId: string;
+            };
+            inputTranscript?: string | undefined;
+            /** @enum {string} */
+            runStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+            response?: {
+                /** @constant */
+                protocol: "graphgoblin.chat.v1";
+                reply: string;
+            } | undefined;
+            error?: {
+                code: string;
+                message: string;
+            } | undefined;
+        };
+        ChatSendRequest: {
+            /** Format: uuid */
+            requestId: string;
+            input: {
+                /** @constant */
+                kind: "text";
+                text: string;
+            } | {
+                /** @constant */
+                kind: "audio";
+                audioId: string;
+            };
+        };
+        ChatAudioUpload: {
+            id: string;
+            mimeType: string;
+            bytes: number;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        ChatDevice: {
+            id: string;
+            label: string;
+            loopId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt?: string | undefined;
+            /** Format: date-time */
+            revokedAt?: string | undefined;
+        };
+        ChatPairingCreated: {
+            id: string;
+            code: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uri */
+            url?: string | undefined;
+        };
+        ChatPairClaimRequest: {
+            code: string;
+            /** Format: uuid */
+            claimId: string;
+            deviceToken: string;
+            label: string;
+        };
+        ChatPairClaimResponse: {
+            deviceId: string;
+            label: string;
+        };
+        OllamaConnectionUpdate: {
+            enabled: boolean;
+            /** Format: uri */
+            baseUrl: string;
+        };
+        OllamaConnectionView: {
+            connection: {
+                enabled: boolean;
+                /** Format: uri */
+                baseUrl: string;
+                revision: number;
+            };
+            discovery: components["schemas"]["OllamaDiscoveryStatus"];
+        };
+        OllamaDiscoveryStatus: {
+            /** @enum {string} */
+            state: "idle" | "refreshing" | "ready" | "error";
+            /** Format: date-time */
+            lastAttemptAt?: string | undefined;
+            /** Format: date-time */
+            lastSuccessAt?: string | undefined;
+            error?: {
+                code: string;
+                message: string;
+            } | undefined;
         };
         ClassifierModelSummary: {
             id: string;
@@ -5733,7 +6745,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness: "codex" | "claude";
+                    harness: "codex" | "claude" | "ollama";
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("none" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -6475,6 +7487,20 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            system?: {
+                /** @constant */
+                kind: "chat";
+                /** @constant */
+                protocol: "graphgoblin.chat.v1";
+                audience: {
+                    /** @constant */
+                    kind: "gateway";
+                } | {
+                    /** @constant */
+                    kind: "device";
+                    deviceId: string;
+                };
+            } | undefined;
         };
         LoopVersionRecord: {
             id: string;
@@ -6514,7 +7540,7 @@ export interface components {
                 sessionId?: string | undefined;
                 retry?: {
                     /** @enum {string} */
-                    harness: "codex" | "claude";
+                    harness: "codex" | "claude" | "ollama";
                     prompt: string;
                     resumeSessionId?: string | undefined;
                 } | undefined;
@@ -6522,7 +7548,7 @@ export interface components {
             missingSession?: {
                 visitId: string;
                 /** @enum {string} */
-                harness: "codex" | "claude";
+                harness: "codex" | "claude" | "ollama";
                 sessionId?: string | undefined;
                 /** @enum {string} */
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
@@ -7115,7 +8141,7 @@ export interface components {
             freshSession?: {
                 visitId: string;
                 /** @enum {string} */
-                harness: "codex" | "claude";
+                harness: "codex" | "claude" | "ollama";
                 sessionId?: string | undefined;
                 /** @enum {string} */
                 origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
@@ -7322,7 +8348,7 @@ export interface components {
             visitId: string;
             turnId: string;
             /** @enum {string} */
-            harness: "codex" | "claude";
+            harness: "codex" | "claude" | "ollama";
             /** @enum {string} */
             promptKind: "authored" | "repair" | "continuation";
             prompt: string;
@@ -7340,7 +8366,7 @@ export interface components {
             /** @enum {string} */
             submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
             /** @enum {string} */
-            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
+            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "ollama.response" | "fake.accepted") | undefined;
         } | {
             runId: string;
             seq: number;
@@ -7350,7 +8376,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex" | "claude";
+            harness: "codex" | "claude" | "ollama";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";

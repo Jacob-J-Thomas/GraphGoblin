@@ -45,6 +45,14 @@ export function harnessDisplayName(harness: string): string {
 /** One sentence saying what the no-turn check found, used when no more specific detail is known. */
 export function readinessDetail(harness: string, state: HarnessReadinessState): string {
   const name = harnessDisplayName(harness);
+  if (harness === 'ollama') {
+    if (state === 'ready')
+      return 'Ollama service metadata probe passed; model execution and memory requirements are not tested.';
+    if (state === 'auth') return 'Ollama service rejected access.';
+    if (state === 'quota') return 'Ollama service usage limit reached.';
+    if (state === 'transport') return 'Ollama service is unavailable.';
+    return 'Ollama service readiness could not be confirmed.';
+  }
   switch (state) {
     case 'ready':
       return `${name} CLI version, required options and sign-in passed; account model access is not tested.`;
@@ -69,6 +77,13 @@ export function readinessAction(
   state: Exclude<HarnessReadinessState, 'ready'>,
 ): string {
   const name = harnessDisplayName(harness);
+  if (harness === 'ollama') {
+    if (state === 'auth')
+      return 'Configure service access outside GraphGoblin, then retry preflight.';
+    if (state === 'quota')
+      return 'Wait for the service usage limit to reset, then retry preflight.';
+    return 'Check the Ollama connection URL and service, then retry preflight.';
+  }
   switch (state) {
     case 'cli-missing':
       return `Install the ${name} CLI or set ${harness === 'claude' || harness === 'codex' ? `GG_${harness.toUpperCase()}_BINARY` : 'its binary path'}, then retry preflight.`;

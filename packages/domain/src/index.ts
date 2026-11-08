@@ -4,6 +4,7 @@
  * Pure logic over the contracts. No I/O, no timers, no randomness without injection.
  */
 export * from './errors.js';
+export * from './chat.js';
 export * from './pointer.js';
 export * from './patch.js';
 export * from './template.js';

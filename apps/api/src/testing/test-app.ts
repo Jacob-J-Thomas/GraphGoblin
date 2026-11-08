@@ -61,6 +61,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     GG_DB_URL: ':memory:',
     GG_SWAGGER_UI: 'false',
     GG_REQUIRE_API_KEY: options.requireApiKey ? 'true' : 'false',
+    GG_OLLAMA_ENABLED: 'false',
     GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
     ...options.env,
   });

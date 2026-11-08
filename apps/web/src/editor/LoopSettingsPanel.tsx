@@ -18,6 +18,7 @@ import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { LOOP_FIELD_CONTROLS } from './field-controls.js';
 import type { EditorIssue } from './model.js';
+import { SYSTEM_CHAT_VARIABLE_FIELDS } from './SystemChatFields.js';
 import { useEditorStore } from './store.js';
 
 const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
@@ -29,8 +30,10 @@ const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
 export function LoopSettingsPanel({
   definition,
   issues = [],
+  system = false,
 }: {
   definition: LoopDefinitionInput;
+  system?: boolean;
   issues?: readonly EditorIssue[] | undefined;
 }) {
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
@@ -108,6 +111,7 @@ export function LoopSettingsPanel({
       </div>
       <SchemaForm
         schema={VariablesFormSchema}
+        fieldOverrides={system ? SYSTEM_CHAT_VARIABLE_FIELDS : undefined}
         value={{ variables: definition.variables ?? {} }}
         label="Variables form"
         onChange={(value, change) =>

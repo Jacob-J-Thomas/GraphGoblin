@@ -6,11 +6,109 @@ Decision routes and temporary boolean predicates use the Codex decider; structur
 [ADR-0019](decisions/ADR-0019-inference-node-harness.md) and
 [ADR-0023](decisions/ADR-0023-installed-claude-code.md).
 
+## Native Chat workflow integration (#443)
+
+Native Chat is an entry point into the existing engine, not a second inference implementation.
+The gateway seeds one system loop with **Trigger → Inference → Exit**. It uses normal harness
+selection, model/effort defaults, readiness checks, structured-output validation and repair.
+Seeding and device pairing make no provider request and do not silently choose a discovered model.
+Each turn pins the published definition and effective defaults through native admission.
+Missing CLI/authentication/model prerequisites produce actionable readiness before a new turn is
+admitted; there is no substitute reply or provider failover.
+The minimal system seed can exist published before model setup; it cannot send until ready.
+
+The seeded inference node starts a fresh session in a temporary working directory. Its prompt
+receives only the current text and server-built bounded conversation history; the existing
+isolation defaults from [ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)
+apply. Owners may edit the workflow's interior, including its harness, prompt, model, effort,
+scripts, decisions and awaited subloops. Native Chat does not sandbox arbitrary owner-authored
+Script commands or introduce a routing, smart-home or transcription provider.
+
+The loop boundary uses the canonical `graphgoblin.chat.v1` input schema from
+`packages/contracts/src/chat.ts`. The server supplies `conversationId`, `requestId`, turn counter,
+current input and recent valid history. A text input is `{kind: 'text', text}`. An audio input is
+`{kind: 'audio', audio: {id, mimeType, bytes, path}}`; only the server can resolve the private
+absolute path. A client sends an upload id, never a path or URL. The server limits history to the
+most recent twelve valid completed turn pairs and 64,000 characters, dropping oldest whole pairs.
+
+The boundary requires one manual trigger named `chat-input`, exposed to exactly UI and API, and
+the canonical `chatResponse` variable schema. The inference output transform writes the validated
+response into `/vars/chatResponse`. Every successful exit returns exactly `vars.chatResponse` to
+exactly the caller. Failure/exhausted exits may return none or that same canonical response; they
+never become successful assistant messages. The public response is exactly
+`{protocol: 'graphgoblin.chat.v1', reply: '<nonblank text>'}`. Strings, `text`, `message` and arbitrary
+JSON are not reply aliases. The chat projection validates a successful native result again on
+read, so an invalid result is `CHAT_RESPONSE_INVALID` without a reply or future-history entry.
+
+Draft saves refuse changes to the locked trigger identity/type/exposure/canonical schema and the
+`chatResponse` variable schema. Other boundary wiring issues remain saveable and block
+publication/admission. A generic system-loop start, draft test or Subloop accepts text-only
+protocol input, even when its published loop supports audio. Only native chat admission resolves
+a new audio reference. Verified immutable native replay may retain the source audio; a new start
+or caller-supplied replay id cannot grant path authority.
+
+### Configure an audio normalizer
+
+Audio is unavailable in the default text-only loop. To enable it, replace the trigger input schema
+with the exported canonical audio-capable schema and make `chat-normalize` the only node directly
+after `chat-input`. Use one of these native node configurations:
+
+| Node    | Required configuration                                                                       | Recorded text                                                                                 |
+| ------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Script  | `stdin: 'thread'`, `stdout: 'last-output'`; return JSON `{text}`                             | `thread.outputs['chat-normalize'].value.text`                                                 |
+| Subloop | `output.mode: 'result-only'`, `output.resultTo.lastOutput: true`; the child returns `{text}` | `thread.outputs['chat-normalize'].value.result.text`, with its envelope `status: 'succeeded'` |
+
+Successful Script output continues to the protected check. Unhandled exit codes fail normally;
+an existing explicit exit-code mapping to `out` retains its native meaning.
+
+The normalizer must handle text pass-through as well as audio transcription. The protected chain
+is `chat-input.out → chat-normalize.out → chat-normalize-check`: the canonical expression decision
+continues through `valid` into the authored workflow or through `invalid` into the failure exit
+`chat-normalize-invalid` (`outcome: 'failure'`, `returns: 'none'`, no destinations). Input, normalizer
+and check cannot be revisited or bypassed; the failure exit accepts only that invalid edge.
+The check validates the original recorded Script object or succeeded Subloop result before a
+later model/action runs. It requires exactly one key, `text`, whose nonblank string is at most
+16,000 UTF-16 code units. Unknown fields, blank/overlength text and a malformed Subloop envelope
+fail without continuing to later actions. Expression errors fail safely too; no coercion/repair
+changes transcript content.
+
+Use the domain's `enableChatAudio(definition, normalizer)` and `disableChatAudio(definition)`
+helpers to change the canonical trigger/normalizer/check/failure chain as one edit. Enabling refuses
+ambiguous continuation wiring and reserved-id collisions. Disabling can also remove a partial
+chain: it uses exactly one valid existing check continuation, or requires an explicit
+`{continuationNodeId}` naming an ordinary nontrigger step (`SYSTEM_CHAT_CONTINUATION_REQUIRED`).
+It removes reserved voice nodes/incident edges and existing trigger-outgoing edges, restores one
+trigger continuation and leaves other ordinary nodes/edges intact. For the exact untouched seed prompt,
+they also switch its input reference; they do not rewrite arbitrary owner prompts. Custom
+interiors must consume the recorded normalized text described above. Subloops already await their
+child; do not add a `wait` property or change the native subloop result envelope. The projector
+selects the extractor from the pinned node kind and independently validates the recorded value.
+The owner editor exposes these edits as **Set up voice messages**, **Add voice steps** and
+**Turn off voice messages**. Setup stages a real Script/Subloop configuration without executing
+it; publication remains a separate action.
+
+The normalized text must contain 1–16,000 nonblank UTF-16 code units. For an audio turn, a successful raw
+run without a valid recorded normalizer result becomes `CHAT_AUDIO_NORMALIZATION_INVALID` and
+does not display a reply or enter future history. A model-generated guess is never a transcript.
+The session's **Configured by loop** state establishes this static contract only: an unavailable
+executable or malformed external result still fails at runtime. There is no built-in STT provider,
+browser speech service, runtime transcription fallback or speech synthesis.
+
+Audio files live in the private `<dataDir>/chat-audio/` directory and retain their bytes for the
+owner's normalizer. Unused uploads expire after one hour. Consumed files remain available while
+the linked native run/history can reference them and are cleaned up with history ownership,
+preserving restart recovery. They are not artifacts encoded into event text or publicly served
+files. Retained used/unused/in-flight audio is capped at 64 MiB per audience and 256 MiB per gateway;
+exceeding the quota refuses an upload without deleting referenced inputs. Deletion of one turn
+does not retroactively erase its text from later immutable native histories. See
+[the Chat frontend](09-frontend-and-pwa.md#native-chat-and-the-goblin-pwa-443) and
+[ADR-0065](decisions/ADR-0065-native-chat-system-loops-and-device-pairing.md).
+
 ## The harness port (Decided)
 
 ```ts
 interface HarnessPort {
-  id: 'codex' | 'claude'; // LiteLLM is a recorded later adapter idea
+  id: 'codex' | 'claude' | 'ollama'; // LiteLLM is a recorded later adapter idea
   preflight(): Promise<{
     state: HarnessReadinessState;
     ok: boolean;
@@ -48,7 +146,12 @@ type HarnessEvent =
   | { type: 'usage'; inputTokens: number; outputTokens: number; cached?: number }
   | {
       type: 'submitted';
-      marker: 'claude.assistant' | 'claude.result' | 'codex.turn.started' | 'fake.accepted';
+      marker:
+        | 'claude.assistant'
+        | 'claude.result'
+        | 'codex.turn.started'
+        | 'ollama.response'
+        | 'fake.accepted';
     }
   | { type: 'turn-complete' }
   | {
@@ -69,12 +172,141 @@ type HarnessResult = {
 
 Adapters translate native events into this model. The engine never sees SDK types.
 
+## Native Ollama and discovered models (#443)
+
+Ollama is a native Inference harness implemented in `packages/infrastructure/src/ollama/` through
+the Node HTTP transport. It calls `/api/chat` directly with the exact selected model identifier,
+the already-rendered prompt as one user message, streaming enabled and the node's JSON Schema
+when present. It uses no CLI, OpenAI compatibility shim, external SDK or standalone chat worker.
+The existing engine still owns prompt/context transforms, structured-output validation,
+transcripts, usage, cancellation and recovery. Ollama is an Inference option; generic LLM
+decision evaluation and structured repair retain their existing provider contracts.
+
+### Connect and discover
+
+One gateway-wide connection supplies the gateway-wide model catalog. Configure its origin and
+enabled state in Settings. Before a saved connection exists, the defaults are
+`GG_OLLAMA_ENABLED=true` and `GG_OLLAMA_URL=http://127.0.0.1:11434`; a saved connection takes
+precedence. An origin may use HTTP or HTTPS and must contain no credentials, query, fragment or
+path beyond `/`. The owner may select a local/LAN service or a trusted proxy; not every selected
+server or model is necessarily local. GraphGoblin does not install/start Ollama, forward its
+management key, manage proxy credentials or download/pull models.
+Services requiring sign-in are unsupported by this adapter; it sends no authentication credential.
+
+Startup schedules discovery immediately after storage is ready. Saving, enabling or changing a
+connection also attempts it immediately, then an enabled gateway refreshes every five minutes
+without Settings being open. **Refresh Ollama models** beside the model list requests a refresh
+and coalesces with one already running. A connection save remains saved when discovery fails;
+the returned discovery state explains the failure. Disabling or stopping cancels scheduled
+discovery. Saving the connection off also blocks all new Ollama HTTP work and closes open gateway
+discovery/preflight/inference requests; work already accepted by the remote server may continue.
+No unload/remote-stop request is sent. A response/status from a prior connection revision cannot
+overwrite the current catalog or discovery status.
+
+Discovery reads `/api/tags` and bounded `/api/show` metadata. A complete snapshot reconciles the
+catalog atomically. A partial/failed scan preserves the previous complete snapshot and last
+success time; a successful empty list marks previously known models missing. Scans are bounded to
+256 models, four concurrent detail reads, five seconds per metadata request, thirty seconds per
+scan and 2 MiB per response. Cached details are invalidated when their digest or connection changes.
+These operations never generate text, load/unload a model or change owner defaults.
+
+Discovered rows use the exact server-reported names, namespaces and tags and remain harness-managed:
+the owner can enable/disable them, not edit their metadata or delete them. A newly supported model
+starts enabled; refreshes preserve the owner's enabled preference, stored selections and defaults.
+Missing or unsupported rows remain visible with their availability reason. They cannot start new
+runs, but reappearance can restore availability without losing that preference. Availability and
+enablement are separate: `MODEL_UNAVAILABLE` is not `MODEL_DISABLED`. Catalog, picker, publication
+and runtime resolution read the same availability facts. A server outage does not erase the last
+complete catalog; service readiness can still block a run. A model removed between discovery and
+dispatch fails visibly without substitution or an automatic pull. The recorded digest is discovery
+metadata, not a guarantee that an Ollama tag always points to immutable weights.
+
+After startup migrations, current connection state governs public/runtime catalog reads. Off projects **Ollama is off
+in Settings**, and metadata from a different/absent connection revision projects **Not yet listed
+at the new address**. Both use unavailable `missing` state while preserving the snapshot and
+owner Enabled choice. An address change does not pretend old models were checked at the new
+origin; only a complete current enabled-revision scan restores availability. Failed scans retain
+usable last-complete availability only within the same revision, never across origins.
+
+An explicit structurally valid Ollama process model in `GG_DEFAULTS.byHarness.ollama` defers
+catalog-dependent validation, so first startup and later offline/missing/unsupported-model
+restarts keep Settings available for correction. JSON/schema/effort-enum validation still applies;
+an effort-only process default without a model is unresolved. A model-only default stays partial,
+with no implicit effort. Owner/loop default authoring keeps its usual validation. The actual
+selected inference still requires the exact enabled/available model and supported effort before
+publication/admission/execution; an absent Ollama row is restorable `MODEL_UNAVAILABLE` until
+discovery succeeds. No startup generation, synchronous remote probe, default substitution or
+default rewrite is introduced. Codex/Claude process-default refusal semantics are unchanged.
+
+For an existing current-format store, startup validates process defaults read-only against the
+established catalog before mutable storage or additive migrations. This early view needs no
+discovery tables; normal discovery-aware reads begin after migration. Existing Codex/Claude
+refusals still happen before database writes, and a normal upgrade needs no reset or format conversion.
+
+### Supported inference controls
+
+This increment supports text and structured JSON in **fresh** conversations only. It supports no
+tools/tool calls, plugins, MCP, context-file reads, web search, images or native audio. Use
+`session.policy: 'fresh'`, `sandbox: 'read-only'` and `approval: 'never'`; capabilities, raw config
+overrides and context files must be empty, and tool network/web-search flags must be false.
+Those policy labels describe a tool-free model request, not OS confinement of the Ollama server.
+Chat's explicit bounded history makes multi-turn Chat possible with a fresh request per turn;
+audio first passes through the configured workflow normalizer and reaches Ollama as text.
+
+Effort choices come from detected capabilities rather than the Codex effort table:
+
+| Reported capability                                                             | Offered control                                 |
+| ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| No thinking capability                                                          | `none`; omit `think`                            |
+| Thinking metadata explicitly supports `false`                                   | `none` maps to `think: false`                   |
+| Named values exactly matching `low`, `medium`, `high`, `xhigh`, `max`           | The identical canonical name                    |
+| Absent/null thinking metadata, with the supported Qwen3.5 server family profile | `none` maps to `think: false`                   |
+| Thinking capability without a supported explicit false/named control or profile | Unavailable, with an unsupported-control reason |
+
+An on/off-only model offers `none` when false is explicit; `true` and unknown names are not renamed
+to invented intensity levels. The catalog prefers `none` as its default when available, then an
+exact supported reported default, then its first supported canonical level. This is catalog
+guidance, not permission to select a model or overwrite owner defaults. Configure a model and
+supported effort at the node, loop or inherited owner/process defaults as usual. The adapter
+rechecks its proven control metadata before dispatch.
+
+The bounded Qwen3.5 profile requires server-reported `qwen35` family (or explicit `qwen3.5`
+renderer) plus completion/thinking capabilities; it is never guessed from a model-name substring.
+Explicit thinking metadata takes precedence. Other unknown thinking-capable families without
+supported controls remain unavailable. This profile follows the official
+[boolean thinking API](https://ollama.com/blog/thinking) and
+[Qwen3.5 renderer behavior](https://raw.githubusercontent.com/ollama/ollama/main/model/renderers/qwen35_test.go).
+
+### Readiness, completion and recovery
+
+Ollama preflight is a bounded service/protocol probe without generation. A ready result does not
+prove every model fits the server's memory or has completed a turn; service failures use service
+connection guidance rather than CLI installation/login instructions. Inference requires a terminal
+`done: true` frame. Malformed/truncated streams, server errors, unexpected tool calls and missing
+terminal completion fail without promoting partial content to a reply. Thinking content is never
+the final answer. Frames are bounded to 1 MiB and total streamed/final content to 8 MiB. Usage comes
+from terminal counters; missing counters are zero rather than estimates. Native JSON Schema
+format support still passes through engine validation.
+
+The local `ollama:<id>` handle correlates native evidence; it is not a resumable provider session.
+Authored `resume-own`, `resume-previous`, `resume-named` and enabled same-session schema repair are
+rejected. `resume` reports `HARNESS_SESSION_MISSING`; existing explicit **Start fresh** recovery is
+the available action. Invalid structured output fails normally. A transport failure after dispatch
+may be delivery-uncertain and is never automatically repeated. Cancellation closes the request and
+reader; it does not claim remote computation stopped or unload the model. Node/run deadlines
+remain the generation limits, without a hidden total generation timeout. An origin/revision change
+cannot retarget or abort a model turn already dispatched; new/unsubmitted work checks the current
+revision before dispatch. Explicit owner disable closes open requests with truthful delivery
+state, without a remote-stop guarantee. See
+[ADR-0066](decisions/ADR-0066-native-ollama-and-model-discovery.md).
+
 ## No-turn readiness (#179)
 
-Readiness describes CLI prerequisites, independently of catalog enablement. `ready` confirms
+For Codex and Claude, readiness describes CLI prerequisites, independently of catalog enablement. `ready` confirms
 version, required CLI flags and local login only; it never promises account access to a model.
 The `models` field lists adapter identities and efforts, even when the CLI is not ready.
 No probe sends a prompt, creates a session, or checks entitlement through inference.
+Ollama instead probes its configured HTTP service as described above; it has no CLI/login prerequisite.
 
 | State                 | Meaning and next action                                                                                                                                                                   |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -363,11 +595,11 @@ The `model_catalog` table carries `source: 'harness' | 'litellm'` and `enabled`.
 
 A family that names the level `minimal` is one more entry, `{ prefix: '<family>', none: 'minimal' }`; no seeded model needs one. Every other level is sent under its own name. The run records the canonical effort the user chose (`none`); only the CLI invocation carries the provider's name (`--config model_reasoning_effort="<name>"`), and the adapter logs both at debug level (`codex: reasoning effort sent to the CLI`). The CLI's compiled catalog lists neither `none` nor `minimal` for any model; the provider accepts `none` for GPT-6 Luna regardless. GPT-5.5 is unusable at any effort on a ChatGPT login (#427).
 
-A saved `none` for GPT-5.5 or a Claude model, like a saved GPT-5.5 `max`, is refused with `EFFORT_UNSUPPORTED` when a draft is saved or published and when Settings or loop defaults are saved, and a run pinned to it fails `EVALUATION_INVALID_CONFIGURATION` (`details.code: EFFORT_UNSUPPORTED`) before any provider request. A `GG_DEFAULTS` effort its model does not offer stops startup before anything is written, with `EVALUATION_INVALID_CONFIGURATION` and one line per refused harness naming the code, the field, the model and the effort. `minimal` is not an effort at all: a request that names it fails validation, and a stored `minimal` is invalid data, corrected by hand on the contract's typed effort paths (CHANGELOG upgrade note, [ADR-0062](decisions/ADR-0062-stored-data-corrected-by-hand-before-1.0.md)). `details` has one shape for every source of the effort: `code` and `path` (`effort`), and when the effort comes from a default also its `level` (`loop`, `owner` or `process`) and `harness`. Settings offers a Codex default effort only from the model it applies to: the selected default model, or the server default model when none is selected, or the efforts every Codex model shares when neither is known.
+A saved `none` for GPT-5.5 or a Claude model, like a saved GPT-5.5 `max`, is refused with `EFFORT_UNSUPPORTED` when a draft is saved or published and when Settings or loop defaults are saved, and a run pinned to it fails `EVALUATION_INVALID_CONFIGURATION` (`details.code: EFFORT_UNSUPPORTED`) before any provider request. A Codex/Claude `GG_DEFAULTS` effort its model does not offer stops startup before anything is written, with `EVALUATION_INVALID_CONFIGURATION` and one line per refused harness naming the code, the field, the model and the effort. `minimal` is not an effort at all: a request that names it fails validation, and a stored `minimal` is invalid data, corrected by hand on the contract's typed effort paths (CHANGELOG upgrade note, [ADR-0062](decisions/ADR-0062-stored-data-corrected-by-hand-before-1.0.md)). `details` has one shape for every source of the effort: `code` and `path` (`effort`), and when the effort comes from a default also its `level` (`loop`, `owner` or `process`) and `harness`. Settings offers a Codex default effort only from the model it applies to: the selected default model, or the server default model when none is selected, or the efforts every Codex model shares when neither is known.
 
 Migration `0004` adds source with a harness default, preserving every legacy row. User-edited seeded rows become harness-owned and their metadata re-syncs on the next startup, while enabled stays as chosen. Hand-added legacy rows also become harness-owned: they keep their values and can be toggled, but are frozen for PUT/DELETE. Existing LiteLLM rows can be edited/deleted and are never refreshed by the harness seed. Creating LiteLLM entries returns `LITELLM_NOT_CONFIGURED` until the provider work ships; no new key convention is defined.
 
-The model catalog is authoritative for selected and effective models. Shared admission checks reject unknown/wrong-harness models and unsupported effort, including inherited defaults; disabled or unconfigured selections remain visible in draft diagnostics and block publication. Runtime checks the chosen model again without substituting another harness or provider. Defaults share `{byHarness:{codex?:{model?,effort?},claude?:{model?,effort?}}}` across loop, owner and process layers. Owner Settings stores this value under `defaults`; `GG_DEFAULTS` supplies the process layer. The Claude model entry is exact and its effort is recorded as requested because the native CLI does not expose effective effort.
+The model catalog is authoritative for selected and effective models. Shared admission checks reject unknown/wrong-harness models and unsupported effort, including inherited defaults; disabled or unconfigured selections remain visible in draft diagnostics and block publication. Runtime checks the chosen model again without substituting another harness or provider. Defaults share `{byHarness:{codex?:{model?,effort?},claude?:{model?,effort?},ollama?:{model?,effort?}}}` across loop, owner and process layers. Owner Settings stores this value under `defaults`; `GG_DEFAULTS` supplies the process layer. The Claude model entry is exact and its effort is recorded as requested because the native CLI does not expose effective effort.
 
 ### Windows notes
 

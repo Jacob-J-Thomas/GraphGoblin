@@ -57,12 +57,37 @@ Starting, observing, and controlling runs.
 | POST   | `/runs/deletion-eligibility`         | Confirm or withdraw deletion eligibility for exactly the reviewed selection; deletes nothing | -                                                                                                                                                                                                        | `{ runIds, token, action, confirmed }`                         | 200           |
 | GET    | `/runs/diagnostics`                  | Identify unreadable run history for manual repair or explicit deletion                       | `cursor`: string (query)                                                                                                                                                                                 | -                                                              | 200           |
 
+## chat
+
+Native workflow chat, isolated devices, and enrollment.
+
+| Method | Path                                            | Summary                                                             | Parameters                                                                        | Request body                | Responses |
+| ------ | ----------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------- | --------- |
+| GET    | `/chat/session`                                 | Current chat audience and published workflow capabilities           | -                                                                                 | -                           | 200       |
+| GET    | `/chat/conversations`                           | List conversations for the current audience                         | `before`: string (query), `limit`: integer (query)                                | -                           | 200       |
+| POST   | `/chat/conversations`                           | Create a conversation for the current audience                      | -                                                                                 | `object`                    | 201       |
+| GET    | `/chat/conversations/{id}/turns`                | Read native-run turns in an audience conversation                   | `after`: integer (query), `limit`: integer (query), `id`: string (path, required) | -                           | 200       |
+| POST   | `/chat/conversations/{id}/turns`                | Admit one idempotent native workflow turn                           | `id`: string (path, required)                                                     | `ChatSendRequestInput`      | 202       |
+| GET    | `/chat/conversations/{id}/requests/{requestId}` | Recover an admission acknowledgement without replay                 | `id`: string (path, required), `requestId`: string (path, required)               | -                           | 200       |
+| GET    | `/chat/turns/{id}`                              | Read one current chat turn                                          | `id`: string (path, required)                                                     | -                           | 200       |
+| POST   | `/chat/turns/{id}/cancel`                       | Cancel a turn through the native run manager                        | `id`: string (path, required)                                                     | `object`                    | 200       |
+| POST   | `/chat/audio`                                   | Upload raw audio for the configured workflow normalizer             | -                                                                                 | -                           | 201       |
+| DELETE | `/chat/audio/{id}`                              | Discard an unused audio upload                                      | `id`: string (path, required)                                                     | -                           | 204       |
+| POST   | `/chat/pairings`                                | Create a ten-minute device enrollment                               | -                                                                                 | `object`                    | 201       |
+| POST   | `/chat/pairings/claim`                          | Claim an enrollment idempotently with a client-generated credential | -                                                                                 | `ChatPairClaimRequestInput` | 200       |
+| GET    | `/chat/devices`                                 | List paired devices and their editable system loops                 | -                                                                                 | -                           | 200       |
+| PATCH  | `/chat/devices/{id}`                            | Rename a device                                                     | `id`: string (path, required)                                                     | `{ label }`                 | 200       |
+| POST   | `/chat/devices/{id}/revoke`                     | Revoke future device access while retaining its loop and history    | `id`: string (path, required)                                                     | `object`                    | 200       |
+
 ## settings
 
 Owner settings and the model catalog.
 
 | Method | Path                               | Summary                                                            | Parameters                                                           | Request body                                                 | Responses |
 | ------ | ---------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------- |
+| GET    | `/harness/ollama/connection`       | The gateway Ollama connection and its last discovery result        | -                                                                    | -                                                            | 200       |
+| PUT    | `/harness/ollama/connection`       | Save the gateway Ollama connection and discover its models         | -                                                                    | `OllamaConnectionUpdateInput`                                | 200       |
+| POST   | `/model-catalog/refresh`           | Refresh the models discovered from the configured Ollama service   | -                                                                    | `{ harness }`                                                | 200       |
 | GET    | `/settings`                        | Owner settings                                                     | -                                                                    | -                                                            | 200       |
 | PUT    | `/settings`                        | Update owner settings                                              | -                                                                    | `object`                                                     | 200       |
 | DELETE | `/settings/{key}`                  | Reset one setting to its default                                   | `key`: string (path, required)                                       | -                                                            | 204       |

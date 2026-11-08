@@ -56,6 +56,13 @@ import { KindChip } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
 import { NodeConnections } from './NodeConnections.js';
 import { SubloopPicker } from './SubloopPicker.js';
+import {
+  SYSTEM_CHAT_TRIGGER_FIELDS,
+  SYSTEM_CHAT_SCRIPT_FIELDS,
+  SYSTEM_CHAT_SUBLOOP_FIELDS,
+  SystemChatTriggerType,
+} from './SystemChatFields.js';
+import { hasChatVoiceSteps, isProtectedVoiceNode } from './chat-protection.js';
 import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
@@ -153,14 +160,19 @@ export function NodeEditorDialog({
   issues,
   loopId,
   notice,
+  system = false,
 }: {
   node: NodeInput;
   definition: LoopDefinitionInput;
   issues: EditorIssue[];
   loopId: string;
+  system?: boolean;
   /** Shown at the top of the dialog, for notices that need an answer while it is open. */
   notice?: ReactNode;
 }) {
+  const voice = system && hasChatVoiceSteps(definition);
+  const protectedVoice = isProtectedVoiceNode(definition, system, node.id);
+  const protectedCheck = protectedVoice && node.id !== 'chat-normalize';
   const queryClient = useQueryClient();
   useEffect(() => {
     void refreshModelDefaults(queryClient);
@@ -454,7 +466,13 @@ export function NodeEditorDialog({
       returnFocus={() => canvasFocusTarget(useEditorStore.getState().selectedNodeId)}
       footer={
         <>
-          <Button size="sm" variant="destructive" onClick={() => removeNode(node.id)}>
+          <Button
+            size="sm"
+            variant="destructive"
+            disabled={protectedVoice}
+            title={protectedVoice ? 'Voice steps stay. Use Turn off voice messages.' : undefined}
+            onClick={() => removeNode(node.id)}
+          >
             <Icon name="trash" />
             Delete node
           </Button>
@@ -466,6 +484,9 @@ export function NodeEditorDialog({
     >
       <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
         {notice}
+        {protectedCheck ? (
+          <HelpText>Protected voice check. Turn off voice messages removes it.</HelpText>
+        ) : null}
         <RequiredNote />
         {/* Issue paths `id` and `label` name these fields (focus-field.ts). */}
         <div data-field-scope="node" className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
@@ -475,6 +496,7 @@ export function NodeEditorDialog({
             </Label>
             <Input
               id="node-id"
+              readOnly={(system && node.id === 'chat-input') || protectedVoice}
               className="font-mono text-sm"
               value={id.value}
               aria-required
@@ -498,6 +520,7 @@ export function NodeEditorDialog({
             </Label>
             <Input
               id="node-label"
+              readOnly={protectedCheck}
               aria-required
               aria-invalid={labelIssue ? true : undefined}
               aria-describedby={labelIssue ? 'node-label-error' : undefined}
@@ -529,14 +552,16 @@ export function NodeEditorDialog({
         <div data-field-scope="config" className="grid min-w-0">
           {node.kind === 'trigger' ? (
             <HelpText>
-              Use a downstream decision for payload checks. Route unwanted input to a quiet success
-              exit with no returns or destinations.
+              {system
+                ? 'Chat starts this loop through its manual trigger. Its input and exposure are fixed by the chat contract.'
+                : 'Use a downstream decision for payload checks. Route unwanted input to a quiet success exit with no returns or destinations.'}
             </HelpText>
           ) : null}
           {node.kind === 'exit' ? (
             <HelpText>
-              Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata
-              expression, or none. Destinations receive the returned value.
+              {system
+                ? 'In a chat loop, a successful exit returns the chat response object, vars.chatResponse. Chat shows only its reply text.'
+                : 'Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata expression, or none. Destinations receive the returned value.'}
             </HelpText>
           ) : null}
           {node.kind === 'decision' && hasRepeatRoute(node.config) ? (
@@ -635,8 +660,8 @@ export function NodeEditorDialog({
                       <JsonApplyReviewContext value={reviewJsonApply}>
                         <JsonCandidateContext value={normalizeJsonCandidate}>
                           <fieldset
-                            disabled={activeReview !== undefined}
-                            inert={activeReview !== undefined}
+                            disabled={activeReview !== undefined || protectedCheck}
+                            inert={activeReview !== undefined || protectedCheck}
                             className="grid min-w-0 gap-0 border-0 p-0"
                           >
                             <NodeOutputsContext value={nodeOutputs}>
@@ -657,17 +682,29 @@ export function NodeEditorDialog({
                                   node.kind === 'decision'
                                     ? DECISION_UNION_PICKERS
                                     : node.kind === 'trigger'
-                                      ? TRIGGER_UNION_PICKERS
+                                      ? system && node.id === 'chat-input'
+                                        ? { ...TRIGGER_UNION_PICKERS, '': SystemChatTriggerType }
+                                        : TRIGGER_UNION_PICKERS
                                       : undefined
                                 }
                                 fieldOverrides={
-                                  node.kind === 'inference'
-                                    ? INFERENCE_FIELD_OVERRIDES
-                                    : node.kind === 'decision'
-                                      ? DECISION_FIELD_OVERRIDES
-                                      : node.kind === 'exit'
-                                        ? EXIT_FIELD_OVERRIDES
-                                        : undefined
+                                  voice && node.id === 'chat-normalize' && node.kind === 'script'
+                                    ? SYSTEM_CHAT_SCRIPT_FIELDS
+                                    : voice &&
+                                        node.id === 'chat-normalize' &&
+                                        node.kind === 'subloop'
+                                      ? SYSTEM_CHAT_SUBLOOP_FIELDS
+                                      : system &&
+                                          node.kind === 'trigger' &&
+                                          node.id === 'chat-input'
+                                        ? SYSTEM_CHAT_TRIGGER_FIELDS
+                                        : node.kind === 'inference'
+                                          ? INFERENCE_FIELD_OVERRIDES
+                                          : node.kind === 'decision'
+                                            ? DECISION_FIELD_OVERRIDES
+                                            : node.kind === 'exit'
+                                              ? EXIT_FIELD_OVERRIDES
+                                              : undefined
                                 }
                                 problems={configProblems}
                                 disclosures={disclosures}
@@ -687,7 +724,7 @@ export function NodeEditorDialog({
               </CatalogWarningsContext>
             </ReorderablePathsContext>
           </FormEditReviewContext>
-          {node.kind === 'trigger' ? (
+          {node.kind === 'trigger' && !system ? (
             <TriggerPresets
               config={node.config}
               definition={definition}
