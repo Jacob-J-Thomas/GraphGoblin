@@ -327,9 +327,11 @@ describe('manual routes in the router (#44)', () => {
       const next = createRoutingPlan(nodes, dragged, undefined, previous);
       expect(next.routes, `segment drag ${step}`).toEqual(createRoutingPlan(nodes, dragged).routes);
       // The manual route itself, plus the automatic routes whose candidate lanes it changed: a
-      // lane is a candidate for every route within the 192 px candidate reach (13 to 26 of the 600
-      // here), comparable to the 38 a 60 x 48 px card drag may replan in this fixture.
-      expect(next.statistics.rerouted).toBeLessThanOrEqual(32);
+      // lane is a candidate for every route within the 192 px candidate reach. Since #449 the
+      // row-wrap retries beside it are loop-backs whose lanes run the grid's width: 56 measured of
+      // the 330 routes (26 when only the gate's return was), comparable to the 64 a 60 x 48 px
+      // card drag may replan in this fixture.
+      expect(next.statistics.rerouted).toBeLessThanOrEqual(64);
       expect(next.statistics.expansions).toBe(0);
       expect(next.directions.get(id)).toBe(base.directions.get(id));
       previous = next;

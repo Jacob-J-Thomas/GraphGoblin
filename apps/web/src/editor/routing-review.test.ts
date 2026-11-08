@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   denseGraph,
   nestedLoops,
@@ -17,10 +17,74 @@ import {
   type RoutingNode,
 } from './routing.js';
 import { detour, SEARCH_LIMIT } from './routing-search.js';
-import { BoxIndex, distance, Reservations } from './routing-geometry.js';
+import { BoxIndex, distance, Reservations, type Box } from './routing-geometry.js';
 
 const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
   createRoutingPlan(...args).routes;
+
+describe('fixed-cell obstacle index', () => {
+  it('keeps cell visitation order and identity-based duplicate handling across negative cells', () => {
+    const later: Box = { id: 'later', left: 270, right: 280, top: -10, bottom: 10 };
+    const early: Box = { id: 'early', left: -270, right: -250, top: 260, bottom: 270 };
+    const cross: Box = { id: 'cross', left: -260, right: 270, top: -260, bottom: 270 };
+    const sameId = { ...cross };
+    const index = new BoxIndex([later, early, cross, cross, sameId]);
+    const touch = vi.spyOn(index.reads, 'touch');
+    const region: Box = { id: '', left: -300, right: 300, top: -300, bottom: 300 };
+    const result = index.query(region, true);
+    expect(result).toHaveLength(4);
+    expect(result[0]).toBe(cross);
+    expect(result[1]).toBe(sameId);
+    expect(result[2]).toBe(early);
+    expect(result[3]).toBe(later);
+    expect(touch).toHaveBeenCalledExactlyOnceWith(region, true);
+    expect(index.checks).toBe(1);
+    expect(index.query({ id: '', left: 256, right: 256, top: 0, bottom: 0 })).toEqual([
+      cross,
+      sameId,
+    ]);
+    expect(index.checks).toBe(2);
+  });
+
+  it('keeps collision, own-card, handle and exempt behavior with the same reads and counters', () => {
+    const body: Box = { id: 'body', left: 0, right: 10, top: 0, bottom: 10 };
+    const handle: Box = { id: 'handle', left: 20, right: 32, top: 0, bottom: 10, handle: true };
+    const index = new BoxIndex([body, handle]);
+    const touch = vi.spyOn(index.reads, 'touch');
+    const from = { x: -10, y: 5 };
+    const to = { x: 40, y: 5 };
+    expect(index.clear(from, to, 0)).toBe(false);
+    expect(index.clear(from, to, 0, 'body')).toBe(false);
+    index.handles = false;
+    expect(index.clear(from, to, 0, 'body')).toBe(true);
+    index.handles = true;
+    index.exempt = ['handle'];
+    expect(index.clear(from, to, 0, 'body')).toBe(true);
+    index.exempt = [];
+    expect(index.clear(from, to, 0, 'handle')).toBe(false);
+    expect(index.checks).toBe(5);
+    expect(touch.mock.calls).toEqual(
+      Array.from({ length: 5 }, () => [{ id: '', left: -10, right: 40, top: 5, bottom: 5 }]),
+    );
+    const region: Box = { id: '', left: -10, right: 40, top: 0, bottom: 10 };
+    index.handles = false;
+    expect(index.query(region)).toEqual([body]);
+    index.handles = true;
+    index.exempt = ['handle'];
+    expect(index.query(region)).toEqual([body]);
+    expect(index.checks).toBe(7);
+  });
+
+  it('retains exact negative-grid boundaries and the shared signed-zero cell', () => {
+    const negative: Box = { id: 'negative', left: -256, right: -256, top: -256, bottom: -256 };
+    const zero: Box = { id: 'zero', left: -0, right: 0, top: 0, bottom: -0 };
+    const index = new BoxIndex([negative, zero]);
+    expect(index.query({ ...negative, id: '' })).toEqual([negative]);
+    expect(index.query({ ...zero, id: '', left: 0, bottom: 0 })).toEqual([zero]);
+    expect(index.query({ id: '', left: 512, right: 768, top: 512, bottom: 768 })).toEqual([]);
+    expect(index.checks).toBe(3);
+  });
+});
 
 const box = (
   id: string,
@@ -276,7 +340,7 @@ describe('routing review regressions', () => {
         const edges = nodes.slice(1).map((n, i) => ({
           ...connection(n.id, nodes[Math.floor(random() * (i + 1))]!.id, 'e' + i),
           port: 'repeat',
-          repeat: true,
+          loopBack: true,
         }));
         const plan = createRoutingPlan(nodes, edges);
         for (const route of plan.routes.values()) {
@@ -321,7 +385,7 @@ describe('routing review regressions', () => {
           n.outputs['repeat']!.y *= -1;
         }
       }
-      const e = { ...connection('source', 'target'), port: 'repeat', repeat: true };
+      const e = { ...connection('source', 'target'), port: 'repeat', loopBack: true };
       const index = new BoxIndex(
         nodes.map((n) => ({
           id: n.id,
@@ -473,7 +537,7 @@ describe('routing review regressions', () => {
     const edges = Array.from({ length: 80 }, (_, i) => ({
       ...connection('source', 'target', `return-${i}`),
       port: 'repeat',
-      repeat: true,
+      loopBack: true,
     }));
     const routes = [...routesOf(nodes, edges).values()].filter((r) => r.points.length);
     expect(routes.length).toBeGreaterThanOrEqual(40);
@@ -565,7 +629,9 @@ describe('routing review regressions', () => {
     // Rejected alternatives are dependencies too; the broader footprint still keeps this local.
     expect(next.statistics.rerouted).toBeLessThanOrEqual(16);
     expect(next.statistics.expansions).toBe(0);
-    expect(next.statistics.checks).toBeLessThanOrEqual(1000);
+    // Measured 1,002 of a fresh plan's 8,341: the row-wrap retries beside row 14 are loop-backs by
+    // topology (#449) and replan across the grid's width (148 when only the gate's return was).
+    expect(next.statistics.checks).toBeLessThanOrEqual(1200);
     expect(next.routes.get('retry-4')).toBe(first.routes.get('retry-4'));
     for (const e of edges) {
       const route = next.routes.get(e.id);
@@ -626,10 +692,13 @@ describe('routing review regressions', () => {
         const next = createRoutingPlan(moved, edges, undefined, previous);
         expect(next.routes, `drag step ${step}`).toEqual(createRoutingPlan(moved, edges).routes);
         // This larger 60 x 48 px sweep crosses neighbouring return lanes. Keep its measured
-        // fan-out bounded too; the smaller performance drag has the tighter bound above.
+        // fan-out bounded too; the smaller performance drag has the tighter bound above. Since
+        // #449 the row-wrap retries are loop-backs that route the grid's width: measured maxima
+        // are 27 / 1,475 (100 cards) and 54 / 4,384 (300 cards), about half a fresh plan's
+        // checks, where the gate's return alone measured 20 / 690 and 30 / 1,045.
         expect(next.statistics.expansions).toBe(0);
-        expect(next.statistics.rerouted).toBeLessThanOrEqual(count === 100 ? 28 : 38);
-        expect(next.statistics.checks).toBeLessThanOrEqual(count === 100 ? 850 : 1200);
+        expect(next.statistics.rerouted).toBeLessThanOrEqual(count === 100 ? 32 : 64);
+        expect(next.statistics.checks).toBeLessThanOrEqual(count === 100 ? 1700 : 5000);
         previous = next;
       }
     },
@@ -695,7 +764,7 @@ describe('routing review regressions', () => {
       const edges = nodes.slice(1).map((n, i) => ({
         ...connection(n.id, nodes[Math.floor(random() * i)]!.id),
         port: 'repeat',
-        repeat: true,
+        loopBack: true,
       }));
       for (const n of nodes) n.outputs = { repeat: n.outputs['out']! };
       const plan = createRoutingPlan(nodes, edges);

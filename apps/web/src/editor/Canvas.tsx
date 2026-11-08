@@ -1,4 +1,3 @@
-import { isRepeatPort } from './decision-gates.js';
 import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
@@ -67,6 +66,7 @@ import { NODE_CARD_SIZE } from './routing-geometry.js';
 import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-placement.js';
 import { ForwardEdge } from './ForwardEdge.js';
 import { edgeLabelText } from './edge-label-text.js';
+import { loopBackEdgeIds } from './loop-back-edges.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -169,6 +169,30 @@ export function buildCardData(
   return next;
 }
 
+/**
+ * The visual loop-back edges (#449): one set for the canvas's direction, style and routing. It is
+ * classified again only when what the classifier reads changes (node ids, kinds and ports; edge
+ * ids and ends), so a committed move, a label or prompt edit, or an issue refresh keeps the set.
+ */
+export function createLoopBackCache() {
+  let key: string | undefined;
+  let ids: ReadonlySet<string> = new Set();
+  return (
+    def: Pick<LoopDefinitionInput, 'nodes' | 'edges'>,
+    data: ReadonlyMap<string, Pick<NodeCardData, 'ports'>>,
+  ): ReadonlySet<string> => {
+    const next = JSON.stringify([
+      def.nodes.map((n) => [n.id, n.kind, data.get(n.id)?.ports ?? canvasPorts(n)]),
+      def.edges.map((e) => [e.id, e.from.node, e.from.port, e.to.node]),
+    ]);
+    if (next !== key) {
+      key = next;
+      ids = loopBackEdgeIds(def);
+    }
+    return ids;
+  };
+}
+
 function buildNodes(
   def: LoopDefinitionInput,
   data: ReadonlyMap<string, NodeCardData>,
@@ -207,11 +231,13 @@ function buildNodes(
  * Unselected forward edges without a manual route keep xyflow's smoothstep type and path;
  * a label channel changes only a colliding label's position. Backward paths
  * (#18) and manual routes (#44) come from the routing plan; a selected edge always uses the
- * orthogonal edge, which shows its segment handles. Labels and the exit's animated dash keep the
- * existing token styles.
+ * orthogonal edge, which shows its segment handles. Labels keep the existing token styles; only
+ * a loop-back (`loopBacks`, from the graph's topology, #449) takes the animated loop dash. An edge
+ * that is merely drawn backward on the canvas is routed backward but keeps the ordinary style.
  */
 function buildEdges(
   def: LoopDefinitionInput,
+  loopBacks: ReadonlySet<string>,
   selected: string | undefined,
   plan: Pick<RoutingPlan, 'routes' | 'directions' | 'suspended'>,
   previous: ReadonlyMap<string, Edge>,
@@ -230,6 +256,7 @@ function buildEdges(
     const from = positions.get(edge.from.node);
     const to = positions.get(edge.to.node);
     const portLabel = from?.data.portLabels[edge.from.port] ?? edge.from.port;
+    const loopBack = loopBacks.has(edge.id);
     const pendingDirection =
       !!from &&
       !!to &&
@@ -239,23 +266,17 @@ function buildEdges(
           source: edge.from.node,
           target: edge.to.node,
           port: edge.from.port,
-          repeat: def.nodes.some(
-            (n) =>
-              n.id === edge.from.node &&
-              n.kind === 'decision' &&
-              isRepeatPort(n.config, edge.from.port),
-          ),
+          loopBack,
         },
         { x: from.position.x + (from.measured?.width ?? NODE_CARD_SIZE.width) + 6, y: 0 },
         { x: to.position.x - 6, y: 0 },
-        before ? before.type === 'orthogonal' && !beforeData?.forward : undefined,
+        // As in the router, a changed classification starts without the previous direction.
+        before && !!before.animated === loopBack
+          ? before.type === 'orthogonal' && !beforeData?.forward
+          : undefined,
       );
     const backward = directions.get(edge.id) ?? pendingDirection;
     const isSelected = edge.id === selected;
-    const repeat = def.nodes.some(
-      (n) =>
-        n.id === edge.from.node && n.kind === 'decision' && isRepeatPort(n.config, edge.from.port),
-    );
     const suspended = plan.suspended.has(edge.id);
     const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
     const channel =
@@ -291,7 +312,8 @@ function buildEdges(
       before.ariaLabel === ariaLabel &&
       before.type === type &&
       before.selected === isSelected &&
-      !!before.animated === repeat
+      // Gaining or losing the loop-back style (a topology edit, #449) replaces the edge object.
+      !!before.animated === loopBack
     )
       return before;
     return {
@@ -309,7 +331,7 @@ function buildEdges(
       ...(edge.from.port !== 'out'
         ? { label: portLabel, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
         : {}),
-      ...(repeat ? { animated: true, className: 'gg-edge-loop' } : {}),
+      ...(loopBack ? { animated: true, className: 'gg-edge-loop' } : {}),
     };
   });
 }
@@ -432,6 +454,12 @@ export function Canvas({
     () => new Set(definition.nodes.map((n) => n.id)),
     [definition.nodes],
   );
+  // One classification for the pending direction, the loop style and the router (#449).
+  const [loopBackCache] = useState(createLoopBackCache);
+  const loopBacks = useMemo(
+    () => loopBackCache(definition, cardData),
+    [loopBackCache, definition, cardData],
+  );
   const routingEdges = useMemo(
     () =>
       definition.edges.map((edge) => {
@@ -443,17 +471,12 @@ export function Canvas({
           source: edge.from.node,
           target: edge.to.node,
           port: edge.from.port,
-          repeat: definition.nodes.some(
-            (n) =>
-              n.id === edge.from.node &&
-              n.kind === 'decision' &&
-              isRepeatPort(n.config, edge.from.port),
-          ),
+          loopBack: loopBacks.has(edge.id),
           ...(route ? { route } : {}),
           ...(route && allowed ? { allowCrossing: allowed } : {}),
         };
       }),
-    [definition.edges, definition.nodes, routeDrag, nodeDrag, authoredCrossings],
+    [definition.edges, loopBacks, routeDrag, nodeDrag, authoredCrossings],
   );
   const decisionPorts = useMemo(
     () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),
@@ -524,7 +547,16 @@ export function Canvas({
   }, [channels, routes, routingEdges, labels]);
   const edges = useMemo(() => {
     const previous = edgesRef.current;
-    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels, labels);
+    const next = buildEdges(
+      definition,
+      loopBacks,
+      selectedEdge,
+      plan,
+      previous.byId,
+      nodes,
+      channels,
+      labels,
+    );
     if (
       next.length === previous.value.length &&
       next.every((edge, index) => edge === previous.value[index])
@@ -532,7 +564,7 @@ export function Canvas({
       return previous.value;
     edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
     return next;
-  }, [definition, selectedEdge, plan, nodes, channels, labels]);
+  }, [definition, loopBacks, selectedEdge, plan, nodes, channels, labels]);
 
   // Segment handles and Reset route (#44). A drag previews through the router and ends in one
   // store change; the step before it is closed first, as for a node drag. Where the author puts a
