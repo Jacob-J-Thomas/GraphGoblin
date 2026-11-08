@@ -33,7 +33,7 @@ function inferenceLoop(name: string, model?: string) {
 }
 
 for (const requestedEffort of ['none', 'medium']) {
-  test(`seeded GPT-6.1 Terra offers medium by default and publishes ${requestedEffort}`, async ({
+  test(`seeded GPT-6.1 Terra preserves inherited effort and publishes ${requestedEffort}`, async ({
     page,
     request,
   }) => {
@@ -51,17 +51,25 @@ for (const requestedEffort of ['none', 'medium']) {
       defaultEffort: 'medium',
       enabled: true,
     });
-    const created = await request.post('/loops', {
-      data: { definition: inferenceLoop(`Terra ${requestedEffort}`) },
-    });
+    const source = inferenceLoop(`Terra ${requestedEffort}`);
+    // Catalog medium is guidance; selecting Terra must preserve configured inherited effort.
+    const definition = {
+      ...source,
+      settings: {
+        ...source.settings,
+        defaults: { byHarness: { codex: { effort: 'low' } } },
+      },
+    };
+    const created = await request.post('/loops', { data: { definition } });
     expect(created.status()).toBe(201);
     const { loop } = (await created.json()) as { loop: { id: string } };
     await page.goto(`/app/loops/${loop.id}/edit`);
     const dialog = await openNode(page, 'infer');
     await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-6.1-terra');
     const effort = dialog.getByLabel('Effort', { exact: true });
+    await expect(effort).toHaveValue('');
     await expect(effort.locator('option')).toHaveText([
-      'Default (medium)',
+      'Default (low)',
       'none (no reasoning)',
       'low',
       'medium',
