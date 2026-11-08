@@ -1,4 +1,4 @@
-# ADR-0065 - Codex loop turns inherit configured plugins
+# ADR-0067 - Codex loop turns inherit configured plugins
 
 Date: 2026-11-07. Status: accepted (owner direction D2/D3; #439).
 

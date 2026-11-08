@@ -2,7 +2,7 @@
 
 Date: 2026-10-28. Status: accepted (owner decision 2026-10-27, option A; #423).
 
-Update 2026-11-07: [ADR-0065](ADR-0065-codex-inherits-configured-plugins.md) supersedes the Codex plugin-off default and confirms inheritance of ordinary settings, skills and personal instructions (D2). Other isolation defaults and Claude's policy below remain in force. The remainder records the original decision and evidence.
+Update 2026-11-07: [ADR-0067](ADR-0067-codex-inherits-configured-plugins.md) supersedes the Codex plugin-off default and confirms inheritance of ordinary settings, skills and personal instructions (D2). Other isolation defaults and Claude's policy below remain in force. The remainder records the original decision and evidence.
 
 ## Context
 

@@ -73,4 +73,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0064: Windows desktop and taskbar launcher](ADR-0064-windows-desktop-launcher.md) records gateway readiness and identity, actual SQLite-file ownership, native shortcut/window relaunch identity and unchanged deliberate shutdown (#276, #325).
 
-[ADR-0065: Codex loop turns inherit configured plugins](ADR-0065-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).
+[ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).

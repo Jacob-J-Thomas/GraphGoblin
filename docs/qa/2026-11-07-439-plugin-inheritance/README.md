@@ -1,6 +1,8 @@
 # #439 - Codex configured plugin inheritance
 
-Implementer evidence, 2026-11-07, baseline `bb8c4afa0c5a83ae92631d5df800bb131445c02b`. Policy: [ADR-0065](../../decisions/ADR-0065-codex-inherits-configured-plugins.md). This record establishes engineering behavior; independent opposite-family review and QA remain separate delivery gates.
+Implementer evidence, 2026-11-07, baseline `bb8c4afa0c5a83ae92631d5df800bb131445c02b`. Policy: [ADR-0067](../../decisions/ADR-0067-codex-inherits-configured-plugins.md). This record establishes engineering behavior; independent opposite-family review and QA remain separate delivery gates.
+
+ADR numbering coordination: the plugin policy moved from ADR-0065 to ADR-0067 so the parallel chat/Ollama [PR #444](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/444#issuecomment-6715295782) can retain its ADR-0065/0066 numbers. Current source/documentation references use ADR-0067. Historical review reports/dispositions, logs and native artifacts retain their original ADR-0065 references and bytes; those references identify the same plugin policy under its former number. This rename changes no behavior.
 
 ## Native method
 

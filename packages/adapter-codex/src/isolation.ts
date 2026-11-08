@@ -2,7 +2,7 @@ import type { CodexOptions } from '@openai/codex-sdk';
 import type { CliCommand, CliRunner } from './cli.js';
 
 /**
- * Codex turns inherit configured plugins (ADR-0065), with other extensions isolated (ADR-0063).
+ * Codex turns inherit configured plugins (ADR-0067), with other extensions isolated (ADR-0063).
  *
  * The CLI loads `~/.codex/config.toml` (and a trusted project's `.codex/config.toml`) for every
  * turn. The CLI resolves installed and remote plugins, including their enabled/disabled state
@@ -179,7 +179,7 @@ function listingFailure(
 /**
  * Discovery must exclude plugin servers even though execution inherits plugins. Otherwise those
  * servers would be listed and disabled by serverSwitches, suppressing an enabled plugin's tools.
- * Never derive this list only from the execution defaults (ADR-0065).
+ * Never derive this list only from the execution defaults (ADR-0067).
  */
 export const LISTING_ARGS = [
   'mcp',
