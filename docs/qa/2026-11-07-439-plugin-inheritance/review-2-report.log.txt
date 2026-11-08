@@ -1,0 +1,44 @@
+I reviewed the delta from `aed1446` to `4bb9d87` against the source, read-only. F1, F2 and F3 are each resolved, and so is the optional upgrade wording. I found one minor new wording gap about runs that were already started before upgrade; it doesn't block. I recommend merging, subject only to the pending integration and CI gates.
+
+**Delta:** base `aed1446bb3867c86acd80263f2c31b2fff6d23cf`, head `4bb9d87f8f4090d2e7f652e3769e111ec5679432`.
+- The branch ref file reads `4bb9d87…`, and the branch reflog shows a single commit between the two: "docs: clarify inherited plugin scope and service authority".
+- The checked-out text of all seven files in the patch matches the patch.
+
+## Root causes
+
+**F1 (which calls the node opt-out reaches): resolved.**
+- **Inference node override:** a node's overrides are applied on every turn (`options.ts:93-101`). An inference node passes the same request, including its working directory and `harnessOptions`, to fresh turns, resumes and output-schema repair (`inference.ts:435-442, 472-474, 559-563`). So "resumes and same-session output-schema repair" is accurate.
+- **Separate structured calls:** LLM decisions (`decider.ts:92-100`) and coerce repairs (`common.ts:222`) send no overrides and no working directory. The container gives the structured adapter no default directory (`container.ts:269-278`, `adapters.ts:17`), so these calls run in a fresh temp directory (`structured.ts:51-65`). Coerce repair is reached from mutate nodes and from inference input and output transforms, so the "no node override" statement covers an inference node's own coerce repair too.
+- **Two levels of control:** a plugin can be excluded from these calls only in user/global Codex configuration; a node can only switch the whole plugin feature on or off for its own sessions. The docs now keep these separate. The `@` claim is correct, because a key containing `@` refuses the turn (`isolation.ts:42-44, 61`).
+
+**F2 (inherited service authority): resolved.**
+- **Facts match source:**
+  - The plugin's MCP server defaults to `127.0.0.1:4747`, the gateway's default port (`apps/mcp/src/config.ts:19`, `apps/api/src/config.ts:14`).
+  - API keys aren't required by default (`apps/api/src/config.ts:17`).
+  - A keyless request gets owner identity with scope `'*'` (`plugins/auth.ts:113-116`).
+  - The plugin passes `GG_API_URL`/`GG_API_KEY` through (`.mcp.json` `env_vars`), and the CLI inherits the gateway's environment.
+- **Mitigation is stated accurately:** disable the plugin in user/global configuration, or require keys and give the plugin a scoped `GG_API_KEY`. The docs add that a valid wildcard key keeps its full authority. The `06-settings-and-secrets.md#create-api-keys` anchor exists, with the scopes table nearby.
+- **Evidence limits are explicit:** the fixture tool really is annotated `readOnlyHint: true, destructiveHint: false` (`native-plugins.mjs:97`). The docs claim no live mutation, recursion or owner-gateway proof, and ADR-0065:31 makes no claim that the owner acknowledged these details.
+
+**F3 (side-effect-free claims): resolved.**
+- docs/06:400 no longer says "no file changes". It separates the fresh structured calls from inference repair on the node's own session.
+- docs/06:270-272 says these calls are not guaranteed side-effect free.
+- ADR-0051:55-60 says effects may happen before a timeout and that Resume may repeat a plugin action.
+
+**Optional wording: resolved.** The docs now say "add to existing overrides", and the note on older pinned runs and resumed paused runs is present. My sweep of the changed docs found no remaining stale opt-out or read-only claims. ADR-0063 still describes the old plugins-off default, but it is unchanged and ADR-0065:35 explicitly supersedes that point.
+
+## New defect from this correction
+
+**Low, doesn't block: the upgrade note pairs already-started runs with an opt-out that can't reach them.**
+- **Where:** CHANGELOG:8 and ADR-0065:27 say that older pinned runs and paused runs resumed after upgrade also inherit plugins, then offer the node override as the opt-out.
+- **Why it can't reach them:** a run always executes its pinned, immutable definition (docs/05:168), and the inference handler takes its options from that definition (`inference.ts:439`). Adding the override to a loop only affects runs started from a version that contains it.
+- **What works today:** for runs already started, only the user/global configuration change works.
+- **Suggested fix:** one clause in each place, for example "node overrides apply only to runs started from a version containing them; for already pinned or paused runs, use user/global configuration."
+
+## Limits
+- I had read-only file tools only, with no git, shell or hashing. I didn't reverify the SHA-256 values, though the preserved report reads the same as the original.
+- **The supplied patch doesn't contain the whole commit.** QA `README.md` line 81 describes the review of `aed1446`, so it must have changed in `4bb9d87`, yet the patch has no hunk for it. The new `review-1-*.log.txt` files are also absent. I reviewed README line 81 in place and found it accurate. Root should confirm with `git diff --name-status aed1446 4bb9d87` that nothing else changed.
+- The format log doesn't list which files it checked. I relied on your statement that the docs, contrast and format checks passed.
+
+## Recommendation
+Approve this documentation correction. Merge subject to the pending full integrated `pnpm check` and all four PR CI jobs. Folding the one-clause fix into the CHANGELOG and ADR-0065 is recommended but not required, and it would only need a quick look at the diff.
