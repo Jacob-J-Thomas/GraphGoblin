@@ -314,7 +314,7 @@ test('Settings catalog preserves a disabled saved default until the owner change
   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
   });
-  // Native keyboard typeahead chooses the displayed server default on every desktop platform.
+  // Native keyboard typeahead chooses the displayed server default.
   await defaults.focus();
   await chooseOptionByKeyboard(page, defaults, '(server default)');
   await expect(defaults).toHaveValue('');

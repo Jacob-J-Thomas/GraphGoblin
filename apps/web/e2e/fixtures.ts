@@ -24,8 +24,8 @@ export const test = base.extend({
 export { expect };
 
 /**
- * Choose a native select's displayed option with actual keyboard typeahead. macOS Chromium does
- * not change a closed select on ArrowDown/Home/End. Leaving and returning with Tab clears the
+ * Choose a native select's displayed option with actual keyboard typeahead. On the headless macOS
+ * Chromium test host, ArrowDown/Home/End leave a closed select unchanged. Tab away and back clears the
  * native search buffer, so consecutive choices cannot accidentally share a prefix. Enter is not
  * used: on that browser it can submit the select's form instead of choosing an option.
  */
