@@ -5,11 +5,16 @@ import { Position, type ReactFlowProps } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closePopovers, Popover } from '../components/ui/index.js';
-import { buildCardData, Canvas, canvasFocusTarget } from './Canvas.js';
+import { buildCardData, Canvas, canvasFocusTarget, createLoopBackCache } from './Canvas.js';
 import type { EditorIssue } from './model.js';
 import type { FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
-import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
+import {
+  decisionBackRoute,
+  forwardLoopBack,
+  routingInput,
+  simpleLoop,
+} from '../__fixtures__/routing.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import { ForwardEdge } from './ForwardEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
@@ -184,16 +189,30 @@ describe('Canvas handlers', () => {
   it('waits for measurements of decision returns and self-loops without drawing a crossing fallback', () => {
     store().load('L1', decisionBackRoute());
     renderCanvas([]);
-    expect(flow().edges!.find((e) => e.id === 'retry')).toMatchObject({ type: 'orthogonal' });
-    expect(flow().edges!.find((e) => e.id === 'self')).toMatchObject({ type: 'orthogonal' });
+    // Neither route is marked Repeat: both are loop-backs by topology (#449).
+    for (const id of ['retry', 'self'])
+      expect(flow().edges!.find((e) => e.id === id)).toMatchObject({
+        type: 'orthogonal',
+        animated: true,
+        className: 'gg-edge-loop',
+      });
     expect(flow().edges!.find((e) => e.id === 'finish')!.type).toBe('smoothstep');
-    // A horizontal move may change direction before the next handle measurement arrives.
-    act(() =>
-      flow().onNodesChange!([
-        { type: 'position', id: 'decide', position: { x: 80, y: 100 }, dragging: true },
-      ]),
-    );
-    expect(flow().edges!.find((e) => e.id === 'retry')!.type).toBe('smoothstep');
+    const drag = (x: number) =>
+      act(() =>
+        flow().onNodesChange!([
+          { type: 'position', id: 'decide', position: { x, y: 100 }, dragging: true },
+        ]),
+      );
+    // A loop-back keeps its return shape wherever its cards are drawn.
+    drag(80);
+    expect(flow().edges!.find((e) => e.id === 'retry')!.type).toBe('orthogonal');
+    // An ordinary connection may change direction before the next handle measurement arrives,
+    // and is routed backward without taking the loop-back style.
+    drag(1000);
+    const finish = flow().edges!.find((e) => e.id === 'finish')!;
+    expect(finish.type).toBe('orthogonal');
+    expect(finish).not.toHaveProperty('animated');
+    expect(finish).not.toHaveProperty('className');
   });
 
   it('keeps a measured labelled forward connection smoothstep', () => {
@@ -509,6 +528,197 @@ describe('Canvas handlers', () => {
       expect(flow().edges!.some((e) => e.selected)).toBe(false);
     },
   );
+});
+
+describe('loop-back edges from the graph topology (#449)', () => {
+  beforeEach(() => {
+    geometry = geometryOf([]);
+  });
+
+  function Live() {
+    const definition = useEditorStore((s) => s.definition)!;
+    return <Canvas definition={definition} issues={[]} />;
+  }
+  const edge = (id: string) => flow().edges!.find((e) => e.id === id)!;
+  const isLoopBack = (id: string) => {
+    const e = edge(id);
+    expect(!!e.animated, id).toBe(e.className === 'gg-edge-loop');
+    return !!e.animated;
+  };
+  const routed = (id: string) => (edge(id).data as OrthogonalEdgeData | undefined)?.channel;
+  const config = (id: string) => store().definition!.nodes.find((n) => n.id === id)!.config;
+  /** A Simple loop whose gate has no Repeat marker, maximum passes or Limit reached port. */
+  function unmarked() {
+    const definition = simpleLoop();
+    const gate = definition.nodes.find((n) => n.id === 'done')!;
+    gate.config = {
+      kind: 'expression',
+      jsonata: '"repeat"',
+      routes: [
+        { id: 'repeat', label: 'Repeat' },
+        { id: 'finish', label: 'Finish' },
+      ],
+    };
+    return definition;
+  }
+
+  it('styles and routes a return by topology, with or without Repeat, and never a forward edge', () => {
+    for (const definition of [simpleLoop(), unmarked()]) {
+      geometry = geometryOf(routingInput(definition).nodes);
+      store().load('L1', definition);
+      const view = render(<Live />);
+      expect(isLoopBack('return')).toBe(true);
+      expect(edge('return')).toMatchObject({ type: 'orthogonal', data: { forward: false } });
+      expect(routed('return')!.getSnapshot()).toMatchObject({ blocked: false, unavailable: false });
+      for (const id of ['start-work', 'work-check', 'check-done']) {
+        expect(isLoopBack(id), id).toBe(false);
+        expect(edge(id).type).toBe('smoothstep');
+      }
+      view.unmount();
+    }
+    // A return from an ordinary node (a script's exit-code port) is a loop-back too.
+    const script = unmarked();
+    script.nodes.find((n) => n.id === 'check')!.config = {
+      command: 'node',
+      exitCodeRoutes: { '1': 'again' },
+    };
+    script.edges.push({
+      id: 'again',
+      from: { node: 'check', port: 'again' },
+      to: { node: 'work' },
+    });
+    geometry = geometryOf(routingInput(script).nodes);
+    store().load('L1', script);
+    render(<Live />);
+    expect(isLoopBack('again')).toBe(true);
+    expect(edge('again').type).toBe('orthogonal');
+  });
+
+  it('routes a return drawn forward, and draws a backward forward step without the loop style', () => {
+    const definition = forwardLoopBack();
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    render(<Live />);
+    // `return` points right on the canvas yet goes back to `work`, which every path visits first.
+    expect(isLoopBack('return')).toBe(true);
+    expect(edge('return')).toMatchObject({ type: 'orthogonal', data: { forward: false } });
+    expect(routed('return')!.getSnapshot()!.points.length).toBeGreaterThan(2);
+    // `work-done` points left: routed backward by the canvas direction (#18), styled as ordinary.
+    expect(isLoopBack('work-done')).toBe(false);
+    expect(edge('work-done')).toMatchObject({ type: 'orthogonal', data: { forward: false } });
+    expect(routed('work-done')!.getSnapshot()!.points.length).toBeGreaterThan(2);
+    expect(isLoopBack('begin')).toBe(false);
+    expect(edge('begin').type).toBe('smoothstep');
+  });
+
+  it('restyles and reroutes after a bypass is added, removed, undone and redone, keeping the definition', () => {
+    const definition = forwardLoopBack();
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    const gate = structuredClone(config('done'));
+    render(<Live />);
+    const begin = edge('begin');
+    const loop = edge('return');
+    expect(isLoopBack('return')).toBe(true);
+
+    // A second entry straight into the gate: `work` is no longer on every path to `done`.
+    act(() => {
+      const side = store().addNode('trigger', { x: -300, y: -300 });
+      store().connect({ source: side, sourceHandle: 'out', target: 'done' });
+    });
+    const bypass = store().definition!.edges.find(
+      (e) => e.to.node === 'done' && e.id !== 'work-done',
+    )!.id;
+    const ordinary = edge('return');
+    expect(ordinary).not.toBe(loop);
+    expect(isLoopBack('return')).toBe(false);
+    // The geometry follows: drawn forward and no longer a loop-back, it leaves the router.
+    expect(ordinary.type).toBe('smoothstep');
+    expect(edge('begin')).toBe(begin);
+
+    act(() => store().removeEdge(bypass));
+    expect(isLoopBack('return')).toBe(true);
+    expect(edge('return')).toMatchObject({ type: 'orthogonal', data: { forward: false } });
+    expect(edge('return')).not.toBe(ordinary);
+    expect(routed('return')!.getSnapshot()!.points.length).toBeGreaterThan(2);
+
+    act(() => store().undo());
+    expect(store().definition!.edges.some((e) => e.id === bypass)).toBe(true);
+    expect(isLoopBack('return')).toBe(false);
+    expect(edge('return').type).toBe('smoothstep');
+    act(() => store().redo());
+    expect(isLoopBack('return')).toBe(true);
+    expect(edge('return').type).toBe('orthogonal');
+
+    // Styling never writes to the definition: the gate keeps exactly its authored settings.
+    expect(config('done')).toEqual(gate);
+    expect(store().definition!.edges.find((e) => e.id === 'return')).toEqual(
+      definition.edges.find((e) => e.id === 'return'),
+    );
+  });
+
+  it('keeps a loop-back through moves and selection, and restores it with an undone deletion', () => {
+    const definition = unmarked();
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    const view = render(<Live />);
+    act(() => store().moveNode('check', { x: 600, y: 400 }));
+    expect(isLoopBack('return')).toBe(true);
+    act(() => flow().onEdgesChange!([{ type: 'select', id: 'return', selected: true }]));
+    expect(edge('return')).toMatchObject({ selected: true, animated: true, type: 'orthogonal' });
+    fireEvent.keyDown(view.getByTestId('canvas'), { key: 'Delete' });
+    expect(store().definition!.edges.some((e) => e.id === 'return')).toBe(false);
+    act(() => store().undo());
+    expect(isLoopBack('return')).toBe(true);
+    // Removing the cycle's forward step leaves `done` unreachable: its edge is ordinary.
+    act(() => store().removeEdge('check-done'));
+    expect(isLoopBack('return')).toBe(false);
+  });
+
+  it('classifies again only when node ids, kinds, ports or edge ends change', () => {
+    const cache = createLoopBackCache();
+    const definition = unmarked();
+    const data = buildCardData(definition, [], new Map());
+    const first = cache(definition, data);
+    expect([...first]).toEqual(['return']);
+    // A committed move, a label edit, a config edit that keeps the ports and an issue refresh
+    // keep the same set.
+    const moved = structuredClone(definition);
+    for (const n of moved.nodes) {
+      n.label = `${n.label}!`;
+      n.ui = { x: n.ui!.x + 40, y: n.ui!.y };
+    }
+    moved.nodes.find((n) => n.id === 'done')!.config = {
+      kind: 'expression',
+      jsonata: '"finish"',
+      routes: [
+        { id: 'repeat', label: 'Repeat' },
+        { id: 'finish', label: 'Finish' },
+      ],
+    };
+    const issue: EditorIssue = { code: 'X', severity: 'error', message: 'm', nodeId: 'work' };
+    expect(cache(moved, buildCardData(moved, [issue], data))).toBe(first);
+    // Marking Repeat adds the Limit reached port: classified again, with the same result.
+    const marked = simpleLoop();
+    const again = cache(marked, buildCardData(marked, [], new Map()));
+    expect(again).not.toBe(first);
+    expect([...again]).toEqual(['return']);
+    // Without card data the ports come from the node itself; a new edge end is a new topology.
+    const rewired = {
+      ...marked,
+      edges: marked.edges.map((e) => (e.id === 'return' ? { ...e, to: { node: 'check' } } : e)),
+    };
+    expect([...cache(rewired, new Map())]).toEqual(['return']);
+    const bypassed = {
+      ...rewired,
+      nodes: [...rewired.nodes, { ...rewired.nodes[0]!, id: 'side' }],
+      edges: [
+        ...rewired.edges,
+        { id: 'side-done', from: { node: 'side', port: 'out' }, to: { node: 'done' } },
+      ],
+    };
+    expect([...cache(bypassed, new Map())]).toEqual([]);
+  });
 });
 
 describe('manual edge routes (#44)', () => {

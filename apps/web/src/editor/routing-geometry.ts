@@ -121,32 +121,37 @@ export class BoxIndex {
   handles = true;
   /** The cards whose own handles the current route ignores: its ports sit on them. */
   exempt: readonly string[] = [];
-  private cells = new Map<string, Box[]>();
+  private cells = new Map<number, Map<number, Box[]>>();
   /** Whether any card has protruding handles (otherwise a handle-less retry changes nothing). */
   readonly hasHandles: boolean;
   constructor(readonly boxes: readonly Box[]) {
     this.hasHandles = boxes.some((box) => box.handle);
     for (const box of boxes)
-      this.cellsFor(box, (key) => {
-        const cell = this.cells.get(key);
+      this.cellsFor(box, (x, y) => {
+        let column = this.cells.get(x);
+        if (!column) {
+          column = new Map();
+          this.cells.set(x, column);
+        }
+        const cell = column.get(y);
         if (cell) cell.push(box);
-        else this.cells.set(key, [box]);
+        else column.set(y, [box]);
       });
   }
   private counts(box: Box): boolean {
     return !box.handle || (this.handles && !this.exempt.includes(box.id));
   }
-  private cellsFor(box: Box, visit: (key: string) => void): void {
+  private cellsFor(box: Box, visit: (x: number, y: number) => void): void {
     for (let x = Math.floor(box.left / 256); x <= Math.floor(box.right / 256); x += 1)
       for (let y = Math.floor(box.top / 256); y <= Math.floor(box.bottom / 256); y += 1)
-        visit(`${x},${y}`);
+        visit(x, y);
   }
   query(box: Box, discovery = false): Box[] {
     this.checks += 1;
     this.reads.touch(box, discovery);
     const found = new Set<Box>();
-    this.cellsFor(box, (key) => {
-      for (const candidate of this.cells.get(key) ?? [])
+    this.cellsFor(box, (x, y) => {
+      for (const candidate of this.cells.get(x)?.get(y) ?? [])
         if (this.counts(candidate) && overlapsBox(box, candidate)) found.add(candidate);
     });
     return [...found];
@@ -156,9 +161,10 @@ export class BoxIndex {
     const region = expand(segment, padding);
     this.checks += 1;
     this.reads.touch(region);
-    for (let x = Math.floor(region.left / 256); x <= Math.floor(region.right / 256); x += 1)
+    for (let x = Math.floor(region.left / 256); x <= Math.floor(region.right / 256); x += 1) {
+      const column = this.cells.get(x);
       for (let y = Math.floor(region.top / 256); y <= Math.floor(region.bottom / 256); y += 1)
-        for (const box of this.cells.get(`${x},${y}`) ?? []) {
+        for (const box of column?.get(y) ?? []) {
           if (box.id === own || !this.counts(box)) continue;
           const pad = clearanceOf(box, padding);
           if (
@@ -169,6 +175,7 @@ export class BoxIndex {
           )
             return false;
         }
+    }
     return true;
   }
   covers(p: Point, own: string): boolean {

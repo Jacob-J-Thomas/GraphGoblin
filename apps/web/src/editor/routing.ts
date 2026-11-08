@@ -36,8 +36,12 @@ export interface RoutingEdge {
   source: string;
   target: string;
   port: string;
-  /** Explicit authored gate marker, independent of the route ID or canvas direction. */
-  repeat?: boolean;
+  /**
+   * A visual loop-back: the graph reaches the target on every path to the source, so the edge
+   * always takes a return route. Derived from topology (`loop-back-edges.ts`), never from the
+   * Repeat marker, the route ID, or canvas direction.
+   */
+  loopBack?: boolean;
   /**
    * A fixed (manual) route, in the contract's `edge.ui.route` form (#44). It is drawn as given,
    * with stubs from the current port tips, and automatic routes reserve around it. One that
@@ -114,7 +118,7 @@ export function backwardDirection(
   to: Point,
   previous?: boolean,
 ): boolean {
-  if (edge.repeat || edge.source === edge.target) return true;
+  if (edge.loopBack || edge.source === edge.target) return true;
   const delta = from.x - to.x;
   return previous === undefined
     ? delta >= 0
@@ -193,7 +197,7 @@ const sameConnection = (a: RoutingEdge, b: RoutingEdge | undefined) =>
   a.source === b.source &&
   a.target === b.target &&
   a.port === b.port &&
-  !!a.repeat === !!b.repeat;
+  !!a.loopBack === !!b.loopBack;
 /** The same connection with the same fixed route: a reused route stays valid. */
 export const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined): boolean =>
   sameConnection(a, b) &&
@@ -345,18 +349,23 @@ function candidates(
 ): number[] {
   const region = expand(bounds([start, end]), 192);
   const nearby = index.query(expand(region, padding), true);
-  return [
-    ...new Set([
-      ...nearby.flatMap((b) => (b.handle ? [] : [b.top - padding, b.bottom + padding])),
-      ...reservations
-        .nearbyLanes(region)
-        .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
-    ]),
-  ]
-    .filter((y) => y >= region.top && y <= region.bottom)
-    .map((y) => ({ y, travel: verticalTravel(start.y, end.y, y) }))
-    .sort((a, b) => a.travel - b.travel || b.y - a.y)
-    .map(({ y }) => y);
+  const values = new Set<number>();
+  for (const box of nearby) {
+    if (box.handle) continue;
+    values.add(box.top - padding);
+    values.add(box.bottom + padding);
+  }
+  for (const lane of reservations.nearbyLanes(region)) {
+    values.add(lane.y - LANE_GAP);
+    values.add(lane.y + LANE_GAP);
+    values.add(lane.y - 12);
+    values.add(lane.y + 12);
+  }
+  const ranked: { y: number; travel: number }[] = [];
+  for (const y of values)
+    if (y >= region.top && y <= region.bottom)
+      ranked.push({ y, travel: verticalTravel(start.y, end.y, y) });
+  return ranked.sort((a, b) => a.travel - b.travel || b.y - a.y).map(({ y }) => y);
 }
 
 function routeOne(
@@ -869,6 +878,16 @@ function reservationDifference(before: RoutedEdge, after: RoutedEdge): Box[] {
   return [...old.filter((b) => !nextKeys.has(key(b))), ...next.filter((b) => !oldKeys.has(key(b)))];
 }
 
+/** Check changed reservations without copying the whole map for every candidate route. */
+function reservationsIntersect(
+  reads: Footprint,
+  changes: ReadonlyMap<string, readonly Box[]>,
+): boolean {
+  for (const boxes of changes.values())
+    for (const box of boxes) if (reads.intersects(box)) return true;
+  return false;
+}
+
 /** Whether any segment enters a card's body (handles do not count: a route may touch a port). */
 function crossesAnyCard(
   points: readonly Point[],
@@ -1019,9 +1038,7 @@ export function createRoutingPlan(
       !changed.has(item.source.id) &&
       !changed.has(item.target.id) &&
       !changedBoxes.some((b) => reads.boxes.intersects(b)) &&
-      ![...reservationChanges.values()].some((boxes) =>
-        boxes.some((b) => reads.reservations.intersects(b)),
-      )
+      !reservationsIntersect(reads.reservations, reservationChanges)
     ) {
       routes.set(id, before);
       dependencies.set(id, reads);

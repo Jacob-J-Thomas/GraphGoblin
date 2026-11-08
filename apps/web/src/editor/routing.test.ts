@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decisionBackRoute,
   denseGraph,
+  forwardLoopBack,
   nestedLoops,
   routingInput,
   simpleLoop,
@@ -38,7 +39,7 @@ const edge = (source: string, target: string, port = 'out'): RoutingEdge => ({
   source,
   target,
   port,
-  repeat: port === 'repeat',
+  loopBack: port === 'repeat',
 });
 
 /** Independently check the public clearance, including own boxes except the two straight stubs. */
@@ -97,7 +98,7 @@ describe('backward routing geometry', () => {
     },
   );
 
-  it('keeps forward edges unchanged, including a script out, but always routes repeat', () => {
+  it('keeps forward edges unchanged, including a script out, but always routes a loop-back', () => {
     const nodes = [box('a', 0, 0), box('b', 400, 0)];
     expect(routesOf(nodes, [edge('a', 'b')]).size).toBe(0);
     expect(assertGeometry(nodes, [edge('a', 'b', 'repeat')]).size).toBe(1);
@@ -105,6 +106,54 @@ describe('backward routing geometry', () => {
     expect(routesOf(nodes, [edge('b', 'a', 'unknown')]).size).toBe(0);
     const { input: _input, ...noInput } = nodes[0]!;
     expect(routesOf([noInput, nodes[1]!], [edge('b', 'a')]).size).toBe(0);
+  });
+
+  it('flags loop-backs by topology, not route names or the Repeat marker (#449)', () => {
+    const flagged = (fixture: () => Parameters<typeof routingInput>[0]) =>
+      routingInput(fixture())
+        .edges.filter((e) => e.loopBack)
+        .map((e) => e.id);
+    // `choose` has a route named `repeat` without the marker; it leads forward and stays ordinary.
+    expect(flagged(nestedLoops)).toEqual(['inner-return', 'outer-return']);
+    // Unmarked decision returns and a self-loop.
+    expect(flagged(decisionBackRoute)).toEqual(['retry', 'self']);
+    expect(flagged(simpleLoop)).toEqual(['return']);
+  });
+
+  it('routes a loop-back drawn forward, and a drawn-backward forward step without the flag', () => {
+    const { nodes, edges } = routingInput(forwardLoopBack());
+    expect(edges.map((e) => [e.id, !!e.loopBack])).toEqual([
+      ['begin', false],
+      ['work-done', false],
+      ['return', true],
+    ]);
+    const plan = createRoutingPlan(nodes, edges);
+    // `return` points right on the canvas and is still routed as a return (a Z detour here).
+    expect(plan.directions.get('return')).toBe(true);
+    expect(plan.directions.get('work-done')).toBe(true);
+    expect(plan.directions.get('begin')).toBe(false);
+    expect([...plan.routes.keys()].sort()).toEqual(['return', 'work-done']);
+    for (const route of plan.routes.values()) {
+      expect(route).toMatchObject({ blocked: false, unavailable: false });
+      for (let i = 1; i < route.points.length; i += 1) {
+        const [a, b] = [route.points[i - 1]!, route.points[i]!];
+        expect(a.x === b.x || a.y === b.y).toBe(true);
+        for (const card of nodes.filter((n) => !['done', 'work'].includes(n.id)))
+          expect(
+            intersectsBox(a, b, {
+              id: card.id,
+              left: card.x,
+              right: card.x + card.width,
+              top: card.y,
+              bottom: card.y + card.height,
+            }),
+            card.id,
+          ).toBe(false);
+      }
+    }
+    // Clearing the flag lets the canvas direction decide: drawn forward, it is not routed.
+    const ordinary = edges.map((e) => ({ ...e, loopBack: false }));
+    expect(createRoutingPlan(nodes, ordinary).directions.get('return')).toBe(false);
   });
 
   it.each([-320, 320])('handles targets directly above/below (%s), plus self-loops', (y) => {
