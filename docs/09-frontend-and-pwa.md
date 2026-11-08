@@ -1113,10 +1113,16 @@ the lock for next-start reclamation without confirmed process cleanup. `drain-fa
 offers inspection, not an incompatible force transition. No browser control starts drain.
 
 Observation polls every ten seconds while the gateway is running and every two seconds
-once a shutdown phase is observed, with no automatic retry on failure, focus or
-reconnect. The stopped phase and observation errors stop this polling; ready/exiting
-continue to observe HTTP closure. An explicit **Check gateway state** performs a read, and
-the app's reachability probe refetches it after a transport failure once the API answers.
+once a shutdown phase is observed, with no automatic retry on focus or reconnect.
+The stopped phase and observation errors stop this polling; ready/exiting continue to
+observe HTTP closure. One narrow exception permits a single further read-only GET at
+the same two-second cadence: an exact Fastify closing-listener 503 body, following a
+validated non-running snapshot with a control token and no intervening observation
+error. The 503 remains unavailable, never proof that the gateway stopped. The allowance
+is consumed before the follow-up; another 503, permission refusal, malformed response or
+other observation error stops it. Only a newly validated snapshot restores ordinary
+observation. An explicit **Check gateway state** performs a read, and the app's reachability
+probe refetches it after a transport failure once the API answers.
 A key without `system:read` (401/403) shows no notice while the gateway runs.
 A lost connection after any healthy snapshot, including a quick drain between polls, says
 **Gateway stopped or disconnected**, preserving the distinction between an observed

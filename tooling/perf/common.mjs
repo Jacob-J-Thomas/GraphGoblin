@@ -17,6 +17,9 @@ export function assertSampleCount(count, total) {
 // Supported Node 22 macOS/Linux/Windows clock-resolution assumption, including Darwin's
 // quantized V8 TimeTicks and hrtime truncation. This is not a universal clock guarantee.
 export const PROFILE_CLOCK_UNCERTAINTY_US = 1000;
+// Node 22's inspector serializer narrows timestamp differences to signed int32 microseconds.
+const MAX_PROFILE_DELTA_US = 2_147_483_647;
+const MIN_PROFILE_DELTA_US = -2_147_483_648;
 // V8's CPU-profile clock and Node's hrtime can have different origins (including on macOS).
 // Assuming a stable unit-rate offset, use bracket bounds plus clock-resolution uncertainty.
 // Conflicting observed bounds fail; their intersection cannot prove absence of arbitrary drift.
@@ -83,13 +86,23 @@ export function profileSampleTimes(profile) {
     profile.samples.length !== profile.timeDeltas.length
   )
     throw new Error('Invalid CPU profile sample/delta arrays');
+  if (profile.endTime - profile.startTime > MAX_PROFILE_DELTA_US)
+    throw new Error('CPU profile span exceeds supported signed 32-bit delta range');
   let at = profile.startTime;
-  return profile.timeDeltas.map((delta) => {
-    if (!Number.isSafeInteger(delta) || delta < 0)
-      throw new Error('Invalid CPU profile time delta');
+  return profile.timeDeltas.map((delta, index) => {
+    // V8 can append samples out of timestamp order. Preserve each original sample/index
+    // pair; attribution tests timestamps independently and does not integrate durations.
+    if (
+      !Number.isSafeInteger(delta) ||
+      delta < MIN_PROFILE_DELTA_US ||
+      delta > MAX_PROFILE_DELTA_US
+    )
+      throw new Error(
+        `Invalid CPU profile time delta at index ${index} (${typeof delta}${typeof delta === 'number' ? ': ' + delta : ''})`,
+      );
     at += delta;
     if (!Number.isSafeInteger(at) || at < profile.startTime || at > profile.endTime)
-      throw new Error('CPU profile sample timestamp is outside its profile');
+      throw new Error(`CPU profile sample timestamp is outside its profile at index ${index}`);
     return at;
   });
 }

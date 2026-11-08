@@ -94,9 +94,12 @@ test('drain is visible everywhere, expiry offers choices, waiting has no timer, 
   const g = await gateway();
   let restarted: Awaited<ReturnType<typeof gateway>> | undefined;
   let shutdownReads = 0;
+  let shutdownPosts = 0;
   page.on('request', (request) => {
     if (new URL(request.url()).pathname === '/system/shutdown' && request.method() === 'GET')
       shutdownReads++;
+    if (new URL(request.url()).pathname === '/system/shutdown' && request.method() === 'POST')
+      shutdownPosts++;
   });
   const release = join(g.directory, 'release');
   const started = join(g.directory, 'started');
@@ -188,10 +191,52 @@ test('drain is visible everywhere, expiry offers choices, waiting has no timer, 
     expect((await g.call('/system/shutdown'))['phase']).toBe('draining');
     await other.close();
     expect((await g.call('/system/shutdown'))['phase']).toBe('draining');
+    // Deterministically cover Fastify's final keep-alive 503, observed in the original CI
+    // failure. Only this GET response is a fixture; the next read reaches the real closed
+    // gateway. No hop-by-hop Connection header is supplied, as a proxy can strip it.
+    let closingResponses = 0;
+    let closingFollowUpReads = 0;
+    await page.route(g.origin + '/system/shutdown', async (route) => {
+      if (route.request().method() === 'GET' && closingResponses === 0) {
+        closingResponses++;
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: 'Service Unavailable',
+            message: 'Service Unavailable',
+            statusCode: 503,
+          }),
+        });
+      } else {
+        if (route.request().method() === 'GET') {
+          closingFollowUpReads++;
+          await g.exited;
+        }
+        await route.continue();
+      }
+    });
+    const postsBeforeClosingRead = shutdownPosts;
+    await expect(
+      page.getByRole('heading', { name: 'Cannot read gateway shutdown state', exact: true }),
+    ).toBeVisible();
+    expect(closingResponses).toBe(1);
+    await expect(page.getByText('Gateway stopped or disconnected', { exact: true })).toHaveCount(0);
+    await testInfo.attach('controlled-closing-status-response', {
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 503,
+        responses: closingResponses,
+        actualGatewayStillDraining: (await g.call('/system/shutdown'))['phase'] === 'draining',
+      }),
+    });
     await writeFile(release, 'finish');
     await expect.poll(() => g.child.exitCode, { timeout: 30_000 }).toBe(0);
     expect(await g.exited).toBe(0);
     await expect(page.getByText('Gateway stopped or disconnected', { exact: true })).toBeVisible();
+    expect(closingResponses).toBe(1);
+    expect(closingFollowUpReads).toBe(1);
+    expect(shutdownPosts).toBe(postsBeforeClosingRead);
     await expect(access(join(g.directory, 'graphgoblin.lock'))).rejects.toMatchObject({
       code: 'ENOENT',
     });

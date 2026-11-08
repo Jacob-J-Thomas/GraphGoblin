@@ -1,9 +1,10 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
-import type { ResponseBody } from '@graphgoblin/api-client';
+import { useState } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GraphGoblinApiError, type ResponseBody } from '@graphgoblin/api-client';
 import { FakeApi, problem, runRecord } from '../__fixtures__/fake-api.js';
-import { renderApp, renderWith } from '../__fixtures__/render.js';
+import { renderApp, renderWith, type Rendered } from '../__fixtures__/render.js';
 import { ShutdownNotice } from './ShutdownNotice.js';
 
 type State = ResponseBody<'/system/shutdown', 'get'>;
@@ -397,5 +398,231 @@ describe('gateway shutdown notice', () => {
     expect(screen.getByRole('heading', { name: 'Gateway is draining' })).toBeInTheDocument();
     view.unmount();
     expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+  });
+});
+
+describe('one closing-listener status observation', () => {
+  const closingBody = {
+    error: 'Service Unavailable',
+    message: 'Service Unavailable',
+    statusCode: 503,
+  };
+  const closing = () => Response.json(closingBody, { status: 503 });
+  const advance = (milliseconds: number) => act(() => vi.advanceTimersByTimeAsync(milliseconds));
+  const reads = (view: Rendered) => view.api.callsTo('GET', '/system/shutdown').length;
+  async function observe(view: Rendered, handler: () => Response) {
+    view.api.override('GET /system/shutdown', handler);
+    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
+    await advance(0);
+  }
+  async function mount(initial = state('draining')) {
+    const { api } = fixture(initial);
+    const view = renderWith(<ShutdownNotice />, '/', api);
+    await advance(0);
+    expect(view.queryClient.getQueryData(['gateway-shutdown'])).toEqual(initial);
+    return view;
+  }
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  it('keeps the closing 503 unavailable, observes transport closure once at two seconds, then stops', async () => {
+    const view = await mount();
+    let calls = 0;
+    await observe(view, () => {
+      if (++calls === 1) return closing();
+      throw new TypeError('actual listener closed');
+    });
+    expect(
+      screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+    ).toBeVisible();
+    expect(screen.queryByText('Gateway stopped or disconnected')).not.toBeInTheDocument();
+    expect(view.queryClient.getQueryState(['gateway-shutdown'])?.error).toMatchObject({
+      status: 503,
+      code: 'HTTP_503',
+    });
+    expect(view.queryClient.getQueryData(['gateway-shutdown'])).toEqual(state('draining'));
+    expect(screen.queryByRole('button', { name: 'Keep waiting' })).not.toBeInTheDocument();
+    expect(reads(view)).toBe(2);
+    await advance(1999);
+    expect(reads(view)).toBe(2);
+    await advance(1);
+    expect(reads(view)).toBe(3);
+    // TanStack batches the resulting render on a zero-delay task after the read settles.
+    await advance(1);
+    expect(screen.getByRole('heading', { name: 'Gateway stopped or disconnected' })).toBeVisible();
+    expect(reads(view)).toBe(3);
+    await advance(6000);
+    expect(reads(view)).toBe(3);
+    expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+  });
+
+  it('does not replenish the allowance after repeated 503 or a component remount', async () => {
+    let remount: () => void = () => {
+      throw new Error('Observer is not mounted');
+    };
+    function Observer() {
+      const [generation, setGeneration] = useState(0);
+      remount = () => setGeneration((value) => value + 1);
+      return <ShutdownNotice key={generation} />;
+    }
+    const { api } = fixture(state('draining'));
+    const view = renderWith(<Observer />, '/', api);
+    await advance(0);
+    await observe(view, closing);
+    await advance(2000);
+    expect(reads(view)).toBe(3);
+    await advance(6000);
+    expect(reads(view)).toBe(3);
+    act(() => remount());
+    await advance(0);
+    const afterMount = reads(view);
+    expect(afterMount).toBeLessThanOrEqual(4);
+    await advance(6000);
+    expect(reads(view)).toBe(afterMount);
+    expect(
+      screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+    ).toBeVisible();
+    expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+  });
+
+  it('does not rearm stale data after another observation error', async () => {
+    const view = await mount();
+    await observe(view, () => problem(500, 'OTHER_FAILURE'));
+    await observe(view, closing);
+    const count = reads(view);
+    await advance(6000);
+    expect(reads(view)).toBe(count);
+    expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+  });
+
+  it.each([
+    ['ordinary problem', { status: 503, code: 'UNAVAILABLE' }, 503],
+    ['extra field', { ...closingBody, extra: true }, 503],
+    ['different message', { ...closingBody, message: 'Try later' }, 503],
+    ['array body', [closingBody], 503],
+    ['null body', null, 503],
+    ['text body', 'Service Unavailable', 503],
+    ['different status', closingBody, 500],
+  ] as const)('stops on %s instead of treating it as closing', async (_name, body, status) => {
+    const view = await mount();
+    await observe(view, () => Response.json(body, { status }));
+    const count = reads(view);
+    await advance(6000);
+    expect(reads(view)).toBe(count);
+    expect(
+      screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+    ).toBeVisible();
+    expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+  });
+
+  it('does not qualify a closing body while the last validated phase is running', async () => {
+    const view = await mount(state('running'));
+    await observe(view, closing);
+    await advance(6000);
+    expect(reads(view)).toBe(2);
+    expect(
+      screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+    ).toBeVisible();
+  });
+
+  it('does not qualify a closing body without a prior snapshot', async () => {
+    const api = new FakeApi();
+    api.override('GET /system/shutdown', closing);
+    const view = renderWith(<ShutdownNotice />, '/', api);
+    await advance(6000);
+    expect(reads(view)).toBe(1);
+    expect(
+      screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+    ).toBeVisible();
+  });
+
+  it('refuses an unknown phase rather than retaining it as a qualifying snapshot', async () => {
+    const api = new FakeApi();
+    api.override('GET /system/shutdown', () => Response.json({ ...state(), phase: 'unknown' }));
+    const view = renderWith(<ShutdownNotice />, '/', api);
+    await advance(0);
+    expect(view.queryClient.getQueryData(['gateway-shutdown'])).toBeUndefined();
+    await observe(view, closing);
+    const count = reads(view);
+    await advance(6000);
+    expect(reads(view)).toBe(count);
+  });
+
+  it.each([401, 403, 500, 'malformed'] as const)(
+    'stops when the single follow-up returns %s',
+    async (outcome) => {
+      const view = await mount();
+      let count = 0;
+      await observe(view, () => {
+        if (++count === 1) return closing();
+        return outcome === 'malformed'
+          ? Response.json({ ...state('draining'), controlToken: '' })
+          : problem(outcome, 'REFUSED');
+      });
+      await advance(2000);
+      expect(reads(view)).toBe(3);
+      const error = view.queryClient.getQueryState(['gateway-shutdown'])?.error;
+      if (outcome !== 'malformed') {
+        expect(error).toBeInstanceOf(GraphGoblinApiError);
+        expect(error).toMatchObject({ status: outcome });
+      }
+      await advance(6000);
+      expect(reads(view)).toBe(3);
+      expect(
+        screen.getByRole('heading', { name: 'Cannot read gateway shutdown state' }),
+      ).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Force stop' })).not.toBeInTheDocument();
+      expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+    },
+  );
+
+  it.each(['running', 'forcing'] as const)(
+    'adopts a validated %s follow-up with its new control token',
+    async (phase) => {
+      const view = await mount(state('ready'));
+      const next = { ...state(phase), controlToken: 'new-incarnation-token' };
+      let count = 0;
+      await observe(view, () => (++count === 1 ? closing() : Response.json(next)));
+      await advance(2000);
+      expect(view.queryClient.getQueryData(['gateway-shutdown'])).toEqual(next);
+      await advance(1);
+      if (phase === 'running')
+        expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument();
+      else {
+        expect(screen.getByRole('heading', { name: 'Gateway is force stopping' })).toBeVisible();
+        // A genuinely new valid observation can qualify a later closing response.
+        await observe(view, closing);
+        const before = reads(view);
+        await advance(2000);
+        expect(reads(view)).toBe(before + 1);
+        await advance(6000);
+        expect(reads(view)).toBe(before + 1);
+      }
+      expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
+    },
+  );
+
+  it('accepts the validated current state of a guarded 409 without replaying the action', async () => {
+    const view = await mount(state('awaiting-choice'));
+    const current = { ...state('forcing'), controlToken: 'after-another-control' };
+    view.api.override('POST /system/shutdown', () => Response.json(current, { status: 409 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep waiting' }));
+    await advance(0);
+    expect(view.queryClient.getQueryData(['gateway-shutdown'])).toEqual(current);
+    await observe(view, closing);
+    const count = reads(view);
+    await advance(2000);
+    expect(reads(view)).toBe(count + 1);
+    await advance(6000);
+    expect(reads(view)).toBe(count + 1);
+    expect(view.api.callsTo('POST', '/system/shutdown')).toHaveLength(1);
+    expect(
+      view.api.callsTo('POST', '/system/shutdown')[0]!.headers.get('x-graphgoblin-shutdown-token'),
+    ).toBe('fake-awaiting-choice');
   });
 });

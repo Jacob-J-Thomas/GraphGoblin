@@ -181,7 +181,7 @@ test('CPU clock mapping refuses malformed, drifting, collapsed, and out-of-profi
   );
 });
 
-test('CPU sample timestamps reject missing, nonfinite, negative and out-of-profile deltas', () => {
+test('CPU sample timestamps reject malformed arrays, deltas and every out-of-profile timestamp', () => {
   const profile = { startTime: 100, endTime: 200, samples: [1, 2, 3], timeDeltas: [0, 50, 50] };
   assert.deepEqual(profileSampleTimes(profile), [100, 150, 200]);
   for (const invalid of [
@@ -192,9 +192,22 @@ test('CPU sample timestamps reject missing, nonfinite, negative and out-of-profi
     { ...profile, endTime: 100 },
   ])
     assert.throws(() => profileSampleTimes(invalid), /sample\/delta/);
-  for (const delta of [NaN, Infinity, -1, 0.5])
+  for (const delta of [
+    NaN,
+    Infinity,
+    0.5,
+    '1',
+    2_147_483_648,
+    -2_147_483_649,
+    Number.MAX_SAFE_INTEGER,
+  ])
     assert.throws(() => profileSampleTimes({ ...profile, timeDeltas: [delta, 0, 0] }), /delta/);
-  assert.throws(() => profileSampleTimes({ ...profile, timeDeltas: [101, 0, 0] }), /outside/);
+  for (const timeDeltas of [
+    [-1, 0, 0],
+    [50, -60, 10],
+    [101, -100, 0],
+  ])
+    assert.throws(() => profileSampleTimes({ ...profile, timeDeltas }), /outside/);
   assert.throws(
     () =>
       profileSampleTimes({
@@ -204,6 +217,50 @@ test('CPU sample timestamps reject missing, nonfinite, negative and out-of-profi
         timeDeltas: [20],
       }),
     /outside/,
+  );
+});
+
+test('signed sample deltas retain node identity when a backwards timestamp re-enters a window', () => {
+  const profile = {
+    startTime: 100_000,
+    endTime: 300_000,
+    samples: [11, 22, 33, 44],
+    timeDeltas: [60_000, 80_000, -60_000, 80_000],
+  };
+  const original = structuredClone(profile);
+  const timestamps = profileSampleTimes(profile);
+  assert.deepEqual(timestamps, [160_000, 240_000, 180_000, 260_000]);
+  const window = mapProfileWindow(
+    { startUs: 149_000, endUs: 201_000 },
+    [
+      { beforeUs: 100_000, afterUs: 100_000, profileUs: 100_000 },
+      { beforeUs: 300_000, afterUs: 300_000, profileUs: 300_000 },
+    ],
+    profile,
+  );
+  const attributed = timestamps.flatMap((at, index) =>
+    at >= window.startUs && at <= window.endUs ? [{ node: profile.samples[index], at }] : [],
+  );
+  assert.deepEqual(attributed, [
+    { node: 11, at: 160_000 },
+    { node: 33, at: 180_000 },
+  ]);
+  assertSampleCount(attributed.length, profile.samples.length);
+  assert.deepEqual(profile, original);
+});
+
+test('CPU delta reconstruction refuses profiles with ambiguous signed32 spans', () => {
+  const max = 2_147_483_647;
+  const profile = {
+    startTime: 1,
+    endTime: 1 + max,
+    samples: [1, 2, 3],
+    timeDeltas: [max, -max, 0],
+  };
+  assert.deepEqual(profileSampleTimes(profile), [1 + max, 1, 1]);
+  assert.throws(
+    () => profileSampleTimes({ ...profile, endTime: 2 + max }),
+    /span exceeds supported/,
   );
 });
 

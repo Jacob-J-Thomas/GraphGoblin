@@ -180,6 +180,12 @@ only `replay --passes=100`, `browser --passes=100`, and `readiness`.
   than proving the absence of arbitrary drift. Only samples inside the conservative
   execution window are counted. Conflicting bounds, an empty mapped window, or
   invalid sample/delta arrays and timestamps fail the measurement.
+  V8 can record samples out of timestamp order, so signed 32-bit deltas are
+  reconstructed in their original sample/index order. Each cumulative timestamp
+  must stay within the full profile; samples are never sorted, clamped or dropped.
+  Full profiles spanning more than 2,147,483,647 microseconds (about 35 minutes
+  47 seconds) are refused as ambiguous for that signed serialization, rather than
+  guessing how to unwrap a timestamp.
   Filtered sample counts must be positive and at most the profile total. Self-sample counts identify candidates, not causal speedup percentages.
 - SSE clients use a raw HTTP/1.1 socket with a 64 KiB high-water mark. The slow
   reader pauses for at least one second initially, then `--pause-ms` between
