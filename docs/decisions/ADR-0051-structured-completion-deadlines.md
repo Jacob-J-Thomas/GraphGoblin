@@ -52,7 +52,12 @@ busy event loop delays a timer, and handles both late fulfillment and rejection.
 Long timers re-arm in chunks no larger than Node's 2,147,483,647 ms timer range.
 Timeout is the resumable `STRUCTURED_COMPLETION_TIMEOUT` with `details.timeoutMs`;
 Both paths retain the completion provider, resolved model and effort in
-`details.provenance`. A deliberate Resume can repeat a read-only evaluation after its external cause clears.
+`details.provenance`. A deliberate Resume can repeat an evaluation after its external cause clears.
+With configured plugins inherited under [ADR-0065](ADR-0065-codex-inherits-configured-plugins.md),
+the read-only command sandbox does not confine plugin service authority or guarantee a
+side-effect-free evaluation. Effects may already have occurred before a timeout, and
+Resume may repeat a plugin action; no live mutating-plugin behavior is established by
+the harmless echo fixture used for that policy change.
 No automatic retry is introduced. Explicit run cancellation remains status `cancelled`
 and has no timeout failure code. Existing terminal-event arbitration remains authoritative.
 
