@@ -72,3 +72,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0063: Loop turns run without the machine's personal extensions](ADR-0063-loop-turns-without-personal-extensions.md) switches off the machine's Codex MCP servers, plugins, apps, memories, goals, sub-agents, hooks and `notify` program for every loop turn, lets a node turn a server back on through its config overrides, and records what a turn still inherits (#423).
 
 [ADR-0064: Windows desktop and taskbar launcher](ADR-0064-windows-desktop-launcher.md) records gateway readiness and identity, actual SQLite-file ownership, native shortcut/window relaunch identity and unchanged deliberate shutdown (#276, #325).
+
+[ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).

@@ -199,7 +199,13 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
 
-The machine's extensions are switched off for every loop turn ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory. It starts the turn with every listed MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.plugins`, `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; servers are therefore disabled by name.
+Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
+
+LLM decisions and `coerce`/output-transform repairs use separate structured calls with no node overrides. Their current callers supply no working directory, so those calls start in a fresh temporary directory and inherit user/global Codex configuration, not the caller's inference override or trusted-project layer. Disable the plugin feature or an individual plugin in effective user/global configuration to exclude it from those calls; this also changes ordinary Codex sessions. There is no per-node structured-call plugin opt-out.
+
+Other extension isolation remains ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory **with plugins switched off only for discovery**, so plugin-owned servers are not listed and then suppressed. It starts the turn with every listed standalone MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; standalone servers are therefore disabled by name and remain available through explicit node overrides.
+
+Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded; [#442](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/442) tracks diagnostics for that limit.
 
 Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. A listed name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). An override key that breaks it is refused by the adapter with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted.
 
@@ -207,7 +213,7 @@ A loop turn still inherits from the machine:
 
 - the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
 - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
-- the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`.
+- the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
 
 | Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                                                                          |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -256,9 +262,14 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 ### Codex structured completions and decider
 
 `CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema,
-sandbox `read-only`, approval `never`, no network and no web search, in the request's
+sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+Configured plugins are inherited through the common harness, including their tools; the
+read-only sandbox controls local commands rather than the authority of plugin services.
+The engine's LLM decision and coerce-repair callers supply neither a working directory
+nor node config overrides, so these calls use the fresh-directory/user-configuration
+behavior described above. Their service calls are not guaranteed to be side-effect free.
 `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks for `{ route, confidence, reasoning }`,
 where route is an enum of declared route IDs. Schemas follow strict structured-output
 rules; the adapter validates the entire answer and confidence bounds without clamping
@@ -386,7 +397,7 @@ Adapter tests replay recorded JSONL event streams captured from real sessions, s
 
 LLM decisions send rendered Liquid instructions, `{id,label}` route declarations, prepared context and resolved model/effort to `DeciderPort.route`. Exactly `route`, `confidence` and `reasoning` are required; the schema forbids additional properties and constrains route to submitted IDs. The adapter and engine check membership and finite confidence in [0,1]. Confidence is informational with no gate; reasoning is truncated to 2,048 characters. There is one completion, without repair or fallback. Separate `evaluateBoolean` requests serve temporary exit predicates.
 
-Decision nodes with evaluation kind `llm` and harness `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. These Codex calls use the installed account login; provider authentication and quota failures are reported normally. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
+LLM decisions and the `coerce` operation's output-transform repairs use fresh Codex structured threads with an output schema, a read-only command sandbox, approval `never`, no command network access and no web search. They inherit user/global plugins without the caller's node override or trusted-project layer. Inference output-schema repair instead continues on the inference node's own harness session and retains its options and working directory. These Codex calls use the installed account login; provider authentication and quota failures are reported normally. Plugin tools retain their service authority subject to CLI policy and service authentication: a read-only command sandbox guarantees neither no file changes through a service nor side-effect-free evaluation. Implemented by `CodexStructured` and `CodexDecider`, with inference repair on `HarnessPort`.
 
 ## Jev decider (Decided, M4)
 
