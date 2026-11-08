@@ -14,6 +14,85 @@ export function assertSampleCount(count, total) {
   if (!Number.isInteger(count) || count <= 0 || count > total)
     throw new Error(`Invalid CPU profile window: ${count} of ${total} samples`);
 }
+// Supported Node 22 macOS/Linux/Windows clock-resolution assumption, including Darwin's
+// quantized V8 TimeTicks and hrtime truncation. This is not a universal clock guarantee.
+export const PROFILE_CLOCK_UNCERTAINTY_US = 1000;
+// V8's CPU-profile clock and Node's hrtime can have different origins (including on macOS).
+// Assuming a stable unit-rate offset, use bracket bounds plus clock-resolution uncertainty.
+// Conflicting observed bounds fail; their intersection cannot prove absence of arbitrary drift.
+export function mapProfileWindow(window, anchors, profile) {
+  const timestamp = (value) => Number.isSafeInteger(value) && value > 0;
+  if (
+    !window ||
+    !timestamp(window.startUs) ||
+    !timestamp(window.endUs) ||
+    window.endUs <= window.startUs ||
+    !profile ||
+    !timestamp(profile.startTime) ||
+    !timestamp(profile.endTime) ||
+    profile.endTime <= profile.startTime ||
+    !Array.isArray(anchors) ||
+    anchors.length < 2
+  )
+    throw new Error('Invalid CPU profile clock calibration');
+  let lower = -Infinity,
+    upper = Infinity,
+    first = Infinity,
+    last = -Infinity;
+  for (const anchor of anchors) {
+    if (
+      !anchor ||
+      !timestamp(anchor.beforeUs) ||
+      !timestamp(anchor.afterUs) ||
+      !timestamp(anchor.profileUs) ||
+      anchor.afterUs < anchor.beforeUs ||
+      anchor.profileUs < profile.startTime ||
+      anchor.profileUs > profile.endTime
+    )
+      throw new Error('Invalid CPU profile clock anchor');
+    lower = Math.max(lower, anchor.profileUs - anchor.afterUs - PROFILE_CLOCK_UNCERTAINTY_US);
+    upper = Math.min(upper, anchor.profileUs - anchor.beforeUs + PROFILE_CLOCK_UNCERTAINTY_US);
+    first = Math.min(first, anchor.beforeUs);
+    last = Math.max(last, anchor.afterUs);
+  }
+  if (lower > upper) throw new Error('CPU profile clock offsets changed during measurement');
+  const mapped = {
+    startUs: window.startUs + upper,
+    endUs: window.endUs + lower,
+    uncertaintyUs: PROFILE_CLOCK_UNCERTAINTY_US,
+  };
+  if (
+    mapped.startUs >= mapped.endUs ||
+    window.startUs < first ||
+    window.endUs > last ||
+    mapped.startUs < profile.startTime ||
+    mapped.endUs > profile.endTime
+  )
+    throw new Error('CPU profile execution window is outside calibrated bounds');
+  return mapped;
+}
+export function profileSampleTimes(profile) {
+  if (
+    !profile ||
+    !Number.isSafeInteger(profile.startTime) ||
+    !Number.isSafeInteger(profile.endTime) ||
+    profile.startTime <= 0 ||
+    profile.endTime <= profile.startTime ||
+    !Array.isArray(profile.samples) ||
+    !Array.isArray(profile.timeDeltas) ||
+    profile.samples.length !== profile.timeDeltas.length
+  )
+    throw new Error('Invalid CPU profile sample/delta arrays');
+  let at = profile.startTime;
+  return profile.timeDeltas.map((delta) => {
+    if (!Number.isSafeInteger(delta) || delta < 0)
+      throw new Error('Invalid CPU profile time delta');
+    at += delta;
+    if (!Number.isSafeInteger(at) || at < profile.startTime || at > profile.endTime)
+      throw new Error('CPU profile sample timestamp is outside its profile');
+    return at;
+  });
+}
 // Fixed-size logarithmic histogram; percentile upper bounds are within 10% above 1 us.
 export class Timings {
   count = 0;

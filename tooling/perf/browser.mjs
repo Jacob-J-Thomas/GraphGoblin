@@ -2,6 +2,52 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dependency, sleep, json } from './common.mjs';
 
+// These functions are serialized into isolated browser pages by Playwright.
+export function initializeBrowserProbe() {
+  window.__perf = { longTasks: [], started: performance.now() };
+  new PerformanceObserver((list) => {
+    for (const entry of list.getEntries())
+      window.__perf.longTasks.push({ start: entry.startTime, duration: entry.duration });
+  }).observe({ type: 'longtask', buffered: true });
+}
+
+export function readBrowserProbe() {
+  return {
+    entries: window.__perf.longTasks,
+    nodes: document.querySelectorAll('*').length,
+    timelineItems: document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0,
+    timelineNodes:
+      document.querySelector('ol[aria-label="Timeline"]')?.querySelectorAll('*').length ?? 0,
+    sessionStorageBytes: Object.values(sessionStorage).reduce(
+      (sum, value) => sum + value.length * 2,
+      0,
+    ),
+    heap: performance.memory
+      ? { used: performance.memory.usedJSHeapSize, total: performance.memory.totalJSHeapSize }
+      : null,
+  };
+}
+
+export function afterBrowserPaint() {
+  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+export function timelineHistoryReady(target) {
+  const count = document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0;
+  const heading = [...document.querySelectorAll('h1,h2,h3')]
+    .map((h) => h.textContent)
+    .find((text) => /^Timeline \(/.test(text ?? ''));
+  const reported = Number(/^Timeline \((\d+) events/.exec(heading ?? '')?.[1] ?? 0);
+  const buttons = [...document.querySelectorAll('ol[aria-label="Timeline"] button')];
+  const last = buttons.at(-1);
+  const renderedTail = Number(
+    last?.getAttribute('data-seq') ??
+      last?.querySelector('span')?.textContent?.replace('#', '') ??
+      0,
+  );
+  return Math.max(count, reported) >= target && renderedTail >= target;
+}
+
 export async function measureBrowser({ base, runId, output, durationMs, warmupPass, call }) {
   const waiting = performance.now();
   for (;;) {
@@ -12,10 +58,12 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
   }
   const warmupMs = performance.now() - waiting;
   const { chromium } = await dependency('@playwright/test', 'web');
-  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const channel =
+    process.env.GG_E2E_BROWSER_CHANNEL ?? (process.platform === 'win32' ? 'msedge' : undefined);
+  const browser = await chromium.launch({ ...(channel ? { channel } : {}), headless: true });
   const results = {
     browser: browser.version(),
-    channel: 'msedge',
+    channel: channel ?? 'chromium',
     headless: true,
     shellDefinition:
       'navigation start to visible heading and actionable link or Events state, then two animation frames',
@@ -50,13 +98,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       page.setDefaultTimeout(120_000);
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await page.addInitScript(() => {
-        window.__perf = { longTasks: [], started: performance.now() };
-        new PerformanceObserver((list) => {
-          for (const entry of list.getEntries())
-            window.__perf.longTasks.push({ start: entry.startTime, duration: entry.duration });
-        }).observe({ type: 'longtask', buffered: true });
-      });
+      await page.addInitScript(initializeBrowserProbe);
       const session = await context.newCDPSession(page);
       await session.send('Performance.enable');
       const beforeRun = await json(base, '/runs/' + runId);
@@ -67,20 +109,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       const metricErrors = [];
       const collect = async () => {
         const at = performance.now();
-        const probe = await page.evaluate(() => ({
-          entries: window.__perf.longTasks,
-          nodes: document.querySelectorAll('*').length,
-          timelineItems: document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0,
-          timelineNodes:
-            document.querySelector('ol[aria-label="Timeline"]')?.querySelectorAll('*').length ?? 0,
-          sessionStorageBytes: Object.values(sessionStorage).reduce(
-            (sum, value) => sum + value.length * 2,
-            0,
-          ),
-          heap: performance.memory
-            ? { used: performance.memory.usedJSHeapSize, total: performance.memory.totalJSHeapSize }
-            : null,
-        }));
+        const probe = await page.evaluate(readBrowserProbe);
         const cdp = await session.send('Performance.getMetrics');
         metrics.push({
           elapsedMs: performance.now() - began,
@@ -111,10 +140,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
         else if (name === 'events-empty')
           await page.getByText('No inbound events yet.', { exact: true }).waitFor();
         else await page.getByRole('table').waitFor();
-        await page.evaluate(
-          () =>
-            new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-        );
+        await page.evaluate(afterBrowserPaint);
         shellReadyMs = performance.now() - began;
         if (name === 'inspector') {
           await page
@@ -123,21 +149,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
             .first()
             .waitFor();
           firstRowsMs = performance.now() - began;
-          await page.waitForFunction((target) => {
-            const count = document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0;
-            const heading = [...document.querySelectorAll('h1,h2,h3')]
-              .map((h) => h.textContent)
-              .find((text) => /^Timeline \(/.test(text ?? ''));
-            const reported = Number(/^Timeline \((\d+) events/.exec(heading ?? '')?.[1] ?? 0);
-            const buttons = [...document.querySelectorAll('ol[aria-label="Timeline"] button')];
-            const last = buttons.at(-1);
-            const renderedTail = Number(
-              last?.getAttribute('data-seq') ??
-                last?.querySelector('span')?.textContent?.replace('#', '') ??
-                0,
-            );
-            return Math.max(count, reported) >= target && renderedTail >= target;
-          }, beforeRun.lastEventSeq);
+          await page.waitForFunction(timelineHistoryReady, beforeRun.lastEventSeq);
           historyReadyMs = performance.now() - began;
           historyReadyCount = await page
             .getByRole('list', { name: 'Timeline', exact: true })

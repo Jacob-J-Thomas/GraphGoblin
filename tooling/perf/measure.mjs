@@ -8,7 +8,14 @@ import { once } from 'node:events';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:net';
-import { root, sleep, json, assertSampleCount } from './common.mjs';
+import {
+  root,
+  sleep,
+  json,
+  assertSampleCount,
+  mapProfileWindow,
+  profileSampleTimes,
+} from './common.mjs';
 import { readReplay } from './replay.mjs';
 import { summarize } from './summary.mjs';
 
@@ -582,6 +589,8 @@ try {
   // Raw profile is retained; a stable table makes sampled attribution inspectable without DevTools.
   try {
     const profile = JSON.parse(await readFile(join(output, 'api.cpuprofile'), 'utf8'));
+    const anchors = JSON.parse(await readFile(join(output, 'profile-clock.json'), 'utf8'));
+    const sampleTimes = profileSampleTimes(profile);
     const hits = new Map(),
       nodes = new Map(profile.nodes.map((node) => [node.id, node]));
     for (const id of profile.samples ?? []) {
@@ -591,12 +600,13 @@ try {
     }
     for (const result of summary.cases) {
       if (!result.profileWindow) continue;
+      const window = mapProfileWindow(result.profileWindow, anchors, profile);
+      result.calibratedProfileWindow = window;
       const caseHits = new Map();
-      let at = profile.startTime,
-        count = 0;
+      let count = 0;
       for (let index = 0; index < (profile.samples?.length ?? 0); index++) {
-        at += profile.timeDeltas[index];
-        if (at < result.profileWindow.startUs || at > result.profileWindow.endUs) continue;
+        const at = sampleTimes[index];
+        if (at < window.startUs || at > window.endUs) continue;
         const frame = nodes.get(profile.samples[index]).callFrame;
         const key = frame.url + ':' + (frame.lineNumber + 1) + ' ' + frame.functionName;
         caseHits.set(key, (caseHits.get(key) ?? 0) + 1);

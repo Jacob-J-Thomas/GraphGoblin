@@ -611,30 +611,52 @@ process.on('message', ({ id, command, args }) => {
     );
 });
 let profiler;
+const profileClock = [];
+let profileBegan;
+const profileNow = () => Number(process.hrtime.bigint() / 1000n);
 const profilePost = (method, params = {}) =>
   new Promise((resolve, reject) =>
     profiler.post(method, params, (error, result) => (error ? reject(error) : resolve(result))),
   );
-if (options.profileMode === 'inspector') {
+async function startProfile() {
   profiler = new Session();
   profiler.connect();
   await profilePost('Profiler.enable');
   await profilePost('Profiler.setSamplingInterval', { interval: 1000 });
+  const beforeUs = profileNow();
   await profilePost('Profiler.start');
+  profileBegan = { beforeUs, afterUs: profileNow() };
 }
-async function stopProfile() {
+async function stopProfile(calibration = false) {
   if (!profiler) return;
+  const beforeUs = profileNow();
   const { profile } = await profilePost('Profiler.stop');
-  await writeFile(
-    join(options.output, options.profileName ?? 'api.cpuprofile'),
-    JSON.stringify(profile),
+  const afterUs = profileNow();
+  profileClock.push(
+    { ...profileBegan, profileUs: profile.startTime },
+    { beforeUs, afterUs, profileUs: profile.endTime },
   );
+  if (!calibration)
+    await writeFile(
+      join(options.output, options.profileName ?? 'api.cpuprofile'),
+      JSON.stringify(profile),
+    );
+  await writeFile(join(options.output, 'profile-clock.json'), JSON.stringify(profileClock));
   profiler.disconnect();
   profiler = undefined;
 }
+await startProfile();
+// --cpu-prof remains the full process profile. A short inspector profile calibrates its
+// V8 clock before/after execution, outside measured workload windows.
+if (options.profileMode !== 'inspector') await stopProfile(true);
 process.on('disconnect', () => {
   void close()
-    .then(stopProfile)
+    .then(async () => {
+      if (options.profileMode !== 'inspector') {
+        await startProfile();
+        await stopProfile(true);
+      } else await stopProfile();
+    })
     .then(
       () => process.exit(0),
       (error) => {

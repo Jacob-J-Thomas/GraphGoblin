@@ -122,18 +122,62 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
     const env = Object.fromEntries(
       Object.entries(process.env).filter(([key]) => !key.startsWith('GG_')),
     );
-    const result = await exec(process.execPath, args, {
-      env,
-      windowsHide: true,
-      timeout: 180_000,
-      maxBuffer: 16 * 1024 * 1024,
-    });
+    if (workload === 'browser' && process.env.GG_E2E_BROWSER_CHANNEL !== undefined)
+      env.GG_E2E_BROWSER_CHANNEL = process.env.GG_E2E_BROWSER_CHANNEL;
+    let result;
+    try {
+      result = await exec(process.execPath, args, {
+        env,
+        windowsHide: true,
+        timeout: 180_000,
+        maxBuffer: 16 * 1024 * 1024,
+      });
+    } catch (error) {
+      const text = (value) => (typeof value === 'string' ? value.slice(0, 1500) : undefined);
+      let evidence;
+      try {
+        const raw = JSON.parse(await readFile(join(output, 'raw-summary.json'), 'utf8'));
+        evidence = {
+          error: text(raw.error),
+          profileError: text(raw.profileError),
+          closeError: text(raw.closeError),
+          memoryLogError: text(raw.memoryLogError),
+          correctnessFailure: raw.correctnessFailure === true,
+          correctness: raw.cases?.slice(0, 3).map(({ correctness }) => ({
+            ok: correctness?.ok,
+            succeeded: correctness?.succeeded,
+            nodeCountsOk: correctness?.nodeCountsOk,
+            unexpectedAttempts: correctness?.unexpectedAttempts,
+            historyValuesOk: correctness?.historyValuesOk,
+            returnsOk: correctness?.returnsOk,
+            replayOk: correctness?.replayOk,
+            recoveryOk: correctness?.recoveryOk,
+            browserOk: correctness?.browserOk,
+          })),
+        };
+      } catch (readError) {
+        evidence = { readError: readError.code ?? 'invalid summary' };
+      }
+      assert.fail(
+        'Measurement CLI failed: ' +
+          JSON.stringify({
+            workload,
+            code: error.code,
+            signal: error.signal,
+            killed: error.killed,
+            rawSummary: join(output, 'raw-summary.json'),
+            evidence,
+            stderr: typeof error.stderr === 'string' ? error.stderr.slice(-1500) : undefined,
+          }),
+      );
+    }
     assert.match(result.stdout, /PERF /);
     const summary = JSON.parse(await readFile(join(output, 'raw-summary.json'), 'utf8'));
     const compact = JSON.parse(await readFile(join(output, 'summary.json'), 'utf8'));
     recordings.set(workload, { output, summary });
     assert.equal(summary.workload, workload);
     assert.equal(summary.error, undefined);
+    assert.equal(summary.profileError, undefined);
     assert.equal(summary.correctnessFailure, undefined);
     assert.equal(summary.cases.length, 1);
     assert.equal(compact.cases.length, 1);
@@ -153,7 +197,11 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
       assert.ok(Number.isFinite(cold.startupToFirstResponseMs));
       // measure.mjs owns cleanup. Windows force-termination is not graceful-exit evidence.
       if (process.platform === 'linux') assert.equal(cold.exitCode, 0);
-    } else assert.equal(summary.cases[0].correctness.ok, true);
+    } else {
+      assert.equal(summary.cases[0].correctness.ok, true);
+      const samples = summary.cases[0].cpuSamples.count;
+      assert.ok(samples > 0 && samples <= summary.cpuProfile.samples);
+    }
   },
   200_000,
 );
