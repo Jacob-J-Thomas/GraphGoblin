@@ -671,6 +671,7 @@ describe('bounded allowlisted model installation', () => {
     const port = scripts();
     const fetcher = vi.fn<typeof fetch>();
     const operation = new LocalVoiceInstaller(directory, port, fetcher);
+    expect(operation.progress).toEqual({ state: 'idle', phase: 'idle', downloadedBytes: 0 });
     await operation.start();
     expect(operation.progress).toMatchObject({
       state: 'failed',

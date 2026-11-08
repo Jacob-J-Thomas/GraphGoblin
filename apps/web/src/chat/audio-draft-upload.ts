@@ -75,7 +75,7 @@ export class AudioDraftUpload {
     this.set({ phase: 'idle', saved: undefined, error: undefined });
     setChatSubmissionUnresolved(`${this.key}:upload`, false);
   };
-  check = (): Promise<ChatAudioUpload | undefined> => {
+  check = (localRecordingAvailable = false): Promise<ChatAudioUpload | undefined> => {
     if (this.checking) return this.checking;
     const saved = this.state.saved;
     if (!saved) return Promise.resolve(undefined);
@@ -133,8 +133,9 @@ export class AudioDraftUpload {
         else if (error instanceof ChatApiError && error.status === 404)
           this.set({
             phase: 'failed',
-            error:
-              'The gateway did not accept this upload. Send again while your recording is still in this open app.',
+            error: localRecordingAvailable
+              ? 'The gateway did not accept this upload. Send again while your recording is still in this open app.'
+              : 'The gateway did not accept this upload. Discard this voice draft, then record again.',
           });
         else
           this.set({
@@ -183,7 +184,7 @@ export class AudioDraftUpload {
       }
       // The request may have arrived. Lookup is read-only; never replace or replay it here.
       this.set({ phase: 'uncertain', error: 'Checking what happened…' });
-      await this.check();
+      await this.check(true);
       return undefined;
     }
   };

@@ -447,7 +447,12 @@ export class ChatRecorder {
         URL.revokeObjectURL(moduleUrl);
       }
       if (generation !== this.generation) return;
-      await Promise.race([resumed, setupStopped]);
+      await Promise.race([
+        resumed.catch(() => {
+          throw new Error('audio-start-failed');
+        }),
+        setupStopped,
+      ]);
       if (generation !== this.generation) return;
       if (context.state !== 'running') throw new Error('audio-start-failed');
       const node = new AudioWorkletNode(context, 'goblin-pcm-capture', {

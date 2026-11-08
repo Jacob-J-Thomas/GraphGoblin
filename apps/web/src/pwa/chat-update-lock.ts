@@ -2,6 +2,12 @@
 // the recorder can check the gate without importing the coordinator that inspects its drafts.
 const updateLocks = new Set<string>();
 let guardRuntimes = 0;
+let guardExpected = true;
+
+/** Entry points declare this before rendering; startup failures and disposal never disable it. */
+export function setChatUpdateGuardExpected(expected: boolean): void {
+  guardExpected = expected;
+}
 
 /** A transaction lock is separate from ordinary draft dirtiness. */
 export function getChatUpdateLocked(): boolean {
@@ -12,7 +18,10 @@ export function getChatUpdateLocked(): boolean {
     (guardRuntimes === 0 &&
       typeof navigator !== 'undefined' &&
       'serviceWorker' in navigator &&
-      !!navigator.locks)
+      !!navigator.locks &&
+      // Development can explicitly omit registration, but an existing controller can still
+      // update this page. Skipping registration alone does not make that page safe to use.
+      (guardExpected || !!navigator.serviceWorker?.controller))
   );
 }
 

@@ -1,12 +1,15 @@
 {
-  "snapshotUtc": "2026-11-08T17:55:32Z",
-  "candidateState": "dirty-intermediate",
+  "snapshotUtc": "2026-11-08T20:46:51Z",
+  "candidateState": "Verified af1 baseline;51b5f55a integration reference with subsequent UI work/final review pending",
   "notReleaseApproval": true,
   "boundaries": {
-    "repairPrCreated": false,
+    "repairPrCreated": true,
+    "repairPr": 454,
+    "repairPrState": "draft/held",
     "liveCutoverPerformed": false,
     "mergeAuthorized": false,
     "autoMergeAllowed": false,
+    "mergeQueueAllowed": false,
     "attachmentsDeferredIssue": 451
   },
   "realOllama": {
@@ -220,7 +223,8 @@
       }
     },
     "remainingFailure": "Tooling performance harness: seven failures involving macOS CPU-clock/browser assumptions; unavailable msedge executable among them. Repair/rerun pending.",
-    "webCoverage": "First run had four failures; later separate full run passed 2355 tests, 194 files."
+    "webCoverage": "First run had four failures; later separate full run passed 2355 tests, 194 files.",
+    "currentDisposition": "Historical combined run; its tooling failure is superseded for tooling by later corrected-input141-test integration pass. Does not establish final current-source gates."
   },
   "independentReviews": {
     "pairing": {
@@ -244,17 +248,43 @@
       "originalAlias": "fable-settings-pwa-review-result.json"
     },
     "browser-qa": {
-      "completedResult": false,
+      "completedResult": true,
       "model": "claude-fable-5-1",
-      "originalAlias": "fable-browser-qa-result.json"
+      "originalAlias": "fable-browser-initial.md",
+      "scope": "partial initial report; not completed final browser QA",
+      "priorInterruptedResultRetained": true
     }
   },
   "fableBrowser": {
-    "initialReportPresent": false,
-    "resetLocal": "2026-11-08 14:20 America/Chicago",
-    "plannedResumeLocal": "2026-11-08 14:25 America/Chicago",
-    "rootInitialWithheldUntilFableInitialFrozen": true,
-    "finalChangedCandidateReviewPending": true
+    "initialReportPresent": true,
+    "initialReportAlias": "fable-browser-initial.md",
+    "initialReportSha256": "e67d51a5bc34fba271f761083344dc22ea2c79a8f52eb968eafc0a1d716c972d",
+    "initialReportScope": "One partial pairing scenario out of four on intermediate bundle; revoke/hash tail and composer/voice/settings scripts unrun",
+    "frozenBeforeRootFindingsShared": true,
+    "priorInterruptedResultAlias": "fable-browser-qa-result.json",
+    "quotaHistory": {
+      "resetLocal": "2026-11-08 14:20 America/Chicago",
+      "resumePlannedLocal": "2026-11-08 14:25 America/Chicago",
+      "actualResumeCompleted": true
+    },
+    "crossCritiqueComplete": true,
+    "crossCritiqueAliases": [
+      "root-critique-fable-initial.md",
+      "fable-root-rebuttal.md"
+    ],
+    "designAliases": [
+      "fable-final-ui-design.md",
+      "fable-design-architecture-cross-review.md"
+    ],
+    "automatedRecordingEvidenceAcknowledged": true,
+    "finalChangedCandidateReviewPending": true,
+    "unrunManualPathsNotInferredFromAutomation": true,
+    "instrumentationCorrections": [
+      "Device counters watched wrong origin, not zero-request proof",
+      "Loop-ID404 is not real cross-conversation denial proof",
+      "Paired notice original claim is DOM/status-only",
+      "Root manual revocation covered reload only"
+    ]
   },
   "proxy": {
     "originalAlias": "proxy-test-receipt.json",
@@ -266,11 +296,12 @@
     "realPhoneTrustVerified": false
   },
   "unverified": [
-    "Physical microphone/phone/Safari capture and interruption",
-    "Phone keyboard/IME and home-Wi-Fi installation/trust",
-    "Live cloud credential/transcription and billing",
-    "Final independent browser initial/cross-critique",
-    "Final exact-candidate full gates/review/deployment/owner QA"
+    "Final current-source reviews/gates/CI/build/deployment/ownerQA",
+    "Remaining independent manual Fable scenarios and final live-open revoke",
+    "Fixed paired-notice geometry and current PairScreen outcomes",
+    "Physical microphone/phone/Safari/IME/interruption",
+    "Home-WiFi certificate trust/install/reachability",
+    "Live cloud credential/transcription/billing"
   ],
   "separatePackageCoverage": {
     "web": {
@@ -298,8 +329,8 @@
     "build": "passed: 11 tasks",
     "upgrade": "passed",
     "recoveryProcess": "passed",
-    "format": "rerun pending after active performance-harness edit",
-    "completeRepositoryGate": "not green"
+    "format": "Earlier passes retained; ongoing UI edits require final formatting/gates",
+    "completeRepositoryGate": "Earlier package and af1CI gates verified within named identities; final current-candidate gate pending"
   },
   "chatRestart": {
     "firstOriginalAlias": "test-chat-restart.log",
@@ -371,7 +402,235 @@
         "sha256": "dbfb854e6d187c8bce3950733c16c1689c75f312ae1cc3b3c258ae450310422a"
       }
     ],
-    "traceHandling": "Binary browser traces remain restricted in place; not copied by this packet."
+    "traceHandling": "Binary browser traces remain restricted in place; not copied by this packet.",
+    "scope": "Focused formatted-source capture baseline, not final application approval"
   },
-  "evidenceIntegrityUpdatedAtUtc": "2026-11-08T17:59:10Z"
+  "evidenceIntegrityUpdatedAtUtc": "2026-11-08T20:46:51Z",
+  "previousStatusSnapshotUtc": "2026-11-08T17:55:32Z",
+  "currentCandidate": {
+    "integrationReferenceCommit": "51b5f55af0a668a55c663501231545c2bf62fb1d",
+    "mainPr450Merged": true,
+    "isFinalReleaseCandidateApproved": false,
+    "workInProgress": [
+      "PairScreen presentation/state/storage correction",
+      "ChatSurface/GoblinApp paired-notice layout correction"
+    ],
+    "activeReviews": [
+      "Fable final UI source",
+      "Fable final core/proxy/deployment"
+    ],
+    "noFinalCiOrDeploymentClaim": true,
+    "diagnosticBuild": {
+      "passed": true,
+      "originalAlias": "combined-diagnostic-build.log",
+      "isFinalReleaseBuild": false
+    }
+  },
+  "verifiedBaseline": {
+    "commit": "af1c7b5ffff631dea1a471abaa394fe7465ead6f",
+    "ci": {
+      "originalAliases": [
+        "ci-af1-jobs.json",
+        "ci-af1-routing-receipt.json"
+      ],
+      "allFiveChecksSuccessful": true,
+      "checks": [
+        {
+          "name": "Template image",
+          "conclusion": "success"
+        },
+        {
+          "name": "Gates",
+          "conclusion": "success"
+        },
+        {
+          "name": "Windows launcher",
+          "conclusion": "success"
+        },
+        {
+          "name": "Browser",
+          "conclusion": "success"
+        },
+        {
+          "name": "Routing performance / routing",
+          "conclusion": "success"
+        }
+      ],
+      "workflowRunIds": [
+        42511186642,
+        42511186665
+      ],
+      "routingJobId": 128824397403
+    },
+    "chromium": {
+      "originalAliases": [
+        "browser-full-third-receipt.json",
+        "browser-full-third.log"
+      ],
+      "result": {
+        "exitCode": 0,
+        "passed": 456,
+        "skipped": 1,
+        "failed": 0,
+        "duration": "14.2m",
+        "workers": 1,
+        "retries": 0
+      },
+      "logSha256": "86aea0b3152f43428fefeb785195411a0b02d88b001bb1b8dc8f4f09593d611a",
+      "assetFileCount": 10,
+      "retainedArtifactCount": 289,
+      "sourceQualification": "Two comment-only native-keyboard qualification corrections; preserved separately. No functional delta from pushed af1 head.",
+      "commentOnlyDeltaSha256": "745e5976f777c47b4e9525957eb96c2665ae39fa7db81dce0c16d5ab97046869",
+      "scope": "Automated full Chromium baseline; not final independent manual Fable scenarios or physical/live-provider qualification"
+    },
+    "rootBrowserFollowup": {
+      "originalAliases": [
+        "root-browser-final.md",
+        "root-final-receipt.json"
+      ],
+      "singleExplicitModelSummaryObserved": true,
+      "staleAnnouncementAndNormalSendWordingObserved": true,
+      "pairedNoticeClaim": "DOM/status text only, not established visually",
+      "revocationScope": "Client reload only; live open-client no-reload remains final targeted check",
+      "markdownScope": "Visual hierarchy with styled paragraph headings, not semantic headings/full Markdown conformance"
+    },
+    "api": {
+      "originalAlias": "candidate-api-final.json",
+      "completedAt": "2026-11-08T18:35:34.036Z",
+      "checkCount": 11,
+      "allPassed": true,
+      "localProductionProbe": {
+        "route": "local",
+        "suitable": true,
+        "latencyMs": 1346,
+        "checkedAt": "2026-11-08T18:35:29.539Z"
+      },
+      "liveCloudUsed": false
+    },
+    "doesNotQualifyCurrentIntegrationHead": true
+  },
+  "combinedTooling": {
+    "integrationReferenceCommit": "51b5f55af0a668a55c663501231545c2bf62fb1d",
+    "originalAliases": [
+      "pr450-tooling-integration-receipt.md",
+      "tooling-pr450-integration-coverage.log"
+    ],
+    "testsPassed": 141,
+    "testFilesPassed": 15,
+    "durationSeconds": 103.08,
+    "branchesPercent": 91.25,
+    "functionsPercent": 91.61,
+    "linesPercent": 96.9,
+    "priorFailureAlias": "tooling-pr450-integration-missing-contrast.log",
+    "priorFailureDisposition": "Sparse-checkout omitted exact tracked contrast artifact; corrected-input pass retained alongside original failure",
+    "isFinalWholeRepositoryGate": false
+  },
+  "pairingRecovery": {
+    "contractCommit": "335c32f6711e1c22c50c9420fe6ba5f07ca799de",
+    "originalAliases": [
+      "pairing-recovery-architecture-advice.md",
+      "pairing-outcome-receipt.md",
+      "fable-final-ui-design.md",
+      "fable-design-architecture-cross-review.md"
+    ],
+    "rejectedRequires": "claim401 and saved-credential session401",
+    "unknownRecovery": "unconfirmed; exact identity retained",
+    "retryMayPost": true,
+    "automaticRetryOrIdentityRotation": false,
+    "connectionFocusedPassed": 32,
+    "compatibilityFocusedPassed": 74,
+    "pairScreenImplementation": "active; final regression/browser receipt pending",
+    "severity": "Recovery correctness defect; no authorization bypass found",
+    "designPrecision": [
+      "Storage error before new persistence differs from error after saved/admitted attempt",
+      "Implicit rejected form/field Enter inert; explicit focused buttons operable",
+      "Offline permits local replacement while blocking network retry",
+      "Avoid permanent future-rejection or unconditional no-duplicate copy"
+    ]
+  },
+  "boundedFableDiagnostic": {
+    "originalAliases": [
+      "fable-layout-diagnostic.md",
+      "fable-layout-diagnostic.json",
+      "fable-layout-diagnostic-result.json"
+    ],
+    "commit": "51b5f55af0a668a55c663501231545c2bf62fb1d",
+    "actualModel": "claude-fable-5-1",
+    "isFinalQa": false,
+    "h1": {
+      "state": "confirmed defect; repair/retest active",
+      "viewports": [
+        [
+          360,
+          740
+        ],
+        [
+          1280,
+          860
+        ]
+      ],
+      "emptyOverflowPixels": 37,
+      "scrollTopPixels": 37,
+      "headerBottomPixels": 61,
+      "noticeTopPixels": 24,
+      "noticeBottomPixels": 55.5,
+      "claim": "Notice rendered in DOM but occluded by sticky header; structural height plus initial follow behavior",
+      "noFixedBuildPassYet": true
+    },
+    "u4CopyTouch": "passed on diagnosed build; no change requested",
+    "h2IdleInstallerCopy": "unused API-only low inconsistency; not shown in sheet/settings",
+    "h3Font": "quantified warnings/duplicate fetches without measured visible delay; observation-only; no fix"
+  },
+  "pendingEvidence": [
+    {
+      "id": "final_pairing_ui",
+      "state": "active implementation",
+      "required": "Frozen PairScreen source/test receipt and final consumed-code/uncertain-recovery browser outcomes",
+      "receiptAlias": null,
+      "sha256": null
+    },
+    {
+      "id": "paired_notice_fixed_geometry",
+      "state": "active implementation",
+      "required": "Fixed-build360/1280geometry including all initial scroll sources, owner offline banner and preserved nonempty/restored follow",
+      "receiptAlias": null,
+      "sha256": null
+    },
+    {
+      "id": "final_fable_ui_source",
+      "state": "active reviewer",
+      "expectedResultAlias": "fable-final-ui-source-result.json",
+      "accepted": false,
+      "sha256": null
+    },
+    {
+      "id": "final_fable_core_deployment",
+      "state": "active reviewer",
+      "expectedResultAlias": "fable-final-core-deployment-result.json",
+      "accepted": false,
+      "sha256": null
+    },
+    {
+      "id": "independent_manual_remaining",
+      "state": "pending",
+      "required": "Remaining composer/voice/settings/recovery/responsive/PWA/live-open-revoke paths; automated baseline remains separate",
+      "receiptAlias": null,
+      "sha256": null
+    },
+    {
+      "id": "final_candidate_ci_build",
+      "state": "pending",
+      "required": "Exact final commit and full source/build/gates/CI receipt after ongoing changes",
+      "receiptAlias": null,
+      "sha256": null
+    },
+    {
+      "id": "local_deployment_owner_qa",
+      "state": "not performed",
+      "required": "Verified backup/rollback, exact reviewed local deployment, serving identities and owner QA with PR held",
+      "receiptAlias": null,
+      "sha256": null
+    }
+  ],
+  "pendingEvidenceAppendPolicy": "Append only completed nonempty receipts with exact identity, outcome, SHA256 and hash-named retainedAlias. If a working alias is reused, append a superseding entry and keep prior frozen bytes; never overwrite initial reports or promote active jobs to acceptance."
 }

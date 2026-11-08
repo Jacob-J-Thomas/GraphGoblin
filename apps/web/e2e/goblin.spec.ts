@@ -1,6 +1,12 @@
 import { resolve } from 'node:path';
 import type { APIRequestContext, Page, TestInfo } from '@playwright/test';
-import type { ChatDevice, ChatPairingCreated, ChatSession, ChatTurn } from '@graphgoblin/contracts';
+import type {
+  ChatDevice,
+  ChatPairClaimRequest,
+  ChatPairingCreated,
+  ChatSession,
+  ChatTurn,
+} from '@graphgoblin/contracts';
 import { control, expect, test } from './fixtures.js';
 
 async function captureDialogMatrix(
@@ -42,6 +48,219 @@ async function gateway(request: APIRequestContext) {
     pairing: (await pairingResponse.json()) as ChatPairingCreated,
   };
 }
+
+async function settleLayout(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((done) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => done())),
+    );
+  });
+}
+
+async function emptyGoblinGeometry(page: Page, noticeText?: string) {
+  const chat = page.getByRole('region', { name: 'Goblin chat', exact: true });
+  await expect(chat.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+  await expect(chat.getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('');
+  await expect(chat.locator('[data-chat-reply]')).toHaveCount(0);
+  const geometry = await chat.evaluate((section, expectedNotice) => {
+    const box = (element: Element) => {
+      const { top, bottom, height } = element.getBoundingClientRect();
+      return { top, bottom, height };
+    };
+    const notice = [...document.querySelectorAll('[role="status"]')].find(
+      (element) => expectedNotice !== null && element.textContent?.trim() === expectedNotice,
+    );
+    return {
+      scrollTop: document.scrollingElement!.scrollTop,
+      excess: document.scrollingElement!.scrollHeight - window.innerHeight,
+      horizontalExcess: document.scrollingElement!.scrollWidth - window.innerWidth,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      header: box(document.querySelector('header')!),
+      section: box(section),
+      composer: box(section.querySelector('form')!),
+      notice: notice ? box(notice) : null,
+    };
+  }, noticeText ?? null);
+  expect(geometry.scrollTop).toBe(0);
+  expect(geometry.excess).toBeLessThanOrEqual(1);
+  expect(geometry.horizontalExcess).toBeLessThanOrEqual(1);
+  expect(geometry.composer.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.composer.bottom).toBeLessThanOrEqual(geometry.viewport.height + 1);
+  if (noticeText) {
+    expect(geometry.notice).not.toBeNull();
+    expect(geometry.notice!.height).toBeGreaterThan(0);
+    expect(geometry.notice!.top).toBeGreaterThanOrEqual(geometry.header.bottom);
+    expect(geometry.notice!.bottom).toBeLessThanOrEqual(geometry.viewport.height);
+  } else expect(geometry.notice).toBeNull();
+  return geometry;
+}
+
+for (const viewport of [
+  { width: 360, height: 740 },
+  { width: 1280, height: 860 },
+]) {
+  test(`fresh same-machine pairing keeps empty Goblin at the top with a visible notice at ${viewport.width}x${viewport.height}`, async ({
+    page,
+    request,
+  }, testInfo) => {
+    const gatewayApp = await gateway(request);
+    expect(new URL(gatewayApp.pairing.url!).origin).toBe(gatewayApp.url);
+    await page.setViewportSize(viewport);
+    let claims = 0;
+    page.on('request', (sent) => {
+      if (sent.method() === 'POST' && new URL(sent.url()).pathname === '/chat/pairings/claim')
+        claims++;
+    });
+    await page.goto(gatewayApp.pairing.url!);
+    await expect(
+      page.getByRole('button', { name: 'Pair this browser instead', exact: true }),
+    ).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+    expect(claims).toBe(0);
+    await page.getByRole('button', { name: 'Pair this browser instead', exact: true }).click();
+    const label = `Layout ${viewport.width}x${viewport.height}`;
+    await page.getByLabel('Device name', { exact: true }).fill(label);
+    await page.getByRole('button', { name: 'Pair this browser', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+    const noticeText = `Paired as ${label}.`;
+    await expect(page.getByText(noticeText, { exact: true })).toBeVisible();
+    const measurements = [
+      { phase: 'after explicit claim', ...(await emptyGoblinGeometry(page, noticeText)) },
+    ];
+    await expect(page.getByTestId('goblin-status')).toContainText('Connected');
+    await settleLayout(page);
+    measurements.push({
+      phase: 'fonts and initial observers settled',
+      ...(await emptyGoblinGeometry(page, noticeText)),
+    });
+    const resized =
+      viewport.width === 360 ? { width: 1280, height: 860 } : { width: 360, height: 740 };
+    for (const size of [resized, viewport]) {
+      await page.setViewportSize(size);
+      await settleLayout(page);
+      measurements.push({
+        phase: `resized ${size.width}x${size.height}`,
+        ...(await emptyGoblinGeometry(page, noticeText)),
+      });
+    }
+    expect(claims).toBe(1);
+    // A restored empty device has no transient pairing notice and still must not reveal a tail.
+    await page.reload();
+    await expect(page.getByTestId('goblin-status')).toContainText('Connected');
+    await expect(page.getByText(noticeText, { exact: true })).toHaveCount(0);
+    await settleLayout(page);
+    measurements.push({
+      phase: 'reload without pairing notice',
+      ...(await emptyGoblinGeometry(page)),
+    });
+    expect(claims).toBe(1);
+    await testInfo.attach('empty-goblin-geometry', {
+      contentType: 'application/json',
+      body: JSON.stringify(measurements, null, 2),
+    });
+  });
+}
+
+test('a consumed code is refused without implicit Enter retries, then an explicit new code pairs', async ({
+  page,
+  browser,
+  request,
+}) => {
+  const gatewayApp = await gateway(request);
+  // Consume the real one-time code in one browser before trying it in separate storage.
+  await page.goto(gatewayApp.pairing.url!);
+  await page.getByRole('button', { name: 'Pair this browser instead', exact: true }).click();
+  await page.getByLabel('Device name', { exact: true }).fill('First code consumer');
+  await page.getByRole('button', { name: 'Pair this browser', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+
+  const secondContext = await browser.newContext({ viewport: { width: 360, height: 740 } });
+  try {
+    const second = await secondContext.newPage();
+    const claims: ChatPairClaimRequest[] = [];
+    const claimStatuses: number[] = [];
+    const sessionStatuses: number[] = [];
+    second.on('request', (sent) => {
+      if (sent.method() === 'POST' && new URL(sent.url()).pathname === '/chat/pairings/claim')
+        claims.push(sent.postDataJSON() as ChatPairClaimRequest);
+    });
+    second.on('response', (received) => {
+      if (new URL(received.url()).pathname === '/chat/pairings/claim')
+        claimStatuses.push(received.status());
+      if (new URL(received.url()).pathname === '/chat/session')
+        sessionStatuses.push(received.status());
+    });
+    await second.goto(`${gatewayApp.url}/goblin/`);
+    const code = second.getByLabel('Pairing code', { exact: true });
+    const name = second.getByLabel('Device name', { exact: true });
+    await code.fill(gatewayApp.pairing.code);
+    await name.fill('Fresh replacement device');
+    expect(claims).toHaveLength(0);
+    await second.getByRole('button', { name: 'Pair this browser', exact: true }).click();
+    await expect(second.getByRole('alert')).toContainText('Pairing was refused');
+    await expect(second.locator('#goblin-pairing-error')).toBeFocused();
+    expect(claims).toHaveLength(1);
+    expect(claimStatuses).toEqual([401]);
+    expect(sessionStatuses).toEqual([401]);
+    const pending = await second.evaluate(() =>
+      localStorage.getItem('graphgoblin.goblin.device.v1'),
+    );
+    expect(JSON.parse(pending!)).toMatchObject({ kind: 'pending', ...claims[0] });
+    await second.keyboard.press('Tab');
+    const replace = second.getByRole('button', { name: 'Use a new code', exact: true });
+    await expect(replace).toBeFocused();
+    await name.press('Enter');
+    await code.press('Enter');
+    await settleLayout(second);
+    expect(claims).toHaveLength(1);
+    expect(claimStatuses).toEqual([401]);
+    expect(sessionStatuses).toEqual([401]);
+    expect(await second.evaluate(() => localStorage.getItem('graphgoblin.goblin.device.v1'))).toBe(
+      pending,
+    );
+    await expect(second.getByRole('button', { name: 'Retry pairing', exact: true })).toBeVisible();
+    // Enter on the actual replacement button remains an explicit, keyboard-operable action.
+    await replace.focus();
+    await replace.press('Enter');
+    await expect(code).toBeFocused();
+    await expect(code).toHaveValue('');
+    await expect(
+      second.getByText('Saved attempt forgotten. Paste a new code.', { exact: true }),
+    ).toBeVisible();
+    expect(
+      await second.evaluate(() => localStorage.getItem('graphgoblin.goblin.device.v1')),
+    ).toBeNull();
+    expect(claims).toHaveLength(1);
+    const generated = await request.post(`${gatewayApp.url}/chat/pairings`, {
+      headers: gatewayApp.headers,
+      data: {},
+    });
+    expect(generated.status()).toBe(201);
+    const fresh = (await generated.json()) as ChatPairingCreated;
+    await code.fill(fresh.code);
+    await second.getByRole('button', { name: 'Pair this browser', exact: true }).click();
+    await expect(second.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+    await expect(
+      second.getByText('Paired as Fresh replacement device.', { exact: true }),
+    ).toBeVisible();
+    expect(claims).toHaveLength(2);
+    expect(claimStatuses).toEqual([401, 200]);
+    expect(claims[1]!.code).toBe(fresh.code);
+    expect(claims[1]!.claimId).not.toBe(claims[0]!.claimId);
+    expect(claims[1]!.deviceToken).not.toBe(claims[0]!.deviceToken);
+    const devices = (await (
+      await request.get(`${gatewayApp.url}/chat/devices`, { headers: gatewayApp.headers })
+    ).json()) as { items: ChatDevice[] };
+    expect(devices.items.map((device) => device.label).sort()).toEqual([
+      'First code consumer',
+      'Fresh replacement device',
+    ]);
+    expect(devices.items.every((device) => !device.revokedAt)).toBe(true);
+  } finally {
+    await secondContext.close();
+  }
+});
 
 test('Goblin pairs explicitly, executes a native turn, keeps API data out of its scoped cache, and signs out locally', async ({
   page,

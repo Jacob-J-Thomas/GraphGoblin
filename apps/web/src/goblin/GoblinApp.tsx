@@ -258,7 +258,7 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
         ? 'bg-status-warn-border'
         : 'bg-accent';
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-2 border-b border-inverse bg-surface-inverse px-[max(1rem,env(safe-area-inset-left))] py-2 text-inverse">
         <h1 id="goblin-heading" tabIndex={-1} className="sr-only">
           Goblin
@@ -406,6 +406,6 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
           </p>
         </div>
       </Dialog>
-    </>
+    </div>
   );
 }

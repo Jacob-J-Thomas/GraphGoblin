@@ -1,5 +1,6 @@
 import type { ChatSendInput, ChatTurn } from '@graphgoblin/contracts';
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -225,8 +226,9 @@ export function ChatSurface({
     uploadController.getSnapshot,
   );
   useEffect(() => {
-    if (uploadController.getSnapshot().saved) void uploadController.check();
-  }, [uploadController]);
+    if (uploadController.getSnapshot().saved)
+      void uploadController.check(recorder.getSnapshot().segments.length > 0);
+  }, [uploadController, recorder]);
   const [audioError, setAudioError] = useState<string>();
   const [uploading, setUploading] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -243,7 +245,15 @@ export function ChatSurface({
   const submittedRef = useRef<{ recorder: typeof recorder; requestId?: string } | undefined>(
     undefined,
   );
-  const revealTail = () => endRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+  const revealTail = useCallback(
+    () => endRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' }),
+    [],
+  );
+  const revealConversationTail = useCallback(() => {
+    // Observer/viewport callbacks outlive the render that installed them.
+    const current = controller.getSnapshot();
+    if (current.turns.length > 0 || current.pending) revealTail();
+  }, [controller, revealTail]);
   useEffect(() => {
     controller.start();
     return controller.stop;
@@ -270,7 +280,7 @@ export function ChatSurface({
       if (followingRef.current) setNewReply(false);
     };
     const resize = () => {
-      if (followingRef.current) revealTail();
+      if (followingRef.current) revealConversationTail();
     };
     window.addEventListener('scroll', scroll, { passive: true });
     window.visualViewport?.addEventListener('resize', resize);
@@ -278,7 +288,7 @@ export function ChatSurface({
     const measure = () => {
       if (element && endRef.current)
         endRef.current.style.scrollMarginBottom = `${element.getBoundingClientRect().height + 16}px`;
-      if (followingRef.current) revealTail();
+      if (followingRef.current) revealConversationTail();
     };
     const observer =
       typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
@@ -289,14 +299,14 @@ export function ChatSurface({
       window.visualViewport?.removeEventListener('resize', resize);
       observer?.disconnect();
     };
-  }, []);
+  }, [revealConversationTail]);
   useLayoutEffect(() => {
     if (state.loading) return;
     const latest = state.turns
       .filter((turn) => turn.response && !turn.error && turn.runStatus === 'succeeded')
       .at(-1);
     if (!restoredRef.current || forceFollowRef.current || followingRef.current) {
-      revealTail();
+      revealConversationTail();
       setNewReply(false);
     } else if (latest && latest.id !== lastReplyRef.current) setNewReply(true);
     if (restoredRef.current && latest && latest.id !== lastReplyRef.current)
@@ -304,7 +314,7 @@ export function ChatSurface({
     lastReplyRef.current = latest?.id;
     restoredRef.current = true;
     forceFollowRef.current = false;
-  }, [state.turns, state.loading, state.pending]);
+  }, [state.turns, state.loading, state.pending, revealConversationTail]);
   useEffect(() => {
     const element = textareaRef.current;
     if (element) {
@@ -489,11 +499,17 @@ export function ChatSurface({
       ? 'Discard the expired upload before recording again.'
       : 'Send or discard the uploaded recording before recording more.';
   const toggleRecording = async () => {
-    if (getChatUpdateLocked() && !captureBusy) {
+    if (captureBusy) {
+      setAudioError(undefined);
+      await recorder.stop();
+      textareaRef.current?.focus();
+      return;
+    }
+    if (getChatUpdateLocked()) {
       setAudioError('The app is updating. Try recording again in a moment.');
       return;
     }
-    if (activeTurn || unresolved || recording.status === 'finalizing') return;
+    if (activeTurn || unresolved) return;
     if (uploadController.getSnapshot().saved?.audio && !recorder.getSnapshot().segments.length) {
       setAnnouncement(serverOnlyReason);
       return;
@@ -504,12 +520,9 @@ export function ChatSurface({
       return;
     }
     setAudioError(undefined);
-    if (captureBusy) await recorder.stop();
-    else {
-      invalidateUploadedDraft();
-      recorder.thaw();
-      await recorder.start();
-    }
+    invalidateUploadedDraft();
+    recorder.thaw();
+    await recorder.start();
     textareaRef.current?.focus();
   };
   useEffect(() => {
@@ -524,7 +537,7 @@ export function ChatSurface({
   return (
     <section
       aria-label={owner ? 'Chat' : 'Goblin chat'}
-      className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-[calc(47.5rem+2*var(--space-page))] min-w-0 flex-col px-page pt-page"
+      className="mx-auto flex w-full max-w-[calc(47.5rem+2*var(--space-page))] min-w-0 flex-1 flex-col px-page pt-page"
     >
       {owner ? (
         <PageHeader
@@ -678,7 +691,9 @@ export function ChatSurface({
               size="sm"
               variant="outline"
               disabled={uploadState.phase === 'checking' || !state.online}
-              onClick={() => void uploadController.check()}
+              onClick={() =>
+                void uploadController.check(recorder.getSnapshot().segments.length > 0)
+              }
             >
               Check upload status
             </Button>
@@ -884,11 +899,11 @@ export function ChatSurface({
             type="button"
             className={`inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-disabled:opacity-45 ${recording.status === 'recording' ? 'animate-pulse bg-danger-subtle text-danger-on-subtle' : 'bg-transparent text-default hover:bg-surface-hover'}`}
             aria-disabled={
-              Boolean(activeTurn) ||
-              unresolved ||
-              recording.status === 'finalizing' ||
-              serverOnlyVoice ||
-              (unavailableVoice && !(owner && voiceOff))
+              !captureBusy &&
+              (Boolean(activeTurn) ||
+                unresolved ||
+                serverOnlyVoice ||
+                (unavailableVoice && !(owner && voiceOff)))
             }
             aria-pressed={recording.status === 'recording'}
             aria-label={
@@ -899,13 +914,15 @@ export function ChatSurface({
                   : 'Record voice message'
             }
             aria-describedby={
-              activeTurn
-                ? 'chat-send-reason'
-                : serverOnlyVoice
-                  ? 'chat-voice-draft-reason'
-                  : audioReason
-                    ? 'chat-audio-reason'
-                    : undefined
+              captureBusy
+                ? undefined
+                : activeTurn
+                  ? 'chat-send-reason'
+                  : serverOnlyVoice
+                    ? 'chat-voice-draft-reason'
+                    : audioReason
+                      ? 'chat-audio-reason'
+                      : undefined
             }
             onClick={() =>
               void toggleRecording().catch((error: unknown) =>

@@ -124,6 +124,32 @@ async function load(
   });
   return { client, ...view };
 }
+function layoutCallbacks() {
+  const observers: TestResizeObserver[] = [];
+  class TestResizeObserver implements ResizeObserver {
+    callback: ResizeObserverCallback;
+    observe = vi.fn<ResizeObserver['observe']>();
+    unobserve = vi.fn<ResizeObserver['unobserve']>();
+    disconnect = vi.fn<ResizeObserver['disconnect']>();
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+      observers.push(this);
+    }
+  }
+  const viewport = new EventTarget();
+  vi.stubGlobal('ResizeObserver', TestResizeObserver);
+  vi.stubGlobal('visualViewport', viewport);
+  const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+  return {
+    scroll,
+    observers,
+    measure: () => act(() => observers.forEach((observer) => observer.callback([], observer))),
+    resize: () =>
+      act(() => {
+        viewport.dispatchEvent(new Event('resize'));
+      }),
+  };
+}
 beforeEach(() => {
   media.drafts.clear();
   media.stopGate = undefined;
@@ -333,6 +359,136 @@ describe('shared composer', () => {
     const before = client.session.mock.calls.length;
     view.rerender(<ChatSurface client={client} storageKey={key} sessionRefreshKey={1} />);
     await waitFor(() => expect(client.session.mock.calls.length).toBeGreaterThan(before));
+  });
+});
+
+describe('H1 remaining-space layout and automatic tail reveal', () => {
+  it.each([false, true])(
+    'leaves empty %s-owner chat at the top through layout, initial measure, observer and viewport changes',
+    async (owner) => {
+      const layout = layoutCallbacks();
+      await load(mockChatClient(), { owner });
+      const surface = screen.getByRole('region', { name: owner ? 'Chat' : 'Goblin chat' });
+      expect(surface).toHaveClass('flex-1', 'flex-col');
+      expect(surface.className).not.toContain('calc(100dvh');
+      expect(layout.scroll).not.toHaveBeenCalled();
+      const textarea = screen.getByRole('textbox', { name: 'Message' });
+      textarea.focus();
+      const composer = textarea.closest('form')!;
+      vi.spyOn(composer, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 360, 200));
+      layout.measure();
+      expect(surface.querySelector('[data-chat-tail]')).toHaveStyle({
+        scrollMarginBottom: '216px',
+      });
+      layout.resize();
+      fireEvent(window, new Event('offline'));
+      layout.measure();
+      layout.resize();
+      fireEvent(window, new Event('online'));
+      layout.measure();
+      layout.resize();
+      expect(layout.scroll).not.toHaveBeenCalled();
+      expect(textarea).toHaveFocus();
+    },
+  );
+  it('uses current pending state in callbacks installed while the conversation was empty', async () => {
+    const layout = layoutCallbacks();
+    const client = mockChatClient();
+    client.send.mockImplementation(() => new Promise(() => {}));
+    await load(client);
+    expect(layout.scroll).not.toHaveBeenCalled();
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    textarea.focus();
+    fireEvent.change(textarea, { target: { value: 'First pending request' } });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(textarea).toHaveFocus();
+  });
+  it('reveals the first reply and follows later composer measurements using current turns', async () => {
+    const layout = layoutCallbacks();
+    const { client } = await load();
+    expect(layout.scroll).not.toHaveBeenCalled();
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(textarea, { target: { value: 'First message' } });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(layout.scroll).toHaveBeenCalled();
+    await waitFor(() => expect(textarea).toHaveFocus());
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(client.send).toHaveBeenCalledOnce();
+    layout.scroll.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(await screen.findByRole('heading', { name: 'What’s the move?' })).toBeVisible();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+  });
+  it('reveals restored history and follows its composer only while the reader stays at the bottom', async () => {
+    const layout = layoutCallbacks();
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([turn]);
+    const { unmount } = await load(client);
+    expect(screen.getByText(turn.response!.reply)).toBeVisible();
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+    fireEvent.scroll(window);
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0,
+    });
+    fireEvent.scroll(window);
+    layout.measure();
+    expect(layout.scroll).toHaveBeenCalledOnce();
+    unmount();
+    expect(layout.observers.every((observer) => observer.disconnect.mock.calls.length === 1)).toBe(
+      true,
+    );
+    layout.scroll.mockClear();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+  });
+  it('reveals restored pending recovery without replaying its request', async () => {
+    const layout = layoutCallbacks();
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        draft: '',
+        pending: {
+          conversationId: conversation.id,
+          request: { requestId: turn.requestId, input: turn.input },
+        },
+      }),
+    );
+    const client = mockChatClient();
+    client.request.mockImplementation(() => new Promise(() => {}));
+    await load(client);
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(client.request).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
   });
 });
 
@@ -874,6 +1030,108 @@ describe('root browser review regressions', () => {
     expect(screen.getAllByText('Checking what happened…')).toHaveLength(1);
     expect(screen.queryByText('Sending…')).not.toBeInTheDocument();
     expect(client.send).toHaveBeenCalledOnce();
+  });
+});
+
+describe('final Fable source follow-ups', () => {
+  it('N2 keeps Stop available when a focus refresh brings in an active turn during capture', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    await load(client);
+    const recorder = media.drafts.get(`${key}/${conversation.id}`)!;
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
+    fireEvent.focus(window);
+    await screen.findByRole('button', { name: 'Cancel request' });
+    const stop = screen.getByRole('button', { name: 'Stop recording' });
+    expect(stop).toHaveAttribute('aria-disabled', 'false');
+    expect(stop).not.toHaveAttribute('aria-describedby');
+    expect(screen.getByRole('button', { name: 'Send message' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    fireEvent.click(stop);
+    expect(await screen.findByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveFocus();
+    const mic = screen.getByRole('button', { name: 'Add more voice' });
+    expect(mic).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(mic);
+    expect(recorder.start).toHaveBeenCalledOnce();
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+  });
+  it('N2 keeps finalizing Stop idempotent after an incoming active turn', async () => {
+    let finish!: () => void;
+    media.stopGate = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
+    await screen.findByText('Finalizing recording…');
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
+    fireEvent.focus(window);
+    await screen.findByRole('button', { name: 'Cancel request' });
+    const stop = screen.getByRole('button', { name: 'Stop recording' });
+    expect(stop).toHaveAttribute('aria-disabled', 'false');
+    fireEvent.click(stop);
+    await act(async () => {
+      finish();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(1);
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+  });
+  it('N4 gives discard-and-record guidance after reload when a missing upload has no local audio', async () => {
+    sessionStorage.setItem(
+      `${key}.voice-upload`,
+      JSON.stringify({ uploadId: turn.requestId, sha256: 'a'.repeat(64), caption: 'Kept caption' }),
+    );
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.audioStatus.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'No upload.'));
+    await load(client);
+    expect(
+      screen.getByText('The local recording is unavailable after this app reloaded.'),
+    ).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The gateway did not accept this upload. Discard this voice draft, then record again.',
+    );
+    expect(screen.queryByText(/Send again while your recording/)).not.toBeInTheDocument();
+    expect(client.audioStatus).toHaveBeenCalledOnce();
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem(`${key}.voice-upload`)!)).toMatchObject({
+      uploadId: turn.requestId,
+      caption: 'Kept caption',
+    });
+  });
+  it('N4 keeps explicit Send-again guidance when the missing upload still has retained local audio', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.upload.mockRejectedValue(new Error('lost acknowledgement'));
+    client.audioStatus.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'No upload.'));
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'The gateway did not accept this upload. Send again while your recording is still in this open app.',
+      ),
+    );
+    expect(screen.getByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    expect(
+      screen.queryByText('The local recording is unavailable after this app reloaded.'),
+    ).not.toBeInTheDocument();
+    expect(client.upload).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
   });
 });
 

@@ -159,3 +159,91 @@ test('owner Chat recovers a lost native-turn acknowledgement by read only, and s
     await pairing.getByRole('button', { name: 'Done', exact: true }).click();
   }
 });
+
+test('empty owner Chat fits its real offline banner and keeps the composer in view after resize', async ({
+  page,
+  context,
+  request,
+}, testInfo) => {
+  const instance = await control(request, '/apps', { requireApiKey: true });
+  const url = String(instance['url']);
+  const token = String(instance['token']);
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.addInitScript((key) => localStorage.setItem('graphgoblin-api-key', key), token);
+  let mutations = 0;
+  page.on('request', (sent) => {
+    if (new URL(sent.url()).pathname.startsWith('/chat/') && sent.method() !== 'GET') mutations++;
+  });
+  const sessionLoaded = page.waitForResponse(
+    (received) => new URL(received.url()).pathname === '/chat/session' && received.status() === 200,
+  );
+  await page.goto(`${url}/app/chat`);
+  await sessionLoaded;
+  const chat = page.getByRole('region', { name: 'Chat', exact: true });
+  const measurements = [];
+  const measure = async (phase: string, offline: boolean) => {
+    await expect(chat.getByRole('textbox', { name: 'Message', exact: true })).toBeVisible();
+    await expect(chat.getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('');
+    await expect(chat.locator('[data-chat-reply]')).toHaveCount(0);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((done) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => done())),
+      );
+    });
+    const geometry = await chat.evaluate((section) => {
+      const box = (element: Element) => {
+        const { top, bottom, height } = element.getBoundingClientRect();
+        return { top, bottom, height };
+      };
+      const banner = [...document.querySelectorAll('[role="status"]')].find((element) =>
+        element.textContent?.includes('You are offline'),
+      );
+      return {
+        scrollTop: document.scrollingElement!.scrollTop,
+        excess: document.scrollingElement!.scrollHeight - window.innerHeight,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        header: box(document.querySelector('header')!),
+        section: box(section),
+        composer: box(section.querySelector('form')!),
+        offlineBanner: banner ? box(banner) : null,
+      };
+    });
+    expect(geometry.scrollTop).toBe(0);
+    expect(geometry.excess).toBeLessThanOrEqual(1);
+    expect(geometry.composer.top).toBeGreaterThanOrEqual(0);
+    expect(geometry.composer.bottom).toBeLessThanOrEqual(geometry.viewport.height + 1);
+    if (offline) {
+      expect(geometry.offlineBanner).not.toBeNull();
+      expect(geometry.offlineBanner!.top).toBeGreaterThanOrEqual(geometry.header.bottom);
+    } else expect(geometry.offlineBanner).toBeNull();
+    return { phase, ...geometry };
+  };
+  try {
+    // The phone case leaves room for the natural wrapping of the offline explanation.
+    // Shorter viewports must remain scrollable when their real content needs that space.
+    for (const viewport of [
+      { width: 1280, height: 860 },
+      { width: 360, height: 960 },
+    ]) {
+      await page.setViewportSize(viewport);
+      measurements.push(await measure('online after resize', false));
+      await context.setOffline(true);
+      await expect(page.getByText('You are offline', { exact: true })).toBeVisible();
+      measurements.push(await measure('real browser offline banner', true));
+      await context.setOffline(false);
+      await expect(page.getByText('You are offline', { exact: true })).toBeHidden();
+      await expect(
+        page.getByText('Cannot reach the GraphGoblin API', { exact: true }),
+      ).toBeHidden();
+      measurements.push(await measure('banner removed after reconnect', false));
+    }
+    expect(mutations).toBe(0);
+    await testInfo.attach('empty-owner-chat-geometry', {
+      contentType: 'application/json',
+      body: JSON.stringify(measurements, null, 2),
+    });
+  } finally {
+    await context.setOffline(false);
+  }
+});

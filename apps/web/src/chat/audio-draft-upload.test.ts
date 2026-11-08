@@ -118,9 +118,30 @@ describe('frozen audio upload identity', () => {
     const upload = new AudioDraftUpload(client, 'upload');
     await upload.upload(blob(), '');
     expect(upload.getSnapshot().phase).toBe('failed');
+    expect(upload.getSnapshot().error).toContain('Send again while your recording');
     await upload.upload(blob(), '');
     expect(client.upload).toHaveBeenCalledTimes(2);
   });
+  it.each([false, true])(
+    'N4 bases missing-upload recovery copy on actual local recording availability (%s)',
+    async (localRecordingAvailable) => {
+      const saved = { uploadId: turn.requestId, sha256: 'a'.repeat(64), caption: 'Caption' };
+      sessionStorage.setItem('upload', JSON.stringify(saved));
+      const client = mockChatClient();
+      client.audioStatus.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'No upload.'));
+      const restored = new AudioDraftUpload(client, 'upload');
+      await restored.check(localRecordingAvailable);
+      expect(restored.getSnapshot()).toMatchObject({ phase: 'failed', saved });
+      expect(restored.getSnapshot().error).toBe(
+        localRecordingAvailable
+          ? 'The gateway did not accept this upload. Send again while your recording is still in this open app.'
+          : 'The gateway did not accept this upload. Discard this voice draft, then record again.',
+      );
+      expect(JSON.parse(sessionStorage.getItem('upload')!)).toEqual(saved);
+      expect(client.upload).not.toHaveBeenCalled();
+      expect(client.send).not.toHaveBeenCalled();
+    },
+  );
 });
 
 it('persists admission identity with accepted audio and recovers the acknowledgement-cleanup gap without replay', async () => {

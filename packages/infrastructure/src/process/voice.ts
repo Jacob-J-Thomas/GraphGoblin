@@ -609,9 +609,8 @@ export interface VoiceInstallerOptions {
 export class LocalVoiceInstaller {
   progress: VoiceInstallProgress = {
     state: 'idle',
-    phase: 'Select a verified runtime',
+    phase: 'idle',
     downloadedBytes: 0,
-    message: unsupported,
   };
   private operation: Promise<void> | undefined;
   private selectedExecutable = '';

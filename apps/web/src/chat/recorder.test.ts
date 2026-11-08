@@ -799,23 +799,37 @@ describe('bounded PCM voice drafts', () => {
     await settleSetup();
     expect(track.stop).toHaveBeenCalledOnce();
   });
-  it('cleans up a delayed activation rejection after permission and module loading', async () => {
-    let reject!: (error: Error) => void;
-    Context.resumeAudio.mockImplementation(
-      () =>
-        new Promise((_done, fail) => {
-          reject = fail;
-        }),
-    );
-    const value = recorder();
-    const starting = value.start();
-    await settleSetup();
-    reject(new Error('activation failed'));
-    await starting;
-    expect(track.stop).toHaveBeenCalledOnce();
-    expect(Context.instances[0]!.close).toHaveBeenCalledOnce();
-    expect(value.getSnapshot()).toMatchObject({ status: 'idle', errorRecovery: 'retry' });
-  });
+  it.each([
+    { name: 'Error', error: new Error('activation failed') },
+    { name: 'NotAllowedError', error: new DOMException('activation', 'NotAllowedError') },
+  ])(
+    'cleans up a delayed $name activation rejection after permission and module loading',
+    async ({ error }) => {
+      let reject!: (error: Error) => void;
+      Context.resumeAudio.mockImplementation(
+        () =>
+          new Promise((_done, fail) => {
+            reject = fail;
+          }),
+      );
+      const value = recorder();
+      const starting = value.start();
+      await settleSetup();
+      expect(value.getSnapshot().permission).toBe('granted');
+      expect(Context.module).toHaveBeenCalledOnce();
+      reject(error);
+      await starting;
+      expect(track.stop).toHaveBeenCalledOnce();
+      expect(Context.instances[0]!.close).toHaveBeenCalledOnce();
+      expect(Node.instances).toHaveLength(0);
+      expect(value.getSnapshot()).toMatchObject({
+        status: 'idle',
+        permission: 'granted',
+        errorRecovery: 'retry',
+        error: 'Audio recording could not start. Tap the microphone and try again.',
+      });
+    },
+  );
   it('does not claim recording when an activated context becomes suspended during permission', async () => {
     let allow!: (stream: MediaStream) => void;
     getUserMedia.mockImplementation(

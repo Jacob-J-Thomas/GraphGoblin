@@ -46,6 +46,45 @@ afterEach(() => {
 });
 
 describe('standalone Goblin shell', () => {
+  it('lets empty paired chat fill the remaining column under the actual header without a notice', async () => {
+    pair();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(session()));
+    render(<GoblinApp initialCode="" />);
+    await screen.findByText('Connected');
+    const header = screen.getByRole('banner');
+    const shell = header.parentElement!;
+    expect(shell).toHaveClass('flex', 'min-h-dvh', 'flex-col');
+    expect(screen.getByText('Shared chat').parentElement).toBe(shell);
+    expect(screen.queryByText(/^Paired as/)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus();
+  });
+
+  it('keeps the fresh pairing notice in the same remaining-space column before chat', async () => {
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation((url) =>
+        Promise.resolve(
+          url === '/chat/pairings/claim'
+            ? new Response(JSON.stringify({ deviceId, label: 'Layout phone' }))
+            : session(),
+        ),
+      );
+    render(<GoblinApp initialCode={'A'.repeat(43)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser instead' }));
+    fireEvent.change(await screen.findByLabelText('Device name'), {
+      target: { value: 'Layout phone' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+    const notice = await screen.findByText('Paired as Layout phone.');
+    const shell = screen.getByRole('banner').parentElement!;
+    expect(shell).toHaveClass('flex', 'min-h-dvh', 'flex-col');
+    expect(notice.parentElement).toBe(shell);
+    expect(notice.previousElementSibling).toBe(screen.getByRole('banner'));
+    expect(notice.nextElementSibling).toBe(screen.getByText('Shared chat'));
+    expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus();
+    expect(fetcher.mock.calls.filter(([url]) => url === '/chat/pairings/claim')).toHaveLength(1);
+  });
+
   it('captures and immediately scrubs same-tab pairing links without replacing an existing identity', async () => {
     const existing = pair();
     const fetcher = vi
