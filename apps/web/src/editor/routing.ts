@@ -36,8 +36,12 @@ export interface RoutingEdge {
   source: string;
   target: string;
   port: string;
-  /** Explicit authored gate marker, independent of the route ID or canvas direction. */
-  repeat?: boolean;
+  /**
+   * A visual loop-back: the graph reaches the target on every path to the source, so the edge
+   * always takes a return route. Derived from topology (`loop-back-edges.ts`), never from the
+   * Repeat marker, the route ID, or canvas direction.
+   */
+  loopBack?: boolean;
   /**
    * A fixed (manual) route, in the contract's `edge.ui.route` form (#44). It is drawn as given,
    * with stubs from the current port tips, and automatic routes reserve around it. One that
@@ -114,7 +118,7 @@ export function backwardDirection(
   to: Point,
   previous?: boolean,
 ): boolean {
-  if (edge.repeat || edge.source === edge.target) return true;
+  if (edge.loopBack || edge.source === edge.target) return true;
   const delta = from.x - to.x;
   return previous === undefined
     ? delta >= 0
@@ -193,7 +197,7 @@ const sameConnection = (a: RoutingEdge, b: RoutingEdge | undefined) =>
   a.source === b.source &&
   a.target === b.target &&
   a.port === b.port &&
-  !!a.repeat === !!b.repeat;
+  !!a.loopBack === !!b.loopBack;
 /** The same connection with the same fixed route: a reused route stays valid. */
 export const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined): boolean =>
   sameConnection(a, b) &&

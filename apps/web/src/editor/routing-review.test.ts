@@ -276,7 +276,7 @@ describe('routing review regressions', () => {
         const edges = nodes.slice(1).map((n, i) => ({
           ...connection(n.id, nodes[Math.floor(random() * (i + 1))]!.id, 'e' + i),
           port: 'repeat',
-          repeat: true,
+          loopBack: true,
         }));
         const plan = createRoutingPlan(nodes, edges);
         for (const route of plan.routes.values()) {
@@ -321,7 +321,7 @@ describe('routing review regressions', () => {
           n.outputs['repeat']!.y *= -1;
         }
       }
-      const e = { ...connection('source', 'target'), port: 'repeat', repeat: true };
+      const e = { ...connection('source', 'target'), port: 'repeat', loopBack: true };
       const index = new BoxIndex(
         nodes.map((n) => ({
           id: n.id,
@@ -473,7 +473,7 @@ describe('routing review regressions', () => {
     const edges = Array.from({ length: 80 }, (_, i) => ({
       ...connection('source', 'target', `return-${i}`),
       port: 'repeat',
-      repeat: true,
+      loopBack: true,
     }));
     const routes = [...routesOf(nodes, edges).values()].filter((r) => r.points.length);
     expect(routes.length).toBeGreaterThanOrEqual(40);
@@ -565,7 +565,9 @@ describe('routing review regressions', () => {
     // Rejected alternatives are dependencies too; the broader footprint still keeps this local.
     expect(next.statistics.rerouted).toBeLessThanOrEqual(16);
     expect(next.statistics.expansions).toBe(0);
-    expect(next.statistics.checks).toBeLessThanOrEqual(1000);
+    // Measured 1,002 of a fresh plan's 8,341: the row-wrap retries beside row 14 are loop-backs by
+    // topology (#449) and replan across the grid's width (148 when only the gate's return was).
+    expect(next.statistics.checks).toBeLessThanOrEqual(1200);
     expect(next.routes.get('retry-4')).toBe(first.routes.get('retry-4'));
     for (const e of edges) {
       const route = next.routes.get(e.id);
@@ -626,10 +628,13 @@ describe('routing review regressions', () => {
         const next = createRoutingPlan(moved, edges, undefined, previous);
         expect(next.routes, `drag step ${step}`).toEqual(createRoutingPlan(moved, edges).routes);
         // This larger 60 x 48 px sweep crosses neighbouring return lanes. Keep its measured
-        // fan-out bounded too; the smaller performance drag has the tighter bound above.
+        // fan-out bounded too; the smaller performance drag has the tighter bound above. Since
+        // #449 the row-wrap retries are loop-backs that route the grid's width: measured maxima
+        // are 27 / 1,475 (100 cards) and 54 / 4,384 (300 cards), about half a fresh plan's
+        // checks, where the gate's return alone measured 20 / 690 and 30 / 1,045.
         expect(next.statistics.expansions).toBe(0);
-        expect(next.statistics.rerouted).toBeLessThanOrEqual(count === 100 ? 28 : 38);
-        expect(next.statistics.checks).toBeLessThanOrEqual(count === 100 ? 850 : 1200);
+        expect(next.statistics.rerouted).toBeLessThanOrEqual(count === 100 ? 32 : 64);
+        expect(next.statistics.checks).toBeLessThanOrEqual(count === 100 ? 1700 : 5000);
         previous = next;
       }
     },
@@ -695,7 +700,7 @@ describe('routing review regressions', () => {
       const edges = nodes.slice(1).map((n, i) => ({
         ...connection(n.id, nodes[Math.floor(random() * i)]!.id),
         port: 'repeat',
-        repeat: true,
+        loopBack: true,
       }));
       for (const n of nodes) n.outputs = { repeat: n.outputs['out']! };
       const plan = createRoutingPlan(nodes, edges);

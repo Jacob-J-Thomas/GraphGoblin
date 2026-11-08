@@ -1,7 +1,8 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { canvasPorts, defaultConfig } from '../editor/model.js';
-import { hasRepeatRoute, isRepeatPort } from '../editor/decision-gates.js';
+import { hasRepeatRoute } from '../editor/decision-gates.js';
+import { loopBackEdgeIds } from '../editor/loop-back-edges.js';
 import type { RoutingEdge, RoutingNode } from '../editor/routing.js';
 
 const edge = (id: string, source: string, target: string, port = 'out') => ({
@@ -167,24 +168,37 @@ export function tightGap(): LoopDefinitionInput {
   return definition;
 }
 
-/** A gate repeat can point right: the clear Z path has no middle horizontal after stub simplification. */
+/**
+ * A loop-back can point right: start, work, done, then back to work, with `work` drawn to the right
+ * of `done`. The clear Z path has no middle horizontal after stub simplification. `work-done` is
+ * drawn backward but is the cycle's forward step, so it is routed without the loop-back style.
+ * The trigger sits below the obstacles so its forward edge does not cross them.
+ */
 export function forwardLoopBack(): LoopDefinitionInput {
   return {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Forward loop-back detour',
     nodes: [
-      node('start', 'trigger', -300, 0),
+      node('start', 'trigger', -300, 450),
       gate('done', 0, 0),
       node('work', 'wait', 700, 280),
       node('ceiling', 'wait', 180, -150),
       node('shelf', 'wait', 180, 160),
       node('wall', 'wait', 500, 30),
     ],
-    edges: [edge('begin', 'start', 'done'), edge('return', 'done', 'work', 'repeat')],
+    edges: [
+      edge('begin', 'start', 'work'),
+      edge('work-done', 'work', 'done'),
+      edge('return', 'done', 'work', 'repeat'),
+    ],
   };
 }
 
-/** Two connected ports per card on average, including return, same-column and self routes. */
+/**
+ * Two connected ports per card on average, including return, same-column and self routes. Every
+ * retry goes back along the single chain, so each is a loop-back (#449); at a row wrap it points
+ * right and routes across the grid's width.
+ */
 export function denseGraph(count = 100): LoopDefinitionInput {
   const nodes: NodeInput[] = [node('start', 'trigger', 0, 0)];
   const edges = [edge('begin', 'start', 'n1')];
@@ -218,6 +232,7 @@ export function routingInput(definition: LoopDefinitionInput): {
   nodes: RoutingNode[];
   edges: RoutingEdge[];
 } {
+  const loopBacks = loopBackEdgeIds(definition);
   return {
     nodes: definition.nodes.map((n) => {
       const { x = 0, y = 0 } = n.ui ?? {};
@@ -243,9 +258,8 @@ export function routingInput(definition: LoopDefinitionInput): {
       source: e.from.node,
       target: e.to.node,
       port: e.from.port,
-      repeat: definition.nodes.some(
-        (n) => n.id === e.from.node && n.kind === 'decision' && isRepeatPort(n.config, e.from.port),
-      ),
+      // The canvas's own topology classification (#449), not the gate's Repeat marker.
+      loopBack: loopBacks.has(e.id),
     })),
   };
 }
