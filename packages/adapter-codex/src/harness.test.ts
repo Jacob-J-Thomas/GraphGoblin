@@ -134,13 +134,12 @@ describe('CodexHarness.start', () => {
       skipGitRepoCheck: true,
       workingDirectory: '/work',
     });
-    // ADR-0063: the machine's plugins, apps, memories, hooks and notify program are switched off.
+    // ADR-0067: plugins inherit CLI configuration; unrelated isolation defaults remain.
     expect(codex.runs[0]?.clientOptions).toEqual({
       codexPathOverride: '/opt/codex',
       env: { PATH: '/bin' },
       config: {
         features: {
-          plugins: false,
           apps: false,
           memories: false,
           hooks: false,
@@ -192,7 +191,6 @@ describe('CodexHarness.start', () => {
     // paths, as the CLI reads every `--config` key.
     expect(codex.runs[1]?.clientOptions.config).toEqual({
       features: {
-        plugins: false,
         apps: false,
         memories: true,
         hooks: false,

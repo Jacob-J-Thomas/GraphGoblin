@@ -13,6 +13,7 @@ import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import {
   DEFAULT_MODEL_CATALOG,
   SqliteModelCatalog,
+  SqliteSettings,
   readPreMigrationModelCatalog,
 } from './settings.js';
 import { modelCatalog } from './schema.js';
@@ -73,6 +74,73 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
 }
 
 describe('model catalog source migration and repository', () => {
+  it('seeds GPT-6.1 Terra enabled with medium default immediately after Sol 6.1', async () => {
+    const handle = await openMemoryDatabase();
+    try {
+      const catalog = new SqliteModelCatalog(handle.db);
+      expect(await catalog.seed()).toBe(DEFAULT_MODEL_CATALOG.length);
+      const terraIndex = DEFAULT_MODEL_CATALOG.findIndex(
+        (entry) => entry.model === 'gpt-6.1-terra',
+      );
+      expect(DEFAULT_MODEL_CATALOG[terraIndex - 1]?.model).toBe('gpt-6.1-sol');
+      expect(await catalog.findOne('codex', 'gpt-6.1-terra')).toEqual({
+        harness: 'codex',
+        model: 'gpt-6.1-terra',
+        source: 'harness',
+        displayName: 'GPT-6.1 Terra',
+        efforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+        defaultEffort: 'medium',
+        enabled: true,
+      });
+      expect(await catalog.isAllowed('codex', 'gpt-6.1-terra', 'none')).toBe(true);
+      expect(await catalog.isAllowed('codex', 'gpt-6.1-terra', 'medium')).toBe(true);
+    } finally {
+      handle.close();
+    }
+  });
+
+  it('adds only missing Terra to an existing catalog and preserves owner switches, defaults and custom entries', async () => {
+    const handle = await openMemoryDatabase();
+    try {
+      const catalog = new SqliteModelCatalog(handle.db);
+      const settings = new SqliteSettings(handle.db, {
+        now: () => new Date('2026-11-07T00:00:00Z'),
+      });
+      const earlier = DEFAULT_MODEL_CATALOG.filter((entry) => entry.model !== 'gpt-6.1-terra');
+      expect(await catalog.seed(earlier)).toBe(earlier.length);
+      await catalog.setEnabled('codex', 'gpt-6.1-sol', false);
+      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
+      await catalog.upsert({
+        harness: 'local',
+        model: 'owner-model',
+        source: 'litellm',
+        displayName: 'Owner model',
+        efforts: ['high'],
+        defaultEffort: 'high',
+        enabled: false,
+      });
+      const defaults = { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } };
+      await settings.set('local', 'defaults', defaults);
+      const before = await catalog.list();
+
+      expect(await catalog.seed()).toBe(1);
+      expect((await catalog.list()).filter((entry) => entry.model !== 'gpt-6.1-terra')).toEqual(
+        before,
+      );
+      expect(await catalog.findOne('codex', 'gpt-6.1-terra')).toMatchObject({ enabled: true });
+      expect(await settings.get('local', 'defaults')).toEqual(defaults);
+
+      await catalog.setEnabled('codex', 'gpt-6.1-terra', false);
+      const after = await catalog.list();
+      expect(await catalog.seed()).toBe(0);
+      expect(await catalog.list()).toEqual(after);
+      expect(await catalog.isAllowed('codex', 'gpt-6.1-terra', 'medium')).toBe(false);
+      expect(await settings.get('local', 'defaults')).toEqual(defaults);
+    } finally {
+      handle.close();
+    }
+  });
+
   it('enables previously blocked Fable once, then preserves owner switches and every other row', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'gg-fable-migration-'));
     const url = `file:${join(dir, 'catalog.db').replaceAll('\\', '/')}`;

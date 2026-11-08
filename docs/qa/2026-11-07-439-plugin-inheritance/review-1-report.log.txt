@@ -1,0 +1,61 @@
+I found no code defect in #439. The adapter change does what the brief asks, but the docs over-promise how to turn plugins off, and one trust-boundary consequence needs explicit owner acceptance. My recommendation is **conditional merge**: both Medium findings can be fixed in the docs, with no code change.
+
+**Reviewed:** base `d1563fe83af812f1b74d6520a621f5ab9c03a0dd`, head `aed1446bb3867c86acd80263f2c31b2fff6d23cf`. I confirmed the head from the branch ref file and that the checked-out source matches the patch.
+
+## Findings
+
+### F1 – Medium: Codex decisions and repairs have no per-node plugin opt-out, but the docs say they do
+- **Code:** Codex structured calls hard-code their options and never pass config overrides (`structured.ts:60-65`). The engine's structured request has no field for them (`ports.ts:368-379`). LLM decisions (`decider.ts:92-101`) and coerce repairs (`common.ts:222`) send only prompt, schema, model and effort. These calls run in a fresh temporary directory (`structured.ts:51-52`), so a trusted-project setting doesn't reach them either.
+- **Docs that claim otherwise:**
+  - The CHANGELOG (line 9) says "to keep plugins off in a node, set `harnessOptions.configOverrides`…".
+  - ADR-0065 lines 15 and 25 say a node can opt out, and that this restores the previous behaviour.
+  - docs/06 line 202 and guide 02 line 68 describe the node opt-out without saying it doesn't apply to these calls.
+- **Impact:** Before #439, decisions and repairs always ran with plugins off. Now they always inherit enabled plugins. The only way to turn that off is the user's global Codex config, which also changes their own Codex sessions. Even an inference node that sets `features.plugins=false` still gets plugins in its coerce repair. So the upgrade note's way of keeping plugins off doesn't work for this whole class of calls.
+- **Fix (scope):** at minimum, correct the CHANGELOG, ADR-0065, docs/06 and guide 02. Adding an opt-out for these calls would be an owner decision.
+
+### F2 – Medium: loop turns now inherit GraphGoblin's own plugin, with owner authority over the live gateway, and this isn't disclosed
+- **Reachability:**
+  - **Plugin installed:** the owner's machine had the `graphgoblin` plugin enabled when it was recorded on 2026-10-28 (`docs/qa/2026-10-28-wp-423-isolation/README.md:34`).
+  - **Gateway reached as owner:**
+    - The Codex adapters get no environment of their own, so the CLI inherits the gateway's (`container.ts:269-278`).
+    - The plugin's server defaults to `127.0.0.1:4747` (`apps/mcp/src/config.ts:19`), which is the gateway's default port (`apps/api/src/config.ts:14`).
+    - API keys aren't required by default (`apps/api/src/config.ts:17`), and a request without a key acts as the local owner (`auth.ts:81-83`).
+  - **Tools:** the plugin exposes `start_run`, `cancel_run`, `pause_run`, `resume_run`, `replay_run`, `provide_input` and `send_signal`, plus read tools for other runs (`08-ui-edge.log.txt:98`).
+- **What is proven and what isn't:**
+  - The native fixture shows read-only-annotated plugin tools do run unattended under approval `never`. So any loop turn, and any Codex decision (F1), can read other runs' threads and events.
+  - It is not shown whether tools that change state run under approval `never` alone. The earlier research note (`codex-sdk.md:98`) never isolated that.
+  - If they do run, an unattended agent could start runs (including recursively), cancel or pause runs, or answer another run's pending human input.
+- **No targeted opt-out:** a node can't switch off just this plugin. Plugin IDs contain `@`, which the override key check rejects (`isolation.ts:42-44`), even though the CLI itself accepts `plugins.graphgoblin@graphgoblin-local.enabled=false` (WP-423 line 36).
+- **Docs:** guide 05 line 108 says loops inherit "this plugin's tools". Neither it nor ADR-0065 mentions the owner authority, the recursion risk, or mitigations such as `GG_REQUIRE_API_KEY=true` or disabling the plugin globally.
+- **Fix (scope):** record the owner's acknowledgement in ADR-0065, plus a warning with mitigations in guide 05. This needs no plugin picker or redesign.
+
+### F3 – Low: one stale statement in docs/06
+docs/06 line 395 still says Codex decision and repair threads make "no file changes", which contradicts the new lines 266-267. ADR-0051 line 55 also justifies Resume because the evaluation is read-only. That premise no longer holds once plugin tools are present, so it's worth noting there as well.
+
+**Nits (optional):**
+- The CHANGELOG says "set" the overrides; "add" is safer, since "set" could overwrite a node's existing overrides.
+- Runs pinned to older versions, and paused runs resumed after the upgrade, will also start inheriting plugins.
+
+## Verified as correct
+- **Execution:** turns no longer receive a default `features.plugins` value (`isolation.ts:89`; test lines 131-132).
+- **Discovery:** the MCP listing still switches plugins off (`isolation.ts:184-189`). In all 26 successful listings across both native runs, only the standalone server appeared.
+- **Precedence:** node overrides layer after the defaults, and the explicit model, sandbox and other SDK options still come last and win (tests 142-175).
+- **Shared policy:** fresh, resumed and structured turns go through the same client path.
+- **Error reporting:** the change that surfaces the CLI's error line (`isolation.ts:156-165`) works. Both config errors in the native runs were refused before any model request, kept the CLI's own wording, and were marked as not submitted.
+- **Cancellation:** cancelling after the plugin started ended its process cleanly.
+- **Key checks:** override and server-name validation is unchanged.
+- **Native evidence:** the implementer and independent runs agree on all 15 scenarios. They prove plugin tools are actually loaded and called inside the real worker. They don't show how a real model would choose tools. The two disclosed CLI limitations are correctly tracked in #442.
+
+## Limits
+- I had read-only file tools only, no git or shell, so I ran no tests or native runs and relied on the recorded logs.
+- I couldn't confirm that the source at `aed1446` matches `df4447bc`, the commit where the gates and the independent native run actually ran.
+- Not tested anywhere: a standalone server and a plugin server sharing a name (guide 05 describes `graphgoblin` both ways), and plugin errors the CLI might report only when plugins are on.
+- `remoteProviderCalls: 0` in the native results is a hard-coded value (`native-plugins.mjs:441`), not a measurement. Zero remote calls is still well supported, because the fixture points the model provider at a local endpoint.
+- I did not review the parent catalog slice (#440).
+
+## Recommendation
+Merge once these are done:
+1. F1 is resolved, at least by correcting the docs and CHANGELOG.
+2. The owner explicitly accepts F2, recorded in ADR-0065 and guide 05.
+3. F3 is batched with those doc fixes.
+4. The downstream gates pass: the full integrated `pnpm check` and all four PR CI jobs.

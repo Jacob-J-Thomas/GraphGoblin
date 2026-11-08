@@ -32,6 +32,80 @@ function inferenceLoop(name: string, model?: string) {
   };
 }
 
+for (const requestedEffort of ['none', 'medium']) {
+  test(`seeded GPT-6.1 Terra preserves inherited effort and publishes ${requestedEffort}`, async ({
+    page,
+    request,
+  }) => {
+    const response = await request.get('/model-catalog');
+    const catalog = (await response.json()) as { items: unknown[] };
+    expect(
+      catalog.items
+        .map((entry) => ModelCatalogEntrySchema.parse(entry))
+        .find((entry) => entry.model === 'gpt-6.1-terra'),
+    ).toMatchObject({
+      harness: 'codex',
+      source: 'harness',
+      displayName: 'GPT-6.1 Terra',
+      efforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      defaultEffort: 'medium',
+      enabled: true,
+    });
+    const source = inferenceLoop(`Terra ${requestedEffort}`);
+    // Catalog medium is guidance; selecting Terra must preserve configured inherited effort.
+    const definition = {
+      ...source,
+      settings: {
+        ...source.settings,
+        defaults: { byHarness: { codex: { effort: 'low' } } },
+      },
+    };
+    const created = await request.post('/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.goto(`/app/loops/${loop.id}/edit`);
+    const dialog = await openNode(page, 'infer');
+    await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-6.1-terra');
+    const effort = dialog.getByLabel('Effort', { exact: true });
+    await expect(effort).toHaveValue('');
+    await expect(effort.locator('option')).toHaveText([
+      'Default (low)',
+      'none (no reasoning)',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+      'max',
+    ]);
+    await effort.selectOption(requestedEffort);
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+    const stored = (await (await request.get(`/loops/${loop.id}`)).json()) as {
+      current: { definition: unknown };
+    };
+    expect(
+      LoopDefinitionSchema.parse(stored.current.definition).nodes.find(
+        (node) => node.id === 'infer',
+      )?.config,
+    ).toMatchObject({ model: 'gpt-6.1-terra', effort: requestedEffort });
+    await control(request, '/harness/script', { turns: [{ finalText: 'Terra catalog smoke' }] });
+    const before = (await control(request, '/harness/requests')) as {
+      started: { model: string; effort: string }[];
+    };
+    await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+    await page.getByRole('button', { name: 'Start run', exact: true }).click();
+    await expect
+      .poll(async () =>
+        ((await control(request, '/harness/requests')) as typeof before).started.slice(
+          before.started.length,
+        ),
+      )
+      .toEqual([{ model: 'gpt-6.1-terra', effort: requestedEffort }]);
+    await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  });
+}
+
 for (const theme of ['dark', 'light']) {
   test(`catalog model and effort publish and reach the harness (${theme})`, async ({
     page,

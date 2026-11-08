@@ -57,10 +57,12 @@ Before sending, check harness readiness in **Settings**, complete any required C
 Ollama service setup, choose a usable model/default, and publish a contract-valid system loop.
 Chat displays the readiness of that published loop and disables unavailable actions with its
 reason. Seeding and pairing make no model request. The default workflow uses fresh sessions,
-a temporary working directory and the existing harness isolation defaults; it does not inherit
-the machine's personal extensions.
+a temporary working directory and the current harness policy. Codex inherits configured plugins
+and their tools/services under [ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md);
+Claude and Ollama retain their own restrictions, including fresh, tool-free Ollama requests.
 The actual workflow runs with the gateway owner's configured authority, including any authored
-Script commands. Pairing does not sandbox those commands or undo their side effects.
+Script commands and inherited Codex plugin services. Pairing does not sandbox that authority or
+undo its side effects; device HTTP credentials remain limited to their chat audience.
 
 Owner API clients use `chat:read` and `chat:write` (write includes read); pairing and device
 administration require wildcard owner authority. Device tokens use their own route/membership

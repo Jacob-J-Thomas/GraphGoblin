@@ -188,6 +188,15 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   {
     harness: 'codex',
     source: 'harness',
+    model: 'gpt-6.1-terra',
+    displayName: 'GPT-6.1 Terra',
+    efforts: CODEX_EFFORTS,
+    defaultEffort: 'medium',
+    enabled: true,
+  },
+  {
+    harness: 'codex',
+    source: 'harness',
     model: 'gpt-6-sol',
     displayName: 'GPT-6 Sol',
     efforts: CODEX_EFFORTS,

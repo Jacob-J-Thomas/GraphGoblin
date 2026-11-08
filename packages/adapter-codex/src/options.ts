@@ -6,7 +6,7 @@ import { isolationDefaults, layerConfig, overrideRefusal, table, unplainKey } fr
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
  * explicitly so the machine's `~/.codex/config.toml` defaults for it never apply to a loop; the
- * machine's extensions are switched off by the isolation defaults (isolation.ts, ADR-0063).
+ * configured plugins are inherited while other extensions have isolation defaults (ADR-0067).
  *
  * Verified against `@openai/codex-sdk` 0.160.0 (`dist/index.js`, `CodexExec.run`): the per-thread
  * options are turned into these CLI arguments, which come after any `config` overrides and so win
@@ -80,9 +80,9 @@ export function sanitizeConfig(value: unknown): ConfigValue | undefined {
 
 /**
  * Client options: the SDK's `config` (dotted `--config` keys) is the isolation defaults of
- * ADR-0063 with `harnessOptions.configOverrides` layered over them, so a node can turn an
- * inherited extension back on. The explicit thread options above are emitted after them, so
- * overrides cannot weaken the sandbox, approval, model, or effort a node declared.
+ * ADR-0063/ADR-0067 with `harnessOptions.configOverrides` layered over them, so a node can opt
+ * out of inherited plugins or turn another extension back on. The thread options are emitted
+ * after them, so overrides cannot weaken the sandbox, approval, model, or effort a node declared.
  */
 export function clientOptions(
   options: HarnessOptions,

@@ -21,7 +21,11 @@ serve the shell and `/chat` on one origin. There is no cross-origin credential f
 Server-owned bindings classify one gateway loop per owner and one loop per device as system chat
 loops. Classification is separate from the portable definition and never depends on a name.
 The gateway seed is a real Trigger → Inference → Exit graph with a fresh harness session,
-temporary workspace, existing default resolution and isolation policy. It makes no model call
+temporary workspace, existing default resolution and current harness policy. Codex inherits
+configured plugin tools/services under [ADR-0067](ADR-0067-codex-inherits-configured-plugins.md);
+the published workflow's authority can include those services while device HTTP credentials stay
+audience-scoped. Claude/Ollama restrictions are unchanged; Ollama remains fresh and tool-free.
+The seed makes no model call
 while seeding. A device enrollment atomically clones the gateway's current published definition,
 publishes the clone and binds it to that device. Later gateway publications do not update existing
 device loops. A missing/corrupt existing binding fails visibly instead of replacing owner edits.

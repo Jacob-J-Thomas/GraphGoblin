@@ -413,6 +413,7 @@ describe('Codex efforts are offered per model, with none as the lowest level (#2
       'gpt-6-luna': noneToMax,
       'gpt-6-sol': noneToMax,
       'gpt-6.1-sol': noneToMax,
+      'gpt-6.1-terra': noneToMax,
     });
   });
 
@@ -425,7 +426,7 @@ describe('Codex efforts are offered per model, with none as the lowest level (#2
       const models = items
         .filter((entry) => entry.harness === 'codex' && entry.model !== 'gpt-5.5')
         .map((e) => e.model);
-      expect(models).toHaveLength(7);
+      expect(models).toHaveLength(8);
       for (const model of models) {
         const created = await t.app.inject({
           method: 'POST',

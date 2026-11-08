@@ -51,6 +51,19 @@ const effortArguments = (argv: string[]) =>
     .filter((value) => value.startsWith('model_reasoning_effort='));
 
 it.each(EffortSchema.options)(
+  'sends GPT-6.1 Terra and its requested effort %s through the pinned SDK unchanged',
+  async (effort) => {
+    const argv = await argvFor('gpt-6.1-terra', effort);
+    expect(effortArguments(argv)).toEqual([`model_reasoning_effort="${effort}"`]);
+    expect(argv.slice(argv.indexOf('--model'), argv.indexOf('--model') + 2)).toEqual([
+      '--model',
+      'gpt-6.1-terra',
+    ]);
+  },
+  30_000,
+);
+
+it.each(EffortSchema.options)(
   'sends the requested effort %s to a GPT-6 model under its canonical name',
   async (effort) => {
     const argv = await argvFor('gpt-6-luna', effort);
@@ -69,6 +82,7 @@ describe('the provider name for effort none', () => {
   it.each([
     ['gpt-6-luna', 'none'],
     ['gpt-6.1-sol', 'none'],
+    ['gpt-6.1-terra', 'none'],
     ['gpt-5.6-terra', 'none'],
   ])(
     'sends none to %s as %s',
