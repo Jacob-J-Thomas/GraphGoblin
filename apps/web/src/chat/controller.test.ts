@@ -620,7 +620,7 @@ describe('bounded direct request polling', () => {
         ? Promise.reject(missing)
         : Promise.resolve(byRequest.get(requestId)!),
     );
-    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(1000);
     expect(client.request).toHaveBeenCalledTimes(16);
     expect(client.request.mock.calls[8]![1]).toBe(pending.request.requestId);
     for (const row of rows)
@@ -913,4 +913,88 @@ it('uncertainty forbids a repeated cancel of that turn while an unrelated acknow
   expect(client.send).not.toHaveBeenCalled();
   expect(controller.getSnapshot()).toMatchObject({ retryBlocked: true, pending: undefined });
   expect(client.session).toHaveBeenCalledTimes(2);
+});
+
+describe('expected pending request absence', () => {
+  it('keeps unacknowledged guidance and the independent one-second polling cadence through pending 404s', async () => {
+    vi.useFakeTimers();
+    sessionStorage.setItem(key, JSON.stringify({ draft: 'Keep draft', pending }));
+    const { controller, client } = create();
+    const row = activeProjection(0);
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue([row]);
+    client.request.mockImplementation((_id, requestId) =>
+      requestId === pending.request.requestId ? Promise.reject(missing) : Promise.resolve(row),
+    );
+    await controller.refresh();
+    const guidance = controller.getSnapshot().error;
+    expect(guidance).toBe(
+      'The gateway has not acknowledged this message. Check its status or explicitly retry the same request.',
+    );
+    client.request.mockClear();
+    for (let tick = 1; tick <= 6; tick++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(client.request).toHaveBeenCalledTimes(tick * 2);
+      expect(controller.getSnapshot()).toMatchObject({
+        error: guidance,
+        pending,
+        turns: [row],
+        draft: 'Keep draft',
+        retryBlocked: false,
+      });
+    }
+    expect(client.session).toHaveBeenCalledOnce();
+    expect(client.conversations).toHaveBeenCalledOnce();
+    expect(client.turns).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({
+      pending,
+      draft: 'Keep draft',
+    });
+  });
+  it('still reports and backs off a real active-target failure alongside a pending 404', async () => {
+    vi.useFakeTimers();
+    sessionStorage.setItem(key, JSON.stringify({ draft: 'Keep draft', pending }));
+    const { controller, client } = create();
+    const row = activeProjection(0);
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue([row]);
+    client.request.mockRejectedValue(missing);
+    await controller.refresh();
+    client.request.mockClear();
+    client.request.mockImplementation((_id, requestId) =>
+      Promise.reject(
+        requestId === pending.request.requestId
+          ? missing
+          : new ChatApiError(503, 'TEMPORARY', 'Temporary active read failure.'),
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    expect(controller.getSnapshot().error).toBe('Temporary active read failure.');
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(client.request).toHaveBeenCalledTimes(4);
+    expect(controller.getSnapshot().pending).toEqual(pending);
+    expect(client.send).not.toHaveBeenCalled();
+  });
+  it('does not automatically retry an idle failed full refresh and recovers on explicit retry', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    client.session.mockRejectedValueOnce(new TypeError('restarting'));
+    await controller.refresh();
+    expect(controller.getSnapshot().error).toBeDefined();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(client.session).toHaveBeenCalledOnce();
+    expect(client.request).not.toHaveBeenCalled();
+    await controller.refresh();
+    expect(client.session).toHaveBeenCalledTimes(2);
+    expect(controller.getSnapshot()).toMatchObject({
+      session,
+      error: undefined,
+      pending: undefined,
+    });
+    expect(client.send).not.toHaveBeenCalled();
+  });
 });

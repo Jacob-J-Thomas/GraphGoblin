@@ -72,7 +72,7 @@ test('the build context keeps the sources and manifests the image needs', () => 
   }
 });
 
-test('the container Goblin entry remains an absolute file path through Vite aliases', () => {
+test('the Goblin HTML alias resolves without rewriting absolute container source paths', () => {
   const root = fileURLToPath(new URL('../..', import.meta.url));
   const dockerfile = readFileSync(new URL('../../Dockerfile', import.meta.url), 'utf8');
   const buildStage = dockerfile.split(/^FROM .+ AS runtime$/m)[0];
@@ -83,10 +83,18 @@ test('the container Goblin entry remains an absolute file path through Vite alia
 
   const entry = 'apps/web/goblin/index.html';
   assert.equal(isExcluded(rules, entry), false);
-  assert.match(readFileSync(new URL(`../../${entry}`, import.meta.url), 'utf8'), /main\.tsx/);
+  const htmlEntry = readFileSync(new URL(`../../${entry}`, import.meta.url), 'utf8').match(
+    /<script type="module" src="([^"]+)"/,
+  )?.[1];
+  assert.ok(htmlEntry, 'the Goblin HTML must declare its module entry');
   const containerEntry = posix.join(workdir, entry);
-  // Exercise Vite's actual alias hook: a /src build directory used to rewrite this entry
-  // into apps/web/src/apps/web/goblin/index.html before the HTML could be loaded.
+  const absoluteEntries = [
+    containerEntry,
+    '/src/apps/web/goblin/index.html',
+    '/src/apps/web/src/goblin/main.tsx',
+  ];
+  // Exercise Vite's actual alias hook: HTML's URL must resolve, while /src on a container
+  // filesystem must not be mistaken for that URL and rewritten into a missing path.
   const resolved = execFileSync(
     process.execPath,
     [
@@ -96,13 +104,20 @@ test('the container Goblin entry remains an absolute file path through Vite alia
 const config = await resolveConfig({ configFile: 'vite.goblin.config.ts', logLevel: 'silent' }, 'build');
 const plugin = config.plugins.find((plugin) => plugin.name === 'alias');
 const hook = typeof plugin.resolveId === 'function' ? plugin.resolveId : plugin.resolveId.handler;
-const resolved = await hook.call({ resolve: async () => null, warn() {} }, process.argv[1], undefined, { isEntry: true });
-process.stdout.write(JSON.stringify(resolved?.id ?? process.argv[1]));`,
-      containerEntry,
+const resolved = await Promise.all(process.argv.slice(1).map(async (entry) => {
+  const resolved = await hook.call({ resolve: async () => null, warn() {} }, entry, undefined, { isEntry: true });
+  return resolved?.id ?? entry;
+}));
+process.stdout.write(JSON.stringify(resolved));`,
+      ...absoluteEntries,
+      htmlEntry,
     ],
     { cwd: posix.join(root, 'apps/web'), encoding: 'utf8' },
   );
-  assert.equal(JSON.parse(resolved), containerEntry);
+  assert.deepEqual(JSON.parse(resolved), [
+    ...absoluteEntries,
+    fileURLToPath(new URL('../../apps/web/src/goblin/main.tsx', import.meta.url)),
+  ]);
 });
 
 test('every tracked source file the image builds from stays in the context', () => {

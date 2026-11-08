@@ -51,6 +51,8 @@ const isKnownGone = (error: unknown): error is ChatApiError =>
 type RequestIdentity = Pick<ChatTurn, 'conversationId' | 'requestId'>;
 const identityKey = (identity: RequestIdentity) =>
   `${identity.conversationId}/${identity.requestId}`;
+const UNACKNOWLEDGED_MESSAGE =
+  'The gateway has not acknowledged this message. Check its status or explicitly retry the same request.';
 
 /** A lost acknowledgement is recovered only by GET. POST is always an explicit user action. */
 export class ChatController {
@@ -285,6 +287,7 @@ export class ChatController {
     let transition = false;
     let failure: unknown;
     let transient = false;
+    let unacknowledged = false;
     for (let offset = 0; offset < targets.length; offset += 4) {
       const batch = targets.slice(offset, offset + 4);
       const results = await Promise.allSettled(
@@ -308,6 +311,13 @@ export class ChatController {
         } else if (isKnownGone(result.reason)) {
           this.retireRequest(result.reason, target.requestId);
           transition = true;
+        } else if (
+          result.reason instanceof ChatApiError &&
+          result.reason.status === 404 &&
+          this.state.pending?.conversationId === target.conversationId &&
+          this.state.pending.request.requestId === target.requestId
+        ) {
+          unacknowledged = true;
         } else {
           failure = result.reason;
           if (result.reason instanceof ChatApiError && result.reason.status === 410)
@@ -328,6 +338,12 @@ export class ChatController {
     }
     this.failures = transient ? this.failures + 1 : 0;
     if (failure) this.fail(failure);
+    else if (
+      unacknowledged &&
+      this.state.pending &&
+      `${this.state.pending.conversationId}/${this.state.pending.request.requestId}` === pendingKey
+    )
+      this.set({ error: UNACKNOWLEDGED_MESSAGE });
     if (this.failures >= 5 && this.hasActiveTurn())
       this.set({ error: 'Lost touch with the gateway. This request may still finish there.' });
     if (transition) {
@@ -392,8 +408,7 @@ export class ChatController {
             if (identityKey(target) !== pendingKey) this.holdUncertain(target, error);
             else
               this.set({
-                error:
-                  'The gateway has not acknowledged this message. Check its status or explicitly retry the same request.',
+                error: UNACKNOWLEDGED_MESSAGE,
               });
           } else throw error;
         }

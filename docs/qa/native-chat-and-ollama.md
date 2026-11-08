@@ -58,7 +58,10 @@ through the real SQLite JSON columns, saved connection settings, optional versus
 explicit process defaults, and read-only preflight on pending or unsupported
 stores. The same review prompted request-only bounded chat polling, consistent
 audio-quota responses, and physical private-audio cleanup in explicit reset.
-These repairs receive a second immutable-candidate review before merge.
+The second independent Opus review accepted these repairs. Its additional
+observations led to preserving pending-request recovery guidance during status
+polls and narrowing the Goblin entry alias so source checkouts under `/src` work.
+The pull request records final candidate review and CI receipts.
 
 The complete local browser diagnostic finished with 425 passes, 23 failures and
 one existing live-provider skip. It used the older built candidate while repairs

@@ -32,7 +32,11 @@ export default defineConfig({
   root: directory('./goblin'),
   publicDir: directory('./public'),
   base: GOBLIN_BASE,
-  resolve: { alias: { '/src': directory('./src') } },
+  resolve: {
+    alias: [
+      { find: /^\/src\/goblin\/main\.tsx$/, replacement: directory('./src/goblin/main.tsx') },
+    ],
+  },
   plugins: [
     react(),
     tailwindcss(),
