@@ -47,6 +47,7 @@ import {
 import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { INFERENCE_FIELD_OVERRIDES } from './HarnessField.js';
+import { SessionPicker } from './SessionPicker.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -70,6 +71,9 @@ const TRIGGER_UNION_PICKERS = {
   authentication: WebhookAuthenticationPicker,
   eventType: WebhookEventTypePicker,
 };
+const INFERENCE_UNION_PICKERS = { session: SessionPicker };
+/** Context shows Prompt, Session, Input, then Files under Advanced; the schema lists session first. */
+const INFERENCE_FIELD_ORDER = ['prompt', 'session', 'input', 'contextFiles'] as const;
 const DECISION_FIELD_LABELS = {
   minConfidence: 'Min confidence',
   truthThreshold: 'Noul true-probability threshold',
@@ -648,7 +652,9 @@ export function NodeEditorDialog({
                                     ? node.config.kind === 'classifier'
                                       ? CLASSIFIER_FIELD_ORDER
                                       : DECISION_FIELD_ORDER
-                                    : undefined
+                                    : node.kind === 'inference'
+                                      ? INFERENCE_FIELD_ORDER
+                                      : undefined
                                 }
                                 value={node.config}
                                 label={`${node.id} config`}
@@ -658,7 +664,9 @@ export function NodeEditorDialog({
                                     ? DECISION_UNION_PICKERS
                                     : node.kind === 'trigger'
                                       ? TRIGGER_UNION_PICKERS
-                                      : undefined
+                                      : node.kind === 'inference'
+                                        ? INFERENCE_UNION_PICKERS
+                                        : undefined
                                 }
                                 fieldOverrides={
                                   node.kind === 'inference'

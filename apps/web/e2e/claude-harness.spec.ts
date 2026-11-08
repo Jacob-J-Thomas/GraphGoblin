@@ -528,6 +528,49 @@ test('Claude settings stay pending through refresh and preserve the Codex defaul
   }
 });
 
+test('Settings Defaults aligns each model and effort select, with the Claude effort note below its row', async ({
+  page,
+  request,
+}) => {
+  const instance = await claudeInstance(request);
+  const settings = await request.put(instance.url + '/settings', {
+    data: {
+      defaults: { byHarness: { claude: { model: 'claude-opus-5-5', effort: 'xhigh' } } },
+    },
+  });
+  expect(settings.status()).toBe(200);
+  await page.goto(instance.url + '/app/settings');
+  for (const [harness, suffix] of [
+    ['codex', ''],
+    ['claude', ' (claude)'],
+  ] as const) {
+    const section = page.getByRole('region', { name: `${harness} defaults`, exact: true });
+    const model = section.getByRole('combobox', { name: `Default model${suffix}`, exact: true });
+    const effort = section.getByRole('combobox', { name: `Default effort${suffix}`, exact: true });
+    await expect(model).toBeEnabled();
+    await expect(effort).toBeEnabled();
+    const modelBox = (await model.boundingBox())!;
+    const effortBox = (await effort.boundingBox())!;
+    // Side by side on a desktop row: the selects share their top edge and height.
+    expect(effortBox.y, harness).toBe(modelBox.y);
+    expect(effortBox.height, harness).toBe(modelBox.height);
+    expect(effortBox.x, harness).toBeGreaterThan(modelBox.x + modelBox.width);
+  }
+  const claude = page.getByRole('region', { name: 'claude defaults', exact: true });
+  const effort = claude.getByRole('combobox', { name: 'Default effort (claude)', exact: true });
+  await expect(effort).toHaveValue('xhigh');
+  await expect(effort).toHaveAccessibleDescription(
+    'This is the requested effort; Claude does not report the effective effort.',
+  );
+  const note = claude.getByText(
+    'This is the requested effort; Claude does not report the effective effort.',
+    { exact: true },
+  );
+  const noteBox = (await note.boundingBox())!;
+  const effortBox = (await effort.boundingBox())!;
+  expect(noteBox.y).toBeGreaterThanOrEqual(effortBox.y + effortBox.height);
+});
+
 test('Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure', async ({
   page,
   request,

@@ -231,6 +231,7 @@ test('creates independent copies and leaves other drafts and the catalog unchang
       response.request().method() === 'PUT' &&
       new URL(response.url()).pathname === `/loops/${first!.loop.id}/draft`,
   );
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await dialog
     .locator('[data-field="prompt.template"] .cm-content')
     .fill('Only this copy uses this prompt.');

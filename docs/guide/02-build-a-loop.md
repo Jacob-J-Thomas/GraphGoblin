@@ -15,7 +15,7 @@ Structured edits in the dialog save as you type; section JSON saves when applied
 
 The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
-Inference and provider decision forms have **Settings** and **Context** tabs. Use **Advanced** within either panel for less common controls; its count shows set values and problems. **Context** also shows how many context fields have a value of their own ("2 set"), with the same rules as Advanced, alongside its problem count. It contains inference input mutations and context files, or the decision's selected messages, variables and last-output settings. An issue opens the correct tab and Advanced group. Variable-name and mutation-pointer fields suggest declared loop variables while accepting other names or pointers allowed by their schemas. Criteria and rubric descriptions support multiple lines. Invalid numbers show their schema's reason and keep the last valid value saved until corrected or discarded.
+Inference and provider decision forms have **Settings** and **Context** tabs. Use **Advanced** within either panel for less common controls; its count shows set values and problems. **Context** also shows how many context fields have a value of their own ("2 set"), with the same rules as Advanced, alongside its problem count. It contains the inference prompt, session, input mutations and context files, or the decision's selected messages, variables and last-output settings. An issue opens the correct tab and Advanced group. Variable-name and mutation-pointer fields suggest declared loop variables while accepting other names or pointers allowed by their schemas. Criteria and rubric descriptions support multiple lines. Invalid numbers show their schema's reason and keep the last valid value saved until corrected or discarded.
 
 An incomplete number such as `-` says **Enter a complete number**, keeps the last valid saved value and blocks **Publish**. Correct it or deliberately empty the field; an empty required field still needs a value. Held numeric input survives tab changes, undo/redo and closing/reopening in this editing session.
 
@@ -71,20 +71,26 @@ The CLI reports invalid configuration as a turn failure, but version 0.160.0 can
 
 Codex turns still run without independently configured MCP servers, ChatGPT apps, memories, goals, sub-agents, hooks and `notify` ([ADR-0063](../decisions/ADR-0063-loop-turns-without-personal-extensions.md)). To use one of your standalone Codex MCP servers in a node, set **Config overrides** to `{"mcp_servers": {"<name>": {"enabled": true}}}`. `{"features": {"multi_agent": true}}` lets the turn spawn sub-agents again. Write every override key as plain segments of letters, digits, `_` and `-`. A key with any other character, or a segment named `__proto__`, `constructor` or `prototype`, makes the run fail before the turn starts. Claude turns always run without your Claude MCP servers, plugins, hooks and skills.
 
-**Choosing inference context.** Use `fresh` for a new provider conversation with your
-authored task and selected inputs. Include current loop context deliberately in
-`prompt.template`, **Context** input transforms or `contextFiles`; fresh does not
-mean an empty task. Use `resume-own` for an independent conversation owned by this
-node within this run and harness. Later visits resume it, including after restart;
-other nodes, runs, replay forks and child runs start their own conversations.
-Previous/named keep their existing shared-session behavior.
+**Choosing inference context.** **Context** shows **Prompt**, then **Session**, **Input**
+and **Advanced → Files**. Session's **Conversation** stores `session.policy`, with help
+for the chosen option. **Start fresh** (`fresh`, the default) starts a new provider
+conversation on each visit; include current loop context deliberately in
+`prompt.template`, input transforms or `contextFiles`. **Resume latest in this run**
+(`resume-previous`) resumes the run's most recent conversation for the same harness,
+including one used by another node. **Resume named conversation** (`resume-named`) shows
+**Conversation name** (`session.key`), shared by nodes and runs of this loop using the
+same name and harness. **Resume this node's conversation** (`resume-own`) resumes this
+node's earlier visits in this run and harness, including after restart; other nodes,
+runs, replay forks and child runs start their own. It does not stop another node using
+Resume latest in this run from continuing it. A resume with nothing recorded starts
+fresh; a recorded conversation that can no longer be resumed fails the visit.
 
-Choosing `resume-own` reveals **Reset after visits** on Settings. Leave it blank for
+**Resume this node's conversation** also shows **Reset after visits**. Leave it blank for
 no automatic reset, or enter a positive safe integer (1 to 9,007,199,254,740,991).
 With 2, visits 1 and 2 share a conversation and visit 3 starts fresh. Retries and
 repairs remain inside a visit. This clears only that node's provider conversation;
-main-loop context and other nodes are kept. A missing provider session fails
-explicitly; an explicit fresh-session recovery choice remains a later feature.
+main-loop context and other nodes are kept. An explicit fresh-session recovery choice
+remains a later feature.
 
 **Script (`script`).** Set an executable `command`, templated `args`, `cwd` (default `workspace`), and optional `env` and `timeoutSeconds`. Commands execute as the API's operating-system user, without a shell wrapper; invoke a shell explicitly if your program needs one. `stdin` accepts `thread`, `last-output`, or `none`; `stdout` accepts `last-output`, `patch` (RFC 6902), or `ignore`. In `env`, use the secret-reference syntax in [Settings and secrets](06-settings-and-secrets.md#store-secrets). Map expected nonzero codes through `exitCodeRoutes`; an unmapped nonzero code fails the run. Connect `out` and every additional route. Make scripts safe to execute again after interruption.
 
@@ -148,7 +154,7 @@ Empty or whitespace-only optional JSONata expressions count as absent and show n
 
 The forms draw each field by its type. An asterisk (*) marks a field you must fill (screen readers hear "required"), and a list or set of options that needs entries says how many ("At least 2 items.", "Choose at least 1."); a problem shows under its field; a field with a default shows it as a placeholder or as the initial choice. An on/off setting with a default is a switch; one that may stay unset offers **Not set**, **Yes**, and **No**. A choice of two to four options is a row of segments (Tab reaches the chosen one and the arrow keys move it), a longer one a dropdown, and an optional choice keeps **Not set**. Liquid, JSONata, and JSON fields are code editors tagged with their language; **Tab** and **Shift+Tab** leave them as from any other field.
 
-Inference, decision, script and subloop forms keep optional controls under **Advanced**, grouped by purpose. In inference, model and effort stay visible on **Settings** with harness, session policy/key, prompt and sandbox. LLM decisions also show model and effort on Settings. Effort is one dropdown: **Default (high)** shows the inherited value, followed by the effective model's supported choices. Choose Default to clear an explicit override; resolution is node, then loop, then Settings, then process defaults. Classifiers keep Question, Model, then Answer and have no effort control. Open **Context** for `input` mutations, and **Context ? Advanced ? Files** for `contextFiles`. In provider decisions, **Context** holds message selection and last output; **Context ? Advanced ? Provider context** holds variable selection. Expression decisions have no Context tab. Decision answers/routes and required evaluator inputs stay visible on Settings; classifier confidence and Noul thresholds are under **Advanced ? Acceptance** inside Evaluation, with alternative recording under the form's **Advanced ? Recording**. Shared exit evaluators use the same nested threshold placement on their single panel.
+Inference, decision, script and subloop forms keep optional controls under **Advanced**, grouped by purpose. In inference, model and effort stay visible on **Settings** with harness and sandbox. LLM decisions also show model and effort on Settings. Effort is one dropdown: **Default (high)** shows the inherited value, followed by the effective model's supported choices. Choose Default to clear an explicit override; resolution is node, then loop, then Settings, then process defaults. Classifiers keep Question, Model, then Answer and have no effort control. Open **Context** for the prompt, the session and `input` mutations, and **Context → Advanced → Files** for `contextFiles`. In provider decisions, **Context** holds message selection and last output; **Context → Advanced → Provider context** holds variable selection. Expression decisions have no Context tab. Decision answers/routes and required evaluator inputs stay visible on Settings; classifier confidence and Noul thresholds are under **Advanced → Acceptance** inside Evaluation, with alternative recording under the form's **Advanced → Recording**. Shared exit evaluators use the same nested threshold placement on their single panel.
 
 Use Left/Right, Home and End on the tabs; Tab leaves the tablist for the selected panel. Both panels keep your edits and unparsed text when switching. Tabs and Advanced show problem counts; Context and Advanced also count fields with values of their own. Choosing an issue opens the right tab and group at its field. Undo/Redo preserve your current tab and open groups; reopening starts on Settings. On large screens the node editor grows at 1024 and 1280 px; below 768 px it remains a full-width bottom sheet.
 

@@ -463,12 +463,13 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
         { timeoutSeconds?: number } | undefined
     )?.timeoutSeconds;
 
-  // Model and effort stay in the basic set alongside session policy and sandbox (#205).
+  // Model and effort stay in the basic set alongside harness and sandbox (#205); the prompt and
+  // session are on Context (#441).
   await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
-  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
-  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeHidden();
+  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeHidden();
   const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
   await expect(sandbox).toBeVisible();
   // Help from the schema's description sits under a field.

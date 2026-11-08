@@ -925,6 +925,7 @@ function UnionField({
     help: help !== undefined,
     required,
   });
+  const pickerDrawsHelp = Picker?.drawsHelp === true;
   return (
     <GroupFrame name={name} label={label} bare={bare}>
       <FieldGroup>
@@ -938,6 +939,7 @@ function UnionField({
             required={required}
             describedBy={control['aria-describedby']}
             invalid={control['aria-invalid'] === true}
+            {...(pickerDrawsHelp ? { help, helpId } : {})}
           />
         ) : (
           <>
@@ -962,7 +964,7 @@ function UnionField({
             </Select>
           </>
         )}
-        <FieldHelp id={helpId} help={help} />
+        {pickerDrawsHelp ? null : <FieldHelp id={helpId} help={help} />}
       </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (
         <ObjectBody key={index} shape={optionShape.shape} name={name} skip={shape.discriminator} />

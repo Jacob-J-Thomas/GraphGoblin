@@ -29,10 +29,13 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await page.getByRole('button', { name: 'Add Inference node' }).click();
   await openNode(page, 'inference');
   const props = page.getByRole('region', { name: 'Node properties' });
+  // The prompt is on Context; model, effort and sandbox are on Settings (#441).
+  await props.getByRole('tab', { name: /^Context\b/ }).click();
   const prompt = props.locator('[data-field="prompt.template"] .cm-content');
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Reply with exactly the single word OK and nothing else.');
+  await props.getByRole('tab', { name: /^Settings\b/ }).click();
   await props.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
   await props.getByLabel('Effort', { exact: true }).selectOption('low');
   await props

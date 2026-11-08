@@ -265,9 +265,6 @@ test('I1: current golden bytes and main inference survive placement and edited s
     'harness',
     'model',
     'effort',
-    'session',
-    'session.key',
-    'prompt.template',
     'harnessOptions.sandbox',
     'harnessOptions.approval',
     'harnessOptions.networkAccess',
@@ -289,14 +286,21 @@ test('I1: current golden bytes and main inference survive placement and edited s
   }
   await selectTab(dialog, 'Context');
   await expandAll(dialog);
-  for (const path of ['input', 'contextFiles.0.path', 'contextFiles.0.template'])
-    await expect(dialog.locator(`[data-field="${path}"]`).first()).toBeVisible();
+  for (const path of [
+    'prompt.template',
+    'session',
+    'session.key',
+    'input',
+    'contextFiles.0.path',
+    'contextFiles.0.template',
+  ])
+    await expect(dialog.locator(`[data-field="${path}"]`).first(), path).toBeVisible();
   expect(JSON.stringify(await config(request, id))).toBe(JSON.stringify(original.config));
   await dialog.locator('[data-field="contextFiles.0.path"] input').fill('notes/日本語.md');
   await replace(page, code(dialog, 'contextFiles.0.template'), 'α\n{{ vars.topic }}');
-  await selectTab(dialog, 'Settings');
   await dialog.locator('[data-field="session.key"] input').fill('qa-session');
   await replace(page, code(dialog, 'prompt.template'), 'Unicode 🧪\n{{ vars.topic }}');
+  await selectTab(dialog, 'Settings');
   await dialog.getByRole('spinbutton', { name: 'Timeout seconds' }).fill('42');
   await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
   await dialog.getByLabel('Effort', { exact: true }).selectOption('low');
@@ -589,7 +593,7 @@ test('I4 held JSON survives collapse, tabs, close, global undo/redo, blocked swi
   await advanced.click();
   await expect(advanced).toContainText('1 error');
   await selectTab(dialog, 'Settings');
-  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toBeVisible();
+  await expect(dialog.getByRole('tab', { name: 'Context 1 set 1 error' })).toBeVisible();
   await dialog.getByLabel('Label', { exact: true }).fill('Unrelated edit');
   await selectTab(dialog, 'Context');
   await openAdvanced(dialog);
@@ -770,14 +774,18 @@ test('inference session policies: named key errors stay visible; switching varia
   const id = await create(request, 'inference', { prompt: { template: 'Hi' } });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
-  const policy = dialog.getByRole('group', { name: 'Session', exact: true }).getByLabel('Policy');
-  await expect(policy).toHaveValue('0');
-  await policy.selectOption('1');
+  await selectTab(dialog, 'Context');
+  const policy = dialog
+    .getByRole('group', { name: 'Session', exact: true })
+    .getByLabel('Conversation', { exact: true });
+  await expect(policy).toHaveValue('fresh');
+  await policy.selectOption({ label: 'Resume latest in this run' });
   await expect
     .poll(async () => (await config(request, id))['session'])
     .toEqual({ policy: 'resume-previous' });
-  await policy.selectOption('2');
+  await policy.selectOption('resume-named');
   const key = dialog.locator('[data-field="session.key"] input');
+  await expect(key).toHaveAccessibleName('Conversation name');
   await key.fill('invalid key');
   const invalid = InferenceConfigSchema.safeParse({
     prompt: { template: 'Hi' },
@@ -791,14 +799,14 @@ test('inference session policies: named key errors stay visible; switching varia
     new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   );
   expect((await config(request, id))['session']).toEqual({ policy: 'resume-previous' });
-  await selectTab(dialog, 'Context');
-  await expect(dialog.getByRole('tab', { name: 'Settings 1 error' })).toBeVisible();
-  await selectTab(dialog, 'Settings');
+  // The name's error counts on Context, where Session is, and not on Settings (#441).
+  await expect(dialog.getByRole('tab', { name: /^Context.* 1 error$/ })).toBeVisible();
+  await expect(dialog.getByRole('tab', { name: 'Settings', exact: true })).toBeVisible();
   await key.fill('authored-session');
   await expect
     .poll(async () => (await config(request, id))['session'])
     .toEqual({ policy: 'resume-named', key: 'authored-session' });
-  await policy.selectOption('0');
+  await policy.selectOption('fresh');
   await expect(key).toHaveCount(0);
   await expect
     .poll(async () => (await config(request, id))['session'])
@@ -815,7 +823,8 @@ test('inference session policies: named key errors stay visible; switching varia
     .toEqual({ policy: 'fresh' });
   await page.reload();
   await openNode(page, 'approve');
-  await expect(policy).toHaveValue('0');
+  await selectTab(dialog, 'Context');
+  await expect(policy).toHaveValue('fresh');
 });
 
 for (const theme of ['dark', 'light']) {
@@ -978,8 +987,10 @@ test('I8 tabs, labelled panels, visual focus order and JSON keyboard exit', asyn
     const panel = page.locator(`[id="${await selected.getAttribute('aria-controls')}"]`);
     await expect(panel).toHaveAccessibleName(await selected.innerText());
   }
+  // Tab leaves the tablist for Context's first field, the prompt (#441).
   await page.keyboard.press('Tab');
-  await expect(dialog.getByRole('button', { name: 'Edit as JSON: Input' })).toBeFocused();
+  await expect(dialog.locator('[data-field="prompt"] :focus')).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).focus();
   await page.keyboard.press('Enter');
   const editor = dialog.getByRole('textbox', { name: 'Input JSON', exact: true });
   await expect(editor).toHaveAccessibleDescription(/Mutations/);

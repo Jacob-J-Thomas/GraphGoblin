@@ -54,6 +54,21 @@ export function placementsOf(items: readonly LayoutItem[]): Placement[] {
   return items.flatMap((item) => (isOwned(item) ? item.fields : [item]));
 }
 
+/** Reorder only the rendered top-level object shape, leaving the schema and field paths intact. */
+export function orderedShape(
+  shape: Record<string, Schema>,
+  fieldOrder: readonly string[] | undefined,
+): Record<string, Schema> {
+  if (!fieldOrder || fieldOrder.length === 0) return shape;
+  const ordered: Record<string, Schema> = {};
+  for (const key of [...fieldOrder, ...Object.keys(shape)]) {
+    if (Object.hasOwn(ordered, key) || !Object.hasOwn(shape, key)) continue;
+    const field = shape[key];
+    if (field !== undefined) ordered[key] = field;
+  }
+  return ordered;
+}
+
 /** The fields of an always-present object some of whose fields say whether they are advanced. */
 function splitFields(schema: Schema): Record<string, Schema> | undefined {
   if (fieldMeta(schema).jsonEditor) return undefined;
@@ -127,9 +142,15 @@ export function formLayout(
 
 /** Collect whole context fields through present objects and the selected evaluator variant.
  * Collections and absent optional objects remain whole so their lifecycle still belongs to their
- * existing renderer. No field paths, schemas or values are rewritten.
+ * existing renderer. No field paths, schemas or values are rewritten. `fieldOrder` orders the
+ * top-level object's fields as it does on Settings; nested objects keep schema order.
  */
-export function contextLayout(schema: Schema, value: unknown, base = ''): FormLayout {
+export function contextLayout(
+  schema: Schema,
+  value: unknown,
+  base = '',
+  fieldOrder?: readonly string[],
+): FormLayout {
   const meta = fieldMeta(schema);
   if (meta.context) {
     const key = base.split('.').at(-1)!;
@@ -145,12 +166,13 @@ export function contextLayout(schema: Schema, value: unknown, base = ''): FormLa
       shape.options[matchOption(shape.options, current, shape.discriminator)]!,
       current,
       base,
+      fieldOrder,
     );
   }
   if (shape.kind !== 'object') return result;
   const record =
     typeof current === 'object' && current !== null ? (current as Record<string, unknown>) : {};
-  for (const [key, child] of Object.entries(shape.shape)) {
+  for (const [key, child] of Object.entries(orderedShape(shape.shape, fieldOrder))) {
     const nested = contextLayout(child, record[key], joinPath(base, key));
     result.basic.push(...nested.basic);
     for (const section of nested.advanced) {
