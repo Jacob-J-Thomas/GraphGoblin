@@ -1,14 +1,18 @@
 import {
   ChatAudioUploadSchema,
+  ChatAudioUploadStatusSchema,
   ChatConversationSchema,
   ChatDeviceSchema,
   ChatPairingCreatedSchema,
+  ChatPairingReadinessSchema,
   ChatSessionSchema,
   ChatTurnSchema,
   type ChatAudioUpload,
+  type ChatAudioUploadStatus,
   type ChatConversation,
   type ChatDevice,
   type ChatPairingCreated,
+  type ChatPairingReadiness,
   type ChatSendRequest,
   type ChatSession,
   type ChatTurn,
@@ -35,9 +39,15 @@ export interface ChatClient {
   send(conversationId: string, request: ChatSendRequest, signal?: AbortSignal): Promise<ChatTurn>;
   request(conversationId: string, requestId: string, signal?: AbortSignal): Promise<ChatTurn>;
   cancel(turnId: string, signal?: AbortSignal): Promise<ChatTurn>;
-  upload(audio: Blob, signal?: AbortSignal): Promise<ChatAudioUpload>;
+  upload(
+    audio: Blob,
+    identity: { uploadId: string; sha256: string },
+    signal?: AbortSignal,
+  ): Promise<ChatAudioUpload>;
+  audioStatus(uploadId: string, signal?: AbortSignal): Promise<ChatAudioUploadStatus>;
   discardAudio(audioId: string, signal?: AbortSignal): Promise<void>;
   devices(signal?: AbortSignal): Promise<ChatDevice[]>;
+  pairingReadiness(signal?: AbortSignal): Promise<ChatPairingReadiness>;
   createPairing(signal?: AbortSignal): Promise<ChatPairingCreated>;
   renameDevice(deviceId: string, label: string, signal?: AbortSignal): Promise<ChatDevice>;
   revokeDevice(deviceId: string, signal?: AbortSignal): Promise<ChatDevice>;
@@ -56,9 +66,10 @@ export function createChatClient(options: {
     schema: z.ZodType<T>,
     body?: unknown,
     signal?: AbortSignal,
+    extraHeaders?: Record<string, string>,
   ): Promise<T> {
     const token = options.getToken();
-    const headers = new Headers({ accept: 'application/json' });
+    const headers = new Headers({ accept: 'application/json', ...extraHeaders });
     if (token) headers.set('authorization', `Bearer ${token}`);
     const binary = body instanceof Blob;
     if (body !== undefined) headers.set('content-type', binary ? body.type : 'application/json');
@@ -148,11 +159,25 @@ export function createChatClient(options: {
       ),
     cancel: (turnId, signal) =>
       call('POST', `/turns/${id(turnId)}/cancel`, ChatTurnSchema, {}, signal),
-    upload: (audio, signal) => call('POST', '/audio', ChatAudioUploadSchema, audio, signal),
+    upload: (audio, identity, signal) =>
+      call('POST', '/audio', ChatAudioUploadSchema, audio, signal, {
+        'Idempotency-Key': identity.uploadId,
+        'X-Content-SHA256': identity.sha256,
+      }),
+    audioStatus: (uploadId, signal) =>
+      call(
+        'GET',
+        `/audio/requests/${id(uploadId)}`,
+        ChatAudioUploadStatusSchema,
+        undefined,
+        signal,
+      ),
     discardAudio: (audioId, signal) =>
       call('DELETE', `/audio/${id(audioId)}`, z.undefined(), undefined, signal),
     devices: async (signal) =>
       (await call('GET', '/devices', list(ChatDeviceSchema), undefined, signal)).items,
+    pairingReadiness: (signal) =>
+      call('GET', '/pairings/readiness', ChatPairingReadinessSchema, undefined, signal),
     createPairing: (signal) => call('POST', '/pairings', ChatPairingCreatedSchema, {}, signal),
     renameDevice: (deviceId, label, signal) =>
       call('PATCH', `/devices/${id(deviceId)}`, ChatDeviceSchema, { label }, signal),

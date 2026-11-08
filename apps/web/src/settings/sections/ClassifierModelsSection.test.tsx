@@ -57,11 +57,17 @@ function hold() {
 }
 
 describe('ClassifierModelsSection', () => {
-  it('sits directly below the LLM catalog and lists the built-in first', async () => {
+  it('follows voice and model defaults and lists the built-in first', async () => {
     renderApp('/settings', seeded());
     await within(region()).findByRole('switch', { name: 'Enable Jev' });
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings.indexOf('Classifier models')).toBe(headings.indexOf('Model catalog') + 1);
+    const catalog = headings.indexOf('Model catalog');
+    expect(headings.slice(catalog, catalog + 4)).toEqual([
+      'Model catalog',
+      'Voice',
+      'Defaults',
+      'Classifier models',
+    ]);
     const rows = within(region()).getAllByRole('row').slice(1);
     expect(rows.map((row) => within(row).getByRole('switch').getAttribute('aria-label'))).toEqual([
       'Enable Jev',

@@ -169,7 +169,7 @@ export function DefaultsSection() {
   // An unsupported effort is named on its own field, as the editor does, not only in the footer.
   const refusedHarness = refusedEffort(save.error, save.variables);
   return (
-    <Card title="Defaults">
+    <Card id="model-defaults" title="Defaults">
       <QueryState query={settingsQuery} what="Settings">
         {(values) => {
           const saved = values['defaults'];

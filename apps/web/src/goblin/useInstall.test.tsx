@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useInstall } from './useInstall.js';
+import { installationGuidance, useInstall } from './useInstall.js';
 
 describe('Goblin installation', () => {
   it('offers installation only after a browser prompt event and consumes that event once', async () => {
@@ -30,4 +30,15 @@ describe('Goblin installation', () => {
     window.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(false);
   });
+});
+
+it.each([
+  ['iPhone Safari', 'iPhone', 1, 'Share'],
+  ['Safari', 'MacIntel', 5, 'Share'],
+  ['Android Chrome', 'Linux', 1, 'Install app'],
+  ['Macintosh Safari', 'MacIntel', 0, 'Add to Dock'],
+  ['Chrome', 'MacIntel', 0, 'address bar'],
+  ['Firefox', 'Linux', 0, 'keep using this browser'],
+])('gives platform install guidance for %s', (ua, platform, touches, expected) => {
+  expect(installationGuidance(ua, platform, touches)).toContain(expected);
 });

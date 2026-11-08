@@ -7,9 +7,10 @@ import { DefaultsSection } from './sections/DefaultsSection.js';
 import { ModelCatalogSection } from './sections/ModelCatalogSection.js';
 import { InstallSection, PreflightSection } from './sections/PreflightSection.js';
 import { SecretsSection } from './sections/SecretsSection.js';
+import { VoiceSection } from './sections/VoiceSection.js';
 
 /**
- * Settings: appearance, the LLM model catalog, classifier models, defaults, secrets, API keys,
+ * Settings: appearance, model connections, voice, defaults, classifier models, secrets, API keys,
  * harness preflight, install.
  */
 export function SettingsPage() {
@@ -18,8 +19,9 @@ export function SettingsPage() {
       <PageHeader title="Settings" />
       <AppearanceSection />
       <ModelCatalogSection />
-      <ClassifierModelsSection />
+      <VoiceSection />
       <DefaultsSection />
+      <ClassifierModelsSection />
       <ExecutionDefaultsSection />
       <SecretsSection />
       <ApiKeysSection />

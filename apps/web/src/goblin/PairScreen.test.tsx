@@ -170,7 +170,7 @@ describe('peripheral pair screen', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const install = vi.fn(() => Promise.resolve());
     render(<PairScreen initialCode="CaseCode" online onPaired={vi.fn()} install={install} />);
-    expect(screen.getByText(/Phones can keep the Home Screen app's storage apart/)).toBeVisible();
+    expect(screen.getByText(/The installed app may keep its storage apart/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
     expect(await screen.findByText(/Code copied/)).toBeVisible();
     expect(writeText).toHaveBeenCalledWith('CaseCode');
@@ -192,7 +192,7 @@ describe('peripheral pair screen', () => {
       await screen.findByText('Couldn’t copy. Select the code and copy it yourself.'),
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Install Goblin' }));
-    expect(await screen.findByText(/In Safari, tap Share/)).toBeVisible();
+    expect(await screen.findByText(/Use your browser’s install option if available/)).toBeVisible();
   });
 
   it('provides manual copy instructions when clipboard access is absent', async () => {

@@ -8,6 +8,7 @@ import {
   type ChatTurn,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
+import { setChatSubmissionUnresolved } from '../pwa/chat-update-guard.js';
 import { ChatApiError, type ChatClient } from './client.js';
 
 export interface PendingChatRequest {
@@ -36,6 +37,8 @@ export interface ChatState {
   retryBlocked: boolean;
   retiredRequestIds: string[];
   historyPollingStopped: boolean;
+  pendingChecked: boolean;
+  checking: boolean;
 }
 export const isActiveTurn = (turn: ChatTurn): boolean =>
   ['queued', 'running', 'waiting', 'paused'].includes(turn.runStatus);
@@ -58,11 +61,16 @@ const UNACKNOWLEDGED_MESSAGE =
 export class ChatController {
   private listeners = new Set<() => void>();
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private readinessTimer: ReturnType<typeof setTimeout> | undefined;
+  private sessionRead: Promise<void> | undefined;
   private abort: AbortController | undefined;
   private generation = 0;
   private failures = 0;
   private readSequence = 0;
   private draftRevision = 0;
+  private drafts = new Map<string, string>();
+  private refusedRequest: PendingChatRequest | undefined;
+  private keepNewDraft = false;
   private pendingDraftRevision:
     { conversationId: string; requestId: string; revision: number } | undefined;
   private pollOffset = 0;
@@ -91,6 +99,7 @@ export class ChatController {
     } catch {
       /* Storage can be unavailable; persistence is required before an actual send. */
     }
+    setChatSubmissionUnresolved(`${storageKey}:turn`, Boolean(saved.pending));
     this.state = {
       session: undefined,
       conversations: [],
@@ -108,8 +117,17 @@ export class ChatController {
       retryBlocked: false,
       retiredRequestIds: [],
       historyPollingStopped: false,
+      pendingChecked: false,
+      checking: false,
     };
-    if (saved.pending && !saved.draft)
+    if (
+      saved.pending &&
+      (!saved.draft ||
+        (saved.pending.request.input.kind === 'text' &&
+          saved.pending.request.input.text === saved.draft) ||
+        (saved.pending.request.input.kind === 'audio' &&
+          saved.pending.request.input.caption === saved.draft))
+    )
       this.pendingDraftRevision = {
         conversationId: saved.pending.conversationId,
         requestId: saved.pending.request.requestId,
@@ -123,6 +141,10 @@ export class ChatController {
   };
   private set(patch: Partial<ChatState>): void {
     this.state = { ...this.state, ...patch };
+    setChatSubmissionUnresolved(
+      `${this.storageKey}:turn`,
+      Boolean(this.state.pending) || this.state.sending,
+    );
     for (const listener of this.listeners) listener();
   }
   private persist(state: ChatState = this.state): void {
@@ -219,15 +241,18 @@ export class ChatController {
     window.addEventListener('offline', this.disconnect);
     window.addEventListener('focus', this.focus);
     document.addEventListener('visibilitychange', this.visibility);
+    window.addEventListener('graphgoblin:chat-readiness-changed', this.focus);
   };
   stop = (): void => {
     ++this.generation;
     this.abort?.abort();
     clearTimeout(this.timer);
+    clearTimeout(this.readinessTimer);
     window.removeEventListener('online', this.reconnect);
     window.removeEventListener('offline', this.disconnect);
     window.removeEventListener('focus', this.focus);
     document.removeEventListener('visibilitychange', this.visibility);
+    window.removeEventListener('graphgoblin:chat-readiness-changed', this.focus);
   };
   private focus = (): void => {
     void this.refresh(this.generation);
@@ -242,16 +267,45 @@ export class ChatController {
   private disconnect = (): void => {
     this.set({ online: false });
     clearTimeout(this.timer);
+    clearTimeout(this.readinessTimer);
   };
   private schedule(generation: number): void {
     clearTimeout(this.timer);
     if (generation !== this.generation || !this.state.online || this.state.authenticationFailed)
       return;
+    this.scheduleReadiness(generation);
     if (this.pollTargets(false).length)
       this.timer = setTimeout(
         () => void this.poll(generation),
         Math.min(1000 * 2 ** this.failures, 15_000),
       );
+  }
+  private scheduleReadiness(generation: number): void {
+    clearTimeout(this.readinessTimer);
+    const readiness = this.state.session?.readiness;
+    const blocked =
+      readiness &&
+      (!readiness.text.ready ||
+        (!readiness.audio.ready &&
+          readiness.audio.code !== 'CHAT_AUDIO_UNAVAILABLE' &&
+          !/normaliz|set up/i.test(readiness.audio.message ?? '')));
+    if (!blocked || document.hidden || !this.state.online || this.state.authenticationFailed)
+      return;
+    this.readinessTimer = setTimeout(() => {
+      if (this.sessionRead || generation !== this.generation) return;
+      this.sessionRead = this.client
+        .session(this.abort?.signal)
+        .then((session) => {
+          if (generation === this.generation) this.set({ session });
+        })
+        .catch((error: unknown) => {
+          if (generation === this.generation) this.fail(error);
+        })
+        .finally(() => {
+          this.sessionRead = undefined;
+          if (generation === this.generation) this.scheduleReadiness(generation);
+        });
+    }, 4000);
   }
   private pollTargets(includePaused: boolean): RequestIdentity[] {
     const candidates: RequestIdentity[] = [
@@ -329,6 +383,7 @@ export class ChatController {
           this.state.pending.request.requestId === target.requestId
         ) {
           unacknowledged = true;
+          this.set({ pendingChecked: true });
         } else {
           failure = result.reason;
           if (result.reason instanceof ChatApiError && result.reason.status === 410)
@@ -372,7 +427,9 @@ export class ChatController {
     )
       return this.fullRead.promise;
     const sequence = ++this.readSequence;
+    this.set({ checking: Boolean(this.state.pending) });
     const promise = this.readFull(generation, sequence).finally(() => {
+      this.set({ checking: false });
       if (this.fullRead?.sequence === sequence) this.fullRead = undefined;
     });
     this.fullRead = { generation, sequence, conversationId, promise };
@@ -392,9 +449,16 @@ export class ChatController {
       ]);
       if (!current()) return;
       const conversationId =
-        this.state.pending?.conversationId ?? this.state.conversationId ?? conversations[0]?.id;
+        this.state.pending?.conversationId ??
+        this.state.conversationId ??
+        (this.keepNewDraft
+          ? undefined
+          : (conversations.find((item) => item.lastTurn > 0)?.id ?? conversations[0]?.id));
       if (this.fullRead?.sequence === sequence) this.fullRead.conversationId = conversationId;
-      this.set({ session, conversations, conversationId });
+      const visible = conversations.filter(
+        (item) => item.lastTurn > 0 || item.id === this.state.pending?.conversationId,
+      );
+      this.set({ session, conversations: visible, conversationId });
       const pendingKey = this.state.pending
         ? `${this.state.pending.conversationId}/${this.state.pending.request.requestId}`
         : undefined;
@@ -420,6 +484,7 @@ export class ChatController {
             else
               this.set({
                 error: UNACKNOWLEDGED_MESSAGE,
+                pendingChecked: true,
               });
           } else throw error;
         }
@@ -470,7 +535,11 @@ export class ChatController {
   };
   selectConversation = async (conversationId: string): Promise<void> => {
     if (this.state.pending || this.state.sending || this.state.retryBlocked) return;
+    this.drafts.set(this.state.conversationId ?? 'new', this.state.draft);
+    this.keepNewDraft = false;
+    this.draftRevision++;
     this.set({
+      draft: this.drafts.get(conversationId) ?? '',
       conversationId,
       turns: [],
       loading: true,
@@ -486,32 +555,29 @@ export class ChatController {
     }
     await this.refresh();
   };
-  newConversation = async (): Promise<void> => {
-    if (!this.state.online || this.state.pending || this.state.sending || this.state.retryBlocked)
-      return;
+  newConversation = (): Promise<void> => {
+    if (this.state.pending || this.state.sending || this.state.retryBlocked)
+      return Promise.resolve();
+    this.drafts.set(this.state.conversationId ?? 'new', this.state.draft);
+    this.draftRevision++;
+    this.refusedRequest = undefined;
+    this.keepNewDraft = true;
+    // A server conversation is created only when its first message is submitted.
     this.set({
-      sending: true,
-      error: undefined,
+      conversationId: undefined,
+      turns: [],
+      draft: '',
       recoveryNotice: undefined,
+      error: undefined,
+      retiredRequestIds: [],
       historyPollingStopped: false,
     });
     try {
-      const conversation = await this.client.createConversation();
-      this.set({
-        conversationId: conversation.id,
-        conversations: [conversation, ...this.state.conversations],
-        turns: [],
-        recoveryNotice: undefined,
-        retryBlocked: false,
-        retiredRequestIds: [],
-        historyPollingStopped: false,
-      });
       this.persist();
-    } catch (error) {
-      this.fail(error);
-    } finally {
-      this.set({ sending: false });
+    } catch {
+      /* Keep the empty draft in memory. */
     }
+    return Promise.resolve();
   };
   private accept(turn: ChatTurn, invalidateRead = true): void {
     if (invalidateRead) ++this.readSequence;
@@ -520,7 +586,14 @@ export class ChatController {
     const turns = this.state.turns.filter((item) => item.id !== turn.id);
     const matchesPending = this.state.pending?.request.requestId === turn.requestId;
     const retainPending = matchesPending && this.state.retryBlocked && isActiveTurn(turn);
-    if (matchesPending && !retainPending) this.pendingDraftRevision = undefined;
+    const clearDraft =
+      matchesPending &&
+      !retainPending &&
+      this.pendingDraftRevision?.revision === this.draftRevision;
+    if (matchesPending && !retainPending) {
+      this.pendingDraftRevision = undefined;
+      this.refusedRequest = undefined;
+    }
     if (!isActiveTurn(turn)) this.pausedPolls.delete(identityKey(turn));
     this.set({
       retryBlocked:
@@ -529,6 +602,8 @@ export class ChatController {
           this.state.retryBlocked && this.state.pending && (!matchesPending || retainPending),
         ),
       pending: matchesPending && !retainPending ? undefined : this.state.pending,
+      ...(clearDraft ? { draft: '' } : {}),
+      ...(matchesPending ? { pendingChecked: false } : {}),
       turns: [...turns, turn].sort((a, b) => a.turn - b.turn),
       error: this.pausedPolls.size > 0 || retainPending ? this.state.error : undefined,
     });
@@ -538,7 +613,13 @@ export class ChatController {
       /* A stale persisted request will be recovered with GET next time. */
     }
   }
-  send = async (input: ChatSendInput): Promise<void> => {
+  send = async (
+    input: ChatSendInput,
+    options?: {
+      prepared?: PendingChatRequest;
+      onPrepared?: (pending: PendingChatRequest) => void;
+    },
+  ): Promise<void> => {
     if (
       !this.state.online ||
       this.state.retryBlocked ||
@@ -561,15 +642,22 @@ export class ChatController {
       historyPollingStopped: false,
     });
     try {
-      let conversationId = this.state.conversationId;
+      this.keepNewDraft = false;
+      let conversationId = options?.prepared?.conversationId ?? this.state.conversationId;
       if (!conversationId) {
         const conversation = await this.client.createConversation();
         conversationId = conversation.id;
         this.set({ conversationId, conversations: [conversation, ...this.state.conversations] });
       }
-      const request = ChatSendRequestSchema.parse({ requestId: crypto.randomUUID(), input });
+      const previous = options?.prepared ?? this.refusedRequest;
+      const request =
+        previous?.conversationId === conversationId &&
+        JSON.stringify(previous.request.input) === JSON.stringify(input)
+          ? previous.request
+          : ChatSendRequestSchema.parse({ requestId: crypto.randomUUID(), input });
       const pending = { conversationId, request };
-      const draft = this.draftRevision === draftRevision ? '' : this.state.draft;
+      options?.onPrepared?.(pending);
+      const draft = this.state.draft;
       // Persist before any turn mutation: a reload must never invent a new request identity.
       try {
         this.persist({ ...this.state, pending, draft });
@@ -581,18 +669,21 @@ export class ChatController {
         );
       }
       this.pendingDraftRevision =
-        this.draftRevision === draftRevision
+        this.draftRevision === draftRevision &&
+        this.state.draft === (input.kind === 'text' ? input.text : (input.caption ?? ''))
           ? { conversationId, requestId: request.requestId, revision: draftRevision }
           : undefined;
-      this.set({ pending, draft });
+      this.set({ pending, draft, pendingChecked: false });
       await this.post(pending);
     } catch (error) {
-      this.set({
-        error:
-          error instanceof Error && error.name === 'QuotaExceededError'
-            ? 'This browser cannot save the request for recovery. Free browser storage before sending.'
-            : message(error),
-      });
+      if (error instanceof ChatApiError && [401, 403].includes(error.status)) this.fail(error);
+      else
+        this.set({
+          error:
+            error instanceof Error && error.name === 'QuotaExceededError'
+              ? 'This browser cannot save the request for recovery. Free browser storage before sending.'
+              : message(error),
+        });
     } finally {
       this.set({ sending: false });
     }
@@ -611,6 +702,7 @@ export class ChatController {
         this.state.pending?.conversationId === pending.conversationId &&
         this.state.pending.request.requestId === pending.request.requestId
       ) {
+        this.refusedRequest = pending;
         const draft =
           this.state.conversationId === pending.conversationId &&
           pending.request.input.kind === 'text' &&
@@ -639,9 +731,9 @@ export class ChatController {
       else this.fail(error);
       if (this.state.pending && !this.state.retryBlocked)
         this.set({
-          error:
-            'Acknowledgement is unknown. Check status before explicitly retrying this same message.',
+          error: 'Acknowledgement is unknown. Checking what happened…',
         });
+      this.schedule(this.generation);
     }
   }
   retryPending = async (): Promise<void> => {
@@ -654,7 +746,11 @@ export class ChatController {
       this.state.retryBlocked
     )
       return;
-    this.set({ sending: true });
+    if (!this.state.pendingChecked) {
+      await this.refresh();
+      if (!this.state.pending || !this.state.pendingChecked || this.state.retryBlocked) return;
+    }
+    this.set({ sending: true, pendingChecked: false });
     await this.post(pending);
     this.set({ sending: false });
   };

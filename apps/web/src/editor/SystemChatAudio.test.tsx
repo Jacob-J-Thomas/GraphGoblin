@@ -53,7 +53,8 @@ afterEach(() => {
 describe('owner voice configuration', () => {
   it('stages a real script, applies once, selects its editor, and removes the full chain through undo', async () => {
     const user = userEvent.setup();
-    mount();
+    const definition = seed();
+    mount(structuredClone(definition));
     expect(screen.getByText('Voice messages: off.')).toBeVisible();
     expect(screen.getByText('Not in published v3.')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Set up voice messages' }));
@@ -70,7 +71,8 @@ describe('owner voice configuration', () => {
     expect(
       within(dialog).getByText('Enter the command that produces the transcript.'),
     ).toBeVisible();
-    expect(useEditorStore.getState().definition!.nodes).toHaveLength(3);
+    expect(useEditorStore.getState().definition).toEqual(definition);
+    expect(useEditorStore.getState().past).toHaveLength(0);
     await user.type(
       within(dialog).getByRole('textbox', { name: 'Command' }),
       '/usr/local/bin/transcribe',
@@ -83,13 +85,30 @@ describe('owner voice configuration', () => {
       nodeDialogOpen: true,
     });
     expect(useEditorStore.getState().past).toHaveLength(1);
+    const staged = useEditorStore.getState().definition!;
+    expect(staged.nodes.find((node) => node.id === 'chat-normalize')).toMatchObject({
+      kind: 'script',
+      config: {
+        command: '/usr/local/bin/transcribe',
+        args: [],
+        cwd: 'workspace',
+        stdin: 'thread',
+        stdout: 'last-output',
+      },
+    });
+    expect(staged.nodes.find((node) => node.id === 'chat-envelope')).toMatchObject({
+      kind: 'mutate',
+    });
+    expect(staged.nodes.find((node) => node.id === 'chat-envelope')).toEqual(
+      definition.nodes.find((node) => node.id === 'chat-envelope'),
+    );
     expect(
       systemChatCapabilities(LoopDefinitionSchema.parse(useEditorStore.getState().definition))
         .audio,
     ).toBe(true);
     expect(screen.getByText('Voice steps added. Undo removes them.')).toBeInTheDocument();
     act(() => useEditorStore.getState().undo());
-    expect(useEditorStore.getState().definition).toEqual(seed());
+    expect(useEditorStore.getState().definition).toEqual(definition);
   });
   it('keeps staged values on helper refusal and never mutates until Add', async () => {
     const user = userEvent.setup();

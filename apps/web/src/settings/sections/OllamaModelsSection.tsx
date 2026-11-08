@@ -48,6 +48,7 @@ function DiscoveryTime({ value }: { value: string }) {
 
 function DiscoveryLine({ view }: { view: OllamaConnectionView }) {
   const { connection, discovery } = view;
+  const problem = discovery.error?.message?.trim() || 'The Ollama server could not be reached.';
   if (!connection.enabled) return <>Not refreshing while off.</>;
   if (discovery.state === 'refreshing') return <>Refreshing models…</>;
   if (discovery.state === 'error')
@@ -55,11 +56,12 @@ function DiscoveryLine({ view }: { view: OllamaConnectionView }) {
       <>
         Last refresh failed{' '}
         {discovery.lastAttemptAt ? <DiscoveryTime value={discovery.lastAttemptAt} /> : null}:{' '}
-        {discovery.error?.message} Showing models from{' '}
+        {problem}
+        {/[.!?]$/.test(problem) ? ' ' : '. '}Showing models from{' '}
         <DiscoveryTime value={discovery.lastSuccessAt} />.
       </>
     ) : (
-      <>Couldn’t list models: {discovery.error?.message}</>
+      <>Couldn’t list models: {problem}</>
     );
   return discovery.lastSuccessAt ? (
     <>
@@ -246,7 +248,7 @@ export function OllamaModelsSection() {
     .filter((entry) => entry.harness === 'ollama')
     .sort((a, b) => a.model.localeCompare(b.model));
   return (
-    <section aria-labelledby="ollama-heading" className="border-t border-default">
+    <section id="ollama" aria-labelledby="ollama-heading" className="border-t border-default">
       <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4">
         <h3 id="ollama-heading" ref={headingRef} tabIndex={-1} className="text-base font-semibold">
           Ollama
@@ -297,13 +299,19 @@ export function OllamaModelsSection() {
             Retry connection
           </Button>
         ) : null}
-        <p
-          id="ollama-refresh-help"
-          className={connection.data?.connection.enabled ? 'sr-only' : 'text-xs text-muted'}
-        >
+        <p id="ollama-refresh-help" className="text-xs text-muted">
           {connection.data?.connection.enabled
-            ? 'Refresh lists installed Ollama models.'
+            ? 'Installed models refresh automatically every 5 minutes. Refresh Ollama models checks now.'
             : 'Turn Ollama on and save to refresh.'}
+        </p>
+        <p className="text-sm">
+          <a href="#model-defaults" className="underline underline-offset-2">
+            Choose the default Ollama model
+          </a>
+          <span className="text-xs text-muted">
+            {' '}
+            · Loops with an explicit model keep their selection.
+          </span>
         </p>
         <p className="text-xs text-muted">
           Missing and unsupported models keep their Enabled choice but can’t be chosen for new runs.

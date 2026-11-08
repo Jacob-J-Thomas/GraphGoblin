@@ -75,6 +75,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: false,
         skipWaiting: false,
+        importScripts: ['chat-update-worker.js'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
       devOptions: { enabled: false },

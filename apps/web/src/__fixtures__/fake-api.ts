@@ -21,6 +21,7 @@ import type {
   RunRecovery,
   TemplateCatalogEntry,
   TemplateDraftRequest,
+  VoiceSetup,
 } from '@graphgoblin/contracts';
 import {
   ClassifierModelPutSchema,
@@ -981,6 +982,23 @@ export class FakeApi {
         delete this.settingsValues[key!];
         return new Response(null, { status: 204 });
       },
+    ],
+    [
+      'GET /chat/voice/config',
+      () =>
+        json({
+          config: { revision: 0, enabled: false, mode: 'auto', cloudFallbackAllowed: false },
+          route: { ready: false, cloudFallbackAllowed: false, message: 'Voice is not configured.' },
+          local: {
+            available: false,
+            installSupported: false,
+            downloadBytes: 0,
+            message: 'Choose cloud setup.',
+          },
+          probes: [],
+          secrets: [],
+          install: { state: 'idle', phase: 'idle', downloadedBytes: 0 },
+        } satisfies VoiceSetup),
     ],
     ['GET /harness/ollama/connection', () => json(this.ollamaConnection)],
     [

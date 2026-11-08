@@ -1,19 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
+import { Workbox } from 'workbox-window';
 import { createAppClient } from '../api/context.js';
 import { startReachability, useReachability } from '../lib/reachability.js';
 import { registerPwa as registerPwaComponent, type RegisterPwaOptions } from './register.js';
 import { usePwaStore } from './store.js';
+import { setChatSubmissionUnresolved } from './chat-update-guard.js';
+import { flush, setNavigator } from './__fixtures__/update.js';
 
 const lifecycles: ReturnType<typeof registerPwaComponent>[] = [];
+const nativeRestorers: (() => void)[] = [];
 function registerPwa(options: RegisterPwaOptions = {}) {
   const lifecycle = registerPwaComponent(options);
   lifecycles.push(lifecycle);
   return lifecycle;
 }
 
-type Listener = (event: { isUpdate?: boolean }) => void;
+type Listener = (event: { isUpdate?: boolean; sw?: ServiceWorker }) => void;
 
 function fakeWorkbox() {
   const listeners = new Map<string, Listener[]>();
@@ -26,7 +30,7 @@ function fakeWorkbox() {
   return {
     registration,
     listeners,
-    emit(type: string, event: { isUpdate?: boolean } = {}) {
+    emit(type: string, event: { isUpdate?: boolean; sw?: ServiceWorker } = {}) {
       for (const l of listeners.get(type) ?? []) l(event);
     },
     addEventListener: vi.fn((type: string, listener: Listener) => {
@@ -41,7 +45,15 @@ function fakeWorkbox() {
 
 afterEach(() => {
   for (const lifecycle of lifecycles.splice(0)) lifecycle.dispose();
-  usePwaStore.setState({ needRefresh: false, applyUpdate: undefined, offlineReady: false });
+  for (const restore of nativeRestorers.splice(0)) restore();
+  usePwaStore.setState({
+    needRefresh: false,
+    applyUpdate: undefined,
+    offlineReady: false,
+    applying: false,
+    blockedReason: undefined,
+  });
+  setChatSubmissionUnresolved('pending-test', false);
   useReachability.setState({ apiReachable: true });
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -350,13 +362,15 @@ describe('registerPwa', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(wb.registration.update).toHaveBeenCalledTimes(2);
   });
-  it('prompts on a waiting worker and activates it only after confirmation', () => {
+  it('prompts on a waiting worker and activates it only after confirmation', async () => {
     const wb = fakeWorkbox();
     const reload = vi.fn();
+    const apply = vi.fn(() => Promise.resolve({ accepted: true }));
     registerPwa({
       createWorkbox: () => wb as never,
       reload,
       serviceWorkerSupported: true,
+      createUpdateGuard: () => ({ apply, dispose: vi.fn() }),
     });
     expect(wb.register).toHaveBeenCalled();
 
@@ -368,13 +382,157 @@ describe('registerPwa', () => {
     expect(usePwaStore.getState().needRefresh).toBe(true);
     expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
     usePwaStore.getState().confirm();
-    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1);
+    await Promise.resolve();
+    expect(apply).toHaveBeenCalledTimes(1);
     usePwaStore.getState().confirm();
-    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
     wb.emit('controlling');
     expect(reload).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the prompt and reason when another tab vetoes the update, then retries', async () => {
+    const wb = fakeWorkbox();
+    const apply = vi
+      .fn()
+      .mockResolvedValueOnce({ accepted: false, reason: 'Voice is pending in another tab.' })
+      .mockResolvedValueOnce({ accepted: true });
+    registerPwa({
+      createWorkbox: () => wb as never,
+      serviceWorkerSupported: true,
+      createUpdateGuard: () => ({ apply, dispose: vi.fn() }),
+    });
+    wb.emit('waiting');
+    usePwaStore.getState().confirm();
+    await vi.waitFor(() => expect(usePwaStore.getState().applying).toBe(false));
+    expect(usePwaStore.getState().needRefresh).toBe(true);
+    expect(usePwaStore.getState().blockedReason).toContain('Voice is pending');
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+    usePwaStore.getState().confirm();
+    await vi.waitFor(() => expect(usePwaStore.getState().needRefresh).toBe(false));
+  });
+
+  it('defers a controlling-event reload until a local uncertain submission clears', async () => {
+    const wb = fakeWorkbox();
+    const reload = vi.fn();
+    registerPwa({
+      createWorkbox: () => wb as never,
+      serviceWorkerSupported: true,
+      reload,
+      createUpdateGuard: () => ({
+        apply: () => Promise.resolve({ accepted: true }),
+        dispose: vi.fn(),
+      }),
+    });
+    wb.emit('waiting');
+    usePwaStore.getState().confirm();
+    await Promise.resolve();
+    setChatSubmissionUnresolved('pending-test', true);
+    wb.emit('controlling');
+    expect(reload).not.toHaveBeenCalled();
+    setChatSubmissionUnresolved('pending-test', false);
+    expect(reload).toHaveBeenCalledTimes(1);
+    wb.emit('controlling');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not mistake first-install control for the confirmed update controlling this page', async () => {
+    const wb = fakeWorkbox();
+    const reload = vi.fn();
+    const first = {} as ServiceWorker;
+    const next = {} as ServiceWorker;
+    const native = Object.assign(new EventTarget(), { controller: first });
+    nativeRestorers.push(setNavigator('serviceWorker', native));
+    registerPwa({
+      createWorkbox: () => wb as never,
+      serviceWorkerSupported: true,
+      reload,
+      createUpdateGuard: (_scope, committed) => ({
+        apply: () => {
+          committed(next);
+          return Promise.resolve({ accepted: true });
+        },
+        dispose: vi.fn(),
+      }),
+    });
+    wb.emit('controlling', { sw: first });
+    wb.emit('waiting', { sw: next });
+    usePwaStore.getState().confirm();
+    await Promise.resolve();
+    expect(reload).not.toHaveBeenCalled();
+    native.controller = next;
+    wb.emit('controlling', { sw: next });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, true])(
+    'uses the actual controller for an external update after 60 seconds (new controller=%s)',
+    async (changed) => {
+      vi.useFakeTimers();
+      vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+      const now = vi.spyOn(performance, 'now').mockReturnValue(100);
+      const scriptURL = new URL('/app/sw.js', location.href).href;
+      const firstTarget = Object.assign(new EventTarget(), { state: 'activated', scriptURL });
+      const nextTarget = Object.assign(new EventTarget(), { state: 'installing', scriptURL });
+      const first = firstTarget as unknown as ServiceWorker;
+      const next = nextTarget as unknown as ServiceWorker;
+      const registration = Object.assign(new EventTarget(), {
+        active: first,
+        waiting: null as ServiceWorker | null,
+        installing: null as ServiceWorker | null,
+        update: vi.fn(() => Promise.resolve()),
+      });
+      const native = Object.assign(new EventTarget(), {
+        controller: first,
+        register: vi.fn(() =>
+          Promise.resolve(registration as unknown as ServiceWorkerRegistration),
+        ),
+      });
+      nativeRestorers.push(setNavigator('serviceWorker', native));
+      const controlling: { sw: ServiceWorker | undefined; isExternal: boolean | undefined }[] = [];
+      const reload = vi.fn();
+      registerPwa({
+        serviceWorkerSupported: true,
+        reload,
+        createWorkbox: (url, scope) => {
+          const workbox = new Workbox(url, { scope });
+          workbox.addEventListener('controlling', (event) => {
+            controlling.push({ sw: event.sw, isExternal: event.isExternal });
+          });
+          return workbox;
+        },
+        createUpdateGuard: (_scope, committed) => ({
+          apply: (worker) => {
+            expect(worker).toBe(next);
+            committed(next);
+            return Promise.resolve({ accepted: true });
+          },
+          dispose: vi.fn(),
+        }),
+      });
+      await flush();
+      expect(registration.update).toHaveBeenCalledTimes(1);
+      // Exercise Workbox 7's real time heuristic. It retains its old _sw and reports the update
+      // as external, even though the application correctly prompts for this new native worker.
+      now.mockReturnValue(60_101);
+      registration.installing = next;
+      registration.dispatchEvent(new Event('updatefound'));
+      registration.waiting = next;
+      nextTarget.state = 'installed';
+      nextTarget.dispatchEvent(new Event('statechange'));
+      expect(usePwaStore.getState().needRefresh).toBe(true);
+      usePwaStore.getState().confirm();
+      await flush();
+      expect(reload).not.toHaveBeenCalled();
+      native.controller = changed ? next : first;
+      native.dispatchEvent(new Event('controllerchange'));
+      expect(controlling).toEqual([{ sw: first, isExternal: changed }]);
+      expect(reload).toHaveBeenCalledTimes(changed ? 1 : 0);
+      native.dispatchEvent(new Event('controllerchange'));
+      expect(reload).toHaveBeenCalledTimes(changed ? 1 : 0);
+    },
+  );
 
   it('does no worker work on unsupported browsers and disposes safely', () => {
     const createWorkbox = vi.fn();
@@ -406,7 +564,7 @@ describe('registerPwa', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     registerPwa();
     await vi.waitFor(() => expect(warn).toHaveBeenCalled());
-    expect(register).toHaveBeenCalledWith('/app/sw.js', { scope: '/app/' });
+    expect(register).toHaveBeenCalledWith('/app/sw.js', { scope: '/app/', updateViaCache: 'none' });
     Reflect.deleteProperty(navigator, 'serviceWorker');
   });
 });

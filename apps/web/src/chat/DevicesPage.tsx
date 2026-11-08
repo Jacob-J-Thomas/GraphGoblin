@@ -1,4 +1,4 @@
-import type { ChatDevice, ChatPairingCreated } from '@graphgoblin/contracts';
+import type { ChatDevice, ChatPairingCreated, ChatPairingReadiness } from '@graphgoblin/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { GoblinMark } from '../components/icons/Logo.js';
@@ -20,14 +20,17 @@ import {
 } from '../components/ui/index.js';
 import { formatDateTime } from '../lib/utils.js';
 import { ChatApiError, type ChatClient } from './client.js';
+import { PairingQr } from './PairingQr.js';
 const errorText = (error: unknown) =>
   error instanceof ChatApiError
     ? error.message
     : 'The gateway could not be reached. Check the connection and try again.';
 function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => void }) {
   const [pairing, setPairing] = useState<ChatPairingCreated>();
+  const [readiness, setReadiness] = useState<ChatPairingReadiness>();
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string>();
+  const [errorAction, setErrorAction] = useState<'check' | 'create'>('check');
   const [status, setStatus] = useState('');
   const [copied, setCopied] = useState<'code' | 'link'>();
   const [copyError, setCopyError] = useState<'code' | 'link'>();
@@ -37,6 +40,18 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const newLinkRef = useRef<HTMLButtonElement>(null);
   const focusExpiredRef = useRef(false);
+  const check = useCallback(async () => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      setReadiness(await client.pairingReadiness());
+    } catch (failure) {
+      setErrorAction('check');
+      setError(errorText(failure));
+    } finally {
+      setBusy(false);
+    }
+  }, [client]);
   const create = useCallback(async () => {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -48,6 +63,8 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
       setPairing(await client.createPairing());
       setNow(Date.now());
     } catch (failure) {
+      setErrorAction('create');
+      if (failure instanceof ChatApiError && failure.status === 409) setReadiness(undefined);
       setError(errorText(failure));
     } finally {
       busyRef.current = false;
@@ -57,9 +74,9 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
-      void create();
+      void check();
     }
-  }, [create]);
+  }, [check]);
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
   useEffect(() => {
     if (!pairing) return;
@@ -116,12 +133,44 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
     >
       <div className="grid gap-4" aria-busy={busy}>
         {busy ? (
-          <p>Creating a pairing link…</p>
+          <p role="status">{readiness ? 'Creating a pairing link…' : 'Checking pairing setup…'}</p>
         ) : error ? (
           <>
-            <Alert title="Couldn’t create a pairing link.">{error}</Alert>
-            <Button onClick={() => void create()}>Try again</Button>
+            <Alert
+              title={
+                errorAction === 'check'
+                  ? 'Couldn’t check pairing setup.'
+                  : 'Couldn’t create a pairing link.'
+              }
+            >
+              {error}
+            </Alert>
+            <Button onClick={() => void (readiness?.ready ? create() : check())}>Try again</Button>
           </>
+        ) : !pairing && readiness ? (
+          <section className="grid gap-3" aria-label="Pairing setup">
+            <h2 className="font-semibold text-heading">
+              {readiness.ready
+                ? readiness.mode === 'same-machine'
+                  ? 'This computer only'
+                  : 'Home Wi-Fi pairing'
+                : 'Finish gateway setup'}
+            </h2>
+            <p className="text-sm text-muted">{readiness.message}</p>
+            {readiness.url ? (
+              <p className="font-mono text-xs wrap-anywhere">{readiness.url}</p>
+            ) : null}
+            {readiness.ready ? (
+              <Button onClick={() => void create()}>Generate pairing link</Button>
+            ) : (
+              <Button variant="outline" onClick={() => void check()}>
+                Check setup again
+              </Button>
+            )}
+            <p className="text-xs text-muted">
+              A pairing code lasts 10 minutes. No code is created until you choose Generate.
+            </p>
+          </section>
         ) : pairing ? (
           expired ? (
             <>
@@ -141,11 +190,33 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
             </>
           ) : (
             <>
+              {readiness?.mode === 'same-machine' ? (
+                <Alert tone="warn" title="This computer only">
+                  This link uses a loopback address. Open it in a new tab, another browser or the
+                  installed Goblin app on this computer. For a phone, set up a reachable HTTPS
+                  gateway address first.
+                </Alert>
+              ) : null}
               <ol className="grid list-decimal gap-4 pl-5">
                 <li>
-                  <p className="mb-2 text-sm">Send this link to the device</p>
+                  <p className="mb-2 text-sm">
+                    {readiness?.mode === 'same-machine'
+                      ? 'Open Goblin on this computer'
+                      : 'Send this link to the device'}
+                  </p>
                   {pairing.url ? (
                     <>
+                      {readiness?.mode === 'network' ? <PairingQr url={pairing.url} /> : null}
+                      <a
+                        href={pairing.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mb-3 block text-sm"
+                      >
+                        {readiness?.mode === 'same-machine'
+                          ? 'Open Goblin on this computer'
+                          : 'Open pairing link'}
+                      </a>
                       <Button
                         data-pair-copy
                         className="max-sm:w-full"
@@ -176,9 +247,12 @@ function PairDialog({ client, onClose }: { client: ChatClient; onClose: () => vo
                       </p>
                     </>
                   ) : null}
-                  <p className="mt-2 text-sm text-muted">
-                    On a phone: open it, copy the code, install Goblin, then pair inside the app.
-                  </p>
+                  {readiness?.mode !== 'same-machine' ? (
+                    <p className="mt-2 text-sm text-muted">
+                      On the device, trust the gateway’s HTTPS certificate before pairing. You can
+                      use the browser or install Goblin and pair inside that app.
+                    </p>
+                  ) : null}
                 </li>
                 <li>
                   <p className="mb-2 text-sm">

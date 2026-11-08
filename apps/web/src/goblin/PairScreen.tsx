@@ -18,6 +18,7 @@ import {
 } from './credentials.js';
 import { claimDevice, gatewayDestination, PairingError } from './connection.js';
 import { useStandalone } from './standalone.js';
+import { installationGuidance } from './useInstall.js';
 
 export interface PairScreenProps {
   initialCode: string;
@@ -142,7 +143,7 @@ export function PairScreen({
         </h1>
         <p className="text-sm text-muted">
           {installFirst
-            ? "Phones can keep the Home Screen app's storage apart from this browser's, so a pairing made here may not reach the app. Continue only if you just created this link on the gateway."
+            ? 'The installed app may keep its storage apart from this browser, so pair inside the app you plan to use. Continue only if you just created this link on the gateway.'
             : linkCode
               ? `You opened a pairing link for ${window.location.host}. Name this device, then tap Pair. Continue only if you just created this link on the gateway.`
               : standalone
@@ -202,19 +203,17 @@ export function PairScreen({
                 variant="outline"
                 className="h-11 max-sm:w-full"
                 onClick={() => {
-                  void install().catch(() =>
-                    setInstallNotice('In Safari, tap Share, then Add to Home Screen.'),
-                  );
+                  void install().catch(() => setInstallNotice(installationGuidance()));
                 }}
               >
                 Install Goblin
               </Button>
             ) : (
-              <p className="text-xs text-muted">In Safari, tap Share, then Add to Home Screen.</p>
+              <p className="text-xs text-muted">{installationGuidance()}</p>
             )}
           </div>
           <p className="font-medium text-heading">
-            3 · Open Goblin from your Home Screen, paste the code and tap Pair.
+            3 · Open the installed Goblin app, paste the code and tap Pair.
           </p>
           <p className="text-xs text-muted">This page forgets the code if you reload or leave.</p>
           <div className="border-t border-default pt-5">
