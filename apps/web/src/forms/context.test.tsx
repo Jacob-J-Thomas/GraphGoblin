@@ -30,12 +30,19 @@ describe('context placement', () => {
       />,
     );
     const user = userEvent.setup();
-    await user.click(screen.getByRole('tab', { name: 'Context 2 set' }));
+    // The required prompt holds a value of its own; the default fresh session does not count.
+    await user.click(screen.getByRole('tab', { name: 'Context 3 set' }));
     await user.click(screen.getByRole('button', { name: 'Remove input 1' }));
-    expect(screen.getByRole('tab', { name: 'Context 1 set' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Context 2 set' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^Advanced/ }));
     await user.click(screen.getByRole('button', { name: 'Remove context files 1' }));
-    expect(screen.getByRole('tab', { name: 'Context' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Context 1 set' })).toBeInTheDocument();
+    await user.selectOptions(
+      within(screen.getByRole('group', { name: 'Session' })).getByLabelText('Policy'),
+      '1',
+    );
+    expect(screen.getByRole('tab', { name: 'Context 2 set' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Settings' })).toBeInTheDocument();
   });
   it.each(['classifier', 'llm'] as const)(
     'keeps %s required inputs and answer routes on Settings',

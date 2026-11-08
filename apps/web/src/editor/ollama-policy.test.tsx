@@ -1,6 +1,6 @@
 import { InferenceConfigSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
@@ -110,9 +110,7 @@ describe('Ollama inference capability presentation', () => {
     expect(screen.getByText(/Ollama starts every run fresh/)).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: /^Context/ }));
     expect(screen.getByRole('button', { name: 'Edit as JSON: Input' })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Edit as JSON: Context files' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit as JSON: Files' })).not.toBeInTheDocument();
     expect(change).not.toHaveBeenCalled();
   });
 
@@ -161,13 +159,29 @@ describe('Ollama inference capability presentation', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Ollama' }));
     await screen.findByRole('button', { name: 'Use Ollama limits' });
     const before = useEditorStore.getState().definition?.nodes.find((node) => node.id === 'infer');
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.click(dialog.getByRole('tab', { name: /^Context/ }));
+    expect(dialog.getByRole('combobox', { name: 'Conversation' })).toHaveDisplayValue(
+      "Resume this node's conversation",
+    );
+    expect(useEditorStore.getState().definition?.nodes.find((node) => node.id === 'infer')).toEqual(
+      before,
+    );
+    fireEvent.click(dialog.getByRole('tab', { name: /^Settings/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Use Ollama limits' }));
     expect(
       useEditorStore.getState().definition?.nodes.find((node) => node.id === 'infer'),
     ).not.toEqual(before);
+    fireEvent.click(dialog.getByRole('tab', { name: /^Context/ }));
+    expect(dialog.queryByRole('combobox', { name: 'Conversation' })).not.toBeInTheDocument();
+    expect(dialog.getByText('Session: fresh (required for Ollama)')).toBeVisible();
     act(() => useEditorStore.getState().undo());
     expect(useEditorStore.getState().definition?.nodes.find((node) => node.id === 'infer')).toEqual(
       before,
+    );
+    fireEvent.click(dialog.getByRole('tab', { name: /^Context/ }));
+    expect(dialog.getByRole('combobox', { name: 'Conversation' })).toHaveDisplayValue(
+      "Resume this node's conversation",
     );
   });
 });

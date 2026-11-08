@@ -160,23 +160,41 @@ export function LayoutFields({
 export function FormPanels({
   schema,
   layout,
+  fieldOrder,
   keyPrefix,
   Field,
 }: {
   schema: Schema;
   layout: FormLayout;
+  /** The top-level display order the Settings layout used, applied to Context too. */
+  fieldOrder?: readonly string[] | undefined;
   keyPrefix: string;
   Field: ComponentType<FieldProps>;
 }) {
-  const contextRef = useRef<{ schema: Schema; structure: string; layout: FormLayout } | undefined>(
-    undefined,
-  );
+  const contextRef = useRef<
+    | {
+        schema: Schema;
+        fieldOrder: readonly string[] | undefined;
+        structure: string;
+        layout: FormLayout;
+      }
+    | undefined
+  >(undefined);
   const snapshot = useWatch({
     compute: (value: unknown) => {
       const structure = contextStructure(schema, value);
-      if (contextRef.current?.schema === schema && contextRef.current.structure === structure)
+      if (
+        contextRef.current?.schema === schema &&
+        contextRef.current.fieldOrder === fieldOrder &&
+        contextRef.current.structure === structure
+      )
         return contextRef.current;
-      contextRef.current = { schema, structure, layout: contextLayout(schema, value) };
+      contextRef.current = {
+        schema,
+        fieldOrder,
+        structure,
+        layout: contextLayout(schema, value, '', fieldOrder),
+      };
       return contextRef.current;
     },
   });

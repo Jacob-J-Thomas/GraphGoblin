@@ -221,6 +221,26 @@ describe('owner voice configuration', () => {
     expect(document.getElementById('node-label')).toHaveAttribute('readonly');
     expect(screen.getByRole('button', { name: 'Delete node' })).toBeDisabled();
   });
+  it('retains the protected system trigger picker alongside inference session presentation', async () => {
+    const definition = seed();
+    useEditorStore.getState().load('gateway-loop', definition);
+    useEditorStore.setState({ systemChat: true });
+    const trigger = definition.nodes.find((node) => node.id === 'chat-input')!;
+    renderWith(
+      <NodeEditorDialog
+        node={trigger}
+        definition={definition}
+        issues={[]}
+        loopId="gateway-loop"
+        system
+      />,
+    );
+    const type = await screen.findByRole('textbox', { name: 'Trigger type' });
+    expect(type).toHaveValue('Manual');
+    expect(type).toHaveAttribute('readonly');
+    expect(screen.queryByRole('combobox', { name: 'Trigger type' })).not.toBeInTheDocument();
+    expect(useEditorStore.getState().definition).toEqual(definition);
+  });
 });
 
 describe('voice setup draft and recovery limits', () => {

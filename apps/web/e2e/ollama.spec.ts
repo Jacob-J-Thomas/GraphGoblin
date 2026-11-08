@@ -290,6 +290,24 @@ test('Ollama authoring makes provider limits explicit and corrects them in one u
   ).toBeVisible();
   await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('');
   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('');
+  const settings = dialog.getByRole('tab', { name: /^Settings\b/ });
+  const context = dialog.getByRole('tab', { name: /^Context\b/ });
+  const prompt = dialog.locator('[data-field="prompt"] .cm-content');
+  const conversation = dialog
+    .getByRole('group', { name: 'Session', exact: true })
+    .getByLabel('Conversation', { exact: true });
+  await context.click();
+  await expect(prompt).toHaveText('Keep deliberate loop context in the prompt.');
+  await expect(conversation).toHaveValue('resume-own');
+  await expect(conversation.locator('option:checked')).toHaveText(
+    "Resume this node's conversation",
+  );
+  await expect(
+    dialog.getByText('Ollama can’t resume a session. Choose Fresh, or switch harness.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await settings.click();
   await dialog.getByRole('button', { name: 'Use Ollama limits' }).click();
   await expect(dialog.getByRole('button', { name: 'Use Ollama limits' })).toHaveCount(0);
   await expect(
@@ -302,6 +320,10 @@ test('Ollama authoring makes provider limits explicit and corrects them in one u
   await page.keyboard.press(undoShortcut.replace(/Z$/, 'z'));
   await expect(dialog.getByRole('radio', { name: 'Ollama', exact: true })).toBeChecked();
   await expect(dialog.getByRole('button', { name: 'Use Ollama limits' })).toBeVisible();
+  await context.click();
+  await expect(conversation).toHaveValue('resume-own');
+  await expect(prompt).toHaveText('Keep deliberate loop context in the prompt.');
+  await settings.click();
   await dialog.getByRole('button', { name: 'Use Ollama limits' }).click();
   await openAdvanced(dialog);
   await expect(
@@ -310,8 +332,15 @@ test('Ollama authoring makes provider limits explicit and corrects them in one u
       { exact: true },
     ),
   ).toBeVisible();
-  await dialog.getByRole('tab', { name: /^Context/ }).click();
-  await expect(dialog.getByRole('button', { name: 'Edit as JSON: Context files' })).toHaveCount(0);
+  await context.click();
+  await expect(prompt).toHaveText('Keep deliberate loop context in the prompt.');
+  await expect(
+    dialog.getByText('Session: fresh (required for Ollama)', { exact: true }),
+  ).toBeVisible();
+  await expect(dialog.getByLabel('Conversation', { exact: true })).toHaveCount(0);
+  await expect(
+    dialog.getByRole('button', { name: 'Edit as JSON: Files', exact: true }),
+  ).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Edit as JSON: Input' })).toBeVisible();
   for (const theme of ['dark', 'light']) {
     await page.evaluate((value) => {

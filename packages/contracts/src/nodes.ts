@@ -147,7 +147,15 @@ export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 export const SessionPolicySchema = z.discriminatedUnion('policy', [
   z.strictObject({ policy: z.literal('fresh') }),
   z.strictObject({ policy: z.literal('resume-previous') }),
-  z.strictObject({ policy: z.literal('resume-named'), key: SlugSchema }),
+  z.strictObject({
+    policy: z.literal('resume-named'),
+    key: SlugSchema.meta(
+      field(
+        'Nodes and runs of this loop using the same name and harness share a conversation. Use a different name for a separate conversation.',
+        { title: 'Conversation name' },
+      ),
+    ),
+  }),
   z.strictObject({
     // Opt-in: fresh stays the inference default. Input/template controls independently select
     // loop context; owning a provider conversation never changes the shared thread.
@@ -163,7 +171,7 @@ export const SessionPolicySchema = z.discriminatedUnion('policy', [
       .optional()
       .meta(
         field(
-          "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          'Leave blank for no automatic reset. After this many completed visits, the next visit starts a new conversation. For example, 2 groups visits 1-2, 3-4, and so on. Retries and repairs do not count as additional visits. Shared loop context is kept.',
           { title: 'Reset after visits' },
         ),
       ),
@@ -301,14 +309,16 @@ export const InferenceConfigSchema = z
         },
       ),
     ),
+    // Context is the editor's presentation only; the editor shows prompt before session.
     session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
       field(
-        "Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.",
+        'Choose whether each visit starts a new conversation or resumes an existing one. Prompt, input and context files determine the information supplied for the visit.',
+        { context: true },
       ),
     ),
     prompt: z
       .strictObject({ template: TemplateSchema })
-      .meta(field('Liquid template rendered against the thread.')),
+      .meta(field('Liquid template rendered against the thread.', { context: true })),
     input: MutationListSchema.default([]).meta(
       field('Mutations applied to the thread view the template sees.', {
         context: true,

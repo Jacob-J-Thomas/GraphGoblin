@@ -29,21 +29,28 @@ test('the editor saves opt-in own continuity and a visible optional reset', asyn
   const { loop } = (await created.json()) as { loop: { id: string } };
   await openDraftTab(page, loop.id, definition.name);
   const dialog = await openNode(page, 'worker');
-  const session = dialog.getByRole('group', { name: 'Session' });
-  const policy = session.getByLabel('Policy');
-  await expect(policy).toHaveValue('0');
-  await expect(session.getByText(/Supply current main-loop context deliberately/)).toBeVisible();
+  // Session is on Context, after Prompt, outside Advanced (#441).
+  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeHidden();
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
+  const session = dialog.getByRole('group', { name: 'Session', exact: true });
+  const policy = session.getByRole('combobox', { name: 'Conversation', exact: true });
+  await expect(policy).toHaveValue('fresh');
+  await expect(policy.locator('option:checked')).toHaveText('Start fresh');
+  await expect(policy).toHaveAccessibleDescription(
+    /^Choose whether each visit starts a new conversation .+ Starts a new provider conversation on each visit\./,
+  );
   await policy.focus();
   await page.keyboard.press('End');
   await page.keyboard.press('Tab');
-  await expect(policy).toHaveValue('3');
+  await expect(policy).toHaveValue('resume-own');
+  await expect(policy.locator('option:checked')).toHaveText("Resume this node's conversation");
+  await expect(policy).toHaveAccessibleDescription(
+    /Resumes this node's conversation from its earlier visits .+ instead of silently starting fresh\.$/,
+  );
   const reset = session.getByLabel('Reset after visits');
   await expect(reset).toBeFocused();
   await expect(reset).toHaveValue('');
-  await expect(session.getByText(/Blank means no automatic reset/)).toBeVisible();
-  await reset.fill('2');
-  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  await expect(reset).toHaveAccessibleDescription(/^Leave blank for no automatic reset\./);
   const savedSession = async () => {
     const response = await request.get(`/loops/${loop.id}`);
     const body = (await response.json()) as {
@@ -51,12 +58,29 @@ test('the editor saves opt-in own continuity and a visible optional reset', asyn
     };
     return body.draft.definition.nodes.find((x) => x.id === 'worker')?.config.session;
   };
+  await reset.fill('2');
+  // Autosave reaches the server while the dialog is open, without moving focus or the tab.
+  await expect.poll(savedSession).toEqual({ policy: 'resume-own', resetAfterVisits: 2 });
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  await expect(reset).toBeFocused();
+  await expect(dialog.getByRole('tab', { name: /^Context\b/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   await expect.poll(savedSession).toEqual({ policy: 'resume-own', resetAfterVisits: 2 });
   await page.reload();
   const reopened = await openNode(page, 'worker');
-  await expect(reopened.getByRole('group', { name: 'Session' }).getByLabel('Policy')).toHaveValue(
-    '3',
+  // Reopening starts on Settings, as before.
+  await expect(reopened.getByRole('tab', { name: 'Settings' })).toHaveAttribute(
+    'aria-selected',
+    'true',
   );
+  await reopened.getByRole('tab', { name: /^Context\b/ }).click();
+  await expect(
+    reopened.getByRole('group', { name: 'Session' }).getByLabel('Conversation', { exact: true }),
+  ).toHaveValue('resume-own');
   await expect(reopened.getByLabel('Reset after visits')).toHaveValue('2');
   await reopened.getByLabel('Reset after visits').fill('');
   await reopened.getByRole('button', { name: 'Done', exact: true }).click();

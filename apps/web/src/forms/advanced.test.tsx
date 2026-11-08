@@ -182,7 +182,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
   it.each([
     [
       'inference',
-      ['harness', 'model', 'effort', 'session', 'prompt', 'harnessOptions.sandbox'],
+      // Prompt and session are on Context (context.test.tsx, session-policy.test.tsx).
+      ['harness', 'model', 'effort', 'harnessOptions.sandbox'],
       [
         'harnessOptions.approval',
         'harnessOptions.networkAccess',
@@ -420,12 +421,13 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
           input: [{ op: 'drop', target: 'messages', where: 'vars.' }],
         }}
         // The loop's validation found it (EXPRESSION_INVALID at config.input.0.where); the
-        // prompt's is a basic field's, not Advanced's.
+        // prompt's is a basic Context field's, not Advanced's.
         problems={['input.0.where', 'prompt.template']}
       />,
     );
     expect(toggle()).toHaveAccessibleName('Advanced');
-    expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Context 2 set 2 errors' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: /^Context/ }));
     // The collapsed operation says so too.
     expect(screen.getByRole('button', { name: /^Input 1 drop messages/ })).toHaveAccessibleName(

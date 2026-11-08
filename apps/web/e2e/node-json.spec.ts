@@ -294,7 +294,7 @@ test('held Context JSON blocks Publish, survives reopening, opens from a badge a
   await badge.click();
   await page.getByRole('button', { name: /FIELD_INPUT_INVALID/ }).click();
   dialog = page.getByRole('dialog', { name: 'Edit inference approve' });
-  await expect(dialog.getByRole('tab', { name: /^Context 1 error/ })).toHaveAttribute(
+  await expect(dialog.getByRole('tab', { name: /^Context 1 set 1 error/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -418,7 +418,7 @@ test('semantic JSON no-ops permit Publish; valid changed JSON is described as un
   const id = await create(request, 'inference', { prompt: { template: 'Hi' }, input });
   await page.goto(`/app/loops/${id}/edit`);
   let dialog = await openNode(page, 'approve');
-  await dialog.getByRole('tab', { name: 'Context 1 set', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Context 2 set', exact: true }).click();
   await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).click();
   await replace(
     page,
