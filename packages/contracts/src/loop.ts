@@ -4,6 +4,7 @@ import { SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './commo
 import { NodeSchema } from './nodes.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { VariableDeclarationsSchema } from './thread.js';
+import { SystemChatBindingSchema } from './chat.js';
 
 /** The one current definition/export/storage format. Older formats are refused, never converted (ADR-0042). */
 export const CURRENT_DEFINITION_FORMAT = 4 as const;
@@ -124,8 +125,11 @@ export const LoopRecordSchema = z.strictObject({
   draftVersionId: UlidSchema.optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
+  /** Server-owned classification, excluded from portable definitions and editable bodies. */
+  system: SystemChatBindingSchema.optional().meta({ readOnly: true }),
 });
-export type LoopRecord = z.infer<typeof LoopRecordSchema>;
+export type LoopRecord = Omit<z.infer<typeof LoopRecordSchema>, 'system'> &
+  Readonly<Pick<z.infer<typeof LoopRecordSchema>, 'system'>>;
 
 /**
  * `draft`: the loop's one editable definition. `published`: an immutable released version.

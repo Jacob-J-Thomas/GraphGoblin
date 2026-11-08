@@ -333,15 +333,20 @@ describe('SettingsPage', () => {
     renderApp('/settings', api);
     const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
     const catalog = screen.getByRole('region', { name: 'Model catalog' });
-    expect(within(catalog).queryByRole('button')).not.toBeInTheDocument();
+    expect(
+      within(catalog).queryByRole('button', { name: /^(Edit |Delete |Add model$)/ }),
+    ).not.toBeInTheDocument();
     expect(
       within(catalog).queryByRole('columnheader', { name: 'Actions' }),
     ).not.toBeInTheDocument();
     expect(within(catalog).getAllByRole('switch')).toHaveLength(2);
     expect(
-      within(catalog).getByText(/Local models served through LiteLLM will appear here/),
+      within(catalog).getByText(
+        'Codex and Claude models are built in. The Ollama section below lists the models installed on your Ollama server. While Ollama is on, that list is re-checked every 5 minutes; Refresh Ollama models checks now. Choose a model and effort.',
+      ),
     ).toBeInTheDocument();
-    expect(catalog).toHaveTextContent('see the Settings guide, Choose a model and effort.');
+    expect(catalog).not.toHaveTextContent('LiteLLM');
+    expect(catalog).not.toHaveTextContent('Settings guide');
     expect(within(catalog).queryByRole('link')).not.toBeInTheDocument();
     const defaults = screen.getByLabelText('Default model');
     expect(within(defaults).getByRole('option', { name: 'Luna' })).toBeInTheDocument();
@@ -379,9 +384,7 @@ describe('SettingsPage', () => {
     expect(within(harness).queryByRole('button')).not.toBeInTheDocument();
     expect(within(local).getByRole('button', { name: 'Edit gpt-6-sol' })).toBeInTheDocument();
     expect(within(local).getByRole('button', { name: 'Delete gpt-6-sol' })).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Local models served through LiteLLM will appear here/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Codex and Claude models are built in/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Add model' }));
     const add = screen.getByRole('form', { name: 'Add model' });
     await user.type(within(add).getByLabelText('Model id'), 'local');
@@ -395,9 +398,7 @@ describe('SettingsPage', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Add model' })).not.toBeInTheDocument(),
     );
-    expect(
-      screen.getByText(/Local models served through LiteLLM will appear here/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Codex and Claude models are built in/)).toBeInTheDocument();
   });
 
   it.each(['vanished switch', 'another control'] as const)(
@@ -474,7 +475,7 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(notice).toBeEmptyDOMElement());
   });
 
-  it('keeps the local-model note hidden until the catalog is loaded', async () => {
+  it('keeps the model catalog description hidden until the catalog is loaded', async () => {
     const api = seeded();
     let finish!: () => void;
     const held = new Promise<void>((resolve) => {
@@ -485,9 +486,9 @@ describe('SettingsPage', () => {
       return api.builtIn(call);
     });
     renderApp('/settings', api);
-    expect(screen.queryByText(/Local models served through LiteLLM/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Codex and Claude models are built in/)).not.toBeInTheDocument();
     await act(() => Promise.resolve(finish()));
-    expect(await screen.findByText(/Local models served through LiteLLM/)).toBeInTheDocument();
+    expect(await screen.findByText(/Codex and Claude models are built in/)).toBeInTheDocument();
   });
 
   it.each(['disabled', 'missing'] as const)(

@@ -21,6 +21,14 @@ const issue = (code: string, path: string, nodeId?: string): LoopIssue => ({
 });
 
 describe('definition-aware draft admission', () => {
+  it('keeps dynamic unavailable models editable while blocking publication', () => {
+    const unavailable: LoopIssue = {
+      ...issue('MODEL_UNAVAILABLE', 'config.model', 'work'),
+      severity: 'warning',
+    };
+    expect(rejectsDraftAdmission(definition(), unavailable)).toBe(false);
+    expect(blocksPublication(unavailable)).toBe(true);
+  });
   it('permits inherited unresolved readiness while keeping publication blocked', () => {
     for (const field of ['model', 'effort']) {
       const value = issue(

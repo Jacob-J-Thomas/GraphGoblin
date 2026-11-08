@@ -72,12 +72,18 @@ test('WCAG reference results, symmetry and both channel transfer branches', () =
 
 test('pair data validates all groups and preserves the sample with focus on every surface', () => {
   validatePairs(pairs);
-  assert.equal(pairs.text.length, 109);
+  assert.equal(pairs.text.length, 111);
   assert.equal(pairs.nonText.length, 132);
   assert.equal(pairs.decorative.length, 18);
   // The editor's issue badges (#15): their edge, for errors and warnings, and the focus ring hold
   // 3:1 on every node kind's header band, and the popover's severity chips on the overlay.
   const has = (group, fg, bg) => group.some(([f, b]) => f === fg && b === bg);
+  for (const severity of ['bad', 'warn']) {
+    assert.ok(
+      has(pairs.text, `--status-${severity}-fg`, '--surface-app'),
+      `Chat ${severity} notice on the page background`,
+    );
+  }
   for (const surface of ['--surface-raised', '--surface-overlay', '--surface-sunken']) {
     assert.ok(has(pairs.text, '--status-warn-fg', surface), `Field warning on ${surface}`);
   }
@@ -168,8 +174,13 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
   assert.equal(result.failures.length, 0);
   assert.match(
     result.markdown,
-    /109 text pairs \(0 below 4.5:1\), 132 non-text pairs \(0 below 3:1\)/,
+    /111 text pairs \(0 below 4.5:1\), 132 non-text pairs \(0 below 3:1\)/,
   );
+  const chatRows = result.markdown
+    .split('\n')
+    .filter((line) => /Chat (error|warning) notices/.test(line));
+  assert.equal(chatRows.length, 4);
+  for (const row of chatRows) assert.match(row, /\| [\d.]+:1 \| pass \|/);
   // The issue badge rows (#15) are measured and pass in both themes: 18 band edges per theme.
   const badgeRows = result.markdown
     .split('\n')

@@ -13,7 +13,13 @@ import {
   type LoopRecord,
   type LoopVersionRecord,
 } from '@graphgoblin/contracts';
-import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  stableHash,
+  systemChatIssues,
+  systemChatLockedIssues,
+} from '@graphgoblin/domain';
 import { EngineRequestError, assertCurrentDefinition } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
@@ -275,6 +281,16 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loopId = request.params.id;
+      const owned = await ownedLoop(request, loopId);
+      const boundaryIssues = owned.system ? systemChatLockedIssues(request.body.definition) : [];
+      if (boundaryIssues.length)
+        return problem(
+          reply,
+          400,
+          'SYSTEM_CHAT_CONTRACT_INVALID',
+          'the system chat boundary must remain valid',
+          boundaryIssues,
+        );
       const admission = await publishIssues(
         request.auth.ownerId,
         request.body.definition,
@@ -368,11 +384,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         const loop = await ownedLoop(request, request.params.id);
         if (!loop.draftVersionId) return { kind: 'no-draft' as const };
         const draft = served(await loops.getVersion(loop.draftVersionId));
+        const boundaryIssues = loop.system && draft ? systemChatIssues(draft.definition) : [];
+        if (boundaryIssues.length)
+          return { kind: 'system-invalid' as const, issues: boundaryIssues };
         const issues = draft
           ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
           : [];
         if (issues.some(blocksPublication)) return { kind: 'invalid' as const, issues };
-        const version = await loops.publish(loop.id);
+        const version = await loops.publish(loop.id, loop.system ? draft?.definition : undefined);
         if (!version) return { kind: 'no-draft' as const };
         // Schedules and webhook endpoints follow the published version (ADR-0008).
         await container.triggers.armVersion(loop, version);
@@ -387,6 +406,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           outcome.issues,
         );
       }
+      if (outcome.kind === 'system-invalid')
+        return problem(
+          reply,
+          400,
+          'SYSTEM_CHAT_CONTRACT_INVALID',
+          'the system chat boundary must remain valid',
+          outcome.issues,
+        );
       if (outcome.kind === 'no-draft') {
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
       }
@@ -476,7 +503,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      await ownedLoop(request, request.params.id);
+      const loop = await ownedLoop(request, request.params.id);
+      if (loop.system)
+        return problem(reply, 409, 'SYSTEM_LOOP_PROTECTED', 'system chat loops cannot be deleted');
       const active = await runs.list({
         loopId: request.params.id,
         status: [...ACTIVE_STATUSES],

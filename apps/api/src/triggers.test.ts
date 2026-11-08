@@ -621,17 +621,24 @@ describe('boot', () => {
 
   it('logs and continues when a loop cannot be re-armed', async () => {
     const id = await t.publishLoop(minimalLoop());
+    const loop = (await t.container.repos.loops.getLoop(id))!;
+    const healthy = (await t.container.repos.loops.listPublished()).length - 1;
+    const getVersion = t.container.repos.loops.getVersion.bind(t.container.repos.loops);
+    let failedReads = 0;
     const spy = vi
       .spyOn(t.container.repos.loops, 'getVersion')
-      .mockRejectedValueOnce(new Error('disk gone'))
-      .mockResolvedValueOnce(undefined);
-    expect(await t.container.triggers.armAll()).toBe(0);
-    expect(await t.container.triggers.armAll()).toBe(0);
+      .mockImplementation(async (versionId) => {
+        if (versionId !== loop.currentVersionId) return await getVersion(versionId);
+        if (failedReads++ === 0) throw new Error('disk gone');
+        return undefined;
+      });
+    expect(await t.container.triggers.armAll()).toBe(healthy);
+    expect(await t.container.triggers.armAll()).toBe(healthy);
     expect(
       t.logger.lines.some((l) => l.msg === 'trigger arm failed' && l.obj['loopId'] === id),
     ).toBe(true);
     spy.mockRestore();
-    expect(await t.container.triggers.armAll()).toBe(1);
+    expect(await t.container.triggers.armAll()).toBe(healthy + 1);
   });
 });
 

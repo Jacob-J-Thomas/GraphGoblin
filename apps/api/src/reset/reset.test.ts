@@ -5,7 +5,9 @@ import {
   lstat,
   mkdir,
   mkdtemp,
+  readFile,
   readdir,
+  realpath,
   rename,
   rm,
   symlink,
@@ -41,7 +43,7 @@ let seeded: string;
 const bases: string[] = [];
 
 beforeAll(async () => {
-  seeded = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-seeded-'));
+  seeded = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-seeded-')));
   await seedStores(seeded);
 }, 240_000);
 afterEach(async () => {
@@ -66,7 +68,7 @@ const linkDirectory = (target: string, path: string) =>
  * directory point at. `base` holds both, so one snapshot covers everything a reset could touch.
  */
 async function prepare(store: 'current' | 'format-3' | 'unmarked' | 'corrupt' | 'none') {
-  const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
   bases.push(base);
   const dataDir = join(base, 'data');
   const outside = join(base, 'outside-repo');
@@ -277,7 +279,7 @@ describe('reset dry run', () => {
   });
 
   it('says there is nothing to reset when the data directory does not exist, and creates nothing', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-missing-'));
+    const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-missing-')));
     bases.push(base);
     const dataDir = join(base, 'never-created');
     for (const argv of [['--reset'], ['--reset', '--yes', '--data-dir', dataDir]]) {
@@ -564,14 +566,15 @@ describe('refused resets change nothing', () => {
   ])(
     'refuses a %s whose database is a regular file named like a directory the reset owns, reading nothing',
     async (_name, argv) => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+      const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
       await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
       await writeFile(join(dataDir, 'workspaces'), 'another one');
+      await writeFile(join(dataDir, 'chat-audio'), 'private audio has a reserved name too');
       await writeFile(join(dataDir, 'unrelated.txt'), 'kept');
-      for (const name of ['artifacts', 'workspaces']) {
+      for (const name of ['artifacts', 'workspaces', 'chat-audio']) {
         const before = await snapshotTree(base);
         const result = await reset(
           argv.map((arg) => (arg === '<data>' ? dataDir : arg)),
@@ -596,15 +599,17 @@ describe('refused resets change nothing', () => {
   it.runIf(CASE_INSENSITIVE_NAMES)(
     'compares names the way a case-insensitive volume does: reserved names in any case are refused and the database is listed once',
     async () => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+      const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
       await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
       await writeFile(join(dataDir, 'workspaces'), 'another one');
+      await writeFile(join(dataDir, 'chat-audio'), 'private audio has a reserved name too');
       for (const [spelling, reserved] of [
         ['ARTIFACTS', 'the artifacts directory'],
         ['Workspaces', 'the workspaces directory'],
+        ['CHAT-AUDIO', 'the chat-audio directory'],
         ['GraphGoblin.Lock', "the reset's lock file"],
       ] as const) {
         const before = await snapshotTree(base);
@@ -660,7 +665,7 @@ describe('refused resets change nothing', () => {
   it.runIf(process.platform === 'win32')(
     'resolves a Windows short-name alias to the listed entry it identifies',
     async ({ skip }) => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+      const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -850,24 +855,39 @@ describe('refused resets change nothing', () => {
   // confused: identity, not case folding, decides which entry a spelling names (the Sol
   // re-review's round-3 reproduction deleted the other file).
   it('plans exactly the configured file when another entry has a look-alike name', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+    const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
     bases.push(base);
     const dataDir = join(base, 'data');
     await mkdir(dataDir);
-    const kelvin = 'K.db';
-    await writeFile(join(dataDir, 'K.db'), 'the configured store');
-    await writeFile(join(dataDir, kelvin), 'another file entirely');
+    let lookalike = 'K.db';
+    await writeFile(join(dataDir, 'K.db'), 'the configured store', { flag: 'wx' });
+    try {
+      await writeFile(join(dataDir, lookalike), 'another file entirely', { flag: 'wx' });
+    } catch (error) {
+      // Some volumes normalize Kelvin and ASCII K to one entry. Never overwrite that entry
+      // while preparing the fixture; verify the alias, then use a distinct Cyrillic lookalike.
+      expect(error).toMatchObject({ code: 'EEXIST' });
+      expect(await identityOf(join(dataDir, lookalike))).toBe(
+        await identityOf(join(dataDir, 'K.db')),
+      );
+      expect(await readFile(join(dataDir, 'K.db'), 'utf8')).toBe('the configured store');
+      lookalike = 'К.db';
+      await writeFile(join(dataDir, lookalike), 'another file entirely', { flag: 'wx' });
+    }
+    expect((await readdir(dataDir)).sort()).toEqual(['K.db', lookalike].sort());
+    expect(await readFile(join(dataDir, 'K.db'), 'utf8')).toBe('the configured store');
     const url = `file:${join(dataDir, 'K.db').replaceAll('\\', '/')}`;
     const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir, GG_DB_URL: url });
     expect(dry.code).toBe(0);
     expect(dry.out).toMatch(/\n {2}K\.db +database +1 file/);
-    expect(dry.out).toMatch(row(kelvin, 'not part of the store'));
+    expect(dry.out).toMatch(row(lookalike, 'not part of the store'));
     const confirmed = await reset(['--reset', '--yes', '--data-dir', dataDir], {
       GG_DATA_DIR: dataDir,
       GG_DB_URL: url,
     });
     expect(confirmed.code).toBe(0);
-    expect((await readdir(dataDir)).sort()).toEqual([kelvin]);
+    expect((await readdir(dataDir)).sort()).toEqual([lookalike]);
+    expect(await readFile(join(dataDir, lookalike), 'utf8')).toBe('another file entirely');
   });
 
   // Windows resolves `graphgoblin.db.` and `graphgoblin.db ` to `graphgoblin.db`, a spelling the
@@ -899,7 +919,7 @@ describe('refused resets change nothing', () => {
   it.skipIf(process.platform === 'win32')(
     'refuses a database that is a FIFO before reading it',
     async () => {
-      const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-'));
+      const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-')));
       bases.push(base);
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
@@ -1035,7 +1055,7 @@ describe('refused resets change nothing', () => {
   });
 
   it('refuses a data directory that is a file', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-file-'));
+    const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-file-')));
     bases.push(base);
     await writeFile(join(base, 'data'), 'not a directory');
     const result = await reset(['--reset'], { GG_DATA_DIR: join(base, 'data') });
@@ -1057,7 +1077,7 @@ describe('refused resets change nothing', () => {
 
 describe('data directory layouts', () => {
   it('lists an empty data directory as nothing but the lock', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-empty-'));
+    const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-empty-')));
     bases.push(base);
     const result = await reset(['--reset'], { GG_DATA_DIR: base });
     expect(result.code).toBe(0);

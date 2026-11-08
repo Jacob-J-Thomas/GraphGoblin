@@ -47,6 +47,7 @@ import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
+import { SystemLoopNotice } from './SystemLoopNotice.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
 
 /** The save notice for a store state, as the editor shows it now (`saveNotice`). */
@@ -102,10 +103,15 @@ export function EditorPage() {
     PALETTE_STORAGE_KEY,
     palettePanelDefault,
   );
+  const system = query.data?.loop.system;
+  useEffect(() => {
+    useEditorStore.setState({ systemChat: Boolean(system) });
+  }, [system, generation]);
   const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
     enabled: ready && !preservationBlocked && !unsupportedBlocked,
     deviceReady: deviceWritable,
     serverReconciled,
+    system: Boolean(system),
   });
   useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
@@ -115,8 +121,9 @@ export function EditorPage() {
   const baseToken = useEditorStore((s) => s.baseToken);
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const local = useMemo(
-    () => (definition ? validateDraft(definition) : { issues: [], schemaValid: false }),
-    [definition],
+    () =>
+      definition ? validateDraft(definition, Boolean(system)) : { issues: [], schemaValid: false },
+    [definition, system],
   );
   // The catalog checks read the model catalog, the classifier catalog, and the classifiers'
   // secrets, which change without a draft edit: the API's checks run again when what they read of
@@ -188,7 +195,7 @@ export function EditorPage() {
       // rather than store it under this state's key. The new state's own check runs.
       if (cachedCatalogFingerprint(queryClient) !== catalogState)
         throw new Error('A catalog changed during the check; checking again.');
-      const known = new Set(validateDraft(checked).issues.map(issueKey));
+      const known = new Set(validateDraft(checked, Boolean(system)).issues.map(issueKey));
       return result.issues
         .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
           ...rest,
@@ -504,6 +511,7 @@ export function EditorPage() {
     <div className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col">
       <EditorToolbar
         loopId={loopId}
+        system={system}
         name={def.name}
         published={Boolean(published)}
         version={query.data?.current?.version}
@@ -526,10 +534,23 @@ export function EditorPage() {
           />
         }
         publishing={publish.isPending}
-        publishBlockedReason={catalogFailureReason}
+        publishBlockedReason={
+          system && !local.schemaValid
+            ? 'Restore the chat contract before publishing.'
+            : catalogFailureReason
+        }
         onPublish={() => publish.mutate()}
         saveStatusRef={saveStatusRef}
       />
+      {system ? (
+        <SystemLoopNotice
+          binding={system}
+          version={query.data?.current?.version}
+          definition={def}
+          published={query.data?.current?.definition}
+          loopId={loopId}
+        />
+      ) : null}
       {notices.length > 0 ? (
         <div
           ref={noticeContainerRef}
@@ -551,6 +572,7 @@ export function EditorPage() {
           </main>
           <LoopPanel
             definition={def}
+            system={Boolean(system)}
             issues={validation.issues}
             expanded={panelExpanded}
             onExpandedChange={setPanelExpanded}
@@ -561,6 +583,7 @@ export function EditorPage() {
       {editing ? (
         <NodeEditorDialog
           key={nodeDialogSession}
+          system={Boolean(system)}
           node={editing}
           definition={def}
           issues={validation.issues}

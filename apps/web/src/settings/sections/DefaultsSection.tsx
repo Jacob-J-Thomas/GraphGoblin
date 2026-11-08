@@ -67,12 +67,24 @@ function defaultsHelp({
     };
   if (saved && !entry)
     return {
-      text: 'Not in the model catalog. Choose another default before publishing or running.',
+      text:
+        harness === 'ollama'
+          ? 'This Ollama model has not been discovered. Refresh Ollama models or choose an installed model.'
+          : 'Not in the model catalog. Choose another default before publishing or running.',
       tone: 'warn',
     };
   if (entry?.enabled === false)
     return {
       text: 'Disabled in the model catalog. Enable it or choose another default.',
+      tone: 'warn',
+    };
+  if (entry?.availability && entry.availability.state !== 'available')
+    return {
+      text:
+        entry.availability.reason ??
+        (entry.availability.state === 'missing'
+          ? 'Missing from the configured Ollama service. Refresh its models or choose another default.'
+          : 'This model has unsupported inference controls. Choose another default.'),
       tone: 'warn',
     };
   // Without a saved model nothing waits on the first check.
@@ -190,6 +202,7 @@ export function DefaultsSection() {
                 const availableEntries = entries.filter(
                   (entry) =>
                     entry.enabled &&
+                    (!entry.availability || entry.availability.state === 'available') &&
                     (harness !== 'claude' ||
                       (readiness.state === 'ready' &&
                         listed?.some((model) => model.model === entry.model))),

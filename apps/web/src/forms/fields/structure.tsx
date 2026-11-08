@@ -88,7 +88,7 @@ export function Field(props: FieldProps) {
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
   const content = createElement(Override ?? Control ?? DefaultField, displayed);
-  return fieldMeta(props.schema).jsonEditor ? (
+  return fieldMeta(props.schema).jsonEditor && !Override?.ownsJsonSection ? (
     <JsonSection {...displayed}>{content}</JsonSection>
   ) : (
     content

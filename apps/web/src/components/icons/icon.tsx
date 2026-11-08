@@ -62,7 +62,33 @@ const GLYPHS = {
       <path d="M20.5 3.5v4h-4" />
     </>
   ),
+  refresh: (
+    <>
+      <path d="M20 12a8 8 0 1 1-2.4-5.7" />
+      <path d="M20.5 3.5v4h-4" />
+    </>
+  ),
   // Interface
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="12" rx="3" />
+      <path d="M5.5 10v2a6.5 6.5 0 0 0 13 0v-2M12 18.5V22M8.5 22h7" />
+    </>
+  ),
+  stop: <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />,
+  attach: <path d="m8 13 7-7a3 3 0 0 1 4 4L9 20a5 5 0 0 1-7-7L13 2" />,
+  device: (
+    <>
+      <rect x="6.5" y="2" width="11" height="20" rx="2.5" />
+      <path d="M10 5h4M11 19h2" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="8" y="8" width="13" height="13" rx="2" />
+      <path d="M16 8V3H3v13h5" />
+    </>
+  ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
   chevron: <path d="m6 9 6 6 6-6" />,

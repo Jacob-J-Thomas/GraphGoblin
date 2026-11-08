@@ -4,6 +4,7 @@ import { InMemoryEventAdmission } from './event-admission.js';
  * tests and by API and E2E tests through `@graphgoblin/engine/testing`.
  */
 import type {
+  SystemChatBinding,
   PromptSubmission,
   ContextThread,
   ClassifierBinding,
@@ -76,6 +77,8 @@ import { AppendConflictError, RecoveryRefusedError } from '../errors.js';
 import { EngineRequestError } from '../run-manager.js';
 import { validateGeneratedEvent } from '../event-validation.js';
 import {
+  ChatAdmissionError,
+  type ConversationTurnAdmission,
   AdmissionConflictError,
   assertAdmissionIdentity,
   assertWebhookClaim,
@@ -400,6 +403,10 @@ export class InMemoryRunRepository implements RunRepository {
 }
 
 export class InMemoryLoopRepository implements LoopRepository {
+  readonly systemChatBindings = new Map<string, SystemChatBinding>();
+  getSystemChatBinding(loopId: string) {
+    return Promise.resolve(this.systemChatBindings.get(loopId));
+  }
   readonly versions = new Map<string, LoopVersionRecord>();
 
   add(record: LoopVersionRecord): void {
@@ -1012,9 +1019,24 @@ export type AdmissionWrite =
   | 'create.receipt'
   | 'create.link'
   /** A child's link on its parent's log (#320). */
-  | 'create.parent';
+  | 'create.parent'
+  | 'create.chat';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  /** Explicit fixtures for native conversation admission; never auto-create authority. */
+  readonly chatConversations = new Map<
+    string,
+    { ownerId: string; audienceKey: string; loopId: string; lastTurn: number }
+  >();
+  readonly chatTurns = new Map<
+    string,
+    ConversationTurnAdmission & { runId: string; ownerId: string; historyDeleted?: boolean }
+  >();
+  readonly revokedChatDevices = new Set<string>();
+  readonly chatAudio = new Map<
+    string,
+    { ownerId: string; audienceKey: string; expiresAt: string; consumedTurnId?: string }
+  >();
   private readonly replayIntents = new Map<string, string>();
   findReplay(
     sourceRunId: string,
@@ -1057,6 +1079,49 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     onCommitted?: () => void,
   ): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
+    const chat = input.conversationTurn;
+    const chatKey = chat ? JSON.stringify([chat.conversationId, chat.requestId]) : undefined;
+    const priorChat = chatKey ? this.chatTurns.get(chatKey) : undefined;
+    if (chat && priorChat) {
+      if (priorChat.audienceKey !== chat.audienceKey || priorChat.ownerId !== input.run.ownerId)
+        throw new ChatAdmissionError('CHAT_NOT_FOUND', 'Conversation not found');
+      if (priorChat.requestHash !== chat.requestHash)
+        throw new ChatAdmissionError('CHAT_REQUEST_CONFLICT', 'Request input changed');
+      if (priorChat.historyDeleted || !this.runs.runs.has(priorChat.runId))
+        throw new ChatAdmissionError('CHAT_HISTORY_DELETED', 'Chat history was deleted');
+      return this.runs.runs.get(priorChat.runId)!;
+    }
+    const conversation = chat ? this.chatConversations.get(chat.conversationId) : undefined;
+    if (chat) {
+      if (
+        !conversation ||
+        conversation.ownerId !== input.run.ownerId ||
+        conversation.audienceKey !== chat.audienceKey ||
+        conversation.loopId !== input.run.loopId
+      )
+        throw new ChatAdmissionError('CHAT_NOT_FOUND', 'Conversation not found');
+      if (this.revokedChatDevices.has(chat.audienceKey))
+        throw new ChatAdmissionError('CHAT_DEVICE_REVOKED', 'Device access is unavailable');
+      if (conversation.lastTurn !== chat.expectedLastTurn)
+        throw new ChatAdmissionError('CHAT_STALE_CONTEXT', 'Conversation changed');
+      if (
+        [...this.chatTurns.values()].some(
+          (turn) =>
+            turn.conversationId === chat.conversationId &&
+            !isTerminal(this.runs.runs.get(turn.runId)?.status ?? 'succeeded'),
+        )
+      )
+        throw new ChatAdmissionError('CHAT_BUSY', 'Wait for current turn');
+      if (chat.audioId) {
+        const audio = this.chatAudio.get(chat.audioId);
+        if (!audio || audio.ownerId !== input.run.ownerId || audio.audienceKey !== chat.audienceKey)
+          throw new ChatAdmissionError('CHAT_NOT_FOUND', 'Audio not found');
+        if (audio.consumedTurnId)
+          throw new ChatAdmissionError('CHAT_AUDIO_CONSUMED', 'Audio was already used');
+        if (audio.expiresAt <= input.run.createdAt)
+          throw new ChatAdmissionError('CHAT_AUDIO_EXPIRED', 'Audio expired');
+      }
+    }
     const replay = input.replayIntent;
     const replayKey = replay
       ? JSON.stringify([replay.sourceRunId, replay.nodeId, replay.observedSeq])
@@ -1122,6 +1187,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
+      if (chat) this.beforeWrite('create.chat');
       if (link) this.beforeWrite('create.parent');
     }
     const parentLink =
@@ -1143,6 +1209,15 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (created) {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
+      if (chat && chatKey && conversation) {
+        this.chatTurns.set(chatKey, {
+          ...structuredClone(chat),
+          runId: run.id,
+          ownerId: input.run.ownerId,
+        });
+        conversation.lastTurn = chat.expectedLastTurn + 1;
+        if (chat.audioId) this.chatAudio.get(chat.audioId)!.consumedTurnId = chat.id;
+      }
       if (replayKey) this.replayIntents.set(replayKey, run.id);
       this.eventStore.commitQueued(queuedEvent(input));
       if (parentLink) {

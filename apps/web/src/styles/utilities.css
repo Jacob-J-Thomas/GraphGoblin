@@ -74,3 +74,26 @@
     opacity: 0.45;
   }
 }
+
+/* Decorative pending dots; the phase text carries the meaning. */
+@utility animate-ellipsis {
+  &::after {
+    content: '…';
+    display: inline-block;
+    width: 0;
+    overflow: hidden;
+    vertical-align: bottom;
+    animation: gg-dots 1.2s steps(4, end) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      animation: none;
+      width: auto;
+    }
+  }
+}
+@keyframes gg-dots {
+  to {
+    width: 1.25em;
+  }
+}

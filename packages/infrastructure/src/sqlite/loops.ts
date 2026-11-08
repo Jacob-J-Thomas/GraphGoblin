@@ -4,17 +4,19 @@ import type {
   LoopVersionRecord,
   RunRecord,
 } from '@graphgoblin/contracts';
+import { stableStringify, systemChatIssues, systemChatLockedIssues } from '@graphgoblin/domain';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
 import { physicalDirectory } from '../fs/physical-path.js';
 import { recordWorkspacePhysical } from './workspace-references.js';
-import type { Database } from './db.js';
+import type { Database, SqliteTransaction } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import { SqliteEventStore } from './events.js';
 import { decodeRunRecord, decodeStoredThread, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
+  chatBindings,
   loops,
   runs,
   schedules,
@@ -26,8 +28,9 @@ import {
 type LoopRow = typeof loops.$inferSelect;
 type VersionRow = typeof loopVersions.$inferSelect;
 
-function toLoop(row: LoopRow): LoopRecord {
+function toLoop(row: LoopRow, system?: LoopRecord['system']): LoopRecord {
   return {
+    ...(system ? { system } : {}),
     id: row.id,
     ownerId: row.ownerId,
     name: row.name,
@@ -36,6 +39,25 @@ function toLoop(row: LoopRow): LoopRecord {
     ...(row.draftVersionId ? { draftVersionId: row.draftVersionId } : {}),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+function systemOf(
+  binding: typeof chatBindings.$inferSelect | null | undefined,
+): LoopRecord['system'] {
+  if (!binding) return undefined;
+  if (
+    binding.protocol !== 'graphgoblin.chat.v1' ||
+    (binding.audienceKey !== 'gateway' && !binding.audienceKey.startsWith('device:'))
+  )
+    throw new SystemChatStorageError('SYSTEM_CHAT_CONTRACT_INVALID', 'Invalid system chat binding');
+  return {
+    kind: 'chat',
+    protocol: 'graphgoblin.chat.v1',
+    audience:
+      binding.audienceKey === 'gateway'
+        ? { kind: 'gateway' }
+        : { kind: 'device', deviceId: binding.audienceKey.slice(7) },
   };
 }
 
@@ -141,20 +163,15 @@ export class SqliteLoopRepository implements LoopRepository {
     const loopId = this.ids.next();
     const draftId = this.ids.next();
     await this.db.transaction(async (tx) => {
-      await tx.insert(loops).values({
-        id: loopId,
+      await insertLoopWithVersion(tx, {
         ownerId,
-        name: definition.name,
-        description: definition.description ?? null,
-        draftVersionId: draftId,
-        createdAt: now,
-        updatedAt: now,
+        loopId,
+        versionId: draftId,
+        definition,
+        now,
+        published: false,
+        physical,
       });
-      await tx
-        .insert(loopVersions)
-        .values({ id: draftId, loopId, version: 1, status: 'draft', definition, createdAt: now });
-      if (working.kind === 'fixed')
-        await recordWorkspacePhysical(tx, 'version:' + draftId, working.path, physical);
     });
     const loop = await this.getLoop(loopId);
     const draft = await this.getVersion(draftId);
@@ -163,17 +180,50 @@ export class SqliteLoopRepository implements LoopRepository {
   }
 
   async getLoop(loopId: string): Promise<LoopRecord | undefined> {
-    const row = await this.db.query.loops.findFirst({ where: eq(loops.id, loopId) });
-    return row ? toLoop(row) : undefined;
+    const [row] = await this.db
+      .select({ loop: loops, binding: chatBindings })
+      .from(loops)
+      .leftJoin(
+        chatBindings,
+        and(eq(chatBindings.loopId, loops.id), eq(chatBindings.ownerId, loops.ownerId)),
+      )
+      .where(eq(loops.id, loopId))
+      .limit(1);
+    return row ? toLoop(row.loop, systemOf(row.binding)) : undefined;
   }
 
   async listLoops(ownerId: string): Promise<LoopRecord[]> {
     const rows = await this.db
-      .select()
+      .select({ loop: loops, binding: chatBindings })
       .from(loops)
+      .leftJoin(
+        chatBindings,
+        and(eq(chatBindings.loopId, loops.id), eq(chatBindings.ownerId, loops.ownerId)),
+      )
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
-    return rows.map(toLoop);
+    return rows.map((row) => toLoop(row.loop, systemOf(row.binding)));
+  }
+
+  getSystemChatBinding(loopId: string) {
+    return this.classification(loopId);
+  }
+  private async classification(loopId: string): Promise<LoopRecord['system']> {
+    const [binding] = await this.db
+      .select()
+      .from(chatBindings)
+      .where(eq(chatBindings.loopId, loopId));
+    return systemOf(binding);
+  }
+  private async assertSystemDefinition(loopId: string, definition: LoopDefinition, draft = false) {
+    if (
+      (await this.classification(loopId)) &&
+      (draft ? systemChatLockedIssues(definition) : systemChatIssues(definition)).length
+    )
+      throw new SystemChatStorageError(
+        'SYSTEM_CHAT_CONTRACT_INVALID',
+        'The system chat boundary is protected',
+      );
   }
 
   /** One statement selects each owner loop's exact count and deterministic latest run. */
@@ -186,6 +236,7 @@ export class SqliteLoopRepository implements LoopRepository {
     const rows = await this.db
       .select({
         ...getTableColumns(loops),
+        chatBinding: chatBindings,
         latestRun: {
           ...rawRunColumns,
           initialThread: sql<string>`${runs.initialThread}`,
@@ -201,6 +252,10 @@ export class SqliteLoopRepository implements LoopRepository {
           ),
       })
       .from(loops)
+      .leftJoin(
+        chatBindings,
+        and(eq(chatBindings.loopId, loops.id), eq(chatBindings.ownerId, loops.ownerId)),
+      )
       .leftJoin(
         runs,
         sql`${runs.id} = (
@@ -230,7 +285,7 @@ export class SqliteLoopRepository implements LoopRepository {
         }
       }
       summaries.push({
-        ...toLoop(row),
+        ...toLoop(row, systemOf(row.chatBinding)),
         runCount: row.runCount,
         // A positive count with no readable latest summary means unavailable, not never run.
         latestRun,
@@ -268,11 +323,15 @@ export class SqliteLoopRepository implements LoopRepository {
   /** Every loop with a published version, across owners; used to re-arm triggers at boot. */
   async listPublished(): Promise<LoopRecord[]> {
     const rows = await this.db
-      .select()
+      .select({ loop: loops, binding: chatBindings })
       .from(loops)
+      .leftJoin(
+        chatBindings,
+        and(eq(chatBindings.loopId, loops.id), eq(chatBindings.ownerId, loops.ownerId)),
+      )
       .where(isNotNull(loops.currentVersionId))
       .orderBy(asc(loops.createdAt));
-    return rows.map(toLoop);
+    return rows.map((row) => toLoop(row.loop, systemOf(row.binding)));
   }
 
   /**
@@ -295,6 +354,7 @@ export class SqliteLoopRepository implements LoopRepository {
    * modified (ADR-0008).
    */
   async saveDraft(loopId: string, definition: LoopDefinition): Promise<LoopVersionRecord> {
+    await this.assertSystemDefinition(loopId, definition, true);
     const loop = await this.getLoop(loopId);
     if (!loop) throw new LoopNotFoundError(loopId);
     const now = this.clock.now().toISOString();
@@ -345,17 +405,41 @@ export class SqliteLoopRepository implements LoopRepository {
   }
 
   /** Freeze the draft as the current published version. Returns undefined when there is no draft. */
-  async publish(loopId: string): Promise<LoopVersionRecord | undefined> {
+  async publish(
+    loopId: string,
+    expectedDefinition?: LoopDefinition,
+  ): Promise<LoopVersionRecord | undefined> {
     const loop = await this.getLoop(loopId);
     if (!loop) throw new LoopNotFoundError(loopId);
     if (!loop.draftVersionId) return undefined;
     const now = this.clock.now().toISOString();
     const draftId = loop.draftVersionId;
     const draft = await this.getVersion(draftId);
+    if (draft) await this.assertSystemDefinition(loopId, draft.definition);
     const working = draft?.definition.settings.workingDirectory;
     const physical = working?.kind === 'fixed' ? await physicalDirectory(working.path) : null;
     // The status flip and the loop pointers change together, and only while the row is a draft.
     const published = await this.db.transaction(async (tx) => {
+      const [system] = await tx
+        .select({ id: chatBindings.loopId })
+        .from(chatBindings)
+        .where(eq(chatBindings.loopId, loopId));
+      if (system) {
+        const [current] = await tx
+          .select()
+          .from(loopVersions)
+          .where(and(eq(loopVersions.id, draftId), eq(loopVersions.status, 'draft')));
+        if (
+          current &&
+          (systemChatIssues(current.definition).length ||
+            stableStringify(current.definition) !==
+              stableStringify(expectedDefinition ?? draft?.definition))
+        )
+          throw new SystemChatStorageError(
+            'SYSTEM_CHAT_CONTRACT_INVALID',
+            'The chat draft changed or has an invalid boundary; review it and publish again',
+          );
+      }
       const flipped = await tx
         .update(loopVersions)
         .set({ status: 'published', publishedAt: now })
@@ -375,6 +459,15 @@ export class SqliteLoopRepository implements LoopRepository {
 
   async delete(loopId: string): Promise<boolean> {
     const deleted = await this.db.transaction(async (tx) => {
+      const [binding] = await tx
+        .select({ id: chatBindings.loopId })
+        .from(chatBindings)
+        .where(eq(chatBindings.loopId, loopId));
+      if (binding)
+        throw new SystemChatStorageError(
+          'SYSTEM_LOOP_PROTECTED',
+          'System chat loops cannot be deleted',
+        );
       const [active] = await tx
         .select({ id: runs.id })
         .from(runs)
@@ -396,4 +489,56 @@ export class SqliteLoopRepository implements LoopRepository {
     });
     return deleted.length > 0;
   }
+}
+
+export class SystemChatStorageError extends Error {
+  constructor(
+    readonly code: 'SYSTEM_CHAT_CONTRACT_INVALID' | 'SYSTEM_LOOP_PROTECTED',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'SystemChatStorageError';
+  }
+}
+/** Native creation semantics shared by ordinary create, system seed and pairing claim. */
+export async function insertLoopWithVersion(
+  tx: SqliteTransaction,
+  input: {
+    ownerId: string;
+    loopId: string;
+    versionId: string;
+    definition: LoopDefinition;
+    now: string;
+    published: boolean;
+    physical?: string | null;
+  },
+) {
+  const { ownerId, loopId, versionId, definition, now, published } = input;
+  await tx.insert(loops).values({
+    id: loopId,
+    ownerId,
+    name: definition.name,
+    description: definition.description ?? null,
+    currentVersionId: published ? versionId : null,
+    draftVersionId: published ? null : versionId,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await tx.insert(loopVersions).values({
+    id: versionId,
+    loopId,
+    version: 1,
+    status: published ? 'published' : 'draft',
+    definition,
+    createdAt: now,
+    ...(published ? { publishedAt: now } : {}),
+  });
+  const working = definition.settings.workingDirectory;
+  if (working.kind === 'fixed')
+    await recordWorkspacePhysical(
+      tx,
+      'version:' + versionId,
+      working.path,
+      input.physical !== undefined ? input.physical : await physicalDirectory(working.path),
+    );
 }

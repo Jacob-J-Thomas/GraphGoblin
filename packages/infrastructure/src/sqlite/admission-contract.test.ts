@@ -24,6 +24,7 @@ export async function createSqliteAdmissionFixture(): Promise<AdmissionContractF
     'claim.inbound': 'BEFORE INSERT ON inbound_events',
     'claim.receipt': 'BEFORE INSERT ON webhook_receipts',
     'create.snapshot': 'BEFORE INSERT ON loop_versions',
+    'create.chat': 'BEFORE INSERT ON chat_turns',
     'create.run': 'BEFORE INSERT ON runs',
     'create.event': 'BEFORE INSERT ON run_events',
     'create.receipt': 'BEFORE UPDATE ON webhook_receipts',

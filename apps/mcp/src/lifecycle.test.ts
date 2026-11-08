@@ -79,6 +79,10 @@ async function connected() {
   const api = await createTestApp();
   try {
     const url = await api.app.listen({ host: '127.0.0.1', port: 0 });
+    const gateway = (await api.container.repos.chat.getBinding({
+      ownerId: 'local',
+      audienceKey: 'gateway',
+    }))!;
     const loopId = await api.publishLoop(minimalLoop());
     const process = launch(['--api-url', url]);
     const client = new Client({ name: 'native-lifecycle', version: '1' });
@@ -86,9 +90,16 @@ async function connected() {
     expect((await client.listTools()).tools.map((tool) => tool.name)).toContain('list_loops');
     const result = await client.callTool({ name: 'list_loops', arguments: {} });
     expect(result.isError).not.toBe(true);
-    expect(result.structuredContent).toMatchObject({
-      items: [expect.objectContaining({ id: loopId })],
-    });
+    const { items } = result.structuredContent as {
+      items: { id: string; published: boolean; hasDraft: boolean }[];
+    };
+    expect(items).toHaveLength(2);
+    expect(items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: gateway.loopId, published: true, hasDraft: false }),
+        expect.objectContaining({ id: loopId, published: true, hasDraft: false }),
+      ]),
+    );
     return { api, client, ...process };
   } catch (error) {
     await api.close();

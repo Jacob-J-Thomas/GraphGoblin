@@ -70,6 +70,8 @@ export function saveNotice(
     device === 'device' ? 'on this device' : device === 'memory' ? 'in this window only' : '';
   switch (state) {
     case 'invalid':
+      if (message === 'SYSTEM_CHAT_CONTRACT_INVALID')
+        return `Undo the chat trigger change to save to the server.${where ? ` Changes are kept ${where}.` : ''}`;
       return `Fix the schema errors to save to the server.${where ? ` Changes are kept ${where}.` : ''}`;
     case 'offline':
       return where

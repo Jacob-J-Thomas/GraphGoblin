@@ -63,6 +63,7 @@ export function SubloopPicker({
         {(items) => {
           const published = items.filter(
             (l) =>
+              !l.system &&
               l.currentVersionId &&
               l.id !== currentLoopId &&
               l.name.toLowerCase().includes(search.toLowerCase()),

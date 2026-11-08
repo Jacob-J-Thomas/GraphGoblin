@@ -269,7 +269,7 @@ test('typing a label, then Ctrl+Z outside the field, restores the label in one s
   const dialog = await openNode(page, 'approve');
   const label = dialog.getByLabel('Label');
   await label.click();
-  await page.keyboard.press('Control+a');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('hello');
   await expect(card(page, 'approve').getByText('hello', { exact: true })).toBeVisible();
   // Leave the field for a control that is not one: the editor's undo takes over.
@@ -305,7 +305,7 @@ test('typing a label, then Ctrl+Z outside the field, restores the label in one s
   // Discard the unparsed text straight after typing is a step of its own: undo brings the text back.
   const schema = start.locator('[data-field="inputSchema"] .cm-content');
   await schema.click();
-  await page.keyboard.press('Control+a');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.press('Delete');
   await page.keyboard.type('{"a": ');
   await expect(schema).toHaveText('{"a": }');

@@ -26,6 +26,7 @@ import {
 } from '../../components/ui/index.js';
 import { effortOptionLabel } from '../../forms/fields/model.js';
 import { cn } from '../../lib/utils.js';
+import { OllamaModelsSection } from './OllamaModelsSection.js';
 import {
   EnableSwitch,
   EFFORTS,
@@ -161,8 +162,9 @@ export function ModelCatalogSection() {
           </Button>
         ) : query.data ? (
           <p className="max-w-prose text-sm text-muted">
-            Local models served through LiteLLM will appear here once the LiteLLM adapter is
-            configured; see the Settings guide, Choose a model and effort.
+            Codex and Claude models are built in. The Ollama section below lists the models
+            installed on your Ollama server. While Ollama is on, that list is re-checked every 5
+            minutes; Refresh Ollama models checks now. Choose a model and effort.
           </p>
         ) : null
       }
@@ -193,119 +195,125 @@ export function ModelCatalogSection() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((entry) => {
-                  // Catalog enablement and harness readiness are separate facts; a row says both
-                  // once the harness has a result other than ready (never during the first check).
-                  const readiness = harnessReadiness(preflightQuery, entry.harness);
-                  const notReady =
-                    readiness.state !== 'ready' && readiness.state !== 'checking'
-                      ? readinessLine(entry.harness, readiness)
-                      : undefined;
-                  return (
-                    <tr key={`${entry.harness}/${entry.model}`}>
-                      <Td>
-                        {entry.source === 'litellm' &&
-                        editing === `${entry.harness}/${entry.model}` ? (
-                          <ModelForm initial={entry} onDone={() => setEditing(undefined)} />
-                        ) : (
-                          <>
-                            <span className="font-semibold">{entry.displayName}</span>{' '}
-                            <code className="text-xs text-muted">
-                              {entry.harness}/{entry.model}
-                            </code>
-                          </>
-                        )}
-                      </Td>
-                      <Td label="Efforts" className="text-sm text-muted">
-                        {entry.efforts.join(', ')} (default {entry.defaultEffort})
-                      </Td>
-                      <Td label="Enabled">
-                        <EnableSwitch
-                          name={entry.displayName}
-                          enabled={entry.enabled}
-                          messages={CATALOG_MESSAGES}
-                          onToggle={async (enabled) => {
-                            // A new toggle replaces the previous vanished-model notice.
-                            setNotice('');
-                            const updated = await modelCatalog.setEnabled(
-                              client,
-                              entry.harness,
-                              entry.model,
-                              enabled,
-                            );
-                            queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
-                              items?.map((item) =>
-                                item.harness === updated.harness && item.model === updated.model
-                                  ? updated
-                                  : item,
-                              ),
-                            );
-                            await refreshCatalogState(queryClient);
-                          }}
-                          onError={async (error, failure) => {
-                            if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
-                              return;
-                            setNotice(
-                              `${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`,
-                            );
-                            const refresh = refreshCatalogState(queryClient);
-                            restoreVanishedToggleFocus(
-                              failure,
-                              headingRef.current?.closest('h2') ?? null,
-                              refresh,
-                            );
-                            await refresh;
-                          }}
-                        />
-                        {notReady ? (
-                          // Two short lines; every row of that harness repeats them, so the
-                          // full problem and Retry stay in Harness preflight.
-                          <p className="mt-1 max-w-[36ch] text-xs whitespace-pre-line text-muted">
-                            {`${entry.enabled ? 'Enabled' : 'Disabled'} in catalog.\n${notReady}`}
-                          </p>
-                        ) : null}
-                      </Td>
-                      {hasLocalModels ? (
-                        <Td className="text-right whitespace-nowrap">
-                          {entry.source === 'litellm' ? (
+                {items
+                  .filter((entry) => entry.harness !== 'ollama')
+                  .map((entry) => {
+                    // Catalog enablement and harness readiness are separate facts; a row says both
+                    // once the harness has a result other than ready (never during the first check).
+                    const readiness = harnessReadiness(preflightQuery, entry.harness);
+                    const notReady =
+                      readiness.state !== 'ready' && readiness.state !== 'checking'
+                        ? readinessLine(entry.harness, readiness)
+                        : undefined;
+                    return (
+                      <tr key={`${entry.harness}/${entry.model}`}>
+                        <Td>
+                          {entry.source === 'litellm' &&
+                          editing === `${entry.harness}/${entry.model}` ? (
+                            <ModelForm initial={entry} onDone={() => setEditing(undefined)} />
+                          ) : (
                             <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditing(`${entry.harness}/${entry.model}`)}
-                                aria-label={`Edit ${entry.model}`}
-                              >
-                                Edit
-                              </Button>
-                              <ConfirmAction
-                                name={entry.model}
-                                onDismiss={(error) => {
-                                  if (error instanceof GraphGoblinApiError && error.status === 404)
-                                    return refreshCatalogState(queryClient);
-                                }}
-                                consequences={
-                                  <p>
-                                    Model: “{entry.displayName}” ({entry.harness}/{entry.model}).
-                                    Removing a LiteLLM model leaves its loops referencing it.
-                                  </p>
-                                }
-                                onConfirm={async () => {
-                                  await modelCatalog.remove(client, entry.harness, entry.model);
-                                  await refreshCatalogState(queryClient);
-                                }}
-                              />
+                              <span className="font-semibold">{entry.displayName}</span>{' '}
+                              <code className="text-xs text-muted">
+                                {entry.harness}/{entry.model}
+                              </code>
                             </>
+                          )}
+                        </Td>
+                        <Td label="Efforts" className="text-sm text-muted">
+                          {entry.efforts.join(', ')} (default {entry.defaultEffort})
+                        </Td>
+                        <Td label="Enabled">
+                          <EnableSwitch
+                            name={entry.displayName}
+                            enabled={entry.enabled}
+                            messages={CATALOG_MESSAGES}
+                            onToggle={async (enabled) => {
+                              // A new toggle replaces the previous vanished-model notice.
+                              setNotice('');
+                              const updated = await modelCatalog.setEnabled(
+                                client,
+                                entry.harness,
+                                entry.model,
+                                enabled,
+                              );
+                              queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
+                                items?.map((item) =>
+                                  item.harness === updated.harness && item.model === updated.model
+                                    ? updated
+                                    : item,
+                                ),
+                              );
+                              await refreshCatalogState(queryClient);
+                            }}
+                            onError={async (error, failure) => {
+                              if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
+                                return;
+                              setNotice(
+                                `${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`,
+                              );
+                              const refresh = refreshCatalogState(queryClient);
+                              restoreVanishedToggleFocus(
+                                failure,
+                                headingRef.current?.closest('h2') ?? null,
+                                refresh,
+                              );
+                              await refresh;
+                            }}
+                          />
+                          {notReady ? (
+                            // Two short lines; every row of that harness repeats them, so the
+                            // full problem and Retry stay in Harness preflight.
+                            <p className="mt-1 max-w-[36ch] text-xs whitespace-pre-line text-muted">
+                              {`${entry.enabled ? 'Enabled' : 'Disabled'} in catalog.\n${notReady}`}
+                            </p>
                           ) : null}
                         </Td>
-                      ) : null}
-                    </tr>
-                  );
-                })}
+                        {hasLocalModels ? (
+                          <Td className="text-right whitespace-nowrap">
+                            {entry.source === 'litellm' ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditing(`${entry.harness}/${entry.model}`)}
+                                  aria-label={`Edit ${entry.model}`}
+                                >
+                                  Edit
+                                </Button>
+                                <ConfirmAction
+                                  name={entry.model}
+                                  onDismiss={(error) => {
+                                    if (
+                                      error instanceof GraphGoblinApiError &&
+                                      error.status === 404
+                                    )
+                                      return refreshCatalogState(queryClient);
+                                  }}
+                                  consequences={
+                                    <p>
+                                      Model: “{entry.displayName}” ({entry.harness}/{entry.model}).
+                                      Removing a LiteLLM model leaves its loops referencing it.
+                                    </p>
+                                  }
+                                  onConfirm={async () => {
+                                    await modelCatalog.remove(client, entry.harness, entry.model);
+                                    await refreshCatalogState(queryClient);
+                                  }}
+                                />
+                              </>
+                            ) : null}
+                          </Td>
+                        ) : null}
+                      </tr>
+                    );
+                  })}
               </tbody>
             </Table>
           )}
         </QueryState>
       </div>
+      <OllamaModelsSection />
     </Card>
   );
 }

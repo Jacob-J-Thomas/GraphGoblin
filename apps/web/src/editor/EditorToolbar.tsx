@@ -1,3 +1,4 @@
+import type { SystemChatBinding } from '@graphgoblin/contracts';
 import { useId, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../components/icons/index.js';
@@ -55,6 +56,7 @@ export function OpenInRuns({ loopId, published }: { loopId: string; published: b
 /** The editor's bar: where you are, what is published, the save state, and the loop actions. */
 export function EditorToolbar({
   loopId,
+  system,
   name,
   published,
   version,
@@ -69,6 +71,7 @@ export function EditorToolbar({
   saveStatusRef,
 }: {
   loopId: string;
+  system?: SystemChatBinding | undefined;
   name: string;
   /** Whether the loop has a published version, and its number. */
   published: boolean;
@@ -104,6 +107,7 @@ export function EditorToolbar({
       >
         {name}
       </h1>
+      {system ? <Badge>System</Badge> : null}
       {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
       <span
         ref={saveStatusRef}
@@ -123,11 +127,26 @@ export function EditorToolbar({
             )}
           />
         ) : null}
-        {saveLabel(saveState, device)}
+        {system && saveState === 'invalid'
+          ? 'Not saved: fix the chat issue'
+          : saveLabel(saveState, device)}
       </span>
       <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
         <UndoRedo />
-        <OpenInRuns loopId={loopId} published={published} />
+        {system ? (
+          <Link
+            className={cn(RUNS_LINK, 'text-link')}
+            to={
+              system.audience.kind === 'gateway'
+                ? '/chat'
+                : `/chat/devices#device-${system.audience.deviceId}`
+            }
+          >
+            {system.audience.kind === 'gateway' ? 'Open Chat' : 'Manage device'}
+          </Link>
+        ) : (
+          <OpenInRuns loopId={loopId} published={published} />
+        )}
         {validation}
         <Button
           onClick={onPublish}

@@ -106,7 +106,12 @@ export function useHarnessSwitch() {
         'The harness changed, but model and effort are unchanged because the configured defaults are invalid. Correct the defaults, then choose a model or switch harness again.',
       );
     const defaults = [loop.data.byHarness[harness], owner.data.byHarness[harness]];
-    const entries = catalog.data.filter((entry) => entry.harness === harness && entry.enabled);
+    const entries = catalog.data.filter(
+      (entry) =>
+        entry.harness === harness &&
+        entry.enabled &&
+        (!entry.availability || entry.availability.state === 'available'),
+    );
     const supportedEfforts = (entry: ModelCatalogEntry) =>
       entry.efforts.filter(
         (value) =>
@@ -285,6 +290,7 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
     harnessId !== 'claude' || (readiness.state === 'ready' && modelCapabilities !== undefined);
   const availableEntries = entries.filter((entry) => {
     if (!entry.enabled) return false;
+    if (entry.availability && entry.availability.state !== 'available') return false;
     if (harnessId !== 'claude') return true;
     if (!hasClaudeAdmission) return false;
     return modelCapabilities?.some((capability) => capability.model === entry.model);
@@ -382,9 +388,11 @@ function CatalogField({
   const inheritedEfforts =
     harnessId === 'claude'
       ? inheritedClaudeEfforts(availableEntries, modelCapabilities)
-      : modelKnown
-        ? EffortSchema.options
-        : sharedEfforts(availableEntries);
+      : harnessId === 'ollama'
+        ? sharedEfforts(availableEntries)
+        : modelKnown
+          ? EffortSchema.options
+          : sharedEfforts(availableEntries);
   const efforts: readonly string[] = entry
     ? entry.efforts.filter(
         (effort) =>
@@ -424,15 +432,23 @@ function CatalogField({
     entry !== undefined &&
     !capability;
   const disabled = kind === 'model' && entry?.enabled === false;
+  const unavailableModel =
+    kind === 'model' && entry?.availability && entry.availability.state !== 'available'
+      ? entry.availability
+      : undefined;
   const status = wrongHarness
     ? `Saved model belongs to ${savedHarnessLabel}`
     : missing
       ? 'not in catalog'
-      : disabled
-        ? 'disabled in the catalog'
-        : notListed
-          ? 'not listed by adapter'
-          : undefined;
+      : unavailableModel
+        ? unavailableModel.state === 'missing'
+          ? 'missing on server'
+          : 'unsupported'
+        : disabled
+          ? 'disabled in the catalog'
+          : notListed
+            ? 'not listed by adapter'
+            : undefined;
   const modelLookupUnknown =
     kind === 'model' && value !== '' && !entry && !wrongHarness && !missing;
   const localCode = missing ? 'MODEL_NOT_IN_CATALOG' : disabled ? 'MODEL_DISABLED' : undefined;
@@ -488,9 +504,11 @@ function CatalogField({
             : []),
           ...(status && !wrongHarness
             ? [
-                notListed
-                  ? `The Claude adapter does not list this model. ${kept}`
-                  : `This model is ${status === 'not in catalog' ? 'not in the catalog' : status}. ${kept}`,
+                unavailableModel
+                  ? `${unavailableModel.state === 'missing' ? (unavailableModel.reason ?? 'This model isn’t on the Ollama server at the last refresh.') : `GraphGoblin can’t run this model yet: ${unavailableModel.reason ?? 'Unsupported inference controls.'}`} ${kept}${disabled ? ' It’s also disabled in the catalog.' : ''}`
+                  : notListed
+                    ? `The Claude adapter does not list this model. ${kept}`
+                    : `This model is ${status === 'not in catalog' ? 'not in the catalog' : status}. ${kept}`,
               ]
             : []),
           ...(unsupported
@@ -507,7 +525,9 @@ function CatalogField({
             ? [
                 harnessId === 'claude'
                   ? 'No enabled Claude model is listed by the adapter. Enable one in Settings or keep the inherited default.'
-                  : 'No enabled models for this harness. Enable a model in Settings or keep the inherited default.',
+                  : harnessId === 'ollama'
+                    ? 'No enabled Ollama model is available. Refresh Ollama models or enable one in Settings.'
+                    : 'No enabled models for this harness. Enable a model in Settings or keep the inherited default.',
               ]
             : []),
         ]
@@ -537,7 +557,10 @@ function CatalogField({
     kind === 'model'
       ? availableEntries.map((entry) => ({
           value: entry.model,
-          label: `${entry.displayName} (${entry.model})`,
+          label:
+            harnessId === 'ollama' && entry.displayName === entry.model
+              ? entry.model
+              : `${entry.displayName} (${entry.model})`,
         }))
       : efforts.map((effort) => ({ value: effort, label: effortOptionLabel(effort) }));
   const unknownDefault = defaultsPending ? 'checking…' : 'unavailable';
@@ -568,7 +591,9 @@ function CatalogField({
       help={
         kind === 'effort' && harnessId === 'claude'
           ? `${help ? `${help} ` : ''}For Claude, this is the requested effort; the CLI does not report the effective effort.`
-          : help
+          : kind === 'effort' && harnessId === 'ollama'
+            ? `${help ? `${help} ` : ''}For Ollama, only the thinking settings this model reports are offered.`
+            : help
       }
       required={required}
       after={

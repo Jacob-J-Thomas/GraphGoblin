@@ -390,8 +390,8 @@ test('registers the service worker and asks before applying an update', async ({
   request,
 }) => {
   const messages = await observeSkipWaiting(page);
-  await page.goto('/app/');
-  await expect(page.getByRole('heading', { name: 'Loops' })).toBeVisible();
+  await page.goto('/app/loops');
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
 
   // The production build registers the worker for the /app/ scope.
   await expect

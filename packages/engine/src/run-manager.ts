@@ -6,7 +6,9 @@ import {
   watchRunDeadline,
 } from './run-deadline.js';
 import {
+  ChatAdmissionError,
   AdmissionConflictError,
+  type ConversationTurnAdmission,
   type RunAdmission,
   type EventClaim,
   type EventReceipt,
@@ -38,11 +40,13 @@ import type {
 } from '@graphgoblin/contracts';
 import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
 import {
+  ChatTextInputJsonSchema,
   ContextThreadSchema,
   DecisionEmissionSchema,
   LoopDefinitionSchema,
 } from '@graphgoblin/contracts';
 import {
+  systemChatIssues,
   applyPatch,
   evaluatePredicate,
   isTerminal,
@@ -114,6 +118,7 @@ export class EngineRequestError extends Error {
 }
 
 export interface StartRunInput {
+  conversationTurn?: ConversationTurnAdmission;
   ownerId: string;
   loopId: string;
   /** Defaults to the latest published version. */
@@ -157,6 +162,7 @@ export type RunAdmissionScope = Pick<RunManager, 'startRun'>;
 
 /** A run start prepared outside the pin lock, admitted inside it. */
 interface PreparedStart {
+  conversationTurn?: ConversationTurnAdmission;
   /** The immutable record the run executes: a published version or the draft snapshot. */
   version: LoopVersionRecord;
   /** The record the start read: the published version or the draft row, checked under the lock. */
@@ -646,8 +652,19 @@ export class RunManager {
   private async prepareStart(input: StartRunInput): Promise<PreparedStart> {
     const source = await this.resolveVersion(input);
     const def = source.definition;
+    const systemChat = await this.ports.loops.getSystemChatBinding(input.loopId);
+    if (systemChat && systemChatIssues(def).length)
+      throw new ChatAdmissionError('CHAT_NOT_READY', 'The system chat boundary is invalid');
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
     const payload: JsonValue = input.payload ?? null;
+    if (!input.conversationTurn && systemChat) {
+      const chatInput = validateJson(ChatTextInputJsonSchema, payload);
+      if (!chatInput.ok)
+        throw new EngineRequestError(
+          'INVALID_INPUT',
+          'System chat runs started outside Chat accept canonical text input only',
+        );
+    }
     if (trigger.config.type === 'manual' && trigger.config.inputSchema) {
       const validation = validateJson(trigger.config.inputSchema, payload);
       if (!validation.ok) {
@@ -713,7 +730,16 @@ export class RunManager {
       createdAt: now,
       lastEventSeq: 0,
     };
-    return { version, sourceId: source.id, run, thread, ...(snapshot ? { snapshot } : {}) };
+    return {
+      version,
+      sourceId: source.id,
+      run,
+      thread,
+      ...(snapshot ? { snapshot } : {}),
+      ...(input.conversationTurn
+        ? { conversationTurn: structuredClone(input.conversationTurn) }
+        : {}),
+    };
   }
 
   /** The defaults a new top-level run inherits, read once at its start and pinned (ADR-0041). */
@@ -760,7 +786,7 @@ export class RunManager {
         return this.ports.admission.create(intent);
       });
       if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
-      this.enqueue(admitted.id);
+      if (admitted.id === prepared.run.id) this.enqueue(admitted.id);
       return admitted;
     }
     const admitted = await this.withPinLock(async () => {
@@ -771,7 +797,7 @@ export class RunManager {
       );
     });
     if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
-    this.enqueue(admitted.id);
+    if (admitted.id === prepared.run.id) this.enqueue(admitted.id);
     return admitted;
   }
 
@@ -801,7 +827,7 @@ export class RunManager {
   }
 
   private async prepareAdmission(
-    { version, run, thread: initialThread, snapshot }: PreparedStart,
+    { version, run, thread: initialThread, snapshot, conversationTurn }: PreparedStart,
     inherited: Record<string, string>,
     versions?: Map<string, LoopVersionRecord>,
   ): Promise<RunAdmission> {
@@ -816,6 +842,7 @@ export class RunManager {
       run,
       initialThread,
       pinnedLoopIds: [...reached],
+      ...(conversationTurn ? { conversationTurn } : {}),
       queued: {
         type: 'run.queued',
         versionId: run.versionId,

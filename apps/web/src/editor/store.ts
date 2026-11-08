@@ -9,6 +9,12 @@ import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
 import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
+import {
+  hasChatVoiceSteps,
+  isProtectedVoiceEdge,
+  isProtectedVoiceNode,
+  VOICE_STEP_MESSAGE,
+} from './chat-protection.js';
 import { cleanGateLimits, hasRepeatRoute } from './decision-gates.js';
 import { decisionRouteEdges, type DecisionRoutes } from './decision-route-edges.js';
 import type { GitHubPresetPreview } from './github-fragment.js';
@@ -40,6 +46,7 @@ export type SaveState =
 export interface EditorState {
   loopId: string | undefined;
   definition: LoopDefinitionInput | undefined;
+  systemChat: boolean;
   /** Stable decision rows and owned edge ids, including while their labels are invalid. */
   decisionRoutes: DecisionRoutes;
   selectedNodeId: string | undefined;
@@ -134,6 +141,12 @@ export interface EditorState {
     change?: FormChange,
   ) => void;
   renameNode: (nodeId: string, nextId: string) => void;
+  applyChatAudio: (
+    source: LoopDefinitionInput,
+    next: LoopDefinitionInput,
+    expected: Pick<EditorState, 'generation' | 'historyEpoch' | 'fieldErrors'>,
+    mode: 'enable' | 'disable',
+  ) => string | undefined;
   applyGitHubPreset: (
     preview: GitHubPresetPreview,
     expected: Pick<EditorState, 'fieldErrors' | 'historyEpoch' | 'generation'>,
@@ -200,6 +213,7 @@ let generations = 0;
 const INITIAL = {
   loopId: undefined,
   definition: undefined,
+  systemChat: false,
   decisionRoutes: {} as DecisionRoutes,
   selectedNodeId: undefined,
   nodeDialogOpen: false,
@@ -450,6 +464,24 @@ export const useEditorStore = create<EditorState>((set, get) => {
         nodeId,
       ),
 
+    applyChatAudio: (source, next, expected, mode) => {
+      const state = get();
+      if (
+        state.definition !== source ||
+        state.generation !== expected.generation ||
+        state.historyEpoch !== expected.historyEpoch ||
+        state.fieldErrors !== expected.fieldErrors
+      )
+        return 'The draft changed. Close this dialog and configure audio again.';
+      if (Object.values(state.fieldErrors).some((scope) => Object.keys(scope).length > 0))
+        return 'Complete or discard unfinished fields before configuring audio.';
+      edit(() => next, { label: `${mode} chat audio` });
+      if (mode === 'disable') {
+        get().closeNodeDialog();
+        get().select('chat-input');
+      }
+      return undefined;
+    },
     applyGitHubPreset: (preview, expected) => {
       const s = get();
       if (
@@ -494,6 +526,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
     },
 
     renameNode: (nodeId, nextId) => {
+      const state = get();
+      if (state.definition && isProtectedVoiceNode(state.definition, state.systemChat, nodeId)) {
+        set({ connectionError: VOICE_STEP_MESSAGE });
+        return;
+      }
       if (nodeId === nextId) return;
       const step = {
         label: `rename ${nodeId} to ${nextId}`,
@@ -530,6 +567,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
       ),
 
     removeNode: (nodeId) => {
+      const state = get();
+      if (state.definition && isProtectedVoiceNode(state.definition, state.systemChat, nodeId)) {
+        set({ connectionError: VOICE_STEP_MESSAGE });
+        return;
+      }
       edit(
         (d) => ({
           ...d,
@@ -553,6 +595,18 @@ export const useEditorStore = create<EditorState>((set, get) => {
     connect: (connection) => {
       const def = get().definition;
       if (!def) return 'no loop loaded';
+      if (
+        get().systemChat &&
+        hasChatVoiceSteps(def) &&
+        (['chat-input', 'chat-normalize'].includes(connection.source) ||
+          (connection.source === 'chat-normalize-check' && connection.sourceHandle !== 'valid') ||
+          ['chat-normalize', 'chat-normalize-check', 'chat-normalize-invalid'].includes(
+            connection.target,
+          ))
+      ) {
+        set({ connectionError: VOICE_STEP_MESSAGE });
+        return VOICE_STEP_MESSAGE;
+      }
       const problem = connectionProblem(def, connection);
       set({ connectionError: problem ?? undefined });
       if (problem) return problem;
@@ -575,6 +629,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
     removeEdge: (edgeId) => {
       const edge = get().definition?.edges.find((e) => e.id === edgeId);
       if (!edge) return;
+      const state = get();
+      if (state.definition && isProtectedVoiceEdge(state.definition, state.systemChat, edge)) {
+        set({ connectionError: VOICE_STEP_MESSAGE });
+        return;
+      }
       edit(
         (d) => ({
           ...d,

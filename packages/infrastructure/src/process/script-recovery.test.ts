@@ -1,4 +1,4 @@
-import { access, copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
@@ -36,7 +36,9 @@ describe('native script start disposition through the engine (#321)', () => {
       await recovered.start();
       await recovered.waitForIdle();
       expect((await ports.runs.get(run.id))?.failure?.code).toBe('SCRIPT_START_FAILED');
-      await copyFile(process.execPath, command);
+      // Preserve relative shared-library lookup for installations such as Homebrew Node.
+      if (process.platform === 'win32') await copyFile(process.execPath, command);
+      else await symlink(process.execPath, command);
       await recovered.resume(run.id);
       await recovered.waitForIdle();
       expect((await ports.runs.get(run.id))?.failure).toMatchObject({

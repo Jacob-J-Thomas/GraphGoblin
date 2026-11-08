@@ -13,7 +13,8 @@ ARG NODE_IMAGE=node:22-bookworm-slim
 FROM ${NODE_IMAGE} AS build
 # The pnpm major pinned by package.json "packageManager".
 RUN npm install --global pnpm@12.8.1 && pnpm --version
-WORKDIR /src
+# Goblin's /src URL alias must not match absolute build entry paths.
+WORKDIR /workspace
 # Only what the build reads; .dockerignore also drops build output, local data, and secrets
 # inside these paths (checked by tooling/scripts/dockerignore.test.mjs).
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json ./
@@ -28,7 +29,8 @@ RUN pnpm exec turbo run build --filter=@graphgoblin/api... --filter=@graphgoblin
 # A self-contained API with production dependencies only (workspace packages copied in).
 RUN pnpm --filter @graphgoblin/api deploy --prod --legacy /out/apps/api \
   && mkdir -p /out/apps/web \
-  && cp -r apps/web/dist /out/apps/web/dist
+  && cp -r apps/web/dist /out/apps/web/dist \
+  && cp -r apps/web/dist-goblin /out/apps/web/dist-goblin
 
 # --- runtime -----------------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS runtime
@@ -36,7 +38,8 @@ ENV NODE_ENV=production \
     GG_HOST=0.0.0.0 \
     GG_PORT=4747 \
     GG_DATA_DIR=/data \
-    GG_WEB_DIST=/app/apps/web/dist
+    GG_WEB_DIST=/app/apps/web/dist \
+    GG_GOBLIN_DIST=/app/apps/web/dist-goblin
 WORKDIR /app
 COPY --from=build --chown=root:root /out/ /app/
 # `codex` on PATH, from the platform binary that @openai/codex-sdk pulled in, so `codex login`,

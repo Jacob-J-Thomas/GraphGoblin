@@ -69,8 +69,12 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0059: Uncertain script recovery](ADR-0059-uncertain-script-recovery.md) records dispatch provenance, explicit retry consent and authoritative resumed observation (#321).
 
 [ADR-0062: Stored data is corrected by hand before 1.0](ADR-0062-stored-data-corrected-by-hand-before-1.0.md) supersedes ADR-0020's one-off-migration sentence for stored content: no automatic data migrations; the CHANGELOG upgrade note names the hand fix, and Drizzle migrations remain for schema changes only (#205).
-[ADR-0063: Loop turns run without the machine's personal extensions](ADR-0063-loop-turns-without-personal-extensions.md) switches off the machine's Codex MCP servers, plugins, apps, memories, goals, sub-agents, hooks and `notify` program for every loop turn, lets a node turn a server back on through its config overrides, and records what a turn still inherits (#423).
+[ADR-0063: Loop turns run without the machine's personal extensions](ADR-0063-loop-turns-without-personal-extensions.md) records the original isolation defaults and what a turn still inherits (#423); [ADR-0067](ADR-0067-codex-inherits-configured-plugins.md) supersedes its Codex plugin-off default.
 
 [ADR-0064: Windows desktop and taskbar launcher](ADR-0064-windows-desktop-launcher.md) records gateway readiness and identity, actual SQLite-file ownership, native shortcut/window relaunch identity and unchanged deliberate shutdown (#276, #325).
+
+[ADR-0065: Native Chat through protected system loops and paired device audiences](ADR-0065-native-chat-system-loops-and-device-pairing.md) records native turn admission, editable guarded workflows, independent device-loop snapshots, scoped enrollment/revocation, read-only acknowledgement recovery and workflow-configured audio (#443).
+
+[ADR-0066: Native Ollama inference and capability-bound model discovery](ADR-0066-native-ollama-and-model-discovery.md) records a gateway-wide saved connection, immediate/five-minute/manual discovery, exact model/control metadata, preference-preserving availability and fresh tool-free inference without fabricated provider sessions (#443).
 
 [ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).

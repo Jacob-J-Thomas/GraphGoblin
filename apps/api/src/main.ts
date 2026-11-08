@@ -1,7 +1,7 @@
 import { ShutdownSignals } from './shutdown-signals.js';
 import { pino } from 'pino';
 import { buildApp } from './app.js';
-import { bundledWebDist, loadConfig } from './config.js';
+import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
 import { runCreateApiKeyCli } from './create-api-key.js';
 import { createContainer } from './container.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
@@ -14,7 +14,10 @@ export async function main(): Promise<{
   app: Awaited<ReturnType<typeof buildApp>>;
   container: Awaited<ReturnType<typeof createContainer>>;
 }> {
-  const config = loadConfig(process.env, { webDistFallback: bundledWebDist() });
+  const config = loadConfig(process.env, {
+    webDistFallback: bundledWebDist(),
+    goblinDistFallback: bundledGoblinDist(),
+  });
   const logger = pino({ level: config.logLevel });
   let container: Awaited<ReturnType<typeof createContainer>> | undefined;
   let app: Awaited<ReturnType<typeof buildApp>> | undefined;

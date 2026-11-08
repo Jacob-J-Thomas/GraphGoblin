@@ -259,7 +259,9 @@ describe('SQLite atomic admission', () => {
       const objectsBefore = await old.client.execute(preservedObjects);
       await applyShippedSqlToHistoricalTestFixture(old);
       expect((await old.client.execute(preservedColumns)).rows).toEqual(before.rows);
-      expect((await old.client.execute(preservedObjects)).rows).toEqual(objectsBefore.rows);
+      expect((await old.client.execute(preservedObjects)).rows).toEqual(
+        expect.arrayContaining(objectsBefore.rows),
+      );
       expect(
         (
           await old.client.execute(

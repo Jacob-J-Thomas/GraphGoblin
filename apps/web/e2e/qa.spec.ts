@@ -236,7 +236,7 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await openNode(page, 'approve');
   const prompt = page.locator('[data-field="prompt"] .cm-content');
   await prompt.click();
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('Approve {% if x %}');
   // The node editor's badge, beside its title, counts the node's issues; its popover names them.
   const editor = page.getByRole('dialog', { name: 'Edit wait approve' });
@@ -259,7 +259,7 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
 
   await openNode(page, 'approve');
   await prompt.click();
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('Approve?');
   await expect(issues).toHaveCount(0);
 
@@ -285,7 +285,7 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await expect(page.getByTestId('node-approve')).toBeVisible();
   await openNode(page, 'approve');
   await schema.click();
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.press('Delete');
   await expect(issues).toHaveCount(0);
   // Delete and Backspace inside the editor edit the field, never the graph.
@@ -455,7 +455,11 @@ test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', asy
   await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
   await page.getByRole('button', { name: 'Use key' }).click();
   await expect(page.getByText('API key required')).toHaveCount(0);
-  await expect(page.getByText('No loops yet.')).toBeVisible();
+  await expect(
+    page.getByText('No loops of your own yet. Create one above or import an export.', {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Forget key' }).click();
   await page.reload();

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Icon } from '../components/icons/index.js';
 import { Button, FieldGroup, FieldRow, HelpText, Label, Select } from '../components/ui/index.js';
 import { canvasPortLabels, canvasPorts } from './model.js';
+import { isProtectedVoiceEdge, VOICE_STEP_MESSAGE } from './chat-protection.js';
 import { useEditorStore } from './store.js';
 
 /**
@@ -84,6 +85,7 @@ export function NodeConnections({
   node: NodeInput;
   definition: LoopDefinitionInput;
 }) {
+  const system = useEditorStore((state) => state.systemChat);
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
   const portLabels = canvasPortLabels(node);
   return (
@@ -107,6 +109,10 @@ export function NodeConnections({
               </span>
               <Button
                 size="icon"
+                disabled={isProtectedVoiceEdge(definition, system, edge)}
+                title={
+                  isProtectedVoiceEdge(definition, system, edge) ? VOICE_STEP_MESSAGE : undefined
+                }
                 variant="ghost"
                 aria-label={`Remove edge ${edge.id}`}
                 onClick={() => {

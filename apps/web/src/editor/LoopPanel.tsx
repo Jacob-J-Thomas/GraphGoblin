@@ -26,11 +26,13 @@ export function loopPanelDefault(): boolean {
  */
 export function LoopPanel({
   definition,
+  system = false,
   issues,
   expanded,
   onExpandedChange,
 }: {
   definition: LoopDefinitionInput;
+  system?: boolean;
   issues?: readonly EditorIssue[];
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
@@ -52,6 +54,7 @@ export function LoopPanel({
         <LoopSettingsPanel
           key={`${generation}:${historyEpoch}`}
           definition={definition}
+          system={system}
           issues={issues}
         />
       </div>

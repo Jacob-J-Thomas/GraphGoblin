@@ -20,7 +20,8 @@ import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from '.
  * cannot open. Without `--yes` it only lists what a reset would remove (a dry run, which changes
  * no data-directory byte). With `--yes --data-dir <path>` naming the configured data directory it takes
  * the data-directory lock, lists the same manifest and removes exactly that: the database and its
- * SQLite sidecars, the artifact directory, and the run workspaces whose names are stored run IDs,
+ * SQLite sidecars, the artifact and private chat-audio directories, and the run workspaces whose
+ * names are stored run IDs,
  * then the lock file last. Planned identities are rechecked before each removal (see tree.ts for
  * the remaining external-process race). Links are removed themselves; `master.key` and every
  * other entry are kept. Browser device drafts live in each
@@ -121,8 +122,12 @@ export class ResetIncompleteError extends Error {
 }
 
 const LOCK_FILES = new Set(['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
+const OWNED_DIRECTORIES = [
+  ['artifacts', 'artifacts'],
+  ['chat-audio', 'private chat audio'],
+] as const;
 /** Directories a reset removes by name; a database may not be named like one or live inside one. */
-const RESERVED_ROOTS = new Set(['artifacts', 'workspaces']);
+const RESERVED_ROOTS = new Set(['workspaces', ...OWNED_DIRECTORIES.map(([name]) => name)]);
 
 /**
  * Whether the host folds letter case in names by default (Windows and macOS volumes). Used only
@@ -275,9 +280,9 @@ export async function planReset({
         `the database path passes through ${ancestor.path}, which is not a physical directory; a reset never follows links`,
       );
   }
-  // The reset owns artifacts/, workspaces/ and the lock files. A database that is one of them, or
-  // inside one of them, would be listed twice or under both Removes and Keeps, so the configuration
-  // is refused before anything is listed.
+  // The reset owns artifacts/, chat-audio/, workspaces/ and the lock files. A database that is one
+  // of them, or inside one of them, would be listed twice or under both Removes and Keeps, so the
+  // configuration is refused before anything is listed.
   const root = segments[0] ?? '';
   const reservedRoot = await reservedNameOf(dataDir, root, RESERVED_ROOTS);
   if (reservedRoot !== undefined)
@@ -309,14 +314,13 @@ export async function planReset({
     databaseTargets[0]?.path === stored
       ? await readStore(resolve(dataDir, ...segments))
       : { readable: false, reason: 'there is no database file', absent: true };
-  // Removal order: the run workspaces and artifacts first and the database last, so a reset that
-  // stops part of the way still has the run IDs it needs when it is run again.
+  // Removal order: the run workspaces, artifacts and private audio first and the database last,
+  // so a reset that stops part of the way still has the run IDs it needs when it is run again.
   const targets: ResetTarget[] = [];
   const kept: KeptEntry[] = [];
   // The reserved directories are named as the directory lists them (`Artifacts` on a volume that
   // folds case), so the manifest shows the stored spelling.
   const workspacesName = await listedName(dataDir, 'workspaces');
-  const artifactsName = await listedName(dataDir, 'artifacts');
   const workspaces = await statEntry(dataDir, workspacesName);
   if (workspaces?.kind === 'directory') {
     const runIds = new Set(store.readable ? store.runIds : []);
@@ -344,23 +348,22 @@ export async function planReset({
           : `a ${NOUNS[workspaces.kind][0]}, not a directory`,
       identity: workspaces.identity,
     });
-  // Only the artifact directory is the artifact store; a file or link of that name is kept.
-  const artifacts = await statEntry(dataDir, artifactsName);
-  if (artifacts?.kind === 'directory')
-    targets.push({
-      path: artifactsName,
-      what: 'artifacts',
-      entries: await listEntry(dataDir, artifactsName),
-    });
-  else if (artifacts)
-    kept.push({
-      path: artifactsName,
-      why:
-        artifacts.kind === 'link'
-          ? 'a link; a reset never follows links'
-          : `a ${NOUNS[artifacts.kind][0]}, not a directory`,
-      identity: artifacts.identity,
-    });
+  // Only physical directories are store-owned; a file or link at a reserved root is kept.
+  for (const [name, what] of OWNED_DIRECTORIES) {
+    const path = await listedName(dataDir, name);
+    const entry = await statEntry(dataDir, path);
+    if (entry?.kind === 'directory')
+      targets.push({ path, what, entries: await listEntry(dataDir, path) });
+    else if (entry)
+      kept.push({
+        path,
+        why:
+          entry.kind === 'link'
+            ? 'a link; a reset never follows links'
+            : `a ${NOUNS[entry.kind][0]}, not a directory`,
+        identity: entry.identity,
+      });
+  }
   targets.push(...databaseTargets);
   // Everything else at the top level is kept. Ownership is decided by identity, so the database's
   // stored spelling and its sidecars, or an `Artifacts` directory on a case-insensitive volume, are

@@ -2,7 +2,9 @@ import { HarnessIdSchema, InferenceConfigSchema } from '@graphgoblin/contracts';
 import { use, useEffect, useId, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Icon } from '../components/icons/index.js';
-import { FieldGroup, HelpText, SegmentedControl } from '../components/ui/index.js';
+import { Button, FieldGroup, HelpText, SegmentedControl } from '../components/ui/index.js';
+import { OLLAMA_FIELD_OVERRIDES } from './OllamaPolicyFields.js';
+import { ollamaPolicyProblems, withOllamaLimits } from './ollama-policy.js';
 import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
 import { useFormChange } from '../forms/changes.js';
 import { useHarnessSwitch } from '../forms/fields/model.js';
@@ -26,6 +28,11 @@ function HarnessField({ schema, name, label }: FieldProps) {
   const [notice, setNotice] = useState<{ text: string; values: string; loading: boolean }>();
   const values = JSON.stringify(useWatch({ name: ['model', 'effort'] }));
   const requestRef = useRef(0);
+  const [policyNotice, setPolicyNotice] = useState('');
+  useWatch({
+    name: ['session', 'harnessOptions', 'capabilities', 'contextFiles', 'output.schema'],
+  });
+  const policyProblems = field.value === 'ollama' ? ollamaPolicyProblems(getValues()) : [];
   useEffect(
     () => () => {
       requestRef.current++;
@@ -41,11 +48,14 @@ function HarnessField({ schema, name, label }: FieldProps) {
   const visible = notice?.values === values ? notice : undefined;
   const noticeId = `${id}-switch`;
   return (
-    <FieldGroup data-field={name}>
+    <FieldGroup id={`${id}-harness`} data-field={name}>
       <SegmentedControl
         legend={label}
         required={required}
-        options={HarnessIdSchema.options.map((value) => ({ value, label: value }))}
+        options={HarnessIdSchema.options.map((value) => ({
+          value,
+          label: value === 'ollama' ? 'Ollama' : value,
+        }))}
         value={InferenceConfigSchema.shape.harness.safeParse(field.value).data}
         describedBy={[control['aria-describedby'], visible ? noticeId : undefined]
           .filter(Boolean)
@@ -55,18 +65,21 @@ function HarnessField({ schema, name, label }: FieldProps) {
           const before: Record<string, unknown> = getValues();
           const snapshot = JSON.stringify(before);
           const read = (key: string): unknown => (isUnset(before[key]) ? undefined : before[key]);
-          const select = switchHarness(
-            harness,
-            read('model'),
-            read('effort'),
-            outputs?.definition.settings?.defaults,
-            () =>
-              setNotice({
-                text: 'Waiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.',
-                values,
-                loading: true,
-              }),
-          );
+          const select =
+            harness === 'ollama'
+              ? Promise.resolve({ message: undefined })
+              : switchHarness(
+                  harness,
+                  read('model'),
+                  read('effort'),
+                  outputs?.definition.settings?.defaults,
+                  () =>
+                    setNotice({
+                      text: 'Waiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.',
+                      values,
+                      loading: true,
+                    }),
+                );
           void select.then((selection) => {
             // Undo, another switch, dismissal or a concurrent field edit cancels this action.
             if (attempt !== requestRef.current) return;
@@ -103,6 +116,33 @@ function HarnessField({ schema, name, label }: FieldProps) {
           });
         }}
       />
+      {policyProblems.length ? (
+        <div className="grid justify-items-start gap-2">
+          <HelpText tone="warn">
+            {policyProblems.length} settings here don’t work with Ollama.
+          </HelpText>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const count = policyProblems.length;
+              change({ path: name, kind: 'commit' }, () =>
+                reset(withOllamaLimits(getValues()), { keepDefaultValues: true }),
+              );
+              setPolicyNotice(`Changed ${count} settings for Ollama. Undo restores them.`);
+              document
+                .getElementById(`${id}-harness`)
+                ?.querySelector<HTMLInputElement>('input[value="ollama"]')
+                ?.focus();
+            }}
+          >
+            Use Ollama limits
+          </Button>
+        </div>
+      ) : null}
+      <span role="status" className="sr-only">
+        {field.value === 'ollama' ? policyNotice : ''}
+      </span>
       {visible ? (
         <HelpText id={noticeId} role="status" tone={visible.loading ? 'muted' : 'warn'}>
           {!visible.loading ? (
@@ -117,4 +157,4 @@ function HarnessField({ schema, name, label }: FieldProps) {
   );
 }
 
-export const INFERENCE_FIELD_OVERRIDES = { harness: HarnessField };
+export const INFERENCE_FIELD_OVERRIDES = { ...OLLAMA_FIELD_OVERRIDES, harness: HarnessField };

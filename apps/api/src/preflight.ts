@@ -1,10 +1,16 @@
-import { readinessMessage } from '@graphgoblin/domain';
+import { readinessDetail, readinessMessage } from '@graphgoblin/domain';
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { OllamaHarness } from '@graphgoblin/infrastructure/ollama';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import { HarnessReadinessStateSchema, type HarnessId } from '@graphgoblin/contracts';
+import {
+  HarnessReadinessStateSchema,
+  OllamaConnectionSchema,
+  type OllamaConnection,
+  type HarnessId,
+} from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
 import {
   DEFAULT_MODEL_CATALOG,
@@ -60,6 +66,8 @@ export interface PreflightSources {
   /** Default: `process.versions.node`. */
   nodeVersion?: string;
   harnesses: Partial<Record<HarnessId, HarnessPort>>;
+  /** CLI cannot inspect saved connection settings until its existing store is current. */
+  ollamaDeferredReason?: string;
   /** Migrations still to apply, or `'missing'` when the database file does not exist yet. Throws when unreachable. */
   pendingMigrations(): Promise<number | 'missing'>;
   /** The Jev API key, if set. Only called once the database is migrated. */
@@ -182,14 +190,24 @@ export async function readMasterKey(
 async function checkHarnesses(
   harnesses: Partial<Record<HarnessId, HarnessPort>>,
   config: ApiConfig,
+  ollamaDeferredReason?: string,
 ): Promise<PreflightCheck[]> {
   const checks: PreflightCheck[] = [];
   await Promise.all(
     Object.entries(harnesses).map(async ([id, harness]) => {
       if (!harness) return;
       const label = `Harness ${id}`;
+      if (id === 'ollama' && ollamaDeferredReason) {
+        checks.push({
+          state: 'unknown',
+          ...check('harness.ollama', label, 'warn', ollamaDeferredReason),
+        });
+        return;
+      }
       const unavailableStatus =
-        id === 'claude' && !config.defaults.byHarness.claude
+        (id === 'claude' && !config.defaults.byHarness.claude) ||
+        (id === 'ollama' && config.defaults.byHarness.ollama?.model === undefined) ||
+        (id === 'codex' && ollamaOnly(config))
           ? ('warn' as const)
           : ('fail' as const);
       try {
@@ -198,7 +216,14 @@ async function checkHarnesses(
         checks.push({
           state: result.state,
           ...(result.ok
-            ? check(`harness.${id}`, label, 'ok', `${id}${version} is installed and logged in`)
+            ? check(
+                `harness.${id}`,
+                label,
+                'ok',
+                id === 'ollama'
+                  ? readinessDetail('ollama', 'ready')
+                  : `${id}${version} is installed and logged in`,
+              )
             : check(
                 `harness.${id}`,
                 label,
@@ -214,10 +239,26 @@ async function checkHarnesses(
       }
     }),
   );
+  if (ollamaOnly(config) && !harnesses.codex)
+    checks.push(
+      check(
+        'harness.codex',
+        'Harness codex',
+        'warn',
+        'Codex is optional for the configured Ollama-only defaults',
+      ),
+    );
   if (checks.length === 0) {
     checks.push(check('harness', 'Harness', 'fail', 'no harness adapter is configured'));
   }
   return checks;
+}
+
+function ollamaOnly(config: ApiConfig): boolean {
+  return (
+    config.defaults.byHarness.ollama?.model !== undefined &&
+    config.defaults.byHarness.codex === undefined
+  );
 }
 
 function checkDefaultModel(
@@ -291,7 +332,7 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
     );
   }
 
-  checks.push(...(await checkHarnesses(sources.harnesses, config)));
+  checks.push(...(await checkHarnesses(sources.harnesses, config, sources.ollamaDeferredReason)));
 
   if (!migrated) {
     checks.push(
@@ -322,7 +363,49 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
 
   try {
     const catalog = migrated ? await sources.catalog() : DEFAULT_MODEL_CATALOG;
-    checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
+    if (!ollamaOnly(config))
+      checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
+    const ollama = config.defaults.byHarness.ollama;
+    if (ollama?.model !== undefined) {
+      const entry = catalog.find((row) => row.harness === 'ollama' && row.model === ollama.model);
+      if (!migrated || !entry)
+        checks.push(
+          check(
+            'default-model.ollama',
+            'Ollama default model',
+            'warn',
+            'The configured Ollama model is not checked until discovery',
+          ),
+        );
+      else {
+        const problem =
+          entry.availability && entry.availability.state !== 'available'
+            ? (entry.availability.reason ??
+              'The configured Ollama model is unavailable; refresh models in Settings')
+            : !entry.enabled
+              ? 'The configured Ollama model is disabled'
+              : !ollama.effort || !entry.efforts.includes(ollama.effort)
+                ? 'Configure an explicit supported Ollama thinking control'
+                : undefined;
+        checks.push(
+          check(
+            'default-model.ollama',
+            'Ollama default model',
+            problem ? 'fail' : 'ok',
+            problem ?? 'Exact Ollama model and effort are configured and available',
+          ),
+        );
+      }
+      if (!sources.harnesses.ollama && !sources.ollamaDeferredReason)
+        checks.push(
+          check(
+            'harness.ollama',
+            'Harness ollama',
+            'fail',
+            'The configured Ollama harness is unavailable',
+          ),
+        );
+    }
     const defaults = config.defaults.byHarness.claude;
     if (defaults) {
       const entry = catalog.find((row) => row.harness === 'claude' && row.model === defaults.model);
@@ -454,8 +537,41 @@ async function inspectDatabase(url: string): Promise<DatabaseState> {
   }
 }
 
+/** Never initializes the singleton or guesses over saved settings in an unverified store. */
+async function inspectedOllamaConnection(
+  database: DatabaseState,
+  config: ApiConfig,
+): Promise<
+  | { connection: OllamaConnection; deferredReason?: never }
+  | { connection?: never; deferredReason: string }
+> {
+  const fallback = { enabled: config.ollamaEnabled, baseUrl: config.ollamaUrl, revision: 1 };
+  if (database.kind === 'missing') return { connection: fallback };
+  if (database.kind === 'broken')
+    return { deferredReason: 'Ollama is not checked until the database can be read' };
+  try {
+    await guardCurrentStore(database.handle.client);
+    if ((await database.handle.pendingMigrations()) !== 0)
+      return { deferredReason: 'Ollama is not checked until the database is migrated' };
+    const row = await database.handle.db.query.ollamaConnection.findFirst({
+      where: (row, { eq }) => eq(row.id, 'gateway'),
+    });
+    return {
+      connection: row
+        ? OllamaConnectionSchema.parse({
+            enabled: row.enabled,
+            baseUrl: row.baseUrl,
+            revision: row.revision,
+          })
+        : fallback,
+    };
+  } catch {
+    return { deferredReason: 'Ollama is not checked until the database is current and readable' };
+  }
+}
+
 export interface ConfigPreflightOptions {
-  /** Replace the real Codex harness (tests). */
+  /** Replace the native harness map (tests). */
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   nodeVersion?: string;
 }
@@ -471,6 +587,7 @@ export async function configPreflightSources(
 ): Promise<PreflightSources & { close(): void }> {
   const database = await inspectDatabase(config.dbUrl);
   const { key } = await readMasterKey(config);
+  const ollama = await inspectedOllamaConnection(database, config);
   const harnesses = options.harnesses ?? {
     codex: createCodexAdapters({
       ...(config.defaults.byHarness.codex?.model !== undefined
@@ -482,10 +599,17 @@ export async function configPreflightSources(
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     }).harness,
     claude: new ClaudeHarness({ ...(config.claudeBinary ? { binary: config.claudeBinary } : {}) }),
+    ollama: new OllamaHarness({
+      snapshot: () =>
+        ollama.connection
+          ? Promise.resolve({ connection: ollama.connection, models: [] })
+          : Promise.reject(new Error(ollama.deferredReason)),
+    }),
   };
   const base = {
     config,
     harnesses,
+    ...(ollama.deferredReason ? { ollamaDeferredReason: ollama.deferredReason } : {}),
     ...(options.nodeVersion ? { nodeVersion: options.nodeVersion } : {}),
   };
   if (database.kind !== 'open') {

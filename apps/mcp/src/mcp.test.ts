@@ -605,7 +605,13 @@ describe('MCP server with API keys', () => {
       const denied = await anonymous.callTool({ name: 'list_loops', arguments: {} });
       expect(text(denied)).toMatch(/^GraphGoblin API error UNAUTHORIZED \(HTTP 401\)/);
       const keyed = await connect(token);
-      expect(body(await keyed.callTool({ name: 'list_loops', arguments: {} })).items).toEqual([]);
+      const gateway = (await t.container.repos.chat.getBinding({
+        ownerId: 'local',
+        audienceKey: 'gateway',
+      }))!;
+      expect(body(await keyed.callTool({ name: 'list_loops', arguments: {} })).items).toEqual([
+        expect.objectContaining({ id: gateway.loopId, published: true, hasDraft: false }),
+      ]);
       await anonymous.close();
       await keyed.close();
     } finally {

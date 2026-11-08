@@ -33,7 +33,7 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await props.getByRole('tab', { name: /^Context\b/ }).click();
   const prompt = props.locator('[data-field="prompt.template"] .cm-content');
   await prompt.click();
-  await page.keyboard.press('Control+A');
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('Reply with exactly the single word OK and nothing else.');
   await props.getByRole('tab', { name: /^Settings\b/ }).click();
   await props.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');

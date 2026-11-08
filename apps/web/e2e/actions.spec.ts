@@ -230,13 +230,18 @@ test('Settings harness switches follow keyboard toggles and update Default model
     .find((entry) => entry.model === 'gpt-6-luna');
   await page.goto(`${url}/app/settings`);
   const catalog = page.getByRole('region', { name: 'Model catalog' });
-  await expect(catalog.getByRole('button')).toHaveCount(0);
-  await expect(catalog.getByRole('columnheader', { name: 'Actions' })).toHaveCount(0);
+  const builtInModels = catalog.getByRole('table').filter({
+    has: page.getByText('codex/gpt-6-luna', { exact: true }),
+  });
+  await expect(builtInModels).toBeVisible();
+  await expect(builtInModels.getByRole('button')).toHaveCount(0);
+  await expect(builtInModels.getByRole('columnheader', { name: 'Actions' })).toHaveCount(0);
+  await expect(catalog.getByRole('button', { name: 'Add model', exact: true })).toHaveCount(0);
   await expect(catalog).toContainText(
-    'Local models served through LiteLLM will appear here once the LiteLLM adapter is configured; see the Settings guide, Choose a model and effort.',
+    'Codex and Claude models are built in. The Ollama section below lists the models installed on your Ollama server. While Ollama is on, that list is re-checked every 5 minutes; Refresh Ollama models checks now. Choose a model and effort.',
   );
   await expect(catalog.getByRole('link')).toHaveCount(0);
-  const enabled = catalog.getByRole('switch', {
+  const enabled = builtInModels.getByRole('switch', {
     name: `Enable ${before!.displayName}`,
     exact: true,
   });
@@ -300,8 +305,8 @@ test('Settings catalog preserves a disabled saved default until the owner change
   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
   });
-  // The truthful selection makes choosing the preceding server-default option fire a change.
-  await defaults.press('ArrowUp');
+  // Home chooses the first enabled option even when the current saved option is disabled.
+  await defaults.press('Home');
   await defaults.press('Enter');
   await expect(defaults).toHaveValue('');
   await expect

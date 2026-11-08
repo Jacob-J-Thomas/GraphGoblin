@@ -24,7 +24,9 @@ describe('cron preview endpoint', () => {
     }
     expect(result.json()).toEqual({ next: expected });
     expect(expected.slice(0, 2)).toEqual(['2026-03-28T09:00:00.000Z', '2026-03-29T08:00:00.000Z']);
-    expect(await t.container.repos.loops.listLoops('local')).toEqual([]);
+    expect(
+      (await t.container.repos.loops.listLoops('local')).filter((loop) => !loop.system),
+    ).toEqual([]);
   });
   it('uses the server clock by default, supports seconds, and bounds the count', async () => {
     t = await createTestApp();

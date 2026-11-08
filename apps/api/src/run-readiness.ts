@@ -76,6 +76,30 @@ export async function assertRunReadiness(
       async ({ version, nodeId, harness, model, effort }): Promise<RunReadinessIssue[]> => {
         const result = await readiness.probe(harness);
         if (result.state === 'ready') {
+          if (harness === 'ollama') {
+            const resolution = resolveHarnessModel({
+              harness,
+              ...(model !== undefined ? { model } : {}),
+              ...(effort !== undefined ? { effort } : {}),
+              loopDefaults: version.definition.settings.defaults,
+              ownerDefaults: plan.defaults.owner,
+              processDefaults: plan.defaults.process,
+              catalog,
+            });
+            if (resolution.status !== 'ready')
+              return [
+                {
+                  code: resolution.code,
+                  severity: resolution.status === 'invalid' ? 'error' : 'warning',
+                  loopId: version.loopId,
+                  versionId: version.id,
+                  nodeId,
+                  path: 'config.' + resolution.path,
+                  message: resolution.message,
+                },
+              ];
+            return [];
+          }
           if (harness !== 'claude' || result.models === undefined) return [];
           const resolution = resolveHarnessModel({
             harness,

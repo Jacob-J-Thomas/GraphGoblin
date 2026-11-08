@@ -13,9 +13,12 @@ import { RunInspectorPage } from '../runs/RunInspectorPage.js';
 import { RunsPage } from '../runs/RunsPage.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
 import { ShutdownNotice } from './ShutdownNotice.js';
+import { ChatPage } from './ChatPage.js';
+import { ChatDevicesPage } from './ChatDevicesPage.js';
 import { StorageNotice } from './StorageNotice.js';
 
 const NAV: readonly NavItem[] = [
+  { to: '/chat', label: 'Chat' },
   { to: '/loops', label: 'Loops' },
   { to: '/runs', label: 'Runs' },
   { to: '/events', label: 'Events' },
@@ -72,7 +75,9 @@ export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/loops" replace />} />
+        <Route index element={<Navigate to="/chat" replace />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="chat/devices" element={<ChatDevicesPage />} />
         <Route path="loops" element={<LoopsPage />} />
         <Route path="loops/:loopId/edit" element={<EditorRoute />} />
         <Route path="runs" element={<RunsPage />} />

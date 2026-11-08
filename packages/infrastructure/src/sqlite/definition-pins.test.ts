@@ -107,7 +107,51 @@ describe('draft snapshots', () => {
     dirs.push(dir);
     const url = 'file:' + join(dir, 'store.db').replaceAll('\\', '/');
     const old = await openStoreBefore(url, DEFAULTS_MIGRATION);
-    return { url, old, loops: new SqliteLoopRepository(old.db, new FakeClock(), new FakeIds()) };
+    return { url, old };
+  }
+
+  /** Seed only columns available in the historical schema; current repositories require 0026. */
+  async function historicalDraft(
+    old: DatabaseHandle,
+    definition: LoopDefinition,
+    published = false,
+  ) {
+    const ids = new FakeIds(),
+      loopId = ids.next(),
+      versionId = ids.next();
+    await old.client.execute({
+      sql: 'INSERT INTO loops (id,owner_id,name,description,current_version_id,draft_version_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)',
+      args: [
+        loopId,
+        'local',
+        definition.name,
+        definition.description ?? null,
+        published ? versionId : null,
+        published ? null : versionId,
+        FIXTURE_TS,
+        FIXTURE_TS,
+      ],
+    });
+    await old.client.execute({
+      sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at,published_at) VALUES (?,?,1,?,?,?,?)',
+      args: [
+        versionId,
+        loopId,
+        published ? 'published' : 'draft',
+        JSON.stringify(definition),
+        FIXTURE_TS,
+        published ? FIXTURE_TS : null,
+      ],
+    });
+    const draft: LoopVersionRecord = {
+      id: versionId,
+      loopId,
+      version: 1,
+      status: 'draft',
+      definition,
+      createdAt: FIXTURE_TS,
+    };
+    return { loop: { id: loopId }, draft };
   }
 
   async function draftRun(seed: string) {
@@ -129,8 +173,7 @@ describe('draft snapshots', () => {
       const definition = named('Additive defaults');
       definition.settings.structuredTimeoutMs = authored;
       definition.settings.runDeadlineSeconds = authored === null ? null : 5;
-      const { loop, draft } = await store.loops.create('local', definition);
-      await store.loops.publish(loop.id);
+      const { loop, draft } = await historicalDraft(old, definition, true);
       const snapshot: LoopVersionRecord = {
         ...draft,
         id: fakeUlid('default-snapshot'),
@@ -276,9 +319,9 @@ describe('draft snapshots', () => {
         settings: { ...named('Invalid').settings, structuredTimeoutMs: -1 },
       }),
     ]) {
-      const { old, loops: historical } = await storeBeforeDefaults();
+      const { old } = await storeBeforeDefaults();
       try {
-        const { draft } = await historical.create('local', named('Damaged defaults'));
+        const { draft } = await historicalDraft(old, named('Damaged defaults'));
         await old.client.execute({
           sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
           args: [stored, draft.id],

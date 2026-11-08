@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop, fakeUlid } from '@graphgoblin/contracts/testing';
@@ -52,6 +53,13 @@ function signed(t: TestApp, body: string, delta = 0) {
     'x-graphgoblin-signature': signPayload('secret-marker', timestamp, body),
   };
 }
+const PUBLIC_MUTATIONS = new Set(['POST /chat/pairings/claim']);
+const unclaimedEnrollment = () => ({
+  code: Buffer.alloc(32, 7).toString('base64url'),
+  claimId: randomUUID(),
+  deviceToken: `ggd_${Buffer.alloc(32, 8).toString('base64url')}`,
+  label: 'Unknown enrollment',
+});
 async function start(t: TestApp, id: string) {
   const response = await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} });
   expect(response.statusCode).toBe(202);
@@ -71,6 +79,21 @@ describe('adversarial API invariants', () => {
         continue;
       for (const method of Object.keys(operations)) {
         if (!['get', 'post', 'put', 'delete', 'patch'].includes(method)) continue;
+        if (PUBLIC_MUTATIONS.has(`${method.toUpperCase()} ${path}`)) {
+          for (const headers of [{}, { authorization: `Bearer ${key.token}` }]) {
+            const res = await t.app.inject({
+              method: 'POST',
+              url: path,
+              headers,
+              payload: unclaimedEnrollment(),
+            });
+            expect(res.statusCode, `${method} ${path}`).toBe(401);
+            expect(res.json().code).toBe(
+              'authorization' in headers ? 'UNAUTHORIZED' : 'CHAT_PAIRING_INVALID',
+            );
+          }
+          continue;
+        }
         const url = path.replace(/\{[^}]+\}/g, fakeUlid('id'));
         for (const headers of [{}, { authorization: `Bearer ${key.token}` }]) {
           const res = await t.app.inject({ method: method.toUpperCase() as 'GET', url, headers });
@@ -182,11 +205,28 @@ describe('adversarial API invariants', () => {
     'GET /system/storage': 'system:read',
     'POST /system/shutdown': 'system:write',
     'GET /harness/preflight': 'system:read',
+    'GET /harness/ollama/connection': 'settings:read',
+    'PUT /harness/ollama/connection': '*',
+    'POST /model-catalog/refresh': 'settings:write',
+    'GET /chat/session': 'chat:read',
+    'GET /chat/conversations': 'chat:read',
+    'POST /chat/conversations': 'chat:write',
+    'GET /chat/conversations/{id}/turns': 'chat:read',
+    'POST /chat/conversations/{id}/turns': 'chat:write',
+    'GET /chat/conversations/{id}/requests/{requestId}': 'chat:read',
+    'GET /chat/turns/{id}': 'chat:read',
+    'POST /chat/turns/{id}/cancel': 'chat:write',
+    'POST /chat/audio': 'chat:write',
+    'DELETE /chat/audio/{id}': 'chat:write',
+    'POST /chat/pairings': '*',
+    'GET /chat/devices': '*',
+    'PATCH /chat/devices/{id}': '*',
+    'POST /chat/devices/{id}/revoke': '*',
   };
 
   it('ADV-008: every advertised route against every scope', async () => {
     const t = await app({ requireApiKey: true });
-    const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+    const scopes = [...new Set(Object.values(ROUTE_SCOPES))].filter((scope) => scope !== '*');
     const resources = [...new Set(scopes.map((s) => s.split(':')[0]!))];
     const tokens = new Map<string, string>();
     for (const scope of [...scopes, '*']) {
@@ -200,8 +240,22 @@ describe('adversarial API invariants', () => {
           advertised.push(`${method.toUpperCase()} ${path}`);
       }
     }
-    expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort());
+    expect(advertised.sort()).toEqual([...Object.keys(ROUTE_SCOPES), ...PUBLIC_MUTATIONS].sort());
     for (const route of advertised) {
+      if (PUBLIC_MUTATIONS.has(route)) {
+        for (const [index, scope] of [...scopes, '*'].entries()) {
+          const response = await t.app.inject({
+            method: 'POST',
+            url: '/chat/pairings/claim',
+            remoteAddress: `127.42.0.${index + 1}`,
+            payload: unclaimedEnrollment(),
+            headers: { authorization: `Bearer ${tokens.get(scope)}` },
+          });
+          expect(response.statusCode, `${route} with ${scope}`).toBe(401);
+          expect(response.json().code).toBe('CHAT_PAIRING_INVALID');
+        }
+        continue;
+      }
       const required = ROUTE_SCOPES[route]!;
       const [method, path] = route.split(' ') as ['GET', string];
       // An unknown id gets past authorization (404, 400, 409, or success) without touching data.
@@ -235,6 +289,7 @@ describe('adversarial API invariants', () => {
       'api-keys',
       'events',
       'system',
+      'chat',
     ]);
     await t.idle();
   });
@@ -294,6 +349,18 @@ describe('adversarial API invariants', () => {
       if (path.startsWith('/hooks/') || path.endsWith('/validate')) continue;
       for (const method of Object.keys(operations)) {
         if (!['post', 'put', 'patch', 'delete'].includes(method)) continue;
+        if (PUBLIC_MUTATIONS.has(`${method.toUpperCase()} ${path}`)) {
+          const response = await t.app.inject({
+            method: 'POST',
+            url: path,
+            headers: { authorization: `Bearer ${key.token}` },
+            payload: unclaimedEnrollment(),
+          });
+          expect(response.statusCode).toBe(401);
+          expect(response.json().code).toBe('CHAT_PAIRING_INVALID');
+          checked++;
+          continue;
+        }
         let payload: Record<string, unknown> | undefined;
         if (path === '/loops' || path.endsWith('/draft')) payload = { definition: minimalLoop() };
         else if (path.endsWith('/import') || path === '/settings' || path.endsWith('/runs'))

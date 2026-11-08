@@ -254,6 +254,45 @@ export function claudePolicyIssues(
   return issues;
 }
 
+/** Ollama v1 is a fresh, tool-free text turn; labels do not claim OS confinement. */
+export function ollamaPolicyIssues(config: {
+  session: SessionPolicy;
+  harnessOptions: HarnessOptions;
+  capabilities?: Capabilities | undefined;
+  contextFiles?: { path: string; template: string }[] | undefined;
+  output: { schema?: { repair: { enabled: boolean } } | undefined };
+}): { path: string[]; message: string }[] {
+  const issues: { path: string[]; message: string }[] = [];
+  const add = (path: string[], message: string) => issues.push({ path, message });
+  if (config.session.policy !== 'fresh')
+    add(['session', 'policy'], 'Ollama supports fresh sessions only');
+  if (config.harnessOptions.sandbox !== 'read-only')
+    add(['harnessOptions', 'sandbox'], 'Ollama requires the tool-free read-only policy');
+  if (config.harnessOptions.approval !== 'never')
+    add(['harnessOptions', 'approval'], 'Ollama does not support approval prompts');
+  for (const name of ['webSearch', 'networkAccess'] as const)
+    if (config.harnessOptions[name] === true)
+      add(['harnessOptions', name], 'Ollama model tool access is unsupported');
+  if (
+    config.harnessOptions.configOverrides &&
+    Object.keys(config.harnessOptions.configOverrides).length
+  )
+    add(
+      ['harnessOptions', 'configOverrides'],
+      'Ollama raw configuration overrides are unsupported',
+    );
+  if (config.contextFiles?.length)
+    add(['contextFiles'], 'Ollama context files are unsupported; include text in the prompt');
+  for (const [name, values] of Object.entries(config.capabilities ?? {}))
+    if (values?.length) add(['capabilities', name], 'Ollama custom capabilities are unsupported');
+  if (config.output.schema?.repair.enabled)
+    add(
+      ['output', 'schema', 'repair', 'enabled'],
+      'Ollama same-session schema repair is unsupported',
+    );
+  return issues;
+}
+
 export const InferenceConfigSchema = z
   .strictObject({
     harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
@@ -360,6 +399,8 @@ export const InferenceConfigSchema = z
       ),
   })
   .superRefine((config, ctx) => {
+    if (config.harness === 'ollama')
+      for (const issue of ollamaPolicyIssues(config)) ctx.addIssue({ code: 'custom', ...issue });
     if (config.harness === 'claude')
       for (const issue of claudePolicyIssues(config.harnessOptions, config.capabilities))
         ctx.addIssue({ code: 'custom', ...issue });

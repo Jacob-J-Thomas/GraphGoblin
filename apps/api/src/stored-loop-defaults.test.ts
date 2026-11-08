@@ -42,6 +42,13 @@ it.each([
   });
   const old = openDatabase({ url });
   try {
+    expect(
+      (
+        await old.client.execute(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_bindings', 'model_discovery', 'ollama_connection')",
+        )
+      ).rows,
+    ).toEqual([]);
     const stored = (
       await old.client.execute({
         sql: 'SELECT definition FROM loop_versions WHERE id = ?',
@@ -56,6 +63,7 @@ it.each([
   }
   const gateway = (t = await createTestApp({ env: { GG_DATA_DIR: dataDir, GG_DB_URL: url } }));
   expect(await gateway.container.handle.pendingMigrations()).toBe(0);
+  expect((await gateway.app.inject('/model-catalog')).statusCode).toBe(200);
   const loop = { id: loopId };
   const draft = { id: draftId };
   const opened = await gateway.app.inject({ method: 'GET', url: `/loops/${loop.id}` });

@@ -3,11 +3,14 @@ import type { Actor } from '@graphgoblin/engine';
 import type { Container } from '../container.js';
 import { LOCAL_OWNER } from '../container.js';
 import { problem } from './errors.js';
+import { createHash } from 'node:crypto';
 
 export interface AuthContext {
   ownerId: string;
   actor: Actor;
   scopes: string[] | '*';
+  /** Device credentials have no owner API-key scopes or management authority. */
+  deviceId?: string;
 }
 
 declare module 'fastify' {
@@ -21,8 +24,38 @@ declare module 'fastify' {
  * the static web app under `/app/` with its `/` and `/app` redirects. The app shell holds no data;
  * every API call it makes is still authenticated.
  */
-const PUBLIC_PREFIXES = ['/healthz', '/version', '/openapi.json', '/docs', '/hooks/', '/app/'];
-const PUBLIC_EXACT = new Set(['/', '/app']);
+const PUBLIC_PREFIXES = [
+  '/healthz',
+  '/version',
+  '/openapi.json',
+  '/docs',
+  '/hooks/',
+  '/app/',
+  '/goblin/',
+];
+const PUBLIC_EXACT = new Set(['/', '/app', '/goblin']);
+
+/** Method and registered pattern must both match; a prefix never grants device authority. */
+export const DEVICE_CHAT_ROUTES = new Set([
+  'GET /chat/session',
+  'POST /chat/conversations',
+  'GET /chat/conversations',
+  'GET /chat/conversations/:id/turns',
+  'POST /chat/conversations/:id/turns',
+  'GET /chat/conversations/:id/requests/:requestId',
+  'GET /chat/turns/:id',
+  'POST /chat/turns/:id/cancel',
+  'POST /chat/audio',
+  'DELETE /chat/audio/:id',
+]);
+
+const OWNER_CHAT_ROUTES = new Set([
+  'PUT /harness/ollama/connection',
+  'POST /chat/pairings',
+  'GET /chat/devices',
+  'PATCH /chat/devices/:id',
+  'POST /chat/devices/:id/revoke',
+]);
 
 function isPublic(url: string): boolean {
   const path = url.split('?')[0] ?? url;
@@ -40,6 +73,8 @@ function isPublic(url: string): boolean {
  * `METHOD route-pattern`, as Fastify registers the route.
  */
 const SCOPE_OVERRIDES: Record<string, string> = {
+  'GET /harness/ollama/connection': 'settings:read',
+  'POST /model-catalog/refresh': 'settings:write',
   'POST /runs/deletion-eligibility/preview': 'runs:read',
   // Starting a run is a run command, even though it is addressed through its loop.
   'POST /loops/:id/runs': 'runs:write',
@@ -87,14 +122,36 @@ export function hasScope(scopes: AuthContext['scopes'], scope: string): boolean 
 export function registerAuth(app: FastifyInstance, container: Container): void {
   app.decorateRequest('auth', null as unknown as AuthContext);
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (isPublic(request.url)) {
+    if ((request.url.split('?')[0] ?? '').startsWith('/chat/'))
+      reply.header('cache-control', 'no-store');
+    const route = `${request.method} ${request.routeOptions.url ?? ''}`;
+    const header = request.headers.authorization;
+    const match = header ? /^Bearer\s+(.+)$/i.exec(header) : undefined;
+    const token = match?.[1]?.trim();
+    if (token?.startsWith('ggd_')) {
+      const identity = /^ggd_[A-Za-z0-9_-]{43}$/.test(token)
+        ? await container.repos.chat.authenticateDevice(
+            createHash('sha256').update(token).digest('hex'),
+          )
+        : undefined;
+      if (!identity)
+        return problem(reply, 401, 'UNAUTHORIZED', 'the device credential is invalid or revoked');
+      if (!DEVICE_CHAT_ROUTES.has(route))
+        return problem(reply, 403, 'FORBIDDEN', 'device credentials cannot access this route');
+      request.auth = {
+        ownerId: identity.ownerId,
+        actor: { kind: 'system', id: `chat-device:${identity.device.id}` },
+        scopes: [],
+        deviceId: identity.device.id,
+      };
+      return;
+    }
+    const publicRoute = isPublic(request.url) || route === 'POST /chat/pairings/claim';
+    if (publicRoute && !header) {
       request.auth = { ownerId: LOCAL_OWNER, actor: { kind: 'system', id: 'public' }, scopes: [] };
       return;
     }
-    const header = request.headers.authorization;
     if (header) {
-      const match = /^Bearer\s+(.+)$/i.exec(header);
-      const token = match?.[1]?.trim();
       const record = token ? await container.repos.apiKeys.authenticate(token) : undefined;
       if (!record) {
         return problem(reply, 401, 'UNAUTHORIZED', 'the API key is missing, malformed, or revoked');
@@ -104,6 +161,9 @@ export function registerAuth(app: FastifyInstance, container: Container): void {
         actor: { kind: 'api-key', id: record.id },
         scopes: record.scopes,
       };
+      if (OWNER_CHAT_ROUTES.has(route) && !hasScope(record.scopes, '*'))
+        return problem(reply, 403, 'FORBIDDEN', 'this operation requires a wildcard owner key');
+      if (publicRoute) return;
       const scope = requiredScope(request.method, request.routeOptions.url);
       if (scope && !hasScope(record.scopes, scope)) {
         return problem(reply, 403, 'FORBIDDEN', `this key lacks the "${scope}" scope`);

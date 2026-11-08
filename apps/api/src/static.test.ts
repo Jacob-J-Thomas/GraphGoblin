@@ -80,7 +80,9 @@ describe('static web app hosting', () => {
   it('leaves API routes and API 404s alone', async () => {
     const loops = await t.app.inject({ method: 'GET', url: '/loops' });
     expect(loops.statusCode).toBe(200);
-    expect(loops.json<{ items: unknown[] }>().items).toEqual([]);
+    expect(loops.json<{ items: { system?: unknown }[] }>().items).toEqual([
+      expect.objectContaining({ system: expect.objectContaining({ kind: 'chat' }) }),
+    ]);
     const missing = await t.app.inject({ method: 'GET', url: '/runs/nope/unknown' });
     expect(missing.statusCode).toBe(404);
     expect(missing.headers['content-type']).toContain('application/problem+json');
@@ -136,5 +138,45 @@ describe('static hosting disabled', () => {
         await t.close();
       }
     }
+  });
+});
+
+describe('independent Goblin shell', () => {
+  it('serves both scoped shells without decorator collisions and keeps Goblin assets public', async () => {
+    const t = await createTestApp({
+      requireApiKey: true,
+      env: { GG_WEB_DIST: dist, GG_GOBLIN_DIST: dist },
+    });
+    try {
+      for (const prefix of ['/app/', '/goblin/']) {
+        expect((await t.app.inject(prefix)).statusCode).toBe(200);
+        expect((await t.app.inject(prefix + 'connect')).body).toContain(
+          '<title>GraphGoblin</title>',
+        );
+        expect((await t.app.inject(prefix + 'sw.js')).headers['cache-control']).toBe('no-cache');
+        expect(
+          (await t.app.inject(prefix + 'assets/index-abc123.js')).headers['cache-control'],
+        ).toContain('immutable');
+        expect((await t.app.inject(prefix + 'missing.js')).statusCode).toBe(404);
+      }
+      expect((await t.app.inject('/goblin')).headers['location']).toBe('/goblin/');
+      expect((await t.app.inject('/chat/session')).statusCode).toBe(401);
+      const paths = Object.keys(
+        (await t.app.inject('/openapi.json')).json<{ paths: Record<string, unknown> }>().paths,
+      );
+      expect(paths.some((path) => path.startsWith('/goblin'))).toBe(false);
+    } finally {
+      await t.close();
+    }
+  });
+
+  it('resolves explicit and fallback Goblin configuration, and lets an empty setting disable the fallback', () => {
+    expect(loadConfig({ GG_GOBLIN_DIST: 'web/dist-goblin' }).goblinDist).toBe(
+      resolve('web/dist-goblin'),
+    );
+    expect(loadConfig({}, { goblinDistFallback: dist }).goblinDist).toBe(dist);
+    expect(
+      loadConfig({ GG_GOBLIN_DIST: '' }, { goblinDistFallback: dist }).goblinDist,
+    ).toBeUndefined();
   });
 });

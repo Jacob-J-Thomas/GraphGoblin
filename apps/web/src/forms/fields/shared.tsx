@@ -36,7 +36,11 @@ export interface FieldProps {
  * renderer too (`DefaultField`), for a raw-value toggle, say. With `drawsWithoutParent` it is also
  * drawn while its optional parent object is absent (see `FieldProps.absentParent`).
  */
-export type FieldControl = ComponentType<FieldProps> & { drawsWithoutParent?: boolean };
+export type FieldControl = ComponentType<FieldProps> & {
+  drawsWithoutParent?: boolean;
+  /** Whole-field overrides may own conditional JSON presentation as well as their control. */
+  ownsJsonSection?: boolean;
+};
 
 /** Registered controls by name. SchemaForm's `controls` prop provides them to every field. */
 export type FieldControls = Readonly<Record<string, FieldControl>>;

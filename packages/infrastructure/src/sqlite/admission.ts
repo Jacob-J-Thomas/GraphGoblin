@@ -12,17 +12,21 @@ import {
   pollAdmissionIdentity,
   queuedEvent,
   validateGeneratedEvent,
+  type ClockPort,
   type RunAdmission,
   type TriggerAdmissionPort,
   type WebhookClaim,
   type WebhookReceipt,
   type WebhookFailureCode,
 } from '@graphgoblin/engine';
-import type { RunEvent } from '@graphgoblin/contracts';
+import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { SqliteEventAdmission } from './event-admission.js';
 import {
+  chatConversations,
+  chatTurns,
+  chatAudio,
   inboundEvents,
   eventReceipts,
   loopVersions,
@@ -31,6 +35,7 @@ import {
   webhookEndpoints,
   webhookReceipts,
 } from './schema.js';
+import { checkChatAdmission, commitChatAdmission } from './chat.js';
 import { runInsert } from './runs.js';
 import { loopVersionFromRow } from './loops.js';
 import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
@@ -69,6 +74,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly db: Database,
     private readonly eventStore: SqliteEventStore,
+    private readonly clock: ClockPort = { now: () => new Date() },
   ) {
     this.events = new SqliteEventAdmission(db, async (intent, id) => {
       const run = await this.commit(intent, id, false, true);
@@ -106,283 +112,399 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     const receipts = eventReceipt ? eventReceipts : webhookReceipts;
     const input = parseRunAdmission(authored);
     const poll = pollItem ? pollAdmissionIdentity(input) : undefined;
-    const committed = await this.db.transaction(async (tx) => {
-      const replay = input.replayIntent;
-      const replayScope = replay
-        ? and(
-            eq(runs.replaySourceRunId, replay.sourceRunId),
-            eq(runs.replayIntentNodeId, replay.nodeId),
-            eq(runs.replayIntentObservedSeq, replay.observedSeq),
-          )
-        : undefined;
-      if (replay) {
-        const [existing] = await tx.select(rawRunColumns).from(runs).where(replayScope);
-        if (existing)
-          return { run: decodeRunRecord(existing), event: undefined, linked: undefined };
-        const [source] = await tx
-          .select({ seq: runs.lastEventSeq, ownerId: runs.ownerId })
-          .from(runs)
-          .where(eq(runs.id, replay.sourceRunId));
-        if (!source || source.ownerId !== input.run.ownerId)
-          throw new EngineRequestError('RUN_NOT_FOUND', `run ${replay.sourceRunId} not found`);
-        if (source.seq !== replay.observedSeq)
-          throw new RecoveryRefusedError(
-            'RECOVERY_STALE',
-            'The run changed since it was shown. Refresh and review its current recovery choices.',
-          );
-      }
-      if (poll) {
-        const [runKey] = await tx
-          .select({ id: runs.id })
-          .from(runs)
-          .where(runKeyScope(input.run.ownerId, input.run.loopId, poll.nodeId, poll.dedupeKey))
-          .limit(1);
-        const [pendingKey] = runKey
-          ? []
-          : await tx
-              .select({ id: webhookReceipts.id })
-              .from(webhookReceipts)
-              .where(
-                and(
-                  eq(webhookReceipts.ownerId, input.run.ownerId),
-                  eq(webhookReceipts.loopId, input.run.loopId),
-                  eq(webhookReceipts.triggerNodeId, poll.nodeId),
-                  eq(webhookReceipts.status, 'pending'),
-                  sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${poll.dedupeKey}`,
-                ),
-              )
-              .limit(1);
-        const [pendingEventKey] =
-          runKey || pendingKey
+    let committed: {
+      run: RunRecord | undefined;
+      event: RunEvent | undefined;
+      linked: RunEvent | undefined;
+    };
+    try {
+      committed = await this.db.transaction(async (tx) => {
+        const duplicateChatRun = await checkChatAdmission(
+          tx,
+          input,
+          this.clock.now().toISOString(),
+        );
+        if (duplicateChatRun) {
+          const [existingChatRun] = await tx
+            .select(rawRunColumns)
+            .from(runs)
+            .where(eq(runs.id, duplicateChatRun));
+          if (!existingChatRun) throw new AdmissionConflictError();
+          return { run: decodeRunRecord(existingChatRun), event: undefined, linked: undefined };
+        }
+        const replay = input.replayIntent;
+        const replayScope = replay
+          ? and(
+              eq(runs.replaySourceRunId, replay.sourceRunId),
+              eq(runs.replayIntentNodeId, replay.nodeId),
+              eq(runs.replayIntentObservedSeq, replay.observedSeq),
+            )
+          : undefined;
+        if (replay) {
+          const [existing] = await tx.select(rawRunColumns).from(runs).where(replayScope);
+          if (existing)
+            return { run: decodeRunRecord(existing), event: undefined, linked: undefined };
+          const [source] = await tx
+            .select({ seq: runs.lastEventSeq, ownerId: runs.ownerId })
+            .from(runs)
+            .where(eq(runs.id, replay.sourceRunId));
+          if (!source || source.ownerId !== input.run.ownerId)
+            throw new EngineRequestError('RUN_NOT_FOUND', `run ${replay.sourceRunId} not found`);
+          if (source.seq !== replay.observedSeq)
+            throw new RecoveryRefusedError(
+              'RECOVERY_STALE',
+              'The run changed since it was shown. Refresh and review its current recovery choices.',
+            );
+        }
+        if (poll) {
+          const [runKey] = await tx
+            .select({ id: runs.id })
+            .from(runs)
+            .where(runKeyScope(input.run.ownerId, input.run.loopId, poll.nodeId, poll.dedupeKey))
+            .limit(1);
+          const [pendingKey] = runKey
             ? []
             : await tx
-                .select({ id: eventReceipts.id })
-                .from(eventReceipts)
+                .select({ id: webhookReceipts.id })
+                .from(webhookReceipts)
                 .where(
                   and(
-                    eq(eventReceipts.ownerId, input.run.ownerId),
-                    eq(eventReceipts.loopId, input.run.loopId),
-                    eq(eventReceipts.triggerNodeId, poll.nodeId),
-                    eq(eventReceipts.status, 'pending'),
-                    eq(eventReceipts.nodeKey, poll.dedupeKey),
+                    eq(webhookReceipts.ownerId, input.run.ownerId),
+                    eq(webhookReceipts.loopId, input.run.loopId),
+                    eq(webhookReceipts.triggerNodeId, poll.nodeId),
+                    eq(webhookReceipts.status, 'pending'),
+                    sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${poll.dedupeKey}`,
                   ),
                 )
                 .limit(1);
-        if (runKey || pendingKey || pendingEventKey)
-          return { run: undefined, event: undefined, linked: undefined };
-      }
-      if (receiptId) {
-        const [receipt] = await tx.select().from(receipts).where(eq(receipts.id, receiptId));
-        if (
-          !receipt ||
-          !['pending', 'admitted'].includes(receipt.status) ||
-          !receipt.intent ||
-          stableStringify(parseRunAdmission(receipt.intent)) !== stableStringify(input)
-        )
-          throw new AdmissionConflictError();
-        const [inbound] = await tx
-          .select()
-          .from(inboundEvents)
-          .where(eq(inboundEvents.id, receipt.inboundId));
-        if (!inbound) throw new AdmissionConflictError();
-        if (
-          inbound.runIds.length &&
-          stableStringify(inbound.runIds) !== stableStringify([input.run.id])
-        )
-          throw new AdmissionConflictError();
-        const { dedupeKey, payload, ...metadata } = inbound;
-        let decoded;
-        try {
-          decoded = JsonValueSchema.parse(JSON.parse(payload));
-        } catch {
-          throw new AdmissionConflictError();
+          const [pendingEventKey] =
+            runKey || pendingKey
+              ? []
+              : await tx
+                  .select({ id: eventReceipts.id })
+                  .from(eventReceipts)
+                  .where(
+                    and(
+                      eq(eventReceipts.ownerId, input.run.ownerId),
+                      eq(eventReceipts.loopId, input.run.loopId),
+                      eq(eventReceipts.triggerNodeId, poll.nodeId),
+                      eq(eventReceipts.status, 'pending'),
+                      eq(eventReceipts.nodeKey, poll.dedupeKey),
+                    ),
+                  )
+                  .limit(1);
+          if (runKey || pendingKey || pendingEventKey)
+            return { run: undefined, event: undefined, linked: undefined };
         }
-        if (
-          eventReceipt &&
-          (!('eventType' in receipt) ||
-            receipt.eventType !== metadata.type ||
-            receipt.requestKey !== (dedupeKey ?? null) ||
-            receipt.nodeKey !== (input.initialThread.invocation.trigger.dedupeKey ?? null))
-        )
-          throw new AdmissionConflictError();
-        if (eventReceipt)
-          assertEventClaim(
-            {
-              id: receipt.id,
-              ownerId: receipt.ownerId,
-              loopId: receipt.loopId,
-              versionId: 'versionId' in receipt ? receipt.versionId : '',
-              triggerNodeId: receipt.triggerNodeId,
-              inbound: {
-                ...metadata,
-                payload: decoded,
-                runIds: [],
-                ...(dedupeKey !== null ? { dedupeKey } : {}),
+        if (receiptId) {
+          const [receipt] = await tx.select().from(receipts).where(eq(receipts.id, receiptId));
+          if (
+            !receipt ||
+            !['pending', 'admitted'].includes(receipt.status) ||
+            !receipt.intent ||
+            stableStringify(parseRunAdmission(receipt.intent)) !== stableStringify(input)
+          )
+            throw new AdmissionConflictError();
+          const [inbound] = await tx
+            .select()
+            .from(inboundEvents)
+            .where(eq(inboundEvents.id, receipt.inboundId));
+          if (!inbound) throw new AdmissionConflictError();
+          if (
+            inbound.runIds.length &&
+            stableStringify(inbound.runIds) !== stableStringify([input.run.id])
+          )
+            throw new AdmissionConflictError();
+          const { dedupeKey, payload, ...metadata } = inbound;
+          let decoded;
+          try {
+            decoded = JsonValueSchema.parse(JSON.parse(payload));
+          } catch {
+            throw new AdmissionConflictError();
+          }
+          if (
+            eventReceipt &&
+            (!('eventType' in receipt) ||
+              receipt.eventType !== metadata.type ||
+              receipt.requestKey !== (dedupeKey ?? null) ||
+              receipt.nodeKey !== (input.initialThread.invocation.trigger.dedupeKey ?? null))
+          )
+            throw new AdmissionConflictError();
+          if (eventReceipt)
+            assertEventClaim(
+              {
+                id: receipt.id,
+                ownerId: receipt.ownerId,
+                loopId: receipt.loopId,
+                versionId: 'versionId' in receipt ? receipt.versionId : '',
+                triggerNodeId: receipt.triggerNodeId,
+                inbound: {
+                  ...metadata,
+                  payload: decoded,
+                  runIds: [],
+                  ...(dedupeKey !== null ? { dedupeKey } : {}),
+                },
               },
-            },
-            input,
-          );
-        if (!eventReceipt)
-          assertWebhookClaim(
-            {
-              ...receipt,
-              contentHash: 'contentHash' in receipt ? receipt.contentHash : '',
-              inbound: {
-                ...metadata,
-                payload: decoded,
-                // An admitted inbound already links this run; claim validation expects no links.
-                runIds: [],
-                ...(dedupeKey !== null ? { dedupeKey } : {}),
+              input,
+            );
+          if (!eventReceipt)
+            assertWebhookClaim(
+              {
+                ...receipt,
+                contentHash: 'contentHash' in receipt ? receipt.contentHash : '',
+                inbound: {
+                  ...metadata,
+                  payload: decoded,
+                  // An admitted inbound already links this run; claim validation expects no links.
+                  runIds: [],
+                  ...(dedupeKey !== null ? { dedupeKey } : {}),
+                },
               },
-            },
-            input,
-          );
-      }
-      // A draft snapshot is immutable: its id may only ever hold the same record (ADR-0041).
-      const [existing] = input.snapshot
-        ? await tx.select().from(loopVersions).where(eq(loopVersions.id, input.snapshot.id))
-        : [];
-      if (
-        existing &&
-        stableStringify(loopVersionFromRow(existing)) !== stableStringify(input.snapshot)
-      )
-        throw new AdmissionConflictError();
-      const [prior] = await tx
-        .select({ ...rawRunColumns, initialThread: sql<string>`${runs.initialThread}` })
-        .from(runs)
-        .where(eq(runs.id, input.run.id));
-      const [first] = await tx
-        .select()
-        .from(runEvents)
-        .where(eq(runEvents.runId, input.run.id))
-        .orderBy(asc(runEvents.seq))
-        .limit(1);
-      let run;
-      let event;
-      if (prior) {
-        const stored = first
-          ? RunEventSchema.safeParse({
-              ...first.payload,
-              runId: first.runId,
-              seq: first.seq,
-              ts: first.ts,
-              type: first.type,
-              ...(first.nodeId ? { nodeId: first.nodeId } : {}),
-            })
-          : undefined;
-        const record = decodeRunRecord(prior);
-        const thread = decodeStoredThread(prior.id, 'initial_thread', prior.initialThread);
-        if (!stored?.success || (input.snapshot && !existing)) throw new AdmissionConflictError();
-        run = record;
-        assertAdmissionIdentity(input, run, thread, stored.data);
-      } else {
-        if (first) throw new AdmissionConflictError();
-        const replaySource = input.initialThread.invocation.replayOf?.runId;
-        if (replaySource) {
-          const [source] = await tx
-            .select({ id: runs.id })
-            .from(runs)
-            .where(and(eq(runs.id, replaySource), eq(runs.ownerId, input.run.ownerId)));
-          if (!source)
-            throw new EngineRequestError(
-              'RUN_NOT_FOUND',
-              'Replay source was removed before admission',
+              input,
             );
         }
-        run = { ...input.run, lastEventSeq: 1 };
-        event = validateGeneratedEvent(queuedEvent(input));
-        if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
-        const values = {
-          ...runInsert(run, input.initialThread),
-          ...(replay
-            ? {
-                replayIntentNodeId: replay.nodeId,
-                replayIntentObservedSeq: replay.observedSeq,
-              }
-            : {}),
-        };
-        if (replay) {
-          const inserted = await tx
-            .insert(runs)
-            .values(values)
-            .onConflictDoNothing({
-              target: [
-                runs.replaySourceRunId,
-                runs.replayIntentNodeId,
-                runs.replayIntentObservedSeq,
-              ],
-            })
-            .returning({ id: runs.id });
-          if (!inserted.length) {
-            const [winner] = await tx.select(rawRunColumns).from(runs).where(replayScope);
-            if (!winner) throw new AdmissionConflictError();
-            return { run: decodeRunRecord(winner), event: undefined, linked: undefined };
-          }
-        } else await tx.insert(runs).values(values);
-        const { runId, seq, ts, type, ...payload } = event;
-        await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
-      }
-      // A child and its parent's record of it are one commit: neither exists without the other.
-      const link = childLinkEvent(input);
-      let linked: RunEvent | undefined;
-      if (link) {
-        const parentId = input.run.parentRunId as string;
-        const [parent] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, parentId));
-        if (!parent) throw new AdmissionConflictError();
-        if (event) {
-          const [last] = await tx
-            .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
-            .from(runEvents)
-            .where(eq(runEvents.runId, parentId));
-          linked = validateGeneratedEvent({
-            ...link,
-            runId: parentId,
-            seq: Number(last?.max ?? 0) + 1,
-            ts: input.run.createdAt,
-          });
-          await tx.insert(runEvents).values({
-            runId: parentId,
-            seq: linked.seq,
-            ts: linked.ts,
-            type: linked.type,
-            nodeId: link.nodeId,
-            payload: { childRunId: link.childRunId },
-          });
-          await tx.update(runs).set({ lastEventSeq: linked.seq }).where(eq(runs.id, parentId));
+        // A draft snapshot is immutable: its id may only ever hold the same record (ADR-0041).
+        const [existing] = input.snapshot
+          ? await tx.select().from(loopVersions).where(eq(loopVersions.id, input.snapshot.id))
+          : [];
+        if (
+          existing &&
+          stableStringify(loopVersionFromRow(existing)) !== stableStringify(input.snapshot)
+        )
+          throw new AdmissionConflictError();
+        const [prior] = await tx
+          .select({ ...rawRunColumns, initialThread: sql<string>`${runs.initialThread}` })
+          .from(runs)
+          .where(eq(runs.id, input.run.id));
+        const [first] = await tx
+          .select()
+          .from(runEvents)
+          .where(eq(runEvents.runId, input.run.id))
+          .orderBy(asc(runEvents.seq))
+          .limit(1);
+        let run;
+        let event;
+        if (prior) {
+          const stored = first
+            ? RunEventSchema.safeParse({
+                ...first.payload,
+                runId: first.runId,
+                seq: first.seq,
+                ts: first.ts,
+                type: first.type,
+                ...(first.nodeId ? { nodeId: first.nodeId } : {}),
+              })
+            : undefined;
+          const record = decodeRunRecord(prior);
+          const thread = decodeStoredThread(prior.id, 'initial_thread', prior.initialThread);
+          if (!stored?.success || (input.snapshot && !existing)) throw new AdmissionConflictError();
+          run = record;
+          assertAdmissionIdentity(input, run, thread, stored.data);
         } else {
-          // The same child admitted again: its parent's link must already be there.
-          const [recorded] = await tx
-            .select({ seq: runEvents.seq })
-            .from(runEvents)
-            .where(
-              and(
-                eq(runEvents.runId, parentId),
-                eq(runEvents.type, 'child_run.started'),
-                eq(runEvents.nodeId, link.nodeId),
-                sql`json_extract(${runEvents.payload}, '$.childRunId') = ${link.childRunId}`,
-              ),
-            )
-            .limit(1);
-          if (!recorded) throw new AdmissionConflictError();
+          if (first) throw new AdmissionConflictError();
+          const replaySource = input.initialThread.invocation.replayOf?.runId;
+          if (replaySource) {
+            const [source] = await tx
+              .select({ id: runs.id })
+              .from(runs)
+              .where(and(eq(runs.id, replaySource), eq(runs.ownerId, input.run.ownerId)));
+            if (!source)
+              throw new EngineRequestError(
+                'RUN_NOT_FOUND',
+                'Replay source was removed before admission',
+              );
+          }
+          run = { ...input.run, lastEventSeq: 1 };
+          event = validateGeneratedEvent(queuedEvent(input));
+          if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
+          const values = {
+            ...runInsert(run, input.initialThread),
+            ...(replay
+              ? {
+                  replayIntentNodeId: replay.nodeId,
+                  replayIntentObservedSeq: replay.observedSeq,
+                }
+              : {}),
+          };
+          if (replay) {
+            const inserted = await tx
+              .insert(runs)
+              .values(values)
+              .onConflictDoNothing({
+                target: [
+                  runs.replaySourceRunId,
+                  runs.replayIntentNodeId,
+                  runs.replayIntentObservedSeq,
+                ],
+              })
+              .returning({ id: runs.id });
+            if (!inserted.length) {
+              const [winner] = await tx.select(rawRunColumns).from(runs).where(replayScope);
+              if (!winner) throw new AdmissionConflictError();
+              return { run: decodeRunRecord(winner), event: undefined, linked: undefined };
+            }
+          } else await tx.insert(runs).values(values);
+          const { runId, seq, ts, type, ...payload } = event;
+          await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
+          await commitChatAdmission(tx, input);
         }
-      }
-      if (receiptId) {
-        const [receipt] = await tx
-          .update(receipts)
-          .set({ status: 'admitted', nextAttemptAt: null, failureCode: null })
-          .where(eq(receipts.id, receiptId))
-          .returning();
-        if (!receipt) throw new AdmissionConflictError();
-        await tx
-          .update(inboundEvents)
-          .set({ runIds: [run.id] })
-          .where(eq(inboundEvents.id, receipt.inboundId));
-      }
-      return { run, event, linked };
-    });
+        // A child and its parent's record of it are one commit: neither exists without the other.
+        const link = childLinkEvent(input);
+        let linked: RunEvent | undefined;
+        if (link) {
+          const parentId = input.run.parentRunId as string;
+          const [parent] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, parentId));
+          if (!parent) throw new AdmissionConflictError();
+          if (event) {
+            const [last] = await tx
+              .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
+              .from(runEvents)
+              .where(eq(runEvents.runId, parentId));
+            linked = validateGeneratedEvent({
+              ...link,
+              runId: parentId,
+              seq: Number(last?.max ?? 0) + 1,
+              ts: input.run.createdAt,
+            });
+            await tx.insert(runEvents).values({
+              runId: parentId,
+              seq: linked.seq,
+              ts: linked.ts,
+              type: linked.type,
+              nodeId: link.nodeId,
+              payload: { childRunId: link.childRunId },
+            });
+            await tx.update(runs).set({ lastEventSeq: linked.seq }).where(eq(runs.id, parentId));
+          } else {
+            // The same child admitted again: its parent's link must already be there.
+            const [recorded] = await tx
+              .select({ seq: runEvents.seq })
+              .from(runEvents)
+              .where(
+                and(
+                  eq(runEvents.runId, parentId),
+                  eq(runEvents.type, 'child_run.started'),
+                  eq(runEvents.nodeId, link.nodeId),
+                  sql`json_extract(${runEvents.payload}, '$.childRunId') = ${link.childRunId}`,
+                ),
+              )
+              .limit(1);
+            if (!recorded) throw new AdmissionConflictError();
+          }
+        }
+        if (receiptId) {
+          const [receipt] = await tx
+            .update(receipts)
+            .set({ status: 'admitted', nextAttemptAt: null, failureCode: null })
+            .where(eq(receipts.id, receiptId))
+            .returning();
+          if (!receipt) throw new AdmissionConflictError();
+          await tx
+            .update(inboundEvents)
+            .set({ runIds: [run.id] })
+            .where(eq(inboundEvents.id, receipt.inboundId));
+        }
+        return { run, event, linked };
+      });
+    } catch (error) {
+      // A native commit may succeed while its acknowledgement is lost. Recover only this
+      // prepared identity, once; returning it lets RunManager schedule the same admitted run.
+      const recovered = input.conversationTurn
+        ? await this.recoverCommittedChat(input).catch(() => undefined)
+        : undefined;
+      if (!recovered) throw error;
+      committed = { run: recovered, event: undefined, linked: undefined };
+    }
     if (committed.event) this.eventStore.notifyCommitted([committed.event]);
     if (committed.linked) this.eventStore.notifyCommitted([committed.linked]);
     return committed.run;
+  }
+  private async recoverCommittedChat(input: RunAdmission): Promise<RunRecord | undefined> {
+    const chat = input.conversationTurn;
+    if (!chat) return undefined;
+    return this.db.transaction(async (tx) => {
+      const [turn] = await tx
+        .select()
+        .from(chatTurns)
+        .where(
+          and(
+            eq(chatTurns.conversationId, chat.conversationId),
+            eq(chatTurns.requestId, chat.requestId),
+            eq(chatTurns.ownerId, input.run.ownerId),
+            eq(chatTurns.audienceKey, chat.audienceKey),
+          ),
+        );
+      if (
+        !turn ||
+        turn.historyDeleted ||
+        turn.id !== chat.id ||
+        turn.runId !== input.run.id ||
+        turn.requestHash !== chat.requestHash ||
+        turn.turn !== chat.expectedLastTurn + 1 ||
+        turn.createdAt !== input.run.createdAt ||
+        stableStringify(turn.input) !== stableStringify(chat.input)
+      )
+        return undefined;
+      const [conversation] = await tx
+        .select({ lastTurn: chatConversations.lastTurn })
+        .from(chatConversations)
+        .where(
+          and(
+            eq(chatConversations.id, chat.conversationId),
+            eq(chatConversations.ownerId, input.run.ownerId),
+            eq(chatConversations.audienceKey, chat.audienceKey),
+          ),
+        );
+      if (!conversation || conversation.lastTurn < turn.turn) return undefined;
+      const [stored] = await tx
+        .select({ ...rawRunColumns, initialThread: sql<string>`${runs.initialThread}` })
+        .from(runs)
+        .where(eq(runs.id, turn.runId));
+      const [first] = await tx
+        .select()
+        .from(runEvents)
+        .where(and(eq(runEvents.runId, turn.runId), eq(runEvents.seq, 1)));
+      if (!stored || !first) return undefined;
+      const event = RunEventSchema.safeParse({
+        ...first.payload,
+        runId: first.runId,
+        seq: first.seq,
+        ts: first.ts,
+        type: first.type,
+        ...(first.nodeId ? { nodeId: first.nodeId } : {}),
+      });
+      if (!event.success || event.data.type !== 'run.queued') return undefined;
+      const run = decodeRunRecord(stored),
+        thread = decodeStoredThread(stored.id, 'initial_thread', stored.initialThread);
+      assertAdmissionIdentity(input, run, thread, event.data);
+      if (input.snapshot) {
+        const [snapshot] = await tx
+          .select()
+          .from(loopVersions)
+          .where(eq(loopVersions.id, input.snapshot.id));
+        if (
+          !snapshot ||
+          stableStringify(loopVersionFromRow(snapshot)) !== stableStringify(input.snapshot)
+        )
+          return undefined;
+      }
+      if (chat.audioId) {
+        const [audio] = await tx
+          .select({ id: chatAudio.id })
+          .from(chatAudio)
+          .where(
+            and(
+              eq(chatAudio.id, chat.audioId),
+              eq(chatAudio.ownerId, input.run.ownerId),
+              eq(chatAudio.audienceKey, chat.audienceKey),
+              eq(chatAudio.state, 'consumed'),
+              eq(chatAudio.consumedTurnId, turn.id),
+            ),
+          );
+        if (!audio) return undefined;
+      }
+      return run;
+    });
   }
   async claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
     const frozen = parseRunAdmission(intent);

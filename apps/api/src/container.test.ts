@@ -1,6 +1,6 @@
 import { LoopDefinitionSchema, type RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop, samplePin, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
-import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
@@ -134,7 +134,7 @@ async function queueRecoveryWork(container: Container) {
 let dataDir: string;
 
 beforeEach(async () => {
-  dataDir = await mkdtemp(join(tmpdir(), 'gg-container-'));
+  dataDir = await realpath(await mkdtemp(join(tmpdir(), 'gg-container-')));
 });
 
 afterEach(async () => {
@@ -148,6 +148,7 @@ function config(env: Record<string, string> = {}) {
     GG_DB_URL: `file:${join(dataDir, 'gg.db').replace(/\\/g, '/')}`,
     GG_SWAGGER_UI: 'false',
     GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+    GG_OLLAMA_ENABLED: 'false',
     ...env,
   });
 }

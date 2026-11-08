@@ -14,6 +14,8 @@ import type {
   LoopIssue,
   LoopRecord,
   LoopVersionRecord,
+  ModelCatalogAvailability,
+  OllamaConnectionView,
   RunEvent,
   RunRecord,
   RunRecovery,
@@ -202,7 +204,12 @@ export class FakeApi {
     efforts: string[];
     defaultEffort: string;
     enabled: boolean;
+    availability?: ModelCatalogAvailability | undefined;
   }[] = [];
+  ollamaConnection: OllamaConnectionView = {
+    connection: { enabled: true, baseUrl: 'http://127.0.0.1:11434', revision: 1 },
+    discovery: { state: 'idle' },
+  };
   secretList: { name: string; createdAt: string; updatedAt: string }[] = [];
   /** Classifier entries; GET derives `configured` from `secretList`, as the API does from secrets. */
   classifiers: ClassifierModelEntry[] = [BUILTIN_JEV];
@@ -973,6 +980,30 @@ export class FakeApi {
           return problem(404, 'SETTING_NOT_FOUND', `setting ${key} not found`);
         delete this.settingsValues[key!];
         return new Response(null, { status: 204 });
+      },
+    ],
+    ['GET /harness/ollama/connection', () => json(this.ollamaConnection)],
+    [
+      'PUT /harness/ollama/connection',
+      (call) => {
+        const body = call.body as { enabled: boolean; baseUrl: string };
+        this.ollamaConnection = {
+          connection: { ...body, revision: this.ollamaConnection.connection.revision + 1 },
+          discovery: body.enabled
+            ? { state: 'ready', lastSuccessAt: '2026-11-07T12:00:00.000Z' }
+            : { state: 'idle' },
+        };
+        return json(this.ollamaConnection);
+      },
+    ],
+    [
+      'POST /model-catalog/refresh',
+      () => {
+        this.ollamaConnection.discovery = {
+          state: 'ready',
+          lastSuccessAt: '2026-11-07T12:00:00.000Z',
+        };
+        return json(this.ollamaConnection.discovery);
       },
     ],
     [

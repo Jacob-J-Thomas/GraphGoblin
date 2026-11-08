@@ -73,7 +73,9 @@ describe('template API without runtime authority', () => {
         /instantiate|prerequisites|template-instances/.test(path),
       ),
     ).toEqual([]);
-    expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+    expect(
+      (await app.container.repos.loops.listLoops('local')).filter((loop) => !loop.system),
+    ).toEqual([]);
     expect(await app.container.repos.runs.list()).toEqual([]);
   });
   it('keeps catalogue reads scoped and unknown template IDs explicit', async () => {
@@ -160,7 +162,9 @@ describe('template API without runtime authority', () => {
         expect(response.body).not.toContain('private-installed-content');
         expect(response.body).not.toContain(app.dataDir);
       }
-      expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+      expect(
+        (await app.container.repos.loops.listLoops('local')).filter((loop) => !loop.system),
+      ).toEqual([]);
     },
   );
   it('keeps ordinary returns and the unwrapped durable finalization marker', async () => {

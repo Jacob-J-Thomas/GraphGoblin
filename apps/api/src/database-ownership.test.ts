@@ -1,4 +1,13 @@
-import { access, link, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
+import {
+  access,
+  link,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -137,7 +146,7 @@ it('locks the same external SQLite file across data directories and refuses an o
 });
 
 it('canonicalizes directory aliases, future database paths and the health identity without writing', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'gg-database-alias-'));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-database-alias-')));
   const physical = join(base, 'physical');
   const alias = join(base, 'alias');
   await mkdir(physical);
@@ -152,11 +161,15 @@ it('canonicalizes directory aliases, future database paths and the health identi
     const first = loadConfig({
       GG_DATA_DIR: physical,
       GG_DB_URL: 'file:' + future.replaceAll('\\', '/'),
+      GG_WEB_DIST: join(physical, 'web'),
+      GG_GOBLIN_DIST: join(physical, 'goblin'),
     });
     const second = {
       ...first,
       dataDir: alias,
       dbUrl: 'file:' + join(alias, 'future', 'store.db').replaceAll('\\', '/'),
+      webDist: join(alias, 'web'),
+      goblinDist: join(alias, 'goblin'),
     };
     expect(instanceIdentity(second)).toBe(instanceIdentity(first));
   } finally {

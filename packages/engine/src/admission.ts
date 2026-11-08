@@ -7,6 +7,9 @@ import {
   RunRecordSchema,
   RunEventSchema,
   ReplayIntentSchema,
+  ChatSendInputSchema,
+  ChatSendRequestSchema,
+  type ChatSendInput,
   type ReplayIntent,
   type ContextThread,
   type JsonValue,
@@ -16,9 +19,40 @@ import {
 } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 
+/** A chat identity attached to the native admission transaction. */
+export interface ConversationTurnAdmission {
+  id: string;
+  conversationId: string;
+  requestId: string;
+  requestHash: string;
+  expectedLastTurn: number;
+  audienceKey: string;
+  input: ChatSendInput;
+  audioId?: string;
+}
+export class ChatAdmissionError extends Error {
+  constructor(
+    readonly code:
+      | 'CHAT_REQUEST_CONFLICT'
+      | 'CHAT_HISTORY_DELETED'
+      | 'CHAT_BUSY'
+      | 'CHAT_STALE_CONTEXT'
+      | 'CHAT_AUDIO_EXPIRED'
+      | 'CHAT_AUDIO_CONSUMED'
+      | 'CHAT_NOT_FOUND'
+      | 'CHAT_DEVICE_REVOKED'
+      | 'CHAT_NOT_READY',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ChatAdmissionError';
+  }
+}
+
 /** A frozen run start. Storage assigns queued seq 1 and publishes only after commit. */
 export interface RunAdmission {
   run: RunRecord;
+  conversationTurn?: ConversationTurnAdmission;
   initialThread: ContextThread;
   queued: Omit<Extract<RunEvent, { type: 'run.queued' }>, 'runId' | 'seq' | 'ts'>;
   pinnedLoopIds: string[];
@@ -196,7 +230,12 @@ export function parseRunAdmission(value: unknown): RunAdmission {
         stableStringify(initialThread.data.invocation.replayOf))
   )
     throw new AdmissionConflictError();
+  const conversationTurn =
+    raw.conversationTurn === undefined ? undefined : parseConversationTurn(raw.conversationTurn);
+  if (conversationTurn && (parented || raw.replayIntent !== undefined))
+    throw new AdmissionConflictError();
   return {
+    ...(conversationTurn ? { conversationTurn } : {}),
     run: run.data,
     initialThread: initialThread.data,
     queued,
@@ -323,4 +362,37 @@ export function assertEventClaim(input: EventClaim, intent: RunAdmission): void 
     stableStringify(invocation.trigger.payload) !== stableStringify(input.inbound.payload)
   )
     throw new AdmissionConflictError();
+}
+
+/** Reject malformed internal chat attachments before any storage mutation. */
+export function parseConversationTurn(value: unknown): ConversationTurnAdmission {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new AdmissionConflictError();
+  const row = value as Record<string, unknown>;
+  const input = ChatSendInputSchema.safeParse(row.input);
+  if (
+    !UlidSchema.safeParse(row.id).success ||
+    !UlidSchema.safeParse(row.conversationId).success ||
+    typeof row.requestId !== 'string' ||
+    !ChatSendRequestSchema.shape.requestId.safeParse(row.requestId).success ||
+    typeof row.requestHash !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(row.requestHash) ||
+    !Number.isSafeInteger(row.expectedLastTurn) ||
+    Number(row.expectedLastTurn) < 0 ||
+    typeof row.audienceKey !== 'string' ||
+    !/^(gateway|device:[0-9A-HJKMNP-TV-Z]{26})$/.test(row.audienceKey) ||
+    !input.success ||
+    (input.data.kind === 'audio' ? row.audioId !== input.data.audioId : row.audioId !== undefined)
+  )
+    throw new AdmissionConflictError();
+  return {
+    id: row.id as string,
+    conversationId: row.conversationId as string,
+    requestId: row.requestId,
+    requestHash: row.requestHash,
+    expectedLastTurn: Number(row.expectedLastTurn),
+    audienceKey: row.audienceKey,
+    input: input.data,
+    ...(typeof row.audioId === 'string' ? { audioId: row.audioId } : {}),
+  };
 }

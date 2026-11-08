@@ -10,7 +10,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
-import { DEFAULT_MODEL_CATALOG, SqliteModelCatalog, SqliteSettings } from './settings.js';
+import {
+  DEFAULT_MODEL_CATALOG,
+  SqliteModelCatalog,
+  SqliteSettings,
+  readPreMigrationModelCatalog,
+} from './settings.js';
+import { modelCatalog } from './schema.js';
 
 function previousMigrations(dir: string, count: number): string {
   const folder = join(dir, 'migrations');
@@ -143,16 +149,26 @@ describe('model catalog source migration and repository', () => {
       await old.migrate();
       const catalog = new SqliteModelCatalog(old.db);
       await catalog.seed();
-      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
-      await catalog.setEnabled('claude', 'claude-opus-5-5', false);
-      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+      // Historical fixture has no model_discovery table; current repository reads require it.
+      for (const [harness, model] of [
+        ['claude', 'claude-fable-5-1'],
+        ['claude', 'claude-opus-5-5'],
+        ['codex', 'gpt-6-luna'],
+      ])
+        await old.client.execute({
+          sql: 'UPDATE model_catalog SET enabled = 0 WHERE harness = ? AND model = ?',
+          args: [harness!, model!],
+        });
     } finally {
       old.close();
     }
     const current = openDatabase({ url });
     try {
       const catalog = new SqliteModelCatalog(current.db);
-      const before = await catalog.list();
+      const before = await current.db
+        .select()
+        .from(modelCatalog)
+        .orderBy(modelCatalog.harness, modelCatalog.model);
       expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 11);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       // Exercise the historical SQL in isolation; format-4 startup cannot admit a pre-baseline store.
@@ -173,6 +189,47 @@ describe('model catalog source migration and repository', () => {
       await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }).catch(
         () => undefined,
       );
+    }
+  });
+  it('reads current-format base catalog before discovery migrations without joining new tables', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-pre-discovery-catalog-'));
+    const url = `file:${join(dir, 'catalog.db').replaceAll('\\', '/')}`;
+    const old = openDatabase({ url, migrationsFolder: previousMigrations(dir, 26) });
+    try {
+      await old.migrate();
+      await new SqliteModelCatalog(old.db).seed();
+      await old.client.execute({
+        sql: 'UPDATE model_catalog SET enabled = 0 WHERE harness = ? AND model = ?',
+        args: ['codex', 'gpt-6-luna'],
+      });
+      await old.client.execute({
+        sql: 'INSERT INTO model_catalog (harness, model, source, display_name, efforts, default_effort, enabled) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: ['ollama', 'exact:tag', 'harness', 'Saved exact model', '["none"]', 'none', 0],
+      });
+      expect(
+        (
+          await old.client.execute(
+            "SELECT name FROM sqlite_master WHERE name IN ('ollama_connection', 'model_discovery')",
+          )
+        ).rows,
+      ).toEqual([]);
+      const rows = await readPreMigrationModelCatalog(old.db);
+      expect(
+        rows.find((row) => row.harness === 'codex' && row.model === 'gpt-6-luna')?.enabled,
+      ).toBe(false);
+      expect(rows.find((row) => row.harness === 'ollama')).toEqual({
+        harness: 'ollama',
+        model: 'exact:tag',
+        source: 'harness',
+        displayName: 'Saved exact model',
+        efforts: ['none'],
+        defaultEffort: 'none',
+        enabled: false,
+      });
+      expect(rows.every((row) => row.availability === undefined)).toBe(true);
+    } finally {
+      old.close();
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     }
   });
   it('adds Sonnet 5.5 and Haiku 5.5 enabled to an existing store and keeps every owner switch', async () => {

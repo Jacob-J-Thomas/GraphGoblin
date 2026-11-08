@@ -16,6 +16,8 @@ import {
 import { isTerminal } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
+import { systemChatIssues } from '@graphgoblin/domain';
+import { ChatError } from '../chat/errors.js';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
@@ -105,7 +107,15 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             ...(versionId ? { versionId } : {}),
             ...(body.allowDraft ? { allowDraft: true } : {}),
           },
-          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
+          async (plan) => {
+            if (loop.system && systemChatIssues(plan.root.definition).length)
+              throw new ChatError(
+                'SYSTEM_CHAT_CONTRACT_INVALID',
+                400,
+                'the pinned system chat boundary must be valid before execution',
+              );
+            await assertRunReadiness(plan, readiness, await ports.modelCatalog.list());
+          },
         );
         reply.status(202);
         return { run };

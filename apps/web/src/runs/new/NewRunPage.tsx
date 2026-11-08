@@ -1,4 +1,3 @@
-import type { LoopRecord } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops } from '../../api/queries.js';
 import { Page, PageHeader } from '../../components/layout/index.js';
@@ -15,7 +14,19 @@ import {
 import { RunLauncher } from './RunLauncher.js';
 
 /** Why the loop in the address cannot be started, if it cannot. */
-function LoopProblem({ loopId, loop }: { loopId: string; loop: LoopRecord | undefined }) {
+function LoopProblem({
+  loopId,
+  loop,
+}: {
+  loopId: string;
+  loop: NonNullable<ReturnType<typeof useLoops>['data']>[number] | undefined;
+}) {
+  if (loop?.system)
+    return (
+      <Alert tone="warn">
+        {loop.name} is a system chat loop. <Link to="/chat">Send a message in Chat</Link> instead.
+      </Alert>
+    );
   if (!loop) {
     return (
       <Alert tone="warn" title="Loop not found">
@@ -58,10 +69,10 @@ export function NewRunPage() {
       <Card>
         <QueryState query={loopsQuery} what="Loops">
           {(items) => {
-            const published = items.filter((l) => l.currentVersionId);
+            const published = items.filter((l) => l.currentVersionId && !l.system);
             const loop = items.find((l) => l.id === loopId);
             // The loop's current published version, when it has one: then it can be started.
-            const current = loop?.currentVersionId;
+            const current = loop?.system ? undefined : loop?.currentVersionId;
             return (
               <div className="grid gap-section">
                 <FieldGroup className="max-w-[440px]">

@@ -86,6 +86,7 @@ describe('transports', () => {
   let t: TestApp;
   let apiUrl: string;
   let loopId: string;
+  let gatewayLoopId: string;
   const logs: string[] = [];
   const log = (line: string) => logs.push(line);
 
@@ -93,6 +94,10 @@ describe('transports', () => {
     t = await createTestApp();
     await t.app.listen({ port: 0, host: '127.0.0.1' });
     apiUrl = `http://127.0.0.1:${(t.app.server.address() as AddressInfo).port}`;
+    gatewayLoopId = (await t.container.repos.chat.getBinding({
+      ownerId: 'local',
+      audienceKey: 'gateway',
+    }))!.loopId;
     loopId = await t.publishLoop(minimalLoop());
   });
   afterAll(async () => {
@@ -193,7 +198,16 @@ describe('transports', () => {
     const client = new Client({ name: 'stdio-test', version: '1' });
     await client.connect(new StreamClientTransport(stdin, stdout));
     const result = await client.callTool({ name: 'list_loops', arguments: {} });
-    expect((result.structuredContent as { items: { id: string }[] }).items[0]?.id).toBe(loopId);
+    const { items } = result.structuredContent as {
+      items: { id: string; published: boolean; hasDraft: boolean }[];
+    };
+    expect(items).toHaveLength(2);
+    expect(items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: gatewayLoopId, published: true, hasDraft: false }),
+        expect.objectContaining({ id: loopId, published: true, hasDraft: false }),
+      ]),
+    );
     expect(seen[0]?.headers.get('authorization')).toBe('Bearer local-key');
     await client.close();
     await started.close();
