@@ -1,0 +1,492 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: model-picker.spec.ts >> seeded GPT-6.1 Terra offers medium by default and publishes medium
+- Location: e2e\model-picker.spec.ts:36:3
+
+# Error details
+
+```
+Error: expect(locator).toHaveText(expected) failed
+
+Locator: getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option')
+Timeout: 10000ms
+- Expected  - 1
++ Received  + 1
+
+@@ -1,7 +1,7 @@
+  Array [
+-   "Default (medium)",
++   "Default (low)",
+    "none (no reasoning)",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+
+Call log:
+  - Expect "toHaveText" getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option') with timeout 10000ms
+  - waiting for getByRole('dialog').getByLabel('Effort', { exact: true }).locator('option')
+    23 × locator resolved to 7 elements
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - link "Loops" [ref=e33] [cursor=pointer]:
+        - /url: /app/loops
+      - generic [ref=e34]: /
+      - heading "Terra medium" [level=1] [ref=e35]
+      - generic [ref=e36]: draft only
+      - generic [ref=e38]: All changes saved
+      - generic [ref=e42]:
+        - button "Undo edit config of infer" [ref=e43] [cursor=pointer]
+        - button "Redo" [disabled] [ref=e47]
+        - link "Open in Runs" [disabled] [ref=e51]
+        - generic [ref=e54]: "Publish the loop first: runs start from a published version."
+        - generic [ref=e55]: Ready to publish
+        - button "Publish" [ref=e59] [cursor=pointer]
+    - generic [ref=e64]:
+      - complementary [ref=e65]:
+        - generic [ref=e66]:
+          - button "Hide palette" [expanded] [ref=e67] [cursor=pointer]
+          - heading "Palette" [level=2] [ref=e70]
+        - navigation "Node palette" [ref=e72]:
+          - button "Add Trigger node" [ref=e73]:
+            - generic [ref=e77]: Trigger
+            - generic [ref=e78]: Starts a run
+          - button "Add Decision node" [ref=e79]:
+            - generic [ref=e84]: Decision
+            - generic [ref=e85]: Chooses a route and can limit repeats
+          - button "Add Inference node" [ref=e86]:
+            - generic [ref=e91]: Inference
+            - generic [ref=e92]: Hands work to a harness
+          - button "Add Script node" [ref=e93]:
+            - generic [ref=e97]: Script
+            - generic [ref=e98]: Runs a program
+          - button "Add Mutate node" [ref=e99]:
+            - generic [ref=e104]: Mutate
+            - generic [ref=e105]: Changes the context thread
+          - button "Add Subloop node" [ref=e106]:
+            - generic [ref=e111]: Subloop
+            - generic [ref=e112]: Runs another loop
+          - button "Add Wait node" [ref=e113]:
+            - generic [ref=e117]: Wait
+            - generic [ref=e118]: Parks until input, time, or a signal
+          - button "Add Heartbeat node" [ref=e119]:
+            - generic [ref=e123]: Heartbeat
+            - generic [ref=e124]: Polls on an interval
+          - button "Add Exit node" [ref=e125]:
+            - generic [ref=e129]: Exit
+            - generic [ref=e130]: Finishes with an outcome and return value
+      - main [ref=e131]:
+        - application [ref=e133]:
+          - generic [ref=e135]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to infer" [ref=e136] [cursor=pointer]
+                - img:
+                  - group "infer out to done" [ref=e139] [cursor=pointer]
+              - generic:
+                - group "Trigger Start (start)" [ref=e142]:
+                  - generic [ref=e143]:
+                    - generic [ref=e144]: Trigger
+                    - generic [ref=e149]:
+                      - generic [ref=e150]: Start
+                      - generic [ref=e151]: start
+                      - generic [ref=e153]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e154]
+                - group "Inference Infer (infer)" [ref=e155]:
+                  - generic [ref=e156]:
+                    - generic "infer input" [ref=e157]
+                    - generic [ref=e158]: Inference
+                    - generic [ref=e164]:
+                      - generic [ref=e165]: Infer
+                      - generic [ref=e166]: infer
+                      - generic [ref=e168]:
+                        - text: out
+                        - generic "infer output out (out)" [ref=e169]
+                - group "Exit Done (done)" [ref=e170]:
+                  - generic [ref=e171]:
+                    - generic "done input" [ref=e172]
+                    - generic [ref=e173]: Exit
+                    - generic [ref=e178]:
+                      - generic [ref=e179]: Done
+                      - generic [ref=e180]: done
+          - generic "Control Panel" [ref=e181]:
+            - button "Zoom In" [ref=e182] [cursor=pointer]
+            - button "Zoom Out" [ref=e185] [cursor=pointer]
+            - button "Fit View" [ref=e188] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e191] [cursor=pointer]
+          - link "React Flow attribution" [ref=e195] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary [ref=e198]:
+        - generic [ref=e199]:
+          - heading "Loop settings" [level=2] [ref=e200]
+          - button "Hide loop settings" [expanded] [ref=e201] [cursor=pointer]
+        - region "Loop settings" [ref=e205]:
+          - paragraph [aria-hidden] [ref=e206]: Required fields are marked *
+          - generic [ref=e207]:
+            - generic [ref=e208]:
+              - generic [ref=e209]: Name
+              - generic [aria-hidden] [ref=e210]: "*"
+            - textbox "Name" [ref=e211]: Terra medium
+          - generic [ref=e212]:
+            - generic [ref=e213]: Description
+            - textbox "Description" [ref=e214]
+          - heading "Settings" [level=3] [ref=e215]
+          - paragraph [ref=e216]: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision evaluation or output-transform repair through the structured port when Limited; it defaults to Unlimited. Same-session inference schema repairs follow the node timeout. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+          - form "Loop settings form" [ref=e217]:
+            - generic [ref=e219]:
+              - group "Working directory" [ref=e220]:
+                - generic [ref=e222]:
+                  - generic [ref=e223]: Kind
+                  - combobox "Kind" [ref=e225] [cursor=pointer]:
+                    - option "fixed"
+                    - option "template"
+                    - option "temp" [selected]
+              - group "Defaults" [ref=e226]:
+                - group "By harness" [ref=e228]:
+                  - paragraph [ref=e230]: Defaults keyed by their harness; omitted fields inherit only within that harness.
+                  - button "Add entry" [ref=e232] [cursor=pointer]
+                  - status [ref=e236]
+              - generic [ref=e237]:
+                - generic [ref=e238]: Maximum node visits
+                - generic [ref=e240]:
+                  - spinbutton "Maximum node visits" [ref=e241]: "10"
+                  - combobox "Maximum node visits mode" [ref=e243] [cursor=pointer]:
+                    - option "Limited" [selected]
+                    - option "Unlimited"
+                - paragraph [ref=e244]: Fresh entries per node. Default 10; unlimited removes this cutoff.
+              - generic [ref=e245]:
+                - generic [ref=e246]: Run deadline seconds
+                - combobox "Run deadline seconds mode" [ref=e250] [cursor=pointer]:
+                  - option "Limited"
+                  - option "No run deadline" [selected]
+                - paragraph [ref=e251]: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+                - paragraph [ref=e252]: No deadline; set one to stop a forgotten run.
+              - generic [ref=e253]:
+                - generic [ref=e254]: Structured completion milliseconds
+                - combobox "Structured completion milliseconds mode" [ref=e258] [cursor=pointer]:
+                  - option "Limited"
+                  - option "Unlimited" [selected]
+                - paragraph [ref=e259]: Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.
+                - paragraph [ref=e260]: No completion deadline; LLM decisions and repairs remain cancellable.
+              - generic [ref=e261]:
+                - generic [ref=e262]: Subloop depth limit
+                - spinbutton "Subloop depth limit" [ref=e264]: "8"
+          - generic [ref=e265]:
+            - heading "Variables" [level=3] [ref=e266]
+            - paragraph [ref=e267]: Each variable maps a name to a JSON Schema.
+          - form "Variables form" [ref=e268]:
+            - group "Variables" [ref=e271]:
+              - generic [ref=e272]: Variables *
+              - button "Add entry" [ref=e274] [cursor=pointer]
+              - status [ref=e278]
+    - dialog [ref=e279]:
+      - banner [ref=e280]:
+        - heading "Edit inference infer" [active] [level=2] [ref=e286]:
+          - text: Edit inference
+          - generic [ref=e287]: infer
+        - button "Close" [ref=e288] [cursor=pointer]
+      - region "Node properties" [ref=e292]:
+        - paragraph [aria-hidden] [ref=e293]: Required fields are marked *
+        - generic [ref=e294]:
+          - generic [ref=e295]:
+            - generic [ref=e296]:
+              - generic [ref=e297]: Node id
+              - generic [aria-hidden] [ref=e298]: "*"
+            - textbox "Node id" [ref=e299]: infer
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]: Label
+              - generic [aria-hidden] [ref=e303]: "*"
+            - textbox "Label" [ref=e304]: Infer
+        - group [ref=e306]:
+          - form "infer config" [ref=e307]:
+            - generic [ref=e308]:
+              - tablist "Node configuration" [ref=e309]:
+                - tab "Settings" [selected] [ref=e310] [cursor=pointer]
+                - tab "Context" [ref=e311] [cursor=pointer]
+              - tabpanel "Settings" [ref=e312]:
+                - generic [ref=e313]:
+                  - radiogroup "Harness" [ref=e314]:
+                    - generic [ref=e317]:
+                      - generic [ref=e318]:
+                        - radio "codex" [checked] [ref=e319]
+                        - generic "codex" [ref=e320] [cursor=pointer]
+                      - generic [ref=e322]:
+                        - radio "claude" [ref=e323]
+                        - generic "claude" [ref=e324] [cursor=pointer]
+                  - paragraph [ref=e326]: Harness that runs the session.
+                - generic [ref=e327]:
+                  - generic [ref=e328]: Model
+                  - combobox "Model" [ref=e331] [cursor=pointer]:
+                    - option "(loop default) (gpt-6-luna)"
+                    - option "GPT-5.5 (gpt-5.5)"
+                    - option "GPT-5.6 Luna (gpt-5.6-luna)"
+                    - option "GPT-5.6 Sol (gpt-5.6-sol)"
+                    - option "GPT-5.6 Terra (gpt-5.6-terra)"
+                    - option "GPT-6 Astra (gpt-6-astra)"
+                    - option "GPT-6 Luna (gpt-6-luna)"
+                    - option "GPT-6 Sol (gpt-6-sol)"
+                    - option "GPT-6.1 Sol (gpt-6.1-sol)"
+                    - option "GPT-6.1 Terra (gpt-6.1-terra)" [selected]
+                  - paragraph [ref=e332]: "Default model: gpt-6-luna."
+                  - paragraph [ref=e333]: Model; inherits within this harness from loop, owner, then process defaults.
+                  - link "Model catalog in Settings" [ref=e334] [cursor=pointer]:
+                    - /url: /app/settings
+                - generic [ref=e335]:
+                  - generic [ref=e336]: Effort
+                  - combobox "Effort" [ref=e339] [cursor=pointer]:
+                    - option "Default (low)" [selected]
+                    - option "none (no reasoning)"
+                    - option "low"
+                    - option "medium"
+                    - option "high"
+                    - option "xhigh"
+                    - option "max"
+                  - paragraph [ref=e340]: "Default effort: low."
+                  - paragraph [ref=e341]: Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.
+                - group "Session" [ref=e342]:
+                  - generic [ref=e344]:
+                    - generic [ref=e345]: Policy
+                    - combobox "Policy" [ref=e347] [cursor=pointer]:
+                      - option "fresh" [selected]
+                      - option "resume-previous"
+                      - option "resume-named"
+                      - option "resume-own"
+                    - paragraph [ref=e348]: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.
+                - group "Prompt" [ref=e349]:
+                  - paragraph [ref=e351]: Liquid template rendered against the thread.
+                  - generic [ref=e352]:
+                    - generic [ref=e353]:
+                      - generic [ref=e354]:
+                        - generic [ref=e355]: Template
+                        - generic [aria-hidden] [ref=e356]: "*"
+                      - generic [ref=e357]: Liquid
+                    - generic [ref=e358]:
+                      - generic [ref=e361]:
+                        - generic [ref=e363]: "1"
+                        - textbox "Template" [ref=e367]:
+                          - generic [ref=e368]: picker run
+                      - generic [ref=e369]: "Preview (sample thread): picker run"
+                      - button "Earlier node outputs (1)" [ref=e371] [cursor=pointer]
+                - generic [ref=e377]:
+                  - radiogroup "Sandbox" [ref=e378]:
+                    - generic [ref=e381]:
+                      - generic [ref=e382]:
+                        - radio "read-only" [ref=e383]
+                        - generic "read-only" [ref=e384] [cursor=pointer]
+                      - generic [ref=e386]:
+                        - radio "workspace-write" [checked] [ref=e387]
+                        - generic "workspace-write" [ref=e388] [cursor=pointer]
+                      - generic [ref=e390]:
+                        - radio "danger-full-access" [ref=e391]
+                        - generic "danger-full-access" [ref=e392] [cursor=pointer]
+                  - paragraph [ref=e394]: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.
+                - button "Advanced" [ref=e396] [cursor=pointer]
+        - region "Connections" [ref=e401]:
+          - heading "Connections" [level=3] [ref=e402]
+          - list [ref=e403]:
+            - listitem [ref=e404]:
+              - generic [ref=e405]:
+                - text: out →
+                - code [ref=e406]: done
+              - button "Remove edge e2" [ref=e407] [cursor=pointer]
+      - contentinfo [ref=e410]:
+        - button "Delete node" [ref=e411] [cursor=pointer]
+        - button "Done" [ref=e415] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  1   | import { LoopDefinitionSchema, ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+  2   | import { minimalLoop } from '@graphgoblin/contracts/testing';
+  3   | import {
+  4   |   closeNode,
+  5   |   control,
+  6   |   expect,
+  7   |   openAdvanced,
+  8   |   openNode,
+  9   |   showLoopPanel,
+  10  |   test,
+  11  | } from './fixtures.js';
+  12  | 
+  13  | function inferenceLoop(name: string, model?: string) {
+  14  |   const source = minimalLoop();
+  15  |   return {
+  16  |     ...source,
+  17  |     name,
+  18  |     nodes: [
+  19  |       source.nodes[0]!,
+  20  |       {
+  21  |         id: 'infer',
+  22  |         kind: 'inference',
+  23  |         label: 'Infer',
+  24  |         config: { prompt: { template: 'picker run' }, ...(model ? { model } : {}) },
+  25  |       },
+  26  |       source.nodes[1]!,
+  27  |     ].map((node, i) => ({ ...node, ui: { x: i * 260, y: 80 } })),
+  28  |     edges: [
+  29  |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'infer' } },
+  30  |       { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'done' } },
+  31  |     ],
+  32  |   };
+  33  | }
+  34  | 
+  35  | for (const requestedEffort of ['none', 'medium']) {
+  36  |   test(`seeded GPT-6.1 Terra offers medium by default and publishes ${requestedEffort}`, async ({
+  37  |     page,
+  38  |     request,
+  39  |   }) => {
+  40  |     const response = await request.get('/model-catalog');
+  41  |     const catalog = (await response.json()) as { items: unknown[] };
+  42  |     expect(
+  43  |       catalog.items
+  44  |         .map((entry) => ModelCatalogEntrySchema.parse(entry))
+  45  |         .find((entry) => entry.model === 'gpt-6.1-terra'),
+  46  |     ).toMatchObject({
+  47  |       harness: 'codex',
+  48  |       source: 'harness',
+  49  |       displayName: 'GPT-6.1 Terra',
+  50  |       efforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  51  |       defaultEffort: 'medium',
+  52  |       enabled: true,
+  53  |     });
+  54  |     const created = await request.post('/loops', {
+  55  |       data: { definition: inferenceLoop(`Terra ${requestedEffort}`) },
+  56  |     });
+  57  |     expect(created.status()).toBe(201);
+  58  |     const { loop } = (await created.json()) as { loop: { id: string } };
+  59  |     await page.goto(`/app/loops/${loop.id}/edit`);
+  60  |     const dialog = await openNode(page, 'infer');
+  61  |     await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-6.1-terra');
+  62  |     const effort = dialog.getByLabel('Effort', { exact: true });
+> 63  |     await expect(effort.locator('option')).toHaveText([
+      |                                            ^ Error: expect(locator).toHaveText(expected) failed
+  64  |       'Default (medium)',
+  65  |       'none (no reasoning)',
+  66  |       'low',
+  67  |       'medium',
+  68  |       'high',
+  69  |       'xhigh',
+  70  |       'max',
+  71  |     ]);
+  72  |     await effort.selectOption(requestedEffort);
+  73  |     await closeNode(page);
+  74  |     await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  75  |     await expect(page.getByText('Published version 1.')).toBeVisible();
+  76  |     const stored = (await (await request.get(`/loops/${loop.id}`)).json()) as {
+  77  |       current: { definition: unknown };
+  78  |     };
+  79  |     expect(
+  80  |       LoopDefinitionSchema.parse(stored.current.definition).nodes.find(
+  81  |         (node) => node.id === 'infer',
+  82  |       )?.config,
+  83  |     ).toMatchObject({ model: 'gpt-6.1-terra', effort: requestedEffort });
+  84  |     await control(request, '/harness/script', { turns: [{ finalText: 'Terra catalog smoke' }] });
+  85  |     const before = (await control(request, '/harness/requests')) as {
+  86  |       started: { model: string; effort: string }[];
+  87  |     };
+  88  |     await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  89  |     await page.getByRole('button', { name: 'Start run', exact: true }).click();
+  90  |     await expect
+  91  |       .poll(async () =>
+  92  |         ((await control(request, '/harness/requests')) as typeof before).started.slice(
+  93  |           before.started.length,
+  94  |         ),
+  95  |       )
+  96  |       .toEqual([{ model: 'gpt-6.1-terra', effort: requestedEffort }]);
+  97  |     await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  98  |   });
+  99  | }
+  100 | 
+  101 | for (const theme of ['dark', 'light']) {
+  102 |   test(`catalog model and effort publish and reach the harness (${theme})`, async ({
+  103 |     page,
+  104 |     request,
+  105 |   }) => {
+  106 |     const selected = `picker-${theme}`;
+  107 |     await control(request, '/catalog/upsert', {
+  108 |       harness: 'codex',
+  109 |       model: selected,
+  110 |       displayName: `Picker ${theme}`,
+  111 |       efforts: ['low', 'high'],
+  112 |       defaultEffort: 'low',
+  113 |       enabled: true,
+  114 |       source: 'harness',
+  115 |     });
+  116 |     const created = await request.post('/loops', {
+  117 |       data: { definition: inferenceLoop(`picker ${theme}`) },
+  118 |     });
+  119 |     expect(created.status()).toBe(201);
+  120 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  121 |     await page.addInitScript((choice) => localStorage.setItem('graphgoblin-theme', choice), theme);
+  122 |     await page.goto(`/app/loops/${loop.id}/edit`);
+  123 |     const dialog = await openNode(page, 'infer');
+  124 |     const model = dialog.getByLabel('Model', { exact: true });
+  125 |     await expect(model).not.toHaveAttribute('aria-readonly');
+  126 |     await expect(model).toHaveValue('');
+  127 |     await model.focus();
+  128 |     await page.keyboard.type(`Picker ${theme}`);
+  129 |     await page.keyboard.press('Enter');
+  130 |     await expect(model).toHaveValue(selected);
+  131 |     const effort = dialog.getByLabel('Effort', { exact: true });
+  132 |     await expect(effort.locator('option')).toHaveText(['Default (low)', 'low', 'high']);
+  133 |     await effort.focus();
+  134 |     await page.keyboard.press('h');
+  135 |     await page.keyboard.press('Enter');
+  136 |     await expect(effort).toHaveValue('high');
+  137 |     await closeNode(page);
+  138 |     await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  139 |     await expect(page.getByText('Published version 1.')).toBeVisible();
+  140 |     const read = await request.get(`/loops/${loop.id}`);
+  141 |     const stored = (await read.json()) as { current: { definition: unknown } };
+  142 |     const config = LoopDefinitionSchema.parse(stored.current.definition).nodes.find(
+  143 |       (node) => node.id === 'infer',
+  144 |     )?.config;
+  145 |     expect(config).toMatchObject({ model: selected, effort: 'high' });
+  146 |     await control(request, '/harness/script', { turns: [{ finalText: 'picker done' }] });
+  147 |     const before = (await control(request, '/harness/requests')) as {
+  148 |       started: { model: string; effort: string }[];
+  149 |     };
+  150 |     await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  151 |     await page.getByRole('button', { name: 'Start run', exact: true }).click();
+  152 |     await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
+  153 |     await expect
+  154 |       .poll(async () =>
+  155 |         ((await control(request, '/harness/requests')) as typeof before).started.slice(
+  156 |           before.started.length,
+  157 |         ),
+  158 |       )
+  159 |       .toEqual([{ model: selected, effort: 'high' }]);
+  160 |     await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  161 |   });
+  162 | }
+  163 | 
+```
