@@ -88,6 +88,19 @@ discovery/connection joins or writes; it preserves custom static rows and Enable
 Normal discovery-aware catalog reads begin after migration. No reset, definition conversion,
 schema-probing fallback or retained-content rewrite is required for this upgrade.
 
+System/CLI preflight reports unused unavailable/off Ollama as a warning; an explicit Ollama process
+model makes service failure a failed diagnostic. Its separate default-model check warns until
+discovery is known, then checks availability, Enabled and exact effort. Only an explicit Ollama
+process model with no Codex process-default entry makes unavailable Codex optional and omits its
+undefined-model check; other Codex/Claude policy stays unchanged. These diagnostics do not gate
+container startup or replace selected-node admission readiness.
+
+CLI preflight resolves saved connection state by pure read only after the current-format guard and
+zero pending migrations. Existing pending/unsupported/unreadable stores defer the Ollama probe
+with a warning and zero HTTP/writes, never environment fallback over unread saved state. A missing
+database or missing singleton in a verified current store may use environment defaults. This
+inspection neither initializes the connection nor starts the discovery service.
+
 ### Honest controls and fresh-only sessions
 
 The first increment supports fresh tool-free text and structured JSON. Send only the rendered

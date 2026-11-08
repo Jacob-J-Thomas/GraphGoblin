@@ -37,13 +37,14 @@ export async function deleteRuns(
     .where(inArray(sql`json_extract(${webhookReceipts.intent}, '$.run.id')`, selected));
   // Replays/subloops can still reference the immutable binary path after its chat turn is gone.
   // Keep such files conservatively until the final native history reference is deleted.
+  // Match a complete JSON string: Windows backslashes are escaped in both stored threads.
   await tx
     .update(chatAudio)
     .set({ state: 'pending-delete' })
     .where(
       and(
         eq(chatAudio.state, 'consumed'),
-        sql`NOT EXISTS (SELECT 1 FROM ${runs} WHERE ${runs.id} NOT IN (${selected}) AND (instr(${runs.initialThread}, ${chatAudio.path}) > 0 OR instr(${runs.threadSnapshot}, ${chatAudio.path}) > 0))`,
+        sql`NOT EXISTS (SELECT 1 FROM ${runs} WHERE ${runs.id} NOT IN (${selected}) AND (instr(${runs.initialThread}, json_quote(${chatAudio.path})) > 0 OR instr(${runs.threadSnapshot}, json_quote(${chatAudio.path})) > 0))`,
       ),
     );
   await tx

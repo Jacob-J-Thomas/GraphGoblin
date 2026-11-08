@@ -114,6 +114,19 @@ test(
       await seedOldStore(dataDir);
       await mkdir(join(dataDir, 'artifacts', 'text'), { recursive: true });
       await writeFile(join(dataDir, 'artifacts', 'text', 'abc123'), 'artifact body');
+      await mkdir(join(dataDir, 'chat-audio'));
+      const audioId = '01J00000000000000000000001';
+      await writeFile(join(dataDir, 'chat-audio', `${audioId}.audio`), 'voice');
+      await writeFile(join(dataDir, 'chat-audio', `.${audioId}.lock`), 'lock');
+      await writeFile(
+        join(dataDir, 'chat-audio', `.${audioId}.00000000-0000-4000-8000-000000000000.tmp`),
+        'partial',
+      );
+      await symlink(
+        outside,
+        join(dataDir, 'chat-audio', 'external-link'),
+        process.platform === 'win32' ? 'junction' : 'dir',
+      );
       await mkdir(join(dataDir, 'workspaces', RUN, 'src'), { recursive: true });
       await writeFile(join(dataDir, 'workspaces', RUN, 'src', 'out.txt'), 'run output');
       await symlink(
@@ -167,6 +180,10 @@ test(
       ])
         assert.ok(dryRun.stdout.includes(line), `dry run output lacks: ${line}`);
       assert.match(dryRun.stdout, /\n {2}graphgoblin\.db +database +1 file, [\d.]+ KB\n/);
+      assert.match(
+        dryRun.stdout,
+        /\n {2}chat-audio +private chat audio +3 files, 1 directory, 1 link, 16 B\n/,
+      );
       assert.deepEqual(await snapshot(base), original);
 
       // A confirmation naming another directory is refused and changes nothing.
@@ -192,6 +209,7 @@ test(
             '^Removing:',
             `  removed workspaces/${RUN} \\(1 file, 2 directories, 1 link, 10 B\\)`,
             '  removed artifacts \\(1 file, 2 directories, 13 B\\)',
+            '  removed chat-audio \\(3 files, 1 directory, 1 link, 16 B\\)',
             '  removed graphgoblin\\.db \\(1 file, [\\d.]+ KB\\)',
             '(  removed graphgoblin\\.db-(wal|shm) \\(1 file, [\\d.]+ (B|KB)\\)\\n)*  removed graphgoblin\\.lock',
             'Reset complete\\. The next start creates a new, empty format-4 store in .+\\.',
@@ -203,7 +221,10 @@ test(
       assert.deepEqual(
         kept,
         original.filter(
-          (record) => !/^data\/(graphgoblin\.db|artifacts|workspaces\/01J)/.test(record),
+          (record) =>
+            !/^data\/(graphgoblin\.db|artifacts(?:\/|$)|chat-audio(?:\/|$)|workspaces\/01J)/.test(
+              record,
+            ),
         ),
       );
 

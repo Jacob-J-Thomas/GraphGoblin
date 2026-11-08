@@ -572,8 +572,9 @@ describe('refused resets change nothing', () => {
       await mkdir(dataDir);
       await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
       await writeFile(join(dataDir, 'workspaces'), 'another one');
+      await writeFile(join(dataDir, 'chat-audio'), 'private audio has a reserved name too');
       await writeFile(join(dataDir, 'unrelated.txt'), 'kept');
-      for (const name of ['artifacts', 'workspaces']) {
+      for (const name of ['artifacts', 'workspaces', 'chat-audio']) {
         const before = await snapshotTree(base);
         const result = await reset(
           argv.map((arg) => (arg === '<data>' ? dataDir : arg)),
@@ -604,9 +605,11 @@ describe('refused resets change nothing', () => {
       await mkdir(dataDir);
       await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
       await writeFile(join(dataDir, 'workspaces'), 'another one');
+      await writeFile(join(dataDir, 'chat-audio'), 'private audio has a reserved name too');
       for (const [spelling, reserved] of [
         ['ARTIFACTS', 'the artifacts directory'],
         ['Workspaces', 'the workspaces directory'],
+        ['CHAT-AUDIO', 'the chat-audio directory'],
         ['GraphGoblin.Lock', "the reset's lock file"],
       ] as const) {
         const before = await snapshotTree(base);

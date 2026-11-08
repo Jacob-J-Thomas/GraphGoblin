@@ -48,6 +48,9 @@ const isKnownGone = (error: unknown): error is ChatApiError =>
   error instanceof ChatApiError &&
   error.status === 410 &&
   ['CHAT_HISTORY_DELETED', 'CHAT_AUDIO_EXPIRED'].includes(error.code);
+type RequestIdentity = Pick<ChatTurn, 'conversationId' | 'requestId'>;
+const identityKey = (identity: RequestIdentity) =>
+  `${identity.conversationId}/${identity.requestId}`;
 
 /** A lost acknowledgement is recovered only by GET. POST is always an explicit user action. */
 export class ChatController {
@@ -57,6 +60,16 @@ export class ChatController {
   private generation = 0;
   private failures = 0;
   private readSequence = 0;
+  private pollOffset = 0;
+  private pausedPolls = new Set<string>();
+  private fullRead:
+    | {
+        generation: number;
+        sequence: number;
+        conversationId: string | undefined;
+        promise: Promise<void>;
+      }
+    | undefined;
   private storage: Storage;
   private state: ChatState;
   constructor(
@@ -129,16 +142,20 @@ export class ChatController {
     const retiredRequestIds = [
       ...new Set([...this.state.retiredRequestIds, ...(requestId ? [requestId] : [])]),
     ];
+    for (const key of this.pausedPolls)
+      if (requestId && key.endsWith(`/${requestId}`)) this.pausedPolls.delete(key);
+    const remainingPending =
+      requestId && this.state.pending?.request.requestId === requestId
+        ? undefined
+        : this.state.pending;
     this.set({
-      retryBlocked: false,
-      pending:
-        requestId && this.state.pending?.request.requestId === requestId
-          ? undefined
-          : this.state.pending,
+      retryBlocked:
+        this.pausedPolls.size > 0 || Boolean(remainingPending && this.state.retryBlocked),
+      pending: remainingPending,
       retiredRequestIds,
       recoveryNotice: notice,
       cancellingTurnId: undefined,
-      error: undefined,
+      error: this.pausedPolls.size ? this.state.error : undefined,
     });
     clearTimeout(this.timer);
     try {
@@ -165,7 +182,7 @@ export class ChatController {
     if (error instanceof ChatApiError && error.status === 410) {
       this.set({
         error: `The gateway could not resolve this request. ${error.message.slice(0, 500)}`,
-        retryBlocked: Boolean(this.state.pending),
+        retryBlocked: Boolean(this.state.pending) || this.pausedPolls.size > 0,
       });
       try {
         this.persist();
@@ -187,6 +204,8 @@ export class ChatController {
     void this.refresh(generation);
     window.addEventListener('online', this.reconnect);
     window.addEventListener('offline', this.disconnect);
+    window.addEventListener('focus', this.focus);
+    document.addEventListener('visibilitychange', this.visibility);
   };
   stop = (): void => {
     ++this.generation;
@@ -194,6 +213,14 @@ export class ChatController {
     clearTimeout(this.timer);
     window.removeEventListener('online', this.reconnect);
     window.removeEventListener('offline', this.disconnect);
+    window.removeEventListener('focus', this.focus);
+    document.removeEventListener('visibilitychange', this.visibility);
+  };
+  private focus = (): void => {
+    void this.refresh(this.generation);
+  };
+  private visibility = (): void => {
+    if (!document.hidden) this.focus();
   };
   private reconnect = (): void => {
     this.set({ online: true });
@@ -205,25 +232,131 @@ export class ChatController {
   };
   private schedule(generation: number): void {
     clearTimeout(this.timer);
-    if (
-      generation !== this.generation ||
-      !this.state.online ||
-      this.state.authenticationFailed ||
-      this.state.historyPollingStopped
-    )
+    if (generation !== this.generation || !this.state.online || this.state.authenticationFailed)
       return;
-    if (this.hasActiveTurn() || this.failures > 0)
+    if (this.pollTargets(false).length)
       this.timer = setTimeout(
-        () => void this.refresh(generation),
+        () => void this.poll(generation),
         Math.min(1000 * 2 ** this.failures, 15_000),
       );
   }
-  refresh = async (generation = this.generation): Promise<void> => {
+  private pollTargets(includePaused: boolean): RequestIdentity[] {
+    const candidates: RequestIdentity[] = [
+      ...(this.state.pending
+        ? [
+            {
+              conversationId: this.state.pending.conversationId,
+              requestId: this.state.pending.request.requestId,
+            },
+          ]
+        : []),
+      ...this.state.turns.filter(
+        (turn) => isActiveTurn(turn) && !this.state.retiredRequestIds.includes(turn.requestId),
+      ),
+    ];
+    return [...new Map(candidates.map((target) => [identityKey(target), target])).values()].filter(
+      (target) => includePaused || !this.pausedPolls.has(identityKey(target)),
+    );
+  }
+  private holdUncertain(target: RequestIdentity, error: ChatApiError): void {
+    this.pausedPolls.add(identityKey(target));
+    this.set({ retryBlocked: true });
+    this.fail(error);
+  }
+  private poll = async (generation: number): Promise<void> => {
+    if (generation !== this.generation || !this.state.online || this.state.authenticationFailed)
+      return;
+    const available = this.pollTargets(false);
+    const pendingKey = this.state.pending
+      ? `${this.state.pending.conversationId}/${this.state.pending.request.requestId}`
+      : undefined;
+    const pending = available.find((target) => identityKey(target) === pendingKey);
+    const ordinary = available.filter((target) => target !== pending);
+    const count = Math.min(8 - Number(Boolean(pending)), ordinary.length);
+    const selected = Array.from(
+      { length: count },
+      (_, index) => ordinary[(this.pollOffset + index) % ordinary.length]!,
+    );
+    if (ordinary.length) this.pollOffset = (this.pollOffset + count) % ordinary.length;
+    const targets = pending ? [pending, ...selected] : selected;
+    if (!targets.length) return;
+    const sequence = ++this.readSequence;
+    const current = () => generation === this.generation && sequence === this.readSequence;
+    let transition = false;
+    let failure: unknown;
+    let transient = false;
+    for (let offset = 0; offset < targets.length; offset += 4) {
+      const batch = targets.slice(offset, offset + 4);
+      const results = await Promise.allSettled(
+        batch.map((target) =>
+          this.client.request(target.conversationId, target.requestId, this.abort?.signal),
+        ),
+      );
+      if (!current()) return;
+      for (let index = 0; index < results.length; index++) {
+        const target = batch[index]!;
+        const result = results[index]!;
+        if (result.status === 'fulfilled') {
+          const previous = this.state.turns.find(
+            (turn) => identityKey(turn) === identityKey(target),
+          );
+          const wasPending = this.state.pending?.request.requestId === target.requestId;
+          transition ||=
+            !isActiveTurn(result.value) &&
+            (Boolean(previous && isActiveTurn(previous)) || wasPending);
+          this.accept(result.value, false);
+        } else if (isKnownGone(result.reason)) {
+          this.retireRequest(result.reason, target.requestId);
+          transition = true;
+        } else {
+          failure = result.reason;
+          if (result.reason instanceof ChatApiError && result.reason.status === 410)
+            this.holdUncertain(target, result.reason);
+          else {
+            transient = true;
+            if (
+              result.reason instanceof ChatApiError &&
+              result.reason.status === 404 &&
+              this.state.turns.some((turn) => identityKey(turn) === identityKey(target))
+            )
+              this.holdUncertain(target, result.reason);
+            else this.fail(result.reason);
+          }
+          if (this.state.authenticationFailed) return;
+        }
+      }
+    }
+    this.failures = transient ? this.failures + 1 : 0;
+    if (failure) this.fail(failure);
+    if (this.failures >= 5 && this.hasActiveTurn())
+      this.set({ error: 'Lost touch with the gateway. This request may still finish there.' });
+    if (transition) {
+      await this.refresh(generation);
+      return;
+    }
+    this.schedule(generation);
+  };
+  refresh = (generation = this.generation): Promise<void> => {
+    const conversationId = this.state.pending?.conversationId ?? this.state.conversationId;
+    if (
+      this.fullRead?.generation === generation &&
+      this.fullRead.sequence === this.readSequence &&
+      this.fullRead.conversationId === conversationId
+    )
+      return this.fullRead.promise;
+    const sequence = ++this.readSequence;
+    const promise = this.readFull(generation, sequence).finally(() => {
+      if (this.fullRead?.sequence === sequence) this.fullRead = undefined;
+    });
+    this.fullRead = { generation, sequence, conversationId, promise };
+    return promise;
+  };
+  private readFull = async (generation: number, sequence: number): Promise<void> => {
+    clearTimeout(this.timer);
     if (!this.state.online || this.state.authenticationFailed) {
       this.set({ loading: false });
       return;
     }
-    const sequence = ++this.readSequence;
     const current = () => generation === this.generation && sequence === this.readSequence;
     try {
       const [session, conversations] = await Promise.all([
@@ -233,36 +366,48 @@ export class ChatController {
       if (!current()) return;
       const conversationId =
         this.state.pending?.conversationId ?? this.state.conversationId ?? conversations[0]?.id;
+      if (this.fullRead?.sequence === sequence) this.fullRead.conversationId = conversationId;
       this.set({ session, conversations, conversationId });
-      if (this.state.pending) {
-        const pending = this.state.pending;
+      const pendingKey = this.state.pending
+        ? `${this.state.pending.conversationId}/${this.state.pending.request.requestId}`
+        : undefined;
+      const recoveryTargets = this.pollTargets(true).filter(
+        (target) => identityKey(target) === pendingKey || this.pausedPolls.has(identityKey(target)),
+      );
+      for (const target of recoveryTargets) {
         try {
           const turn = await this.client.request(
-            pending.conversationId,
-            pending.request.requestId,
+            target.conversationId,
+            target.requestId,
             this.abort?.signal,
           );
           if (!current()) return;
           this.accept(turn, false);
         } catch (error) {
           if (!current()) return;
-          if (isKnownGone(error)) {
-            this.retireRequest(error, pending.request.requestId);
-          } else if (error instanceof ChatApiError && error.status === 410) {
-            this.fail(error);
-          } else if (error instanceof ChatApiError && error.status === 404) {
-            this.set({
-              error:
-                'The gateway has not acknowledged this message. Check its status or explicitly retry the same request.',
-            });
+          if (isKnownGone(error)) this.retireRequest(error, target.requestId);
+          else if (error instanceof ChatApiError && error.status === 410)
+            this.holdUncertain(target, error);
+          else if (error instanceof ChatApiError && error.status === 404) {
+            if (identityKey(target) !== pendingKey) this.holdUncertain(target, error);
+            else
+              this.set({
+                error:
+                  'The gateway has not acknowledged this message. Check its status or explicitly retry the same request.',
+              });
           } else throw error;
         }
       }
       if (conversationId) {
         const turns = await this.client.turns(conversationId, this.abort?.signal);
         if (!current()) return;
+        const knownUncertain = this.state.turns.filter((turn) =>
+          this.pausedPolls.has(identityKey(turn)),
+        );
+        const merged = new Map(turns.map((turn) => [turn.id, turn]));
+        for (const turn of knownUncertain) merged.set(turn.id, turn);
         this.set({
-          turns,
+          turns: [...merged.values()].sort((a, b) => a.turn - b.turn),
           historyPollingStopped: false,
           ...(this.state.cancellingTurnId &&
           !turns.some((turn) => turn.id === this.state.cancellingTurnId && isActiveTurn(turn))
@@ -271,7 +416,10 @@ export class ChatController {
         });
       }
       this.failures = 0;
-      this.set({ loading: false, ...(this.state.pending ? {} : { error: undefined }) });
+      this.set({
+        loading: false,
+        ...(this.state.pending || this.state.retryBlocked ? {} : { error: undefined }),
+      });
       try {
         this.persist();
       } catch {
@@ -284,6 +432,7 @@ export class ChatController {
         if (!this.state.recoveryNotice) this.fail(error);
         this.set({ historyPollingStopped: true });
         this.failures = 0;
+        this.schedule(generation);
         return;
       }
       this.failures++;
@@ -294,7 +443,7 @@ export class ChatController {
     this.schedule(generation);
   };
   selectConversation = async (conversationId: string): Promise<void> => {
-    if (this.state.pending || this.state.sending) return;
+    if (this.state.pending || this.state.sending || this.state.retryBlocked) return;
     this.set({
       conversationId,
       turns: [],
@@ -312,7 +461,8 @@ export class ChatController {
     await this.refresh();
   };
   newConversation = async (): Promise<void> => {
-    if (!this.state.online || this.state.pending || this.state.sending) return;
+    if (!this.state.online || this.state.pending || this.state.sending || this.state.retryBlocked)
+      return;
     this.set({
       sending: true,
       error: undefined,
@@ -342,12 +492,18 @@ export class ChatController {
     if (this.state.cancellingTurnId === turn.id && !isActiveTurn(turn))
       this.set({ cancellingTurnId: undefined });
     const turns = this.state.turns.filter((item) => item.id !== turn.id);
+    const matchesPending = this.state.pending?.request.requestId === turn.requestId;
+    const retainPending = matchesPending && this.state.retryBlocked && isActiveTurn(turn);
+    if (!isActiveTurn(turn)) this.pausedPolls.delete(identityKey(turn));
     this.set({
-      retryBlocked: false,
-      pending:
-        this.state.pending?.request.requestId === turn.requestId ? undefined : this.state.pending,
+      retryBlocked:
+        this.pausedPolls.size > 0 ||
+        Boolean(
+          this.state.retryBlocked && this.state.pending && (!matchesPending || retainPending),
+        ),
+      pending: matchesPending && !retainPending ? undefined : this.state.pending,
       turns: [...turns, turn].sort((a, b) => a.turn - b.turn),
-      error: undefined,
+      error: this.pausedPolls.size > 0 || retainPending ? this.state.error : undefined,
     });
     try {
       this.persist();
@@ -358,6 +514,7 @@ export class ChatController {
   send = async (input: ChatSendInput): Promise<void> => {
     if (
       !this.state.online ||
+      this.state.retryBlocked ||
       this.state.sending ||
       this.state.pending ||
       this.state.authenticationFailed ||
@@ -429,7 +586,12 @@ export class ChatController {
       if (isKnownGone(error)) {
         this.retireRequest(error, pending.request.requestId);
         await this.refresh();
-      } else this.fail(error);
+      } else if (error instanceof ChatApiError && error.status === 410)
+        this.holdUncertain(
+          { conversationId: pending.conversationId, requestId: pending.request.requestId },
+          error,
+        );
+      else this.fail(error);
       if (this.state.pending && !this.state.retryBlocked)
         this.set({
           error:
@@ -453,11 +615,15 @@ export class ChatController {
   };
   cancel = async (turnId: string): Promise<void> => {
     if (!this.state.online || this.state.authenticationFailed) return;
+    const previous = this.state.turns.find((turn) => turn.id === turnId);
+    if (previous && this.pausedPolls.has(identityKey(previous))) return;
     if (this.state.cancellingTurnId) return;
     this.set({ cancellingTurnId: turnId, error: undefined });
     try {
-      this.accept(await this.client.cancel(turnId));
-      this.schedule(this.generation);
+      const turn = await this.client.cancel(turnId);
+      this.accept(turn);
+      if (previous && isActiveTurn(previous) && !isActiveTurn(turn)) await this.refresh();
+      else this.schedule(this.generation);
     } catch (error) {
       this.set({ cancellingTurnId: undefined });
       if (isKnownGone(error)) {
@@ -465,14 +631,8 @@ export class ChatController {
         await this.refresh();
       } else if (error instanceof ChatApiError && error.status === 410) {
         const turn = this.state.turns.find((item) => item.id === turnId);
-        if (turn && !this.state.pending)
-          this.set({
-            pending: {
-              conversationId: turn.conversationId,
-              request: { requestId: turn.requestId, input: turn.input },
-            },
-          });
-        this.fail(error);
+        if (turn) this.holdUncertain(turn, error);
+        else this.fail(error);
         await this.refresh();
       } else this.fail(error);
     }

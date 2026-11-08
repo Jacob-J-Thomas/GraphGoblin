@@ -148,6 +148,10 @@ The composer may retain an unsent draft while offline, but Send stays disabled. 
 not send the draft. Neither service worker caches chat API responses, tokens, transcripts or
 uploads, queues mutations, or uses Background Sync. Polling follows active turns and resumes with
 read-only lookups after reload; transient read failures do not authorize replay.
+Active-turn timers read only canonical request status, with one-second polling and backoff;
+they do not repeat session/readiness and full-history reads every second. Full refresh occurs on
+mount, explicit refresh, reconnect, conversation selection, focus/visibility return and one
+coalesced terminal/retirement transition.
 
 ### Audio is configured by the loop
 
@@ -185,6 +189,8 @@ cannot record.
 
 Uploads are limited to 10 MiB and recognized WebM, MP4, MPEG, WAV, Ogg or FLAC audio/container MIME
 types. An unused upload expires after one hour; an audience may hold at most three unused uploads.
+Only one upload per audience and eight gateway uploads may be in flight; count/byte quota refusals
+return 429 `CHAT_AUDIO_QUOTA`.
 Retained audio, including used, unused and in-flight reservations, is capped at 64 MiB per audience
 and 256 MiB per gateway. `CHAT_AUDIO_QUOTA` refuses excess uploads; referenced input is not deleted
 automatically to free space.

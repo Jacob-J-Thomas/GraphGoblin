@@ -281,7 +281,21 @@ supported controls remain unavailable. This profile follows the official
 
 Ollama preflight is a bounded service/protocol probe without generation. A ready result does not
 prove every model fits the server's memory or has completed a turn; service failures use service
-connection guidance rather than CLI installation/login instructions. Inference requires a terminal
+connection guidance rather than CLI installation/login instructions. In the system/CLI diagnostic,
+unused unavailable/off Ollama is a warning; an explicit Ollama process model makes an unavailable
+service a failed diagnostic. Its default-model check awaits discovery when unknown, then checks
+known availability, Enabled and exact effort. An explicit Ollama process model with no Codex
+process-default entry also makes unavailable Codex a warning and omits its undefined-model check;
+other Codex/Claude checks retain their existing policy. These reports do not become a startup or
+run-admission gate; selected-node readiness remains authoritative.
+
+CLI preflight reads a saved Ollama connection without writes only from a current, fully migrated
+readable store. For an existing pending/unsupported/unreadable store it defers the Ollama probe
+with a warning and no HTTP, rather than guessing environment settings over an unread saved Off
+choice. A genuinely missing database, or a missing connection row in a current store, may use
+environment defaults. Preflight never initializes that row or starts discovery.
+
+Inference requires a terminal
 `done: true` frame. Malformed/truncated streams, server errors, unexpected tool calls and missing
 terminal completion fail without promoting partial content to a reply. Thinking content is never
 the final answer. Frames are bounded to 1 MiB and total streamed/final content to 8 MiB. Usage comes

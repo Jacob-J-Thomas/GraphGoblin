@@ -444,7 +444,7 @@ export function ChatSurface({
         <Alert title="Chat needs attention">
           {state.error}
           <Button variant="ghost" size="sm" onClick={() => void controller.refresh()}>
-            Retry now
+            {state.retryBlocked && !state.pending ? 'Check status' : 'Retry now'}
           </Button>
         </Alert>
       ) : null}

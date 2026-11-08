@@ -52,6 +52,21 @@ reproduced the clock mismatch without GraphGoblin. Performance code, thresholds,
 test exclusions and CI gates were not changed to hide those limitations. The
 mandatory Linux Gates job must pass the entire tooling coverage suite before merge.
 
+The first independent Opus code review found Windows JSON-path retention and
+optional Ollama preflight regressions. Regression tests now cover escaped paths
+through the real SQLite JSON columns, saved connection settings, optional versus
+explicit process defaults, and read-only preflight on pending or unsupported
+stores. The same review prompted request-only bounded chat polling, consistent
+audio-quota responses, and physical private-audio cleanup in explicit reset.
+These repairs receive a second immutable-candidate review before merge.
+
+The complete local browser diagnostic finished with 425 passes, 23 failures and
+one existing live-provider skip. It used the older built candidate while repairs
+were in progress, and exposed macOS keyboard/loader differences as well as the
+subsequently repaired focus and Settings expectations. It is not final-candidate
+acceptance. The pull request's clean Linux browser run is the required full-suite
+gate; targeted local browser checks are rerun against the final build.
+
 Real speech transcription requires an owner-configured normalization loop; these
 tests verify the audio contract and refusal paths, not a claim that a transcription
 provider is installed. Browser emulation does not establish physical iOS Home

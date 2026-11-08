@@ -1026,7 +1026,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Is each configured harness installed and authenticated? */
+        /** Check prerequisites and service readiness for each configured harness */
         get: {
             parameters: {
                 query?: never;

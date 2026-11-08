@@ -543,7 +543,7 @@ describe('durable chat identities', () => {
 describe('audio metadata lifecycle', () => {
   it('reserves quota before bytes, permits three ready uploads, expires abandoned work and retries exact-ID cleanup until acknowledged', async () => {
     const id = await repo.reserveAudio(scope);
-    await expect(repo.reserveAudio(scope)).rejects.toMatchObject({ code: 'CHAT_BUSY' });
+    await expect(repo.reserveAudio(scope)).rejects.toMatchObject({ code: 'CHAT_AUDIO_QUOTA' });
     expect(await repo.protectedAudioIds()).toEqual(new Set([id]));
     await repo.failAudio(scope, id);
     expect(await repo.cleanupAudio()).toEqual([id]);
@@ -551,7 +551,7 @@ describe('audio metadata lifecycle', () => {
     await repo.audioDeleted(id);
     expect(await repo.cleanupAudio()).toEqual([]);
     const ids = [await upload(), await upload(), await upload()];
-    await expect(repo.reserveAudio(scope)).rejects.toMatchObject({ code: 'CHAT_BUSY' });
+    await expect(repo.reserveAudio(scope)).rejects.toMatchObject({ code: 'CHAT_AUDIO_QUOTA' });
     await repo.discardAudio(scope, ids[0]!);
     await repo.discardAudio(scope, 'missing');
     await repo.discardAudio({ ownerId: 'other', audienceKey: 'gateway' }, ids[1]!);
@@ -561,6 +561,14 @@ describe('audio metadata lifecycle', () => {
     expect(await repo.cleanupAudio('2031-01-01T00:00:00.000Z')).toEqual(
       expect.arrayContaining(ids),
     );
+  });
+  it('reports the same audio quota refusal when the gateway has eight in-flight uploads', async () => {
+    for (let index = 0; index < 8; index++)
+      await repo.reserveAudio({
+        ownerId: 'local',
+        audienceKey: 'device:' + fakeUlid(`upload-${index}`),
+      });
+    await expect(repo.reserveAudio(scope)).rejects.toMatchObject({ code: 'CHAT_AUDIO_QUOTA' });
   });
   it('reserves worst-case bytes across retained consumed uploads and enforces audience and gateway byte quotas', async () => {
     const retained = async (ownerId: string, audienceKey: string, bytes: number) =>
@@ -683,6 +691,54 @@ describe('audio metadata lifecycle', () => {
     spy.mockRestore();
     expect((await repo.getAudio(scope, audioId))?.consumedTurnId).toBe(input.conversationTurn!.id);
   });
+  it.each(['initialThread', 'threadSnapshot'] as const)(
+    'retains a Windows audio path encoded in a surviving %s until its final history is deleted',
+    async (reference) => {
+      await repo.ensureGateway('local', audioDefinition());
+      const audioId = await upload();
+      // Emulate a Windows data directory while exercising the real JSON columns on every host.
+      const windowsPath = `C:\\GraphGoblin\\chat-audio\\${audioId}.audio`;
+      await handle.db.update(chatAudio).set({ path: windowsPath }).where(eq(chatAudio.id, audioId));
+      const original = await prepare({ kind: 'audio', audioId });
+      await admission.create(original);
+      await finish(original.run.id);
+
+      const keeper = await prepare({ kind: 'text', text: 'Retain the voice input' });
+      if (reference === 'initialThread') keeper.initialThread.vars.audioPath = windowsPath;
+      await admission.create(keeper);
+      if (reference === 'threadSnapshot') {
+        const snapshot = structuredClone(keeper.initialThread);
+        snapshot.vars.audioPath = windowsPath;
+        await handle.db
+          .update(runs)
+          .set({ threadSnapshot: snapshot })
+          .where(eq(runs.id, keeper.run.id));
+      }
+      await finish(keeper.run.id);
+      const stored = (
+        await handle.client.execute({
+          sql: 'SELECT initial_thread, thread_snapshot FROM runs WHERE id = ?',
+          args: [keeper.run.id],
+        })
+      ).rows[0];
+      expect(
+        stored?.[reference === 'initialThread' ? 'initial_thread' : 'thread_snapshot'],
+      ).toContain(JSON.stringify(windowsPath));
+
+      const unrelated = await prepare({ kind: 'text', text: 'Unrelated history' });
+      await admission.create(unrelated);
+      await finish(unrelated.run.id);
+      await handle.db.transaction((tx) => deleteRuns(tx, eq(runs.id, unrelated.run.id)));
+      expect((await repo.getAudio(scope, audioId))?.state).toBe('consumed');
+      expect(await repo.cleanupAudio()).toEqual([]);
+
+      await handle.db.transaction((tx) => deleteRuns(tx, eq(runs.id, original.run.id)));
+      expect((await repo.getAudio(scope, audioId))?.state).toBe('consumed');
+      expect(await repo.cleanupAudio()).toEqual([]);
+      await handle.db.transaction((tx) => deleteRuns(tx, eq(runs.id, keeper.run.id)));
+      expect(await repo.cleanupAudio()).toEqual([audioId]);
+    },
+  );
   it('claims bytes exactly once, validates immutable metadata, retains consumed files for native replays, then queues final deletion', async () => {
     const definition = audioDefinition();
     await repo.ensureGateway('local', definition);

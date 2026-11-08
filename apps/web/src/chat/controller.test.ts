@@ -164,28 +164,30 @@ describe('durable chat request recovery', () => {
     expect(client.cancel).not.toHaveBeenCalled();
     expect(controller.getSnapshot().online).toBe(false);
   });
-  it('polls active runs with backoff, stops on auth failure, and notifies once', async () => {
+  it('polls active requests with backoff, stops on auth failure, and never repeats readiness or history', async () => {
     vi.useFakeTimers();
     const { controller, client, auth } = create();
     client.conversations.mockResolvedValue([conversation]);
     client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
     await controller.refresh();
-    const first = client.session.mock.calls.length;
-    client.session.mockRejectedValueOnce(new TypeError('offline'));
+    const sessionCalls = client.session.mock.calls.length;
+    const historyCalls = client.turns.mock.calls.length;
+    client.request.mockRejectedValueOnce(new TypeError('offline'));
     await vi.advanceTimersByTimeAsync(1000);
-    expect(client.session).toHaveBeenCalledTimes(first + 1);
+    expect(client.request).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(1999);
-    expect(client.session).toHaveBeenCalledTimes(first + 1);
-    client.session.mockRejectedValue(new ChatApiError(401, 'UNAUTHORIZED', 'Pair again.'));
+    expect(client.request).toHaveBeenCalledOnce();
+    client.request.mockRejectedValue(new ChatApiError(401, 'UNAUTHORIZED', 'Pair again.'));
     await vi.advanceTimersByTimeAsync(1);
     expect(auth).toHaveBeenCalledOnce();
     expect(controller.getSnapshot().authenticationFailed).toBe(true);
-    const calls = client.session.mock.calls.length;
     await vi.advanceTimersByTimeAsync(30_000);
     await controller.send(turn.input);
     await controller.cancel(turn.id);
     await controller.refresh();
-    expect(client.session).toHaveBeenCalledTimes(calls);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    expect(client.session).toHaveBeenCalledTimes(sessionCalls);
+    expect(client.turns).toHaveBeenCalledTimes(historyCalls);
     expect(client.send).not.toHaveBeenCalled();
   });
   it('preserves existing history during a transient error and ignores reads after stop', async () => {
@@ -542,7 +544,7 @@ describe('unrecognized 410 stays uncertain', () => {
     await controller.cancel(turn.id);
     expect(controller.getSnapshot()).toMatchObject({
       retryBlocked: true,
-      pending: { request: { requestId: turn.requestId } },
+      pending: undefined,
     });
     await controller.retryPending();
     expect(client.cancel).toHaveBeenCalledOnce();
@@ -566,4 +568,349 @@ it('an unrecognized history-list 410 retains visible active history and never in
   });
   await controller.send(turn.input);
   expect(client.send).not.toHaveBeenCalled();
+});
+
+const activeProjection = (index: number) => ({
+  ...turn,
+  id: String(index).padStart(26, '0'),
+  runId: String(index + 100).padStart(26, '0'),
+  requestId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+  turn: index + 1,
+  runStatus: 'running' as const,
+  response: undefined,
+});
+describe('bounded direct request polling', () => {
+  it('prioritizes pending recovery, limits each tick to eight and four concurrent reads, and rotates active rows fairly', async () => {
+    vi.useFakeTimers();
+    sessionStorage.setItem(key, JSON.stringify({ draft: 'Keep draft', pending }));
+    const { controller, client } = create();
+    const rows = Array.from({ length: 10 }, (_, index) => activeProjection(index));
+    const byRequest = new Map(rows.map((row) => [row.requestId, row]));
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    client.request.mockRejectedValue(missing);
+    await controller.refresh();
+    client.request.mockClear();
+    let inFlight = 0;
+    let maximum = 0;
+    const finish: (() => void)[] = [];
+    client.request.mockImplementation(
+      (_conversationId, requestId) =>
+        new Promise((resolve, reject) => {
+          inFlight++;
+          maximum = Math.max(maximum, inFlight);
+          finish.push(() => {
+            inFlight--;
+            if (requestId === pending.request.requestId) reject(missing);
+            else resolve(byRequest.get(requestId)!);
+          });
+        }),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request).toHaveBeenCalledTimes(4);
+    expect(client.request.mock.calls[0]![1]).toBe(pending.request.requestId);
+    finish.splice(0).forEach((done) => done());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(client.request).toHaveBeenCalledTimes(8);
+    finish.splice(0).forEach((done) => done());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(maximum).toBe(4);
+    client.request.mockImplementation((_conversationId, requestId) =>
+      requestId === pending.request.requestId
+        ? Promise.reject(missing)
+        : Promise.resolve(byRequest.get(requestId)!),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(client.request).toHaveBeenCalledTimes(16);
+    expect(client.request.mock.calls[8]![1]).toBe(pending.request.requestId);
+    for (const row of rows)
+      expect(client.request.mock.calls.some((call) => call[1] === row.requestId)).toBe(true);
+    expect(client.session).toHaveBeenCalledOnce();
+    expect(client.conversations).toHaveBeenCalledOnce();
+    expect(client.turns).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(controller.getSnapshot().draft).toBe('Keep draft');
+  });
+  it('coalesces multiple terminal transitions into one full readiness/index/history refresh', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    const rows = Array.from({ length: 4 }, (_, index) => activeProjection(index));
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    await controller.refresh();
+    client.request.mockImplementation((_id, requestId) =>
+      Promise.resolve({
+        ...rows.find((row) => row.requestId === requestId)!,
+        runStatus: 'succeeded',
+        response: turn.response,
+      }),
+    );
+    client.turns.mockResolvedValue(
+      rows.map((row) => ({ ...row, runStatus: 'succeeded', response: turn.response })),
+    );
+    client.session.mockResolvedValue({
+      ...session,
+      readiness: { ...session.readiness, text: { ready: false, message: 'Changed model.' } },
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request).toHaveBeenCalledTimes(4);
+    expect(client.session).toHaveBeenCalledTimes(2);
+    expect(client.conversations).toHaveBeenCalledTimes(2);
+    expect(client.turns).toHaveBeenCalledTimes(2);
+    expect(controller.getSnapshot().session?.readiness.text.message).toBe('Changed model.');
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(client.request).toHaveBeenCalledTimes(4);
+  });
+  it('coalesces focus, visibility return and reconnect while refreshing and removes all listeners on stop', async () => {
+    const { controller, client } = create();
+    controller.start();
+    await vi.waitFor(() => expect(controller.getSnapshot().loading).toBe(false));
+    let finish!: (value: typeof session) => void;
+    client.session.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('online'));
+    expect(client.session).toHaveBeenCalledTimes(2);
+    finish(session);
+    await vi.waitFor(() => expect(client.conversations).toHaveBeenCalledTimes(2));
+    controller.stop();
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('online'));
+    expect(client.session).toHaveBeenCalledTimes(2);
+  });
+  it('ignores an old direct poll after conversation selection and does not replace the new transcript', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    const row = activeProjection(0);
+    client.conversations.mockResolvedValue([conversation, { ...conversation, id: turn.runId }]);
+    client.turns.mockResolvedValue([row]);
+    await controller.refresh();
+    let finish!: (value: typeof row) => void;
+    client.request.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    client.turns.mockResolvedValue([]);
+    await controller.selectConversation(turn.runId);
+    finish(row);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(controller.getSnapshot()).toMatchObject({ conversationId: turn.runId, turns: [] });
+  });
+  it('stops only unknown-410 identities, never overwrites pending recovery, and resolves each by canonical reads', async () => {
+    vi.useFakeTimers();
+    sessionStorage.setItem(key, JSON.stringify({ draft: 'Keep draft', pending }));
+    const { controller, client } = create();
+    const rows = [activeProjection(0), activeProjection(1)];
+    const unknown = new ChatApiError(410, 'UNKNOWN', 'Unresolved.');
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    client.request.mockRejectedValue(unknown);
+    await controller.refresh();
+    client.request.mockClear();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    expect(controller.getSnapshot().pending).toEqual(pending);
+    expect(controller.getSnapshot().turns).toEqual(rows);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    await controller.retryPending();
+    await controller.send(turn.input);
+    await controller.newConversation();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(client.createConversation).not.toHaveBeenCalled();
+    client.request.mockImplementation((_id, requestId) =>
+      requestId === pending.request.requestId
+        ? Promise.resolve({ ...turn, runStatus: 'running', response: undefined })
+        : requestId === rows[0]!.requestId
+          ? Promise.resolve({ ...rows[0]!, runStatus: 'succeeded', response: turn.response })
+          : Promise.reject(new ChatApiError(410, 'CHAT_HISTORY_DELETED', 'Deleted.')),
+    );
+    client.turns.mockResolvedValue([]);
+    await controller.refresh();
+    expect(controller.getSnapshot()).toMatchObject({
+      pending,
+      retryBlocked: true,
+      draft: 'Keep draft',
+    });
+    expect(controller.getSnapshot().turns).toEqual([
+      expect.objectContaining({ requestId: pending.request.requestId, runStatus: 'running' }),
+    ]);
+    await controller.send(turn.input);
+    expect(client.send).not.toHaveBeenCalled();
+    client.request.mockResolvedValue(turn);
+    client.turns.mockResolvedValue([turn]);
+    await controller.refresh();
+    expect(controller.getSnapshot()).toMatchObject({
+      pending: undefined,
+      retryBlocked: false,
+      turns: [turn],
+      draft: 'Keep draft',
+    });
+  });
+  it('keeps an acknowledged unknown-410 row separate from the send/retry identity while other active rows continue', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    const rows = [activeProjection(0), activeProjection(1)];
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    await controller.refresh();
+    client.request.mockImplementation((_id, requestId) =>
+      requestId === rows[0]!.requestId
+        ? Promise.reject(new ChatApiError(410, 'UNKNOWN', 'Unresolved.'))
+        : Promise.resolve(rows[1]!),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(controller.getSnapshot()).toMatchObject({
+      pending: undefined,
+      retryBlocked: true,
+      turns: rows,
+    });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(client.request.mock.calls.filter((call) => call[1] === rows[0]!.requestId)).toHaveLength(
+      1,
+    );
+    expect(
+      client.request.mock.calls.filter((call) => call[1] === rows[1]!.requestId).length,
+    ).toBeGreaterThan(1);
+    await controller.newConversation();
+    await controller.send(turn.input);
+    expect(client.send).not.toHaveBeenCalled();
+    expect(client.createConversation).not.toHaveBeenCalled();
+  });
+  it('stops authenticated polling before dispatching another batch when one read loses access', async () => {
+    vi.useFakeTimers();
+    const { controller, client, auth } = create();
+    const rows = Array.from({ length: 10 }, (_, index) => activeProjection(index));
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    await controller.refresh();
+    client.request.mockRejectedValue(new ChatApiError(403, 'FORBIDDEN', 'Denied.'));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request).toHaveBeenCalledTimes(4);
+    expect(auth).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(client.request).toHaveBeenCalledTimes(4);
+  });
+  it('a failed history-list refresh does not stop independent direct active polling', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    const row = activeProjection(0);
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue([row]);
+    await controller.refresh();
+    client.turns.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved list.'));
+    await controller.refresh();
+    client.request.mockResolvedValue(row);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    expect(client.turns).toHaveBeenCalledTimes(2);
+    expect(controller.getSnapshot().turns).toEqual([row]);
+  });
+});
+
+it.each(['CHAT_HISTORY_DELETED', 'CHAT_AUDIO_EXPIRED'])(
+  'a typed %s on the direct poll refreshes once and does not retire another active identity',
+  async (code) => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    const rows = [activeProjection(0), activeProjection(1)];
+    client.conversations.mockResolvedValue([conversation]);
+    client.turns.mockResolvedValue(rows);
+    await controller.refresh();
+    client.request.mockImplementation((_id, requestId) =>
+      requestId === rows[0]!.requestId
+        ? Promise.reject(new ChatApiError(410, code, 'Gone.'))
+        : Promise.resolve(rows[1]!),
+    );
+    client.turns.mockResolvedValue([rows[1]!]);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(controller.getSnapshot()).toMatchObject({
+      turns: [rows[1]],
+      retiredRequestIds: [rows[0]!.requestId],
+    });
+    expect(client.session).toHaveBeenCalledTimes(2);
+    expect(client.turns).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.request.mock.calls.filter((call) => call[1] === rows[0]!.requestId)).toHaveLength(
+      1,
+    );
+    expect(client.request.mock.calls.filter((call) => call[1] === rows[1]!.requestId)).toHaveLength(
+      2,
+    );
+    expect(client.send).not.toHaveBeenCalled();
+  },
+);
+it('a direct nonterminal acknowledgement clears ordinary pending recovery and leaves readiness/history untouched until terminal', async () => {
+  vi.useFakeTimers();
+  sessionStorage.setItem(key, JSON.stringify({ draft: 'Keep draft', pending }));
+  const { controller, client } = create();
+  client.request.mockRejectedValue(missing);
+  await controller.refresh();
+  client.request.mockResolvedValue({ ...turn, runStatus: 'running', response: undefined });
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(controller.getSnapshot()).toMatchObject({
+    pending: undefined,
+    retryBlocked: false,
+    draft: 'Keep draft',
+    turns: [expect.objectContaining({ runStatus: 'running' })],
+  });
+  expect(client.session).toHaveBeenCalledOnce();
+  expect(client.turns).toHaveBeenCalledOnce();
+  expect(client.send).not.toHaveBeenCalled();
+});
+it('keeps paused nonterminal rows and uncertainty visible through explicit refresh and refuses selection that would discard them', async () => {
+  vi.useFakeTimers();
+  const { controller, client } = create();
+  const row = activeProjection(0);
+  client.conversations.mockResolvedValue([conversation]);
+  client.turns.mockResolvedValue([row]);
+  await controller.refresh();
+  client.request.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved.'));
+  await vi.advanceTimersByTimeAsync(1000);
+  client.request.mockResolvedValue({ ...row, runStatus: 'paused' });
+  client.turns.mockResolvedValue([]);
+  await controller.refresh();
+  expect(controller.getSnapshot()).toMatchObject({
+    pending: undefined,
+    retryBlocked: true,
+    error: expect.stringContaining('Unresolved.'),
+    turns: [expect.objectContaining({ runStatus: 'paused' })],
+  });
+  await controller.selectConversation(turn.runId);
+  expect(controller.getSnapshot().conversationId).toBe(conversation.id);
+});
+
+it('uncertainty forbids a repeated cancel of that turn while an unrelated acknowledged turn can cancel', async () => {
+  vi.useFakeTimers();
+  const { controller, client } = create();
+  const rows = [activeProjection(0), activeProjection(1)];
+  client.conversations.mockResolvedValue([conversation]);
+  client.turns.mockResolvedValue(rows);
+  await controller.refresh();
+  client.request.mockImplementation((_id, requestId) =>
+    requestId === rows[0]!.requestId
+      ? Promise.reject(new ChatApiError(410, 'UNKNOWN', 'Unresolved.'))
+      : Promise.resolve(rows[1]!),
+  );
+  await vi.advanceTimersByTimeAsync(1000);
+  await controller.cancel(rows[0]!.id);
+  expect(client.cancel).not.toHaveBeenCalled();
+  const cancelled = { ...rows[1]!, runStatus: 'cancelled' as const };
+  client.cancel.mockResolvedValue(cancelled);
+  client.turns.mockResolvedValue([rows[0]!, cancelled]);
+  await controller.cancel(rows[1]!.id);
+  expect(client.cancel).toHaveBeenCalledOnce();
+  expect(client.cancel).toHaveBeenCalledWith(rows[1]!.id);
+  expect(client.send).not.toHaveBeenCalled();
+  expect(controller.getSnapshot()).toMatchObject({ retryBlocked: true, pending: undefined });
+  expect(client.session).toHaveBeenCalledTimes(2);
 });

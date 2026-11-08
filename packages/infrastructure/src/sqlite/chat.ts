@@ -583,7 +583,7 @@ export class SqliteChatRepository {
         Number(count?.inflight ?? 0) > 0 ||
         Number(global?.total ?? 0) >= 8
       )
-        throw new ChatRepositoryError('CHAT_BUSY', 'Audio upload quota is full');
+        throw new ChatRepositoryError('CHAT_AUDIO_QUOTA', 'Audio upload quota is full');
       const budget = sql<number>`coalesce(sum(case when ${chatAudio.state} = 'reserved' then 10485760 else coalesce(${chatAudio.bytes},0) end),0)`;
       const [audienceBudget] = await tx
         .select({ bytes: budget })

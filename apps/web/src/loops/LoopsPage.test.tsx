@@ -389,6 +389,7 @@ describe('LoopsPage', () => {
     });
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'Delete last ordinary loop' }));
+    expect(screen.getByRole('link', { name: 'Chat on this gateway' })).toHaveClass('touch-target');
     await user.click(screen.getByRole('button', { name: 'Confirm delete last ordinary loop' }));
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Your loops' })).not.toBeInTheDocument(),

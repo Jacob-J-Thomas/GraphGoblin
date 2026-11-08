@@ -273,6 +273,7 @@ function LoopTable({
                     <p className="mt-1 text-sm text-muted">
                       Answers{' '}
                       <Link
+                        className="touch-target"
                         to={
                           loop.system.audience.kind === 'gateway'
                             ? '/chat'

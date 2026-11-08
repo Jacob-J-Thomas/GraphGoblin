@@ -94,6 +94,12 @@ recovers the same admitted native run under its existing effect/recovery rules; 
 a fresh run from a pending chat intent. Offline drafts remain unsent. Service workers precache
 shell assets only, never store chat/management responses or credentials and never queue or replay
 mutations. No Background Sync is introduced.
+The active timer performs only canonical request GETs: prioritize the held pending identity,
+deduplicate other active identities and rotate fairly, with at most eight lookups per tick and
+four concurrent requests. Keep one-second polling/backoff; full session/index/history reads are
+coalesced lifecycle/focus/explicit refreshes or one terminal/typed-retirement transition. Unknown
+410 pauses only its identity's automatic lookup and preserves the recovery gate, without changing
+the singular durable pending identity or issuing a POST.
 
 ### Device enrollment and revocation
 
@@ -178,6 +184,9 @@ retained for native run recovery and cleaned up only when no surviving initial-t
 reference remains, including replay chains, rather than an arbitrary TTL. Full-size reservations
 before upload bound retained used/unused/in-flight audio to 64 MiB per audience and 256 MiB per
 gateway. `CHAT_AUDIO_QUOTA` returns 429; referenced inputs are never deleted to free quota.
+The three-unused/one-in-flight audience limits and eight-in-flight gateway limit use that same
+429 quota response. Private `chat-audio/` is store-owned reset data, removed only as a physical
+directory under the existing reset ownership/link safeguards; complete backups include it.
 
 ## Consequences and limits
 

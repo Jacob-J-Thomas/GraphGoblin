@@ -137,7 +137,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     {
       schema: {
         tags: ['system'],
-        summary: 'Is each configured harness installed and authenticated?',
+        summary: 'Check prerequisites and service readiness for each configured harness',
         response: { 200: z.object({ items: z.array(PreflightSchema) }) },
       },
     },

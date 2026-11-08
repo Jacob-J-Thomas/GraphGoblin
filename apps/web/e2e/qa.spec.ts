@@ -455,7 +455,11 @@ test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', asy
   await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
   await page.getByRole('button', { name: 'Use key' }).click();
   await expect(page.getByText('API key required')).toHaveCount(0);
-  await expect(page.getByText('No loops yet.')).toBeVisible();
+  await expect(
+    page.getByText('No loops of your own yet. Create one above or import an export.', {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Forget key' }).click();
   await page.reload();

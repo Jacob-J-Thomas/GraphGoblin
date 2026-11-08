@@ -81,6 +81,11 @@ describe('shared chat surface', () => {
     const client = mockChatClient();
     client.conversations.mockResolvedValue([conversation]);
     client.turns.mockResolvedValue([{ ...turn, runStatus: 'waiting', response: undefined }]);
+    client.cancel.mockImplementation(() => {
+      const cancelled = { ...turn, runStatus: 'cancelled' as const, response: undefined };
+      client.turns.mockResolvedValue([cancelled]);
+      return Promise.resolve(cancelled);
+    });
     await load(client);
     expect(
       await screen.findByText('Waiting on the gateway. Ask its owner if this doesn’t move.'),
@@ -632,4 +637,29 @@ describe('device voice readiness copy', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Retry same message' }));
     expect(client.send).not.toHaveBeenCalled();
   });
+});
+
+it('offers GET-only Check status for an acknowledged uncertain turn without inventing another admission', async () => {
+  const user = userEvent.setup();
+  const client = mockChatClient();
+  const active = { ...turn, runStatus: 'running' as const, response: undefined };
+  client.conversations.mockResolvedValue([conversation]);
+  client.turns.mockResolvedValue([active]);
+  client.cancel.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved cancellation.'));
+  client.request.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved cancellation.'));
+  await load(client);
+  await user.click(screen.getByRole('button', { name: 'Cancel request' }));
+  await user.click(
+    within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel request' }),
+  );
+  const check = await screen.findByRole('button', { name: 'Check status' });
+  expect(screen.queryByRole('button', { name: 'Retry now' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Retry same message' })).not.toBeInTheDocument();
+  client.request.mockResolvedValue(turn);
+  client.turns.mockResolvedValue([turn]);
+  const before = client.request.mock.calls.length;
+  await user.click(check);
+  await waitFor(() => expect(client.request).toHaveBeenCalledTimes(before + 1));
+  expect(client.cancel).toHaveBeenCalledOnce();
+  expect(client.send).not.toHaveBeenCalled();
 });

@@ -152,4 +152,4 @@ Health, version, harness preflight.
 | GET    | `/healthz`               | Liveness check                                                                                 | -                                               | -            | 200       |
 | GET    | `/version`               | API name and version                                                                           | -                                               | -            | 200       |
 | GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -                                               | -            | 200       |
-| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -                                               | -            | 200       |
+| GET    | `/harness/preflight`     | Check prerequisites and service readiness for each configured harness                          | -                                               | -            | 200       |
