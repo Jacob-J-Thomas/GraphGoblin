@@ -1,0 +1,254 @@
+{
+  "preparedAtUtc": "2026-11-08 01:03:56 UTC",
+  "implementationBase": "bb8c4afa0c5a83ae92631d5df800bb131445c02b",
+  "committedImplementationHead": "d1563fe83af812f1b74d6520a621f5ab9c03a0dd",
+  "scope": "Add enabled gpt-6.1-terra seed after Sol 6.1, catalog defaultEffort medium; no production default-resolution, schema, migration, dependency or retired-model changes.",
+  "runtime": {
+    "node": "22.23.4",
+    "pnpm": "12.8.1",
+    "codexSdk": "0.160.0",
+    "codexCli": "0.160.0"
+  },
+  "focusedTests": {
+    "infrastructure": {
+      "passed": 53,
+      "exitCode": 0
+    },
+    "codexAdapter": {
+      "passed": 31,
+      "exitCode": 0
+    },
+    "apiCatalog": {
+      "passed": 37,
+      "exitCode": 0
+    }
+  },
+  "live": {
+    "realTurns": 2,
+    "retryCount": 0,
+    "model": "gpt-6.1-terra",
+    "efforts": [
+      "none",
+      "medium"
+    ],
+    "outcomes": [
+      "pass",
+      "pass"
+    ],
+    "finalText": "GRAPHGOBLIN_TERRA_OK",
+    "providerEffectiveModel": null,
+    "providerEffectiveEffort": null,
+    "source": "live-terra-result.json",
+    "additionalProviderCalls": 0,
+    "realJevCalls": 0
+  },
+  "completePassingCoverage": [
+    {
+      "package": "contracts",
+      "passed": 286,
+      "lines": 99.75,
+      "branches": 95
+    },
+    {
+      "package": "domain",
+      "passed": 328,
+      "lines": 99.4,
+      "branches": 97.66
+    },
+    {
+      "package": "engine",
+      "passed": 1763,
+      "lines": 96.94,
+      "branches": 91.2
+    },
+    {
+      "package": "infrastructure",
+      "passed": 873,
+      "lines": 98.12,
+      "branches": 94.31
+    },
+    {
+      "package": "adapter-codex",
+      "passed": 639,
+      "skipped": 4,
+      "lines": 99.42,
+      "branches": 95.6
+    },
+    {
+      "package": "adapter-jev",
+      "passed": 34,
+      "skipped": 5,
+      "lines": 98.8,
+      "branches": 96.77
+    },
+    {
+      "package": "api-client",
+      "passed": 98,
+      "lines": 100,
+      "branches": 97.05
+    },
+    {
+      "package": "mcp",
+      "passed": 55,
+      "skipped": 2,
+      "lines": 96.74,
+      "branches": 94.04
+    },
+    {
+      "package": "plugin-codex",
+      "passed": 9,
+      "skipped": 1,
+      "lines": 95.23,
+      "branches": 95.45
+    },
+    {
+      "package": "tooling",
+      "passed": 122,
+      "lines": 96.63,
+      "branches": 92.53
+    }
+  ],
+  "localRootChecks": [
+    {
+      "log": "check.log.txt",
+      "exitCode": 1,
+      "cause": "Engine checkpoint timing assertion: 2144.306ms against <2000ms; later unchanged full engine runs passed."
+    },
+    {
+      "log": "check-rerun-serial.log.txt",
+      "exitCode": 1,
+      "cause": "Infrastructure worker native exit 3221225477 while storage.test.ts ran; 871 tests completed, 2 incomplete; later full 873-test infrastructure recovery passed."
+    }
+  ],
+  "rootCheckPassClaimed": false,
+  "broadMatrix": {
+    "log": "remaining-coverage.log.txt",
+    "completed": true,
+    "exitCode": 1,
+    "duration": "1h36m53.493s",
+    "successfulTasks": 15,
+    "totalTasks": 17,
+    "cachedDependencyBuilds": 8,
+    "api": {
+      "passed": 1712,
+      "failed": 2,
+      "skipped": 14,
+      "durationSeconds": 2140.27,
+      "fullCoverageSummaryEmitted": false,
+      "failures": [
+        "script-restart.test.ts: after-dispatch restart refused because disposable graphgoblin.lock held",
+        "subloop-restart.test.ts: expected waiting, received queued; fixture disposal hook timed out at 60000ms"
+      ]
+    },
+    "web": {
+      "passed": 1851,
+      "failed": 1,
+      "durationSeconds": 3005.97,
+      "fullCoverageSummaryEmitted": false,
+      "failure": "EventsPage.recovery.test.tsx:72, keeps both loaded pages during a Refresh and after failure, then commits a successful newest page; unchanged 20000ms timeout",
+      "retryAttempted": false
+    },
+    "sourceCheckpointSnapshot": "remaining-coverage-snapshot.log.txt"
+  },
+  "boundedRecovery": {
+    "engineFull": {
+      "passed": 1763,
+      "exitCode": 0,
+      "log": "engine-coverage-serial.log.txt"
+    },
+    "storageFilteredV8": {
+      "passed": 53,
+      "commandExitCode": 1,
+      "reason": "Sparse coverage against unchanged full infrastructure denominator",
+      "log": "storage-coverage-diagnostic.log.txt"
+    },
+    "infrastructureFull": {
+      "passed": 873,
+      "exitCode": 0,
+      "log": "infrastructure-coverage-recovery.log.txt"
+    },
+    "apiRestartFilteredV8": {
+      "passed": 6,
+      "commandExitCode": 1,
+      "reason": "Sparse coverage against unchanged full API denominator; no test failure reproduced",
+      "log": "native-cases-retry.log.txt",
+      "ownerObservations": "native-cases-retry-locks.json"
+    },
+    "causeOfEarlierFailuresProven": false,
+    "assertionsTimeoutsThresholdsChanged": false
+  },
+  "sourceGates": {
+    "staticGateCommands": "static-gates.json",
+    "templatesExitCode": 0,
+    "licensesExitCode": 0,
+    "generatedDocsExitCode": 0,
+    "contrastExitCode": 0,
+    "build": {
+      "exitCode": 0,
+      "successfulTasks": 11,
+      "cachedTasks": 10,
+      "log": "build.log.txt"
+    },
+    "finalWebTypecheck": {
+      "exitCode": 0,
+      "log": "web-typecheck-final.log.txt"
+    },
+    "finalChangedFileLint": {
+      "exitCode": 0,
+      "log": "web-lint-final.log.txt"
+    },
+    "earlierFullWebLint": {
+      "exitCode": 0,
+      "log": "web-lint-corrected.log.txt"
+    },
+    "wholeRepositoryFormat": {
+      "exitCode": 0,
+      "log": "format-check.log.txt"
+    },
+    "finalReportOnlyFormat": {
+      "exitCode": 0,
+      "log": "final-readme-format.log.txt"
+    }
+  },
+  "browser": {
+    "channel": "msedge",
+    "workers": 1,
+    "retries": 0,
+    "LIVE": "0",
+    "fullAttempt1": {
+      "passedUnchanged": 32,
+      "failedNew": 2,
+      "exitCode": 1,
+      "reason": "Incorrect expectation that catalog medium replaces inherited low",
+      "log": "model-browser.log.txt",
+      "artifacts": "browser-initial-failure"
+    },
+    "fullAttempt2": {
+      "passedUnchanged": 32,
+      "failedNew": 2,
+      "exitCode": 1,
+      "reason": "Test fixture assumed optional settings already existed",
+      "log": "model-browser-corrected.log.txt",
+      "artifacts": "browser-fixture-error"
+    },
+    "finalFocused": {
+      "passed": 2,
+      "exitCode": 0,
+      "durationSeconds": 21.3,
+      "log": "terra-browser-final.log.txt"
+    },
+    "resultClaim": "32 unchanged passing cases plus 2 corrected focused passing cases; no single 34-pass command.",
+    "behavior": "Catalog medium retained; explicit loop low remains inherited; explicit none/medium publish and reach controlled harness.",
+    "productionDefaultResolutionChanged": false
+  },
+  "documentationCorrections": [
+    "Literal byte-marker scan is non-exhaustive; empty matches do not establish absence from embedded/runtime catalogs.",
+    "Catalog defaultEffort medium is guidance; existing loop/owner/process effort inheritance remains."
+  ],
+  "smokeCleanup": {
+    "exactTempDirectoryRemovedByOrchestratorAndVerifiedAbsent": true,
+    "exactTwoNativeRolloutsRemovedByOrchestratorAndVerifiedAbsent": true,
+    "broaderProviderRecordSweep": false
+  },
+  "deliveryStatus": "Slice source/evidence ready for independent review. Full integrated batch/CI gates remain separate requirements; neither failed root check nor failed broad matrix is claimed passing."
+}

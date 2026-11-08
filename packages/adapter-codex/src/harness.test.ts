@@ -134,7 +134,7 @@ describe('CodexHarness.start', () => {
       skipGitRepoCheck: true,
       workingDirectory: '/work',
     });
-    // ADR-0065: plugins inherit CLI configuration; unrelated isolation defaults remain.
+    // ADR-0067: plugins inherit CLI configuration; unrelated isolation defaults remain.
     expect(codex.runs[0]?.clientOptions).toEqual({
       codexPathOverride: '/opt/codex',
       env: { PATH: '/bin' },

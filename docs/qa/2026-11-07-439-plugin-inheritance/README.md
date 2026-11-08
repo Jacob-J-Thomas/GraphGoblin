@@ -1,6 +1,8 @@
 # #439 - Codex configured plugin inheritance
 
-Implementer evidence, 2026-11-07, baseline `bb8c4afa0c5a83ae92631d5df800bb131445c02b`. Policy: [ADR-0065](../../decisions/ADR-0065-codex-inherits-configured-plugins.md). This record establishes engineering behavior; independent opposite-family review and QA remain separate delivery gates.
+Implementer evidence, 2026-11-07, baseline `bb8c4afa0c5a83ae92631d5df800bb131445c02b`. Policy: [ADR-0067](../../decisions/ADR-0067-codex-inherits-configured-plugins.md). This record establishes engineering behavior; independent opposite-family review and QA remain separate delivery gates.
+
+ADR numbering coordination: the plugin policy moved from ADR-0065 to ADR-0067 so the parallel chat/Ollama [PR #444](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/444#issuecomment-6715295782) can retain its ADR-0065/0066 numbers. Current source/documentation references use ADR-0067. Historical review reports/dispositions, logs and native artifacts retain their original ADR-0065 references and bytes; those references identify the same plugin policy under its former number. This rename changes no behavior.
 
 ## Native method
 
@@ -78,4 +80,4 @@ These are **observed limitations**, not passing plugin-health checks. GraphGobli
 - Gate scope: full adapter coverage plus the native common-harness fixture establish this slice's configuration and worker boundary. No API contract or route changed, so no additional focused API boundary test was selected. This plugin branch did **not** run repository-wide coverage or the complete `pnpm check`. The final integrated UI/batch branch must run the full batch `pnpm check`, and all four PR CI jobs remain required; those integration/CI gates are pending in this implementer record.
 - After the final evidence-only README updates, its focused Prettier check and `git diff --check` passed.
 
-Independent source review remains pending. The separate root rerun above completed native QA; reviewers can inspect its actual worker-output records and use the script to reproduce a specific unresolved concern.
+Claude Opus 5.5 completed the full source review on `aed1446` against `d1563`, then approved the targeted documentation delta at `4bb9d87`: F1/F2/F3 and the optional upgrade wording are resolved. The [full report](review-1-report.log.txt), [first disposition](review-1-disposition.md), [approved delta report](review-2-report.log.txt) and [final disposition](review-2-disposition.md) preserve that sequence. The final non-blocking P3 clarification explains that new node overrides cannot change already-pinned definitions; root requested and will inspect that concise CHANGELOG/ADR correction without another model pass. Full and targeted review are complete; integrated batch/CI gates remain pending. The separate root rerun completed native QA; service-authority possibilities do not expand its harmless echo-tool evidence into live mutating-tool proof.

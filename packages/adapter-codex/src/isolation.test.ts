@@ -8,7 +8,7 @@ import type { CliResult, CliRunner } from './cli.js';
 import { CodexHarness } from './harness.js';
 import { CodexStructured } from './structured.js';
 
-// Plugins inherit CLI configuration; other extensions stay isolated (ADR-0065). The real SDK spawns
+// Plugins inherit CLI configuration; other extensions stay isolated (ADR-0067). The real SDK spawns
 // `<codexBinary> mcp list --json` (the harness's listing) and `<codexBinary> exec ...` (the turn);
 // this Node executable with the preloaded fake CLI answers the listing like CLI 0.160.0 and
 // records the turn's exact arguments, so these assertions cover the SDK's own argument building.
