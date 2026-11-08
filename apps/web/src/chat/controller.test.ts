@@ -998,3 +998,186 @@ describe('expected pending request absence', () => {
     expect(client.send).not.toHaveBeenCalled();
   });
 });
+
+describe('definite text refusal preserves the draft (review4504383697)', () => {
+  const refusals = [
+    { status: 429, code: 'RATE_LIMITED' },
+    { status: 409, code: 'CHAT_BUSY' },
+  ];
+  it.each(refusals)(
+    'restores and persists text after $status $code; a later explicit send has a new identity',
+    async ({ status, code }) => {
+      const { controller, client } = create();
+      await controller.refresh();
+      controller.setDraft('Keep this exact text.');
+      client.send.mockRejectedValue(new ChatApiError(status, code, 'Try later.'));
+      await controller.send({ kind: 'text', text: 'Keep this exact text.' });
+      expect(controller.getSnapshot()).toMatchObject({
+        draft: 'Keep this exact text.',
+        pending: undefined,
+        error: 'Try later.',
+        sending: false,
+      });
+      const refusedId = client.send.mock.calls[0]![1].requestId;
+      expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({
+        draft: 'Keep this exact text.',
+        conversationId: conversation.id,
+      });
+      expect(JSON.parse(sessionStorage.getItem(key)!)).not.toHaveProperty('pending');
+      await controller.retryPending();
+      expect(client.send).toHaveBeenCalledOnce();
+      const reload = create();
+      await reload.controller.refresh();
+      expect(reload.controller.getSnapshot().draft).toBe('Keep this exact text.');
+      expect(reload.client.send).not.toHaveBeenCalled();
+      expect(reload.client.request).not.toHaveBeenCalled();
+      await reload.controller.send({ kind: 'text', text: reload.controller.getSnapshot().draft });
+      expect(reload.client.send).toHaveBeenCalledOnce();
+      expect(reload.client.send.mock.calls[0]![1].requestId).not.toBe(refusedId);
+    },
+  );
+  it.each(refusals)(
+    'preserves a newer draft when $status $code refuses the earlier text',
+    async ({ status, code }) => {
+      const { controller, client } = create();
+      await controller.refresh();
+      controller.setDraft('Earlier text');
+      client.send.mockImplementation(() => {
+        controller.setDraft('A newer draft');
+        return Promise.reject(new ChatApiError(status, code, 'Try later.'));
+      });
+      await controller.send({ kind: 'text', text: 'Earlier text' });
+      expect(controller.getSnapshot()).toMatchObject({
+        pending: undefined,
+        draft: 'A newer draft',
+      });
+      expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({ draft: 'A newer draft' });
+      expect(client.send).toHaveBeenCalledOnce();
+    },
+  );
+  it('preserves a newer edit that the user subsequently cleared to empty', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    controller.setDraft('Earlier text');
+    client.send.mockImplementation(() => {
+      controller.setDraft('Newer');
+      controller.setDraft('');
+      return Promise.reject(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
+    });
+    await controller.send({ kind: 'text', text: 'Earlier text' });
+    expect(controller.getSnapshot()).toMatchObject({ pending: undefined, draft: '' });
+    expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({ draft: '' });
+  });
+  it('keeps the original restoration guard across an explicit same-identity retry', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    controller.setDraft('Earlier text');
+    client.send
+      .mockRejectedValueOnce(new TypeError('lost response'))
+      .mockRejectedValueOnce(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
+    await controller.send({ kind: 'text', text: 'Earlier text' });
+    const identity = controller.getSnapshot().pending!;
+    expect(controller.getSnapshot()).toMatchObject({ draft: '', pending: identity });
+    await controller.retryPending();
+    expect(client.send.mock.calls[1]![1]).toEqual(identity.request);
+    expect(controller.getSnapshot()).toMatchObject({ pending: undefined, draft: 'Earlier text' });
+  });
+  it('never resets the guard at retry after a newer edit was cleared', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    controller.setDraft('Earlier text');
+    client.send
+      .mockRejectedValueOnce(new TypeError('lost response'))
+      .mockRejectedValueOnce(new ChatApiError(409, 'CHAT_BUSY', 'Busy.'));
+    await controller.send({ kind: 'text', text: 'Earlier text' });
+    controller.setDraft('Newer');
+    controller.setDraft('');
+    await controller.retryPending();
+    expect(controller.getSnapshot()).toMatchObject({ pending: undefined, draft: '' });
+    expect(client.send).toHaveBeenCalledTimes(2);
+  });
+  it.each(['', 'A saved newer draft'])(
+    'initializes reload restoration only for an empty saved draft (%s)',
+    async (draft) => {
+      sessionStorage.setItem(key, JSON.stringify({ draft, pending }));
+      const { controller, client } = create();
+      client.request.mockRejectedValue(missing);
+      await controller.refresh();
+      if (draft) controller.setDraft('');
+      client.send.mockRejectedValue(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
+      await controller.retryPending();
+      expect(controller.getSnapshot()).toMatchObject({
+        pending: undefined,
+        draft: draft ? '' : 'Hello',
+      });
+      expect(JSON.parse(sessionStorage.getItem(key)!)).not.toHaveProperty('pending');
+    },
+  );
+  it('does not clear or replace a newer draft written while conversation creation is pending', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    controller.setDraft('Earlier text');
+    let finish!: (value: typeof conversation) => void;
+    client.createConversation.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    client.send.mockRejectedValue(new ChatApiError(409, 'CHAT_BUSY', 'Busy.'));
+    const posting = controller.send({ kind: 'text', text: 'Earlier text' });
+    controller.setDraft('Newer while creating');
+    finish(conversation);
+    await posting;
+    expect(controller.getSnapshot()).toMatchObject({
+      pending: undefined,
+      draft: 'Newer while creating',
+    });
+    expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({
+      draft: 'Newer while creating',
+    });
+  });
+  it('keeps audio refusal and uncertain transport semantics separate from restored text', async () => {
+    const { controller, client } = create();
+    client.session.mockResolvedValue({
+      ...session,
+      readiness: { text: { ready: true }, audio: { ready: true } },
+    });
+    await controller.refresh();
+    client.send.mockRejectedValueOnce(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
+    await controller.send({ kind: 'audio', audioId: turn.id });
+    expect(controller.getSnapshot()).toMatchObject({ draft: '', pending: undefined });
+    client.send.mockRejectedValueOnce(new ChatApiError(503, 'UNAVAILABLE', 'Unknown admission.'));
+    await controller.send({ kind: 'text', text: 'Uncertain text' });
+    expect(controller.getSnapshot()).toMatchObject({
+      draft: '',
+      pending: { request: { input: { kind: 'text', text: 'Uncertain text' } } },
+    });
+    expect(client.send).toHaveBeenCalledTimes(2);
+  });
+});
+
+it('retires an exactly matched refused request without restoring into another selected conversation (review4504383697)', async () => {
+  const { controller, client } = create();
+  await controller.refresh();
+  controller.setDraft('Refused text');
+  const otherConversationId = '01J00000000000000000000009';
+  client.send.mockImplementation(() => {
+    // Defensive state injection: ordinary UI guards prevent selection while a send is pending.
+    controller.getSnapshot().conversationId = otherConversationId;
+    return Promise.reject(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
+  });
+  await controller.send({ kind: 'text', text: 'Refused text' });
+  expect(controller.getSnapshot()).toMatchObject({
+    pending: undefined,
+    conversationId: otherConversationId,
+    draft: '',
+  });
+  expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({
+    conversationId: otherConversationId,
+    draft: '',
+  });
+  expect(JSON.parse(sessionStorage.getItem(key)!)).not.toHaveProperty('pending');
+  await controller.retryPending();
+  expect(client.send).toHaveBeenCalledOnce();
+});

@@ -63,6 +63,13 @@ observations led to preserving pending-request recovery guidance during status
 polls and narrowing the Goblin entry alias so source checkouts under `/src` work.
 The pull request records final candidate review and CI receipts.
 
+Integration with the concurrently merged Terra catalog and Codex plugin policy
+preserves their source and tests. Codex system chat follows ADR-0067; native
+Ollama remains tool-free. The pull request records the upstream merge, semantic
+carryforward checks, and the late-accounted automatic review. Its definite-refusal
+regressions verify draft recovery without overwriting newer edits or reusing a
+refused request identity; uncertain submissions retain their existing behavior.
+
 The complete local browser diagnostic finished with 425 passes, 23 failures and
 one existing live-provider skip. It used the older built candidate while repairs
 were in progress, and exposed macOS keyboard/loader differences as well as the

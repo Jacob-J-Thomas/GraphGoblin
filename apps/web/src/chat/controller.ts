@@ -62,6 +62,9 @@ export class ChatController {
   private generation = 0;
   private failures = 0;
   private readSequence = 0;
+  private draftRevision = 0;
+  private pendingDraftRevision:
+    { conversationId: string; requestId: string; revision: number } | undefined;
   private pollOffset = 0;
   private pausedPolls = new Set<string>();
   private fullRead:
@@ -106,6 +109,12 @@ export class ChatController {
       retiredRequestIds: [],
       historyPollingStopped: false,
     };
+    if (saved.pending && !saved.draft)
+      this.pendingDraftRevision = {
+        conversationId: saved.pending.conversationId,
+        requestId: saved.pending.request.requestId,
+        revision: this.draftRevision,
+      };
   }
   getSnapshot = (): ChatState => this.state;
   subscribe = (listener: () => void): (() => void) => {
@@ -127,6 +136,7 @@ export class ChatController {
     );
   }
   setDraft = (draft: string): void => {
+    this.draftRevision++;
     this.set({ draft });
     try {
       this.persist();
@@ -150,6 +160,7 @@ export class ChatController {
       requestId && this.state.pending?.request.requestId === requestId
         ? undefined
         : this.state.pending;
+    if (!remainingPending) this.pendingDraftRevision = undefined;
     this.set({
       retryBlocked:
         this.pausedPolls.size > 0 || Boolean(remainingPending && this.state.retryBlocked),
@@ -509,6 +520,7 @@ export class ChatController {
     const turns = this.state.turns.filter((item) => item.id !== turn.id);
     const matchesPending = this.state.pending?.request.requestId === turn.requestId;
     const retainPending = matchesPending && this.state.retryBlocked && isActiveTurn(turn);
+    if (matchesPending && !retainPending) this.pendingDraftRevision = undefined;
     if (!isActiveTurn(turn)) this.pausedPolls.delete(identityKey(turn));
     this.set({
       retryBlocked:
@@ -541,6 +553,7 @@ export class ChatController {
         ? this.state.session?.readiness.text.ready
         : this.state.session?.readiness.audio.ready;
     if (!ready) return;
+    const draftRevision = this.draftRevision;
     this.set({
       sending: true,
       error: undefined,
@@ -556,9 +569,10 @@ export class ChatController {
       }
       const request = ChatSendRequestSchema.parse({ requestId: crypto.randomUUID(), input });
       const pending = { conversationId, request };
+      const draft = this.draftRevision === draftRevision ? '' : this.state.draft;
       // Persist before any turn mutation: a reload must never invent a new request identity.
       try {
-        this.persist({ ...this.state, pending, draft: '' });
+        this.persist({ ...this.state, pending, draft });
       } catch {
         throw new ChatApiError(
           0,
@@ -566,7 +580,11 @@ export class ChatController {
           'This browser cannot save the request for recovery. Enable browser storage before sending.',
         );
       }
-      this.set({ pending, draft: '' });
+      this.pendingDraftRevision =
+        this.draftRevision === draftRevision
+          ? { conversationId, requestId: request.requestId, revision: draftRevision }
+          : undefined;
+      this.set({ pending, draft });
       await this.post(pending);
     } catch (error) {
       this.set({
@@ -589,9 +607,21 @@ export class ChatController {
         error instanceof ChatApiError &&
         error.status >= 400 &&
         error.status < 500 &&
-        error.status !== 410
+        error.status !== 410 &&
+        this.state.pending?.conversationId === pending.conversationId &&
+        this.state.pending.request.requestId === pending.request.requestId
       ) {
-        this.set({ pending: undefined });
+        const draft =
+          this.state.conversationId === pending.conversationId &&
+          pending.request.input.kind === 'text' &&
+          this.state.draft === '' &&
+          this.pendingDraftRevision?.conversationId === pending.conversationId &&
+          this.pendingDraftRevision.requestId === pending.request.requestId &&
+          this.pendingDraftRevision.revision === this.draftRevision
+            ? pending.request.input.text
+            : this.state.draft;
+        this.set({ pending: undefined, draft });
+        this.pendingDraftRevision = undefined;
         try {
           this.persist();
         } catch {
