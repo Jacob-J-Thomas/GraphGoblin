@@ -60,9 +60,16 @@ export interface UnionPickerProps {
   required: boolean;
   describedBy?: string | undefined;
   invalid?: boolean | undefined;
+  /** The union's help and the id `describedBy` names for it, given to a picker that `drawsHelp`. */
+  help?: string | undefined;
+  helpId?: string | undefined;
 }
 
-export type UnionPicker = ComponentType<UnionPickerProps>;
+/**
+ * A picker drawn in place of a nested union's select. With `drawsHelp` it places the union's help
+ * itself (`help` under `helpId`), where its own layout needs it, rather than after the picker.
+ */
+export type UnionPicker = ComponentType<UnionPickerProps> & { drawsHelp?: boolean };
 export type UnionPickers = Readonly<Record<string, UnionPicker>>;
 
 export const UnionPickersContext = createContext<UnionPickers>({});

@@ -8,6 +8,7 @@ import {
   contextLayout,
   isCustomized,
   isOwned,
+  orderedShape,
   placementsOf,
   type FormLayout,
   type LayoutItem,
@@ -40,14 +41,7 @@ describe('formLayout', () => {
 
   it('places inference fields: basic first, a split object, groups by first appearance', () => {
     const layout = formLayout(shape(NodeConfigSchemas.inference), '', undefined, true);
-    expect(names(layout.basic)).toEqual([
-      'harness',
-      'model',
-      'effort',
-      'session',
-      'prompt',
-      'harnessOptions.sandbox',
-    ]);
+    expect(names(layout.basic)).toEqual(['harness', 'model', 'effort', 'harnessOptions.sandbox']);
     expect(sections(layout)).toEqual([
       [
         'Harness options',
@@ -72,9 +66,44 @@ describe('formLayout', () => {
     expect(harness).toMatchObject({ owner: 'harnessOptions', showsError: false });
     // All of `output` is advanced: its first block shows its message.
     expect(layout.advanced[1]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
+    // Context holds prompt and session whole, outside Advanced; schema order without a display order.
     const context = contextLayout(NodeConfigSchemas.inference, {});
-    expect(names(context.basic)).toEqual(['input']);
+    expect(names(context.basic)).toEqual(['session', 'prompt', 'input']);
     expect(sections(context)).toEqual([['Files', ['contextFiles']]]);
+    expect(context.basic.some(isOwned)).toBe(false);
+  });
+
+  it('orders inference Context by the display order the editor gives, as on Settings', () => {
+    const order = ['prompt', 'session', 'input', 'contextFiles'];
+    const context = contextLayout(NodeConfigSchemas.inference, {}, '', order);
+    expect(names(context.basic)).toEqual(['prompt', 'session', 'input']);
+    expect(sections(context)).toEqual([['Files', ['contextFiles']]]);
+    // Settings keeps its own fields and order; the reordered context fields stay off it.
+    const settings = formLayout(
+      orderedShape(shape(NodeConfigSchemas.inference), order),
+      '',
+      undefined,
+      true,
+    );
+    expect(names(settings.basic)).toEqual(['harness', 'model', 'effort', 'harnessOptions.sandbox']);
+    expect(sections(settings).map(([heading]) => heading)).toEqual([
+      'Harness options',
+      'Output',
+      'Limits',
+    ]);
+    // A selected decision variant takes the order through the union; nested objects keep theirs.
+    const decision = contextLayout(NodeConfigSchemas.decision, { kind: 'classifier' }, '', [
+      'context',
+      'question',
+    ]);
+    expect(names(decision.basic)).toEqual(['context']);
+  });
+
+  it('reorders only the listed top-level keys and ignores unknown ones', () => {
+    const shaped = { a: z.string(), b: z.string(), c: z.string() };
+    expect(Object.keys(orderedShape(shaped, ['c', 'missing', 'a']))).toEqual(['c', 'a', 'b']);
+    expect(orderedShape(shaped, undefined)).toBe(shaped);
+    expect(orderedShape(shaped, [])).toBe(shaped);
   });
 
   it.each(['expression', 'classifier', 'llm'] as const)(

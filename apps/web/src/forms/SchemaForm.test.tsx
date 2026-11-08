@@ -596,19 +596,19 @@ describe('SchemaForm', () => {
     setCode('Config overrides value 1', '');
     expect(screen.queryByText(/Invalid JSON/)).not.toBeInTheDocument();
 
-    await user.selectOptions(
-      within(screen.getByRole('group', { name: 'Session' })).getByLabelText('Policy'),
-      '2',
-    );
-    expect(last(spy)['session']).toEqual({ policy: 'resume-named', key: '' });
-
     await user.click(screen.getByRole('button', { name: 'Add schema' }));
     setCode('Json schema', '{"type":"object"}');
     expect((last(spy)['output'] as Record<string, unknown>)['schema']).toMatchObject({
       jsonSchema: { type: 'object' },
     });
 
+    // The session union is on Context, with the generic picker outside the node editor.
     await user.click(screen.getByRole('tab', { name: /^Context/ }));
+    await user.selectOptions(
+      within(screen.getByRole('group', { name: 'Session' })).getByLabelText('Policy'),
+      '2',
+    );
+    expect(last(spy)['session']).toEqual({ policy: 'resume-named', key: '' });
     await user.click(screen.getByRole('button', { name: 'Add input' }));
     expect((last(spy)['input'] as unknown[])[0]).toMatchObject({
       op: 'set',

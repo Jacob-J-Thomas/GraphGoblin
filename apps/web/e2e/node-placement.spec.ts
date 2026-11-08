@@ -64,7 +64,9 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
   await expect(main).toHaveAttribute('aria-selected', 'true');
   await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
-  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+  // Prompt and Session are on Context (#441).
+  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeHidden();
+  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeHidden();
   await expect(dialog.getByRole('button', { name: 'Add input', exact: true })).toBeHidden();
   await main.focus();
   for (const [key, selected] of [
@@ -81,11 +83,12 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
     const panel = page.locator(`[id="${await selected.getAttribute('aria-controls')}"]`);
     await expect(panel).toHaveAttribute('aria-labelledby', (await selected.getAttribute('id'))!);
   }
+  // Tab leaves the tablist for Context's first field: the prompt, then the session.
   await page.keyboard.press('Tab');
-  await expect(
-    dialog.getByRole('button', { name: 'Edit as JSON: Input', exact: true }),
-  ).toBeFocused();
-  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeHidden();
+  await expect(dialog.locator('[data-field="prompt"] :focus')).toHaveCount(1);
+  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
   await closeNode(page);
   const reopened = await openNode(page, 'approve');
   await expect(reopened.getByRole('tab', { name: 'Settings' })).toHaveAttribute(

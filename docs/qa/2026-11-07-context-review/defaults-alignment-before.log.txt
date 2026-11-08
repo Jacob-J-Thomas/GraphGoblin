@@ -1,0 +1,25 @@
+Running 1 test using 1 worker
+(node:449876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\claude-harness.spec.ts:531:1 › Settings Defaults aligns each model and effort select, with the Claude effort note below its row (3.7s)
+  1) [chromium] › e2e\claude-harness.spec.ts:531:1 › Settings Defaults aligns each model and effort select, with the Claude effort note below its row 
+    Error: claude
+    expect(received).toBe(expected) // Object.is equality
+    Expected: 1874.84375
+    Received: 1836.46875
+      553 |     const effortBox = (await effort.boundingBox())!;
+      554 |     // Side by side on a desktop row: the selects share their top edge and height.
+    > 555 |     expect(effortBox.y, harness).toBe(modelBox.y);
+          |                                  ^
+      556 |     expect(effortBox.height, harness).toBe(modelBox.height);
+      557 |     expect(effortBox.x, harness).toBeGreaterThan(modelBox.x + modelBox.width);
+      558 |   }
+        at apps\web\e2e\claude-harness.spec.ts:555:34
+    Error Context: test-results\claude-harness-Settings-De-64b54-e-effort-note-below-its-row-chromium\error-context.md
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\claude-harness-Settings-De-64b54-e-effort-note-below-its-row-chromium\trace.zip
+    Usage:
+        pnpm exec playwright show-trace test-results\claude-harness-Settings-De-64b54-e-effort-note-below-its-row-chromium\trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  1 failed
+    [chromium] › e2e\claude-harness.spec.ts:531:1 › Settings Defaults aligns each model and effort select, with the Claude effort note below its row 

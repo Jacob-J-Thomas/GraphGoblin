@@ -312,15 +312,14 @@ export function DefaultsSection() {
                             </option>
                           ))}
                         </Select>
-                        {harness === 'claude' ? (
-                          <HelpText id={effortHelpId}>
-                            This is the requested effort; Claude does not report the effective
-                            effort.
-                          </HelpText>
-                        ) : null}
                       </FieldGroup>
                     </FieldRow>
                     {/* Below the row, like the model's line, so both fields stay aligned. */}
+                    {harness === 'claude' ? (
+                      <HelpText id={effortHelpId}>
+                        This is the requested effort; Claude does not report the effective effort.
+                      </HelpText>
+                    ) : null}
                     {effortProblem ? (
                       <HelpText id={effortProblemId} tone="warn">
                         <Icon name="alert" className="mr-1 inline size-3.5 align-text-bottom" />

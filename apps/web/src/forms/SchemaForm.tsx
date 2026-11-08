@@ -32,7 +32,7 @@ import {
   withUnsetFields,
   type Schema,
 } from './introspect.js';
-import { formLayout } from './layout.js';
+import { formLayout, orderedShape } from './layout.js';
 import {
   ParseErrorContext,
   repathParseErrors,
@@ -55,7 +55,10 @@ export interface SchemaFormProps {
   onChange: (value: unknown, change: FormChange) => void;
   /** Accessible name for the form. */
   label: string;
-  /** Optional display order for top-level object fields; unspecified fields keep schema order. */
+  /**
+   * Optional display order for top-level object fields, on Settings and Context alike; unspecified
+   * fields keep schema order.
+   */
   fieldOrder?: readonly string[] | undefined;
   /** Stored held input, including invalid or unapplied JSON, by field path; restored on remount. */
   parseErrors?: Record<string, ParseError> | undefined;
@@ -118,21 +121,6 @@ function issuesOf(schema: Schema, value: unknown): Issue[] {
 
 function asValues(value: unknown): FieldValues {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : {};
-}
-
-/** Reorder only the rendered top-level object shape, leaving the schema and field paths intact. */
-function orderedShape(
-  shape: Record<string, Schema>,
-  fieldOrder: readonly string[] | undefined,
-): Record<string, Schema> {
-  if (!fieldOrder || fieldOrder.length === 0) return shape;
-  const ordered: Record<string, Schema> = {};
-  for (const key of [...fieldOrder, ...Object.keys(shape)]) {
-    if (Object.hasOwn(ordered, key) || !Object.hasOwn(shape, key)) continue;
-    const field = shape[key];
-    if (field !== undefined) ordered[key] = field;
-  }
-  return ordered;
 }
 
 /**
@@ -393,6 +381,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                 key={unionIndex}
                                 schema={variantSchema}
                                 layout={layout}
+                                fieldOrder={fieldOrder}
                                 keyPrefix=""
                                 Field={Field}
                               />
