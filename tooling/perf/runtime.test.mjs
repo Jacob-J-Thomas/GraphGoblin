@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import { execFile, fork } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -16,6 +16,134 @@ import { measureBrowser } from './browser.mjs';
 const recordings = new Map();
 const exec = promisify(execFile);
 const script = (name) => fileURLToPath(new URL(name, import.meta.url));
+
+async function reportMeasurementFailure(error, output) {
+  const clip = (value, limit = 2000) => {
+    if (typeof value === 'string')
+      return value.length > limit ? value.slice(0, limit) + ' [truncated]' : value;
+    return value === null || ['boolean', 'number'].includes(typeof value)
+      ? value
+      : value === undefined
+        ? null
+        : '[unexpected ' + typeof value + ']';
+  };
+  const diagnostic = {
+    code: clip(error.code, 80),
+    signal: clip(error.signal, 80),
+    killed: clip(error.killed),
+  };
+  try {
+    const summary = JSON.parse(await readFile(join(output, 'raw-summary.json'), 'utf8'));
+    if (!Array.isArray(summary?.cases)) throw new Error('raw-summary cases must be an array');
+    diagnostic.flags = Object.fromEntries(
+      ['error', 'correctnessFailure', 'memoryLogError', 'closeError', 'profileError'].map((key) => [
+        key,
+        clip(summary[key]),
+      ]),
+    );
+    diagnostic.caseCount = summary.cases.length;
+    diagnostic.cases = summary.cases.slice(0, 5).map((entry) => {
+      const pages = Array.isArray(entry?.browser?.pages) ? entry.browser.pages : [];
+      return {
+        correctness: Object.fromEntries(
+          Object.entries(entry?.correctness ?? {})
+            .filter(
+              ([, value]) =>
+                value === null || ['boolean', 'number', 'string'].includes(typeof value),
+            )
+            .slice(0, 32)
+            .map(([key, value]) => [clip(key, 80), clip(value, 200)]),
+        ),
+        pageCount: pages.length,
+        pages: pages.slice(0, 5).map((page) => ({
+          name: clip(page?.name, 80),
+          errorCount: Array.isArray(page?.errors) ? page.errors.length : null,
+          errors: Array.isArray(page?.errors)
+            ? page.errors.slice(0, 5).map((value) => clip(value, 500))
+            : [],
+          executionContinued: clip(page?.executionContinued),
+          runningThroughout: clip(page?.runningThroughout),
+          beforeStatus: clip(page?.beforeRun?.status, 80),
+          afterStatus: clip(page?.afterRun?.status, 80),
+          beforeSeq: clip(page?.beforeRun?.lastEventSeq, 80),
+          afterSeq: clip(page?.afterRun?.lastEventSeq, 80),
+        })),
+      };
+    });
+  } catch (cause) {
+    diagnostic.summaryReadError = clip(cause.message);
+  }
+  console.error('PERF_FAILURE ' + JSON.stringify(diagnostic));
+}
+
+test('measurement failure diagnostics preserve the error and expose bounded raw failure details', async () => {
+  const output = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-perf-diagnostics-'));
+  const cause = new Error('original cause');
+  const error = Object.assign(new Error('original failure', { cause }), {
+    code: 1,
+    signal: 'SIGTERM',
+    killed: true,
+    stdout: 'DO_NOT_PRINT_STDOUT',
+  });
+  const original = { message: error.message, stack: error.stack, ...error };
+  const page = {
+    name: 'events',
+    errors: ['x'.repeat(3000)],
+    executionContinued: false,
+    runningThroughout: false,
+    beforeRun: { status: 'succeeded', lastEventSeq: 12010 },
+    afterRun: { status: 'succeeded', lastEventSeq: 12010 },
+  };
+  await writeFile(
+    join(output, 'raw-summary.json'),
+    JSON.stringify({
+      correctnessFailure: true,
+      profileError: 'x'.repeat(3000),
+      cases: Array.from({ length: 7 }, () => ({
+        correctness: { ok: true, browserOk: false, visits: { data: 'DO_NOT_PRINT_NESTED' } },
+        browser: { pages: Array.from({ length: 7 }, () => page) },
+      })),
+      cpuProfile: 'DO_NOT_PRINT_PROFILE',
+      samples: ['DO_NOT_PRINT_SAMPLES'],
+      dataDir: 'DO_NOT_PRINT_STORE',
+    }),
+  );
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    await reportMeasurementFailure(error, output);
+    const message = log.mock.calls[0][0];
+    const diagnostic = JSON.parse(message.slice('PERF_FAILURE '.length));
+    assert.deepEqual([diagnostic.code, diagnostic.signal, diagnostic.killed], [1, 'SIGTERM', true]);
+    assert.equal(diagnostic.flags.correctnessFailure, true);
+    assert.equal(diagnostic.cases[0].correctness.browserOk, false);
+    assert.deepEqual(diagnostic.cases[0].pages[0], {
+      name: 'events',
+      errorCount: 1,
+      errors: ['x'.repeat(500) + ' [truncated]'],
+      executionContinued: false,
+      runningThroughout: false,
+      beforeStatus: 'succeeded',
+      afterStatus: 'succeeded',
+      beforeSeq: 12010,
+      afterSeq: 12010,
+    });
+    assert.equal(diagnostic.caseCount, 7);
+    assert.equal(diagnostic.cases.length, 5);
+    assert.equal(diagnostic.cases[0].pageCount, 7);
+    assert.equal(diagnostic.cases[0].pages.length, 5);
+    assert.ok(diagnostic.flags.profileError.length < 2100);
+    assert.ok(!message.includes('DO_NOT_PRINT'));
+    await reportMeasurementFailure(error, join(output, 'absent'));
+    assert.match(log.mock.calls[1][0], /summaryReadError.*ENOENT/);
+    await writeFile(join(output, 'raw-summary.json'), '{');
+    await reportMeasurementFailure(error, output);
+    assert.match(log.mock.calls[2][0], /summaryReadError/);
+    assert.deepEqual({ message: error.message, stack: error.stack, ...error }, original);
+    assert.equal(error.cause, cause);
+  } finally {
+    log.mockRestore();
+  }
+});
 
 test('measurement helpers count nested files, tolerate absent stores and reject invalid HTTP responses', async () => {
   const root = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-perf-helpers-'));
@@ -122,12 +250,19 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
     const env = Object.fromEntries(
       Object.entries(process.env).filter(([key]) => !key.startsWith('GG_')),
     );
-    const result = await exec(process.execPath, args, {
-      env,
-      windowsHide: true,
-      timeout: 180_000,
-      maxBuffer: 16 * 1024 * 1024,
-    });
+    let result;
+    try {
+      result = await exec(process.execPath, args, {
+        env,
+        windowsHide: true,
+        timeout: 180_000,
+        maxBuffer: 16 * 1024 * 1024,
+      });
+    } catch (error) {
+      // Diagnostic read/log failures must never replace the original subprocess failure.
+      await reportMeasurementFailure(error, output).catch(() => {});
+      throw error;
+    }
     assert.match(result.stdout, /PERF /);
     const summary = JSON.parse(await readFile(join(output, 'raw-summary.json'), 'utf8'));
     const compact = JSON.parse(await readFile(join(output, 'summary.json'), 'utf8'));
