@@ -349,18 +349,23 @@ function candidates(
 ): number[] {
   const region = expand(bounds([start, end]), 192);
   const nearby = index.query(expand(region, padding), true);
-  return [
-    ...new Set([
-      ...nearby.flatMap((b) => (b.handle ? [] : [b.top - padding, b.bottom + padding])),
-      ...reservations
-        .nearbyLanes(region)
-        .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
-    ]),
-  ]
-    .filter((y) => y >= region.top && y <= region.bottom)
-    .map((y) => ({ y, travel: verticalTravel(start.y, end.y, y) }))
-    .sort((a, b) => a.travel - b.travel || b.y - a.y)
-    .map(({ y }) => y);
+  const values = new Set<number>();
+  for (const box of nearby) {
+    if (box.handle) continue;
+    values.add(box.top - padding);
+    values.add(box.bottom + padding);
+  }
+  for (const lane of reservations.nearbyLanes(region)) {
+    values.add(lane.y - LANE_GAP);
+    values.add(lane.y + LANE_GAP);
+    values.add(lane.y - 12);
+    values.add(lane.y + 12);
+  }
+  const ranked: { y: number; travel: number }[] = [];
+  for (const y of values)
+    if (y >= region.top && y <= region.bottom)
+      ranked.push({ y, travel: verticalTravel(start.y, end.y, y) });
+  return ranked.sort((a, b) => a.travel - b.travel || b.y - a.y).map(({ y }) => y);
 }
 
 function routeOne(
@@ -873,6 +878,16 @@ function reservationDifference(before: RoutedEdge, after: RoutedEdge): Box[] {
   return [...old.filter((b) => !nextKeys.has(key(b))), ...next.filter((b) => !oldKeys.has(key(b)))];
 }
 
+/** Check changed reservations without copying the whole map for every candidate route. */
+function reservationsIntersect(
+  reads: Footprint,
+  changes: ReadonlyMap<string, readonly Box[]>,
+): boolean {
+  for (const boxes of changes.values())
+    for (const box of boxes) if (reads.intersects(box)) return true;
+  return false;
+}
+
 /** Whether any segment enters a card's body (handles do not count: a route may touch a port). */
 function crossesAnyCard(
   points: readonly Point[],
@@ -1023,9 +1038,7 @@ export function createRoutingPlan(
       !changed.has(item.source.id) &&
       !changed.has(item.target.id) &&
       !changedBoxes.some((b) => reads.boxes.intersects(b)) &&
-      ![...reservationChanges.values()].some((boxes) =>
-        boxes.some((b) => reads.reservations.intersects(b)),
-      )
+      !reservationsIntersect(reads.reservations, reservationChanges)
     ) {
       routes.set(id, before);
       dependencies.set(id, reads);
