@@ -1,0 +1,257 @@
+$ pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:migrations && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:templates && pnpm check:licenses && pnpm check:docs && pnpm check:contrast
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing ae3d9869b424b8e5
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: cache miss, executing 279a5c932b2679d8
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache miss, executing 78adef6c156ca21b
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache miss, executing 8772ab9580992ece
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: cache miss, executing 8d38972d1c894ce1
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing 33c82e7156b88937
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: cache miss, executing 3e460528c5e6f98b
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing 1afaa6f693b45081
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache miss, executing 9b49d0c67c1d4747
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing 829b2c56410c0058
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 1558c13225a340fb
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: cache miss, executing a6e75cbd3d250d82
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: cache miss, executing aaf4115ac821a0a7
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: cache miss, executing 4c947b46fc68e99a
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: cache miss, executing 725c74df02a5e310
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: cache miss, executing 0dc8e067889ea721
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: cache miss, executing 68fe2a4aa61f139e
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: cache miss, executing 2d72bec90de7bfce
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: cache miss, executing d32bc1a6175a7d0e
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 7e7adebec83e5988
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    2m50.407s 
+
+$ turbo run lint
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/tooling:lint: cache miss, executing f6b6d7a6fbeb4a3e
+@graphgoblin/tooling:lint: $ eslint scripts/*.mjs perf/*.mjs *.mjs
+@graphgoblin/contracts:lint: cache miss, executing 66be80da167ac7a7
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/domain:lint: cache miss, executing 77aec3dfce972ffe
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: cache miss, executing e48277d22b7ae4e3
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/infrastructure:lint: cache miss, executing e070b9b27e7756e1
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: cache miss, executing 24e717e0870fcb63
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: cache miss, executing c854f649e678a5ca
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/api:lint: cache miss, executing 68e5a6fcbb5a936e
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/api-client:lint: cache miss, executing 01cea95cd967e2c6
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/web:lint: cache miss, executing c95bd2c6487e0960
+@graphgoblin/web:lint: $ eslint .
+@graphgoblin/mcp:lint: cache miss, executing 8b2eb6a09ca33620
+@graphgoblin/mcp:lint: $ eslint .
+@graphgoblin/plugin-codex:lint: cache miss, executing f4877e2cf254c130
+@graphgoblin/plugin-codex:lint: $ eslint .
+
+ Tasks:    12 successful, 12 total
+Cached:    0 cached, 12 total
+  Time:    4m9.455s 
+
+$ node tooling/scripts/check-layers.mjs
+Layer rules: OK
+$ node tooling/scripts/check-migrations.mjs
+Drizzle generation is a no-op.
+$ node tooling/scripts/check-design-tokens.mjs
+Design tokens: OK (185 files checked)
+$ depcruise packages apps --config .dependency-cruiser.cjs
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+  warn no-orphans: apps/web/e2e/shutdown.config.ts
+  warn no-orphans: apps/api/scripts/check-templates.d.mts
+
+x 3 dependency violations (0 errors, 3 warnings). 1072 modules, 4536 dependencies cruised.
+
+$ turbo run test:coverage
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running test:coverage in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs ae3d9869b424b8e5
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:test:coverage: cache miss, executing 01571e25a9df0899
+@graphgoblin/contracts:test:coverage: $ vitest run --coverage
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261107-models/GraphGoblin/packages/contracts
+@graphgoblin/contracts:test:coverage:       Coverage enabled with v8
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  Test Files  23 passed (23)
+@graphgoblin/contracts:test:coverage:       Tests  286 passed (286)
+@graphgoblin/contracts:test:coverage:    Start at  17:03:07
+@graphgoblin/contracts:test:coverage:    Duration  18.83s (import 74%, tests 10%, worker 8%, transform 8%)
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:     Isolate  23 workers spawned · ~347ms startup each (spawn + environment, per file)
+@graphgoblin/contracts:test:coverage:              at least ~7.64s faster with isolate: false — reuses workers across files instead of one per file
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  % Coverage report from v8
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/contracts:test:coverage: Statements   : 99.52% ( 419/421 )
+@graphgoblin/contracts:test:coverage: Branches     : 95% ( 190/200 )
+@graphgoblin/contracts:test:coverage: Functions    : 100% ( 59/59 )
+@graphgoblin/contracts:test:coverage: Lines        : 99.75% ( 405/406 )
+@graphgoblin/contracts:test:coverage: ================================================================================
+@graphgoblin/domain:build: cache hit, replaying logs 78adef6c156ca21b
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:test:coverage: cache miss, executing 4ead72fb0864282e
+@graphgoblin/domain:test:coverage: $ vitest run --coverage
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261107-models/GraphGoblin/packages/domain
+@graphgoblin/domain:test:coverage:       Coverage enabled with v8
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:  Test Files  25 passed (25)
+@graphgoblin/domain:test:coverage:       Tests  328 passed (328)
+@graphgoblin/domain:test:coverage:    Start at  17:03:28
+@graphgoblin/domain:test:coverage:    Duration  25.55s (tests 47%, import 42%, transform 6%, worker 5%)
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:      Import  77 modules were evaluated 175 times · 7.17s total, 42% of tracked time
+@graphgoblin/domain:test:coverage:              ~4.01s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+@graphgoblin/domain:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:  % Coverage report from v8
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/domain:test:coverage: Statements   : 98.97% ( 1159/1171 )
+@graphgoblin/domain:test:coverage: Branches     : 97.66% ( 964/987 )
+@graphgoblin/domain:test:coverage: Functions    : 97.28% ( 215/221 )
+@graphgoblin/domain:test:coverage: Lines        : 99.4% ( 994/1000 )
+@graphgoblin/domain:test:coverage: ================================================================================
+@graphgoblin/engine:build: cache hit, replaying logs 8d38972d1c894ce1
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:test:coverage: cache miss, executing 2269765b569eed41
+@graphgoblin/engine:test:coverage: $ vitest run --coverage
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261107-models/GraphGoblin/packages/engine
+@graphgoblin/engine:test:coverage:       Coverage enabled with v8
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage: {"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:  Test Files  62 passed (62)
+@graphgoblin/engine:test:coverage:       Tests  1763 passed (1763)
+@graphgoblin/engine:test:coverage:    Start at  17:03:56
+@graphgoblin/engine:test:coverage:    Duration  183.79s (tests 68%, import 28%, transform 2%, worker 1%)
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:      Import  153 modules were evaluated 236 times · 44.20s total, 28% of tracked time
+@graphgoblin/engine:test:coverage:              ~15.55s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+@graphgoblin/engine:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage:  % Coverage report from v8
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/engine:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/engine:test:coverage: Statements   : 95.65% ( 3585/3748 )
+@graphgoblin/engine:test:coverage: Branches     : 91.2% ( 2975/3262 )
+@graphgoblin/engine:test:coverage: Functions    : 97.76% ( 656/671 )
+@graphgoblin/engine:test:coverage: Lines        : 96.94% ( 3268/3371 )
+@graphgoblin/engine:test:coverage: ================================================================================
+@graphgoblin/adapter-jev:build: cache hit, replaying logs 3e460528c5e6f98b
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache hit, replaying logs 1afaa6f693b45081
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 9b49d0c67c1d4747
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:test:coverage: cache miss, executing e977c1993715d293
+@graphgoblin/infrastructure:test:coverage: $ vitest run --coverage
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261107-models/GraphGoblin/packages/infrastructure
+@graphgoblin/infrastructure:test:coverage:       Coverage enabled with v8
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: {"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+@graphgoblin/infrastructure:test:coverage: ⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: Vitest caught 1 unhandled error during the test run.
+@graphgoblin/infrastructure:test:coverage: This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: ⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/infrastructure:test:coverage: Error: [vitest-pool]: Worker forks emitted error.
+@graphgoblin/infrastructure:test:coverage:  ❯ EventEmitter.onTaskError ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11532:21
+@graphgoblin/infrastructure:test:coverage:  ❯ EventEmitter.emit node:events:519:28
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11007:22
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess.emit node:events:519:28
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: Caused by: Error: Worker exited unexpectedly with exit code 3221225477 during started state while running test file C:/Users/98jak/.codex/worktrees/gg-20261107-models/GraphGoblin/packages/infrastructure/src/sqlite/storage.test.ts
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11005:33
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess.emit node:events:519:28
+@graphgoblin/infrastructure:test:coverage:  ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  Test Files  61 passed (62)
+@graphgoblin/infrastructure:test:coverage:       Tests  871 passed (873)
+@graphgoblin/infrastructure:test:coverage:      Errors  1 error
+@graphgoblin/infrastructure:test:coverage:    Start at  17:07:02
+@graphgoblin/infrastructure:test:coverage:    Duration  298.89s (tests 69%, import 29%, transform 1%, worker 1%)
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:      Import  208 modules were evaluated 263 times · 76.74s total, 29% of tracked time
+@graphgoblin/infrastructure:test:coverage:              ~16.05s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+@graphgoblin/infrastructure:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  % Coverage report from v8
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/infrastructure:test:coverage: Statements   : 94.99% ( 2771/2917 )
+@graphgoblin/infrastructure:test:coverage: Branches     : 92.74% ( 2070/2232 )
+@graphgoblin/infrastructure:test:coverage: Functions    : 96.19% ( 581/604 )
+@graphgoblin/infrastructure:test:coverage: Lines        : 96.79% ( 2477/2559 )
+@graphgoblin/infrastructure:test:coverage: ================================================================================
+@graphgoblin/infrastructure:test:coverage: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/adapter-jev:test:coverage: cache miss, executing 9c4f13addd6a9788
+@graphgoblin/adapter-codex:test:coverage: cache miss, executing 40a3efd5af112eeb
+@graphgoblin/api:build: cache hit, replaying logs aaf4115ac821a0a7
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/infrastructure#test:coverage:  ERROR  command (C:\Users\98jak\.codex\worktrees\gg-20261107-models\GraphGoblin\packages\infrastructure) C:\nvm4w\nodejs\pnpm.cmd run test:coverage exited (1)
+
+ Tasks:    10 successful, 13 total
+Cached:    7 cached, 13 total
+  Time:    8m56.209s 
+Failed:    @graphgoblin/infrastructure#test:coverage
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

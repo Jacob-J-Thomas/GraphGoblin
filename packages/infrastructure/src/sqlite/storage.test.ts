@@ -870,6 +870,7 @@ describe('settings, api keys, model catalog', () => {
       'gpt-6-luna': noneToMax,
       'gpt-6-sol': noneToMax,
       'gpt-6.1-sol': noneToMax,
+      'gpt-6.1-terra': noneToMax,
     });
     for (const entry of entries.filter((m) => m.harness === 'claude'))
       expect(entry.efforts).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
