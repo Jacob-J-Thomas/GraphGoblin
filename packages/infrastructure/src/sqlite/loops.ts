@@ -4,7 +4,12 @@ import type {
   LoopVersionRecord,
   RunRecord,
 } from '@graphgoblin/contracts';
-import { stableStringify, systemChatIssues, systemChatLockedIssues } from '@graphgoblin/domain';
+import {
+  stableHash,
+  stableStringify,
+  systemChatIssues,
+  systemChatLockedIssues,
+} from '@graphgoblin/domain';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
@@ -16,6 +21,7 @@ import { SqliteEventStore } from './events.js';
 import { decodeRunRecord, decodeStoredThread, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
+  settings,
   chatBindings,
   loops,
   runs,
@@ -353,7 +359,11 @@ export class SqliteLoopRepository implements LoopRepository {
    * the loop was read, a new draft version is created instead, so a published version is never
    * modified (ADR-0008).
    */
-  async saveDraft(loopId: string, definition: LoopDefinition): Promise<LoopVersionRecord> {
+  async saveDraft(
+    loopId: string,
+    definition: LoopDefinition,
+    compare?: { ownerId: string; definitionHash: string; voiceConfigRevision: number },
+  ): Promise<LoopVersionRecord> {
     await this.assertSystemDefinition(loopId, definition, true);
     const loop = await this.getLoop(loopId);
     if (!loop) throw new LoopNotFoundError(loopId);
@@ -363,6 +373,36 @@ export class SqliteLoopRepository implements LoopRepository {
     const existingDraftId = loop.draftVersionId;
     let draftId = existingDraftId ?? this.ids.next();
     await this.db.transaction(async (tx) => {
+      if (compare) {
+        const [current] = await tx
+          .select()
+          .from(loops)
+          .where(and(eq(loops.id, loopId), eq(loops.ownerId, compare.ownerId)));
+        const versionId = current?.draftVersionId ?? current?.currentVersionId;
+        const [version] = versionId
+          ? await tx.select().from(loopVersions).where(eq(loopVersions.id, versionId))
+          : [];
+        const [voice] = await tx
+          .select()
+          .from(settings)
+          .where(and(eq(settings.ownerId, compare.ownerId), eq(settings.key, 'chat.voice.v1')));
+        const config: unknown = voice ? JSON.parse(voice.value) : { revision: 0 };
+        if (
+          !current ||
+          !version ||
+          (current.draftVersionId ?? undefined) !== loop.draftVersionId ||
+          (current.currentVersionId ?? undefined) !== loop.currentVersionId ||
+          stableHash(version.definition) !== compare.definitionHash ||
+          !config ||
+          typeof config !== 'object' ||
+          !('revision' in config) ||
+          config.revision !== compare.voiceConfigRevision
+        )
+          throw new SystemChatStorageError(
+            'VOICE_DRAFT_STALE',
+            'The loop or voice configuration changed. Refresh and review a new preview.',
+          );
+      }
       const updated = existingDraftId
         ? await tx
             .update(loopVersions)
@@ -493,7 +533,7 @@ export class SqliteLoopRepository implements LoopRepository {
 
 export class SystemChatStorageError extends Error {
   constructor(
-    readonly code: 'SYSTEM_CHAT_CONTRACT_INVALID' | 'SYSTEM_LOOP_PROTECTED',
+    readonly code: 'SYSTEM_CHAT_CONTRACT_INVALID' | 'SYSTEM_LOOP_PROTECTED' | 'VOICE_DRAFT_STALE',
     message: string,
   ) {
     super(message);

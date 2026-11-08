@@ -6,6 +6,7 @@ import { TemplateError } from '../templates/errors.js';
 import { singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { ScriptRunRequest, ScriptRunResult } from '@graphgoblin/engine';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
+import { ProcessScripts } from '@graphgoblin/infrastructure/process';
 import { SqliteRunRepository } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 
@@ -199,7 +200,33 @@ describe('template API without runtime authority', () => {
     ).toEqual([]);
     expect(app.container.settings).not.toHaveProperty('beforeExecute');
     expect(app.container.settings).not.toHaveProperty('beforeResume');
-    expect(app.container.ports.scripts.constructor.name).toBe('ProcessScripts');
+    const native: ScriptRunResult = {
+      state: 'outcome-uncertain',
+      exitCode: null,
+      terminationUnconfirmed: true,
+      stdout: '',
+      stderr: 'safe-native-diagnostic',
+      stdoutBytes: 0,
+      stderrBytes: 22,
+      timedOut: true,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+    };
+    const delegate = vi.spyOn(ProcessScripts.prototype, 'run').mockResolvedValue(native);
+    const request: ScriptRunRequest = {
+      command: 'ordinary-script',
+      args: ['unchanged'],
+      cwd: app.dataDir,
+      env: { ORDINARY: 'value' },
+      stdin: 'ordinary-input',
+      signal: new AbortController().signal,
+    };
+    try {
+      expect(await app.container.ports.scripts.run(request)).toBe(native);
+      expect(delegate.mock.calls[0]?.[0]).toBe(request);
+    } finally {
+      delegate.mockRestore();
+    }
   });
   it('preserves ordinary script environment, stdin and JSON stdout through the container', async () => {
     app = await createTestApp();

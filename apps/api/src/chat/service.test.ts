@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAT_PROTOCOL, LoopDefinitionSchema, type ChatLoopInput } from '@graphgoblin/contracts';
-import { createSystemChatDefinition } from '@graphgoblin/domain';
+import { createSystemChatDefinition, stableHash } from '@graphgoblin/domain';
 import { ChatAdmissionError, EngineRequestError } from '@graphgoblin/engine';
 import { ChatRepositoryError, type ChatStoredTurn } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
@@ -25,7 +25,7 @@ async function freshConversation() {
 }
 async function admitted(): Promise<ChatStoredTurn> {
   const conversation = await freshConversation();
-  t.harness.script([{ structured: { protocol: CHAT_PROTOCOL, reply: 'Actual reply' } }]);
+  t.harness.script([{ finalText: 'Actual reply' }]);
   const requestId = randomUUID();
   await service.send(auth, conversation.id, {
     requestId,
@@ -306,4 +306,181 @@ it('reports nested readiness from the exact published reference and handles miss
   );
   await t.container.repos.loops.publish(current.loop.id);
   expect((await service.session(auth)).readiness.text.ready).toBe(false);
+});
+
+it('qualifies selected Ollama context metadata during readiness without starting inference', async () => {
+  const { FakeHarness } = await import('@graphgoblin/engine/testing');
+  const ollama = Object.assign(new FakeHarness([], 'ollama'), {
+    contextWindow: vi.fn().mockRejectedValue(
+      Object.assign(new Error('private unqualified metadata'), {
+        code: 'HARNESS_CONTEXT_UNSUPPORTED',
+      }),
+    ),
+  });
+  t.container.ports.harnesses.ollama = ollama;
+  const catalog = await t.container.repos.catalog.list();
+  vi.spyOn(t.container.repos.catalog, 'list').mockResolvedValue([
+    ...catalog,
+    {
+      harness: 'ollama',
+      source: 'harness',
+      model: 'fixture',
+      displayName: 'Fixture',
+      efforts: ['none'],
+      defaultEffort: 'none',
+      enabled: true,
+    },
+  ]);
+  const definition = createSystemChatDefinition({ name: 'Gateway', harness: 'ollama' });
+  const respond = definition.nodes.find((node) => node.id === 'respond');
+  if (respond?.kind === 'inference') {
+    respond.config.model = 'fixture';
+    respond.config.effort = 'none';
+  }
+  const binding = await t.container.repos.chat.getBinding({
+    ownerId: 'local',
+    audienceKey: 'gateway',
+  });
+  await t.container.repos.loops.saveDraft(binding!.loopId, definition);
+  await t.container.repos.loops.publish(binding!.loopId, definition);
+  expect((await service.readiness(auth)).readiness.text).toMatchObject({
+    ready: false,
+    message: expect.stringContaining('not been qualified'),
+  });
+  expect(ollama.started).toHaveLength(0);
+  expect(ollama.contextWindow.mock.calls[0]?.[0]).toMatchObject({
+    model: 'fixture',
+    turn: { prompt: '' },
+  });
+  ollama.contextWindow.mockRejectedValueOnce(new DOMException('private timeout', 'AbortError'));
+  expect((await service.readiness(auth)).readiness.text).toMatchObject({
+    ready: false,
+    message: expect.stringContaining('connection could not be checked'),
+  });
+  ollama.contextWindow.mockResolvedValue({
+    contextTokens: 4096,
+    outputReserveTokens: 768,
+    profile: 'fixture',
+    fits: () => true,
+  });
+  expect((await service.readiness(auth)).readiness.text.ready).toBe(true);
+  expect(ollama.started).toHaveLength(0);
+});
+
+it('derives a bounded title from the first text without another model call', async () => {
+  const stored = await admitted();
+  const conversation = await t.container.repos.chat.getConversation(
+    { ownerId: 'local', audienceKey: 'gateway' },
+    stored.conversationId,
+  );
+  const before = t.harness.started.length;
+  expect((await service.conversation(auth, conversation!)).title).toBe('User text');
+  expect(t.harness.started.length).toBe(before);
+});
+
+it('projects an actionable safe output limit without raw provider diagnostics', async () => {
+  const stored = await admitted();
+  await t.container.repos.runs.update(stored.runId, {
+    status: 'failed',
+    failure: {
+      code: 'HARNESS_OUTPUT_LIMIT',
+      nodeId: 'respond',
+      message: 'PRIVATE_PROVIDER',
+      resumable: false,
+    },
+  });
+  expect((await service.project(stored)).error).toMatchObject({
+    code: 'HARNESS_OUTPUT_LIMIT',
+    message: expect.stringContaining('reply reached the model output limit'),
+  });
+  expect(JSON.stringify(await service.project(stored))).not.toContain('PRIVATE_PROVIDER');
+});
+
+it('projects fixed voice errors only from the pinned built-in normalizer and prioritizes native safety', async () => {
+  const stored = await admitted();
+  const run = await t.container.repos.runs.get(stored.runId);
+  const pinned = await t.container.repos.loops.getVersion(run!.versionId);
+  const preview = await t.container.voice.preview(
+    'local',
+    run!.loopId,
+    stableHash(pinned!.definition),
+    0,
+  );
+  const built = { ...pinned!, definition: preview.definition };
+  const get = vi.spyOn(t.container.repos.loops, 'getVersion');
+  const audio = {
+    ...stored,
+    input: { kind: 'audio' as const, audioId: t.container.ports.ids.next() },
+  };
+  await t.container.repos.runs.update(run!.id, {
+    status: 'failed',
+    failure: {
+      code: 'SCRIPT_EXIT_CODE',
+      nodeId: 'chat-normalize',
+      message: 'PRIVATE',
+      resumable: true,
+      details: { stderr: 'VOICE_CLOUD_RATE_LIMITED' },
+    },
+  });
+  get.mockResolvedValueOnce(built);
+  expect((await service.project(audio)).error).toMatchObject({
+    code: 'VOICE_CLOUD_RATE_LIMITED',
+    message: expect.stringContaining('rate limited'),
+  });
+  const custom = structuredClone(built);
+  const node = custom.definition.nodes.find((value) => value.id === 'chat-normalize');
+  if (node?.kind === 'script') node.config.command = 'authored-command';
+  get.mockResolvedValueOnce(custom);
+  expect((await service.project(audio)).error?.code).toBe('CHAT_AUDIO_NORMALIZATION_INVALID');
+  await t.container.repos.runs.update(run!.id, {
+    failure: {
+      code: 'SCRIPT_EXIT_CODE',
+      nodeId: 'chat-normalize',
+      message: 'PRIVATE',
+      resumable: true,
+      details: { stderr: 'VOICE_NO_SPEECH\nPRIVATE' },
+    },
+  });
+  get.mockResolvedValueOnce(built);
+  expect((await service.project(audio)).error?.code).toBe('CHAT_AUDIO_NORMALIZATION_INVALID');
+  await t.container.repos.runs.update(run!.id, {
+    failure: {
+      code: 'SCRIPT_TERMINATION_UNCONFIRMED',
+      nodeId: 'chat-normalize',
+      message: 'PRIVATE',
+      resumable: false,
+      details: { stderr: 'VOICE_LOCAL_FAILED' },
+    },
+  });
+  get.mockResolvedValueOnce(built);
+  expect((await service.project(audio)).error).toMatchObject({
+    code: 'SCRIPT_TERMINATION_UNCONFIRMED',
+    message: expect.stringContaining('stop it before restarting'),
+  });
+});
+
+it('addresses publication recovery to device users through the owner', async () => {
+  const current = await service.published(auth);
+  const preview = await t.container.voice.preview(
+    'local',
+    current.loop.id,
+    stableHash(current.version.definition),
+    0,
+  );
+  await t.container.repos.loops.saveDraft(current.loop.id, preview.definition);
+  await t.container.repos.loops.publish(current.loop.id, preview.definition);
+  await t.container.voice.update('local', {
+    expectedRevision: 0,
+    enabled: false,
+    mode: 'cloud',
+    cloudFallbackAllowed: false,
+  });
+  const published = await service.published(auth);
+  vi.spyOn(service, 'published').mockResolvedValue(published);
+  const state = await service.readiness({ ...auth, deviceId: t.container.ports.ids.next() });
+  expect(state.readiness.audio).toMatchObject({
+    ready: false,
+    code: 'VOICE_PUBLISH_REQUIRED',
+    message: expect.stringContaining('Ask the owner'),
+  });
 });

@@ -50,10 +50,19 @@ function config(defaults: HarnessDefaults) {
 }
 
 function adapters(offline = false) {
-  const ollama = new FakeHarness([{ structured: fixtureReply }], 'ollama');
+  const ollama = Object.assign(new FakeHarness([{ finalText: fixtureReply.reply }], 'ollama'), {
+    contextWindow: vi.fn(() =>
+      Promise.resolve({
+        contextTokens: 4096,
+        outputReserveTokens: 1024,
+        profile: 'qualified-fixture',
+        fits: () => true,
+      }),
+    ),
+  });
   if (offline) ollama.preflightResult = readinessFailure('ollama', 'transport');
-  const codex = new FakeHarness([{ structured: fixtureReply }]);
-  const claude = new FakeHarness([{ structured: fixtureReply }], 'claude');
+  const codex = new FakeHarness([{ finalText: fixtureReply.reply }]);
+  const claude = new FakeHarness([{ finalText: fixtureReply.reply }], 'claude');
   const service = {
     harness: ollama,
     view: vi.fn(() =>
@@ -131,9 +140,13 @@ async function assertBlocked(expectedCode: string) {
 async function seedAvailable(repository: SqliteOllamaRepository, model = exactModel) {
   const at = container!.ports.clock.now().toISOString();
   const current = await repository.read({ enabled: true, baseUrl: origin });
-  const detected = discoveredModel(model, 'fixture-digest', current.connection.revision, at, {
-    capabilities: ['completion'],
-  });
+  // This fixture simulates a complete metadata/profile qualification, not a capability-only scan.
+  const detected = {
+    ...discoveredModel(model, 'fixture-digest', current.connection.revision, at, {
+      capabilities: ['completion'],
+    }),
+    contextProfile: 'ollama-0.32.15/qwen35-gpt2/single-user-v1',
+  };
   expect(await repository.reconcile(current.connection.revision, at, [detected])).toBe(true);
   return { at, revision: current.connection.revision };
 }
@@ -177,6 +190,7 @@ describe('dynamic Ollama process-default startup admission', () => {
   it.each([
     ['missing', 'MODEL_UNAVAILABLE'],
     ['unsupported', 'MODEL_UNAVAILABLE'],
+    ['unqualified', 'MODEL_UNAVAILABLE'],
     ['unsupported-effort', 'EFFORT_UNSUPPORTED'],
     ['disabled', 'MODEL_DISABLED'],
     ['offline', 'HARNESS_READINESS_TRANSPORT'],
@@ -200,6 +214,12 @@ describe('dynamic Ollama process-default startup admission', () => {
         await repository.reconcile(revision, at, [
           discoveredModel(exactModel, 'unsupported-digest', revision, at, {
             capabilities: ['embedding'],
+          }),
+        ]);
+      if (state === 'unqualified')
+        await repository.reconcile(revision, at, [
+          discoveredModel(exactModel, 'old-capability-only', revision, at, {
+            capabilities: ['completion'],
           }),
         ]);
       if (state === 'disabled')

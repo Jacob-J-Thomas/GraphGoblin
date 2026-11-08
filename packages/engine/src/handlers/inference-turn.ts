@@ -6,7 +6,10 @@ import { RunFailureError } from '../errors.js';
 type Turn = Extract<RunEvent, { type: 'harness.turn' }>;
 type FreshSession = NonNullable<Extract<RunEvent, { type: 'run.resumed' }>['freshSession']>;
 export interface PendingTurn {
-  turn: Pick<Turn, 'visitId' | 'turnId' | 'prompt' | 'promptKind' | 'resumeSessionId' | 'harness'>;
+  turn: Pick<
+    Turn,
+    'visitId' | 'turnId' | 'prompt' | 'promptKind' | 'resumeSessionId' | 'harness' | 'context'
+  >;
   submission: PromptProvenance['submission'];
   sessionId?: string;
   accepted: boolean;
@@ -84,6 +87,7 @@ export function visitTurn(
           prompt: event.prompt,
           promptKind: event.promptKind,
           harness: event.harness,
+          ...(event.context ? { context: event.context } : {}),
           ...(event.resumeSessionId ? { resumeSessionId: event.resumeSessionId } : {}),
         },
         submission: 'delivery-uncertain',
@@ -119,6 +123,7 @@ export function provenance(pending: PendingTurn): PromptProvenance {
           retry: {
             harness: pending.turn.harness,
             prompt: pending.turn.prompt,
+            ...(pending.turn.context ? { context: pending.turn.context } : {}),
             ...(pending.turn.resumeSessionId
               ? { resumeSessionId: pending.turn.resumeSessionId }
               : {}),

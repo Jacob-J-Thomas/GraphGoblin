@@ -5,6 +5,7 @@ import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
 import { ChatResponseJsonSchema } from '@graphgoblin/contracts';
 import { OllamaError } from './http.js';
 import { discoveredModel } from './discovery.js';
+import { qwenContextDetail } from './context-fixture.js';
 import { OllamaHarness } from './harness.js';
 import type { OllamaFetch } from './http.js';
 const at = '2026-11-07T00:00:00.000Z';
@@ -30,9 +31,19 @@ const terminal = {
 function response(frames: unknown[]): Response {
   return new Response(frames.map((frame) => JSON.stringify(frame)).join('\n'));
 }
+function contextFetcher(fetcher: OllamaFetch): OllamaFetch {
+  return (url, init) => {
+    const address = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+    if (address.endsWith('/api/show'))
+      return Promise.resolve(new Response(JSON.stringify(qwenContextDetail)));
+    if (address.endsWith('/api/version'))
+      return Promise.resolve(new Response(JSON.stringify({ version: '0.32.15' })));
+    return fetcher(url, init);
+  };
+}
 function harness(fetcher: OllamaFetch = () => Promise.resolve(response([terminal]))) {
   return new OllamaHarness({
-    fetcher,
+    fetcher: contextFetcher(fetcher),
     snapshot: () => Promise.resolve({ connection, models: [model] }),
     sessionId: () => 'ollama:00000000000000000000000000',
   });
@@ -56,6 +67,14 @@ describe('native Ollama harness', () => {
       const chunks: Buffer[] = [];
       incoming.on('data', (chunk) => chunks.push(Buffer.from(chunk as Uint8Array)));
       incoming.on('end', () => {
+        if (incoming.url === '/api/show' || incoming.url === '/api/version') {
+          outgoing.end(
+            JSON.stringify(
+              incoming.url === '/api/show' ? qwenContextDetail : { version: '0.32.15' },
+            ),
+          );
+          return;
+        }
         body = JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>;
         expect(incoming.url).toBe('/api/chat');
         const format = body.format as { properties: { reply: { pattern: string } } };
@@ -125,6 +144,7 @@ describe('native Ollama harness', () => {
         model: model.model,
         messages: [{ role: 'user', content: 'exact prompt' }],
         stream: true,
+        options: { num_ctx: 4096, num_predict: 1024 },
         format: schema,
         think: false,
       });
@@ -145,6 +165,7 @@ describe('native Ollama harness', () => {
       model: model.model,
       messages: [{ role: 'user', content: 'Hello' }],
       stream: true,
+      options: { num_ctx: 4096, num_predict: 1024 },
     });
     expect((await events(session.events)).at(-1)).toEqual({ type: 'turn-complete' });
   });
@@ -249,7 +270,7 @@ describe('native Ollama harness', () => {
       { ...model, enabled: false },
     ]) {
       const invalid = new OllamaHarness({
-        fetcher,
+        fetcher: contextFetcher(fetcher),
         snapshot: () => Promise.resolve({ connection, models: [changedModel] }),
       });
       await expect(
@@ -260,7 +281,7 @@ describe('native Ollama harness', () => {
       ).rejects.toBeDefined();
     }
     const disabled = new OllamaHarness({
-      fetcher,
+      fetcher: contextFetcher(fetcher),
       snapshot: () =>
         Promise.resolve({ connection: { ...connection, enabled: false }, models: [] }),
     });
@@ -269,18 +290,23 @@ describe('native Ollama harness', () => {
     ).rejects.toMatchObject({ code: 'HARNESS_INVALID_CONFIGURATION' });
     expect(fetcher).not.toHaveBeenCalled();
   });
-  it('supports proven named thinking controls exactly', async () => {
+  it('refuses a named thinking variant without its own qualified context profile', async () => {
     const named = discoveredModel(model.model, model.digest, 1, at, {
       capabilities: ['completion', 'thinking'],
       thinking: { values: ['high'] },
     });
     const fetcher = vi.fn<OllamaFetch>(() => Promise.resolve(response([terminal])));
     const native = new OllamaHarness({
-      fetcher,
+      fetcher: contextFetcher(fetcher),
       snapshot: () => Promise.resolve({ connection, models: [named] }),
     });
-    await native.start({ ...request, effort: 'high' }, new AbortController().signal).result;
-    expect(JSON.parse(bodyText(fetcher.mock.calls[0]?.[1]?.body)).think).toBe('high');
+    await expect(
+      native.start({ ...request, effort: 'high' }, new AbortController().signal).result,
+    ).rejects.toMatchObject({
+      code: 'HARNESS_CONTEXT_UNSUPPORTED',
+      submission: 'definitely-not-submitted',
+    });
+    expect(fetcher).not.toHaveBeenCalled();
   });
   it('cancels before dispatch, while connecting and while streaming', async () => {
     const already = new AbortController();
@@ -321,7 +347,7 @@ describe('native Ollama harness', () => {
     const fetcher = vi.fn<OllamaFetch>(() => Promise.resolve(response([terminal])));
     const guarded = new OllamaHarness({
       snapshot: () => Promise.resolve({ connection, models: [model] }),
-      fetcher,
+      fetcher: contextFetcher(fetcher),
       guard: () =>
         Promise.resolve({
           signal: owner.signal,
@@ -340,7 +366,7 @@ describe('native Ollama harness', () => {
     const streaming = new OllamaHarness({
       snapshot: () => Promise.resolve({ connection, models: [model] }),
       guard: () => Promise.resolve({ signal: activeOwner.signal, check() {} }),
-      fetcher: () =>
+      fetcher: contextFetcher(() =>
         Promise.resolve(
           new Response(
             new ReadableStream({
@@ -360,6 +386,7 @@ describe('native Ollama harness', () => {
             }),
           ),
         ),
+      ),
     });
     const session = streaming.start(request, new AbortController().signal);
     const recorded: HarnessEvent[] = [];

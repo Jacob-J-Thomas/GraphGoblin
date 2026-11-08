@@ -82,21 +82,18 @@ describe('system chat seed', () => {
       expect(inference.config.model).toBeUndefined();
       expect(inference.config.effort).toBeUndefined();
       expect(inference.config.capabilities).toBeUndefined();
-      expect(inference.config.output.schema?.jsonSchema).toEqual(ChatResponseJsonSchema);
+      expect(inference.config.output.capture).toBe('text');
+      expect(inference.config.output.schema).toBeUndefined();
+      expect(inference.config.timeoutSeconds).toBe(300);
       if (harness === 'ollama') {
         expect(inference.config.harnessOptions).toEqual({
           sandbox: 'read-only',
           approval: 'never',
         });
-        expect(inference.config.output.schema?.repair.enabled).toBe(false);
       }
-      expect(inference.config.output.transforms).toEqual([
-        {
-          op: 'set',
-          path: '/vars/chatResponse',
-          value: { kind: 'expression', jsonata: 'lastOutput.value' },
-        },
-      ]);
+      expect(inference.config.output.transforms).toEqual([]);
+      const envelope = def.nodes.find((node) => node.id === 'chat-envelope');
+      expect(envelope?.kind).toBe('mutate');
       const prompt = await renderTemplate(inference.config.prompt.template, {
         trigger: {
           payload: {
@@ -253,21 +250,21 @@ describe('protected system chat boundary', () => {
     for (const returns of ['none', 'lastOutput.value', '"fake"'])
       expect(
         issuesAfter((def) => {
-          const exit = def.nodes[2]!;
+          const exit = def.nodes.find((node) => node.kind === 'exit')!;
           if (exit.kind === 'exit') exit.config.returns = returns;
         }),
       ).toContainEqual(expect.objectContaining({ path: 'config.returns' }));
     for (const destinations of [[], [{ kind: 'caller' as const }, { kind: 'log' as const }]])
       expect(
         issuesAfter((def) => {
-          const exit = def.nodes[2]!;
+          const exit = def.nodes.find((node) => node.kind === 'exit')!;
           if (exit.kind === 'exit') exit.config.destinations = destinations;
         }),
       ).toContainEqual(expect.objectContaining({ path: 'config.destinations' }));
     for (const outcome of ['failure', 'exhausted'] as const) {
       expect(
         issuesAfter((def) => {
-          const exit = def.nodes[2]!;
+          const exit = def.nodes.find((node) => node.kind === 'exit')!;
           if (exit.kind === 'exit') {
             exit.config.outcome = outcome;
             exit.config.returns = 'none';
@@ -276,7 +273,7 @@ describe('protected system chat boundary', () => {
       ).toEqual([]);
       expect(
         issuesAfter((def) => {
-          const exit = def.nodes[2]!;
+          const exit = def.nodes.find((node) => node.kind === 'exit')!;
           if (exit.kind === 'exit') exit.config.outcome = outcome;
         }),
       ).toEqual([]);
@@ -741,7 +738,7 @@ describe('atomic system chat audio edits', () => {
       expect(disabled).toEqual({
         ...before,
         edges: [
-          before.edges[1],
+          ...before.edges.filter((edge) => edge.from.node !== 'chat-input'),
           {
             id: 'chat-text-continuation',
             from: { node: 'chat-input', port: 'out' },
@@ -769,7 +766,7 @@ describe('atomic system chat audio edits', () => {
     expect(disableChatAudio(enabled)).toEqual({
       ...def,
       edges: [
-        def.edges[1],
+        ...def.edges.filter((edge) => edge.from.node !== 'chat-input'),
         {
           id: 'chat-text-continuation',
           from: { node: 'chat-input', port: 'out' },
@@ -913,6 +910,7 @@ describe('atomic system chat audio edits', () => {
       expect(disabled.nodes.map((node) => node.id)).toEqual([
         'chat-input',
         'respond',
+        'chat-envelope',
         'chat-return',
       ]);
       expect(disabled.edges.filter((edge) => edge.from.node === 'chat-input')).toEqual([
@@ -969,6 +967,7 @@ describe('atomic system chat audio edits', () => {
       expect(disabled.nodes.map((node) => node.id)).toEqual([
         'chat-input',
         'respond',
+        'chat-envelope',
         'chat-return',
       ]);
     }
@@ -1008,7 +1007,9 @@ describe('atomic system chat audio edits', () => {
     expect(disabled.nodes.find((node) => node.id === 'authored-action')).toEqual(ordinary);
     expect(disabled.nodes.find((node) => node.id === 'respond')).toEqual(respond);
     expect(disabled.edges.filter((edge) => edge.from.node !== 'chat-input')).toEqual(
-      def.edges.filter((edge) => ['respond', 'authored-action'].includes(edge.from.node)),
+      def.edges.filter((edge) =>
+        ['respond', 'chat-envelope', 'authored-action'].includes(edge.from.node),
+      ),
     );
     expect(disabled.edges.find((edge) => edge.from.node === 'chat-input')?.id).toBe(
       'chat-text-continuation-3',

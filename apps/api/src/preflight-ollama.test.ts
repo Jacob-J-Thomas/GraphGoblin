@@ -63,7 +63,18 @@ function metadata(online = true) {
         JSON.stringify(
           path.endsWith('/api/tags')
             ? { models: [{ model: MODEL, digest: 'sha256:fixture' }] }
-            : { capabilities: ['completion'] },
+            : path.endsWith('/api/version')
+              ? { version: '0.32.15' }
+              : {
+                  capabilities: ['completion'],
+                  template: '{{ .Prompt }}',
+                  model_info: {
+                    'general.architecture': 'qwen35',
+                    'tokenizer.ggml.model': 'gpt2',
+                    'tokenizer.ggml.pre': 'qwen35',
+                    'qwen35.context_length': 262144,
+                  },
+                },
         ),
       ),
     );
@@ -351,6 +362,8 @@ describe('CLI Ollama source resolution is read-only', () => {
         { enabled, baseUrl: 'https://saved.fixture' },
         AT,
       );
+      // Settle this closed-store fixture before hashing; its setup writes can remain in WAL.
+      await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
       handle.close();
       const before = await digestStore();
       const fetcher = metadata();

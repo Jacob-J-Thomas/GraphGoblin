@@ -165,3 +165,8 @@ describe('main', () => {
     }
   }, 30_000);
 });
+
+it('preserves an explicitly empty public URL so pairing cannot silently choose loopback fallback', () => {
+  expect(loadConfig({ GG_PUBLIC_URL: '' }).publicUrl).toBe('');
+  expect(loadConfig({}).publicUrl).toBeUndefined();
+});

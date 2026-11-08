@@ -54,7 +54,7 @@ export function object(value: unknown): value is Record<string, unknown> {
 export async function requestJson(
   fetcher: OllamaFetch,
   baseUrl: string,
-  path: '/api/tags' | '/api/show',
+  path: '/api/tags' | '/api/show' | '/api/version',
   signal: AbortSignal,
   body?: { model: string },
 ): Promise<unknown> {

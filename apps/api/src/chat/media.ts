@@ -33,3 +33,40 @@ export function normalizeChatMediaType(header: string | undefined): string {
   }
   return mimeType === 'audio/x-wav' ? 'audio/wav' : mimeType;
 }
+
+/** The guided preset accepts one canonical uncompressed WAV; no decoder or transcoder is invoked. */
+export function validateCanonicalChatWav(bytes: Uint8Array): { durationSeconds: number } {
+  const invalid = (): never => {
+    throw new ChatError(
+      'CHAT_AUDIO_INVALID_WAV',
+      400,
+      'voice requires 16 kHz mono PCM16 WAV with a complete aligned payload',
+    );
+  };
+  const data = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (
+    data.length < 46 ||
+    data.toString('ascii', 0, 4) !== 'RIFF' ||
+    data.toString('ascii', 8, 12) !== 'WAVE' ||
+    data.readUInt32LE(4) !== data.length - 8
+  )
+    return invalid();
+  if (
+    data.toString('ascii', 12, 16) !== 'fmt ' ||
+    data.readUInt32LE(16) !== 16 ||
+    data.readUInt16LE(20) !== 1 ||
+    data.readUInt16LE(22) !== 1 ||
+    data.readUInt32LE(24) !== 16000 ||
+    data.readUInt32LE(28) !== 32000 ||
+    data.readUInt16LE(32) !== 2 ||
+    data.readUInt16LE(34) !== 16 ||
+    data.toString('ascii', 36, 40) !== 'data'
+  )
+    return invalid();
+  const size = data.readUInt32LE(40);
+  if (!size || size % 2 || size !== data.length - 44) return invalid();
+  const durationSeconds = size / 32000;
+  if (durationSeconds > 120)
+    throw new ChatError('CHAT_AUDIO_TOO_LONG', 413, 'voice drafts can contain at most 120 seconds');
+  return { durationSeconds };
+}

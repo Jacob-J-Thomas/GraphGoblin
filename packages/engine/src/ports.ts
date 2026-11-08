@@ -264,6 +264,16 @@ export type HarnessPreflight = ContractHarnessPreflight;
 export interface HarnessPort {
   readonly id: HarnessId;
   preflight(): Promise<HarnessPreflight>;
+  /** Optional model-specific admission. Checks complete rendered prompts without inference. */
+  contextWindow?(
+    request: HarnessStartRequest,
+    signal: AbortSignal,
+  ): Promise<{
+    contextTokens: number;
+    outputReserveTokens: number;
+    profile: string;
+    fits(prompt: string): boolean;
+  }>;
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession;
   /**
    * Continue an existing session. The request carries the node's full session settings (model,

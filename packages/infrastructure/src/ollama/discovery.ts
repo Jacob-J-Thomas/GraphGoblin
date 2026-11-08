@@ -1,5 +1,6 @@
 import { ModelNameSchema, type Effort, type OllamaConnection } from '@graphgoblin/contracts';
 import { OllamaError, object, requestJson, type OllamaFetch } from './http.js';
+import { contextProfile, contextRuntimeVersion, OLLAMA_CONTEXT_PROFILE } from './context.js';
 import type { OllamaDiscoveredModel } from './types.js';
 
 const NAMED_EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
@@ -101,6 +102,21 @@ export async function discoverOllama(options: {
       'OLLAMA_DISCOVERY_INVALID',
       'Ollama model list contains duplicate identities',
     );
+  if (identities.length === 0) return [];
+  const version = await requestJson(
+    options.fetcher,
+    options.connection.baseUrl,
+    '/api/version',
+    signal,
+  );
+  let supportedRuntime = false;
+  try {
+    contextRuntimeVersion(version);
+    supportedRuntime = true;
+  } catch (error) {
+    if (!(error instanceof OllamaError) || error.code !== 'HARNESS_CONTEXT_UNSUPPORTED')
+      throw error;
+  }
   const results: OllamaDiscoveredModel[] = [];
   let next = 0;
   try {
@@ -114,7 +130,9 @@ export async function discoverOllama(options: {
               entry.model === identity.model &&
               entry.digest === identity.digest &&
               entry.connectionRevision === options.connection.revision &&
-              entry.availability.state !== 'missing',
+              entry.availability.state !== 'missing' &&
+              entry.contextProfile === OLLAMA_CONTEXT_PROFILE &&
+              supportedRuntime,
           );
           if (cached)
             results.push({
@@ -129,15 +147,40 @@ export async function discoverOllama(options: {
               signal,
               { model: identity.model },
             );
-            results.push(
-              discoveredModel(
-                identity.model,
-                identity.digest,
-                options.connection.revision,
-                options.at,
-                detail,
-              ),
+            const entry = discoveredModel(
+              identity.model,
+              identity.digest,
+              options.connection.revision,
+              options.at,
+              detail,
             );
+            let reason: string | undefined;
+            let qualified: string | undefined;
+            try {
+              qualified = contextProfile(detail, version).profile;
+              if (!entry.efforts.includes('none'))
+                reason =
+                  'This supported context profile requires explicit no-thinking mode. Named thinking modes need a separately qualified context profile.';
+            } catch (error) {
+              if (!(error instanceof OllamaError) || error.code !== 'HARNESS_CONTEXT_UNSUPPORTED')
+                throw error;
+              reason = error.message;
+            }
+            const supportsNone = entry.efforts.includes('none');
+            results.push({
+              ...entry,
+              efforts: qualified && supportsNone ? ['none'] : [],
+              defaultEffort: 'none',
+              thinkingByEffort:
+                qualified && supportsNone && entry.thinkingByEffort.none !== undefined
+                  ? { none: entry.thinkingByEffort.none }
+                  : {},
+              ...(qualified ? { contextProfile: qualified } : {}),
+              availability:
+                entry.availability.state === 'available' && reason
+                  ? { state: 'unsupported', checkedAt: options.at, reason }
+                  : entry.availability,
+            });
           }
         }
       }),

@@ -3,6 +3,8 @@ import type { HarnessStartRequest, Logger } from '@graphgoblin/engine';
 import { openMemoryDatabase } from '../sqlite/db.js';
 import { SqliteOllamaRepository } from '../sqlite/ollama.js';
 import { SqliteModelCatalog } from '../sqlite/settings.js';
+import { OLLAMA_CONTEXT_PROFILE } from './context.js';
+import { qwenContextDetail } from './context-fixture.js';
 import { discoveredModel } from './discovery.js';
 import { createOllamaServices } from './services.js';
 import type { OllamaFetch } from './http.js';
@@ -12,11 +14,19 @@ const defaults = { enabled: true, baseUrl: 'http://localhost:11434' };
 const clock = { now: () => new Date(at) };
 const logger: Logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 const json = (value: unknown) => new Response(JSON.stringify(value));
+const qualifiedModel = (...args: Parameters<typeof discoveredModel>) => ({
+  ...discoveredModel(...args),
+  contextProfile: OLLAMA_CONTEXT_PROFILE,
+});
 const tags = { models: [{ model: 'namespace/qwen:tag', digest: 'd' }] };
 function fixture(): OllamaFetch {
   return (url) =>
     Promise.resolve(
-      requestUrl(url).endsWith('/api/tags') ? json(tags) : json({ capabilities: ['completion'] }),
+      requestUrl(url).endsWith('/api/tags')
+        ? json(tags)
+        : requestUrl(url).endsWith('/api/version')
+          ? json({ version: '0.32.15' })
+          : json({ ...qwenContextDetail, capabilities: ['completion'] }),
     );
 }
 afterEach(() => {
@@ -35,7 +45,7 @@ describe('Ollama discovery services', () => {
     const fetcher = vi.fn<OllamaFetch>(async (url) => {
       await Promise.resolve();
       if (offline) throw new Error('secret provider details');
-      return requestUrl(url).endsWith('/api/tags') ? first : json({ capabilities: ['completion'] });
+      return requestUrl(url).endsWith('/api/tags') ? first : fixture()(url);
     });
     const service = createOllamaServices({ repository, defaults, clock, logger, fetcher });
     try {
@@ -43,7 +53,7 @@ describe('Ollama discovery services', () => {
       await vi.waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
       release?.(json(tags));
       expect((await pending).map((status) => status.state)).toEqual(['ready', 'ready', 'ready']);
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(fetcher).toHaveBeenCalledTimes(3);
       const catalog = new SqliteModelCatalog(handle.db);
       await catalog.setEnabled('ollama', 'namespace/qwen:tag', false);
       offline = true;
@@ -68,16 +78,16 @@ describe('Ollama discovery services', () => {
       service.start();
       service.start();
       await vi.waitFor(async () => expect((await service.view()).discovery.state).toBe('ready'));
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(fetcher).toHaveBeenCalledTimes(3);
       await vi.advanceTimersByTimeAsync(5 * 60_000);
-      await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
+      await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(5));
       expect(fetcher.mock.calls.every((call) => !requestUrl(call[0]).endsWith('/api/chat'))).toBe(
         true,
       );
       await service.stop();
       await service.stop();
       await vi.advanceTimersByTimeAsync(10 * 60_000);
-      expect(fetcher).toHaveBeenCalledTimes(3);
+      expect(fetcher).toHaveBeenCalledTimes(5);
     } finally {
       await service.stop();
       handle.close();
@@ -139,7 +149,7 @@ describe('Ollama discovery services', () => {
           ? old
           : requestUrl(url).endsWith('/api/tags')
             ? json({ models: [{ model: 'new:tag', digest: 'new' }] })
-            : json({ capabilities: ['completion'] }),
+            : fixture()(url),
       ),
     );
     const service = createOllamaServices({ repository, defaults, clock, logger, fetcher });
@@ -225,13 +235,14 @@ describe('Ollama discovery services', () => {
     const repository = new SqliteOllamaRepository(handle.db);
     await repository.read(defaults);
     await repository.reconcile(1, at, [
-      discoveredModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
+      qualifiedModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
     ]);
-    const fetcher = vi.fn<OllamaFetch>(
-      (_url, init) =>
-        new Promise<Response>((_resolve, reject) =>
-          init?.signal?.addEventListener('abort', () => reject(new Error('aborted'))),
-        ),
+    const fetcher = vi.fn<OllamaFetch>((url, init) =>
+      requestUrl(url).endsWith('/api/show') || requestUrl(url).endsWith('/api/version')
+        ? fixture()(url, init)
+        : new Promise<Response>((_resolve, reject) =>
+            init?.signal?.addEventListener('abort', () => reject(new Error('aborted'))),
+          ),
     );
     const service = createOllamaServices({ repository, defaults, clock, logger, fetcher });
     const request: HarnessStartRequest = {
@@ -245,7 +256,7 @@ describe('Ollama discovery services', () => {
       const turn = service.harness.start(request, new AbortController().signal);
       const preflight = service.harness.preflight();
       const refresh = service.refresh();
-      await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
+      await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(5));
       await service.configure({ ...defaults, enabled: false });
       await expect(turn.result).rejects.toMatchObject({
         code: 'HARNESS_TURN_FAILED',
@@ -270,7 +281,7 @@ describe('Ollama discovery services', () => {
         submission: 'definitely-not-submitted',
         message: 'Ollama is off in Settings',
       });
-      expect(fetcher).toHaveBeenCalledTimes(3);
+      expect(fetcher).toHaveBeenCalledTimes(5);
     } finally {
       await service.stop();
       handle.close();
@@ -282,7 +293,7 @@ describe('Ollama discovery services', () => {
       const real = new SqliteOllamaRepository(handle.db);
       await real.read(defaults);
       await real.reconcile(1, at, [
-        discoveredModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
+        qualifiedModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
       ]);
       let release: (() => void) | undefined;
       const gate = new Promise<void>((resolve) => {
@@ -339,7 +350,7 @@ describe('Ollama discovery services', () => {
     const repository = new SqliteOllamaRepository(handle.db);
     await repository.read(defaults);
     await repository.reconcile(1, at, [
-      discoveredModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
+      qualifiedModel('namespace/qwen:tag', 'd', 1, at, { capabilities: ['completion'] }),
     ]);
     let stream: ReadableStreamDefaultController<Uint8Array> | undefined;
     let requestSignal: AbortSignal | null | undefined;

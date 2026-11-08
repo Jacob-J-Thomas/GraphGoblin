@@ -153,7 +153,7 @@ export function loadConfig(
     shutdownGraceMs: e.GG_SHUTDOWN_GRACE_MS,
     hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,
-    ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
+    ...(e.GG_PUBLIC_URL !== undefined ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
     ...(e.GG_CLAUDE_BINARY ? { claudeBinary: e.GG_CLAUDE_BINARY } : {}),
     ollamaEnabled: e.GG_OLLAMA_ENABLED,

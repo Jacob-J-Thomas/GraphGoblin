@@ -69,6 +69,7 @@ export class SqliteOllamaRepository implements OllamaRepository {
         model: metadata.model,
         digest: metadata.digest,
         connectionRevision: metadata.connectionRevision,
+        ...(metadata.contextProfile ? { contextProfile: metadata.contextProfile } : {}),
         availability: ollamaAvailability(connection, metadata),
         thinkingByEffort: metadata.thinkingByEffort,
         displayName: catalog.displayName,
@@ -147,6 +148,7 @@ export class SqliteOllamaRepository implements OllamaRepository {
           model: entry.model,
           digest: entry.digest,
           connectionRevision: revision,
+          contextProfile: entry.contextProfile ?? null,
           availability: { ...entry.availability, checkedAt: at },
           thinkingByEffort: entry.thinkingByEffort,
         };

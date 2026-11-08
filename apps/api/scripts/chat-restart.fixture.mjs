@@ -9,9 +9,7 @@ import { ProcessScripts } from '@graphgoblin/infrastructure/process';
 // Only inference is scripted. The first process withholds an already-finished Script result,
 // placing the native engine at a known external-effect uncertainty boundary before SIGKILL.
 const nativeScripts = new ProcessScripts();
-const harness = new FakeHarness([
-  { structured: { protocol: 'graphgoblin.chat.v1', reply: 'Exact native fixture reply' } },
-]);
+const harness = new FakeHarness([{ finalText: 'Exact native fixture reply' }]);
 const offset = Number(process.env.CHAT_RESTART_CLOCK_OFFSET_MS ?? 0);
 const container = await createContainer(loadConfig(process.env), {
   harnesses: { codex: harness },

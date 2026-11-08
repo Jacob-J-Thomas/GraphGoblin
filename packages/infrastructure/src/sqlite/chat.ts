@@ -1,5 +1,6 @@
 import type {
   ChatAudioUpload,
+  ChatAudioUploadStatus,
   ChatConversation,
   ChatDevice,
   ChatSendInput,
@@ -26,6 +27,7 @@ import { physicalDirectory } from '../fs/physical-path.js';
 import { insertLoopWithVersion } from './loops.js';
 import {
   chatAudio,
+  chatAudioUploads,
   chatBindings,
   chatConversations,
   chatDevices,
@@ -65,6 +67,9 @@ export class ChatRepositoryError extends Error {
       | 'CHAT_PAIRING_INVALID'
       | 'CHAT_PAIRING_UNAVAILABLE'
       | 'CHAT_BUSY'
+      | 'CHAT_AUDIO_UPLOAD_CONFLICT'
+      | 'CHAT_AUDIO_UPLOAD_IN_PROGRESS'
+      | 'CHAT_AUDIO_UPLOAD_RETIRED'
       | 'CHAT_AUDIO_QUOTA'
       | 'CHAT_AUDIO_EXPIRED'
       | 'CHAT_AUDIO_CONSUMED'
@@ -552,6 +557,82 @@ export class SqliteChatRepository {
       .limit(Math.max(1, Math.min(100, options.limit ?? 100)));
     return rows.map((row) => turnOf(row.turn));
   }
+  async uploadStatus(
+    scope: ChatScope,
+    uploadId: string,
+  ): Promise<ChatAudioUploadStatus | undefined> {
+    const [operation] = await this.db
+      .select()
+      .from(chatAudioUploads)
+      .where(and(scopeWhere(chatAudioUploads, scope), eq(chatAudioUploads.uploadId, uploadId)));
+    if (!operation) return undefined;
+    if (operation.state === 'receiving') return { state: 'receiving' };
+    if (operation.state === 'failed')
+      return { state: 'failed', code: operation.failureCode ?? 'CHAT_AUDIO_UPLOAD_FAILED' };
+    if (operation.state === 'retired') return { state: 'retired' };
+    let audio: ChatAudioMetadata | undefined;
+    try {
+      audio = operation.audioId ? await this.getAudio(scope, operation.audioId) : undefined;
+    } catch {
+      return { state: 'retired' };
+    }
+    if (!audio || audio.expiresAt <= this.now()) return { state: 'retired' };
+    return {
+      state: 'ready',
+      audio: {
+        id: audio.id,
+        mimeType: audio.mimeType,
+        bytes: audio.bytes,
+        expiresAt: audio.expiresAt,
+      },
+    };
+  }
+  async beginUpload(
+    scope: ChatScope,
+    uploadId: string,
+    digest: string,
+  ): Promise<ChatAudioUploadStatus | undefined> {
+    const inserted = await this.db
+      .insert(chatAudioUploads)
+      .values({ ...scope, uploadId, declaredDigest: digest, state: 'receiving' })
+      .onConflictDoNothing()
+      .returning();
+    if (inserted.length) return undefined;
+    const [existing] = await this.db
+      .select()
+      .from(chatAudioUploads)
+      .where(and(scopeWhere(chatAudioUploads, scope), eq(chatAudioUploads.uploadId, uploadId)));
+    if (existing?.declaredDigest !== digest)
+      throw new ChatRepositoryError(
+        'CHAT_AUDIO_UPLOAD_CONFLICT',
+        'Upload identity already names different audio',
+      );
+    return this.uploadStatus(scope, uploadId);
+  }
+  async finishUpload(scope: ChatScope, uploadId: string, audioId: string): Promise<void> {
+    await this.db
+      .update(chatAudioUploads)
+      .set({ state: 'ready', audioId })
+      .where(
+        and(
+          scopeWhere(chatAudioUploads, scope),
+          eq(chatAudioUploads.uploadId, uploadId),
+          eq(chatAudioUploads.state, 'receiving'),
+        ),
+      );
+  }
+  async failUpload(scope: ChatScope, uploadId: string, code: string): Promise<void> {
+    await this.db
+      .update(chatAudioUploads)
+      .set({ state: 'failed', failureCode: code })
+      .where(
+        and(
+          scopeWhere(chatAudioUploads, scope),
+          eq(chatAudioUploads.uploadId, uploadId),
+          eq(chatAudioUploads.state, 'receiving'),
+        ),
+      );
+  }
   async reserveAudio(scope: ChatScope): Promise<string> {
     const now = this.now(),
       id = this.ids.next(),
@@ -666,6 +747,10 @@ export class SqliteChatRepository {
   /** At boot all reservations are abandoned; committed files are protected until expiry/history deletion. */
   async recoverAudioReservations(): Promise<void> {
     await this.db
+      .update(chatAudioUploads)
+      .set({ state: 'failed', failureCode: 'CHAT_AUDIO_UPLOAD_INTERRUPTED' })
+      .where(eq(chatAudioUploads.state, 'receiving'));
+    await this.db
       .update(chatAudio)
       .set({ state: 'pending-delete' })
       .where(eq(chatAudio.state, 'reserved'));
@@ -703,6 +788,10 @@ export class SqliteChatRepository {
   }
   /** Ack exact-ID filesystem deletion only after it succeeded. */
   async audioDeleted(id: string): Promise<void> {
+    await this.db
+      .update(chatAudioUploads)
+      .set({ state: 'retired' })
+      .where(eq(chatAudioUploads.audioId, id));
     await this.db
       .delete(chatAudio)
       .where(and(eq(chatAudio.id, id), eq(chatAudio.state, 'pending-delete')));
@@ -818,6 +907,11 @@ export async function checkChatAdmission(tx: SqliteTransaction, input: RunAdmiss
   const publicInput = canonical.data.input;
   if (turn.input.kind === 'text' && stableStringify(publicInput) !== stableStringify(turn.input))
     throw new ChatAdmissionError('CHAT_REQUEST_CONFLICT', 'Canonical input changed');
+  if (
+    turn.input.kind === 'audio' &&
+    (publicInput.kind !== 'audio' || turn.input.caption !== publicInput.caption)
+  )
+    throw new ChatAdmissionError('CHAT_REQUEST_CONFLICT', 'Canonical audio caption changed');
   const scope = { ownerId: input.run.ownerId, audienceKey: turn.audienceKey };
   const [conversation] = await tx
     .select()

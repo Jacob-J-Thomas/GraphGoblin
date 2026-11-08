@@ -81,3 +81,23 @@ it('applies missing/termination overrides before explicit submission and the acc
     mapHarnessFailure({ submission: 'session-missing' }, undefined, 'infer', 'codex').failure.code,
   ).toBe('HARNESS_SESSION_MISSING');
 });
+
+it.each([
+  ['HARNESS_CONTEXT_LIMIT', 'INFERENCE_CONTEXT_LIMIT'],
+  ['HARNESS_CONTEXT_UNSUPPORTED', 'INFERENCE_CONTEXT_UNSUPPORTED'],
+])('maps %s as an actionable pinned refusal without allowing replay', (code, expected) => {
+  const mapped = mapHarnessFailure(
+    {
+      code,
+      message: 'Context admission refused',
+      retriable: true,
+      submission: 'definitely-not-submitted',
+    },
+    undefined,
+    'respond',
+    'ollama',
+  );
+  expect(mapped.failure.code).toBe(expected);
+  expect(mapped.failure.options.resumable).toBe(false);
+  expect(mapped.submission).toBe('definitely-not-submitted');
+});

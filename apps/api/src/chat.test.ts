@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -23,6 +23,35 @@ afterEach(async () => {
 });
 const headers = (token: string) => ({ authorization: `Bearer ${token}` });
 const response = (reply: string) => ({ protocol: CHAT_PROTOCOL, reply });
+function uploadAudio(payload: Buffer, contentType: string) {
+  return t.app.inject({
+    method: 'POST',
+    url: '/chat/audio',
+    headers: {
+      'content-type': contentType,
+      'idempotency-key': randomUUID(),
+      'x-content-sha256': createHash('sha256').update(payload).digest('hex'),
+    },
+    payload,
+  });
+}
+function canonicalWav(): Buffer {
+  const bytes = Buffer.alloc(46);
+  bytes.write('RIFF', 0);
+  bytes.writeUInt32LE(bytes.length - 8, 4);
+  bytes.write('WAVEfmt ', 8);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(16_000, 24);
+  bytes.writeUInt32LE(32_000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write('data', 36);
+  bytes.writeUInt32LE(2, 40);
+  bytes.writeInt16LE(1024, 44);
+  return bytes;
+}
 async function conversation(token?: string): Promise<string> {
   const result = await t.app.inject({
     method: 'POST',
@@ -117,10 +146,7 @@ describe('native workflow chat', () => {
     });
     expect(session.headers['cache-control']).toBe('no-store');
     const id = await conversation();
-    t.harness.script([
-      { structured: response('Exact native reply') },
-      { structured: response('Second actual reply') },
-    ]);
+    t.harness.script([{ finalText: 'Exact native reply' }, { finalText: 'Second actual reply' }]);
     const requestId = randomUUID();
     const [first, concurrent] = await Promise.all([
       send(id, 'Hello', requestId),
@@ -270,12 +296,7 @@ describe('native workflow chat', () => {
       payload: {},
     });
     expect(missingCancel.statusCode).toBe(404);
-    const upload = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/webm' },
-      payload: Buffer.from('bytes'),
-    });
+    const upload = await uploadAudio(Buffer.from('bytes'), 'audio/webm');
     expect(upload.json().code).toBe('CHAT_AUDIO_UNAVAILABLE');
     expect(
       (await t.app.inject({ method: 'POST', url: '/chat/pairings', payload: {} })).json().code,
@@ -284,7 +305,7 @@ describe('native workflow chat', () => {
 
   it('keeps active turns single-file and cancels only through native run commands', async () => {
     t = await createTestApp();
-    t.harness.script([{ structured: response('late'), delayMs: 2000 }]);
+    t.harness.script([{ finalText: 'late', delayMs: 2000 }]);
     const id = await conversation();
     const first = await send(id);
     const active = first.json<ChatTurn>();
@@ -332,7 +353,7 @@ describe('isolated device authorization and enrollment', () => {
     const aConversation = await conversation(a.token);
     const bConversation = await conversation(b.token);
     expect(aConversation).not.toBe(bConversation);
-    t.harness.script([{ structured: response('For Kitchen only') }]);
+    t.harness.script([{ finalText: 'For Kitchen only' }]);
     const sent = await send(aConversation, 'kitchen', randomUUID(), a.token);
     expect(sent.statusCode, sent.body).toBe(202);
     await t.idle();
@@ -343,11 +364,25 @@ describe('isolated device authorization and enrollment', () => {
       '/settings',
       '/api-keys',
       '/chat/devices',
+      '/chat/voice/config',
+      '/chat/voice/loops',
+      `/chat/voice/probes/${randomUUID()}`,
+      `/chat/voice/installs/${randomUUID()}`,
       '/chat/unknown',
       '/healthz',
     ]) {
       const result = await t.app.inject({ url, headers: headers(a.token) });
       expect(result.statusCode, url).toBe(403);
+    }
+    for (const [method, url] of [
+      ['PUT', '/chat/voice/config'],
+      ['POST', '/chat/voice/probe'],
+      ['POST', '/chat/voice/install'],
+      ['POST', '/chat/voice/preview'],
+      ['POST', '/chat/voice/stage'],
+    ] as const) {
+      const result = await t.app.inject({ method, url, payload: {}, headers: headers(a.token) });
+      expect(result.statusCode, `${method} ${url}`).toBe(403);
     }
     for (const url of [
       `/chat/conversations/${aConversation}/turns`,
@@ -580,20 +615,18 @@ describe('workflow audio transport and projection', () => {
     t = await createTestApp();
     await audioDefinition();
     const session = (await t.app.inject('/chat/session')).json<ChatSession>();
-    expect(session.readiness.audio).toEqual({ ready: true, message: 'Configured by loop' });
-    const bytes = Buffer.from('actual fixture transcript');
-    const upload = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/webm;codecs=opus' },
-      payload: bytes,
+    expect(session.readiness.audio).toMatchObject({
+      ready: true,
+      message: expect.stringContaining('typed captions'),
     });
+    const bytes = Buffer.from('actual fixture transcript');
+    const upload = await uploadAudio(bytes, 'audio/webm;codecs=opus');
     expect(upload.statusCode, upload.body).toBe(201);
     expect(upload.body).not.toContain('path');
     const audioId = upload.json<{ id: string }>().id;
     expect(await readFile(t.container.chatAudio.resolve(audioId))).toEqual(bytes);
     const id = await conversation();
-    t.harness.script([{ structured: response('Workflow heard the audio') }]);
+    t.harness.script([{ finalText: 'Workflow heard the audio' }]);
     const requestId = randomUUID();
     const sent = await t.app.inject({
       method: 'POST',
@@ -608,7 +641,7 @@ describe('workflow audio transport and projection', () => {
       response: response('Workflow heard the audio'),
     });
     expect(turn.body).not.toContain(t.dataDir);
-    t.harness.script([{ structured: response('Typed text passed through') }]);
+    t.harness.script([{ finalText: 'Typed text passed through' }]);
     const typed = await send(id, 'Typed after audio');
     expect(typed.statusCode, typed.body).toBe(202);
     await t.idle();
@@ -639,34 +672,15 @@ describe('workflow audio transport and projection', () => {
       'audio/webm; codecs=evil',
       'audio/webm;evil=x',
     ]) {
-      const result = await t.app.inject({
-        method: 'POST',
-        url: '/chat/audio',
-        headers: { 'content-type': type },
-        payload: Buffer.from('x'),
-      });
+      const result = await uploadAudio(Buffer.from('x'), type);
       expect(result.json().code, result.body).toBe('CHAT_MEDIA_UNSUPPORTED');
     }
-    const empty = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/wav' },
-      payload: Buffer.alloc(0),
-    });
+    const empty = await uploadAudio(Buffer.alloc(0), 'audio/wav');
     expect(empty.json().code).toBe('CHAT_AUDIO_EMPTY');
-    const large = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/wav' },
-      payload: Buffer.alloc(10 * 1024 * 1024 + 1),
-    });
+    const large = await uploadAudio(Buffer.alloc(10 * 1024 * 1024 + 1), 'audio/wav');
     expect(large.json().code).toBe('CHAT_AUDIO_TOO_LARGE');
-    const uploaded = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/x-wav' },
-      payload: Buffer.from('x'),
-    });
+    const uploaded = await uploadAudio(canonicalWav(), 'audio/x-wav');
+    expect(uploaded.statusCode, uploaded.body).toBe(201);
     expect(uploaded.json().mimeType).toBe('audio/wav');
     const audioId = uploaded.json<{ id: string }>().id;
     expect(
@@ -678,12 +692,8 @@ describe('workflow audio transport and projection', () => {
     expect(
       (await readdir(t.dataDir + '/chat-audio')).filter((name) => name.endsWith('.audio')),
     ).toHaveLength(0);
-    const expired = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/ogg' },
-      payload: Buffer.from('x'),
-    });
+    const expired = await uploadAudio(Buffer.from('x'), 'audio/ogg');
+    expect(expired.statusCode, expired.body).toBe(201);
     t.clock.advance(60 * 60_000 + 1);
     const id = await conversation();
     const sent = await t.app.inject({
@@ -709,14 +719,10 @@ describe('workflow audio transport and projection', () => {
   it('stops malformed normalization before inference and suppresses an assistant response', async () => {
     t = await createTestApp();
     await audioDefinition(true);
-    const upload = await t.app.inject({
-      method: 'POST',
-      url: '/chat/audio',
-      headers: { 'content-type': 'audio/mp4' },
-      payload: Buffer.from('x'),
-    });
+    const upload = await uploadAudio(Buffer.from('x'), 'audio/mp4');
+    expect(upload.statusCode, upload.body).toBe(201);
     const id = await conversation();
-    t.harness.script([{ structured: response('Must be suppressed') }]);
+    t.harness.script([{ finalText: 'Must be suppressed' }]);
     const sent = await t.app.inject({
       method: 'POST',
       url: `/chat/conversations/${id}/turns`,
@@ -746,38 +752,15 @@ describe('workflow audio transport and projection', () => {
       new Error('PRIVATE_STREAM_PATH'),
     ]) {
       write.mockRejectedValueOnce(error);
-      const upload = await t.app.inject({
-        method: 'POST',
-        url: '/chat/audio',
-        headers: { 'content-type': 'audio/flac' },
-        payload: Buffer.from('x'),
-      });
+      const upload = await uploadAudio(Buffer.from('x'), 'audio/flac');
       expect(upload.statusCode).toBe(
         error instanceof ChatAudioStoreError ? (error.code === 'too_large' ? 413 : 507) : 500,
       );
       expect(upload.body).not.toMatch(/PRIVATE_ENOSPC_PATH|PRIVATE_STREAM_PATH/);
     }
     for (let i = 0; i < 3; i++)
-      expect(
-        (
-          await t.app.inject({
-            method: 'POST',
-            url: '/chat/audio',
-            headers: { 'content-type': 'audio/flac' },
-            payload: Buffer.from('x'),
-          })
-        ).statusCode,
-      ).toBe(201);
-    expect(
-      (
-        await t.app.inject({
-          method: 'POST',
-          url: '/chat/audio',
-          headers: { 'content-type': 'audio/flac' },
-          payload: Buffer.from('x'),
-        })
-      ).statusCode,
-    ).toBe(429);
+      expect((await uploadAudio(Buffer.from('x'), 'audio/flac')).statusCode).toBe(201);
+    expect((await uploadAudio(Buffer.from('x'), 'audio/flac')).statusCode).toBe(429);
     const unknown = t.container.ports.ids.next();
     for (let i = 0; i < 30; i++) expect((await send(unknown)).statusCode).toBe(404);
     expect((await send(unknown)).statusCode).toBe(429);

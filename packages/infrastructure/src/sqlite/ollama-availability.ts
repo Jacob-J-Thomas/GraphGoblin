@@ -1,3 +1,4 @@
+import { OLLAMA_CONTEXT_PROFILE } from '../ollama/context.js';
 import type { ModelCatalogAvailability } from '@graphgoblin/contracts';
 import type { modelDiscovery, ollamaConnection } from './schema.js';
 
@@ -11,5 +12,15 @@ export function ollamaAvailability(
     return { state: 'missing', checkedAt, reason: 'Ollama is off in Settings' };
   if (!connection || !metadata || metadata.connectionRevision !== connection.revision)
     return { state: 'missing', checkedAt, reason: 'Not yet listed at the new address' };
+  if (
+    metadata.availability.state === 'available' &&
+    metadata.contextProfile !== OLLAMA_CONTEXT_PROFILE
+  )
+    return {
+      state: 'unsupported',
+      checkedAt,
+      reason:
+        'Context capacity is unverified for the current Ollama support policy. Refresh models to qualify this model/runtime.',
+    };
   return metadata.availability;
 }

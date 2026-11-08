@@ -1,3 +1,4 @@
+import { VoiceService, VoiceScripts } from './chat/voice-service.js';
 import { ShutdownController, type ShutdownAction } from './shutdown.js';
 import { existsSync } from 'node:fs';
 import {
@@ -117,6 +118,7 @@ export interface ContainerOverrides {
 export interface Container {
   ollama: OllamaServices;
   chatAudio: ChatAudioStore;
+  voice: VoiceService;
   historyCleanup: HistoryCleanup;
   templates: { catalog: TemplateCatalog };
   config: ApiConfig;
@@ -342,6 +344,7 @@ export async function createContainer(
       clock,
       logger,
     );
+    const processScripts = overrides.scripts ?? new ProcessScripts();
     const ports: EnginePorts = {
       clock,
       ids,
@@ -363,7 +366,7 @@ export async function createContainer(
       deciders: overrides.deciders ?? [new CodexDecider(structured)],
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
-      scripts: overrides.scripts ?? new ProcessScripts(),
+      scripts: processScripts,
       workspace: ownedResources.workspace,
       timers,
       probes: overrides.probes ?? new HttpProbes(),
@@ -374,6 +377,16 @@ export async function createContainer(
       artifacts: ownedResources.artifacts,
       secrets: ownerSecrets,
     };
+    const voice = new VoiceService(
+      {
+        config,
+        masterKey,
+        repos: { settings: settingsRepo, secretsFor, loops, chat, runs },
+        ports,
+      },
+      processScripts,
+    );
+    ports.scripts = new VoiceScripts(processScripts, voice);
     const templateCatalog = new TemplateCatalog(
       overrides.templateCatalogRoot ??
         fileURLToPath(
@@ -417,6 +430,7 @@ export async function createContainer(
     });
 
     const prepareShutdown = (): void => {
+      voice.stop();
       void stopOllama().catch(() => logger.warn({}, 'Ollama discovery could not stop cleanly'));
       void historyCleanup.stop();
       admissionClosed = true;
@@ -439,6 +453,7 @@ export async function createContainer(
         clearInterval(audioTimer);
         await audioCleaning?.catch(() => undefined);
         await chatAudio.close();
+        await voice.close();
         await stopOllama();
         await historyCleanup.stop();
         cron.stop();
@@ -485,6 +500,7 @@ export async function createContainer(
     return {
       ollama,
       chatAudio,
+      voice,
       historyCleanup,
       templates,
       config,

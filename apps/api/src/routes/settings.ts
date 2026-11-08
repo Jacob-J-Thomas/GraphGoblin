@@ -56,6 +56,13 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
+      if (Object.keys(request.body).some((key) => key.startsWith('chat.voice.')))
+        return problem(
+          reply,
+          400,
+          'VOICE_SETTING_RESERVED',
+          'Use the guided voice settings flow for voice configuration.',
+        );
       if ('defaultModel' in request.body || 'defaultEffort' in request.body)
         return problem(
           reply,
@@ -107,6 +114,13 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
+      if (request.params.key.startsWith('chat.voice.'))
+        return problem(
+          reply,
+          400,
+          'VOICE_SETTING_RESERVED',
+          'Use the guided voice settings flow for voice configuration.',
+        );
       const deleted = await repos.settings.delete(request.auth.ownerId, request.params.key);
       if (!deleted)
         return problem(reply, 404, 'SETTING_NOT_FOUND', `setting ${request.params.key} not found`);

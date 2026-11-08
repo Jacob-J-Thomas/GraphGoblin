@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { InferenceContextSchema } from './harness.js';
 import { DecisionEvidenceSchema } from './evaluation.js';
 import { WebhookDeliverySchema } from './delivery.js';
 import {
@@ -214,8 +215,9 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     turnId: UlidSchema,
     harness: HarnessIdSchema,
     promptKind: z.enum(['authored', 'repair', 'continuation']),
-    // Exact rendered task, durable before invoking the adapter. No rerender on retry.
+    // Exact rendered task and admission facts, durable before invoking the adapter.
     prompt: z.string(),
+    context: InferenceContextSchema.optional(),
     resumeSessionId: z.string().min(1).max(256).optional(),
   }),
   z.strictObject({
