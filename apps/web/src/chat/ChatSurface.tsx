@@ -1,12 +1,28 @@
-import type { ChatTurn } from '@graphgoblin/contracts';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import type { ChatSendInput, ChatTurn } from '@graphgoblin/contracts';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { Icon } from '../components/icons/index.js';
 import { GoblinMark } from '../components/icons/Logo.js';
 import { PageHeader } from '../components/layout/index.js';
 import { Alert, Button, ConfirmAction, Label, Select } from '../components/ui/index.js';
 import { ChatApiError, type ChatClient } from './client.js';
 import { ChatController, isActiveTurn } from './controller.js';
-import { ChatRecorder, recordingAvailable, supportedChatAudioType } from './recorder.js';
+import { getChatUpdateLocked, setChatSubmissionUnresolved } from '../pwa/chat-update-guard.js';
+import { AudioDraftUpload } from './audio-draft-upload.js';
+import { ChatMarkdown, CopyReply } from './ChatMarkdown.js';
+import {
+  getConversationRecorder,
+  moveConversationRecorder,
+  type VoiceSegment,
+} from './recorder.js';
 
 export interface ChatSurfaceProps {
   client: ChatClient;
@@ -14,9 +30,17 @@ export interface ChatSurfaceProps {
   onAuthenticationError?: () => void;
   owner?: boolean;
   headerActions?: ReactNode;
+  ownerSummary?: (systemLoopId: string) => ReactNode;
+  onSetupVoice?: () => void;
+  sessionRefreshKey?: number;
 }
 const time = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const duration = (milliseconds: number) =>
+  `${Math.floor(milliseconds / 60_000)}:${String(Math.floor(milliseconds / 1000) % 60).padStart(2, '0')}`;
+const nearBottom = () =>
+  document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 120;
+const caption = (input: ChatSendInput) => (input.kind === 'text' ? input.text : input.caption);
 const terminalNotice = (turn: ChatTurn): string => {
   if (turn.error) return `The chat loop failed: ${turn.error.message}`;
   if (turn.runStatus === 'cancelled')
@@ -24,86 +48,69 @@ const terminalNotice = (turn: ChatTurn): string => {
   if (turn.runStatus === 'exhausted') return 'The chat loop hit a limit before replying.';
   return 'The chat loop finished without a usable reply.';
 };
-function Turn({
-  turn,
-  owner,
-  cancelling,
-  retired,
-  onCancel,
-}: {
-  turn: ChatTurn;
-  owner: boolean;
-  cancelling: boolean;
-  retired: boolean;
-  onCancel: () => Promise<void>;
-}) {
-  const active = isActiveTurn(turn) && !retired;
+function Turn({ turn, owner, retired }: { turn: ChatTurn; owner: boolean; retired: boolean }) {
   return (
     <li className="grid gap-5">
       <article className="ml-auto max-w-[min(85%,35rem)] rounded-xl rounded-br-sm border border-default bg-surface-raised px-3.5 py-2.5">
         <p className="text-[15px] leading-normal whitespace-pre-wrap wrap-anywhere">
           <span className="sr-only">You: </span>
-          {turn.input.kind === 'text' ? turn.input.text : (turn.inputTranscript ?? 'Voice message')}
+          {caption(turn.input) ?? 'Voice message'}
         </p>
+        {turn.input.kind === 'audio' ? (
+          <>
+            {turn.input.caption ? <p className="mt-1 text-xs text-subtle">Voice message</p> : null}
+            {turn.inputTranscript ? (
+              <details className="mt-2 text-sm">
+                <summary>Transcript</summary>
+                <p className="mt-2 whitespace-pre-wrap">
+                  {turn.input.kind === 'audio' &&
+                  turn.input.caption &&
+                  turn.inputTranscript.startsWith(`${turn.input.caption}\n\n`)
+                    ? turn.inputTranscript.slice(turn.input.caption.length + 2)
+                    : turn.inputTranscript}
+                </p>
+                {turn.voice?.route ? (
+                  <p className="mt-2 font-mono text-xs text-subtle">
+                    {turn.voice.route === 'local'
+                      ? 'Transcribed on this gateway'
+                      : `Transcribed by ${turn.voice.cloudProvider ?? 'the configured cloud provider'}`}
+                  </p>
+                ) : null}
+              </details>
+            ) : null}
+          </>
+        ) : null}
         <p className="mt-1 text-right font-mono text-xs text-subtle">
           <time dateTime={turn.createdAt}>{time(turn.createdAt)}</time>
         </p>
-        {turn.inputTranscript ? (
-          <p className="mt-1 font-mono text-xs text-subtle">Transcript</p>
-        ) : null}
       </article>
       {turn.runStatus === 'succeeded' && turn.response && !turn.error ? (
         <article
           tabIndex={-1}
           data-chat-reply
-          className="max-w-[40rem] border-l-2 border-default pl-3.5"
+          className="group max-w-[40rem] border-l-2 border-default pl-3.5"
         >
-          <p className="text-[15px] leading-normal whitespace-pre-wrap wrap-anywhere">
-            <span className="sr-only">Reply: </span>
-            {turn.response.reply}
-          </p>
-          <p className="mt-1 font-mono text-xs text-subtle">
-            {owner ? <a href={`/app/runs/${encodeURIComponent(turn.runId)}`}>Open run</a> : null}
-          </p>
-        </article>
-      ) : active ? (
-        <div className="max-w-[40rem] border-l-2 border-accent-strong pl-3.5" aria-busy="true">
-          <p className="text-sm text-muted">
-            <span className="animate-ellipsis">
-              {cancelling
-                ? 'Cancelling'
-                : turn.runStatus === 'queued'
-                  ? 'Queued'
-                  : turn.runStatus === 'paused'
-                    ? owner
-                      ? 'Paused. Open the run for details.'
-                      : 'Paused on the gateway.'
-                    : turn.runStatus === 'waiting'
-                      ? owner
-                        ? 'Waiting. Open the run to see what it needs.'
-                        : 'Waiting on the gateway. Ask its owner if this doesn’t move.'
-                      : 'Working'}
-            </span>
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <span className="sr-only">Reply: </span>
+          <ChatMarkdown text={turn.response.reply} />
+          <div className="mt-1 flex items-center gap-3">
+            <CopyReply text={turn.response.reply} />
+            <time
+              dateTime={turn.createdAt}
+              className="font-mono text-xs text-subtle opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            >
+              {time(turn.createdAt)}
+            </time>
             {owner ? (
-              <a className="text-sm" href={`/app/runs/${encodeURIComponent(turn.runId)}`}>
+              <a
+                className="text-xs text-subtle"
+                href={`/app/runs/${encodeURIComponent(turn.runId)}`}
+              >
                 Open run
               </a>
             ) : null}
-            <ConfirmAction
-              action="cancel-request"
-              disabled={cancelling}
-              name="this request"
-              accessibleName="Cancel request"
-              consequences={
-                <p>Stops this request if it’s still running. Anything it already did stays done.</p>
-              }
-              onConfirm={onCancel}
-            />
           </div>
-        </div>
-      ) : retired ? null : (
+        </article>
+      ) : isActiveTurn(turn) || retired ? null : (
         <div className="flex flex-wrap items-start gap-2 text-sm">
           <Icon name="alert" className="text-status-warn-fg" />
           <p>
@@ -118,17 +125,73 @@ function Turn({
           </p>
         </div>
       )}
+      {turn.context && turn.context.omittedHistoryPairs > 0 ? (
+        <p className="max-w-[40rem] text-xs text-subtle">
+          {turn.context.omittedHistoryPairs} earlier{' '}
+          {turn.context.omittedHistoryPairs === 1 ? 'pair' : 'pairs'} omitted from the recent
+          context to fit this model.
+        </p>
+      ) : null}
     </li>
   );
 }
-
-/** Shared by the owner shell and Goblin. Credentials and management navigation are explicit props. */
+function Segment({
+  segment,
+  index,
+  disabled,
+  onRemove,
+}: {
+  segment: VoiceSegment;
+  index: number;
+  disabled: boolean;
+  onRemove: () => void;
+}) {
+  const url = useMemo(() => URL.createObjectURL?.(segment.blob), [segment.blob]);
+  useEffect(
+    () => () => {
+      if (url) URL.revokeObjectURL?.(url);
+    },
+    [url],
+  );
+  return (
+    <li className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-default bg-surface-raised px-2 py-1.5">
+      <span className="text-xs whitespace-nowrap">
+        Voice {index + 1} · {duration(segment.durationMs)}
+      </span>
+      {url ? (
+        <audio
+          controls
+          preload="none"
+          src={url}
+          aria-label={`Play recording ${index + 1}`}
+          className="h-8 w-40 max-w-full"
+        />
+      ) : null}
+      <ConfirmAction
+        name={`recording ${index + 1}`}
+        accessibleName={`Remove recording ${index + 1}`}
+        triggerLabel="Remove"
+        disabled={disabled}
+        consequences={<p>This removes only this recording from your voice draft.</p>}
+        onConfirm={() => {
+          onRemove();
+          return Promise.resolve();
+        }}
+        returnFocusTo="chat-message"
+      />
+    </li>
+  );
+}
+/** Shared owner/device experience; credentials and owner setup remain in the composition root. */
 export function ChatSurface({
   client,
   storageKey,
   onAuthenticationError,
   owner = false,
   headerActions,
+  ownerSummary,
+  onSetupVoice,
+  sessionRefreshKey,
 }: ChatSurfaceProps) {
   const authRef = useRef(onAuthenticationError);
   authRef.current = onAuthenticationError;
@@ -136,63 +199,122 @@ export function ChatSurface({
     () => new ChatController(client, storageKey, () => authRef.current?.()),
     [client, storageKey],
   );
-  const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
-  const recorder = useMemo(
-    () => new ChatRecorder(state.session?.limits.maxAudioBytes ?? 10 * 1024 * 1024),
-    [state.session?.limits.maxAudioBytes],
+  const followingRef = useRef(true);
+  const forceFollowRef = useRef(false);
+  const subscribe = useMemo(
+    () => (listener: () => void) =>
+      controller.subscribe(() => {
+        // The DOM still contains the previous list at this point, before React grows it.
+        followingRef.current = forceFollowRef.current || nearBottom();
+        listener();
+      }),
+    [controller],
   );
+  const state = useSyncExternalStore(subscribe, controller.getSnapshot);
+  const recorder = useMemo(() => {
+    const key = `${storageKey}/${state.conversationId ?? 'new'}`;
+    if (state.conversationId && state.sending) moveConversationRecorder(`${storageKey}/new`, key);
+    return getConversationRecorder(key, state.session?.limits.maxAudioBytes ?? 10 * 1024 * 1024);
+  }, [storageKey, state.conversationId, state.sending, state.session?.limits.maxAudioBytes]);
   const recording = useSyncExternalStore(recorder.subscribe, recorder.getSnapshot);
-  const [fileAttachment, setFileAttachment] = useState<Blob>();
-  const attachment = fileAttachment ?? recording.blob;
-  const [elapsed, setElapsed] = useState(0);
-  const [attachmentName, setAttachmentName] = useState('Voice message');
+  const uploadController = useMemo(
+    () => new AudioDraftUpload(client, `${storageKey}.voice-upload`),
+    [client, storageKey],
+  );
+  const uploadState = useSyncExternalStore(
+    uploadController.subscribe,
+    uploadController.getSnapshot,
+  );
+  useEffect(() => {
+    if (uploadController.getSnapshot().saved)
+      void uploadController.check(recorder.getSnapshot().segments.length > 0);
+  }, [uploadController, recorder]);
   const [audioError, setAudioError] = useState<string>();
   const [uploading, setUploading] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [newReply, setNewReply] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [clock, setClock] = useState(() => Date.now());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const sendRef = useRef<HTMLButtonElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLFormElement>(null);
+  const audioProblemRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
   const lastReplyRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    const focused = (event: FocusEvent) => {
-      if (event.target instanceof HTMLElement) lastFocusedRef.current = event.target;
-    };
-    document.addEventListener('focusin', focused);
-    return () => document.removeEventListener('focusin', focused);
-  }, []);
-  useEffect(() => {
-    if (!state.recoveryNotice) return;
-    // An external controller event invalidates this local media and announces its disposition.
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setFileAttachment(undefined);
-    recorder.cancel();
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setAudioError(undefined);
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setAnnouncement(`Problem: ${state.recoveryNotice}`);
-    if (lastFocusedRef.current && !lastFocusedRef.current.isConnected) textareaRef.current?.focus();
-  }, [state.recoveryNotice, recorder]);
+  const busyRef = useRef(false);
+  const submittedRef = useRef<{ recorder: typeof recorder; requestId?: string } | undefined>(
+    undefined,
+  );
+  const revealTail = useCallback(
+    () => endRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' }),
+    [],
+  );
+  const revealConversationTail = useCallback(() => {
+    // Observer/viewport callbacks outlive the render that installed them.
+    const current = controller.getSnapshot();
+    if (current.turns.length > 0 || current.pending) revealTail();
+  }, [controller, revealTail]);
   useEffect(() => {
     controller.start();
     return controller.stop;
   }, [controller]);
-  useEffect(() => () => recorder.cancel(), [recorder]);
+  useEffect(() => {
+    if (sessionRefreshKey !== undefined) void controller.refresh();
+  }, [controller, sessionRefreshKey]);
+  useEffect(
+    () => () => {
+      void recorder.stop().catch(() => undefined);
+    },
+    [recorder],
+  );
   useEffect(() => {
     const hidden = () => {
-      if (document.hidden) recorder.stop();
+      if (document.hidden) void recorder.stop().catch(() => undefined);
     };
     document.addEventListener('visibilitychange', hidden);
     return () => document.removeEventListener('visibilitychange', hidden);
   }, [recorder]);
   useEffect(() => {
-    if (recording.status !== 'recording') return;
-    const timer = setInterval(() => setElapsed((value) => value + 1), 1000);
-    return () => clearInterval(timer);
-  }, [recording.status]);
+    const scroll = () => {
+      followingRef.current = nearBottom();
+      if (followingRef.current) setNewReply(false);
+    };
+    const resize = () => {
+      if (followingRef.current) revealConversationTail();
+    };
+    window.addEventListener('scroll', scroll, { passive: true });
+    window.visualViewport?.addEventListener('resize', resize);
+    const element = composerRef.current;
+    const measure = () => {
+      if (element && endRef.current)
+        endRef.current.style.scrollMarginBottom = `${element.getBoundingClientRect().height + 16}px`;
+      if (followingRef.current) revealConversationTail();
+    };
+    const observer =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    if (element) observer?.observe(element);
+    measure();
+    return () => {
+      window.removeEventListener('scroll', scroll);
+      window.visualViewport?.removeEventListener('resize', resize);
+      observer?.disconnect();
+    };
+  }, [revealConversationTail]);
+  useLayoutEffect(() => {
+    if (state.loading) return;
+    const latest = state.turns
+      .filter((turn) => turn.response && !turn.error && turn.runStatus === 'succeeded')
+      .at(-1);
+    if (!restoredRef.current || forceFollowRef.current || followingRef.current) {
+      revealConversationTail();
+      setNewReply(false);
+    } else if (latest && latest.id !== lastReplyRef.current) setNewReply(true);
+    if (restoredRef.current && latest && latest.id !== lastReplyRef.current)
+      setAnnouncement(`Reply: ${latest.response!.reply.slice(0, 300)}`);
+    lastReplyRef.current = latest?.id;
+    restoredRef.current = true;
+    forceFollowRef.current = false;
+  }, [state.turns, state.loading, state.pending, revealConversationTail]);
   useEffect(() => {
     const element = textareaRef.current;
     if (element) {
@@ -200,100 +322,222 @@ export function ChatSurface({
       element.style.height = `${element.scrollHeight}px`;
     }
   }, [state.draft]);
-  useEffect(() => {
-    if (state.loading) return;
-    const latest = state.turns
-      .filter((turn) => turn.response && !turn.error && turn.runStatus === 'succeeded')
-      .at(-1);
-    const nearBottom =
-      document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 120;
-    if (!restoredRef.current || nearBottom)
-      endRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
-    else if (latest?.id !== lastReplyRef.current) setNewReply(true);
-    if (restoredRef.current && latest && latest.id !== lastReplyRef.current)
-      setAnnouncement(`Reply: ${latest.response!.reply.slice(0, 300)}`);
-    lastReplyRef.current = latest?.id;
-    restoredRef.current = true;
-  }, [state.turns, state.loading]);
-  const active = state.turns.some(
+  const activeTurn = state.turns.find(
     (turn) => isActiveTurn(turn) && !state.retiredRequestIds.includes(turn.requestId),
   );
-  const recordingBusy = recording.status === 'recording' || recording.status === 'requesting';
-  const reason = state.authenticationFailed
-    ? 'This chat needs authorization. Pair again or check your gateway access.'
+  useEffect(() => {
+    if (!activeTurn && recording.status !== 'recording') return;
+    const timer = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [activeTurn, recording.status]);
+  useEffect(() => {
+    const frozen = submittedRef.current;
+    const audioId = uploadController.getSnapshot().saved?.audio?.id;
+    if (
+      audioId &&
+      state.turns.some((turn) => turn.input.kind === 'audio' && turn.input.audioId === audioId)
+    ) {
+      recorder.discard();
+      uploadController.clear();
+    }
+    if (!frozen) return;
+    const admitted = state.turns.find((turn) => turn.requestId === frozen.requestId);
+    if (admitted) {
+      frozen.recorder.discard();
+      uploadController.clear();
+      submittedRef.current = undefined;
+      textareaRef.current?.focus();
+    } else if (frozen.requestId && !state.pending && !state.sending) {
+      frozen.recorder.thaw();
+      submittedRef.current = undefined;
+    }
+  }, [state.turns, state.pending, state.sending, uploadController, recorder]);
+  const resetConversationAnnouncement = () => {
+    setAnnouncement('');
+    setNewReply(false);
+    restoredRef.current = false;
+    lastReplyRef.current = undefined;
+  };
+  const newConversation = () => {
+    const current = controller.getSnapshot();
+    if (current.pending || current.sending || current.retryBlocked) return;
+    resetConversationAnnouncement();
+    void controller.newConversation();
+  };
+  const selectConversation = (conversationId: string) => {
+    const current = controller.getSnapshot();
+    if (current.pending || current.sending || current.retryBlocked) return;
+    resetConversationAnnouncement();
+    void controller.selectConversation(conversationId);
+  };
+  const captureBusy = ['requesting', 'recording', 'finalizing'].includes(recording.status);
+  const uploadUncertain = ['checking', 'uncertain'].includes(uploadState.phase);
+  const unresolved =
+    Boolean(state.pending) || preparing || uploading || state.sending || uploadUncertain;
+  const submissionUncertain = Boolean(state.pending && !state.sending) || uploadUncertain;
+  const submissionStatus = submissionUncertain
+    ? 'Checking what happened…'
+    : preparing || uploading || state.sending
+      ? 'Sending…'
+      : undefined;
+  const hasVoice =
+    recording.segments.length > 0 || captureBusy || Boolean(uploadState.saved?.audio);
+  const blocked = state.authenticationFailed
+    ? owner
+      ? 'Enter an API key to use Chat.'
+      : 'This device needs to pair with the gateway again.'
     : !state.online
       ? 'You’re offline. Reconnect to send.'
-      : !(attachment ? state.session?.readiness.audio.ready : state.session?.readiness.text.ready)
-        ? ((attachment
-            ? state.session?.readiness.audio.message
-            : state.session?.readiness.text.message) ??
-          (state.loading ? 'Checking Gateway chat…' : 'Chat isn’t ready yet.'))
-        : state.pending || active || state.sending
-          ? 'Wait for this request to finish, or cancel it.'
-          : recordingBusy
-            ? 'Stop recording first.'
-            : uploading
-              ? 'Uploading audio…'
-              : undefined;
-  const audioReason = state.session?.readiness.audio.ready
-    ? undefined
-    : (state.session?.readiness.audio.message ??
-      'Audio is unavailable until a normalizer is configured in the chat loop.');
-  const deviceAudioOff = !owner && state.session?.readiness.audio.code === 'CHAT_AUDIO_UNAVAILABLE';
-  const deviceAudioOffMessage =
-    'Voice messages are off for this device. The gateway owner can set them up.';
-  const announceAudioUnavailable = () => {
-    if (deviceAudioOff) setAnnouncement(deviceAudioOffMessage);
-    else setAudioError(`Voice messages aren’t available here. ${audioReason}`);
-  };
-  const canSend = !reason && Boolean(attachment || state.draft.trim());
+      : submissionStatus
+        ? submissionStatus
+        : activeTurn
+          ? 'Waiting for the current reply. Cancel it to send something else.'
+          : !(hasVoice ? state.session?.readiness.audio.ready : state.session?.readiness.text.ready)
+            ? ((hasVoice
+                ? state.session?.readiness.audio.message
+                : state.session?.readiness.text.message) ??
+              (state.loading ? 'Checking Gateway chat…' : 'Chat isn’t ready yet.'))
+            : undefined;
+  const unavailableVoice = !state.session?.readiness.audio.ready;
+  const voiceOff =
+    state.session?.readiness.audio.code === 'CHAT_AUDIO_UNAVAILABLE' ||
+    /normaliz|voice.*set up/i.test(state.session?.readiness.audio.message ?? '');
+  const audioReason = unavailableVoice
+    ? voiceOff
+      ? owner
+        ? 'Voice isn’t set up yet.'
+        : 'Voice messages are off for this device. The gateway owner can set them up.'
+      : (state.session?.readiness.audio.message ?? 'Checking voice availability…')
+    : undefined;
+  const canSend =
+    !blocked &&
+    uploadState.phase !== 'retired' &&
+    recording.status !== 'requesting' &&
+    !preparing &&
+    Boolean(hasVoice || state.draft.trim());
   const send = async () => {
-    if (!canSend) return;
+    if (!canSend || busyRef.current) return;
+    if (getChatUpdateLocked()) {
+      setAudioError('The app is updating. Try sending again in a moment.');
+      return;
+    }
+    setPreparing(true);
+    setChatSubmissionUnresolved(storageKey, true);
+    busyRef.current = true;
+    forceFollowRef.current = true;
+    followingRef.current = true;
     setAudioError(undefined);
-    if (attachment) {
-      setUploading(true);
-      let audioId: string | undefined;
-      try {
-        const upload = await client.upload(attachment);
-        audioId = upload.id;
-        await controller.send({ kind: 'audio', audioId });
-        if (!controller.getSnapshot().pending) {
-          setFileAttachment(undefined);
-          recorder.cancel();
+    try {
+      if (hasVoice) {
+        let upload = uploadState.saved?.audio;
+        if (!upload) {
+          const frozen = await recorder.freeze();
+          if (!frozen) return;
+          setUploading(true);
+          upload = await uploadController.upload(frozen.blob, state.draft);
         }
-      } catch (error) {
-        if (
-          error instanceof ChatApiError &&
-          error.status === 410 &&
-          ['CHAT_HISTORY_DELETED', 'CHAT_AUDIO_EXPIRED'].includes(error.code)
-        )
-          await controller.unavailable(error);
-        else
-          setAudioError(
-            error instanceof ChatApiError
-              ? error.message
-              : 'Audio could not be uploaded. Check the connection and try again.',
-          );
-      } finally {
-        // Discard only a definite unsent upload. Unknown acknowledgement keeps it for same-ID recovery.
-        if (
-          audioId &&
-          !controller.getSnapshot().recoveryNotice &&
-          !controller.getSnapshot().pending &&
-          !controller
-            .getSnapshot()
-            .turns.some((turn) => turn.input.kind === 'audio' && turn.input.audioId === audioId)
-        )
-          void client.discardAudio(audioId).catch(() => undefined);
-        setUploading(false);
-      }
-    } else await controller.send({ kind: 'text', text: state.draft });
+        if (!upload) {
+          recorder.thaw();
+          return;
+        }
+        submittedRef.current = { recorder };
+        await controller.send(
+          {
+            kind: 'audio',
+            audioId: upload.id,
+            ...(state.draft.trim() ? { caption: state.draft } : {}),
+          },
+          {
+            ...(uploadController.getSnapshot().saved?.pending
+              ? { prepared: uploadController.getSnapshot().saved!.pending! }
+              : {}),
+            onPrepared: uploadController.prepareRequest,
+          },
+        );
+        const snapshot = controller.getSnapshot();
+        const pendingId = snapshot.pending?.request.requestId;
+        const admitted = snapshot.turns.find(
+          (turn) => turn.input.kind === 'audio' && turn.input.audioId === upload.id,
+        );
+        if (admitted) {
+          recorder.discard();
+          uploadController.clear();
+          submittedRef.current = undefined;
+        } else if (pendingId) submittedRef.current = { recorder, requestId: pendingId };
+        else {
+          recorder.thaw();
+          submittedRef.current = undefined;
+        }
+      } else await controller.send({ kind: 'text', text: state.draft });
+      textareaRef.current?.focus();
+      revealTail();
+    } catch (error) {
+      // No replay after ambiguous upload acknowledgement: the operation identity is recovered separately.
+      if (error instanceof ChatApiError && error.status === 410)
+        await controller.unavailable(error);
+      recorder.thaw();
+      setAudioError(
+        error instanceof Error
+          ? error.message
+          : 'Couldn’t send this recording. Your draft is kept.',
+      );
+    } finally {
+      busyRef.current = false;
+      setPreparing(false);
+      setUploading(false);
+      setChatSubmissionUnresolved(storageKey, false);
+    }
+  };
+  const invalidateUploadedDraft = () => {
+    const audio = uploadController.getSnapshot().saved?.audio;
+    if (audio) void client.discardAudio(audio.id).catch(() => undefined);
+    uploadController.clear();
+  };
+  const serverOnlyVoice = Boolean(uploadState.saved?.audio) && !recording.segments.length;
+  const serverOnlyReason =
+    uploadState.phase === 'retired'
+      ? 'Discard the expired upload before recording again.'
+      : 'Send or discard the uploaded recording before recording more.';
+  const toggleRecording = async () => {
+    if (captureBusy) {
+      setAudioError(undefined);
+      await recorder.stop();
+      textareaRef.current?.focus();
+      return;
+    }
+    if (getChatUpdateLocked()) {
+      setAudioError('The app is updating. Try recording again in a moment.');
+      return;
+    }
+    if (activeTurn || unresolved) return;
+    if (uploadController.getSnapshot().saved?.audio && !recorder.getSnapshot().segments.length) {
+      setAnnouncement(serverOnlyReason);
+      return;
+    }
+    if (unavailableVoice) {
+      if (owner && voiceOff && onSetupVoice) onSetupVoice();
+      else setAnnouncement(audioReason ?? 'Voice is unavailable.');
+      return;
+    }
+    setAudioError(undefined);
+    invalidateUploadedDraft();
+    recorder.thaw();
+    await recorder.start();
     textareaRef.current?.focus();
   };
+  useEffect(() => {
+    if (recording.error && recording.errorRecovery !== 'retry' && !audioError && !uploadState.error)
+      return;
+    if (audioError || recording.error || uploadState.error) {
+      const element = audioProblemRef.current;
+      (element?.querySelector<HTMLElement>('button') ?? element)?.focus();
+    }
+  }, [audioError, recording.error, recording.errorRecovery, uploadState.error]);
+  const busyState = recording.status === 'finalizing' ? 'Finalizing recording…' : undefined;
   return (
     <section
       aria-label={owner ? 'Chat' : 'Goblin chat'}
-      className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-[calc(47.5rem+2*var(--space-page))] min-w-0 flex-col px-page pt-page"
+      className="mx-auto flex w-full max-w-[calc(47.5rem+2*var(--space-page))] min-w-0 flex-1 flex-col px-page pt-page"
     >
       {owner ? (
         <PageHeader
@@ -302,12 +546,12 @@ export function ChatSurface({
           actions={
             <>
               {headerActions}
-              {state.turns.length ? (
+              {state.turns.length || state.conversationId ? (
                 <Button
                   size="sm"
                   variant="ghost"
-                  disabled={active || Boolean(state.pending) || state.sending}
-                  onClick={() => void controller.newConversation()}
+                  disabled={Boolean(activeTurn) || unresolved || Boolean(uploadState.saved)}
+                  onClick={newConversation}
                 >
                   New chat
                 </Button>
@@ -325,7 +569,15 @@ export function ChatSurface({
               Answered by{' '}
               <a href={`/app/loops/${encodeURIComponent(state.session.systemLoopId)}/edit`}>
                 Gateway chat
-              </a>
+              </a>{' '}
+              ·{' '}
+              {ownerSummary ? (
+                ownerSummary(state.session.systemLoopId)
+              ) : (
+                <a href={`/app/loops/${encodeURIComponent(state.session.systemLoopId)}/edit`}>
+                  View model and workflow
+                </a>
+              )}
             </>
           ) : (
             'Checking Gateway chat…'
@@ -333,7 +585,8 @@ export function ChatSurface({
         </p>
       ) : null}
       <div className="mt-4 flex items-end gap-2">
-        {state.conversations.length > 1 ? (
+        {state.conversations.length > 1 ||
+        (state.conversations.length > 0 && !state.conversationId) ? (
           <>
             <Label htmlFor="chat-conversation" className="sr-only">
               Conversation
@@ -341,12 +594,16 @@ export function ChatSurface({
             <Select
               id="chat-conversation"
               value={state.conversationId ?? ''}
-              disabled={Boolean(state.pending) || state.sending}
-              onChange={(event) => void controller.selectConversation(event.target.value)}
+              disabled={unresolved || Boolean(uploadState.saved)}
+              onChange={(event) => {
+                selectConversation(event.target.value);
+              }}
             >
+              {!state.conversationId ? <option value="">New chat</option> : null}
               {state.conversations.map((conversation) => (
                 <option key={conversation.id} value={conversation.id}>
-                  {new Date(conversation.createdAt).toLocaleString()}
+                  {conversation.title ?? 'Conversation'} ·{' '}
+                  {new Date(conversation.createdAt).toLocaleDateString()}
                 </option>
               ))}
             </Select>
@@ -356,8 +613,8 @@ export function ChatSurface({
           <Button
             size="sm"
             variant="ghost"
-            disabled={active || Boolean(state.pending)}
-            onClick={() => void controller.newConversation()}
+            disabled={Boolean(activeTurn) || unresolved || Boolean(uploadState.saved)}
+            onClick={newConversation}
           >
             New chat
           </Button>
@@ -365,7 +622,7 @@ export function ChatSurface({
       </div>
       {!state.session && !state.loading ? (
         <p className="my-auto py-16 text-center text-sm text-muted">
-          Your conversation loads when Goblin can reach the gateway.
+          Your conversation loads when {owner ? 'GraphGoblin' : 'Goblin'} can reach the gateway.
         </p>
       ) : state.turns.length ? (
         <ol aria-label="Conversation" className="my-6 grid flex-1 content-start gap-5">
@@ -374,13 +631,7 @@ export function ChatSurface({
               key={turn.id}
               turn={turn}
               owner={owner}
-              cancelling={state.cancellingTurnId === turn.id}
               retired={state.retiredRequestIds.includes(turn.requestId)}
-              onCancel={async () => {
-                await controller.cancel(turn.id);
-                const error = controller.getSnapshot().error;
-                if (error) throw new Error(`Couldn’t cancel: ${error}`);
-              }}
             />
           ))}
         </ol>
@@ -391,7 +642,7 @@ export function ChatSurface({
           {state.session?.readiness.text.ready ? (
             <p className="max-w-80 text-sm text-muted">
               {state.session.readiness.audio.ready
-                ? 'Type it, say it, or attach a voice memo. The goblin doesn’t bite. Much.'
+                ? 'Type it or say it. The goblin doesn’t bite. Much.'
                 : 'Type it and send it. The goblin doesn’t bite. Much.'}
             </p>
           ) : null}
@@ -401,55 +652,77 @@ export function ChatSurface({
         <div className="mb-5 grid gap-3">
           <article className="ml-auto max-w-[85%] rounded-xl rounded-br-sm border border-default bg-surface-raised px-3.5 py-2.5">
             <p className="whitespace-pre-wrap wrap-anywhere">
-              {state.pending.request.input.kind === 'text'
-                ? state.pending.request.input.text
-                : 'Voice message'}
-            </p>
-            <p className="font-mono text-xs text-subtle">
-              {state.sending ? 'Sending…' : 'Acknowledgement unknown'}
+              {caption(state.pending.request.input) ?? 'Voice message'}
             </p>
           </article>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
-              disabled={state.sending || !state.online}
+              disabled={state.sending || state.checking || !state.online}
               onClick={() => void controller.refresh()}
             >
               Check status
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={
-                state.sending || !state.online || state.authenticationFailed || state.retryBlocked
-              }
-              onClick={() => void controller.retryPending()}
-            >
-              Retry same message
-            </Button>
+            {state.pendingChecked ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={
+                  state.sending || !state.online || state.authenticationFailed || state.retryBlocked
+                }
+                onClick={() => void controller.retryPending()}
+              >
+                Retry same message
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : null}
-      {state.recoveryNotice ? (
-        <div className="mb-5 flex items-start gap-2 text-sm">
-          <Icon name="alert" className="text-status-warn-fg" />
-          <p>
-            <span className="sr-only">Problem: </span>
-            {state.recoveryNotice}
-          </p>
+      {uploadState.phase !== 'idle' && !state.pending ? (
+        <div className="mb-3 text-sm text-muted">
+          {uploadState.phase === 'ready' ? (
+            <p>Your recording reached the gateway. Press Send to submit this message.</p>
+          ) : uploadState.error && uploadState.error !== 'Checking what happened…' ? (
+            <p>{uploadState.error}</p>
+          ) : null}
+          {uploadUncertain ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={uploadState.phase === 'checking' || !state.online}
+              onClick={() =>
+                void uploadController.check(recorder.getSnapshot().segments.length > 0)
+              }
+            >
+              Check upload status
+            </Button>
+          ) : null}
         </div>
+      ) : null}
+      {state.recoveryNotice ? (
+        <p className="mb-5 text-sm">
+          <span className="sr-only">Problem: </span>
+          {state.recoveryNotice}
+        </p>
       ) : null}
       {state.error ? (
         <Alert title="Chat needs attention">
           {state.error}
-          <Button variant="ghost" size="sm" onClick={() => void controller.refresh()}>
-            {state.retryBlocked && !state.pending ? 'Check status' : 'Retry now'}
-          </Button>
+          {state.pending ? null : state.retryBlocked ? (
+            <Button variant="ghost" size="sm" onClick={() => void controller.refresh()}>
+              Check status
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" disabled={!canSend} onClick={() => void send()}>
+              Try again
+            </Button>
+          )}
         </Alert>
       ) : null}
-      <div ref={endRef} />
+      <div ref={endRef} data-chat-tail />
       <form
+        ref={composerRef}
         className="sticky bottom-0 z-10 -mx-page bg-surface-app px-page pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         onSubmit={(event) => {
           event.preventDefault();
@@ -462,8 +735,10 @@ export function ChatSurface({
             variant="outline"
             className="mx-auto mb-2 flex"
             onClick={() => {
-              endRef.current?.scrollIntoView();
-              document.querySelector<HTMLElement>('[data-chat-reply]:last-of-type')?.focus();
+              followingRef.current = true;
+              revealTail();
+              const replies = document.querySelectorAll<HTMLElement>('[data-chat-reply]');
+              replies.item(replies.length - 1)?.focus({ preventScroll: true });
               setNewReply(false);
             }}
           >
@@ -471,80 +746,123 @@ export function ChatSurface({
             New reply
           </Button>
         ) : null}
-        {reason ? (
-          <div id="chat-send-reason" className="mb-2">
-            <Alert tone="warn" className="py-2">
-              {reason}
-            </Alert>
-          </div>
-        ) : null}
-        {attachment ? (
-          <div className="mb-2 flex items-center gap-2 text-sm">
-            <Icon name="mic" />
-            <span className="min-w-0 wrap-anywhere">
-              {attachmentName} · {(attachment.size / 1024 / 1024).toFixed(1)} MB
-            </span>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Remove audio"
-              onClick={() => {
-                setFileAttachment(undefined);
-                recorder.cancel();
-                textareaRef.current?.focus();
-              }}
-            >
-              <Icon name="close" />
-            </Button>
-          </div>
-        ) : null}
-        <div className="flex items-end gap-0.5 rounded-2xl border border-strong bg-surface-field p-1 hover:border-field-hover focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="audio/*,video/webm,video/mp4"
-            hidden
-            onChange={(event) => {
-              const chosen = event.target.files?.[0];
-              event.target.value = '';
-              if (!chosen) return;
-              if (!supportedChatAudioType(chosen.type)) {
-                setAudioError(
-                  'That file isn’t a supported audio type. Try WebM, MP4, MP3, WAV, Ogg or FLAC.',
-                );
-                return;
-              }
-              if (!chosen.size || chosen.size > (state.session?.limits.maxAudioBytes ?? 0)) {
-                setAudioError('That file is empty or too big. Audio must be 10 MiB or smaller.');
-                return;
-              }
-              setFileAttachment(chosen);
-              setAttachmentName(chosen.name);
-              setAudioError(undefined);
-            }}
-          />
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="size-11 rounded-full"
-            aria-disabled={
-              Boolean(audioReason) || recordingBusy || uploading || Boolean(state.pending) || active
-            }
-            aria-label="Attach audio"
-            aria-describedby={audioReason ? 'chat-audio-reason' : undefined}
-            title={audioReason}
-            onClick={() => {
-              if (audioReason) {
-                announceAudioUnavailable();
-                return;
-              }
-              if (!recordingBusy && !uploading && !state.pending && !active)
-                fileRef.current?.click();
-            }}
+        {activeTurn ? (
+          <div
+            className="mb-2 flex flex-wrap items-center gap-3 text-sm text-muted"
+            aria-busy="true"
           >
-            <Icon name="attach" />
-          </Button>
+            <GoblinMark className="size-5 animate-pulse" />
+            <span>
+              {state.cancellingTurnId === activeTurn.id
+                ? 'Cancelling'
+                : activeTurn.runStatus === 'paused'
+                  ? 'Paused on the gateway.'
+                  : activeTurn.runStatus === 'waiting'
+                    ? 'Waiting on the gateway.'
+                    : activeTurn.runStatus === 'queued'
+                      ? 'Queued'
+                      : 'Working…'}{' '}
+              <span className="font-mono">
+                {duration(Math.max(0, clock - Date.parse(activeTurn.createdAt)))}
+              </span>
+            </span>
+            {owner ? (
+              <a href={`/app/runs/${encodeURIComponent(activeTurn.runId)}`}>Open run</a>
+            ) : null}
+            <ConfirmAction
+              action="cancel-request"
+              name="this request"
+              accessibleName="Cancel request"
+              disabled={state.cancellingTurnId === activeTurn.id}
+              consequences={
+                <p>Stops this request if it’s still running. Anything it already did stays done.</p>
+              }
+              onConfirm={async () => {
+                await controller.cancel(activeTurn.id);
+                const error = controller.getSnapshot().error;
+                if (error) throw new Error(`Couldn’t cancel: ${error}`);
+              }}
+            />
+          </div>
+        ) : null}
+        {blocked ? (
+          <div
+            id="chat-send-reason"
+            className="mb-2 text-sm text-muted"
+            role={submissionStatus ? 'status' : undefined}
+          >
+            {blocked}
+            {!activeTurn && !unresolved && !state.authenticationFailed ? (
+              <Button variant="ghost" size="sm" onClick={() => void controller.refresh()}>
+                Check connection
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {!recording.segments.length && uploadState.saved && !state.pending ? (
+          <div className="mb-2 flex items-center gap-2 text-sm">
+            <p>
+              {uploadState.phase === 'retired'
+                ? 'This uploaded recording expired.'
+                : uploadState.saved.audio
+                  ? 'Voice recording ready on the gateway.'
+                  : 'The local recording is unavailable after this app reloaded.'}
+            </p>
+            <ConfirmAction
+              name="voice draft"
+              accessibleName="Discard voice"
+              triggerLabel="Discard voice"
+              disabled={unresolved || state.retryBlocked}
+              consequences={<p>This forgets this voice draft. It does not submit a message.</p>}
+              onConfirm={() => {
+                invalidateUploadedDraft();
+                return Promise.resolve();
+              }}
+              returnFocusTo="chat-message"
+            />
+          </div>
+        ) : null}
+        {recording.segments.length ? (
+          <div className="mb-2 grid gap-2">
+            <ol aria-label="Voice recordings" className="flex flex-wrap gap-2">
+              {recording.segments.map((segment, index) => (
+                <Segment
+                  key={segment.id}
+                  segment={segment}
+                  index={index}
+                  disabled={captureBusy || unresolved}
+                  onRemove={() => {
+                    recorder.thaw();
+                    invalidateUploadedDraft();
+                    recorder.removeSegment(segment.id);
+                  }}
+                />
+              ))}
+            </ol>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-subtle">
+                {duration(recording.totalDurationMs)} / 2:00
+              </span>
+              <ConfirmAction
+                name="voice draft"
+                accessibleName="Discard voice"
+                triggerLabel="Discard voice"
+                disabled={captureBusy || unresolved}
+                consequences={
+                  <p>This removes all recordings in this draft. Your typed caption stays.</p>
+                }
+                onConfirm={async () => {
+                  recorder.discard();
+                  if (uploadState.saved?.audio)
+                    await client.discardAudio(uploadState.saved.audio.id);
+                  uploadController.clear();
+                }}
+                returnFocusTo="chat-message"
+              />
+            </div>
+          </div>
+        ) : null}
+        <div className="flex items-end gap-1 rounded-2xl border border-strong bg-surface-field p-1 hover:border-field-hover focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
           <label htmlFor="chat-message" className="sr-only">
             Message
           </label>
@@ -552,102 +870,178 @@ export function ChatSurface({
             id="chat-message"
             ref={textareaRef}
             rows={1}
+            enterKeyHint="send"
             maxLength={state.session?.limits.maxTextCharacters ?? 16_000}
             value={state.draft}
-            disabled={Boolean(attachment)}
-            placeholder={
-              attachment ? 'Voice message ready. Send it or remove it.' : 'Tell the goblin…'
-            }
-            className="min-h-11 max-h-[min(10rem,30dvh)] min-w-0 flex-1 resize-none bg-transparent px-1.5 py-[11px] text-lg leading-[22px] outline-none placeholder:text-subtle"
+            placeholder="Tell the goblin…"
+            className="min-h-11 max-h-[min(10rem,30dvh)] min-w-0 flex-1 resize-none bg-transparent px-2 py-[11px] text-lg leading-[22px] outline-none placeholder:text-subtle"
             onChange={(event) => controller.setDraft(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+              if (event.key === 'Escape' && captureBusy) {
+                event.preventDefault();
+                void recorder
+                  .stop()
+                  .then(() => textareaRef.current?.focus())
+                  .catch(() => undefined);
+              }
               if (
-                event.ctrlKey ||
-                event.metaKey ||
-                (!event.shiftKey && !window.matchMedia?.('(pointer: coarse)').matches)
+                event.key === 'Enter' &&
+                !event.nativeEvent.isComposing &&
+                event.nativeEvent.keyCode !== 229 &&
+                !event.shiftKey
               ) {
                 event.preventDefault();
                 void send();
               }
             }}
           />
-          <Button
+          <button
             type="button"
-            size="icon"
-            variant="ghost"
-            className={`size-11 rounded-full ${recording.status === 'recording' ? 'bg-danger-subtle text-danger-on-subtle' : ''}`}
+            className={`inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-disabled:opacity-45 ${recording.status === 'recording' ? 'animate-pulse bg-danger-subtle text-danger-on-subtle' : 'bg-transparent text-default hover:bg-surface-hover'}`}
             aria-disabled={
-              Boolean(audioReason) ||
-              Boolean(attachment) ||
-              uploading ||
-              Boolean(state.pending) ||
-              active
+              !captureBusy &&
+              (Boolean(activeTurn) ||
+                unresolved ||
+                serverOnlyVoice ||
+                (unavailableVoice && !(owner && voiceOff)))
             }
             aria-pressed={recording.status === 'recording'}
-            aria-label={recordingBusy ? 'Stop recording' : 'Record voice message'}
-            aria-describedby={audioReason ? 'chat-audio-reason' : undefined}
-            title={
-              audioReason ??
-              (!recordingAvailable()
-                ? 'This browser can’t record. Attach an audio file instead.'
-                : undefined)
+            aria-label={
+              captureBusy
+                ? 'Stop recording'
+                : recording.segments.length
+                  ? 'Add more voice'
+                  : 'Record voice message'
             }
-            onClick={() => {
-              if (audioReason) {
-                announceAudioUnavailable();
-                return;
-              }
-              if (attachment || uploading || state.pending || active) return;
-              if (recordingBusy) {
-                recorder.stop();
-                sendRef.current?.focus();
-              } else {
-                setElapsed(0);
-                setAttachmentName('Voice message');
-                void recorder.start();
-              }
-            }}
+            aria-describedby={
+              captureBusy
+                ? undefined
+                : activeTurn
+                  ? 'chat-send-reason'
+                  : serverOnlyVoice
+                    ? 'chat-voice-draft-reason'
+                    : audioReason
+                      ? 'chat-audio-reason'
+                      : undefined
+            }
+            onClick={() =>
+              void toggleRecording().catch((error: unknown) =>
+                setAudioError(
+                  error instanceof Error ? error.message : 'Recording failed. Your draft is kept.',
+                ),
+              )
+            }
           >
-            <Icon name={recording.status === 'recording' ? 'stop' : 'mic'} />
-          </Button>
-          <Button
-            ref={sendRef}
+            <Icon name={captureBusy ? 'stop' : 'mic'} />
+          </button>
+          <button
             type="submit"
-            size="icon"
-            className="size-11 rounded-full"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-accent-strong bg-accent text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-disabled:opacity-45"
             aria-label="Send message"
             aria-disabled={!canSend}
-            aria-describedby={reason ? 'chat-send-reason' : undefined}
+            aria-describedby={blocked ? 'chat-send-reason' : undefined}
           >
             <Icon name="send" />
-          </Button>
+          </button>
         </div>
-        {recordingBusy ? (
-          <div className="mt-2 flex items-center gap-2 text-sm text-muted">
-            <span className="font-mono">
-              {recording.status === 'requesting'
+        {serverOnlyVoice ? (
+          <p id="chat-voice-draft-reason" className="mt-2 text-xs text-muted">
+            {serverOnlyReason}
+          </p>
+        ) : null}
+        {captureBusy || busyState ? (
+          <p className="mt-2 text-sm text-muted" role="status">
+            {busyState ??
+              (recording.status === 'requesting'
                 ? 'Opening microphone…'
-                : `Recording ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}${elapsed >= 105 ? ' · Recording stops at 2:00.' : ''}`}
-            </span>
-            <Button size="sm" variant="ghost" onClick={recorder.cancel}>
-              Discard
-            </Button>
-          </div>
+                : `Recording ${duration(recording.totalDurationMs)} / 2:00`)}
+          </p>
         ) : null}
         {audioReason ? (
           <p id="chat-audio-reason" className="mt-2 text-xs text-muted">
-            {deviceAudioOff ? deviceAudioOffMessage : audioReason}
+            {audioReason}
+            {owner && voiceOff ? (
+              <>
+                {' '}
+                <button type="button" className="underline" onClick={onSetupVoice}>
+                  Set up voice
+                </button>
+              </>
+            ) : null}
           </p>
-        ) : (
-          <p className="mt-2 font-mono text-xs text-subtle">
-            Audio configured by loop · up to 2 minutes / 10 MiB
+        ) : null}
+        {hasVoice && state.session?.voice ? (
+          <p className="mt-2 text-xs text-muted">
+            {state.session.voice.message}
+            {state.session.voice.route === 'cloud'
+              ? ' This sends your recording to the cloud provider; its billing applies.'
+              : state.session.voice.cloudFallbackAllowed
+                ? ' Cloud fallback is allowed by your gateway settings.'
+                : null}
           </p>
-        )}
-        {audioError || recording.error ? (
-          <p role="alert" className="mt-2 text-sm text-status-bad-fg">
-            {audioError ?? recording.error}
+        ) : null}
+        {hasVoice &&
+        !state.session?.voice &&
+        state.session?.readiness.audio.ready &&
+        state.session.readiness.audio.message ? (
+          <p className="mt-2 text-xs text-muted">{state.session.readiness.audio.message}</p>
+        ) : null}
+        {owner && !unavailableVoice ? (
+          <button
+            type="button"
+            className="mt-2 text-xs text-subtle underline"
+            onClick={onSetupVoice}
+          >
+            Voice settings
+          </button>
+        ) : null}
+        {recording.dirty ? (
+          <p className="mt-2 text-xs text-subtle">
+            Voice drafts stay in this open app; reloading or closing loses them.
           </p>
+        ) : null}
+        {audioError || recording.error || uploadState.error ? (
+          <div
+            ref={audioProblemRef}
+            role="alert"
+            tabIndex={-1}
+            className="mt-2 text-sm text-status-bad-fg"
+          >
+            <p>{audioError ?? recording.error ?? uploadState.error}</p>
+            {uploadState.phase === 'retired' && recording.segments.length ? (
+              <ConfirmAction
+                name="expired upload"
+                accessibleName="Use kept recording"
+                triggerLabel="Use kept recording"
+                disabled={unresolved || state.retryBlocked}
+                consequences={
+                  <p>
+                    This forgets the expired upload and keeps your local recording and caption. Your
+                    next Send is a new message with a new upload. Nothing is submitted now.
+                  </p>
+                }
+                onConfirm={() => {
+                  const current = controller.getSnapshot();
+                  if (current.pending || current.retryBlocked)
+                    throw new Error(
+                      'Check what happened to the previous message before replacing this upload.',
+                    );
+                  recorder.thaw();
+                  invalidateUploadedDraft();
+                  return Promise.resolve();
+                }}
+                returnFocusTo="chat-message"
+              />
+            ) : recording.error && recording.errorRecovery === 'retry' && !serverOnlyVoice ? (
+              <Button size="sm" variant="ghost" onClick={() => void toggleRecording()}>
+                Record again
+              </Button>
+            ) : canSend ? (
+              <Button size="sm" variant="ghost" onClick={() => void send()}>
+                Try again
+              </Button>
+            ) : null}
+          </div>
         ) : null}
       </form>
       <p className="sr-only" role="status" aria-live="polite">

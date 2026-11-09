@@ -29,7 +29,7 @@ function chatPrompt(input: string): string {
     '{{ message.role }}: {{ message.text }}',
     '{% endfor %}',
     `user: {{ ${input} }}`,
-    'Return only the required graphgoblin.chat.v1 response object with your reply.',
+    'Reply with your answer text. Markdown is welcome.',
   ].join('\n');
 }
 export const SYSTEM_CHAT_TEXT_PROMPT = chatPrompt('trigger.payload.input.text');
@@ -139,26 +139,33 @@ export function createSystemChatDefinition(options: {
           ...(options.harness === 'claude' || options.harness === 'ollama'
             ? { harnessOptions: { sandbox: 'read-only', approval: 'never' } }
             : {}),
-          output: {
-            schema: {
-              jsonSchema: structuredClone(ChatResponseJsonSchema),
-              ...(options.harness === 'ollama' ? { repair: { enabled: false } } : {}),
-            },
-            transforms: [
-              {
-                op: 'set',
-                path: '/vars/chatResponse',
-                value: { kind: 'expression', jsonata: 'lastOutput.value' },
+          timeoutSeconds: 300,
+          output: { capture: 'text' },
+        },
+      },
+      {
+        id: 'chat-envelope',
+        kind: 'mutate',
+        label: 'Package chat response',
+        ui: { x: 640, y: 0 },
+        config: {
+          operations: [
+            {
+              op: 'set',
+              path: '/vars/chatResponse',
+              value: {
+                kind: 'expression',
+                jsonata: '{"protocol":"graphgoblin.chat.v1","reply":outputs.respond.value}',
               },
-            ],
-          },
+            },
+          ],
         },
       },
       {
         id: 'chat-return',
         kind: 'exit',
         label: 'Chat response',
-        ui: { x: 640, y: 0 },
+        ui: { x: 960, y: 0 },
         config: {
           outcome: 'success',
           returns: 'vars.chatResponse',
@@ -168,7 +175,12 @@ export function createSystemChatDefinition(options: {
     ],
     edges: [
       { id: 'chat-start', from: { node: 'chat-input', port: 'out' }, to: { node: 'respond' } },
-      { id: 'chat-finish', from: { node: 'respond', port: 'out' }, to: { node: 'chat-return' } },
+      { id: 'chat-package', from: { node: 'respond', port: 'out' }, to: { node: 'chat-envelope' } },
+      {
+        id: 'chat-finish',
+        from: { node: 'chat-envelope', port: 'out' },
+        to: { node: 'chat-return' },
+      },
     ],
   });
 }

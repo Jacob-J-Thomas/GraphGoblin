@@ -5,16 +5,24 @@ import {
   CHAT_MAX_HISTORY_MESSAGES,
   CHAT_MAX_TEXT_CHARACTERS,
   CHAT_PROTOCOL,
+  JsonValueSchema,
+  VoiceConfigSchema,
+  VoiceRouteInfoSchema,
+  VOICE_NORMALIZER_COMMAND,
+  type ChatConversation,
   type ChatHistoryMessage,
   type ChatLoopInput,
   type ChatReadiness,
   type ChatSendRequest,
   type ChatSession,
   type ChatTurn,
+  type VoiceRouteInfo,
+  type RunRecord,
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import {
   DomainError,
+  resolveHarnessModel,
   parseChatNormalizedInput,
   parseChatResult,
   stableStringify,
@@ -23,7 +31,7 @@ import {
 } from '@graphgoblin/domain';
 import { ChatRepositoryError, type ChatStoredTurn } from '@graphgoblin/infrastructure/sqlite';
 import { ChatAdmissionError, EngineRequestError } from '@graphgoblin/engine';
-import type { Container } from '../container.js';
+import { readOwnerDefaults, type Container } from '../container.js';
 import type { AuthContext } from '../plugins/auth.js';
 import { loopPublicationIssues } from '../loop-issues.js';
 import { modelIssues } from '../model-issues.js';
@@ -51,6 +59,76 @@ const blocksChat = (issue: { severity: string; code: string }) =>
   issue.severity === 'error' ||
   /^(?:HARNESS_READINESS_|MODEL_|EFFORT_|CLASSIFIER_)/.test(issue.code);
 
+const voiceFailureMessages: Readonly<Record<string, string>> = {
+  VOICE_NO_SPEECH: 'No speech was recognized. Record again or send text.',
+  VOICE_AUDIO_INVALID:
+    'The recording format is unsupported by this voice preset. Record a new message or send text.',
+  VOICE_LOCAL_MISSING:
+    'The local voice runtime or model is unavailable. Ask the owner to check local voice setup.',
+  VOICE_LOCAL_PATH_INVALID:
+    'The local voice configuration is invalid. Ask the owner to check gateway voice settings.',
+  VOICE_LOCAL_FAILED:
+    'Local voice processing failed. Ask the owner to retest local voice before trying again.',
+  VOICE_CLOUD_RATE_LIMITED:
+    'The cloud transcription provider is rate limited. Wait and check provider billing before an explicit retry.',
+  VOICE_CLOUD_CREDENTIAL_INVALID:
+    'The cloud voice credential was refused. Ask the owner to reconnect voice in gateway settings.',
+  VOICE_CLOUD_OUTCOME_UNCERTAIN:
+    'The cloud provider may have processed this recording. Ask the owner to inspect this turn before retrying; no automatic retry was made.',
+  VOICE_CLOUD_FAILED:
+    'Cloud transcription failed. Ask the owner to check the voice connection and billing before retrying.',
+  VOICE_CLOUD_INVALID_RESPONSE:
+    'The cloud provider returned an invalid transcript. Ask the owner to check the voice connection.',
+  VOICE_NOT_READY:
+    'Voice is unavailable. Ask the owner to check voice setup and run its connection test.',
+  VOICE_CONFIG_CHANGED:
+    'Voice settings changed before transcription. Ask the owner to review and publish this chat loop before trying again.',
+  VOICE_SECRET_MISSING:
+    'The voice credential is missing. Ask the owner to reconnect voice in gateway settings.',
+  VOICE_NORMALIZATION_FAILED:
+    'The recording and caption could not form a valid message. Shorten them or send text.',
+  VOICE_AUDIO_CHANGED:
+    'The saved recording could not be verified. Keep this failed turn and record a new message explicitly.',
+  VOICE_AUDIO_UNAVAILABLE:
+    'The recording is unavailable. Keep this failed turn and record a new message explicitly.',
+};
+const nativeVoiceFailureMessages: Readonly<Record<string, string>> = {
+  SCRIPT_TERMINATION_UNCONFIRMED:
+    'The voice process may still be running. Ask the owner to stop it before restarting this turn.',
+  SCRIPT_OUTCOME_UNCERTAIN:
+    'Voice processing may have started, and its outcome is uncertain. Ask the owner to inspect this turn before retrying.',
+  SCRIPT_TIMEOUT:
+    'Voice processing exceeded its time limit. Ask the owner to retest voice before an explicit retry.',
+  SCRIPT_START_FAILED:
+    'The gateway could not start voice processing. Ask the owner to check local voice setup.',
+};
+function builtinVoiceFailure(
+  run: RunRecord,
+  definition: LoopDefinition,
+): ChatTurn['error'] | undefined {
+  const failure = run.failure;
+  const normalizer = definition.nodes.find((node) => node.id === 'chat-normalize');
+  if (
+    failure?.nodeId !== 'chat-normalize' ||
+    normalizer?.kind !== 'script' ||
+    normalizer.config.command !== VOICE_NORMALIZER_COMMAND
+  )
+    return undefined;
+  const native = nativeVoiceFailureMessages[failure.code];
+  if (native) return { code: failure.code, message: native };
+  if (
+    failure.code !== 'SCRIPT_EXIT_CODE' ||
+    !failure.details ||
+    typeof failure.details !== 'object' ||
+    Array.isArray(failure.details)
+  )
+    return undefined;
+  const code = failure.details.stderr;
+  if (typeof code !== 'string' || !/^VOICE_[A-Z_]{1,64}$/.test(code)) return undefined;
+  const message = voiceFailureMessages[code];
+  return message ? { code, message } : undefined;
+}
+
 /** Chat is a constrained native-run gateway. The native admission transaction owns correctness. */
 export class ChatService {
   constructor(private readonly container: Container) {}
@@ -67,7 +145,9 @@ export class ChatService {
     return { loop, version };
   }
 
-  async readiness(auth: AuthContext): Promise<{ readiness: ChatReadiness; loopId?: string }> {
+  async readiness(
+    auth: AuthContext,
+  ): Promise<{ readiness: ChatReadiness; loopId?: string; voice?: VoiceRouteInfo }> {
     let current: Awaited<ReturnType<ChatService['published']>>;
     try {
       current = await this.published(auth);
@@ -80,6 +160,8 @@ export class ChatService {
     const issues = [];
     const pending = [{ loopId: current.loop.id, version: current.version, depth: 0 }];
     const visited = new Set([current.version.id]);
+    const catalog = await this.container.repos.catalog.list();
+    const ownerDefaults = await readOwnerDefaults(this.container.repos.settings, auth.ownerId);
     for (const item of pending) {
       issues.push(
         ...(await loopPublicationIssues(
@@ -91,6 +173,54 @@ export class ChatService {
         )),
       );
       for (const node of item.version.definition.nodes) {
+        if (node.kind === 'inference' && node.config.harness === 'ollama') {
+          const resolved = resolveHarnessModel({
+            harness: 'ollama',
+            ...(node.config.model ? { model: node.config.model } : {}),
+            ...(node.config.effort ? { effort: node.config.effort } : {}),
+            loopDefaults: item.version.definition.settings.defaults,
+            ownerDefaults,
+            processDefaults: this.container.config.defaults,
+            catalog,
+          });
+          if (resolved.status === 'ready') {
+            const harness = this.container.ports.harnesses.ollama;
+            try {
+              if (!harness?.contextWindow) throw new Error('unqualified');
+              await harness.contextWindow(
+                {
+                  workingDirectory: '/unused',
+                  model: resolved.model,
+                  ...(resolved.effort ? { effort: resolved.effort } : {}),
+                  options: node.config.harnessOptions,
+                  ...(node.config.capabilities ? { capabilities: node.config.capabilities } : {}),
+                  turn: {
+                    prompt: '',
+                    ...(node.config.output.schema?.native
+                      ? { outputSchema: node.config.output.schema.jsonSchema }
+                      : {}),
+                  },
+                },
+                AbortSignal.timeout(5000),
+              );
+            } catch (error) {
+              const unsupported =
+                !harness?.contextWindow ||
+                (error instanceof Error &&
+                  'code' in error &&
+                  error.code === 'HARNESS_CONTEXT_UNSUPPORTED');
+              issues.push({
+                severity: 'error',
+                code: unsupported
+                  ? 'INFERENCE_CONTEXT_UNSUPPORTED'
+                  : 'OLLAMA_DISCOVERY_UNAVAILABLE',
+                message: unsupported
+                  ? 'This local model configuration has not been qualified for safe context admission. Ask the owner to choose a supported model/runtime.'
+                  : 'The local model connection could not be checked. Check the connection and try again.',
+              });
+            }
+          }
+        }
         if (
           node.kind !== 'subloop' ||
           item.depth + 1 >
@@ -118,19 +248,63 @@ export class ChatService {
           problem.message,
         )
       : { ready: true };
-    const audio = systemChatCapabilities(current.version.definition).audio
+    let audio: ChatReadiness['audio'] = systemChatCapabilities(current.version.definition).audio
       ? text.ready
-        ? { ready: true, message: 'Configured by loop' }
+        ? {
+            ready: true,
+            message: auth.deviceId
+              ? 'Configured by the gateway loop. Ask the owner whether its normalizer combines typed captions with audio.'
+              : 'Configured by a custom loop. Its normalizer controls how transcripts and typed captions are combined.',
+          }
         : text
       : unavailable(
           'CHAT_AUDIO_UNAVAILABLE',
           'configure chat-normalize in the published system loop to enable audio',
         );
-    return { readiness: { text, audio }, loopId: current.loop.id };
+    const normalizer = current.version.definition.nodes.find(
+      (node) => node.id === 'chat-normalize',
+    );
+    let voice: VoiceRouteInfo | undefined;
+    if (normalizer?.kind === 'script' && normalizer.config.command === VOICE_NORMALIZER_COMMAND) {
+      let raw: unknown;
+      try {
+        raw = JSON.parse(normalizer.config.env?.GG_VOICE_CONFIG ?? 'null');
+      } catch {
+        raw = null;
+      }
+      const config = VoiceConfigSchema.safeParse(raw);
+      const live = await this.container.voice.config(auth.ownerId);
+      const selected = await this.container.voice.route(auth.ownerId, live);
+      const route =
+        auth.deviceId && !selected.ready
+          ? {
+              ...selected,
+              message:
+                'Voice is unavailable. Ask the owner to check gateway voice setup and run its connection test.',
+            }
+          : selected;
+      if (
+        audio.ready &&
+        (!config.success || stableStringify(config.data) !== stableStringify(live))
+      )
+        audio = unavailable(
+          'VOICE_PUBLISH_REQUIRED',
+          auth.deviceId
+            ? 'Ask the owner to review and publish voice settings for this chat loop.'
+            : 'Review and publish voice settings for this chat loop.',
+        );
+      else if (audio.ready && !route.ready) audio = unavailable('VOICE_NOT_READY', route.message);
+      voice = {
+        ...route,
+        ready: route.ready && audio.ready,
+        ...(!audio.ready && audio.message ? { message: audio.message } : {}),
+      };
+    }
+    return { readiness: { text, audio }, loopId: current.loop.id, ...(voice ? { voice } : {}) };
   }
 
   async session(auth: AuthContext): Promise<ChatSession> {
-    const { readiness, loopId } = await this.readiness(auth);
+    const { readiness, loopId, voice } = await this.readiness(auth);
     const device = auth.deviceId
       ? (await this.container.repos.chat.listDevices(auth.ownerId)).find(
           (entry) => entry.id === auth.deviceId,
@@ -140,9 +314,30 @@ export class ChatService {
       audience: auth.deviceId ? { kind: 'device', deviceId: auth.deviceId } : { kind: 'gateway' },
       label: device?.label ?? 'Gateway',
       readiness,
+      ...(voice ? { voice } : {}),
       limits: { maxTextCharacters: CHAT_MAX_TEXT_CHARACTERS, maxAudioBytes: CHAT_MAX_AUDIO_BYTES },
       ...(!auth.deviceId && loopId ? { systemLoopId: loopId } : {}),
     };
+  }
+
+  async conversation(auth: AuthContext, conversation: ChatConversation): Promise<ChatConversation> {
+    const [first] = await this.container.repos.chat.listTurns(chatScope(auth), conversation.id, {
+      limit: 1,
+    });
+    if (!first) return conversation;
+    const turn = await this.project(first).catch(() => undefined);
+    const text =
+      turn?.input.kind === 'text'
+        ? turn.input.text
+        : (turn?.inputTranscript ??
+          (turn?.input.kind === 'audio' ? turn.input.caption : undefined));
+    if (!text) return conversation;
+    const words = text.replace(/\s+/gu, ' ').trim();
+    const title = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(words)]
+      .slice(0, 48)
+      .map((item) => item.segment)
+      .join('');
+    return title ? { ...conversation, title } : conversation;
   }
 
   async project(stored: ChatStoredTurn): Promise<ChatTurn> {
@@ -160,6 +355,17 @@ export class ChatService {
       input: stored.input,
       runStatus: run.status,
     };
+    const route = VoiceRouteInfoSchema.safeParse(
+      await this.container.repos.settings.get(run.ownerId, `chat.voice.route.${run.id}`),
+    );
+    if (route.success) turn.voice = route.data;
+    const contextEvent = await this.container.repos.events.latest(run.id, 'harness.turn');
+    if (contextEvent?.type === 'harness.turn' && contextEvent.context)
+      turn.context = {
+        retainedHistoryPairs: contextEvent.context.retainedHistoryPairs,
+        omittedHistoryPairs: contextEvent.context.omittedHistoryPairs,
+        contextTokens: contextEvent.context.contextTokens,
+      };
     if (
       run.status === 'succeeded' ||
       (stored.input.kind === 'audio' && (run.status === 'failed' || run.status === 'exhausted'))
@@ -173,6 +379,14 @@ export class ChatService {
         return turn;
       }
       if (stored.input.kind === 'audio') {
+        const projected =
+          run.status === 'failed' || run.status === 'exhausted'
+            ? builtinVoiceFailure(run, pinned.definition)
+            : undefined;
+        if (projected) {
+          turn.error = projected;
+          return turn;
+        }
         try {
           const thread = await this.container.manager.getThread(run.id);
           turn.inputTranscript = parseChatNormalizedInput(pinned.definition, thread?.outputs).text;
@@ -198,9 +412,15 @@ export class ChatService {
       turn.error = {
         code: run.failure?.code ?? 'CHAT_RUN_FAILED',
         message:
-          run.status === 'exhausted'
-            ? 'the workflow reached its execution limit'
-            : 'the workflow failed; the owner can inspect the native run',
+          run.failure?.code === 'INFERENCE_CONTEXT_LIMIT'
+            ? 'This message and the workflow instructions exceed the local model context. Shorten the message or ask the owner to change the model/context setup.'
+            : run.failure?.code === 'HARNESS_OUTPUT_LIMIT'
+              ? 'The reply reached the model output limit. Ask the owner to increase the reply allowance or try a shorter request.'
+              : run.failure?.code === 'INFERENCE_CONTEXT_UNSUPPORTED'
+                ? 'This local model configuration has not been qualified for safe context admission. Ask the owner to choose a supported model/runtime.'
+                : run.status === 'exhausted'
+                  ? 'the workflow reached its execution limit'
+                  : 'the workflow failed; the owner can inspect the native run',
       };
     }
     return turn;
@@ -306,6 +526,7 @@ export class ChatService {
           input = {
             kind: 'audio',
             audio: { id: audio.id, mimeType: audio.mimeType, bytes: audio.bytes, path: audio.path },
+            ...(request.input.caption ? { caption: request.input.caption } : {}),
           };
         }
         const payload: ChatLoopInput = {
@@ -326,7 +547,7 @@ export class ChatService {
               triggerNodeId: 'chat-input',
               source: auth.deviceId || auth.actor.kind === 'api-key' ? 'manual.api' : 'manual.ui',
               caller: auth.actor,
-              payload,
+              payload: JsonValueSchema.parse(payload),
               conversationTurn: {
                 id: this.container.ports.ids.next(),
                 conversationId,

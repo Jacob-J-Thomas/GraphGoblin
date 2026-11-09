@@ -10,6 +10,254 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/chat/pairings/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check owner-only device enrollment prerequisites without creating a code */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ready: boolean;
+                            /** @enum {string} */
+                            mode: "same-machine" | "network" | "unavailable";
+                            /** Format: uri */
+                            url?: string | undefined;
+                            code?: string | undefined;
+                            message?: string | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/pairings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a ten-minute device enrollment */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatPairingCreated"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/pairings/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim an enrollment idempotently with a client-generated credential */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChatPairClaimRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatPairClaimResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List paired devices and their editable system loops */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ChatDevice"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a device */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        label: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDevice"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/chat/devices/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke future device access while retaining its loop and history */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDevice"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/chat/session": {
         parameters: {
             query?: never;
@@ -335,6 +583,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/chat/audio/requests/{uploadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recover an audio upload acknowledgement without replay */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    uploadId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            state: "receiving";
+                        } | {
+                            /** @enum {string} */
+                            state: "ready";
+                            audio: components["schemas"]["ChatAudioUpload"];
+                        } | {
+                            /** @enum {string} */
+                            state: "failed";
+                            code: string;
+                        } | {
+                            /** @enum {string} */
+                            state: "retired";
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/chat/audio/{id}": {
         parameters: {
             query?: never;
@@ -371,94 +671,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/chat/pairings": {
+    "/chat/voice/config": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        /** Create a ten-minute device enrollment */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ChatPairingCreated"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/chat/pairings/claim": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Claim an enrollment idempotently with a client-generated credential */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ChatPairClaimRequestInput"];
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ChatPairClaimResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/chat/devices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List paired devices and their editable system loops */
+        /** Voice routing, connection and measured capability */
         get: {
             parameters: {
                 query?: never;
@@ -475,7 +695,377 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: components["schemas"]["ChatDevice"][];
+                            config: {
+                                revision: number;
+                                enabled: boolean;
+                                /** @enum {string} */
+                                mode: "auto" | "local" | "cloud";
+                                cloudFallbackAllowed: boolean;
+                                local?: {
+                                    executable: string;
+                                    modelPath: string;
+                                } | undefined;
+                                cloud?: {
+                                    /** @enum {string} */
+                                    provider: "openai";
+                                    /** @enum {string} */
+                                    model: "gpt-transcribe";
+                                    secretName: string;
+                                } | undefined;
+                            };
+                            route: {
+                                ready: boolean;
+                                /** @enum {string} */
+                                route?: ("local" | "cloud") | undefined;
+                                /** @enum {string} */
+                                cloudProvider?: "OpenAI" | undefined;
+                                cloudFallbackAllowed: boolean;
+                                message: string;
+                            };
+                            local: {
+                                available: boolean;
+                                installSupported: boolean;
+                                downloadBytes: number;
+                                message: string;
+                                executable?: string | undefined;
+                                modelPath?: string | undefined;
+                            };
+                            probes: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            }[];
+                            secrets: {
+                                name: string;
+                                compatible: boolean;
+                            }[];
+                            install: {
+                                /** @enum {string} */
+                                state: "idle" | "installing" | "ready" | "failed";
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                                message?: string | undefined;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        /** Save explicit owner voice routing */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        enabled: boolean;
+                        /** @enum {string} */
+                        mode: "auto" | "local" | "cloud";
+                        cloudFallbackAllowed: boolean;
+                        local?: {
+                            executable: string;
+                            modelPath: string;
+                        } | undefined;
+                        cloud?: {
+                            /** @enum {string} */
+                            provider: "openai";
+                            /** @enum {string} */
+                            model: "gpt-transcribe";
+                            secretName: string;
+                        } | undefined;
+                        expectedRevision: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            config: {
+                                revision: number;
+                                enabled: boolean;
+                                /** @enum {string} */
+                                mode: "auto" | "local" | "cloud";
+                                cloudFallbackAllowed: boolean;
+                                local?: {
+                                    executable: string;
+                                    modelPath: string;
+                                } | undefined;
+                                cloud?: {
+                                    /** @enum {string} */
+                                    provider: "openai";
+                                    /** @enum {string} */
+                                    model: "gpt-transcribe";
+                                    secretName: string;
+                                } | undefined;
+                            };
+                            route: {
+                                ready: boolean;
+                                /** @enum {string} */
+                                route?: ("local" | "cloud") | undefined;
+                                /** @enum {string} */
+                                cloudProvider?: "OpenAI" | undefined;
+                                cloudFallbackAllowed: boolean;
+                                message: string;
+                            };
+                            local: {
+                                available: boolean;
+                                installSupported: boolean;
+                                downloadBytes: number;
+                                message: string;
+                                executable?: string | undefined;
+                                modelPath?: string | undefined;
+                            };
+                            probes: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            }[];
+                            secrets: {
+                                name: string;
+                                compatible: boolean;
+                            }[];
+                            install: {
+                                /** @enum {string} */
+                                state: "idle" | "installing" | "ready" | "failed";
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                                message?: string | undefined;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/voice/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start one guided local model installation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        operationId: string;
+                        expectedConfigRevision: number;
+                        /** @enum {string} */
+                        modelId: "tiny.en" | "base.en";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uuid */
+                            operationId: string;
+                            /** @enum {string} */
+                            kind: "probe" | "install";
+                            /** @enum {string} */
+                            state: "running" | "succeeded" | "failed";
+                            code?: string | undefined;
+                            probe?: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            } | undefined;
+                            install?: {
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                            } | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/voice/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test a route once with the included public sample */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        operationId: string;
+                        /** @enum {string} */
+                        route: "local" | "cloud";
+                        expectedConfigRevision: number;
+                        cloudUploadAcknowledged?: boolean | undefined;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uuid */
+                            operationId: string;
+                            /** @enum {string} */
+                            kind: "probe" | "install";
+                            /** @enum {string} */
+                            state: "running" | "succeeded" | "failed";
+                            code?: string | undefined;
+                            probe?: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            } | undefined;
+                            install?: {
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                            } | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/voice/probes/{operationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an existing voice test without repeating it */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    operationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uuid */
+                            operationId: string;
+                            /** @enum {string} */
+                            kind: "probe" | "install";
+                            /** @enum {string} */
+                            state: "running" | "succeeded" | "failed";
+                            code?: string | undefined;
+                            probe?: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            } | undefined;
+                            install?: {
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                            } | undefined;
                         };
                     };
                 };
@@ -489,36 +1079,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/chat/devices/{id}": {
+    "/chat/voice/installs/{operationId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Read an existing model download without restarting it */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    operationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uuid */
+                            operationId: string;
+                            /** @enum {string} */
+                            kind: "probe" | "install";
+                            /** @enum {string} */
+                            state: "running" | "succeeded" | "failed";
+                            code?: string | undefined;
+                            probe?: {
+                                /** @enum {string} */
+                                route: "local" | "cloud";
+                                configRevision: number;
+                                /** Format: date-time */
+                                checkedAt: string;
+                                fingerprint: string;
+                                suitable: boolean;
+                                latencyMs: number;
+                                freeMemoryBytes: number;
+                                message: string;
+                                transcript?: string | undefined;
+                            } | undefined;
+                            install?: {
+                                phase: string;
+                                downloadedBytes: number;
+                                totalBytes?: number | undefined;
+                            } | undefined;
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Rename a device */
-        patch: {
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/voice/loops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inspect each independent chat loop before changing it */
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    id: string;
-                };
+                path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        label: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Default Response */
                 200: {
@@ -526,14 +1166,30 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ChatDevice"];
+                        "application/json": {
+                            items: {
+                                loopId: string;
+                                definitionHash: string;
+                                published: boolean;
+                                hasNormalizer: boolean;
+                                /** @enum {string} */
+                                classification: "standard" | "customized" | "current";
+                                label: string;
+                            }[];
+                        };
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
-    "/chat/devices/{id}/revoke": {
+    "/chat/voice/preview": {
         parameters: {
             query?: never;
             header?: never;
@@ -542,19 +1198,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Revoke future device access while retaining its loop and history */
+        /** Preview a precise voice preset edit without saving or publishing */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    id: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody: {
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": {
+                        loopId: string;
+                        expectedDraftHash: string;
+                        expectedConfigRevision: number;
+                    };
                 };
             };
             responses: {
@@ -564,7 +1222,63 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ChatDevice"];
+                        "application/json": {
+                            loopId: string;
+                            baseHash: string;
+                            configRevision: number;
+                            previewHash: string;
+                            definition: components["schemas"]["LoopDefinition"];
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/voice/stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stage the reviewed voice edit as a guarded draft only */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        loopId: string;
+                        expectedDraftHash: string;
+                        expectedConfigRevision: number;
+                        expectedPreviewHash: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            loopId: string;
+                            draftHash: string;
+                            editorUrl: string;
+                        };
                     };
                 };
             };
@@ -3744,6 +4458,15 @@ export interface components {
                 maxAudioBytes: number;
             };
             systemLoopId?: string | undefined;
+            voice?: {
+                ready: boolean;
+                /** @enum {string} */
+                route?: ("local" | "cloud") | undefined;
+                /** @constant */
+                cloudProvider?: "OpenAI" | undefined;
+                cloudFallbackAllowed: boolean;
+                message: string;
+            } | undefined;
         };
         ChatConversationInput: {
             id: string;
@@ -3752,6 +4475,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             lastTurn: number;
+            title?: string | undefined;
         };
         ChatTurnInput: {
             id: string;
@@ -3770,8 +4494,23 @@ export interface components {
                 /** @constant */
                 kind: "audio";
                 audioId: string;
+                caption?: string | undefined;
             };
             inputTranscript?: string | undefined;
+            voice?: {
+                ready: boolean;
+                /** @enum {string} */
+                route?: ("local" | "cloud") | undefined;
+                /** @constant */
+                cloudProvider?: "OpenAI" | undefined;
+                cloudFallbackAllowed: boolean;
+                message: string;
+            } | undefined;
+            context?: {
+                retainedHistoryPairs: number;
+                omittedHistoryPairs: number;
+                contextTokens: number;
+            } | undefined;
             /** @enum {string} */
             runStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
             response?: {
@@ -3795,6 +4534,7 @@ export interface components {
                 /** @constant */
                 kind: "audio";
                 audioId: string;
+                caption?: string | undefined;
             };
         };
         ChatAudioUploadInput: {
@@ -4393,6 +5133,8 @@ export interface components {
                     } | undefined;
                     /** @default {} */
                     output?: {
+                        /** @enum {string} */
+                        capture?: ("auto" | "text") | undefined;
                         /**
                          * @default artifact
                          * @enum {string}
@@ -5016,7 +5758,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5040,6 +5782,13 @@ export interface components {
                     /** @enum {string} */
                     harness: "codex" | "claude" | "ollama";
                     prompt: string;
+                    context?: {
+                        profile: string;
+                        contextTokens: number;
+                        outputReserveTokens: number;
+                        retainedHistoryPairs: number;
+                        omittedHistoryPairs: number;
+                    } | undefined;
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
@@ -5850,6 +6599,13 @@ export interface components {
             /** @enum {string} */
             promptKind: "authored" | "repair" | "continuation";
             prompt: string;
+            context?: {
+                profile: string;
+                contextTokens: number;
+                outputReserveTokens: number;
+                retainedHistoryPairs: number;
+                omittedHistoryPairs: number;
+            } | undefined;
             resumeSessionId?: string | undefined;
         } | {
             runId: string;
@@ -6263,6 +7019,15 @@ export interface components {
                 maxAudioBytes: number;
             };
             systemLoopId?: string | undefined;
+            voice?: {
+                ready: boolean;
+                /** @enum {string} */
+                route?: ("local" | "cloud") | undefined;
+                /** @constant */
+                cloudProvider?: "OpenAI" | undefined;
+                cloudFallbackAllowed: boolean;
+                message: string;
+            } | undefined;
         };
         ChatConversation: {
             id: string;
@@ -6271,6 +7036,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             lastTurn: number;
+            title?: string | undefined;
         };
         ChatTurn: {
             id: string;
@@ -6289,8 +7055,23 @@ export interface components {
                 /** @constant */
                 kind: "audio";
                 audioId: string;
+                caption?: string | undefined;
             };
             inputTranscript?: string | undefined;
+            voice?: {
+                ready: boolean;
+                /** @enum {string} */
+                route?: ("local" | "cloud") | undefined;
+                /** @constant */
+                cloudProvider?: "OpenAI" | undefined;
+                cloudFallbackAllowed: boolean;
+                message: string;
+            } | undefined;
+            context?: {
+                retainedHistoryPairs: number;
+                omittedHistoryPairs: number;
+                contextTokens: number;
+            } | undefined;
             /** @enum {string} */
             runStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
             response?: {
@@ -6314,6 +7095,7 @@ export interface components {
                 /** @constant */
                 kind: "audio";
                 audioId: string;
+                caption?: string | undefined;
             };
         };
         ChatAudioUpload: {
@@ -6901,6 +7683,8 @@ export interface components {
                         skills?: string[] | undefined;
                     } | undefined;
                     output: {
+                        /** @enum {string} */
+                        capture?: ("auto" | "text") | undefined;
                         /**
                          * @default artifact
                          * @enum {string}
@@ -7518,7 +8302,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -7542,6 +8326,13 @@ export interface components {
                     /** @enum {string} */
                     harness: "codex" | "claude" | "ollama";
                     prompt: string;
+                    context?: {
+                        profile: string;
+                        contextTokens: number;
+                        outputReserveTokens: number;
+                        retainedHistoryPairs: number;
+                        omittedHistoryPairs: number;
+                    } | undefined;
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
@@ -8352,6 +9143,13 @@ export interface components {
             /** @enum {string} */
             promptKind: "authored" | "repair" | "continuation";
             prompt: string;
+            context?: {
+                profile: string;
+                contextTokens: number;
+                outputReserveTokens: number;
+                retainedHistoryPairs: number;
+                omittedHistoryPairs: number;
+            } | undefined;
             resumeSessionId?: string | undefined;
         } | {
             runId: string;

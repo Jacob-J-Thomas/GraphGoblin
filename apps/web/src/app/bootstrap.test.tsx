@@ -1,13 +1,32 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Root } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useApi } from '../api/context.js';
+import { mockChatClient, turn } from '../chat/__fixtures__/chat.js';
 import { FONT_STORAGE_KEY } from '../lib/font.js';
 import { subscribeTheme, THEME_STORAGE_KEY } from '../lib/theme.js';
+import { setNavigator } from '../pwa/__fixtures__/update.js';
+import { getChatUpdateLocked, setChatUpdateGuardExpected } from '../pwa/chat-update-lock.js';
 import { bootstrap, createQueryClient } from './bootstrap.js';
 
 const registerPwa = vi.hoisted(() => vi.fn());
 vi.mock('../pwa/register.js', () => ({ registerPwa }));
+const chat = vi.hoisted(() => ({
+  client: undefined as ReturnType<typeof mockChatClient> | undefined,
+}));
+vi.mock('./useOwnerChatClient.js', () => ({ useOwnerChatClient: () => chat.client }));
+
+const nativeRestorers: (() => void)[] = [];
+afterEach(() => {
+  for (const restore of nativeRestorers.splice(0)) restore();
+  setChatUpdateGuardExpected(true);
+  chat.client = undefined;
+});
+
+function supportedBrowser(controller: object | null = null) {
+  nativeRestorers.push(setNavigator('locks', {}));
+  nativeRestorers.push(setNavigator('serviceWorker', { controller }));
+}
 
 describe('bootstrap', () => {
   it('mounts the app and registers the service worker unless disabled', async () => {
@@ -126,4 +145,76 @@ describe('bootstrap', () => {
     expect(() => render(<Probe />)).toThrow('useApi must be used inside <ApiProvider>');
     error.mockRestore();
   });
+
+  it.each([false, true])(
+    'sends in development only when no worker controls the page (controlled=%s)',
+    async (controlled) => {
+      supportedBrowser(controlled ? {} : null);
+      chat.client = mockChatClient();
+      window.history.pushState({}, '', '/app/chat');
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      let root!: Root;
+      act(() => {
+        root = bootstrap(container, { registerServiceWorker: false });
+        // This is checked before React renders or runs a registration effect.
+        expect(getChatUpdateLocked()).toBe(controlled);
+      });
+      try {
+        await waitFor(() => expect(chat.client?.session).toHaveBeenCalled());
+        fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+          target: { value: 'Hello from development' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+        if (controlled) {
+          expect(
+            await screen.findByText('The app is updating. Try sending again in a moment.'),
+          ).toBeVisible();
+          expect(chat.client.send).not.toHaveBeenCalled();
+        } else {
+          expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+          expect(chat.client.send).toHaveBeenCalledExactlyOnceWith(
+            expect.any(String),
+            expect.objectContaining({ input: { kind: 'text', text: 'Hello from development' } }),
+          );
+        }
+        expect(registerPwa).not.toHaveBeenCalled();
+      } finally {
+        act(() => root.unmount());
+        container.remove();
+        window.history.pushState({}, '', '/');
+      }
+    },
+  );
+
+  it.each([undefined, true])(
+    'restores the production startup gate before a later render (registration=%s)',
+    (registerServiceWorker) => {
+      supportedBrowser();
+      window.history.pushState({}, '', '/app/nowhere');
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      let root!: Root;
+      act(() => {
+        root = bootstrap(container, { registerServiceWorker: false });
+        expect(getChatUpdateLocked()).toBe(false);
+      });
+      act(() => root.unmount());
+      registerPwa.mockReturnValueOnce({ dispose: vi.fn() });
+      act(() => {
+        root = bootstrap(
+          container,
+          registerServiceWorker === undefined ? {} : { registerServiceWorker },
+        );
+        expect(getChatUpdateLocked()).toBe(true);
+      });
+      expect(registerPwa).toHaveBeenCalledOnce();
+      act(() => root.unmount());
+      expect(getChatUpdateLocked()).toBe(true);
+      container.remove();
+      window.history.pushState({}, '', '/');
+    },
+  );
 });

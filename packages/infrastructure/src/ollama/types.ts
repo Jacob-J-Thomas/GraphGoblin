@@ -9,7 +9,10 @@ import type { HarnessPort } from '@graphgoblin/engine';
 
 /** Complete persisted metadata; owner enablement remains independent of discovery. */
 export type OllamaDiscoveredModel = OllamaModelDiscovery &
-  Pick<ModelCatalogEntry, 'displayName' | 'efforts' | 'defaultEffort' | 'enabled'>;
+  Pick<ModelCatalogEntry, 'displayName' | 'efforts' | 'defaultEffort' | 'enabled'> & {
+    /** Exact runtime/profile policy that qualified this digest; absent means unverified. */
+    contextProfile?: string;
+  };
 export type OllamaDiscoveryError = NonNullable<OllamaDiscoveryStatus['error']>;
 export interface OllamaRepository {
   read(defaults: OllamaConnectionUpdate): Promise<OllamaConnectionView>;

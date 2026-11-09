@@ -10,6 +10,8 @@ type ShutdownState = ResponseBody<'/system/shutdown', 'get'>;
 function checkedSnapshot(snapshot: ShutdownState): ShutdownState {
   if (typeof snapshot.controlToken !== 'string' || snapshot.controlToken === '')
     throw new Error('Gateway shutdown response is missing its control token.');
+  if (!Object.hasOwn(PHASE_TITLE, snapshot.phase))
+    throw new Error('Gateway shutdown response has an invalid phase.');
   return snapshot;
 }
 
@@ -26,6 +28,30 @@ const PHASE_TITLE: Record<ShutdownState['phase'], string> = {
   stopped: 'Gateway stopped',
 };
 const TERMINAL = new Set<ShutdownState['phase']>(['ready', 'stopped', 'exiting']);
+
+/** A closing listener can answer a final keep-alive GET before transport closure. */
+class ClosingShutdownRead extends GraphGoblinApiError {
+  followUpAvailable = true;
+
+  constructor(response: Response) {
+    super(
+      { status: response.status, code: 'HTTP_503', detail: response.statusText },
+      { serverSent: false },
+    );
+  }
+}
+
+function fastifyClosingResponse(response: Response, body: unknown): boolean {
+  if (response.status !== 503 || !body || typeof body !== 'object' || Array.isArray(body))
+    return false;
+  const value = body as Record<string, unknown>;
+  return (
+    Object.keys(value).length === 3 &&
+    value['statusCode'] === 503 &&
+    value['error'] === 'Service Unavailable' &&
+    value['message'] === 'Service Unavailable'
+  );
+}
 
 /** Names are optional decoration: restricted/unavailable run reads must never hide the choice. */
 function RunLink({ id }: { id: string }) {
@@ -175,22 +201,38 @@ export function ShutdownNotice() {
   const status = useQuery({
     queryKey: KEY,
     queryFn: async ({ signal }) => {
-      const snapshot = unwrap(await client.GET('/system/shutdown', { signal, cache: 'no-store' }));
-      return checkedSnapshot(snapshot);
+      const previous = cache.getQueryState<ShutdownState>(KEY);
+      // The allowance lives on the cached error, so remounts cannot replenish it. Consume
+      // before sending the observation; another 503 or any intervening error must stop.
+      if (previous?.error instanceof ClosingShutdownRead) previous.error.followUpAvailable = false;
+      const result = await client.GET('/system/shutdown', { signal, cache: 'no-store' });
+      if (
+        previous?.error === null &&
+        previous.data &&
+        Object.hasOwn(PHASE_TITLE, previous.data.phase) &&
+        previous.data.phase !== 'running' &&
+        previous.data.controlToken &&
+        fastifyClosingResponse(result.response, result.error)
+      )
+        throw new ClosingShutdownRead(result.response);
+      return checkedSnapshot(unwrap(result));
     },
     enabled: !action.isPending,
     retry: false,
     staleTime: 1000,
     // A running gateway is checked every ten seconds, a shutting-down one every two, so
-    // ready/exiting still observe HTTP closure. After a failure this query does not poll: an
-    // explicit check reads it again, and the app's reachability probe (startReachability)
-    // refetches it once the API answers after a transport failure. No action is ever retried.
+    // ready/exiting still observe HTTP closure. Only the exact closing-listener 503 after a
+    // validated non-running snapshot permits one more GET at the same two-second cadence.
+    // Other failures stop polling: an explicit check or reachability recovery reads again.
+    // No action is ever retried, and a 503 is never reported as confirmed closure.
     refetchInterval: (query) =>
-      query.state.error || query.state.data?.phase === 'stopped'
-        ? false
-        : query.state.data?.phase === 'running'
-          ? 10_000
-          : 2000,
+      query.state.error instanceof ClosingShutdownRead && query.state.error.followUpAvailable
+        ? 2000
+        : query.state.error || query.state.data?.phase === 'stopped'
+          ? false
+          : query.state.data?.phase === 'running'
+            ? 10_000
+            : 2000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

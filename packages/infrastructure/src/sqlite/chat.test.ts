@@ -16,6 +16,7 @@ import { SqliteTriggerAdmission } from './admission.js';
 import { SqliteEventStore } from './events.js';
 import {
   chatAudio,
+  settings,
   chatPairings,
   chatTurns,
   loopVersions,
@@ -466,7 +467,17 @@ describe('durable chat identities', () => {
     const input = await prepare();
     await admission.create(input);
     await finish(input.run.id);
+    const routeKey = `chat.voice.route.${input.run.id}`;
+    await handle.db.insert(settings).values([
+      { ownerId: 'local', key: routeKey, value: '{}', updatedAt: clock.now().toISOString() },
+      { ownerId: 'other', key: routeKey, value: '{}', updatedAt: clock.now().toISOString() },
+    ]);
     await handle.db.transaction((tx) => deleteRuns(tx, eq(runs.id, input.run.id)));
+    expect(
+      (await handle.db.select().from(settings))
+        .filter((row) => row.key === routeKey)
+        .map((row) => row.ownerId),
+    ).toEqual(['other']);
     const turn = await repo.findRequest(
       scope,
       input.conversationTurn!.conversationId,
@@ -794,5 +805,45 @@ describe('audio metadata lifecycle', () => {
     await finish(fork.run.id);
     await handle.db.transaction((tx) => deleteRuns(tx, eq(runs.id, fork.run.id)));
     expect(await repo.cleanupAudio()).toEqual([audioId]);
+  });
+});
+
+describe('durable audio upload identities', () => {
+  it('scopes identity, conflicts changed digests and preserves retired tombstones', async () => {
+    const operation = randomUUID();
+    const digest = 'a'.repeat(64);
+    expect(await repo.beginUpload(scope, operation, digest)).toBeUndefined();
+    expect(await repo.uploadStatus(scope, operation)).toEqual({ state: 'receiving' });
+    expect(
+      await repo.uploadStatus({ ...scope, audienceKey: 'device:foreign' }, operation),
+    ).toBeUndefined();
+    await expect(repo.beginUpload(scope, operation, 'b'.repeat(64))).rejects.toMatchObject({
+      code: 'CHAT_AUDIO_UPLOAD_CONFLICT',
+    });
+    const audioId = await repo.reserveAudio(scope);
+    await repo.completeAudio(scope, audioId, {
+      mimeType: 'audio/wav',
+      bytes: 46,
+      sha256: digest,
+      path: '/private/audio.wav',
+    });
+    await repo.finishUpload(scope, operation, audioId);
+    expect(await repo.beginUpload(scope, operation, digest)).toMatchObject({
+      state: 'ready',
+      audio: { id: audioId },
+    });
+    await repo.discardAudio(scope, audioId);
+    await repo.audioDeleted(audioId);
+    expect(await repo.uploadStatus(scope, operation)).toEqual({ state: 'retired' });
+    expect(await repo.beginUpload(scope, operation, digest)).toEqual({ state: 'retired' });
+  });
+  it('marks interrupted uploads failed on restart without resuming them', async () => {
+    const operation = randomUUID();
+    await repo.beginUpload(scope, operation, 'c'.repeat(64));
+    await repo.recoverAudioReservations();
+    expect(await repo.uploadStatus(scope, operation)).toEqual({
+      state: 'failed',
+      code: 'CHAT_AUDIO_UPLOAD_INTERRUPTED',
+    });
   });
 });

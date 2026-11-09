@@ -168,8 +168,17 @@ test('keyboard: Enter opens, Tab stays inside, Delete edits text only, Esc close
   await expect(dialog.getByLabel('Label')).toBeFocused();
 
   // Delete and Backspace in a field edit its text; on a button they do nothing (WP-D2 D19).
-  await page.keyboard.press('End');
+  // Collapse the text selected on Tab before testing single-character deletion.
+  await page.keyboard.press('ArrowRight');
+  await expect
+    .poll(() =>
+      dialog
+        .getByLabel('Label')
+        .evaluate((element: HTMLInputElement) => [element.selectionStart, element.selectionEnd]),
+    )
+    .toEqual([7, 7]);
   await page.keyboard.press('Backspace');
+  await expect(dialog.getByLabel('Label')).toHaveValue('Approv');
   await page.keyboard.press('Delete');
   await expect(dialog.getByLabel('Label')).toHaveValue('Approv');
   await dialog.getByRole('button', { name: 'Done' }).focus();

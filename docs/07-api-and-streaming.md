@@ -791,3 +791,26 @@ Resource ownership and reference protection persist through migration 0023; expl
 Artifact downloads resolve only exact canonical `artifact:<lowercase kind>/<64 lowercase hex>` references returned by publication; noncanonical spellings are missing (`ARTIFACT_NOT_FOUND`), including uppercase, alternate separators/segments and trailing whitespace. Retained-resource proof uses that same canonical form after decoding JSON escapes. Arbitrary input strings are not artifact-resolution consent.
 
 Workspace protection resolves configured fixed directories and recorded retained uses through native filesystem realpath, including junction/short-name aliases and aliases above missing descendants. Equal, enclosed or enclosing physical directories protect the owned workspace. Unknown resolution, non-directory ancestors and bounded-proof exhaustion keep it. Physical workspace references are recorded with use/definition changes and refreshed in bounded batches outside database locks. The final indexed reference and ownership recheck shares a short transaction with quarantine rename and durable generation recording. Thousands of retained workspace users do not force a global refusal; larger refresh sweeps continue across passes and defer staging until complete. Unknown resolution keeps resources, and alias changes after observation remain an external filesystem race described in ADR-0060. Inventory and entry-by-entry unlink happen outside the database lock and publication gate; new publications at the original path have separate ownership. No new event-write work is added. Both history and resource traversal wrap within a pass. `no-eligible` requires a concluding absence proof for approvals and potentially removable pending resources; bounded or unknown work keeps `pressure`. `preservedResources` counts all pending resources kept, including deferred work, independently of cursor position. The initial capacity sample precedes listening, but cleanup starts only after the listener is accepting requests. A failed capacity attempt records its new attempt time and empty volumes. Only live template runs without a recorded directory use carry a future-use obligation; terminal unused template history does not block workspace cleanup, including after migration. Literal templates are scoped to their known physical directory; unresolved dynamic templates remain conservatively unknown until use or termination. The configured data directory itself may be aliased; managed resource operations use its once-resolved physical root and still reject links inside it.
+
+## Chat repair APIs (ADR-0068)
+
+`GET /chat/pairings/readiness` is owner-only and reports whether enrollment is ready for this
+computer or the configured network origin before creation. Device enrollment stays explicit.
+
+`POST /chat/audio` requires a UUID `Idempotency-Key` and SHA-256 `X-Content-SHA256` for the raw body.
+`GET /chat/audio/requests/:uploadId` reads the same audience-scoped operation without repeating its
+upload. Identities bind exact content; different bytes or audience cannot reuse them. An audio turn
+may include `caption`, which is part of the canonical request/hash and protected loop input.
+
+Owner-only Voice routes use the contracts in `packages/contracts/src/voice.ts`: GET/PUT
+`/chat/voice/config`; POST `/chat/voice/probe` and `/chat/voice/install`; GET
+`/chat/voice/probes/:operationId` and `/chat/voice/installs/:operationId`; GET `/chat/voice/loops`;
+POST `/chat/voice/preview` and `/chat/voice/stage`. Operation starts persist identity before work;
+uncertain acknowledgements use their read-only status endpoints. Revision/hash conflicts refuse
+before replacing configuration or the reviewed loop draft. Preview is pure, Stage is explicit and
+atomic against the reviewed draft/configuration, and publication remains a separate ordinary loop
+action. These routes neither publish all device clones nor grant devices access to gateway secrets.
+
+Optional turn context metadata describes retained/omitted history pairs and the qualified context
+allocation. It is evidence about admitted model input, not a promise of semantic model recall.
+Regenerate the typed API client and route reference when changing these schemas.

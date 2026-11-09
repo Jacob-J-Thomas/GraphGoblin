@@ -1,5 +1,11 @@
 import { Workbox } from 'workbox-window';
 import { subscribeApiRecovery, useReachability } from '../lib/reachability.js';
+import {
+  isChatUpdateUnsafe,
+  startChatUpdateGuard,
+  subscribeChatUpdateGuard,
+  type ChatUpdateGuard,
+} from './chat-update-guard.js';
 import { usePwaStore } from './store.js';
 
 export interface RegisterPwaOptions {
@@ -13,12 +19,18 @@ export interface RegisterPwaOptions {
   ) => Pick<Workbox, 'addEventListener' | 'register' | 'messageSkipWaiting'>;
   reload?: () => void;
   serviceWorkerSupported?: boolean;
+  createUpdateGuard?: (
+    scope: string,
+    committed: (worker: ServiceWorker) => void,
+  ) => ChatUpdateGuard;
 }
 
 /**
  * Register the service worker with the prompt update flow: when a new worker is waiting, the store
- * raises the "A new version is available" toast; only the user's confirmation sends SKIP_WAITING,
- * and the page reloads once the new worker controls it. Nothing activates automatically.
+ * raises the "A new version is available" toast; only the user's confirmation requests guarded
+ * APPLY. The waiting worker activates after every open scoped page is safely frozen, and the page
+ * reloads once that worker controls it. Dirty voice drafts and unresolved submissions veto
+ * activation. The application never applies updates on its own.
  */
 export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: void): void } {
   const url = options.url ?? '/app/sw.js';
@@ -28,6 +40,27 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
   let disposed = false;
   let cleanup = () => undefined;
   const store = usePwaStore.getState();
+  let reloadRequested = false;
+  let controlled = false;
+  let committedWorker: ServiceWorker | undefined;
+  let reloaded = false;
+  const maybeReload = () => {
+    if (!disposed && reloadRequested && controlled && !reloaded && !isChatUpdateUnsafe()) {
+      reloaded = true;
+      reload();
+    }
+  };
+  const guard = (options.createUpdateGuard ?? startChatUpdateGuard)(scope, (worker) => {
+    committedWorker = worker;
+    controlled = navigator.serviceWorker?.controller === worker;
+    reloadRequested = true;
+    maybeReload();
+  });
+  const unsubscribeGuard = subscribeChatUpdateGuard(maybeReload);
+  cleanup = () => {
+    unsubscribeGuard();
+    guard.dispose();
+  };
 
   const lifecycle = {
     dispose: () => {
@@ -39,16 +72,32 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
   if (!supported) return lifecycle;
   const create =
     options.createWorkbox ??
-    ((swUrl: string, swScope: string) => new Workbox(swUrl, { scope: swScope }));
+    ((swUrl: string, swScope: string) =>
+      new Workbox(swUrl, { scope: swScope, updateViaCache: 'none' }));
   const wb = create(url, scope);
+  wb.addEventListener('controlling', () => {
+    // For external updates Workbox reports its previously tracked worker in event.sw. The
+    // browser's actual controller is the authority for whether our committed worker took over.
+    controlled = !committedWorker || navigator.serviceWorker?.controller === committedWorker;
+    maybeReload();
+  });
   const promptedWorkers = new WeakSet<ServiceWorker>();
   const prompt = (worker?: ServiceWorker) => {
     if (disposed || (worker && promptedWorkers.has(worker))) return;
     if (worker) promptedWorkers.add(worker);
-    store.promptUpdate(() => {
-      wb.addEventListener('controlling', () => reload());
-      wb.messageSkipWaiting();
-    });
+    const apply = async () => {
+      controlled = false;
+      const result = await guard.apply(worker ?? registration?.waiting ?? undefined);
+      if (disposed || usePwaStore.getState().applyUpdate !== apply) return false;
+      if (!result.accepted) {
+        store.setUpdateBlocked(result.reason ?? 'The update could not be checked. Try again.');
+        return false;
+      }
+      reloadRequested = true;
+      maybeReload();
+      return true;
+    };
+    store.promptUpdate(apply);
   };
   wb.addEventListener('waiting', (event) => prompt(event.sw));
   wb.addEventListener('activated', (event) => {
@@ -133,6 +182,8 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
   window.addEventListener('pagehide', pageHide);
   window.addEventListener('pageshow', trigger);
   cleanup = () => {
+    unsubscribeGuard();
+    guard.dispose();
     clearInterval(interval);
     clearFocusTimer();
     unsubscribe();

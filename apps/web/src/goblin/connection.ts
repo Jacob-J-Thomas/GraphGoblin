@@ -7,11 +7,17 @@ import {
   type PendingPairing,
 } from './credentials.js';
 
+export type PairingOutcome = 'rejected' | 'unconfirmed';
+
+const pairingUnconfirmedMessage =
+  'Not sure pairing finished. Tap Pair again; it reuses the same request.';
+
 export class PairingError extends Error {
   constructor(
     public readonly status: number,
     public readonly code: string,
     message: string,
+    public readonly outcome: PairingOutcome = 'unconfirmed',
   ) {
     super(message);
     this.name = 'PairingError';
@@ -64,11 +70,7 @@ async function request(fetcher: typeof fetch, path: string, init: RequestInit): 
       referrerPolicy: 'no-referrer',
     });
   } catch {
-    throw new PairingError(
-      0,
-      'NETWORK',
-      'Not sure pairing finished. Tap Pair again; it reuses the same request.',
-    );
+    throw new PairingError(0, 'NETWORK', pairingUnconfirmedMessage);
   }
   if (!response.ok) {
     const message =
@@ -77,18 +79,14 @@ async function request(fetcher: typeof fetch, path: string, init: RequestInit): 
         : response.status === 429
           ? 'Too many pairing attempts. Wait a little, then try again.'
           : response.status >= 500
-            ? 'Not sure pairing finished. Tap Pair again; it reuses the same request.'
+            ? pairingUnconfirmedMessage
             : 'Can’t pair right now. Check with the gateway owner and try again.';
     throw new PairingError(response.status, 'PAIRING_REJECTED', message);
   }
   try {
     return await response.json();
   } catch {
-    throw new PairingError(
-      0,
-      'ACKNOWLEDGEMENT_INVALID',
-      'Not sure pairing finished. Tap Pair again; it reuses the same request.',
-    );
+    throw new PairingError(0, 'ACKNOWLEDGEMENT_INVALID', pairingUnconfirmedMessage);
   }
 }
 
@@ -119,19 +117,24 @@ export async function claimDevice(
       session = await request(fetcher, '/chat/session', {
         headers: { Authorization: `Bearer ${pending.deviceToken}` },
       });
-    } catch {
-      throw error;
+    } catch (recoveryError) {
+      // Only two authoritative refusals establish current rejection. An unavailable or
+      // unreadable recovery response cannot prove the saved credential is unusable.
+      if (recoveryError instanceof PairingError && recoveryError.status === 401)
+        throw new PairingError(error.status, error.code, error.message, 'rejected');
+      throw new PairingError(
+        recoveryError instanceof PairingError ? recoveryError.status : 0,
+        recoveryError instanceof PairingError ? recoveryError.code : 'ACKNOWLEDGEMENT_INVALID',
+        pairingUnconfirmedMessage,
+      );
     }
     const parsed = ChatSessionSchema.safeParse(session);
-    if (!parsed.success || parsed.data.audience.kind !== 'device') throw error;
+    if (!parsed.success || parsed.data.audience.kind !== 'device')
+      throw new PairingError(0, 'ACKNOWLEDGEMENT_INVALID', pairingUnconfirmedMessage);
     value = { deviceId: parsed.data.audience.deviceId, label: parsed.data.label };
   }
   const parsed = ChatPairClaimResponseSchema.safeParse(value);
   if (!parsed.success)
-    throw new PairingError(
-      0,
-      'ACKNOWLEDGEMENT_INVALID',
-      'Not sure pairing finished. Tap Pair again; it reuses the same request.',
-    );
+    throw new PairingError(0, 'ACKNOWLEDGEMENT_INVALID', pairingUnconfirmedMessage);
   return completePairing(pending, parsed.data, storage);
 }

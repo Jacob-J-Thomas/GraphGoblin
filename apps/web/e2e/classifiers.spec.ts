@@ -207,9 +207,11 @@ test('Settings registers, enables, edits, disables, and deletes a classifier fro
   const target = await instance(request);
   await page.goto(`${target.url}/app/settings`);
   const section = page.getByRole('region', { name: 'Classifier models' });
-  // Below the LLM catalog; the built-in is listed first and needs its key.
+  // Voice follows the LLM catalog, then Defaults and classifiers. The built-in needs its key.
   const headings = await page.getByRole('heading', { level: 2 }).allTextContents();
-  expect(headings.indexOf('Classifier models')).toBe(headings.indexOf('Model catalog') + 1);
+  expect(
+    headings.slice(headings.indexOf('Model catalog'), headings.indexOf('Classifier models') + 1),
+  ).toEqual(['Model catalog', 'Voice', 'Defaults', 'Classifier models']);
   const jevRow = section.getByRole('switch', { name: 'Enable Jev' }).locator('xpath=ancestor::tr');
   await expect(jevRow).toContainText('Needs a key');
   await expect(jevRow).toContainText(

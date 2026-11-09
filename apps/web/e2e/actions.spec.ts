@@ -1,4 +1,11 @@
-import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
+import {
+  approvalLoop,
+  chooseOptionByKeyboard,
+  control,
+  expect,
+  publishLoop,
+  test,
+} from './fixtures.js';
 import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
 import type { Locator, Page } from '@playwright/test';
 
@@ -240,7 +247,9 @@ test('Settings harness switches follow keyboard toggles and update Default model
   await expect(catalog).toContainText(
     'Codex and Claude models are built in. The Ollama section below lists the models installed on your Ollama server. While Ollama is on, that list is re-checked every 5 minutes; Refresh Ollama models checks now. Choose a model and effort.',
   );
-  await expect(catalog.getByRole('link')).toHaveCount(0);
+  await expect(
+    catalog.getByRole('link', { name: 'Choose the default Ollama model', exact: true }),
+  ).toHaveAttribute('href', '#model-defaults');
   const enabled = builtInModels.getByRole('switch', {
     name: `Enable ${before!.displayName}`,
     exact: true,
@@ -305,9 +314,9 @@ test('Settings catalog preserves a disabled saved default until the owner change
   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
   });
-  // Home chooses the first enabled option even when the current saved option is disabled.
-  await defaults.press('Home');
-  await defaults.press('Enter');
+  // Native keyboard typeahead chooses the displayed server default.
+  await defaults.focus();
+  await chooseOptionByKeyboard(page, defaults, '(server default)');
   await expect(defaults).toHaveValue('');
   await expect
     .poll(async () => {

@@ -347,7 +347,9 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument();
     expect(catalog).not.toHaveTextContent('LiteLLM');
     expect(catalog).not.toHaveTextContent('Settings guide');
-    expect(within(catalog).queryByRole('link')).not.toBeInTheDocument();
+    expect(
+      within(catalog).getByRole('link', { name: 'Choose the default Ollama model' }),
+    ).toHaveAttribute('href', '#model-defaults');
     const defaults = screen.getByLabelText('Default model');
     expect(within(defaults).getByRole('option', { name: 'Luna' })).toBeInTheDocument();
     enabled.focus();

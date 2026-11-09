@@ -574,6 +574,20 @@ export const chatAudio = sqliteTable(
   ],
 );
 
+export const chatAudioUploads = sqliteTable(
+  'chat_audio_uploads',
+  {
+    ownerId: text('owner_id').notNull(),
+    audienceKey: text('audience_key').notNull(),
+    uploadId: text('upload_id').notNull(),
+    declaredDigest: text('declared_digest').notNull(),
+    audioId: text('audio_id'),
+    state: text('state', { enum: ['receiving', 'ready', 'failed', 'retired'] }).notNull(),
+    failureCode: text('failure_code'),
+  },
+  (t) => [uniqueIndex('chat_audio_upload_identity_idx').on(t.ownerId, t.audienceKey, t.uploadId)],
+);
+
 // Add contract type imports: OllamaDiscoveryStatus, ModelCatalogAvailability
 export const ollamaConnection = sqliteTable('ollama_connection', {
   id: text('id').primaryKey(),
@@ -589,6 +603,7 @@ export const modelDiscovery = sqliteTable(
     model: text('model').notNull(),
     digest: text('digest').notNull(),
     connectionRevision: integer('connection_revision').notNull(),
+    contextProfile: text('context_profile'),
     availability: text('availability', { mode: 'json' })
       .$type<ModelCatalogAvailability>()
       .notNull(),

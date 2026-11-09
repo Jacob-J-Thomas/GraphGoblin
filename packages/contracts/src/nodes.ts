@@ -354,6 +354,15 @@ export const InferenceConfigSchema = z
     ),
     output: z
       .strictObject({
+        capture: z
+          .enum(['auto', 'text'])
+          .optional()
+          .meta(
+            field(
+              'Omitted or auto uses existing JSON-or-text capture; text captures final text verbatim.',
+              { advanced: true },
+            ),
+          ),
         captureTranscript: z
           .enum(['artifact', 'none'])
           .default('artifact')
@@ -399,6 +408,12 @@ export const InferenceConfigSchema = z
       ),
   })
   .superRefine((config, ctx) => {
+    if (config.output.capture === 'text' && config.output.schema)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['output', 'schema'],
+        message: 'Text capture cannot also require a structured output schema',
+      });
     if (config.harness === 'ollama')
       for (const issue of ollamaPolicyIssues(config)) ctx.addIssue({ code: 'custom', ...issue });
     if (config.harness === 'claude')

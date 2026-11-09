@@ -100,6 +100,9 @@ jobs:
       - name: Shipped templates and deliberate-invalid refusal
         run: pnpm check:templates
 
+      - name: Install Chromium for tooling browser measurements
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+
       - name: Unit tests with coverage thresholds
         # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
         run: pnpm exec turbo run test:coverage --concurrency=1

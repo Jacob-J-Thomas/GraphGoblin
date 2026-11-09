@@ -3,7 +3,7 @@ import { HarnessDefaultsSchema, type LoopDefinitionInput } from '@graphgoblin/co
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import {
   cachedCatalogFingerprint,
@@ -49,6 +49,7 @@ import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
 import { SystemLoopNotice } from './SystemLoopNotice.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
+import { VoiceCustomReviewNotice, VoicePreviewNotice } from './VoicePreviewNotice.js';
 
 /** The save notice for a store state, as the editor shows it now (`saveNotice`). */
 function noticeOf(state: EditorState): string | undefined {
@@ -65,6 +66,24 @@ function noticeOf(state: EditorState): string | undefined {
  */
 export function EditorPage() {
   const { loopId = '' } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routeState: unknown = location.state;
+  const voicePreview =
+    routeState && typeof routeState === 'object' && 'voicePreview' in routeState
+      ? routeState.voicePreview
+      : undefined;
+  const voiceReview =
+    routeState &&
+    typeof routeState === 'object' &&
+    'voiceReview' in routeState &&
+    routeState.voiceReview === true;
+  const [voiceStaging, setVoiceStaging] = useState(false);
+  const [appliedVoice, setAppliedVoice] = useState<{
+    loopId: string;
+    generation: number;
+    revision: number;
+  }>();
   const client = useApi();
   const queryClient = useQueryClient();
   const {
@@ -108,7 +127,7 @@ export function EditorPage() {
     useEditorStore.setState({ systemChat: Boolean(system) });
   }, [system, generation]);
   const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
-    enabled: ready && !preservationBlocked && !unsupportedBlocked,
+    enabled: ready && !preservationBlocked && !unsupportedBlocked && !voiceStaging,
     deviceReady: deviceWritable,
     serverReconciled,
     system: Boolean(system),
@@ -399,6 +418,52 @@ export function EditorPage() {
   };
 
   const notices = [
+    voiceReview ? (
+      <VoiceCustomReviewNotice key={`voice-review-${location.key}`} loopId={loopId} />
+    ) : null,
+    voicePreview !== undefined ? (
+      <VoicePreviewNotice
+        key={`voice-${location.key}`}
+        value={voicePreview}
+        loopId={loopId}
+        ready={serverReconciled && deviceWritable}
+        restored={restoredGeneration === generation}
+        onStagingChange={setVoiceStaging}
+        storageUnavailableReason={
+          !deviceWritable && (deviceReadError || storageProblem || serverReconciled)
+            ? 'This device’s draft storage is unavailable, so Apply is paused. Close older GraphGoblin tabs or windows, then retry device draft storage. Your current draft is kept.'
+            : undefined
+        }
+        onRetryStorage={retryDeviceRead}
+        onApplied={() => {
+          const applied = useEditorStore.getState();
+          setAppliedVoice({ loopId, generation: applied.generation, revision: applied.revision });
+          const nextState =
+            routeState && typeof routeState === 'object'
+              ? Object.fromEntries(
+                  Object.entries(routeState).filter(([key]) => key !== 'voicePreview'),
+                )
+              : null;
+          void navigate(`${location.pathname}${location.search}${location.hash}`, {
+            replace: true,
+            state: nextState,
+            preventScrollReset: true,
+          });
+        }}
+      />
+    ) : null,
+    appliedVoice?.loopId === loopId &&
+    appliedVoice.generation === generation &&
+    appliedVoice.revision === revision ? (
+      <Alert
+        key="voice-applied"
+        tone="good"
+        title="Voice draft applied"
+        onDismiss={() => setAppliedVoice(undefined)}
+      >
+        Saved as a draft. Undo restores the previous draft. Publish when you are ready to use it.
+      </Alert>
+    ) : null,
     ...deviceCopyNotices,
     deviceReadError ? (
       <Alert key="device-read" tone="warn" title="Device drafts could not be read">
@@ -508,7 +573,11 @@ export function EditorPage() {
   ].filter(Boolean);
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col">
+    <div
+      className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col"
+      inert={voiceStaging}
+      aria-busy={voiceStaging}
+    >
       <EditorToolbar
         loopId={loopId}
         system={system}

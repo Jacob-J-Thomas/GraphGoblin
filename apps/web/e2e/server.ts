@@ -21,6 +21,8 @@ import {
   createTestApp,
   createThreadHistoryFixture,
   startFakeClassifierEndpoint,
+  storeLoopBefore,
+  voiceProbeSample,
   type TestApp,
 } from '@graphgoblin/api/testing';
 import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
@@ -209,7 +211,23 @@ async function startApp(
 
 const main = await startApp({}, false, false, { id: 'main' });
 const workerPath = join(dist, 'sw.js');
-const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
+// A stopped legacy-fallback test can leave its marked omission in the disposable build. Recover
+// the exact original import expression before taking the baseline, just as build markers recover.
+const originalWorker = cleanWorker(await readFile(workerPath, 'utf8')).replace(
+  /\/\* E2E legacy guard: (importScripts\(\s*(["'])chat-update-worker\.js\2\s*\)) \*\/void 0/g,
+  '$1',
+);
+const guardImport = /\bimportScripts\(\s*(["'])chat-update-worker\.js\1\s*\)/;
+if (!guardImport.test(originalWorker) || !existsSync(join(dist, 'chat-update-worker.js')))
+  throw new Error(
+    'E2E PWA checks require the current built worker and chat-update-worker.js. Rebuild the web app.',
+  );
+// Keep the real precache/navigation worker. Omitting its helper models an active pre-guard build
+// with no capability response; the reversible marker also preserves interrupted-run recovery.
+const legacyWorker = originalWorker.replace(
+  guardImport,
+  (statement) => `/* E2E legacy guard: ${statement} */void 0`,
+);
 let workerBuild = 0;
 
 /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
@@ -296,6 +314,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/voice/public-sample':
+      // Public fixture bytes for Chromium's fake device, never ambient microphone input.
+      return { wavBase64: voiceProbeSample().toString('base64') };
     case '/storage/capacity': {
       const instance = selectedInstance(body);
       storageCapacities.get(instance.id)!.availableBytes = z
@@ -315,10 +336,15 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
     case '/api/listener':
       await setApiListening(selectedInstance(body), body['listening'] !== false);
       return { ok: true };
-    case '/worker/build':
+    case '/worker/build': {
+      const mode = z.enum(['guarded', 'legacy']).parse(body['mode'] ?? 'guarded');
       workerBuild += 1;
-      await writeFile(workerPath, `${originalWorker}\n// E2E build ${workerBuild}\n`);
-      return { build: workerBuild };
+      await writeFile(
+        workerPath,
+        `${mode === 'legacy' ? legacyWorker : originalWorker}\n// E2E build ${workerBuild}\n`,
+      );
+      return { build: workerBuild, mode };
+    }
     case '/worker/reset':
       await writeFile(workerPath, originalWorker);
       return { ok: true };
@@ -553,6 +579,34 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
           throw new E2eControlError('unknown thread-history action');
       }
       return { ok: true };
+    }
+    case '/apps/stored-loop-defaults': {
+      const status = z.enum(['draft', 'published']).parse(body['status']);
+      const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-editor-'));
+      let fixture: TestApp | undefined;
+      try {
+        // Preserve the genuine pre-0019 store. Only the normal gateway startup migrates it.
+        const stored = await storeLoopBefore({
+          dataDir,
+          tag: '0019_completion_deadline_defaults',
+          definition: body['definition'],
+          publish: status === 'published',
+          remove: ['$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds'],
+        });
+        fixture = await createTestApp({
+          env: { GG_DATA_DIR: dataDir, GG_DB_URL: stored.url, GG_WEB_DIST: dist },
+        });
+        const pendingMigrations = await fixture.container.handle.pendingMigrations();
+        const url = await fixture.app.listen({ host: '127.0.0.1', port: 0 });
+        apps.push(fixture);
+        // App teardown closes its store before the externally supplied directory is removed.
+        closers.push(() => rm(dataDir, { recursive: true, force: true, maxRetries: 5 }));
+        return { url, loopId: stored.loopId, pendingMigrations };
+      } catch (error) {
+        await fixture?.close();
+        await rm(dataDir, { recursive: true, force: true, maxRetries: 5 });
+        throw error;
+      }
     }
     case '/apps': {
       if (body['threadHistory'] === true) {

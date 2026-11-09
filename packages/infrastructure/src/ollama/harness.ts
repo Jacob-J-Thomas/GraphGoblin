@@ -20,6 +20,12 @@ import {
   requestJson,
   type OllamaFetch,
 } from './http.js';
+import {
+  contextProfile,
+  contextRuntimeVersion,
+  contextOverflow,
+  OLLAMA_CONTEXT_PROFILE,
+} from './context.js';
 import { OLLAMA_OFF_REASON, type OllamaDiscoveredModel } from './types.js';
 
 export interface OllamaHarnessOptions {
@@ -50,6 +56,15 @@ const MAX_LINE_BYTES = 1024 * 1024;
 export class OllamaHarness implements HarnessPort {
   readonly id = 'ollama' as const;
   private readonly fetcher: OllamaFetch;
+  private readonly runtimeProbes = new Map<string, Promise<unknown>>();
+  private readonly contextProfiles = new Map<
+    string,
+    {
+      expires: number;
+      promise: Promise<ReturnType<typeof contextProfile>>;
+      settled: boolean;
+    }
+  >();
   constructor(private readonly options: OllamaHarnessOptions) {
     this.fetcher = options.fetcher ?? fetch;
   }
@@ -87,6 +102,81 @@ export class OllamaHarness implements HarnessPort {
               ? 'unknown'
               : 'transport';
       return readinessFailure('ollama', state);
+    }
+  }
+  async contextWindow(request: HarnessStartRequest, signal: AbortSignal, refreshModel = false) {
+    if (signal.aborted) throw aborted();
+    if (request.effort !== 'none')
+      throw new OllamaError(
+        'HARNESS_CONTEXT_UNSUPPORTED',
+        'This Ollama context profile supports explicit no-thinking mode only. Choose no thinking or another qualified harness; the requested effort was not changed.',
+      );
+    const { connection, models } = await this.options.snapshot();
+    if (!connection.enabled)
+      throw new OllamaError('HARNESS_INVALID_CONFIGURATION', OLLAMA_OFF_REASON);
+    const model = models.find(
+      (entry) => entry.model === request.model && entry.connectionRevision === connection.revision,
+    );
+    if (!model || !model.enabled || model.availability.state !== 'available')
+      throw new OllamaError(
+        'HARNESS_MODEL_UNAVAILABLE',
+        'Ollama model is unavailable; refresh models and check the selected model',
+      );
+    const guard = await this.options.guard?.(connection);
+    guard?.check();
+    const metadataSignal = AbortSignal.any([
+      AbortSignal.timeout(5000),
+      ...(guard ? [guard.signal] : []),
+    ]);
+    const runtimeKey = `${connection.revision}:${connection.baseUrl}`;
+    let runtime = this.runtimeProbes.get(runtimeKey);
+    if (!runtime) {
+      runtime = requestJson(this.fetcher, connection.baseUrl, '/api/version', metadataSignal);
+      this.runtimeProbes.set(runtimeKey, runtime);
+      const clear = () => {
+        if (this.runtimeProbes.get(runtimeKey) === runtime) this.runtimeProbes.delete(runtimeKey);
+      };
+      void runtime.then(clear, clear);
+    }
+    const prepare = async () => {
+      const version = await runtime;
+      const runtimeVersion = contextRuntimeVersion(version);
+      const key = `${connection.revision}:${model.digest}:${model.model}:${runtimeVersion}:${OLLAMA_CONTEXT_PROFILE}`;
+      let cached = this.contextProfiles.get(key);
+      if (!cached || cached.expires <= Date.now() || (refreshModel && cached.settled)) {
+        // Coalesce model metadata by catalog digest/runtime/policy. Final dispatch refreshes
+        // the live profile; every admission rechecks runtime version qualification.
+        const promise = requestJson(this.fetcher, connection.baseUrl, '/api/show', metadataSignal, {
+          model: model.model,
+        }).then((detail) => contextProfile(detail, version));
+        cached = { expires: Date.now() + 30_000, promise, settled: false };
+        const entry = cached;
+        void promise.then(
+          () => {
+            entry.settled = true;
+          },
+          () => undefined,
+        );
+        if (this.contextProfiles.size >= 256) this.contextProfiles.clear();
+        this.contextProfiles.set(key, cached);
+        void promise.catch(() => {
+          if (this.contextProfiles.get(key)?.promise === promise) this.contextProfiles.delete(key);
+        });
+      }
+      return cached.promise;
+    };
+    const prepared = prepare();
+    let rejectAbort: (() => void) | undefined;
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      rejectAbort = () => reject(aborted());
+      signal.addEventListener('abort', rejectAbort, { once: true });
+      if (signal.aborted) rejectAbort();
+    });
+    try {
+      const profile = await Promise.race([prepared, cancelled]);
+      return profile.window(request.turn.outputSchema);
+    } finally {
+      if (rejectAbort) signal.removeEventListener('abort', rejectAbort);
     }
   }
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
@@ -162,6 +252,10 @@ export class OllamaHarness implements HarnessPort {
         if (ownerSignal) combined = AbortSignal.any([combined, ownerSignal]);
         guard?.check();
         if (combined.aborted) throw aborted();
+        const context = await this.contextWindow(request, combined, true);
+        if (!context.fits(request.turn.prompt)) throw contextOverflow();
+        guard?.check();
+        if (combined.aborted) throw aborted();
         queue.push({ type: 'session', sessionId, mode: 'fresh' });
         let response: Response;
         try {
@@ -176,6 +270,7 @@ export class OllamaHarness implements HarnessPort {
               model: model.model,
               messages: [{ role: 'user', content: request.turn.prompt }],
               stream: true,
+              options: { num_ctx: context.contextTokens, num_predict: context.outputReserveTokens },
               ...(request.turn.outputSchema ? { format: request.turn.outputSchema } : {}),
               ...(think !== undefined ? { think } : {}),
             }),
@@ -258,6 +353,12 @@ export class OllamaHarness implements HarnessPort {
               'delivery-uncertain',
             );
           if (value.done) {
+            if (value.done_reason === 'length')
+              throw new OllamaError(
+                'HARNESS_OUTPUT_LIMIT',
+                'Ollama reached the reserved reply limit; no partial reply was accepted',
+                'delivery-uncertain',
+              );
             usage = {
               inputTokens: count(value.prompt_eval_count),
               outputTokens: count(value.eval_count),
@@ -333,17 +434,32 @@ export class OllamaHarness implements HarnessPort {
           ownerSignal?.aborted && !signal.aborted && !controller.signal.aborted
             ? new OllamaError(
                 'HARNESS_TURN_FAILED',
-                'Ollama request closed because Ollama was turned off; remote computation may continue',
+                dispatched
+                  ? 'Ollama request closed because Ollama was turned off; remote computation may continue'
+                  : 'Ollama inference was not submitted because Ollama was turned off',
                 dispatched ? 'delivery-uncertain' : 'definitely-not-submitted',
               )
             : error;
-        if (failure instanceof OllamaError)
+        const timeoutReason = object(combined.reason) && combined.reason.code === 'HARNESS_TIMEOUT';
+        const evidence =
+          failure instanceof OllamaError
+            ? failure
+            : !dispatched && combined.aborted
+              ? new OllamaError(
+                  timeoutReason ? 'HARNESS_TIMEOUT' : 'HARNESS_TURN_FAILED',
+                  timeoutReason
+                    ? 'Ollama inference timed out before dispatch'
+                    : 'Ollama inference was cancelled before dispatch',
+                  'definitely-not-submitted',
+                )
+              : undefined;
+        if (evidence)
           queue.push({
             type: 'error',
-            code: failure.code,
-            message: failure.message,
-            retriable: failure.retriable,
-            submission: failure.submission,
+            code: evidence.code,
+            message: evidence.message,
+            retriable: evidence.retriable,
+            submission: evidence.submission,
           });
         throw failure;
       } finally {

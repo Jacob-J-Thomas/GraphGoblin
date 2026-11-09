@@ -41,3 +41,13 @@ export const HarnessPreflightSchema = z.strictObject({
   models: z.array(ClaudeModelCapabilitySchema).max(16).optional(),
 });
 export type HarnessPreflight = z.infer<typeof HarnessPreflightSchema>;
+
+/** Admission facts persisted atomically with the exact rendered inference task. */
+export const InferenceContextSchema = z.strictObject({
+  profile: z.string().min(1).max(256),
+  contextTokens: z.number().int().positive(),
+  outputReserveTokens: z.number().int().positive(),
+  retainedHistoryPairs: z.number().int().nonnegative(),
+  omittedHistoryPairs: z.number().int().nonnegative(),
+});
+export type InferenceContext = z.infer<typeof InferenceContextSchema>;

@@ -245,17 +245,17 @@ test('inside a text field or CodeMirror the keys undo only that field’s text',
   await expect(label).toHaveValue('Approve now');
   // The browser's own undo takes back the typing (how much per press is the browser's choice:
   // the word, or the word and the space), and the canvas keeps the added node.
-  await page.keyboard.press('Control+z');
+  await page.keyboard.press('ControlOrMeta+z');
   await expect(label).toHaveValue(/^Approve ?$/);
   await expect(card(page, 'wait')).toHaveCount(1);
   await expect(card(page, 'approve').getByText('Approve now')).toHaveCount(0);
 
   const prompt = dialog.locator('[data-field="prompt"] .cm-content');
   await prompt.click();
-  await page.keyboard.press('Control+End');
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End');
   await page.keyboard.type(' Really?');
   await expect(prompt).toHaveText('Approve? Really?');
-  await page.keyboard.press('Control+z');
+  await page.keyboard.press('ControlOrMeta+z');
   await expect(prompt).toHaveText('Approve?');
   await expect(card(page, 'wait')).toHaveCount(1);
 });

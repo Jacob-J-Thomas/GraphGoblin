@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChatPairClaimRequestSchema } from '@graphgoblin/contracts';
 import { GoblinMark, Icon } from '../components/icons/index.js';
 import {
@@ -16,8 +16,14 @@ import {
   type DeviceCredential,
   type PendingPairing,
 } from './credentials.js';
-import { claimDevice, gatewayDestination, PairingError } from './connection.js';
+import {
+  claimDevice,
+  gatewayDestination,
+  PairingError,
+  type PairingOutcome,
+} from './connection.js';
 import { useStandalone } from './standalone.js';
+import { installationGuidance } from './useInstall.js';
 
 export interface PairScreenProps {
   initialCode: string;
@@ -46,8 +52,15 @@ export function PairScreen({
   const [linkCode, setLinkCode] = useState(Boolean(initialCode));
   const [editingCode, setEditingCode] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [rejectedCode, setRejectedCode] = useState(false);
+  const inFlightRef = useRef(false);
+  const [outcome, setOutcome] = useState<PairingOutcome | 'idle'>(
+    matchingPending ? 'unconfirmed' : 'idle',
+  );
   const [error, setError] = useState('');
+  const [errorKind, setErrorKind] = useState<'request' | 'specific'>('specific');
+  const [errorStatus, setErrorStatus] = useState<number>();
+  const [errorFocus, setErrorFocus] = useState(0);
+  const [replacementNotice, setReplacementNotice] = useState('');
   const [gateway, setGateway] = useState('');
   const [gatewayError, setGatewayError] = useState('');
   const [installNotice, setInstallNotice] = useState('');
@@ -66,11 +79,8 @@ export function PairScreen({
     if (editingCode > 0) document.getElementById('goblin-pairing-code')?.focus();
   }, [editingCode]);
   useEffect(() => {
-    if (!rejectedCode || busy) return;
-    const field = document.getElementById(linkCode ? 'goblin-paste-code' : 'goblin-pairing-code');
-    field?.focus();
-    if (field instanceof HTMLTextAreaElement) field.select();
-  }, [rejectedCode, busy, linkCode]);
+    if (errorFocus > 0 && !busy) document.getElementById('goblin-pairing-error')?.focus();
+  }, [errorFocus, busy]);
 
   useEffect(() => {
     if (browserPairing && initialCode && !standalone)
@@ -78,7 +88,8 @@ export function PairScreen({
   }, [browserPairing, initialCode, standalone]);
 
   async function pair() {
-    if (busy || !online) return;
+    if (inFlightRef.current || busy || !online) return;
+    setErrorKind('specific');
     if (!label.trim()) {
       setError('Enter a name for this device.');
       document.getElementById('goblin-device-label')?.focus();
@@ -101,22 +112,36 @@ export function PairScreen({
       focusCode();
       return;
     }
+    inFlightRef.current = true;
     setBusy(true);
-    setRejectedCode(false);
     setError('');
+    setErrorStatus(undefined);
+    setReplacementNotice('');
+    // Keep the actual durable enrollment across the await. React's captured `saved` can
+    // still be empty when writing success fails after beginPairing already persisted it.
+    let enrollment = saved;
     try {
-      const enrollment = saved ?? beginPairing(code, label);
+      enrollment ??= beginPairing(code, label);
       setSaved(enrollment);
+      setOutcome('unconfirmed');
       onPaired(await claimDevice(enrollment));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Pairing could not finish. Try again.');
-      if (cause instanceof PairingError && cause.status === 401) setRejectedCode(true);
+      setOutcome(
+        enrollment ? (cause instanceof PairingError ? cause.outcome : 'unconfirmed') : 'idle',
+      );
+      setErrorKind(cause instanceof PairingError ? 'request' : 'specific');
+      setErrorStatus(cause instanceof PairingError ? cause.status : undefined);
+      setErrorFocus((count) => count + 1);
     } finally {
+      inFlightRef.current = false;
       setBusy(false);
     }
   }
 
   function newCode() {
+    if (inFlightRef.current || busy) return;
+    setReplacementNotice('');
     try {
       forgetDevice();
       setSaved(undefined);
@@ -124,8 +149,16 @@ export function PairScreen({
       setLinkCode(false);
       setEditingCode((count) => count + 1);
       setError('');
+      setErrorStatus(undefined);
+      setOutcome('idle');
+      setReplacementNotice(
+        saved ? 'Saved attempt forgotten. Paste a new code.' : 'Paste a new code.',
+      );
     } catch (cause) {
       setError((cause as Error).message);
+      setErrorKind('specific');
+      setErrorStatus(undefined);
+      setErrorFocus((count) => count + 1);
     }
   }
 
@@ -142,7 +175,7 @@ export function PairScreen({
         </h1>
         <p className="text-sm text-muted">
           {installFirst
-            ? "Phones can keep the Home Screen app's storage apart from this browser's, so a pairing made here may not reach the app. Continue only if you just created this link on the gateway."
+            ? 'The installed app may keep its storage apart from this browser, so pair inside the app you plan to use. Continue only if you just created this link on the gateway.'
             : linkCode
               ? `You opened a pairing link for ${window.location.host}. Name this device, then tap Pair. Continue only if you just created this link on the gateway.`
               : standalone
@@ -202,19 +235,17 @@ export function PairScreen({
                 variant="outline"
                 className="h-11 max-sm:w-full"
                 onClick={() => {
-                  void install().catch(() =>
-                    setInstallNotice('In Safari, tap Share, then Add to Home Screen.'),
-                  );
+                  void install().catch(() => setInstallNotice(installationGuidance()));
                 }}
               >
                 Install Goblin
               </Button>
             ) : (
-              <p className="text-xs text-muted">In Safari, tap Share, then Add to Home Screen.</p>
+              <p className="text-xs text-muted">{installationGuidance()}</p>
             )}
           </div>
           <p className="font-medium text-heading">
-            3 · Open Goblin from your Home Screen, paste the code and tap Pair.
+            3 · Open the installed Goblin app, paste the code and tap Pair.
           </p>
           <p className="text-xs text-muted">This page forgets the code if you reload or leave.</p>
           <div className="border-t border-default pt-5">
@@ -237,7 +268,7 @@ export function PairScreen({
           className="grid gap-4"
           onSubmit={(event) => {
             event.preventDefault();
-            void pair();
+            if (outcome !== 'rejected') void pair();
           }}
         >
           <FieldGroup>
@@ -261,6 +292,7 @@ export function PairScreen({
               <Icon name="check" className="text-status-good-fg" />
               <p>Pairing code: from the link</p>
               <Button
+                type="button"
                 id="goblin-paste-code"
                 variant="ghost"
                 size="sm"
@@ -292,7 +324,7 @@ export function PairScreen({
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                     event.preventDefault();
-                    void pair();
+                    if (outcome !== 'rejected') void pair();
                   }
                 }}
               />
@@ -301,35 +333,102 @@ export function PairScreen({
           )}
           {saved ? (
             <p className="text-sm text-muted">
-              A pairing attempt is saved on this device. Retry checks the same connection.
+              {outcome === 'rejected'
+                ? 'The saved attempt is currently refused. Use a new code to replace it.'
+                : 'A pairing attempt is saved on this device. Retry pairing reuses the saved request and device credential.'}
             </p>
           ) : null}
           {!online ? (
             <p role="status" className="text-sm text-status-warn-fg">
-              You’re offline. Reconnect, then tap Pair.
+              {outcome === 'idle'
+                ? 'You’re offline. Reconnect to pair.'
+                : 'You’re offline. Reconnect to retry pairing.'}
             </p>
           ) : null}
-          <Button type="submit" className="h-11 w-full" disabled={busy || !online} aria-busy={busy}>
-            {busy
-              ? 'Pairing…'
-              : saved
-                ? 'Retry pairing'
-                : !standalone
-                  ? 'Pair this browser'
-                  : 'Pair'}
-          </Button>
           {error ? (
-            <div id="goblin-pairing-error">
-              <Alert tone="bad" title="Pairing needs attention">
-                {error}
+            <div id="goblin-pairing-error" tabIndex={-1} className="focus:outline-none">
+              <Alert
+                tone="bad"
+                title={
+                  errorKind === 'request'
+                    ? outcome === 'rejected'
+                      ? 'Pairing was refused'
+                      : 'Not sure pairing finished'
+                    : 'Pairing needs attention'
+                }
+              >
+                {errorKind === 'request' ? (
+                  outcome === 'rejected' ? (
+                    'The gateway currently refuses this code and the saved credential. Use a new code to replace the saved attempt.'
+                  ) : (
+                    <div className="grid gap-2">
+                      {errorStatus === 429 ? (
+                        <p>Too many pairing attempts. Wait about a minute, then retry.</p>
+                      ) : null}
+                      <p>
+                        The gateway didn’t confirm this pairing. Retry pairing reuses the saved
+                        request and device credential.
+                      </p>
+                      {errorStatus !== undefined &&
+                      errorStatus >= 400 &&
+                      errorStatus < 500 &&
+                      errorStatus !== 401 &&
+                      errorStatus !== 429 ? (
+                        <p>{error}</p>
+                      ) : null}
+                    </div>
+                  )
+                ) : (
+                  error
+                )}
               </Alert>
             </div>
           ) : null}
-          {saved ? (
-            <Button variant="ghost" disabled={busy} onClick={newCode}>
-              Use a new code
-            </Button>
+          {replacementNotice ? (
+            <p role="status" className="text-sm text-muted">
+              {replacementNotice}
+            </p>
           ) : null}
+          {outcome === 'rejected' ? (
+            <>
+              <Button type="button" className="h-11 w-full" disabled={busy} onClick={newCode}>
+                Use a new code
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy || !online}
+                aria-busy={busy}
+                onClick={() => {
+                  void pair();
+                }}
+              >
+                {busy ? 'Pairing…' : 'Retry pairing'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="submit"
+                className="h-11 w-full"
+                disabled={busy || !online}
+                aria-busy={busy}
+              >
+                {busy
+                  ? 'Pairing…'
+                  : outcome === 'unconfirmed'
+                    ? 'Retry pairing'
+                    : !standalone
+                      ? 'Pair this browser'
+                      : 'Pair'}
+              </Button>
+              {saved ? (
+                <Button type="button" variant="ghost" disabled={busy} onClick={newCode}>
+                  Use a new code
+                </Button>
+              ) : null}
+            </>
+          )}
           {!standalone ? (
             <HelpText>Pairs this browser only. The installed app needs its own pairing.</HelpText>
           ) : null}

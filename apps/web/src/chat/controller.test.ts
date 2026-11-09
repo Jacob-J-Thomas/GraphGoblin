@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChatApiError } from './client.js';
-import { ChatController, isActiveTurn } from './controller.js';
+import { ChatController, isActiveTurn, type PendingChatRequest } from './controller.js';
 import { conversation, mockChatClient, session, turn } from './__fixtures__/chat.js';
 const key = 'test-chat';
 const pending = {
@@ -215,7 +215,8 @@ describe('durable chat request recovery', () => {
     const { controller, client } = create();
     await controller.refresh();
     await controller.newConversation();
-    expect(controller.getSnapshot().conversationId).toBe(conversation.id);
+    expect(controller.getSnapshot().conversationId).toBeUndefined();
+    expect(client.createConversation).not.toHaveBeenCalled();
     await controller.selectConversation(conversation.id);
     expect(client.turns).toHaveBeenCalled();
     controller.setDraft('Keep drafting');
@@ -229,6 +230,7 @@ describe('durable chat request recovery', () => {
     expect(controller.getSnapshot().error).toBeTruthy();
     client.createConversation.mockRejectedValue(new ChatApiError(403, 'FORBIDDEN', 'Not allowed.'));
     await controller.newConversation();
+    await controller.send(turn.input);
     expect(controller.getSnapshot().authenticationFailed).toBe(true);
   });
   it('does not duplicate a post while it is in flight and does not send if conversation creation fails', async () => {
@@ -1077,7 +1079,8 @@ describe('definite text refusal preserves the draft (review4504383697)', () => {
       .mockRejectedValueOnce(new ChatApiError(429, 'RATE_LIMITED', 'Try later.'));
     await controller.send({ kind: 'text', text: 'Earlier text' });
     const identity = controller.getSnapshot().pending!;
-    expect(controller.getSnapshot()).toMatchObject({ draft: '', pending: identity });
+    expect(controller.getSnapshot()).toMatchObject({ draft: 'Earlier text', pending: identity });
+    client.request.mockRejectedValue(missing);
     await controller.retryPending();
     expect(client.send.mock.calls[1]![1]).toEqual(identity.request);
     expect(controller.getSnapshot()).toMatchObject({ pending: undefined, draft: 'Earlier text' });
@@ -1092,6 +1095,7 @@ describe('definite text refusal preserves the draft (review4504383697)', () => {
     await controller.send({ kind: 'text', text: 'Earlier text' });
     controller.setDraft('Newer');
     controller.setDraft('');
+    client.request.mockRejectedValue(missing);
     await controller.retryPending();
     expect(controller.getSnapshot()).toMatchObject({ pending: undefined, draft: '' });
     expect(client.send).toHaveBeenCalledTimes(2);
@@ -1157,7 +1161,7 @@ describe('definite text refusal preserves the draft (review4504383697)', () => {
   });
 });
 
-it('retires an exactly matched refused request without restoring into another selected conversation (review4504383697)', async () => {
+it('keeps already visible draft when a selected conversation is defensively changed during refusal (review4504383697)', async () => {
   const { controller, client } = create();
   await controller.refresh();
   controller.setDraft('Refused text');
@@ -1171,13 +1175,108 @@ it('retires an exactly matched refused request without restoring into another se
   expect(controller.getSnapshot()).toMatchObject({
     pending: undefined,
     conversationId: otherConversationId,
-    draft: '',
+    draft: 'Refused text',
   });
   expect(JSON.parse(sessionStorage.getItem(key)!)).toMatchObject({
     conversationId: otherConversationId,
-    draft: '',
+    draft: 'Refused text',
   });
   expect(JSON.parse(sessionStorage.getItem(key)!)).not.toHaveProperty('pending');
   await controller.retryPending();
   expect(client.send).toHaveBeenCalledOnce();
+});
+
+describe('approved admission and readiness behavior', () => {
+  it('retains text until acknowledged admission, then never restores an admitted failed run', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    controller.setDraft('Keep until admitted');
+    let finish!: (value: typeof turn) => void;
+    client.send.mockImplementation(
+      (_id, request) =>
+        new Promise((resolve) => {
+          finish = (value) => resolve({ ...value, requestId: request.requestId });
+        }),
+    );
+    const sending = controller.send({ kind: 'text', text: 'Keep until admitted' });
+    await vi.waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(controller.getSnapshot().draft).toBe('Keep until admitted');
+    finish({
+      ...turn,
+      runStatus: 'failed',
+      response: undefined,
+      error: { code: 'FAILED', message: 'No transcript.' },
+    });
+    await sending;
+    expect(controller.getSnapshot()).toMatchObject({
+      draft: '',
+      pending: undefined,
+      turns: [expect.objectContaining({ runStatus: 'failed' })],
+    });
+  });
+  it('retains per-conversation text drafts and creates no empty records on New chat', async () => {
+    const { controller, client } = create();
+    await controller.refresh();
+    await controller.selectConversation(conversation.id);
+    controller.setDraft('First draft');
+    await controller.selectConversation(turn.id);
+    controller.setDraft('Other draft');
+    await controller.selectConversation(conversation.id);
+    expect(controller.getSnapshot().draft).toBe('First draft');
+    await controller.newConversation();
+    await controller.newConversation();
+    expect(client.createConversation).not.toHaveBeenCalled();
+  });
+  it('refreshes blocked foreground session readiness within four seconds without reading history', async () => {
+    vi.useFakeTimers();
+    const { controller, client } = create();
+    client.session
+      .mockResolvedValueOnce({
+        ...session,
+        readiness: {
+          text: { ready: false, message: 'Model unavailable.' },
+          audio: { ready: false, code: 'CHAT_AUDIO_UNAVAILABLE' },
+        },
+      })
+      .mockResolvedValue(session);
+    await controller.refresh();
+    const historyReads = client.conversations.mock.calls.length;
+    controller.setDraft('Preserve me');
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(controller.getSnapshot().session?.readiness.text.ready).toBe(true);
+    expect(controller.getSnapshot().draft).toBe('Preserve me');
+    expect(client.conversations).toHaveBeenCalledTimes(historyReads);
+  });
+});
+
+it('reuses recovered prepared voice identity and invokes durable upload handoff before POST', async () => {
+  const { controller, client } = create();
+  client.session.mockResolvedValue({
+    ...session,
+    readiness: { text: { ready: true }, audio: { ready: true } },
+  });
+  await controller.refresh();
+  const input = { kind: 'audio' as const, audioId: turn.id, caption: 'Caption' };
+  const prepared = {
+    conversationId: conversation.id,
+    request: { requestId: turn.requestId, input },
+  };
+  const handoff = vi.fn((pending: PendingChatRequest) => {
+    expect(client.send).not.toHaveBeenCalled();
+    expect(pending).toEqual(prepared);
+  });
+  await controller.send(input, { prepared, onPrepared: handoff });
+  expect(handoff).toHaveBeenCalledOnce();
+  expect(client.send).toHaveBeenCalledWith(conversation.id, prepared.request);
+  expect(client.createConversation).not.toHaveBeenCalled();
+});
+it('does not admit a turn when the durable upload-to-request handoff fails', async () => {
+  const { controller, client } = create();
+  await controller.refresh();
+  await controller.send(turn.input, {
+    onPrepared: () => {
+      throw new Error('Storage blocked');
+    },
+  });
+  expect(client.send).not.toHaveBeenCalled();
 });

@@ -250,6 +250,8 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
     const env = Object.fromEntries(
       Object.entries(process.env).filter(([key]) => !key.startsWith('GG_')),
     );
+    if (workload === 'browser' && process.env.GG_E2E_BROWSER_CHANNEL !== undefined)
+      env.GG_E2E_BROWSER_CHANNEL = process.env.GG_E2E_BROWSER_CHANNEL;
     let result;
     try {
       result = await exec(process.execPath, args, {
@@ -269,6 +271,7 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
     recordings.set(workload, { output, summary });
     assert.equal(summary.workload, workload);
     assert.equal(summary.error, undefined);
+    assert.equal(summary.profileError, undefined);
     assert.equal(summary.correctnessFailure, undefined);
     assert.equal(summary.cases.length, 1);
     assert.equal(compact.cases.length, 1);
@@ -288,7 +291,11 @@ test.each(['long', 'context', 'artifacts', 'replay', 'readiness', 'browser', 'ap
       assert.ok(Number.isFinite(cold.startupToFirstResponseMs));
       // measure.mjs owns cleanup. Windows force-termination is not graceful-exit evidence.
       if (process.platform === 'linux') assert.equal(cold.exitCode, 0);
-    } else assert.equal(summary.cases[0].correctness.ok, true);
+    } else {
+      assert.equal(summary.cases[0].correctness.ok, true);
+      const samples = summary.cases[0].cpuSamples.count;
+      assert.ok(samples > 0 && samples <= summary.cpuProfile.samples);
+    }
   },
   200_000,
 );

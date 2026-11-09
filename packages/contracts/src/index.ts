@@ -32,3 +32,7 @@ export * from './trigger-integrations.js';
 export * from './template-manifest.js';
 
 export * from './webhook-receipt-migration.js';
+
+export * from './chat-pairing.js';
+
+export * from './voice.js';

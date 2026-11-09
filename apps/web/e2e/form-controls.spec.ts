@@ -4,7 +4,15 @@
  * `aria-required`; an error describes its control; the file picker is a labelled native input.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, openAdvanced, openNode, publishLoop, test } from './fixtures.js';
+import {
+  approvalLoop,
+  chooseOptionByKeyboard,
+  expect,
+  openAdvanced,
+  openNode,
+  publishLoop,
+  test,
+} from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, kind: string, config: unknown) {
   const definition = approvalLoop(`controls ${kind}`);
@@ -83,12 +91,11 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   await expect
     .poll(async () => (await savedConfig(request, id))?.['harnessOptions'])
     .not.toHaveProperty('networkAccess');
-  // A select (more than four options) by keyboard: "Not set", then the first effort. The inherited
-  // GPT-6 Luna starts at none, no reasoning (#205).
+  // A select (more than four options) by native keyboard typeahead: choose no reasoning explicitly.
   const effort = dialog.getByLabel('Effort', { exact: true });
   await expect(effort).toHaveValue('');
   await effort.focus();
-  await page.keyboard.press('ArrowDown');
+  await chooseOptionByKeyboard(page, effort, 'none (no reasoning)');
   await expect(effort).toHaveValue('none');
   await expect.poll(async () => (await savedConfig(request, id))?.['effort']).toBe('none');
 

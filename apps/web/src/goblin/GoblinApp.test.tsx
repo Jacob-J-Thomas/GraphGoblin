@@ -42,9 +42,89 @@ function session(kind: 'device' | 'gateway' = 'device') {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  window.history.replaceState({}, '', '/');
 });
 
 describe('standalone Goblin shell', () => {
+  it('lets empty paired chat fill the remaining column under the actual header without a notice', async () => {
+    pair();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(session()));
+    render(<GoblinApp initialCode="" />);
+    await screen.findByText('Connected');
+    const header = screen.getByRole('banner');
+    const shell = header.parentElement!;
+    expect(shell).toHaveClass('flex', 'min-h-dvh', 'flex-col');
+    expect(screen.getByText('Shared chat').parentElement).toBe(shell);
+    expect(screen.queryByText(/^Paired as/)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus();
+  });
+
+  it('keeps the fresh pairing notice in the same remaining-space column before chat', async () => {
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation((url) =>
+        Promise.resolve(
+          url === '/chat/pairings/claim'
+            ? new Response(JSON.stringify({ deviceId, label: 'Layout phone' }))
+            : session(),
+        ),
+      );
+    render(<GoblinApp initialCode={'A'.repeat(43)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser instead' }));
+    fireEvent.change(await screen.findByLabelText('Device name'), {
+      target: { value: 'Layout phone' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+    const notice = await screen.findByText('Paired as Layout phone.');
+    const shell = screen.getByRole('banner').parentElement!;
+    expect(shell).toHaveClass('flex', 'min-h-dvh', 'flex-col');
+    expect(notice.parentElement).toBe(shell);
+    expect(notice.previousElementSibling).toBe(screen.getByRole('banner'));
+    expect(notice.nextElementSibling).toBe(screen.getByText('Shared chat'));
+    expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus();
+    expect(fetcher.mock.calls.filter(([url]) => url === '/chat/pairings/claim')).toHaveLength(1);
+  });
+
+  it('captures and immediately scrubs same-tab pairing links without replacing an existing identity', async () => {
+    const existing = pair();
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(session()));
+    render(<GoblinApp initialCode="" />);
+    await screen.findByText('Connected');
+    window.history.replaceState({}, '', `/goblin/#pair=${'B'.repeat(43)}`);
+    fireEvent(window, new HashChangeEvent('hashchange'));
+    expect(window.location.hash).toBe('');
+    expect(screen.getByRole('heading', { name: 'This device is already paired' })).toBeVisible();
+    expect(readDeviceRecord()).toEqual(existing);
+    expect(fetcher.mock.calls.every(([url]) => url === '/chat/session')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep current pairing' }));
+    await screen.findByText('Shared chat');
+  });
+  it('captures a same-tab code on the unpaired screen and claims only after a user tap', () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch');
+    render(<GoblinApp initialCode="" />);
+    window.history.replaceState({}, '', `/goblin/#pair=${'A'.repeat(43)}`);
+    fireEvent(window, new HashChangeEvent('hashchange'));
+    expect(window.location.hash).toBe('');
+    expect(screen.getByRole('button', { name: 'Pair this browser instead' })).toBeVisible();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('accepts and scrubs a new same-tab link after access was revoked without claiming it', async () => {
+    pair();
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{}', { status: 401 }));
+    render(<GoblinApp initialCode="" />);
+    await screen.findByRole('heading', { name: 'This device no longer has access' });
+    window.history.replaceState({}, '', `/goblin/#pair=${'A'.repeat(43)}`);
+    fireEvent(window, new HashChangeEvent('hashchange'));
+    expect(window.location.hash).toBe('');
+    expect(screen.getByRole('button', { name: 'Pair this browser instead' })).toBeVisible();
+    expect(readDeviceRecord()).toBeUndefined();
+    expect(fetcher.mock.calls.every(([url]) => url === '/chat/session')).toBe(true);
+  });
   it('shows pairing without making an unauthenticated session request', () => {
     const fetcher = vi.spyOn(globalThis, 'fetch');
     render(<GoblinApp initialCode="" />);
@@ -82,6 +162,7 @@ describe('standalone Goblin shell', () => {
     expect(screen.getByText(window.location.origin)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Check connection' }));
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    expect(surfaces.mock.lastCall?.[0]).toMatchObject({ sessionRefreshKey: 1 });
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open');
   });
@@ -363,7 +444,7 @@ describe('standalone Goblin shell', () => {
     expect(fetcher.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true);
   });
 
-  it('an already paired installed app opens chat and ignores a new pairing fragment', async () => {
+  it('an already paired installed app requires an explicit choice for a new pairing fragment', async () => {
     const existing = pair();
     vi.stubGlobal(
       'matchMedia',
@@ -373,8 +454,10 @@ describe('standalone Goblin shell', () => {
       .spyOn(globalThis, 'fetch')
       .mockImplementation(() => Promise.resolve(session()));
     render(<GoblinApp initialCode={'A'.repeat(43)} />);
+    expect(screen.getByRole('heading', { name: 'This device is already paired' })).toBeVisible();
+    expect(fetcher).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep current pairing' }));
     await screen.findByText('Shared chat');
-    expect(screen.queryByText('This device is already paired')).not.toBeInTheDocument();
     expect(readDeviceRecord()).toEqual(existing);
     expect(fetcher.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true);
   });

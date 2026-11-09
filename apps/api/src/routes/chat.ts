@@ -1,54 +1,35 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import {
   CHAT_MAX_AUDIO_BYTES,
+  VOICE_NORMALIZER_COMMAND,
   ChatAudioUploadSchema,
+  ChatAudioUploadStatusSchema,
   ChatConversationSchema,
-  ChatDeviceSchema,
-  ChatPairClaimRequestSchema,
-  ChatPairClaimResponseSchema,
-  ChatPairingCreatedSchema,
   ChatSendRequestSchema,
   ChatSessionSchema,
   ChatTurnSchema,
   UlidSchema,
 } from '@graphgoblin/contracts';
 import { ChatAudioStoreError } from '@graphgoblin/infrastructure/fs';
-import { systemChatIssues } from '@graphgoblin/domain';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import type { ApiInstance } from '../types.js';
 import type { FastifyRequest } from 'fastify';
 import { ChatError } from '../chat/errors.js';
-import { normalizeChatMediaType } from '../chat/media.js';
+import { normalizeChatMediaType, validateCanonicalChatWav } from '../chat/media.js';
 import { ChatService, chatScope } from '../chat/service.js';
 import { problem } from '../plugins/errors.js';
 import { FixedWindowRateLimiter } from '../triggers/rate-limit.js';
+import { registerChatPairingRoutes } from './chat-pairing.js';
+export { pairingBaseUrl } from './chat-pairing.js';
 
 const IdParams = z.strictObject({ id: UlidSchema });
 const EmptyBody = z.strictObject({}).default({});
-const hash = (secret: string) => createHash('sha256').update(secret).digest('hex');
-
-/** Enrollment links use configured authority only, never Host or forwarded headers. */
-export function pairingBaseUrl(publicUrl: string | undefined): URL | undefined {
-  if (!publicUrl) return undefined;
-  try {
-    const url = new URL(publicUrl);
-    if (url.username || url.password || url.search || url.hash) return undefined;
-    const loopback =
-      url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '[::1]';
-    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) return undefined;
-    return new URL('/goblin/', url);
-  } catch {
-    return undefined;
-  }
-}
-
 export function registerChatRoutes(app: ApiInstance, container: Container): void {
   const { chat } = container.repos;
   const service = new ChatService(container);
-  const claims = new FixedWindowRateLimiter(container.ports.clock, 10);
-  const globalClaims = new FixedWindowRateLimiter(container.ports.clock, 100);
+  registerChatPairingRoutes(app, container);
   const sends = new FixedWindowRateLimiter(container.ports.clock, 30);
   const uploads = new FixedWindowRateLimiter(container.ports.clock, 6);
   const reservations = new WeakMap<
@@ -56,6 +37,9 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
     {
       id: string;
       mimeType: string;
+      uploadId: string;
+      digest: string;
+      canonicalWav: boolean;
       scope: ReturnType<typeof chatScope>;
     }
   >();
@@ -63,6 +47,7 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
     const reservation = reservations.get(request);
     if (!reservation) return;
     reservations.delete(request);
+    await chat.failUpload(reservation.scope, reservation.uploadId, 'CHAT_AUDIO_UPLOAD_FAILED');
     await chat.discardAudio(reservation.scope, reservation.id);
     await container.chatAudio.remove(reservation.id);
     await chat.audioDeleted(reservation.id);
@@ -73,10 +58,7 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
   app.addHook('onRequest', async (request, reply) => {
     const route = `${request.method} ${request.routeOptions.url ?? ''}`;
     let decisions: { allowed: boolean; retryAfterSeconds: number }[] = [];
-    if (route === 'POST /chat/pairings/claim') {
-      const global = globalClaims.hit('all');
-      decisions = global.allowed ? [global, claims.hit(request.ip)] : [global];
-    } else if (route === 'POST /chat/conversations/:id/turns')
+    if (route === 'POST /chat/conversations/:id/turns')
       decisions = [sends.hit(`${request.auth.ownerId}:${chatScope(request.auth).audienceKey}`)];
     else if (route === 'POST /chat/audio') {
       normalizeChatMediaType(request.headers['content-type']);
@@ -103,13 +85,62 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
           409,
           readiness.audio.message ?? 'audio is unavailable',
         );
+      const published = await service.published(request.auth);
+      const normalizer = published.version.definition.nodes.find(
+        (node) => node.id === 'chat-normalize',
+      );
+      if (
+        normalizer?.kind === 'script' &&
+        normalizer.config.command === VOICE_NORMALIZER_COMMAND &&
+        normalizeChatMediaType(request.headers['content-type']) !== 'audio/wav'
+      )
+        throw new ChatError(
+          'CHAT_MEDIA_UNSUPPORTED',
+          415,
+          'the guided voice preset requires canonical WAV audio',
+        );
       const scope = chatScope(request.auth);
-      const id = await chat.reserveAudio(scope);
-      reservations.set(request, {
-        id,
-        scope,
-        mimeType: normalizeChatMediaType(request.headers['content-type']),
-      });
+      const uploadId = z.uuid().safeParse(request.headers['idempotency-key']);
+      const digest = z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .safeParse(request.headers['x-content-sha256']);
+      if (!uploadId.success || !digest.success)
+        throw new ChatError(
+          'CHAT_AUDIO_UPLOAD_IDENTITY_REQUIRED',
+          400,
+          'persist an upload UUID and SHA-256 digest before uploading',
+        );
+      const existing = await chat.beginUpload(scope, uploadId.data, digest.data);
+      if (existing) {
+        if (existing.state === 'ready') return reply.status(201).send(existing.audio);
+        if (existing.state === 'receiving')
+          throw new ChatError(
+            'CHAT_AUDIO_UPLOAD_IN_PROGRESS',
+            409,
+            'check the existing upload identity before retrying',
+          );
+        throw new ChatError(
+          'CHAT_AUDIO_UPLOAD_RETIRED',
+          410,
+          'this upload attempt is terminal; keep the draft and start a new upload explicitly',
+        );
+      }
+      try {
+        const id = await chat.reserveAudio(scope);
+        reservations.set(request, {
+          id,
+          scope,
+          uploadId: uploadId.data,
+          digest: digest.data,
+          canonicalWav:
+            normalizer?.kind === 'script' && normalizer.config.command === VOICE_NORMALIZER_COMMAND,
+          mimeType: normalizeChatMediaType(request.headers['content-type']),
+        });
+      } catch (error) {
+        await chat.failUpload(scope, uploadId.data, 'CHAT_AUDIO_UPLOAD_FAILED');
+        throw error;
+      }
     }
   });
   app.addHook('onResponse', async (request) => {
@@ -159,10 +190,14 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request) => ({
-      items: await chat.listConversations(chatScope(request.auth), {
-        ...(request.query.before ? { before: request.query.before } : {}),
-        ...(request.query.limit !== undefined ? { limit: request.query.limit } : {}),
-      }),
+      items: await Promise.all(
+        (
+          await chat.listConversations(chatScope(request.auth), {
+            ...(request.query.before ? { before: request.query.before } : {}),
+            ...(request.query.limit !== undefined ? { limit: request.query.limit } : {}),
+          })
+        ).map((conversation) => service.conversation(request.auth, conversation)),
+      ),
     }),
   );
 
@@ -287,21 +322,34 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const { id, mimeType, scope } = reservations.get(request)!;
+      const { id, mimeType, scope, uploadId, digest, canonicalWav } = reservations.get(request)!;
       try {
         if (!(request.body instanceof Readable))
           throw new ChatError('CHAT_MEDIA_UNSUPPORTED', 415, 'upload raw audio bytes');
         const stored = await container.chatAudio.write(id, request.body);
+        if (stored.sha256 !== digest)
+          throw new ChatError(
+            'CHAT_AUDIO_DIGEST_MISMATCH',
+            400,
+            'uploaded audio does not match its frozen digest',
+          );
+        if (canonicalWav) validateCanonicalChatWav(await readFile(stored.path));
         const upload = await chat.completeAudio(scope, id, {
           mimeType,
           bytes: stored.byteLength,
           sha256: stored.sha256,
           path: stored.path,
         });
+        await chat.finishUpload(scope, uploadId, id);
         reservations.delete(request);
         reply.status(201);
         return upload;
       } catch (error) {
+        await chat.failUpload(
+          scope,
+          uploadId,
+          error instanceof ChatError ? error.code : 'CHAT_AUDIO_UPLOAD_FAILED',
+        );
         await releaseReservation(request);
         if (error instanceof ChatAudioStoreError) {
           if (error.code === 'too_large')
@@ -316,6 +364,29 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
         }
         throw error;
       }
+    },
+  );
+
+  app.get(
+    '/chat/audio/requests/:uploadId',
+    {
+      schema: {
+        tags: ['chat'],
+        summary: 'Recover an audio upload acknowledgement without replay',
+        params: z.strictObject({ uploadId: z.uuid() }),
+        response: { 200: ChatAudioUploadStatusSchema },
+      },
+    },
+    async (request) => {
+      const status = await chat.uploadStatus(chatScope(request.auth), request.params.uploadId);
+      if (!status) throw new ChatError('CHAT_NOT_FOUND', 404, 'upload request not found');
+      if (status.state === 'retired')
+        throw new ChatError(
+          'CHAT_AUDIO_UPLOAD_RETIRED',
+          410,
+          'this upload is no longer available; keep the draft and start a new upload explicitly',
+        );
+      return status;
     },
   );
 
@@ -340,105 +411,5 @@ export function registerChatRoutes(app: ApiInstance, container: Container): void
       }
       return reply.status(204).send(null);
     },
-  );
-
-  app.post(
-    '/chat/pairings',
-    {
-      schema: {
-        tags: ['chat'],
-        summary: 'Create a ten-minute device enrollment',
-        body: EmptyBody,
-        response: { 201: ChatPairingCreatedSchema },
-      },
-    },
-    async (request, reply) => {
-      const url = pairingBaseUrl(container.config.publicUrl);
-      if (!container.config.requireApiKey || !url)
-        throw new ChatError(
-          'CHAT_PAIRING_UNAVAILABLE',
-          409,
-          'enable GG_REQUIRE_API_KEY and configure GG_PUBLIC_URL with HTTPS (or loopback HTTP) before pairing',
-        );
-      try {
-        const { version } = await service.published(request.auth);
-        if (systemChatIssues(version.definition).length)
-          throw new ChatError('CHAT_NOT_READY', 409, 'publish a contract-valid gateway chat loop');
-      } catch (error) {
-        if (error instanceof ChatError)
-          throw new ChatError('CHAT_PAIRING_UNAVAILABLE', 409, error.message);
-        throw error;
-      }
-      const code = randomBytes(32).toString('base64url');
-      const expiresAt = new Date(container.ports.clock.now().getTime() + 10 * 60_000).toISOString();
-      const pairing = await chat.createPairing(request.auth.ownerId, hash(code), expiresAt);
-      url.hash = `pair=${encodeURIComponent(code)}`;
-      reply.status(201);
-      return { ...pairing, code, url: url.toString() };
-    },
-  );
-
-  app.post(
-    '/chat/pairings/claim',
-    {
-      schema: {
-        tags: ['chat'],
-        summary: 'Claim an enrollment idempotently with a client-generated credential',
-        security: [],
-        body: ChatPairClaimRequestSchema,
-        response: { 200: ChatPairClaimResponseSchema },
-      },
-    },
-    async (request) => {
-      if (!container.config.requireApiKey)
-        throw new ChatError('CHAT_PAIRING_UNAVAILABLE', 409, 'peripheral onboarding is disabled');
-      const device = await chat.claimPairing({
-        codeHash: hash(request.body.code),
-        claimId: request.body.claimId,
-        tokenHash: hash(request.body.deviceToken),
-        label: request.body.label,
-      });
-      return { deviceId: device.id, label: device.label };
-    },
-  );
-
-  app.get(
-    '/chat/devices',
-    {
-      schema: {
-        tags: ['chat'],
-        summary: 'List paired devices and their editable system loops',
-        response: { 200: z.strictObject({ items: z.array(ChatDeviceSchema) }) },
-      },
-    },
-    async (request) => ({ items: await chat.listDevices(request.auth.ownerId) }),
-  );
-
-  app.patch(
-    '/chat/devices/:id',
-    {
-      schema: {
-        tags: ['chat'],
-        summary: 'Rename a device',
-        params: IdParams,
-        body: ChatDeviceSchema.pick({ label: true }),
-        response: { 200: ChatDeviceSchema },
-      },
-    },
-    (request) => chat.updateDevice(request.auth.ownerId, request.params.id, request.body.label),
-  );
-
-  app.post(
-    '/chat/devices/:id/revoke',
-    {
-      schema: {
-        tags: ['chat'],
-        summary: 'Revoke future device access while retaining its loop and history',
-        params: IdParams,
-        body: EmptyBody,
-        response: { 200: ChatDeviceSchema },
-      },
-    },
-    (request) => chat.revokeDevice(request.auth.ownerId, request.params.id),
   );
 }

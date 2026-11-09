@@ -7,7 +7,7 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { closeNode, control, expect, openNode, test } from './fixtures.js';
+import { chooseOptionByKeyboard, closeNode, control, expect, openNode, test } from './fixtures.js';
 import { checkAnswerTypeHelp } from './answer-type-help.js';
 
 const handle = (page: Page, node: string, port: string) =>
@@ -336,13 +336,12 @@ test('keyboard connection reaches the eighth option by its ID while showing its 
   const dialog = await openNode(page, 'pick');
   const output = dialog.getByLabel('Output', { exact: true });
   await output.focus();
-  for (let step = 0; step < 5; step += 1) await output.press('ArrowDown');
-  await output.press('Enter');
+  await chooseOptionByKeyboard(page, output, '8 (route-8)');
   await expect(output).toHaveValue('route-8');
   await expect(output.getByRole('option', { selected: true })).toHaveText('8 (route-8)');
   const target = dialog.getByLabel('To', { exact: true });
   await target.focus();
-  await target.press('Enter');
+  await chooseOptionByKeyboard(page, target, 'Branch (branch)');
   await expect(target).toHaveValue('branch');
   const connect = dialog.getByRole('button', { name: 'Connect', exact: true });
   await connect.focus();
@@ -478,9 +477,8 @@ test('Score bands expose fractional boundaries, validate malformed coverage, and
   const output = dialog.getByLabel('Output', { exact: true });
   await output.focus();
   await expect(output.getByRole('option', { selected: true })).toHaveText('Middle (middle)');
-  await page.keyboard.press('ArrowDown');
+  await chooseOptionByKeyboard(page, output, 'Top score (high)');
   await expect(output.getByRole('option', { selected: true })).toHaveText('Top score (high)');
-  await page.keyboard.press('Enter');
   await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
   await expect(connections).toContainText('Top score (high)');
   await closeNode(page);

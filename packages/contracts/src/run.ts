@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { InferenceContextSchema } from './harness.js';
 import { ExecutionLimitsSchema } from './loop.js';
 import {
   JsonSchemaSchema,
@@ -58,6 +59,8 @@ export const RunErrorCodeSchema = z.enum([
   'SCRIPT_OUTCOME_UNCERTAIN',
   'SCRIPT_TIMEOUT',
   'INFERENCE_TIMEOUT',
+  'INFERENCE_CONTEXT_LIMIT',
+  'INFERENCE_CONTEXT_UNSUPPORTED',
   'OUTPUT_SCHEMA_MISMATCH',
   'ARTIFACT_WRITE_FAILED',
   'SUBLOOP_DEPTH_EXCEEDED',
@@ -126,6 +129,7 @@ export const PromptProvenanceSchema = z.strictObject({
     .strictObject({
       harness: HarnessIdSchema,
       prompt: z.string(),
+      context: InferenceContextSchema.optional(),
       resumeSessionId: z.string().min(1).max(256).optional(),
     })
     .optional(),

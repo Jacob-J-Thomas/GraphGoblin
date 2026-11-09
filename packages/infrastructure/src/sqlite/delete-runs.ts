@@ -2,6 +2,7 @@ import { and, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import type { SqliteTransaction } from './db.js';
 import {
   chatTurns,
+  settings,
   chatAudio,
   harnessSessions,
   inboundEvents,
@@ -51,6 +52,11 @@ export async function deleteRuns(
     .update(chatTurns)
     .set({ historyDeleted: true, input: null })
     .where(inArray(chatTurns.runId, selected));
+  await tx
+    .delete(settings)
+    .where(
+      sql`EXISTS (SELECT 1 FROM ${runs} WHERE ${where} AND ${settings.ownerId} = ${runs.ownerId} AND ${settings.key} = 'chat.voice.route.' || ${runs.id})`,
+    );
   await tx.delete(runEvents).where(inArray(runEvents.runId, selected));
   await tx.delete(harnessSessions).where(inArray(harnessSessions.runId, selected));
   await tx.delete(timers).where(inArray(timers.runId, selected));

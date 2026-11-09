@@ -68,16 +68,22 @@ describe('chat audience transport', () => {
   });
   it('uploads raw bytes and treats delete as an empty response', async () => {
     const { client, fetch } = make();
-    const blob = new Blob(['bytes'], { type: 'audio/webm' });
+    const blob = new Blob(['bytes'], { type: 'audio/wav' });
     fetch.mockResolvedValue(
       json(
         { id: device.id, mimeType: blob.type, bytes: 5, expiresAt: conversation.createdAt },
         201,
       ),
     );
-    await client.upload(blob);
+    await client.upload(blob, { uploadId: turn.requestId, sha256: 'a'.repeat(64) });
+    expect(new Headers(fetch.mock.calls[0]![1]!.headers).get('Idempotency-Key')).toBe(
+      turn.requestId,
+    );
+    expect(new Headers(fetch.mock.calls[0]![1]!.headers).get('X-Content-SHA256')).toBe(
+      'a'.repeat(64),
+    );
     expect(fetch.mock.calls[0]![1]!.body).toBe(blob);
-    expect(new Headers(fetch.mock.calls[0]![1]!.headers).get('content-type')).toBe('audio/webm');
+    expect(new Headers(fetch.mock.calls[0]![1]!.headers).get('content-type')).toBe('audio/wav');
     fetch.mockResolvedValue(new Response(null, { status: 204 }));
     await expect(client.discardAudio('a/b')).resolves.toBeUndefined();
     expect(fetch.mock.calls[1]![0]).toBe('/chat/audio/a%2Fb');
@@ -126,4 +132,18 @@ describe('chat audience transport', () => {
       vi.unstubAllGlobals();
     }
   });
+});
+
+it('reads audience-safe pairing readiness and upload operation status with GET', async () => {
+  const { client, fetch } = make();
+  fetch
+    .mockResolvedValueOnce(
+      json({ ready: true, mode: 'network', url: 'https://example.com/goblin/' }),
+    )
+    .mockResolvedValueOnce(json({ state: 'receiving' }));
+  expect(await client.pairingReadiness()).toMatchObject({ ready: true });
+  expect(await client.audioStatus(turn.requestId)).toEqual({ state: 'receiving' });
+  expect(fetch.mock.calls[0]![0]).toBe('/chat/pairings/readiness');
+  expect(fetch.mock.calls[1]![0]).toBe(`/chat/audio/requests/${turn.requestId}`);
+  expect(fetch.mock.calls.every((call) => call[1]?.method === 'GET')).toBe(true);
 });

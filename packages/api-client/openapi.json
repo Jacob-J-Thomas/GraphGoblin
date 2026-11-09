@@ -246,6 +246,38 @@
           "systemLoopId": {
             "type": "string",
             "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "voice": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "route": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "cloud"
+                ]
+              },
+              "cloudProvider": {
+                "type": "string",
+                "const": "OpenAI"
+              },
+              "cloudFallbackAllowed": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "ready",
+              "cloudFallbackAllowed",
+              "message"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -277,6 +309,11 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
           }
         },
         "required": [
@@ -349,6 +386,12 @@
                   "audioId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "caption": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16000,
+                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
                   }
                 },
                 "required": [
@@ -364,6 +407,64 @@
             "minLength": 1,
             "maxLength": 16000,
             "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
+          },
+          "voice": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "route": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "cloud"
+                ]
+              },
+              "cloudProvider": {
+                "type": "string",
+                "const": "OpenAI"
+              },
+              "cloudFallbackAllowed": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "ready",
+              "cloudFallbackAllowed",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "retainedHistoryPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "omittedHistoryPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "contextTokens": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "retainedHistoryPairs",
+              "omittedHistoryPairs",
+              "contextTokens"
+            ],
+            "additionalProperties": false
           },
           "runStatus": {
             "type": "string",
@@ -472,6 +573,12 @@
                   "audioId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "caption": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16000,
+                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
                   }
                 },
                 "required": [
@@ -2861,6 +2968,13 @@
                           "default": {},
                           "type": "object",
                           "properties": {
+                            "capture": {
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "text"
+                              ]
+                            },
                             "captureTranscript": {
                               "default": "artifact",
                               "type": "string",
@@ -5131,6 +5245,8 @@
               "SCRIPT_OUTCOME_UNCERTAIN",
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
+              "INFERENCE_CONTEXT_LIMIT",
+              "INFERENCE_CONTEXT_UNSUPPORTED",
               "OUTPUT_SCHEMA_MISMATCH",
               "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
@@ -5253,6 +5369,44 @@
                   },
                   "prompt": {
                     "type": "string"
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "contextTokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "outputReserveTokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "retainedHistoryPairs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "omittedHistoryPairs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "profile",
+                      "contextTokens",
+                      "outputReserveTokens",
+                      "retainedHistoryPairs",
+                      "omittedHistoryPairs"
+                    ],
+                    "additionalProperties": false
                   },
                   "resumeSessionId": {
                     "type": "string",
@@ -8880,6 +9034,44 @@
               "prompt": {
                 "type": "string"
               },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "contextTokens": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "outputReserveTokens": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "retainedHistoryPairs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "omittedHistoryPairs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "profile",
+                  "contextTokens",
+                  "outputReserveTokens",
+                  "retainedHistoryPairs",
+                  "omittedHistoryPairs"
+                ],
+                "additionalProperties": false
+              },
               "resumeSessionId": {
                 "type": "string",
                 "minLength": 1,
@@ -10845,6 +11037,38 @@
           "systemLoopId": {
             "type": "string",
             "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "voice": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "route": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "cloud"
+                ]
+              },
+              "cloudProvider": {
+                "type": "string",
+                "const": "OpenAI"
+              },
+              "cloudFallbackAllowed": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "ready",
+              "cloudFallbackAllowed",
+              "message"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -10876,6 +11100,11 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
           }
         },
         "required": [
@@ -10948,6 +11177,12 @@
                   "audioId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "caption": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16000,
+                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
                   }
                 },
                 "required": [
@@ -10963,6 +11198,64 @@
             "minLength": 1,
             "maxLength": 16000,
             "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
+          },
+          "voice": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "route": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "cloud"
+                ]
+              },
+              "cloudProvider": {
+                "type": "string",
+                "const": "OpenAI"
+              },
+              "cloudFallbackAllowed": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "ready",
+              "cloudFallbackAllowed",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "retainedHistoryPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "omittedHistoryPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "contextTokens": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "retainedHistoryPairs",
+              "omittedHistoryPairs",
+              "contextTokens"
+            ],
+            "additionalProperties": false
           },
           "runStatus": {
             "type": "string",
@@ -11071,6 +11364,12 @@
                   "audioId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "caption": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16000,
+                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
                   }
                 },
                 "required": [
@@ -13516,6 +13815,13 @@
                         "output": {
                           "type": "object",
                           "properties": {
+                            "capture": {
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "text"
+                              ]
+                            },
                             "captureTranscript": {
                               "default": "artifact",
                               "type": "string",
@@ -15868,6 +16174,8 @@
               "SCRIPT_OUTCOME_UNCERTAIN",
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
+              "INFERENCE_CONTEXT_LIMIT",
+              "INFERENCE_CONTEXT_UNSUPPORTED",
               "OUTPUT_SCHEMA_MISMATCH",
               "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
@@ -15990,6 +16298,44 @@
                   },
                   "prompt": {
                     "type": "string"
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "contextTokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "outputReserveTokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "retainedHistoryPairs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "omittedHistoryPairs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "profile",
+                      "contextTokens",
+                      "outputReserveTokens",
+                      "retainedHistoryPairs",
+                      "omittedHistoryPairs"
+                    ],
+                    "additionalProperties": false
                   },
                   "resumeSessionId": {
                     "type": "string",
@@ -19650,6 +19996,44 @@
               "prompt": {
                 "type": "string"
               },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "contextTokens": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "outputReserveTokens": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "retainedHistoryPairs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "omittedHistoryPairs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "profile",
+                  "contextTokens",
+                  "outputReserveTokens",
+                  "retainedHistoryPairs",
+                  "omittedHistoryPairs"
+                ],
+                "additionalProperties": false
+              },
               "resumeSessionId": {
                 "type": "string",
                 "minLength": 1,
@@ -21398,6 +21782,247 @@
     }
   },
   "paths": {
+    "/chat/pairings/readiness": {
+      "get": {
+        "summary": "Check owner-only device enrollment prerequisites without creating a code",
+        "tags": [
+          "chat"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ready": {
+                      "type": "boolean"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "same-machine",
+                        "network",
+                        "unavailable"
+                      ]
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ready",
+                    "mode"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/pairings": {
+      "post": {
+        "summary": "Create a ten-minute device enrollment",
+        "tags": [
+          "chat"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "default": {},
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatPairingCreated"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/pairings/claim": {
+      "post": {
+        "summary": "Claim an enrollment idempotently with a client-generated credential",
+        "tags": [
+          "chat"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatPairClaimRequestInput"
+              }
+            }
+          }
+        },
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatPairClaimResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/devices": {
+      "get": {
+        "summary": "List paired devices and their editable system loops",
+        "tags": [
+          "chat"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChatDevice"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/devices/{id}": {
+      "patch": {
+        "summary": "Rename a device",
+        "tags": [
+          "chat"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
+                  }
+                },
+                "required": [
+                  "label"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDevice"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/devices/{id}/revoke": {
+      "post": {
+        "summary": "Revoke future device access while retaining its loop and history",
+        "tags": [
+          "chat"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "default": {},
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDevice"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat/session": {
       "get": {
         "summary": "Current chat audience and published workflow capabilities",
@@ -21740,6 +22365,109 @@
         }
       }
     },
+    "/chat/audio/requests/{uploadId}": {
+      "get": {
+        "summary": "Recover an audio upload acknowledgement without replay",
+        "tags": [
+          "chat"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "uploadId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "receiving"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "state"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "ready"
+                          ]
+                        },
+                        "audio": {
+                          "$ref": "#/components/schemas/ChatAudioUpload"
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "audio"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "failed"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "code"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "retired"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "state"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat/audio/{id}": {
       "delete": {
         "summary": "Discard an unused audio upload",
@@ -21764,63 +22492,654 @@
         }
       }
     },
-    "/chat/pairings": {
-      "post": {
-        "summary": "Create a ten-minute device enrollment",
+    "/chat/voice/config": {
+      "get": {
+        "summary": "Voice routing, connection and measured capability",
         "tags": [
-          "chat"
+          "settings"
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "default": {},
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatPairingCreated"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/chat/pairings/claim": {
-      "post": {
-        "summary": "Claim an enrollment idempotently with a client-generated credential",
-        "tags": [
-          "chat"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatPairClaimRequestInput"
-              }
-            }
-          }
-        },
-        "security": [],
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatPairClaimResponse"
+                  "type": "object",
+                  "properties": {
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "cloudFallbackAllowed": {
+                          "type": "boolean"
+                        },
+                        "local": {
+                          "type": "object",
+                          "properties": {
+                            "executable": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            },
+                            "modelPath": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            }
+                          },
+                          "required": [
+                            "executable",
+                            "modelPath"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "cloud": {
+                          "type": "object",
+                          "properties": {
+                            "provider": {
+                              "type": "string",
+                              "enum": [
+                                "openai"
+                              ]
+                            },
+                            "model": {
+                              "type": "string",
+                              "enum": [
+                                "gpt-transcribe"
+                              ]
+                            },
+                            "secretName": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                            }
+                          },
+                          "required": [
+                            "provider",
+                            "model",
+                            "secretName"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "enabled",
+                        "mode",
+                        "cloudFallbackAllowed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "route": {
+                      "type": "object",
+                      "properties": {
+                        "ready": {
+                          "type": "boolean"
+                        },
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "cloudProvider": {
+                          "type": "string",
+                          "enum": [
+                            "OpenAI"
+                          ]
+                        },
+                        "cloudFallbackAllowed": {
+                          "type": "boolean"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        }
+                      },
+                      "required": [
+                        "ready",
+                        "cloudFallbackAllowed",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "local": {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "installSupported": {
+                          "type": "boolean"
+                        },
+                        "downloadBytes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "executable": {
+                          "type": "string"
+                        },
+                        "modelPath": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "installSupported",
+                        "downloadBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "probes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "route": {
+                            "type": "string",
+                            "enum": [
+                              "local",
+                              "cloud"
+                            ]
+                          },
+                          "configRevision": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "checkedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "fingerprint": {
+                            "type": "string"
+                          },
+                          "suitable": {
+                            "type": "boolean"
+                          },
+                          "latencyMs": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "freeMemoryBytes": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 1000
+                          },
+                          "transcript": {
+                            "type": "string",
+                            "maxLength": 16000
+                          }
+                        },
+                        "required": [
+                          "route",
+                          "configRevision",
+                          "checkedAt",
+                          "fingerprint",
+                          "suitable",
+                          "latencyMs",
+                          "freeMemoryBytes",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "secrets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "compatible": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "compatible"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "idle",
+                            "installing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "config",
+                    "route",
+                    "local",
+                    "probes",
+                    "secrets",
+                    "install"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Save explicit owner voice routing",
+        "tags": [
+          "settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "local",
+                      "cloud"
+                    ]
+                  },
+                  "cloudFallbackAllowed": {
+                    "type": "boolean"
+                  },
+                  "local": {
+                    "type": "object",
+                    "properties": {
+                      "executable": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "modelPath": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      }
+                    },
+                    "required": [
+                      "executable",
+                      "modelPath"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "cloud": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "openai"
+                        ]
+                      },
+                      "model": {
+                        "type": "string",
+                        "enum": [
+                          "gpt-transcribe"
+                        ]
+                      },
+                      "secretName": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "provider",
+                      "model",
+                      "secretName"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode",
+                  "cloudFallbackAllowed",
+                  "expectedRevision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "cloudFallbackAllowed": {
+                          "type": "boolean"
+                        },
+                        "local": {
+                          "type": "object",
+                          "properties": {
+                            "executable": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            },
+                            "modelPath": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            }
+                          },
+                          "required": [
+                            "executable",
+                            "modelPath"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "cloud": {
+                          "type": "object",
+                          "properties": {
+                            "provider": {
+                              "type": "string",
+                              "enum": [
+                                "openai"
+                              ]
+                            },
+                            "model": {
+                              "type": "string",
+                              "enum": [
+                                "gpt-transcribe"
+                              ]
+                            },
+                            "secretName": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                            }
+                          },
+                          "required": [
+                            "provider",
+                            "model",
+                            "secretName"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "enabled",
+                        "mode",
+                        "cloudFallbackAllowed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "route": {
+                      "type": "object",
+                      "properties": {
+                        "ready": {
+                          "type": "boolean"
+                        },
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "cloudProvider": {
+                          "type": "string",
+                          "enum": [
+                            "OpenAI"
+                          ]
+                        },
+                        "cloudFallbackAllowed": {
+                          "type": "boolean"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        }
+                      },
+                      "required": [
+                        "ready",
+                        "cloudFallbackAllowed",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "local": {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "installSupported": {
+                          "type": "boolean"
+                        },
+                        "downloadBytes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "executable": {
+                          "type": "string"
+                        },
+                        "modelPath": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "installSupported",
+                        "downloadBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "probes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "route": {
+                            "type": "string",
+                            "enum": [
+                              "local",
+                              "cloud"
+                            ]
+                          },
+                          "configRevision": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "checkedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "fingerprint": {
+                            "type": "string"
+                          },
+                          "suitable": {
+                            "type": "boolean"
+                          },
+                          "latencyMs": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "freeMemoryBytes": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 1000
+                          },
+                          "transcript": {
+                            "type": "string",
+                            "maxLength": 16000
+                          }
+                        },
+                        "required": [
+                          "route",
+                          "configRevision",
+                          "checkedAt",
+                          "fingerprint",
+                          "suitable",
+                          "latencyMs",
+                          "freeMemoryBytes",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "secrets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "compatible": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "compatible"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "idle",
+                            "installing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "config",
+                    "route",
+                    "local",
+                    "probes",
+                    "secrets",
+                    "install"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -21828,11 +23147,616 @@
         }
       }
     },
-    "/chat/devices": {
-      "get": {
-        "summary": "List paired devices and their editable system loops",
+    "/chat/voice/install": {
+      "post": {
+        "summary": "Start one guided local model installation",
         "tags": [
-          "chat"
+          "settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "expectedConfigRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "modelId": {
+                    "type": "string",
+                    "enum": [
+                      "tiny.en",
+                      "base.en"
+                    ]
+                  }
+                },
+                "required": [
+                  "operationId",
+                  "expectedConfigRevision",
+                  "modelId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "probe",
+                        "install"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "probe": {
+                      "type": "object",
+                      "properties": {
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "configRevision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "fingerprint": {
+                          "type": "string"
+                        },
+                        "suitable": {
+                          "type": "boolean"
+                        },
+                        "latencyMs": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "freeMemoryBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "transcript": {
+                          "type": "string",
+                          "maxLength": 16000
+                        }
+                      },
+                      "required": [
+                        "route",
+                        "configRevision",
+                        "checkedAt",
+                        "fingerprint",
+                        "suitable",
+                        "latencyMs",
+                        "freeMemoryBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "kind",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/voice/probe": {
+      "post": {
+        "summary": "Test a route once with the included public sample",
+        "tags": [
+          "settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": [
+                      "local",
+                      "cloud"
+                    ]
+                  },
+                  "expectedConfigRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "cloudUploadAcknowledged": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "operationId",
+                  "route",
+                  "expectedConfigRevision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "probe",
+                        "install"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "probe": {
+                      "type": "object",
+                      "properties": {
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "configRevision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "fingerprint": {
+                          "type": "string"
+                        },
+                        "suitable": {
+                          "type": "boolean"
+                        },
+                        "latencyMs": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "freeMemoryBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "transcript": {
+                          "type": "string",
+                          "maxLength": 16000
+                        }
+                      },
+                      "required": [
+                        "route",
+                        "configRevision",
+                        "checkedAt",
+                        "fingerprint",
+                        "suitable",
+                        "latencyMs",
+                        "freeMemoryBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "kind",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/voice/probes/{operationId}": {
+      "get": {
+        "summary": "Read an existing voice test without repeating it",
+        "tags": [
+          "settings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "operationId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "probe",
+                        "install"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "probe": {
+                      "type": "object",
+                      "properties": {
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "configRevision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "fingerprint": {
+                          "type": "string"
+                        },
+                        "suitable": {
+                          "type": "boolean"
+                        },
+                        "latencyMs": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "freeMemoryBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "transcript": {
+                          "type": "string",
+                          "maxLength": 16000
+                        }
+                      },
+                      "required": [
+                        "route",
+                        "configRevision",
+                        "checkedAt",
+                        "fingerprint",
+                        "suitable",
+                        "latencyMs",
+                        "freeMemoryBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "kind",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/voice/installs/{operationId}": {
+      "get": {
+        "summary": "Read an existing model download without restarting it",
+        "tags": [
+          "settings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "operationId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "probe",
+                        "install"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "probe": {
+                      "type": "object",
+                      "properties": {
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "local",
+                            "cloud"
+                          ]
+                        },
+                        "configRevision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "fingerprint": {
+                          "type": "string"
+                        },
+                        "suitable": {
+                          "type": "boolean"
+                        },
+                        "latencyMs": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "freeMemoryBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "transcript": {
+                          "type": "string",
+                          "maxLength": 16000
+                        }
+                      },
+                      "required": [
+                        "route",
+                        "configRevision",
+                        "checkedAt",
+                        "fingerprint",
+                        "suitable",
+                        "latencyMs",
+                        "freeMemoryBytes",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "install": {
+                      "type": "object",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "downloadedBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "totalBytes": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "phase",
+                        "downloadedBytes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "kind",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/voice/loops": {
+      "get": {
+        "summary": "Inspect each independent chat loop before changing it",
+        "tags": [
+          "settings"
         ],
         "responses": {
           "200": {
@@ -21845,7 +23769,42 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/ChatDevice"
+                        "type": "object",
+                        "properties": {
+                          "loopId": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "definitionHash": {
+                            "type": "string"
+                          },
+                          "published": {
+                            "type": "boolean"
+                          },
+                          "hasNormalizer": {
+                            "type": "boolean"
+                          },
+                          "classification": {
+                            "type": "string",
+                            "enum": [
+                              "standard",
+                              "customized",
+                              "current"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "loopId",
+                          "definitionHash",
+                          "published",
+                          "hasNormalizer",
+                          "classification",
+                          "label"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -21860,11 +23819,11 @@
         }
       }
     },
-    "/chat/devices/{id}": {
-      "patch": {
-        "summary": "Rename a device",
+    "/chat/voice/preview": {
+      "post": {
+        "summary": "Preview a precise voice preset edit without saving or publishing",
         "tags": [
-          "chat"
+          "settings"
         ],
         "requestBody": {
           "required": true,
@@ -21873,39 +23832,70 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "label": {
+                  "loopId": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80,
-                    "pattern": "^(.|[\\r\\n\\u2028\\u2029])*[^\\u0009-\\u000D\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF](.|[\\r\\n\\u2028\\u2029])*$"
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "expectedDraftHash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{16}$"
+                  },
+                  "expectedConfigRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   }
                 },
                 "required": [
-                  "label"
+                  "loopId",
+                  "expectedDraftHash",
+                  "expectedConfigRevision"
                 ],
                 "additionalProperties": false
               }
             }
           }
         },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatDevice"
+                  "type": "object",
+                  "properties": {
+                    "loopId": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    "baseHash": {
+                      "type": "string"
+                    },
+                    "configRevision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "previewHash": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{16}$"
+                    },
+                    "definition": {
+                      "$ref": "#/components/schemas/LoopDefinition"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "loopId",
+                    "baseHash",
+                    "configRevision",
+                    "previewHash",
+                    "definition",
+                    "message"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -21913,43 +23903,73 @@
         }
       }
     },
-    "/chat/devices/{id}/revoke": {
+    "/chat/voice/stage": {
       "post": {
-        "summary": "Revoke future device access while retaining its loop and history",
+        "summary": "Stage the reviewed voice edit as a guarded draft only",
         "tags": [
-          "chat"
+          "settings"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "default": {},
                 "type": "object",
-                "properties": {},
+                "properties": {
+                  "loopId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "expectedDraftHash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{16}$"
+                  },
+                  "expectedConfigRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "expectedPreviewHash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{16}$"
+                  }
+                },
+                "required": [
+                  "loopId",
+                  "expectedDraftHash",
+                  "expectedConfigRevision",
+                  "expectedPreviewHash"
+                ],
                 "additionalProperties": false
               }
             }
           }
         },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatDevice"
+                  "type": "object",
+                  "properties": {
+                    "loopId": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    "draftHash": {
+                      "type": "string"
+                    },
+                    "editorUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "loopId",
+                    "draftHash",
+                    "editorUrl"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }

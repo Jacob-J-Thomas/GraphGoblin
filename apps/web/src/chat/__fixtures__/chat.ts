@@ -58,8 +58,14 @@ export function mockChatClient() {
       bytes: 12,
       expiresAt: '2026-11-07T11:00:00.000Z',
     }),
+    audioStatus: vi
+      .fn<ChatClient['audioStatus']>()
+      .mockRejectedValue(new Error('No upload status configured.')),
     discardAudio: vi.fn<ChatClient['discardAudio']>().mockResolvedValue(undefined),
     devices: vi.fn<ChatClient['devices']>().mockResolvedValue([device]),
+    pairingReadiness: vi
+      .fn<ChatClient['pairingReadiness']>()
+      .mockResolvedValue({ ready: true, mode: 'network', url: 'https://example.com/goblin/' }),
     createPairing: vi.fn<ChatClient['createPairing']>().mockResolvedValue({
       id: '01J00000000000000000000007',
       code: 'A'.repeat(43),

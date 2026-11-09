@@ -13,6 +13,8 @@ const PINNED = new Set([
   'HARNESS_ARGUMENTS_REJECTED',
   'HARNESS_INVALID_CONFIGURATION',
   'HARNESS_UNSUPPORTED_POLICY',
+  'HARNESS_CONTEXT_LIMIT',
+  'HARNESS_CONTEXT_UNSUPPORTED',
 ]);
 const ORDINARY = new Set([
   'HARNESS_NOT_AUTHENTICATED',
@@ -135,6 +137,14 @@ export function mapHarnessFailure(
       nodeId,
       resumable: true,
     });
+  } else if (code === 'HARNESS_CONTEXT_LIMIT' || code === 'HARNESS_CONTEXT_UNSUPPORTED') {
+    failure = new RunFailureError(
+      code === 'HARNESS_CONTEXT_LIMIT'
+        ? 'INFERENCE_CONTEXT_LIMIT'
+        : 'INFERENCE_CONTEXT_UNSUPPORTED',
+      message,
+      { nodeId, resumable: false },
+    );
   } else if (code === 'HARNESS_NOT_INSTALLED') {
     failure = new RunFailureError(code, message, { nodeId, resumable: true });
   } else if (code === 'HARNESS_TIMEOUT' || code === 'INFERENCE_TIMEOUT') {

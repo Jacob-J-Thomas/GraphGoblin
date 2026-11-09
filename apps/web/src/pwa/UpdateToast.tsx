@@ -9,6 +9,8 @@ export function UpdateToast() {
   const needRefresh = usePwaStore((s) => s.needRefresh);
   const confirm = usePwaStore((s) => s.confirm);
   const dismiss = usePwaStore((s) => s.dismiss);
+  const applying = usePwaStore((s) => s.applying);
+  const blockedReason = usePwaStore((s) => s.blockedReason);
   if (!needRefresh) return null;
   return (
     <div
@@ -20,11 +22,14 @@ export function UpdateToast() {
         aria-hidden="true"
         className="size-2 shrink-0 rounded-full bg-accent-highlight ring-4 ring-accent-highlight-subtle"
       />
-      <span className="max-sm:flex-1">A new version is available</span>
-      <Button size="sm" onClick={confirm}>
-        Update
+      <span className="max-sm:flex-1">
+        A new version is available
+        {blockedReason && <span className="block text-xs text-muted">{blockedReason}</span>}
+      </span>
+      <Button size="sm" onClick={confirm} disabled={applying}>
+        {applying ? 'Checking…' : 'Update'}
       </Button>
-      <Button size="sm" variant="ghost" onClick={dismiss}>
+      <Button size="sm" variant="ghost" onClick={dismiss} disabled={applying}>
         Later
       </Button>
     </div>

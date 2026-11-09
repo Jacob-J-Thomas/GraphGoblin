@@ -130,3 +130,4 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
 export { createThreadHistoryFixture } from './thread-history.js';
 export { storeLoopBefore, type StoredLoopBefore } from './historical-store.js';
 export { shippedSqlMigrationsFrom } from '@graphgoblin/infrastructure/sqlite/testing';
+export { voiceProbeSample } from '../chat/voice-sample.js';

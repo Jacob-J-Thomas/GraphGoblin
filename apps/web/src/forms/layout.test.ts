@@ -55,7 +55,13 @@ describe('formLayout', () => {
       ],
       [
         'Output',
-        ['output.captureTranscript', 'output.toMessages', 'output.transforms', 'output.schema'],
+        [
+          'output.capture',
+          'output.captureTranscript',
+          'output.toMessages',
+          'output.transforms',
+          'output.schema',
+        ],
       ],
       ['Limits', ['timeoutSeconds']],
     ]);

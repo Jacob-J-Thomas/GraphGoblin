@@ -1,9 +1,21 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { beginPairing, readDeviceRecord } from './credentials.js';
+import { beginPairing, DEVICE_CREDENTIAL_KEY, readDeviceRecord } from './credentials.js';
 import { PairScreen } from './PairScreen.js';
 
 const CODE = 'A'.repeat(42) + 'w';
+const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
+const pairedResponse = () => json({ deviceId: '01ARZ3NDEKTSV4RRFFQ69G5FAV', label: 'Phone' });
+const gatewaySession = {
+  audience: { kind: 'gateway' },
+  label: 'Owner',
+  readiness: { text: { ready: true }, audio: { ready: false } },
+  limits: { maxTextCharacters: 16000, maxAudioBytes: 10485760 },
+};
+function errorContainer() {
+  return screen.getByRole('alert').closest('#goblin-pairing-error');
+}
 function showBrowserForm() {
   const choice = screen.queryByRole('button', { name: 'Pair this browser instead' });
   if (choice) fireEvent.click(choice);
@@ -90,7 +102,9 @@ describe('peripheral pair screen', () => {
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
     expect(screen.getByRole('button', { name: 'Pairing…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use a new code' })).toBeDisabled();
     fireEvent.submit(screen.getByLabelText('Device name').closest('form')!);
+    fireEvent.keyDown(screen.getByLabelText('Pairing code'), { key: 'Enter' });
     expect(fetcher).toHaveBeenCalledOnce();
     reject(new Error('offline'));
     await screen.findByText(/Not sure pairing finished/);
@@ -138,6 +152,11 @@ describe('peripheral pair screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Allow site storage');
     expect(fetcher).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Pair this browser' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Retry pairing' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Device name')).not.toHaveAttribute('readonly');
+    expect(screen.getByLabelText('Pairing code')).not.toHaveAttribute('readonly');
+    expect(errorContainer()).toHaveFocus();
   });
 
   it('reports failed pending-state removal', () => {
@@ -170,7 +189,7 @@ describe('peripheral pair screen', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const install = vi.fn(() => Promise.resolve());
     render(<PairScreen initialCode="CaseCode" online onPaired={vi.fn()} install={install} />);
-    expect(screen.getByText(/Phones can keep the Home Screen app's storage apart/)).toBeVisible();
+    expect(screen.getByText(/The installed app may keep its storage apart/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
     expect(await screen.findByText(/Code copied/)).toBeVisible();
     expect(writeText).toHaveBeenCalledWith('CaseCode');
@@ -192,7 +211,7 @@ describe('peripheral pair screen', () => {
       await screen.findByText('Couldn’t copy. Select the code and copy it yourself.'),
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Install Goblin' }));
-    expect(await screen.findByText(/In Safari, tap Share/)).toBeVisible();
+    expect(await screen.findByText(/Use your browser’s install option if available/)).toBeVisible();
   });
 
   it('provides manual copy instructions when clipboard access is absent', async () => {
@@ -243,26 +262,260 @@ describe('peripheral pair screen', () => {
   });
 
   it.each([false, true])(
-    'keeps a rejected claim identity and focuses the code correction for link=%s',
+    'keeps rejected link=%s implicit submission inert and explicit keyboard actions available',
     async (link) => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-        Promise.resolve(new Response('{}', { status: 401 })),
-      );
+      const user = userEvent.setup();
+      const fetcher = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => Promise.resolve(new Response('{}', { status: 401 })));
       render(<PairScreen initialCode={link ? CODE : ''} online onPaired={vi.fn()} />);
       if (link) {
         showBrowserForm();
         fireEvent.change(screen.getByLabelText('Device name'), { target: { value: 'Phone' } });
       } else fill();
       fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
-      expect(await screen.findByRole('alert')).toHaveTextContent('That code didn’t work.');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Pairing was refused');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'currently refuses this code and the saved credential',
+      );
       expect(readDeviceRecord()?.kind).toBe('pending');
-      expect(
-        link
-          ? screen.getByRole('button', { name: 'Paste a different code' })
-          : screen.getByLabelText('Pairing code'),
-      ).toHaveFocus();
+      const stored = localStorage.getItem(DEVICE_CREDENTIAL_KEY);
+      expect(errorContainer()).toHaveFocus();
+      expect(screen.getByRole('button', { name: 'Use a new code' })).toHaveAttribute(
+        'type',
+        'button',
+      );
+      expect(screen.getByRole('button', { name: 'Retry pairing' })).toHaveAttribute(
+        'type',
+        'button',
+      );
+      fireEvent.submit(screen.getByLabelText('Device name').closest('form')!);
+      fireEvent.keyDown(screen.getByLabelText('Device name'), { key: 'Enter' });
+      if (!link) fireEvent.keyDown(screen.getByLabelText('Pairing code'), { key: 'Enter' });
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(localStorage.getItem(DEVICE_CREDENTIAL_KEY)).toBe(stored);
+
+      screen.getByRole('button', { name: 'Retry pairing' }).focus();
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(4));
+      await waitFor(() => expect(errorContainer()).toHaveFocus());
+      expect(fetcher.mock.calls[0]?.[1]?.body).toBe(fetcher.mock.calls[2]?.[1]?.body);
+      expect(localStorage.getItem(DEVICE_CREDENTIAL_KEY)).toBe(stored);
+
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Use a new code' })).toHaveFocus();
+      await user.keyboard(link ? ' ' : '{Enter}');
+      expect(fetcher).toHaveBeenCalledTimes(4);
+      expect(readDeviceRecord()).toBeUndefined();
+      expect(screen.getByLabelText('Pairing code')).toHaveValue('');
+      expect(screen.getByLabelText('Pairing code')).toHaveFocus();
+      expect(screen.getByLabelText('Device name')).not.toHaveAttribute('readonly');
+      expect(screen.getByText('Saved attempt forgotten. Paste a new code.')).toBeVisible();
     },
   );
+
+  it.each([
+    { name: 'claim network failure', claim: () => Promise.reject(new Error('offline')) },
+    { name: 'claim 500', claim: () => Promise.resolve(json({}, 500)) },
+    { name: 'claim bad JSON', claim: () => Promise.resolve(new Response('bad-json')) },
+    { name: 'claim invalid schema', claim: () => Promise.resolve(json({ deviceId: '' })) },
+    { name: 'recovery network failure', recovery: () => Promise.reject(new Error('offline')) },
+    { name: 'recovery 500', recovery: () => Promise.resolve(json({}, 500)) },
+    { name: 'recovery bad JSON', recovery: () => Promise.resolve(new Response('bad-json')) },
+    {
+      name: 'recovery invalid schema',
+      recovery: () => Promise.resolve(json({ audience: { kind: 'device' } })),
+    },
+    { name: 'recovery gateway audience', recovery: () => Promise.resolve(json(gatewaySession)) },
+  ])('keeps $name unconfirmed with exact-identity explicit retry', async (entry) => {
+    const paired = vi.fn();
+    const fetcher = vi.spyOn(globalThis, 'fetch');
+    if ('claim' in entry) fetcher.mockImplementationOnce(entry.claim);
+    else fetcher.mockResolvedValueOnce(json({}, 401)).mockImplementationOnce(entry.recovery);
+    render(<PairScreen initialCode="" online onPaired={paired} />);
+    fill();
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not sure pairing finished');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'reuses the saved request and device credential',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Pairing was refused');
+    expect(errorContainer()).toHaveFocus();
+    expect(paired).not.toHaveBeenCalled();
+    const stored = localStorage.getItem(DEVICE_CREDENTIAL_KEY);
+    const calls = fetcher.mock.calls.length;
+    expect(calls).toBe('claim' in entry ? 1 : 2);
+    expect(screen.getByRole('button', { name: 'Retry pairing' })).toHaveAttribute('type', 'submit');
+    fetcher.mockImplementationOnce(() => Promise.resolve(pairedResponse()));
+    fireEvent.keyDown(screen.getByLabelText('Pairing code'), { key: 'Enter', isComposing: true });
+    expect(fetcher).toHaveBeenCalledTimes(calls);
+    expect(localStorage.getItem(DEVICE_CREDENTIAL_KEY)).toBe(stored);
+    fireEvent.keyDown(screen.getByLabelText('Pairing code'), { key: 'Enter' });
+    await waitFor(() => expect(paired).toHaveBeenCalledOnce());
+    expect(fetcher.mock.calls[0]?.[1]?.body).toBe(fetcher.mock.calls[calls]?.[1]?.body);
+  });
+
+  it.each([false, true])(
+    'keeps claim/recovery 429=%s advisory without automatic retry for 70 seconds',
+    async (recovery) => {
+      vi.useFakeTimers();
+      try {
+        const fetcher = vi.spyOn(globalThis, 'fetch');
+        if (recovery) fetcher.mockResolvedValueOnce(json({}, 401));
+        fetcher.mockResolvedValueOnce(json({}, 429));
+        const view = render(<PairScreen initialCode="" online onPaired={vi.fn()} />);
+        fill();
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+          await Promise.resolve();
+        });
+        expect(screen.getByRole('alert')).toHaveTextContent('Not sure pairing finished');
+        expect(screen.getByRole('alert')).toHaveTextContent('Wait about a minute, then retry.');
+        const pending = readDeviceRecord();
+        if (pending?.kind !== 'pending') throw new Error('missing pending enrollment');
+        const stored = localStorage.getItem(DEVICE_CREDENTIAL_KEY);
+        const calls = recovery ? 2 : 1;
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(70_000);
+        });
+        expect(fetcher).toHaveBeenCalledTimes(calls);
+        view.rerender(<PairScreen initialCode="" online={false} onPaired={vi.fn()} />);
+        expect(screen.getByRole('button', { name: 'Retry pairing' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Use a new code' })).toBeEnabled();
+        view.rerender(<PairScreen initialCode="" online onPaired={vi.fn()} />);
+        fireEvent(window, new Event('online'));
+        fireEvent(document, new Event('visibilitychange'));
+        view.unmount();
+        render(<PairScreen initialCode="" pending={pending} online onPaired={vi.fn()} />);
+        expect(screen.getByRole('button', { name: 'Retry pairing' })).toBeEnabled();
+        expect(screen.getByText(/A pairing attempt is saved/)).toHaveTextContent(
+          'reuses the saved request and device credential',
+        );
+        expect(localStorage.getItem(DEVICE_CREDENTIAL_KEY)).toBe(stored);
+        expect(fetcher).toHaveBeenCalledTimes(calls);
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  it.each([false, true])(
+    'keeps rejected link=%s replacement enabled while offline',
+    async (link) => {
+      const fetcher = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => Promise.resolve(json({}, 401)));
+      const view = render(<PairScreen initialCode={link ? CODE : ''} online onPaired={vi.fn()} />);
+      if (link) {
+        showBrowserForm();
+        fireEvent.change(screen.getByLabelText('Device name'), { target: { value: 'Phone' } });
+      } else fill();
+      expect(screen.getByRole('button', { name: 'Pair this browser' })).toBeEnabled();
+      fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+      await screen.findByText('Pairing was refused');
+      view.rerender(
+        <PairScreen initialCode={link ? CODE : ''} online={false} onPaired={vi.fn()} />,
+      );
+      expect(screen.getByRole('button', { name: 'Retry pairing' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Use a new code' })).toBeEnabled();
+      if (link)
+        expect(screen.getByRole('button', { name: 'Paste a different code' })).toBeEnabled();
+      fireEvent.click(screen.getByRole('button', { name: 'Use a new code' }));
+      expect(readDeviceRecord()).toBeUndefined();
+      expect(screen.getByLabelText('Pairing code')).toHaveFocus();
+      expect(screen.getByRole('button', { name: 'Pair this browser' })).toBeDisabled();
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('retains the newly persisted enrollment when saving valid success fails', async () => {
+    const paired = vi.fn();
+    const original = Storage.prototype.setItem;
+    let failSuccess = true;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key, value) {
+      if (
+        key === DEVICE_CREDENTIAL_KEY &&
+        (JSON.parse(value) as { kind: string }).kind === 'device' &&
+        failSuccess
+      ) {
+        failSuccess = false;
+        throw new Error('quota');
+      }
+      original.call(this, key, value);
+    });
+    const fetcher = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(pairedResponse()));
+    render(<PairScreen initialCode="" online onPaired={paired} />);
+    fill();
+    fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Allow site storage');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Pairing was refused');
+    expect(errorContainer()).toHaveFocus();
+    expect(paired).not.toHaveBeenCalled();
+    const pending = readDeviceRecord();
+    expect(pending?.kind).toBe('pending');
+    expect(screen.getByLabelText('Pairing code')).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry pairing' }));
+    await waitFor(() => expect(paired).toHaveBeenCalledOnce());
+    expect(fetcher.mock.calls[0]?.[1]?.body).toBe(fetcher.mock.calls[1]?.[1]?.body);
+    expect(readDeviceRecord()).toMatchObject({ kind: 'device', deviceToken: pending?.deviceToken });
+  });
+
+  it('keeps an existing enrollment recoverable when storage access fails before dispatch', async () => {
+    const pending = beginPairing(CODE, 'Phone');
+    const storage = localStorage,
+      stored = storage.getItem(DEVICE_CREDENTIAL_KEY);
+    const fetcher = vi.spyOn(globalThis, 'fetch');
+    render(<PairScreen initialCode="" pending={pending} online onPaired={vi.fn()} />);
+    const getter = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Retry pairing' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Allow site storage');
+      expect(screen.getByRole('button', { name: 'Retry pairing' })).toBeEnabled();
+      expect(screen.getByLabelText('Device name')).toHaveAttribute('readonly');
+      expect(storage.getItem(DEVICE_CREDENTIAL_KEY)).toBe(stored);
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {
+      getter.mockRestore();
+    }
+  });
+
+  it('retains in-memory recovery after explicit forgetting fails partway without a false success notice', async () => {
+    const pending = beginPairing(CODE, 'Phone');
+    const drafts = sessionStorage,
+      original = Storage.prototype.removeItem;
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (
+      this: Storage,
+      key,
+    ) {
+      if (this === drafts) throw new Error('draft removal blocked');
+      original.call(this, key);
+    });
+    const paired = vi.fn(),
+      fetcher = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => Promise.resolve(pairedResponse()));
+    render(<PairScreen initialCode="" pending={pending} online onPaired={paired} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Use a new code' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Allow site storage');
+    expect(
+      screen.queryByText('Saved attempt forgotten. Paste a new code.'),
+    ).not.toBeInTheDocument();
+    expect(readDeviceRecord()).toBeUndefined();
+    expect(screen.getByLabelText('Pairing code')).toHaveValue(CODE);
+    expect(screen.getByLabelText('Pairing code')).toHaveAttribute('readonly');
+    expect(fetcher).not.toHaveBeenCalled();
+    remove.mockRestore();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry pairing' }));
+    await waitFor(() => expect(paired).toHaveBeenCalledOnce());
+    expect(JSON.parse(fetcher.mock.calls[0]?.[1]?.body as string)).toMatchObject({
+      claimId: pending.claimId,
+      deviceToken: pending.deviceToken,
+    });
+  });
 
   it('Enter submits an installed typed code while IME Enter stays in the field', async () => {
     vi.stubGlobal(

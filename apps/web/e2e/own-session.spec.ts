@@ -1,5 +1,5 @@
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { expect, openDraftTab, openNode, test } from './fixtures.js';
+import { chooseOptionByKeyboard, expect, openDraftTab, openNode, test } from './fixtures.js';
 
 test('the editor saves opt-in own continuity and a visible optional reset', async ({
   page,
@@ -40,7 +40,7 @@ test('the editor saves opt-in own continuity and a visible optional reset', asyn
     /^Choose whether each visit starts a new conversation .+ Starts a new provider conversation on each visit\./,
   );
   await policy.focus();
-  await page.keyboard.press('End');
+  await chooseOptionByKeyboard(page, policy, "Resume this node's conversation");
   await page.keyboard.press('Tab');
   await expect(policy).toHaveValue('resume-own');
   await expect(policy.locator('option:checked')).toHaveText("Resume this node's conversation");

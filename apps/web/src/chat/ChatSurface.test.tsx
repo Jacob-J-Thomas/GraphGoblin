@@ -1,111 +1,474 @@
+import { webcrypto } from 'node:crypto';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { RecordingState, VoiceSegment } from './recorder.js';
 import { ChatSurface } from './ChatSurface.js';
 import { ChatApiError } from './client.js';
 import { conversation, mockChatClient, session, turn } from './__fixtures__/chat.js';
+const media = vi.hoisted(() => {
+  class Recorder {
+    state: RecordingState = {
+      status: 'idle',
+      segments: [],
+      totalDurationMs: 0,
+      dirty: false,
+      permission: 'unknown',
+      unsupported: false,
+      blob: undefined,
+      error: undefined,
+    };
+    listeners = new Set<() => void>();
+    frozen = false;
+    stopPromise: Promise<void> | undefined;
+    getSnapshot = () => this.state;
+    subscribe = (listener: () => void) => {
+      this.listeners.add(listener);
+      return () => this.listeners.delete(listener);
+    };
+    set = (patch: Partial<RecordingState>) => {
+      this.state = { ...this.state, ...patch };
+      this.listeners.forEach((listener) => listener());
+    };
+    start = vi.fn(() => {
+      this.set({ status: 'recording', dirty: true });
+      return Promise.resolve();
+    });
+    stop = vi.fn(() => {
+      if (this.stopPromise) return this.stopPromise;
+      if (this.state.status !== 'recording') return Promise.resolve();
+      this.set({ status: 'finalizing' });
+      const work = (async () => {
+        if (media.stopGate) await media.stopGate;
+        const blob = Object.assign(new Blob(['wav'], { type: 'audio/wav' }), {
+          arrayBuffer: () => Promise.resolve(new Uint8Array([1, 2, 3]).buffer),
+        });
+        const segment: VoiceSegment = {
+          id: crypto.randomUUID(),
+          blob,
+          durationMs: 5000,
+          byteLength: 3,
+        };
+        this.set({
+          status: 'ready',
+          segments: [...this.state.segments, segment],
+          totalDurationMs: this.state.totalDurationMs + 5000,
+          dirty: true,
+        });
+      })();
+      this.stopPromise = work;
+      void work.then(() => {
+        if (this.stopPromise === work) this.stopPromise = undefined;
+      });
+      return work;
+    });
+    freeze = vi.fn(async () => {
+      await this.stop();
+      this.frozen = true;
+      return {
+        blob: this.state.segments[0]!.blob,
+        segments: this.state.segments,
+        durationMs: this.state.totalDurationMs,
+      };
+    });
+    removeSegment = (id: string) => {
+      if (this.frozen) return;
+      const segments = this.state.segments.filter((segment) => segment.id !== id);
+      this.set({ segments, totalDurationMs: segments.length * 5000, dirty: segments.length > 0 });
+    };
+    discard = vi.fn(() =>
+      this.set({ status: 'idle', segments: [], totalDurationMs: 0, dirty: false }),
+    );
+    thaw = vi.fn(() => {
+      this.frozen = false;
+    });
+  }
+  return {
+    Recorder,
+    drafts: new Map<string, Recorder>(),
+    stopGate: undefined as Promise<void> | undefined,
+    updateLocked: false,
+  };
+});
+vi.mock('./recorder.js', () => ({
+  getConversationRecorder: (key: string) => {
+    if (!media.drafts.has(key)) media.drafts.set(key, new media.Recorder());
+    return media.drafts.get(key)!;
+  },
+  moveConversationRecorder: (from: string, to: string) => {
+    const recorder = media.drafts.get(from);
+    if (recorder && !media.drafts.get(to)?.state.dirty) {
+      media.drafts.set(to, recorder);
+      media.drafts.delete(from);
+      return true;
+    }
+    return false;
+  },
+  anyVoiceDraftDirty: () => [...media.drafts.values()].some((recorder) => recorder.state.dirty),
+  subscribeVoiceDrafts: () => () => {},
+}));
+vi.mock('../pwa/chat-update-guard.js', () => ({
+  getChatUpdateLocked: () => media.updateLocked,
+  setChatSubmissionUnresolved: vi.fn(),
+}));
 const key = 'surface-chat';
-const ready = () =>
-  waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Send message' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    ),
-  );
-const load = async (client = mockChatClient(), owner = false) => {
-  const view = render(<ChatSurface client={client} storageKey={key} owner={owner} />);
+const audioReady = { ...session, readiness: { text: { ready: true }, audio: { ready: true } } };
+async function load(
+  client = mockChatClient(),
+  props: Partial<Parameters<typeof ChatSurface>[0]> = {},
+) {
+  const view = render(<ChatSurface client={client} storageKey={key} {...props} />);
   await waitFor(() => expect(client.session).toHaveBeenCalled());
-  await waitFor(() => expect(screen.queryByText('Checking Gateway chat…')).not.toBeInTheDocument());
+  await act(async () => {
+    await Promise.resolve();
+  });
   return { client, ...view };
-};
+}
+function layoutCallbacks() {
+  const observers: TestResizeObserver[] = [];
+  class TestResizeObserver implements ResizeObserver {
+    callback: ResizeObserverCallback;
+    observe = vi.fn<ResizeObserver['observe']>();
+    unobserve = vi.fn<ResizeObserver['unobserve']>();
+    disconnect = vi.fn<ResizeObserver['disconnect']>();
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+      observers.push(this);
+    }
+  }
+  const viewport = new EventTarget();
+  vi.stubGlobal('ResizeObserver', TestResizeObserver);
+  vi.stubGlobal('visualViewport', viewport);
+  const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+  return {
+    scroll,
+    observers,
+    measure: () => act(() => observers.forEach((observer) => observer.callback([], observer))),
+    resize: () =>
+      act(() => {
+        viewport.dispatchEvent(new Event('resize'));
+      }),
+  };
+}
+beforeEach(() => {
+  media.drafts.clear();
+  media.stopGate = undefined;
+  media.updateLocked = false;
+  vi.stubGlobal('crypto', webcrypto);
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    value: vi.fn(() => 'blob:preview'),
+  });
+  Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+});
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
-describe('shared chat surface', () => {
-  it('keeps quiet empty state and displays only the exact loop reply as plain text', async () => {
-    const user = userEvent.setup();
+describe('shared composer', () => {
+  it('removes attachments, sends text on coarse-pointer Enter, preserves Shift Enter and IME', async () => {
     const { client } = await load();
-    expect(screen.getByRole('heading', { name: 'What’s the move?' })).toBeVisible();
-    expect(screen.getByText(/Configure a normalizer/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Attach audio' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
-    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello');
-    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(screen.queryByRole('button', { name: 'Attach audio' })).not.toBeInTheDocument();
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+    fireEvent.keyDown(textarea, { key: 'Enter', isComposing: true });
+    expect(client.send).not.toHaveBeenCalled();
+    fireEvent.keyDown(textarea, { key: 'Enter' });
     expect(await screen.findByText(turn.response!.reply)).toBeVisible();
     expect(client.send).toHaveBeenCalledOnce();
+    expect(textarea).toHaveValue('');
     expect(screen.queryByRole('link', { name: 'Open run' })).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('');
   });
-  it('renders projected errors as notices and owner run links without inventing a reply', async () => {
+  it('owner unconfigured Mic opens the guided setup while device shows quiet audience copy', async () => {
     const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation]);
-    client.turns.mockResolvedValue([
-      { ...turn, error: { code: 'CHAT_RESPONSE_INVALID', message: 'The result is invalid.' } },
-    ]);
-    await load(client, true);
-    expect(await screen.findByText(/The chat loop failed: The result is invalid/)).toBeVisible();
-    expect(screen.queryByText(turn.response!.reply)).not.toBeInTheDocument();
-    expect(screen.getByText('Problem:')).toHaveClass('sr-only');
-    expect(screen.getByRole('link', { name: 'Open run' })).toHaveAttribute(
-      'href',
-      `/app/runs/${turn.runId}`,
-    );
-    expect(screen.getByRole('link', { name: 'Gateway chat' })).toHaveAttribute(
-      'href',
-      `/app/loops/${session.systemLoopId}/edit`,
-    );
+    client.session.mockResolvedValue({
+      ...session,
+      readiness: {
+        text: { ready: true },
+        audio: { ready: false, code: 'CHAT_AUDIO_UNAVAILABLE', message: 'chat-normalize missing' },
+      },
+    });
+    const setup = vi.fn();
+    const view = await load(client, { owner: true, onSetupVoice: setup });
+    fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
+    expect(setup).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/chat-normalize/)).not.toBeInTheDocument();
+    view.unmount();
+    await load(client);
+    fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Voice messages are off for this device.');
   });
-  it.each(['cancelled', 'exhausted', 'failed', 'succeeded'] as const)(
-    'shows a terminal %s notice when no canonical reply exists',
-    async (runStatus) => {
-      const client = mockChatClient();
-      client.conversations.mockResolvedValue([conversation]);
-      client.turns.mockResolvedValue([{ ...turn, runStatus, response: undefined }]);
-      await load(client);
-      expect(
-        await screen.findByText(
-          runStatus === 'cancelled'
-            ? 'Cancelled. Anything the chat loop already did stays done.'
-            : runStatus === 'exhausted'
-              ? 'The chat loop hit a limit before replying.'
-              : 'The chat loop finished without a usable reply.',
-        ),
-      ).toBeVisible();
-    },
-  );
-  it('waiting is visible, keeps drafting possible, and cancels using the chat client', async () => {
-    const user = userEvent.setup();
+  it('retains Stop, appends another segment, and sends caption plus all finalized recording once', async () => {
     const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation]);
-    client.turns.mockResolvedValue([{ ...turn, runStatus: 'waiting', response: undefined }]);
-    client.cancel.mockImplementation(() => {
-      const cancelled = { ...turn, runStatus: 'cancelled' as const, response: undefined };
-      client.turns.mockResolvedValue([cancelled]);
-      return Promise.resolve(cancelled);
+    client.session.mockResolvedValue(audioReady);
+    await load(client);
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(textarea, { target: { value: 'Caption' } });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    expect(textarea).toHaveFocus();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(1);
+    expect(screen.getByText(/reloading or closing loses them/)).toBeVisible();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add more voice' }));
+    let finish!: () => void;
+    media.stopGate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText('Finalizing recording…')).toBeVisible();
+    expect(client.upload).not.toHaveBeenCalled();
+    act(() => finish());
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    const recorder = media.drafts.get(`${key}/${conversation.id}`)!;
+    expect(recorder.freeze).toHaveBeenCalledOnce();
+    expect(client.send.mock.calls[0]![1].input).toMatchObject({
+      kind: 'audio',
+      caption: 'Caption',
+    });
+    expect(client.upload).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(screen.queryByRole('list', { name: 'Voice recordings' })).not.toBeInTheDocument(),
+    );
+    expect(textarea).toHaveValue('');
+  });
+  it('removal and whole draft discard require explicit confirmation and preserve typed caption', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    await load(client);
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(textarea, { target: { value: 'Keep this' } });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove recording 1' }));
+    expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(1);
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', {
+        name: 'Confirm delete recording 1',
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard voice' }));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', {
+        name: 'Confirm delete voice draft',
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('list', { name: 'Voice recordings' })).not.toBeInTheDocument(),
+    );
+    expect(textarea).toHaveValue('Keep this');
+  });
+  it('uses calm active state with cancellation consequences and accessible blocked explanation', async () => {
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
+    await load(client, { owner: true });
+    expect(screen.getByText(/Waiting for the current reply/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Send message' })).toHaveAttribute(
+      'aria-describedby',
+      'chat-send-reason',
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }));
+    expect(
+      within(screen.getByRole('alertdialog')).getByText(
+        'Stops this request if it’s still running. Anything it already did stays done.',
+      ),
+    ).toBeVisible();
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Keep running' }),
+    );
+    expect(client.cancel).not.toHaveBeenCalled();
+  });
+  it('lost upload acknowledgement checks status and never admits automatically', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.upload.mockRejectedValue(new Error('lost'));
+    client.audioStatus.mockResolvedValue({
+      state: 'ready',
+      audio: { id: turn.id, bytes: 3, mimeType: 'audio/wav', expiresAt: turn.createdAt },
     });
     await load(client);
-    expect(
-      await screen.findByText('Waiting on the gateway. Ask its owner if this doesn’t move.'),
-    ).toBeVisible();
-    expect(screen.getByText('Wait for this request to finish, or cancel it.')).toBeVisible();
-    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Next');
-    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText(/Your recording reached the gateway/)).toBeVisible();
     expect(client.send).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Cancel request' }));
-    await user.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel request' }),
-    );
-    expect(client.cancel).toHaveBeenCalledWith(turn.id);
-    expect(
-      await screen.findByText('Cancelled. Anything the chat loop already did stays done.'),
-    ).toBeVisible();
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Next');
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(client.upload).toHaveBeenCalledOnce();
   });
-  it('reload checks unknown acknowledgement without posting, then offers explicit same-message retry', async () => {
-    const user = userEvent.setup();
+  it('keeps a rejected caption and voice draft, but clears an admitted failed workflow', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.send
+      .mockRejectedValueOnce(new ChatApiError(413, 'TOO_LONG', 'Shorten the caption.'))
+      .mockImplementation((_id, request) =>
+        Promise.resolve({
+          ...turn,
+          input: request.input,
+          requestId: request.requestId,
+          runStatus: 'failed',
+          response: undefined,
+          error: { code: 'FAILED', message: 'Transcription failed.' },
+        }),
+      );
+    await load(client);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Caption' },
+    });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText('Shorten the caption.')).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Caption');
+    expect(screen.getByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText(/The chat loop failed: Transcription failed/)).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('');
+    expect(client.send.mock.calls[0]![1].requestId).toEqual(
+      client.send.mock.calls[1]![1].requestId,
+    );
+  });
+  it('refreshes readiness from Check connection props and retains per-conversation voice drafts', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    const other = { ...conversation, id: turn.id, lastTurn: 1, title: 'Other conversation' };
+    client.conversations.mockResolvedValue([
+      { ...conversation, lastTurn: 1, title: 'First conversation' },
+      other,
+    ]);
+    const view = await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conversation' }), {
+      target: { value: other.id },
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole('list', { name: 'Voice recordings' })).not.toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conversation' }), {
+      target: { value: conversation.id },
+    });
+    expect(await screen.findByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    const before = client.session.mock.calls.length;
+    view.rerender(<ChatSurface client={client} storageKey={key} sessionRefreshKey={1} />);
+    await waitFor(() => expect(client.session.mock.calls.length).toBeGreaterThan(before));
+  });
+});
+
+describe('H1 remaining-space layout and automatic tail reveal', () => {
+  it.each([false, true])(
+    'leaves empty %s-owner chat at the top through layout, initial measure, observer and viewport changes',
+    async (owner) => {
+      const layout = layoutCallbacks();
+      await load(mockChatClient(), { owner });
+      const surface = screen.getByRole('region', { name: owner ? 'Chat' : 'Goblin chat' });
+      expect(surface).toHaveClass('flex-1', 'flex-col');
+      expect(surface.className).not.toContain('calc(100dvh');
+      expect(layout.scroll).not.toHaveBeenCalled();
+      const textarea = screen.getByRole('textbox', { name: 'Message' });
+      textarea.focus();
+      const composer = textarea.closest('form')!;
+      vi.spyOn(composer, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 360, 200));
+      layout.measure();
+      expect(surface.querySelector('[data-chat-tail]')).toHaveStyle({
+        scrollMarginBottom: '216px',
+      });
+      layout.resize();
+      fireEvent(window, new Event('offline'));
+      layout.measure();
+      layout.resize();
+      fireEvent(window, new Event('online'));
+      layout.measure();
+      layout.resize();
+      expect(layout.scroll).not.toHaveBeenCalled();
+      expect(textarea).toHaveFocus();
+    },
+  );
+  it('uses current pending state in callbacks installed while the conversation was empty', async () => {
+    const layout = layoutCallbacks();
+    const client = mockChatClient();
+    client.send.mockImplementation(() => new Promise(() => {}));
+    await load(client);
+    expect(layout.scroll).not.toHaveBeenCalled();
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    textarea.focus();
+    fireEvent.change(textarea, { target: { value: 'First pending request' } });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(textarea).toHaveFocus();
+  });
+  it('reveals the first reply and follows later composer measurements using current turns', async () => {
+    const layout = layoutCallbacks();
+    const { client } = await load();
+    expect(layout.scroll).not.toHaveBeenCalled();
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(textarea, { target: { value: 'First message' } });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(layout.scroll).toHaveBeenCalled();
+    await waitFor(() => expect(textarea).toHaveFocus());
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(client.send).toHaveBeenCalledOnce();
+    layout.scroll.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(await screen.findByRole('heading', { name: 'What’s the move?' })).toBeVisible();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+  });
+  it('reveals restored history and follows its composer only while the reader stays at the bottom', async () => {
+    const layout = layoutCallbacks();
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([turn]);
+    const { unmount } = await load(client);
+    expect(screen.getByText(turn.response!.reply)).toBeVisible();
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+    fireEvent.scroll(window);
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0,
+    });
+    fireEvent.scroll(window);
+    layout.measure();
+    expect(layout.scroll).toHaveBeenCalledOnce();
+    unmount();
+    expect(layout.observers.every((observer) => observer.disconnect.mock.calls.length === 1)).toBe(
+      true,
+    );
+    layout.scroll.mockClear();
+    layout.resize();
+    expect(layout.scroll).not.toHaveBeenCalled();
+  });
+  it('reveals restored pending recovery without replaying its request', async () => {
+    const layout = layoutCallbacks();
     sessionStorage.setItem(
       key,
       JSON.stringify({
@@ -117,186 +480,88 @@ describe('shared chat surface', () => {
       }),
     );
     const client = mockChatClient();
-    client.request.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'Not found.'));
+    client.request.mockImplementation(() => new Promise(() => {}));
     await load(client);
-    expect(await screen.findByText('Acknowledgement unknown')).toBeVisible();
+    expect(layout.scroll).toHaveBeenCalled();
+    layout.scroll.mockClear();
+    layout.measure();
+    layout.resize();
+    expect(layout.scroll).toHaveBeenCalledTimes(2);
+    expect(client.request).toHaveBeenCalledOnce();
     expect(client.send).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Check status' }));
-    expect(client.send).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Retry same message' }));
-    expect(client.send).toHaveBeenCalledWith(conversation.id, {
-      requestId: turn.requestId,
-      input: turn.input,
-    });
-    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
-  });
-  it('blocks offline sends and never sends an unsent draft when reconnecting', async () => {
-    const user = userEvent.setup();
-    const { client } = await load();
-    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Draft');
-    await act(() => window.dispatchEvent(new Event('offline')));
-    expect(screen.getByText('You’re offline. Reconnect to send.')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(client.send).not.toHaveBeenCalled();
-    await act(() => window.dispatchEvent(new Event('online')));
-    await waitFor(() =>
-      expect(screen.queryByText('You’re offline. Reconnect to send.')).not.toBeInTheDocument(),
-    );
-    expect(client.send).not.toHaveBeenCalled();
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Draft');
-  });
-  it('respects IME, Shift+Enter and touch newline, but explicitly sends Ctrl+Enter', async () => {
-    const { client } = await load();
-    const input = screen.getByRole('textbox', { name: 'Message' });
-    fireEvent.change(input, { target: { value: 'Message' } });
-    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
-    expect(client.send).not.toHaveBeenCalled();
-    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
-    fireEvent.keyDown(input, { key: 'Enter' });
-    expect(client.send).not.toHaveBeenCalled();
-    fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true });
-    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
-  });
-  it('uploads an audio attachment, renders actual transcript, and handles invalid file sizes', async () => {
-    const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
-    });
-    client.send.mockImplementation((_id, request) =>
-      Promise.resolve({
-        ...turn,
-        requestId: request.requestId,
-        input: request.input,
-        inputTranscript: 'Actual normalizer transcript',
-      }),
-    );
-    const { container } = await load(client);
-    const picker = container.querySelector<HTMLInputElement>('input[type=file]')!;
-    fireEvent.change(picker, {
-      target: { files: [new File([], 'empty.webm', { type: 'audio/webm' })] },
-    });
-    expect(screen.getByRole('alert')).toHaveTextContent('empty or too big');
-    fireEvent.change(picker, {
-      target: { files: [new File(['audio'], 'memo.webm', { type: 'audio/webm' })] },
-    });
-    expect(screen.getByRole('textbox', { name: 'Message' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(await screen.findByText('Actual normalizer transcript')).toBeVisible();
-    expect(client.upload).toHaveBeenCalledOnce();
-    expect(screen.getByText('Transcript')).toBeVisible();
-    expect(client.discardAudio).not.toHaveBeenCalled();
-  });
-  it('file removal restores typing and an upload failure is a notice', async () => {
-    const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
-    });
-    const { container } = await load(client);
-    const picker = container.querySelector<HTMLInputElement>('input[type=file]')!;
-    fireEvent.change(picker, {
-      target: { files: [new File(['a'], 'clip.webm', { type: 'audio/webm' })] },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Remove audio' }));
-    expect(screen.getByRole('textbox', { name: 'Message' })).toBeEnabled();
-    fireEvent.change(picker, {
-      target: { files: [new File(['a'], 'clip.webm', { type: 'audio/webm' })] },
-    });
-    client.upload.mockRejectedValue(
-      new ChatApiError(415, 'CHAT_MEDIA_UNSUPPORTED', 'Use a supported audio type.'),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Use a supported audio type.');
-    expect(client.send).not.toHaveBeenCalled();
-  });
-  it('owner header supports actions and selecting/new conversations', async () => {
-    const user = userEvent.setup();
-    const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation, { ...conversation, id: turn.id }]);
-    client.turns.mockResolvedValue([turn]);
-    render(
-      <ChatSurface
-        client={client}
-        storageKey={key}
-        owner
-        headerActions={<button>Devices</button>}
-      />,
-    );
-    await screen.findByText(turn.response!.reply);
-    expect(screen.getByRole('button', { name: 'Devices' })).toBeVisible();
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Conversation' }), turn.id);
-    await waitFor(() =>
-      expect(client.turns).toHaveBeenCalledWith(turn.id, expect.any(AbortSignal)),
-    );
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
-    expect(client.createConversation).toHaveBeenCalledOnce();
-  });
-  it('announces no restored history and safely renders HTML-looking text', async () => {
-    const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation]);
-    client.turns.mockResolvedValue([
-      { ...turn, response: { ...turn.response!, reply: '<img src=x onerror=alert(1)>' } },
-    ]);
-    const { container } = await load(client);
-    expect(screen.getByText('<img src=x onerror=alert(1)>')).toBeVisible();
-    expect(container.querySelector('img')).toBeNull();
-    expect(within(container).getByRole('status')).toHaveTextContent('');
-    await ready();
   });
 });
 
-describe('chat readiness and audio boundaries', () => {
-  it('unavailable audio controls explain the exact reason without asking for permission', async () => {
-    const { client } = await load();
-    fireEvent.click(screen.getByRole('button', { name: 'Attach audio' }));
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Voice messages aren’t available here. Configure a normalizer',
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
-    expect(client.upload).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Voice messages aren’t available here.');
-  });
-  it('readiness and authentication failures keep the draft, show a notice and forbid mutation', async () => {
+describe('thread recovery and reading intent', () => {
+  it.each([
+    ['cancelled', 'Cancelled. Anything the chat loop already did stays done.'],
+    ['exhausted', 'The chat loop hit a limit before replying.'],
+    ['succeeded', 'The chat loop finished without a usable reply.'],
+  ] as const)('shows truthful %s terminal status', async (runStatus, notice) => {
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: {
-        ...session.readiness,
-        text: { ready: false, message: 'Choose an available model.' },
-      },
-    });
-    const { unmount } = await load(client);
-    expect(screen.getByText('Choose an available model.')).toBeVisible();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
-      target: { value: 'Draft' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(client.send).not.toHaveBeenCalled();
-    unmount();
-    const auth = vi.fn();
-    const denied = mockChatClient();
-    denied.session.mockRejectedValue(new ChatApiError(401, 'UNAUTHORIZED', 'Pair again.'));
-    render(
-      <ChatSurface
-        client={denied}
-        storageKey="auth-chat"
-        onAuthenticationError={auth}
-        headerActions={<button>Gateway sheet</button>}
-      />,
-    );
-    await waitFor(() => expect(auth).toHaveBeenCalledOnce());
-    expect(
-      screen.getByText('Your conversation loads when Goblin can reach the gateway.'),
-    ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Gateway sheet' })).toBeVisible();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([{ ...turn, runStatus, response: undefined }]);
+    await load(client, { owner: true });
+    expect(screen.getByText(notice)).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Open run' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(await screen.findByRole('heading', { name: 'What’s the move?' })).toBeVisible();
+    expect(client.createConversation).not.toHaveBeenCalled();
   });
-  it('a request tombstone preserves the remaining transcript and current draft without replay', async () => {
+  it.each(['queued', 'waiting', 'paused'] as const)(
+    'shows %s without owner diagnostics to a device',
+    async (runStatus) => {
+      const client = mockChatClient();
+      client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+      client.turns.mockResolvedValue([{ ...turn, runStatus, response: undefined }]);
+      await load(client, { headerActions: <span>Device header</span> });
+      expect(screen.queryByRole('link', { name: 'Open run' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
+      expect(media.drafts.get(`${key}/${conversation.id}`)?.start).not.toHaveBeenCalled();
+    },
+  );
+  it('shows a caption and voice-only transcript without duplicating the canonical caption', async () => {
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([
+      {
+        ...turn,
+        input: { kind: 'audio', audioId: turn.id, caption: 'Caption' },
+        inputTranscript: 'Caption\n\nSpoken words',
+      },
+    ]);
+    await load(client);
+    fireEvent.click(screen.getByText('Transcript'));
+    expect(screen.getByText('Caption')).toBeVisible();
+    expect(screen.getByText('Spoken words')).toBeVisible();
+    expect(screen.queryByText('Caption\n\nSpoken words')).not.toBeInTheDocument();
+  });
+  it('does GET-only recovery before an explicit retry and keeps newer text intact', async () => {
     sessionStorage.setItem(
       key,
       JSON.stringify({
-        draft: 'My next message',
+        draft: 'Next draft',
+        pending: {
+          conversationId: conversation.id,
+          request: { requestId: turn.requestId, input: turn.input },
+        },
+      }),
+    );
+    const client = mockChatClient();
+    client.request.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'Not admitted.'));
+    await load(client);
+    expect(client.send).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Check status' }));
+    await waitFor(() => expect(client.request).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry same message' }));
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Next draft');
+  });
+  it('clears unavailable pending recovery without repeating a command', async () => {
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        draft: 'Next draft',
         pending: {
           conversationId: conversation.id,
           request: { requestId: turn.requestId, input: turn.input },
@@ -305,100 +570,51 @@ describe('chat readiness and audio boundaries', () => {
     );
     const client = mockChatClient();
     client.request.mockRejectedValue(new ChatApiError(410, 'CHAT_HISTORY_DELETED', 'Gone.'));
-    client.turns.mockResolvedValue([
-      { ...turn, requestId: '36bee35d-3ce7-43ab-87c1-a95952a069ed' },
-    ]);
     await load(client);
     expect(
       screen.getByText(
         'This request was deleted on the gateway. The rest of this conversation is still here.',
       ),
     ).toBeVisible();
-    expect(screen.getByText(turn.response!.reply)).toBeVisible();
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('My next message');
-    expect(screen.getByRole('button', { name: 'Send message' })).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
     expect(client.send).not.toHaveBeenCalled();
-    expect(client.createConversation).not.toHaveBeenCalled();
   });
-  it('rejects unsupported files before uploading and discards definitely refused uploads', async () => {
+  it('keeps older reading position on an incoming reply, then reveals the relevant tail on request', async () => {
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([turn]);
+    await load(client);
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    scroll.mockClear();
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
     });
-    client.send.mockRejectedValue(new ChatApiError(409, 'CHAT_AUDIO_EXPIRED', 'Audio expired.'));
-    client.discardAudio.mockRejectedValue(new Error('already expired'));
-    const { container } = await load(client);
-    const picker = container.querySelector<HTMLInputElement>('input[type=file]')!;
-    fireEvent.change(picker, { target: { files: [] } });
-    fireEvent.change(picker, {
-      target: { files: [new File(['text'], 'text.txt', { type: 'text/plain' })] },
+    fireEvent.scroll(window);
+    client.turns.mockResolvedValue([
+      turn,
+      {
+        ...turn,
+        id: turn.runId,
+        turn: 2,
+        response: { protocol: 'graphgoblin.chat.v1', reply: 'Incoming reply' },
+      },
+    ]);
+    fireEvent.focus(window);
+    expect(await screen.findByRole('button', { name: 'New reply' })).toBeVisible();
+    expect(scroll).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'New reply' }));
+    expect(screen.getByText('Incoming reply').closest('article')).toHaveFocus();
+    expect(scroll).toHaveBeenCalled();
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0,
     });
-    expect(screen.getByRole('alert')).toHaveTextContent('supported audio type');
-    expect(client.upload).not.toHaveBeenCalled();
-    fireEvent.change(picker, {
-      target: { files: [new File(['audio'], 'clip.webm', { type: 'audio/webm' })] },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    await waitFor(() => expect(client.discardAudio).toHaveBeenCalledOnce());
+    fireEvent.scroll(window);
   });
-  it('unknown audio acknowledgement retains its consumed upload; generic upload errors remain notices', async () => {
+  it('cancellation failure retains its dialog and an asynchronous accepted cancellation shows Cancelling', async () => {
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
-    });
-    client.send.mockRejectedValue(new TypeError('lost response'));
-    const { container, unmount } = await load(client);
-    const picker = container.querySelector<HTMLInputElement>('input[type=file]')!;
-    fireEvent.change(picker, {
-      target: { files: [new File(['audio'], 'clip.webm', { type: 'audio/webm' })] },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    await screen.findByText('Acknowledgement unknown');
-    expect(client.discardAudio).not.toHaveBeenCalled();
-    unmount();
-    sessionStorage.clear();
-    const failed = mockChatClient();
-    failed.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
-    });
-    failed.upload.mockRejectedValue(new TypeError('network'));
-    const second = await load(failed);
-    fireEvent.change(second.container.querySelector<HTMLInputElement>('input[type=file]')!, {
-      target: { files: [new File(['audio'], 'clip.webm', { type: 'audio/webm' })] },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Audio could not be uploaded');
-  });
-  it.each(['queued', 'running', 'waiting', 'paused'] as const)(
-    'shows exact native %s phase with owner intervention and cancel confirmation',
-    async (runStatus) => {
-      const client = mockChatClient();
-      client.conversations.mockResolvedValue([conversation]);
-      client.turns.mockResolvedValue([{ ...turn, runStatus, response: undefined }]);
-      await load(client, true);
-      expect(await screen.findByRole('button', { name: 'Cancel request' })).toBeVisible();
-      expect(screen.getByRole('link', { name: 'Open run' })).toBeVisible();
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }));
-      const dialog = screen.getByRole('alertdialog');
-      expect(
-        within(dialog).getByText(
-          'Stops this request if it’s still running. Anything it already did stays done.',
-        ),
-      ).toBeVisible();
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Keep running' }));
-      expect(client.cancel).not.toHaveBeenCalled();
-    },
-  );
-  it('an asynchronous cancel shows Cancelling until projection is terminal and failures can be retried', async () => {
-    const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation]);
-    client.turns.mockResolvedValue([{ ...turn, runStatus: 'paused', response: undefined }]);
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
     client.cancel
       .mockRejectedValueOnce(new ChatApiError(503, 'BUSY', 'Try later.'))
       .mockResolvedValue({ ...turn, runStatus: 'running', response: undefined });
@@ -413,202 +629,350 @@ describe('chat readiness and audio boundaries', () => {
     );
     expect(await screen.findByText('Cancelling')).toBeVisible();
   });
-});
-
-describe('local recording and scroll behavior', () => {
-  it('records, warns at the limit, stops tracks, discards and stops when hidden', async () => {
-    const stopTrack = vi.fn();
-    vi.stubGlobal('navigator', {
-      onLine: true,
-      mediaDevices: {
-        getUserMedia: () => Promise.resolve({ getTracks: () => [{ stop: stopTrack }] }),
-      },
-    });
-    class Recorder {
-      static isTypeSupported() {
-        return true;
-      }
-      state = 'inactive';
-      mimeType = 'audio/webm';
-      ondataavailable: ((event: BlobEvent) => void) | null = null;
-      onstop: (() => void) | null = null;
-      start() {
-        this.state = 'recording';
-      }
-      stop() {
-        this.state = 'inactive';
-        this.ondataavailable?.({ data: new Blob(['audio']) } as BlobEvent);
-        this.onstop?.();
-      }
-    }
-    vi.stubGlobal('MediaRecorder', Recorder);
+  it('pauses capture on Escape and backgrounding, and surfaces finalization failures without upload', async () => {
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: { text: { ready: true }, audio: { ready: true } },
-    });
+    client.session.mockResolvedValue(audioReady);
     await load(client);
-    vi.useFakeTimers();
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
-      await Promise.resolve();
-    });
-    expect(screen.getByRole('button', { name: 'Stop recording' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    expect(screen.getByText('Stop recording first.')).toBeVisible();
-    await act(() => vi.advanceTimersByTimeAsync(106_000));
-    expect(screen.getByText(/Recording stops at 2:00/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
-    expect(screen.getByRole('button', { name: 'Send message' })).toHaveFocus();
-    expect(stopTrack).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Remove audio' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Remove audio' }));
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
-      await Promise.resolve();
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
-    expect(screen.getByRole('button', { name: 'Record voice message' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
-      await Promise.resolve();
-    });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Escape' });
+    expect(await screen.findByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add more voice' }));
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
     fireEvent(document, new Event('visibilitychange'));
-    expect(screen.getByRole('button', { name: 'Remove audio' })).toBeVisible();
-    vi.useRealTimers();
+    await waitFor(() =>
+      expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(2),
+    );
+    const recorder = media.drafts.get(`${key}/new`)!;
+    recorder.freeze.mockRejectedValueOnce(
+      new Error('Final words could not be saved. Record again.'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Final words could not be saved.');
+    expect(screen.getByRole('button', { name: 'Try again' })).toHaveFocus();
+    expect(client.upload).not.toHaveBeenCalled();
   });
-  it('leaves scroll and focus alone when a new reply arrives away from the bottom until New reply is chosen', async () => {
-    const user = userEvent.setup();
+  it('unavailable owner credentials and offline readiness use audience-specific actionable copy', async () => {
     const client = mockChatClient();
-    client.conversations.mockResolvedValue([conversation]);
-    client.turns.mockResolvedValue([turn]);
-    const { container } = await load(client);
-    Object.defineProperty(document.documentElement, 'scrollHeight', {
-      configurable: true,
-      value: 5000,
-    });
-    try {
-      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Second message');
-      client.send.mockImplementation((_id, request) =>
-        Promise.resolve({
-          ...turn,
-          id: conversation.id,
-          requestId: request.requestId,
-          turn: 2,
-          input: request.input,
-          response: { ...turn.response!, reply: 'New reply from loop' },
-        }),
-      );
-      await user.click(screen.getByRole('button', { name: 'Send message' }));
-      expect(await screen.findByRole('button', { name: 'New reply' })).toBeVisible();
-      await user.click(screen.getByRole('button', { name: 'New reply' }));
-      expect(container.querySelector('[data-chat-reply]')).toHaveFocus();
-      await user.click(screen.getByRole('button', { name: 'New chat' }));
-      expect(client.createConversation).toHaveBeenCalledOnce();
-    } finally {
-      Reflect.deleteProperty(document.documentElement, 'scrollHeight');
-    }
+    client.session.mockRejectedValue(new ChatApiError(401, 'UNAUTHORIZED', 'API key needed.'));
+    const view = await load(client, { owner: true });
+    expect(screen.getByText('Enter an API key to use Chat.')).toBeVisible();
+    view.unmount();
+    const online = mockChatClient();
+    await load(online);
+    fireEvent(window, new Event('offline'));
+    expect(screen.getByText('You’re offline. Reconnect to send.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Check connection' }));
+    expect(online.send).not.toHaveBeenCalled();
   });
 });
 
-describe('unavailable request UI', () => {
-  it('removes recovery controls, keeps the current draft and restores their focus to the message box', async () => {
-    sessionStorage.setItem(
-      key,
-      JSON.stringify({
-        draft: 'Keep typing',
-        pending: {
-          conversationId: conversation.id,
-          request: { requestId: turn.requestId, input: turn.input },
+describe('safe per-turn context and transcription disclosure', () => {
+  it.each([undefined, 0, 1, 3])(
+    'discloses only actual recent-context omission (%s pairs)',
+    async (omittedHistoryPairs) => {
+      const client = mockChatClient();
+      client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+      client.turns.mockResolvedValue([
+        {
+          ...turn,
+          ...(omittedHistoryPairs === undefined
+            ? {}
+            : { context: { retainedHistoryPairs: 2, omittedHistoryPairs, contextTokens: 4096 } }),
         },
-      }),
-    );
-    const client = mockChatClient();
-    client.request
-      .mockRejectedValueOnce(new ChatApiError(404, 'NOT_FOUND', 'Not found.'))
-      .mockRejectedValue(new ChatApiError(410, 'CHAT_HISTORY_DELETED', 'Gone.'));
-    await load(client);
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Check status' }));
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Check status' })).not.toBeInTheDocument(),
-    );
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Keep typing');
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveFocus();
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Problem: This request was deleted on the gateway. The rest of this conversation is still here.',
-    );
-    expect(client.send).not.toHaveBeenCalled();
-  });
-  it.each(['upload', 'send'] as const)(
-    'an expired audio %s forgets the local recording and old upload',
-    async (phase) => {
+      ]);
+      await load(client);
+      if (omittedHistoryPairs) {
+        expect(
+          screen.getByText(
+            `${omittedHistoryPairs} earlier ${omittedHistoryPairs === 1 ? 'pair' : 'pairs'} omitted from the recent context to fit this model.`,
+          ),
+        ).toBeVisible();
+      } else expect(screen.queryByText(/omitted from the recent context/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/all history|total recall|4096/)).not.toBeInTheDocument();
+    },
+  );
+  it.each(['local', 'cloud'] as const)(
+    'labels the %s route pinned to the transcript rather than today’s setting',
+    async (route) => {
       const client = mockChatClient();
       client.session.mockResolvedValue({
-        ...session,
-        readiness: { text: { ready: true }, audio: { ready: true } },
+        ...audioReady,
+        voice: {
+          ready: true,
+          route: route === 'local' ? 'cloud' : 'local',
+          cloudFallbackAllowed: false,
+          message: 'Current setting differs.',
+        },
       });
-      const gone = new ChatApiError(410, 'CHAT_AUDIO_EXPIRED', 'Expired.');
-      if (phase === 'upload') client.upload.mockRejectedValue(gone);
-      else client.send.mockRejectedValue(gone);
-      const { container } = await load(client);
-      fireEvent.change(container.querySelector<HTMLInputElement>('input[type=file]')!, {
-        target: { files: [new File(['audio'], 'clip.webm', { type: 'audio/webm' })] },
-      });
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Send message' }));
+      client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+      client.turns.mockResolvedValue([
+        {
+          ...turn,
+          input: { kind: 'audio', audioId: turn.id },
+          inputTranscript: 'Spoken words',
+          voice: {
+            ready: true,
+            route,
+            ...(route === 'cloud' ? { cloudProvider: 'OpenAI' as const } : {}),
+            cloudFallbackAllowed: false,
+            message: 'Pinned route.',
+          },
+        },
+      ]);
+      await load(client);
+      fireEvent.click(screen.getByText('Transcript'));
       expect(
-        await screen.findByText(
-          'This voice message expired on the gateway. Record a new one or attach the file again.',
+        screen.getByText(
+          route === 'local' ? 'Transcribed on this gateway' : 'Transcribed by OpenAI',
         ),
       ).toBeVisible();
-      await waitFor(() =>
-        expect(screen.queryByRole('button', { name: 'Remove audio' })).not.toBeInTheDocument(),
-      );
-      expect(screen.getByRole('textbox', { name: 'Message' })).not.toBeDisabled();
-      expect(client.upload).toHaveBeenCalledOnce();
-      expect(client.send).toHaveBeenCalledTimes(phase === 'send' ? 1 : 0);
-      expect(client.discardAudio).not.toHaveBeenCalled();
-      expect(screen.queryByRole('button', { name: 'Retry same message' })).not.toBeInTheDocument();
     },
   );
 });
 
-describe('device voice readiness copy', () => {
-  it('uses the reason code for quiet device-off guidance without rewriting runtime failures', async () => {
+describe('Fable review regressions', () => {
+  it('F1 sends once when Enter arrives after Stop entered finalizing', async () => {
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: {
-        text: { ready: true },
-        audio: {
-          ready: false,
-          code: 'CHAT_AUDIO_UNAVAILABLE',
-          message: 'configure chat-normalize in the published system loop to enable audio',
-        },
-      },
+    client.session.mockResolvedValue(audioReady);
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    let finish!: () => void;
+    media.stopGate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
+    expect(await screen.findByText('Finalizing recording…')).toBeVisible();
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(client.send).not.toHaveBeenCalled();
+    act(() => finish());
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(client.upload).toHaveBeenCalledOnce();
+  });
+  it('F2 preserves a route back to the only saved conversation after New chat', async () => {
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([
+      { ...conversation, lastTurn: 1, title: 'My only conversation' },
+    ]);
+    client.turns.mockResolvedValue([turn]);
+    await load(client, { owner: true });
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    const selector = await screen.findByRole('combobox', { name: 'Conversation' });
+    expect(
+      within(selector).getByRole('option', { name: /My only conversation/ }),
+    ).toBeInTheDocument();
+    fireEvent.change(selector, { target: { value: conversation.id } });
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(client.createConversation).not.toHaveBeenCalled();
+  });
+  it('F3 removes a retained frozen segment after an out-of-band retry is definitively refused', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.send
+      .mockRejectedValueOnce(new Error('Lost acknowledgement'))
+      .mockRejectedValueOnce(new ChatApiError(413, 'REFUSED', 'Not admitted.'));
+    client.request.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'Not admitted.'));
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    fireEvent.click(await screen.findByRole('button', { name: 'Check status' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry same message' }));
+    expect(await screen.findByText('Not admitted.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove recording 1' }));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', {
+        name: 'Confirm delete recording 1',
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('list', { name: 'Voice recordings' })).not.toBeInTheDocument(),
+    );
+  });
+  it('F5 explains an explicit Send held by an app update without upload or admission', async () => {
+    const { client } = await load();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Keep me' },
+    });
+    media.updateLocked = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The app is updating. Try sending again in a moment.',
+    );
+    expect(client.send).not.toHaveBeenCalled();
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Keep me');
+  });
+  it('F6 keeps reload-recovered server audio until explicit Send or confirmed discard', async () => {
+    sessionStorage.setItem(
+      `${key}.voice-upload`,
+      JSON.stringify({
+        uploadId: turn.requestId,
+        sha256: 'a'.repeat(64),
+        caption: 'Kept',
+        audio: { id: turn.id, bytes: 50, mimeType: 'audio/wav', expiresAt: turn.createdAt },
+      }),
+    );
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.audioStatus.mockResolvedValue({
+      state: 'ready',
+      audio: { id: turn.id, bytes: 50, mimeType: 'audio/wav', expiresAt: turn.createdAt },
     });
     await load(client);
-    const line = 'Voice messages are off for this device. The gateway owner can set them up.';
-    expect(screen.getByText(line)).toBeVisible();
-    const record = screen.getByRole('button', { name: 'Record voice message' });
-    const attach = screen.getByRole('button', { name: 'Attach audio' });
-    expect(record).toHaveAttribute('aria-describedby', 'chat-audio-reason');
-    await userEvent.setup().click(record);
-    expect(screen.getByRole('status')).toHaveTextContent(line);
-    await userEvent.setup().click(attach);
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(client.upload).not.toHaveBeenCalled();
+    expect(await screen.findByText('Voice recording ready on the gateway.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Record voice message' }));
+    expect(client.discardAudio).not.toHaveBeenCalled();
+    expect(document.getElementById('chat-voice-draft-reason')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Record voice message' })).toHaveAttribute(
+      'aria-describedby',
+      'chat-voice-draft-reason',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Discard voice' }));
+    expect(client.discardAudio).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', {
+        name: 'Confirm delete voice draft',
+      }),
+    );
+    await waitFor(() => expect(client.discardAudio).toHaveBeenCalledOnce());
+    expect(screen.queryByText('Voice recording ready on the gateway.')).not.toBeInTheDocument();
   });
-  it('keeps a different backend audio reason verbatim and preserves unknown-410 request recovery', async () => {
+});
+
+it.each(['send-or-remove', 'other-draft', 'wait'] as const)(
+  'F4 keeps composer focus and avoids a dead-end Record again for %s',
+  async (errorRecovery) => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    await load(client);
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    if (errorRecovery === 'send-or-remove') {
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    }
+    textarea.focus();
+    const recorder = media.drafts.get(`${key}/new`)!;
+    act(() =>
+      recorder.set({
+        error: 'Capacity is unavailable. Send it, or remove a recording.',
+        errorRecovery,
+      }),
+    );
+    expect(screen.queryByRole('button', { name: 'Record again' })).not.toBeInTheDocument();
+    expect(textarea).toHaveFocus();
+    if (errorRecovery === 'send-or-remove') {
+      fireEvent.keyDown(textarea, { key: 'Enter' });
+      await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    }
+  },
+);
+it('H3 leaves WebKit IME keyCode229 confirmation in the composer', async () => {
+  const { client } = await load();
+  const textarea = screen.getByRole('textbox', { name: 'Message' });
+  fireEvent.change(textarea, { target: { value: '候補' } });
+  fireEvent.keyDown(textarea, { key: 'Enter', keyCode: 229, isComposing: false });
+  expect(client.send).not.toHaveBeenCalled();
+  expect(textarea).toHaveValue('候補');
+  expect(textarea).toHaveAttribute('enterkeyhint', 'send');
+});
+it('H6 replaces a known retired upload only after confirmation and a later explicit Send', async () => {
+  const client = mockChatClient();
+  client.session.mockResolvedValue(audioReady);
+  client.upload
+    .mockRejectedValueOnce(new Error('Lost upload acknowledgement'))
+    .mockResolvedValue({ id: turn.id, bytes: 3, mimeType: 'audio/wav', expiresAt: turn.createdAt });
+  client.audioStatus.mockResolvedValue({ state: 'retired' });
+  await load(client);
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+    target: { value: 'Caption' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+  expect(await screen.findByRole('button', { name: 'Use kept recording' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+  expect(client.upload).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'Use kept recording' }));
+  expect(client.upload).toHaveBeenCalledOnce();
+  fireEvent.click(
+    within(screen.getByRole('alertdialog')).getByRole('button', {
+      name: 'Confirm delete expired upload',
+    }),
+  );
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+  expect(screen.getByRole('list', { name: 'Voice recordings' })).toBeVisible();
+  expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Caption');
+  expect(client.send).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+  expect(client.upload.mock.calls[0]![1].uploadId).not.toBe(
+    client.upload.mock.calls[1]![1].uploadId,
+  );
+});
+
+it('sends a reload-recovered ready recording explicitly without recapturing or uploading it again', async () => {
+  const audio = { id: turn.id, bytes: 50, mimeType: 'audio/wav', expiresAt: turn.createdAt };
+  sessionStorage.setItem(key, JSON.stringify({ draft: 'Kept caption' }));
+  sessionStorage.setItem(
+    `${key}.voice-upload`,
+    JSON.stringify({
+      uploadId: turn.requestId,
+      sha256: 'a'.repeat(64),
+      caption: 'Kept caption',
+      audio,
+    }),
+  );
+  const client = mockChatClient();
+  client.session.mockResolvedValue(audioReady);
+  client.audioStatus.mockResolvedValue({ state: 'ready', audio });
+  await load(client);
+  expect(await screen.findByText('Voice recording ready on the gateway.')).toBeVisible();
+  expect(client.send).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+  expect(client.send.mock.calls[0]![1].input).toEqual({
+    kind: 'audio',
+    audioId: audio.id,
+    caption: 'Kept caption',
+  });
+  expect(client.upload).not.toHaveBeenCalled();
+  expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('');
+});
+
+describe('root browser review regressions', () => {
+  it('R1 never invokes owner model observation in a peripheral Chat surface', async () => {
+    const ownerSummary = vi.fn(() => <span>Owner-only published model</span>);
+    await load(mockChatClient(), { ownerSummary });
+    expect(ownerSummary).not.toHaveBeenCalled();
+    expect(screen.queryByText('Owner-only published model')).not.toBeInTheDocument();
+  });
+  it('R2 clears the previous reply live announcement on intentional New chat and conversation selection', async () => {
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1, title: 'Saved chat' }]);
+    await load(client, { owner: true });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Hello' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(screen.getByRole('status')).toHaveTextContent(`Reply: ${turn.response!.reply}`);
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(await screen.findByRole('heading', { name: 'What’s the move?' })).toBeVisible();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    client.turns.mockResolvedValue([turn]);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conversation' }), {
+      target: { value: conversation.id },
+    });
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+  it('R2 keeps uncertain admission recovery intact when New chat is blocked', async () => {
     sessionStorage.setItem(
       key,
       JSON.stringify({
-        draft: 'Keep draft',
+        draft: 'Next draft',
         pending: {
           conversationId: conversation.id,
           request: { requestId: turn.requestId, input: turn.input },
@@ -616,50 +980,202 @@ describe('device voice readiness copy', () => {
       }),
     );
     const client = mockChatClient();
-    client.session.mockResolvedValue({
-      ...session,
-      readiness: {
-        text: { ready: true },
-        audio: {
-          ready: false,
-          code: 'MODEL_UNAVAILABLE',
-          message: 'The selected model is missing.',
-        },
-      },
-    });
-    client.request.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Ambiguous response.'));
-    await load(client);
-    expect(screen.getByText('The selected model is missing.')).toBeVisible();
-    expect(screen.queryByText(/Voice messages are off for this device/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry same message' })).toBeDisabled();
+    client.request.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'Not admitted.'));
+    await load(client, { owner: true });
+    const newChat = screen.getByRole('button', { name: 'New chat' });
+    expect(newChat).toBeDisabled();
+    fireEvent.click(newChat);
     expect(screen.getByRole('button', { name: 'Check status' })).toBeVisible();
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Keep draft');
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry same message' }));
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Next draft');
+    expect(client.send).not.toHaveBeenCalled();
+    expect(client.createConversation).not.toHaveBeenCalled();
+  });
+  it('R3 shows one Sending status during a normal held POST and no uncertain-ack wording', async () => {
+    const client = mockChatClient();
+    let finish!: () => void;
+    client.send.mockImplementation(
+      (conversationId, request) =>
+        new Promise((resolve) => {
+          finish = () =>
+            resolve({
+              ...turn,
+              conversationId,
+              requestId: request.requestId,
+              input: request.input,
+            });
+        }),
+    );
+    await load(client);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Hello' },
+    });
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Enter' });
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    expect(screen.getAllByText('Sending…')).toHaveLength(1);
+    expect(screen.queryByText('Checking what happened…')).not.toBeInTheDocument();
+    act(() => finish());
+    expect(await screen.findByText(turn.response!.reply)).toBeVisible();
+    expect(screen.queryByText('Sending…')).not.toBeInTheDocument();
+  });
+  it('R3 reserves one Checking status for a lost acknowledgement', async () => {
+    const client = mockChatClient();
+    client.send.mockRejectedValue(new Error('Lost acknowledgement'));
+    client.request.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'Not admitted.'));
+    await load(client);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Hello' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(await screen.findByText('Checking what happened…')).toBeVisible();
+    expect(screen.getAllByText('Checking what happened…')).toHaveLength(1);
+    expect(screen.queryByText('Sending…')).not.toBeInTheDocument();
+    expect(client.send).toHaveBeenCalledOnce();
+  });
+});
+
+describe('final Fable source follow-ups', () => {
+  it('N2 keeps Stop available when a focus refresh brings in an active turn during capture', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    await load(client);
+    const recorder = media.drafts.get(`${key}/${conversation.id}`)!;
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
+    fireEvent.focus(window);
+    await screen.findByRole('button', { name: 'Cancel request' });
+    const stop = screen.getByRole('button', { name: 'Stop recording' });
+    expect(stop).toHaveAttribute('aria-disabled', 'false');
+    expect(stop).not.toHaveAttribute('aria-describedby');
+    expect(screen.getByRole('button', { name: 'Send message' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    fireEvent.click(stop);
+    expect(await screen.findByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveFocus();
+    const mic = screen.getByRole('button', { name: 'Add more voice' });
+    expect(mic).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(mic);
+    expect(recorder.start).toHaveBeenCalledOnce();
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+  });
+  it('N2 keeps finalizing Stop idempotent after an incoming active turn', async () => {
+    let finish!: () => void;
+    media.stopGate = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1 }]);
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
+    await screen.findByText('Finalizing recording…');
+    client.turns.mockResolvedValue([{ ...turn, runStatus: 'running', response: undefined }]);
+    fireEvent.focus(window);
+    await screen.findByRole('button', { name: 'Cancel request' });
+    const stop = screen.getByRole('button', { name: 'Stop recording' });
+    expect(stop).toHaveAttribute('aria-disabled', 'false');
+    fireEvent.click(stop);
+    await act(async () => {
+      finish();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(1);
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+  });
+  it('N4 gives discard-and-record guidance after reload when a missing upload has no local audio', async () => {
+    sessionStorage.setItem(
+      `${key}.voice-upload`,
+      JSON.stringify({ uploadId: turn.requestId, sha256: 'a'.repeat(64), caption: 'Kept caption' }),
+    );
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.audioStatus.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'No upload.'));
+    await load(client);
+    expect(
+      screen.getByText('The local recording is unavailable after this app reloaded.'),
+    ).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The gateway did not accept this upload. Discard this voice draft, then record again.',
+    );
+    expect(screen.queryByText(/Send again while your recording/)).not.toBeInTheDocument();
+    expect(client.audioStatus).toHaveBeenCalledOnce();
+    expect(client.upload).not.toHaveBeenCalled();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem(`${key}.voice-upload`)!)).toMatchObject({
+      uploadId: turn.requestId,
+      caption: 'Kept caption',
+    });
+  });
+  it('N4 keeps explicit Send-again guidance when the missing upload still has retained local audio', async () => {
+    const client = mockChatClient();
+    client.session.mockResolvedValue(audioReady);
+    client.upload.mockRejectedValue(new Error('lost acknowledgement'));
+    client.audioStatus.mockRejectedValue(new ChatApiError(404, 'NOT_FOUND', 'No upload.'));
+    await load(client);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'The gateway did not accept this upload. Send again while your recording is still in this open app.',
+      ),
+    );
+    expect(screen.getByRole('list', { name: 'Voice recordings' })).toBeVisible();
+    expect(
+      screen.queryByText('The local recording is unavailable after this app reloaded.'),
+    ).not.toBeInTheDocument();
+    expect(client.upload).toHaveBeenCalledOnce();
     expect(client.send).not.toHaveBeenCalled();
   });
 });
 
-it('offers GET-only Check status for an acknowledged uncertain turn without inventing another admission', async () => {
-  const user = userEvent.setup();
-  const client = mockChatClient();
-  const active = { ...turn, runStatus: 'running' as const, response: undefined };
-  client.conversations.mockResolvedValue([conversation]);
-  client.turns.mockResolvedValue([active]);
-  client.cancel.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved cancellation.'));
-  client.request.mockRejectedValue(new ChatApiError(410, 'UNKNOWN', 'Unresolved cancellation.'));
-  await load(client);
-  await user.click(screen.getByRole('button', { name: 'Cancel request' }));
-  await user.click(
-    within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel request' }),
+describe('custom-loop voice caption guidance', () => {
+  it.each([true, false])(
+    'shows audience-safe configured-by-loop responsibility only beside a voice draft (owner=%s)',
+    async (owner) => {
+      const message = owner
+        ? 'Configured by a custom loop. Its normalizer controls how transcripts and typed captions are combined.'
+        : 'Configured by the gateway loop. Ask the owner whether its normalizer combines typed captions with audio.';
+      const client = mockChatClient();
+      client.session.mockResolvedValue({
+        ...audioReady,
+        readiness: { text: { ready: true }, audio: { ready: true, message } },
+      });
+      await load(client, { owner });
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+      expect(screen.getByText(message)).toBeVisible();
+      expect(screen.getByRole('textbox', { name: 'Message' })).toBeEnabled();
+    },
   );
-  const check = await screen.findByRole('button', { name: 'Check status' });
-  expect(screen.queryByRole('button', { name: 'Retry now' })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Retry same message' })).not.toBeInTheDocument();
-  client.request.mockResolvedValue(turn);
-  client.turns.mockResolvedValue([turn]);
-  const before = client.request.mock.calls.length;
-  await user.click(check);
-  await waitFor(() => expect(client.request).toHaveBeenCalledTimes(before + 1));
-  expect(client.cancel).toHaveBeenCalledOnce();
-  expect(client.send).not.toHaveBeenCalled();
+  it.each(['local', 'cloud'] as const)(
+    'does not add custom-normalizer guidance to a built-in %s route',
+    async (route) => {
+      const message = 'Custom normalizer responsibility text';
+      const client = mockChatClient();
+      client.session.mockResolvedValue({
+        ...audioReady,
+        readiness: { text: { ready: true }, audio: { ready: true, message } },
+        voice: {
+          ready: true,
+          route,
+          ...(route === 'cloud' ? { cloudProvider: 'OpenAI' as const } : {}),
+          cloudFallbackAllowed: false,
+          message: 'Configured built-in voice route.',
+        },
+      });
+      await load(client);
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Stop recording' }));
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      expect(screen.getByText(/Configured built-in voice route/)).toBeVisible();
+    },
+  );
 });

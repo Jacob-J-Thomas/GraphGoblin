@@ -3,6 +3,7 @@ export const RESOURCE_OWNERSHIP_REWIND_SQL = [
   // Historical fixtures rewinding before 0023 must also remove every later additive table.
   'DROP TABLE model_discovery',
   'DROP TABLE ollama_connection',
+  'DROP TABLE chat_audio_uploads',
   'DROP TABLE chat_audio',
   'DROP TABLE chat_turns',
   'DROP TABLE chat_conversations',

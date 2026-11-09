@@ -147,6 +147,22 @@ export interface EditorState {
     expected: Pick<EditorState, 'generation' | 'historyEpoch' | 'fieldErrors'>,
     mode: 'enable' | 'disable',
   ) => string | undefined;
+  /** Install an atomically staged voice draft as a saved baseline, retaining one Undo step. */
+  applyStagedVoicePreview: (
+    source: LoopDefinitionInput,
+    next: LoopDefinitionInput,
+    expected: Pick<
+      EditorState,
+      | 'loopId'
+      | 'generation'
+      | 'revision'
+      | 'savedRevision'
+      | 'historyEpoch'
+      | 'fieldErrors'
+      | 'baseToken'
+    >,
+    token: string,
+  ) => string | undefined;
   applyGitHubPreset: (
     preview: GitHubPresetPreview,
     expected: Pick<EditorState, 'fieldErrors' | 'historyEpoch' | 'generation'>,
@@ -480,6 +496,48 @@ export const useEditorStore = create<EditorState>((set, get) => {
         get().closeNodeDialog();
         get().select('chat-input');
       }
+      return undefined;
+    },
+    applyStagedVoicePreview: (source, next, expected, token) => {
+      const s = get();
+      if (
+        s.definition !== source ||
+        s.loopId !== expected.loopId ||
+        s.generation !== expected.generation ||
+        s.revision !== expected.revision ||
+        s.savedRevision !== expected.savedRevision ||
+        s.revision !== s.savedRevision ||
+        s.historyEpoch !== expected.historyEpoch ||
+        s.fieldErrors !== expected.fieldErrors ||
+        s.baseToken !== expected.baseToken ||
+        s.conflict ||
+        Object.values(s.fieldErrors).some((scope) => Object.keys(scope).length > 0)
+      )
+        return 'The gateway staged the voice draft, but this editor changed. Your local work is kept. Reopen the loop to review the server draft.';
+      const nextState = decisionRouteEdges(next, s.decisionRoutes);
+      const before = {
+        definition: source,
+        fieldErrors: s.fieldErrors,
+        decisionRoutes: s.decisionRoutes,
+      };
+      const after = { ...nextState, fieldErrors: s.fieldErrors };
+      const revision = s.revision + 1;
+      set({
+        ...after,
+        revision,
+        savedRevision: revision,
+        deviceRevision: undefined,
+        baseToken: token,
+        saveState: 'saved',
+        saveMessage: undefined,
+        ...recordStep(
+          historyOf(s),
+          before,
+          after,
+          { label: 'apply reviewed voice draft' },
+          performance.now(),
+        ),
+      });
       return undefined;
     },
     applyGitHubPreset: (preview, expected) => {

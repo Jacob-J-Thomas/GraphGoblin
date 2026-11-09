@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { VoiceRouteInfoSchema } from './voice-route.js';
 import { TimestampSchema, UlidSchema, type JsonSchema } from './common.js';
 
 export const CHAT_PROTOCOL = 'graphgoblin.chat.v1' as const;
 export const CHAT_MAX_TEXT_CHARACTERS = 16_000;
 export const CHAT_MAX_REPLY_CHARACTERS = 32_000;
+export const CHAT_MAX_AUDIO_SECONDS = 120;
 export const CHAT_MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const CHAT_MAX_HISTORY_MESSAGES = 24;
 export const CHAT_MAX_HISTORY_CHARACTERS = 64_000;
@@ -37,7 +39,11 @@ const ChatTextSchema = text(CHAT_MAX_TEXT_CHARACTERS);
 const ChatLabelSchema = text(80);
 export const ChatSendInputSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('text'), text: ChatTextSchema }),
-  z.strictObject({ kind: z.literal('audio'), audioId: UlidSchema }),
+  z.strictObject({
+    kind: z.literal('audio'),
+    audioId: UlidSchema,
+    caption: ChatTextSchema.optional(),
+  }),
 ]);
 export type ChatSendInput = z.infer<typeof ChatSendInputSchema>;
 export const ChatSendRequestSchema = z.strictObject({
@@ -66,6 +72,7 @@ const ChatTextLoopInputSchema = z.strictObject({ kind: z.literal('text'), text: 
 const ChatAudioLoopInputSchema = z.strictObject({
   kind: z.literal('audio'),
   audio: ChatAudioReferenceSchema,
+  caption: ChatTextSchema.optional(),
 });
 const loopInputShape = {
   protocol: ChatProtocolSchema,
@@ -107,6 +114,7 @@ export const ChatConversationSchema = z.strictObject({
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   lastTurn: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  title: z.string().min(1).max(CHAT_MAX_TEXT_CHARACTERS).optional(),
 });
 export type ChatConversation = z.infer<typeof ChatConversationSchema>;
 export const ChatTurnSchema = z.strictObject({
@@ -118,6 +126,14 @@ export const ChatTurnSchema = z.strictObject({
   createdAt: TimestampSchema,
   input: ChatSendInputSchema,
   inputTranscript: ChatTextSchema.optional(),
+  voice: VoiceRouteInfoSchema.optional(),
+  context: z
+    .strictObject({
+      retainedHistoryPairs: z.number().int().nonnegative(),
+      omittedHistoryPairs: z.number().int().nonnegative(),
+      contextTokens: z.number().int().positive(),
+    })
+    .optional(),
   runStatus: z.enum([
     'queued',
     'running',
@@ -148,6 +164,7 @@ export const ChatSessionSchema = z.strictObject({
     maxAudioBytes: z.number().int().positive(),
   }),
   systemLoopId: UlidSchema.optional(),
+  voice: VoiceRouteInfoSchema.optional(),
 });
 export type ChatSession = z.infer<typeof ChatSessionSchema>;
 export const ChatAudioUploadSchema = z.strictObject({
@@ -157,6 +174,13 @@ export const ChatAudioUploadSchema = z.strictObject({
   expiresAt: TimestampSchema,
 });
 export type ChatAudioUpload = z.infer<typeof ChatAudioUploadSchema>;
+export const ChatAudioUploadStatusSchema = z.discriminatedUnion('state', [
+  z.strictObject({ state: z.literal('receiving') }),
+  z.strictObject({ state: z.literal('ready'), audio: ChatAudioUploadSchema }),
+  z.strictObject({ state: z.literal('failed'), code: z.string().min(1).max(128) }),
+  z.strictObject({ state: z.literal('retired') }),
+]);
+export type ChatAudioUploadStatus = z.infer<typeof ChatAudioUploadStatusSchema>;
 export const ChatDeviceSchema = z.strictObject({
   id: UlidSchema,
   label: ChatLabelSchema,

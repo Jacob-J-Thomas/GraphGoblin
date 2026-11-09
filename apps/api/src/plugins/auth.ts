@@ -46,12 +46,23 @@ export const DEVICE_CHAT_ROUTES = new Set([
   'GET /chat/turns/:id',
   'POST /chat/turns/:id/cancel',
   'POST /chat/audio',
+  'GET /chat/audio/requests/:uploadId',
   'DELETE /chat/audio/:id',
 ]);
 
 const OWNER_CHAT_ROUTES = new Set([
   'PUT /harness/ollama/connection',
   'POST /chat/pairings',
+  'GET /chat/pairings/readiness',
+  'GET /chat/voice/config',
+  'PUT /chat/voice/config',
+  'POST /chat/voice/probe',
+  'POST /chat/voice/preview',
+  'POST /chat/voice/install',
+  'GET /chat/voice/loops',
+  'POST /chat/voice/stage',
+  'GET /chat/voice/probes/:operationId',
+  'GET /chat/voice/installs/:operationId',
   'GET /chat/devices',
   'PATCH /chat/devices/:id',
   'POST /chat/devices/:id/revoke',
@@ -74,6 +85,15 @@ function isPublic(url: string): boolean {
  */
 const SCOPE_OVERRIDES: Record<string, string> = {
   'GET /harness/ollama/connection': 'settings:read',
+  'GET /chat/voice/config': 'settings:read',
+  'PUT /chat/voice/config': 'settings:write',
+  'POST /chat/voice/probe': 'settings:write',
+  'POST /chat/voice/preview': 'settings:write',
+  'POST /chat/voice/install': 'settings:write',
+  'GET /chat/voice/loops': 'settings:read',
+  'POST /chat/voice/stage': 'settings:write',
+  'GET /chat/voice/probes/:operationId': 'settings:read',
+  'GET /chat/voice/installs/:operationId': 'settings:read',
   'POST /model-catalog/refresh': 'settings:write',
   'POST /runs/deletion-eligibility/preview': 'runs:read',
   // Starting a run is a run command, even though it is addressed through its loop.

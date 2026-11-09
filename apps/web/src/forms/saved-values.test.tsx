@@ -1,6 +1,6 @@
 import { NodeConfigSchemas, type NodeKind } from '@graphgoblin/contracts';
 import { FIXTURE_IDS } from '@graphgoblin/contracts/testing';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -80,6 +80,7 @@ describe('the same edits save the same config', () => {
         await user.click(radio('harnessOptions.sandbox', 'read-only'));
         await user.click(radio('harnessOptions.approval', 'on-request'));
         await user.click(radio('harnessOptions.networkAccess', 'Yes'));
+        await user.click(radio('output.capture', 'text'));
         await user.click(radio('output.toMessages', 'none'));
         await user.type(within(fieldAt('timeoutSeconds')).getByRole('spinbutton'), '90');
         await user.click(
@@ -92,7 +93,7 @@ describe('the same edits save the same config', () => {
         effort: 'high',
         harnessOptions: { sandbox: 'read-only', approval: 'on-request', networkAccess: true },
         capabilities: {},
-        output: { toMessages: 'none' },
+        output: { capture: 'text', toMessages: 'none' },
         timeoutSeconds: 90,
       },
     );
@@ -107,7 +108,12 @@ describe('the same edits save the same config', () => {
         await user.click(radio('stdin', 'none'));
         await user.click(radio('stdout', 'ignore'));
         await user.click(within(fieldAt('env')).getByRole('button', { name: 'Add entry' }));
+        // Adding a record focuses its new key after the controls mount. Let that handoff finish
+        // before the user moves to Value, so its characters cannot land in the key mid-edit.
+        await waitFor(() => expect(screen.getByLabelText('Env key 1')).toHaveFocus());
         await user.type(screen.getByLabelText('Env value 1'), 'on');
+        expect(screen.getByLabelText('Env key 1')).toHaveValue('key1');
+        expect(screen.getByLabelText('Env value 1')).toHaveValue('on');
         await user.type(within(fieldAt('timeoutSeconds')).getByRole('spinbutton'), '5');
       },
       {

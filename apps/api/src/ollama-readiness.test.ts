@@ -10,7 +10,7 @@ import {
 import { createSystemChatDefinition } from '@graphgoblin/domain';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import { SqliteOllamaRepository } from '@graphgoblin/infrastructure/sqlite';
-import type { OllamaDiscoveredModel } from '@graphgoblin/infrastructure/ollama';
+import { OllamaHarness, type OllamaDiscoveredModel } from '@graphgoblin/infrastructure/ollama';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 const MODEL = 'fixture-local:latest';
@@ -23,6 +23,37 @@ beforeEach(async () => {
   harness = new FakeHarness([], 'ollama');
   t = await createTestApp({ harnesses: { ollama: harness } });
   repository = new SqliteOllamaRepository(t.container.handle.db);
+  // Simulate metadata qualification while retaining FakeHarness preflight and inference.
+  const nativeContext = new OllamaHarness({
+    snapshot: async () => {
+      const view = await repository.read({ enabled: true, baseUrl: 'http://127.0.0.1:11434' });
+      return {
+        connection: view.connection,
+        models: await repository.cached(view.connection.revision),
+      };
+    },
+    fetcher: (url) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify(
+            (typeof url === 'string' ? url : 'url' in url ? url.url : url.href).endsWith(
+              '/api/version',
+            )
+              ? { version: '0.32.15' }
+              : {
+                  template: '{{ .Prompt }}',
+                  model_info: {
+                    'general.architecture': 'qwen35',
+                    'tokenizer.ggml.model': 'gpt2',
+                    'tokenizer.ggml.pre': 'qwen35',
+                    'qwen35.context_length': 262144,
+                  },
+                },
+          ),
+        ),
+      ),
+  });
+  Object.assign(harness, { contextWindow: nativeContext.contextWindow.bind(nativeContext) });
 });
 afterEach(async () => {
   await t.close();
@@ -40,6 +71,7 @@ function model(revision: number): OllamaDiscoveredModel {
   return {
     model: MODEL,
     digest: 'sha256:fixture',
+    contextProfile: 'ollama-0.32.15/qwen35-gpt2/single-user-v1',
     connectionRevision: revision,
     availability: { state: 'available', checkedAt: t.clock.now().toISOString() },
     thinkingByEffort: { none: false },
@@ -85,9 +117,7 @@ describe('dynamic Ollama model readiness', () => {
   it('admits an available exact selected model through the ordinary native run path', async () => {
     await available();
     const id = await t.publishLoop(definition());
-    harness.script([
-      { structured: { protocol: CHAT_PROTOCOL, reply: 'Available native fixture reply' } },
-    ]);
+    harness.script([{ finalText: 'Available native fixture reply' }]);
     const start = await t.app.inject({
       method: 'POST',
       url: `/loops/${id}/runs`,

@@ -121,6 +121,46 @@ describe('inference node', () => {
     expect(thread?.lastOutput?.value).toEqual({ ok: true }); // JSON final text is parsed
   });
 
+  it.each(['{"reply":"answer"}', '42', 'null', '"quoted"', '**🦎 café**\nこんにちは'])(
+    'captures native final text verbatim: %s',
+    async (finalText) => {
+      const engine = await createTestEngine();
+      engine.ports.harness.script([{ finalText, structured: { ignored: true } }]);
+      const version = engine.publish(
+        inferenceLoop('text-capture', { output: { capture: 'text' } }),
+      );
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.status).toBe('succeeded');
+      const thread = await engine.manager.getThread(run.id);
+      expect(thread?.lastOutput?.value).toBe(finalText);
+      expect(thread?.messages.at(-1)?.content).toBe(finalText);
+      expect(engine.ports.harness.started[0]?.turn.outputSchema).toBeUndefined();
+    },
+  );
+
+  it('rejects malformed structured text without extracting one convenient object', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([{ finalText: '{"ok":true} {"extra":true}' }]);
+    const version = engine.publish(
+      inferenceLoop('strict-malformed', {
+        output: {
+          schema: {
+            jsonSchema: {
+              type: 'object',
+              properties: { ok: { type: 'boolean' } },
+              required: ['ok'],
+              additionalProperties: false,
+            },
+            repair: { enabled: false },
+          },
+        },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.failure?.code).toBe('OUTPUT_SCHEMA_MISMATCH');
+    expect(engine.ports.harness.started).toHaveLength(1);
+  });
+
   it('preserves a failed tool-call status in progress without provider diagnostics', async () => {
     const engine = await createTestEngine();
     engine.ports.harness.script([

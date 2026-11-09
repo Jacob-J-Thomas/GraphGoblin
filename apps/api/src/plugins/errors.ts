@@ -95,7 +95,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
       if (error instanceof SystemChatStorageError)
         return problem(
           reply,
-          error.code === 'SYSTEM_LOOP_PROTECTED' ? 409 : 400,
+          error.code === 'SYSTEM_LOOP_PROTECTED' || error.code === 'VOICE_DRAFT_STALE' ? 409 : 400,
           error.code,
           error.message,
         );

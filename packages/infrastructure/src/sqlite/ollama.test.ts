@@ -3,9 +3,14 @@ import { openMemoryDatabase } from './db.js';
 import { SqliteOllamaRepository } from './ollama.js';
 import { SqliteModelCatalog } from './settings.js';
 import { modelDiscovery } from './schema.js';
+import { OLLAMA_CONTEXT_PROFILE } from '../ollama/context.js';
 import { discoveredModel } from '../ollama/discovery.js';
 const at = '2026-11-07T00:00:00.000Z';
 const later = '2026-11-07T00:05:00.000Z';
+const qualifiedModel = (...args: Parameters<typeof discoveredModel>) => ({
+  ...discoveredModel(...args),
+  contextProfile: OLLAMA_CONTEXT_PROFILE,
+});
 const defaults = { enabled: true, baseUrl: 'http://localhost:11434' };
 describe('Ollama discovery persistence', () => {
   it('atomically reconciles metadata and owner preferences, including missing/reappearing/unsupported', async () => {
@@ -19,7 +24,7 @@ describe('Ollama discovery persistence', () => {
       });
       expect(await repository.cached(1)).toEqual([]);
       expect(await repository.markRefreshing(1, at)).toBe(true);
-      const model = discoveredModel('namespace/qwen:tag', 'd', 1, at, {
+      const model = qualifiedModel('namespace/qwen:tag', 'd', 1, at, {
         capabilities: ['completion'],
       });
       expect(await repository.reconcile(1, at, [model])).toBe(true);
@@ -44,7 +49,7 @@ describe('Ollama discovery persistence', () => {
         enabled: false,
         availability: { state: 'available' },
       });
-      const unsupported = discoveredModel('embed:latest', 'e', 1, at, {
+      const unsupported = qualifiedModel('embed:latest', 'e', 1, at, {
         capabilities: ['embedding'],
       });
       await repository.reconcile(1, later, [model, unsupported]);
@@ -68,6 +73,33 @@ describe('Ollama discovery persistence', () => {
       handle.close();
     }
   });
+  it('keeps old or stale policy snapshots visible but unavailable until a complete qualified scan', async () => {
+    const handle = await openMemoryDatabase();
+    const repository = new SqliteOllamaRepository(handle.db);
+    const catalog = new SqliteModelCatalog(handle.db);
+    try {
+      await repository.read(defaults);
+      const old = discoveredModel('qwen:old', 'digest', 1, at, { capabilities: ['completion'] });
+      await repository.reconcile(1, at, [old]);
+      await catalog.setEnabled('ollama', old.model, false);
+      expect(await catalog.findOne('ollama', old.model)).toMatchObject({
+        enabled: false,
+        availability: { state: 'unsupported', reason: expect.stringContaining('unverified') },
+      });
+      expect(await catalog.isAllowed('ollama', old.model, 'none')).toBe(false);
+      await repository.reconcile(1, later, [{ ...old, contextProfile: 'obsolete-policy' }]);
+      expect((await repository.cached(1))[0]?.availability.state).toBe('unsupported');
+      await repository.reconcile(1, later, [{ ...old, contextProfile: OLLAMA_CONTEXT_PROFILE }]);
+      expect(await catalog.findOne('ollama', old.model)).toMatchObject({
+        enabled: false,
+        availability: { state: 'available' },
+      });
+      expect((await repository.cached(1))[0]?.contextProfile).toBe(OLLAMA_CONTEXT_PROFILE);
+    } finally {
+      handle.close();
+    }
+  });
+
   it('guards revision commits and invalidates old connection availability without losing catalog choices', async () => {
     const handle = await openMemoryDatabase();
     const repository = new SqliteOllamaRepository(handle.db);
@@ -77,7 +109,7 @@ describe('Ollama discovery persistence', () => {
       expect(await repository.reconcile(1, at, [])).toBe(false);
       await repository.fail(1, at, { code: 'NONE', message: 'Not initialized' });
       await repository.configure(defaults, at);
-      const model = discoveredModel('a:tag', 'd', 1, at, { capabilities: ['completion'] });
+      const model = qualifiedModel('a:tag', 'd', 1, at, { capabilities: ['completion'] });
       await repository.reconcile(1, at, [model]);
       await catalog.setEnabled('ollama', model.model, false);
       const changed = await repository.configure(
@@ -114,7 +146,7 @@ describe('Ollama discovery persistence', () => {
     const repository = new SqliteOllamaRepository(handle.db);
     const catalog = new SqliteModelCatalog(handle.db);
     try {
-      const row = discoveredModel('qwen:tag', 'digest', 1, at, { capabilities: ['completion'] });
+      const row = qualifiedModel('qwen:tag', 'digest', 1, at, { capabilities: ['completion'] });
       await catalog.upsert({
         harness: 'ollama',
         source: 'harness',

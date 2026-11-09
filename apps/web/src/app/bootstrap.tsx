@@ -8,6 +8,7 @@ import { refreshModelDefaults } from '../api/queries.js';
 import { applyFont, currentFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
 import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
 import { startReachability } from '../lib/reachability.js';
+import { setChatUpdateGuardExpected } from '../pwa/chat-update-lock.js';
 import { registerPwa } from '../pwa/register.js';
 import { App } from './App.js';
 
@@ -79,6 +80,8 @@ export interface BootstrapOptions {
  * applied here instead, late but right.
  */
 export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}): Root {
+  const registerServiceWorker = options.registerServiceWorker ?? true;
+  setChatUpdateGuardExpected(registerServiceWorker);
   const client = createAppClient(options.baseUrl ?? window.location.origin);
   const stored = readStoredTheme();
   if (stored !== currentTheme()) applyTheme(stored);
@@ -87,7 +90,7 @@ export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}
   const root = createRoot(container);
   root.render(
     <>
-      {(options.registerServiceWorker ?? true) ? <PwaRegistration /> : null}
+      {registerServiceWorker ? <PwaRegistration /> : null}
       <StrictMode>
         <AppearanceAcrossTabs />
         <Providers client={client} queryClient={createQueryClient()}>

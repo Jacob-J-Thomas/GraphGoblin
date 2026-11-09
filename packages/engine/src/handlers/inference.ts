@@ -9,7 +9,13 @@ import {
   type Usage,
   type MissingSession,
 } from '@graphgoblin/contracts';
-import { applyPatch, renderTemplate, threadView, validateJson } from '@graphgoblin/domain';
+import {
+  applyPatch,
+  renderTemplate,
+  threadView,
+  validateJson,
+  systemChatIssues,
+} from '@graphgoblin/domain';
 import {
   ArtifactStoreError,
   RunCancelledError,
@@ -58,6 +64,8 @@ import {
   usagePatch,
   withTimeout,
 } from './common.js';
+
+import { admitInferencePrompt } from './inference-context.js';
 
 const ZERO_USAGE: Usage = {
   inputTokens: 0,
@@ -376,6 +384,54 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         }
       }
     }
+    const timeout = withTimeout(ctx.signal, config.timeoutSeconds, () =>
+      Object.assign(new Error('inference timeout'), { code: 'HARNESS_TIMEOUT' }),
+    );
+    let admittedContext: Awaited<ReturnType<typeof admitInferencePrompt>>['context'] | undefined;
+    if (harness?.contextWindow) {
+      try {
+        const window = await harness.contextWindow(
+          {
+            workingDirectory,
+            model,
+            effort,
+            options: config.harnessOptions,
+            ...(config.capabilities ? { capabilities: config.capabilities } : {}),
+            turn: {
+              prompt,
+              ...(config.output.schema?.native
+                ? { outputSchema: config.output.schema.jsonSchema }
+                : {}),
+            },
+          },
+          timeout.signal,
+        );
+        const admitted = await admitInferencePrompt({
+          prompt,
+          template: config.prompt.template,
+          thread: viewThread,
+          allowHistoryTrim:
+            !visit.pending &&
+            !visit.freshSession &&
+            ctx.node.id === 'respond' &&
+            systemChatIssues(ctx.definition).length === 0,
+          window,
+        });
+        prompt = admitted.prompt;
+        admittedContext = admitted.context;
+      } catch (error) {
+        timeout.dispose();
+        if (timeout.timedOut())
+          throw new RunFailureError(
+            'INFERENCE_TIMEOUT',
+            `Inference exceeded ${config.timeoutSeconds ?? 0}s before context admission; no provider inference was submitted.`,
+            { nodeId: ctx.node.id, resumable: true },
+          );
+        if (ctx.signal.aborted || isAbortError(error)) throw new RunCancelledError();
+        if (error instanceof RunFailureError) throw error;
+        throw mapHarnessFailure(error, undefined, ctx.node.id, config.harness).failure;
+      }
+    }
     const beginTurn = (
       text: string,
       kind: PendingTurn['turn']['promptKind'],
@@ -387,6 +443,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         harness: config.harness,
         prompt: text,
         promptKind: kind,
+        ...(admittedContext
+          ? {
+              context:
+                kind === 'authored'
+                  ? admittedContext
+                  : { ...admittedContext, retainedHistoryPairs: 0, omittedHistoryPairs: 0 },
+            }
+          : {}),
         ...(id ? { resumeSessionId: id } : {}),
       };
       return {
@@ -440,11 +504,6 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       ...(config.capabilities ? { capabilities: config.capabilities } : {}),
       turn: next,
     });
-    const timeout = withTimeout(
-      ctx.signal,
-      config.timeoutSeconds,
-      () => new Error('inference timeout'),
-    );
 
     let result: HarnessResult;
     let session: HarnessSession | undefined;
@@ -588,7 +647,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           );
         }
       } else {
-        output = jsonOrText(result.finalText);
+        output = config.output.capture === 'text' ? result.finalText : jsonOrText(result.finalText);
       }
 
       // Build the patch: transcript artifact, messages, output, usage.

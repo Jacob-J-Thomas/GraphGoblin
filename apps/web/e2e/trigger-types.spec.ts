@@ -1,4 +1,4 @@
-import { approvalLoop, expect, openNode, test } from './fixtures.js';
+import { approvalLoop, chooseOptionByKeyboard, expect, openNode, test } from './fixtures.js';
 
 for (const theme of ['light', 'dark']) {
   test(`trigger types and optional preset keyboard review in ${theme}`, async ({
@@ -25,7 +25,7 @@ for (const theme of ['light', 'dark']) {
 
     // The native select remains the keyboard entry point; one undo returns to Manual.
     await type.focus();
-    await page.keyboard.press('ArrowDown');
+    await chooseOptionByKeyboard(page, type, 'Cron');
     await expect(type).toHaveValue('cron');
     await expect(dialog.getByLabel('Repeat')).toBeVisible();
     await expect(dialog.getByLabel('Timezone')).toBeVisible();
@@ -135,7 +135,7 @@ for (const width of [360, 1440]) {
     const auth = dialog.getByLabel('Authentication recipe');
     await expect(auth.locator('option:checked')).toHaveText('None');
     await auth.focus();
-    await page.keyboard.press('ArrowDown');
+    await chooseOptionByKeyboard(page, auth, 'Body HMAC');
     await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
     await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
     await expect(dialog.getByLabel('Signing header')).toHaveAttribute(

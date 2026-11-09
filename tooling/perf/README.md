@@ -9,7 +9,9 @@ pnpm.cmd build
 
 Run from the repository root. Each command starts its own API on a free loopback port,
 uses a new temporary file-backed store and fake execution (plus native main.js for readiness), and makes no
-provider calls. Edge runs headlessly using the installed Microsoft Edge channel.
+provider calls. Browser observations run headlessly using bundled Chromium on macOS/Linux
+and installed Edge on Windows. `GG_E2E_BROWSER_CHANNEL` selects an explicit installed
+channel, matching the functional browser tests; the selected channel is recorded.
 No owner instance, home store, browser profile, or service worker is modified.
 
 | Workload                  | One command                                                 | Default size                                                                                                                                                |
@@ -170,7 +172,21 @@ only `replay --passes=100`, `browser --passes=100`, and `readiness`.
   lock wait/native/yield cost, not pure mutex wait or steady-state queue depth.
 - CPU profiles cover the API process only. Per-case summaries filter samples to
   the execution window, excluding import/startup/population and final correctness
-  reads. Filtered sample counts must be positive and at most the profile total. Self-sample counts identify candidates, not causal speedup percentages.
+  reads. Inspector start/stop brackets calibrate Node's monotonic clock to V8's
+  profile clock, whose origin can differ on macOS. `profile-clock.json` retains
+  these bounds; each mapped window records a conservative 1 ms clock-resolution
+  margin for the supported Node 22 macOS/Linux/Windows environment. This assumes
+  a stable unit-rate offset; intersecting observed bounds rejects conflicts rather
+  than proving the absence of arbitrary drift. Only samples inside the conservative
+  execution window are counted. Conflicting bounds, an empty mapped window, or
+  invalid sample/delta arrays and timestamps fail the measurement.
+  V8 can record samples out of timestamp order, so signed 32-bit deltas are
+  reconstructed in their original sample/index order. Each cumulative timestamp
+  must stay within the full profile; samples are never sorted, clamped or dropped.
+  Full profiles spanning more than 2,147,483,647 microseconds (about 35 minutes
+  47 seconds) are refused as ambiguous for that signed serialization, rather than
+  guessing how to unwrap a timestamp.
+  Filtered sample counts must be positive and at most the profile total. Self-sample counts identify candidates, not causal speedup percentages.
 - SSE clients use a raw HTTP/1.1 socket with a 64 KiB high-water mark. The slow
   reader pauses for at least one second initially, then `--pause-ms` between
   reads; no Fetch body prebuffering hides lag. Replay enables the API event-loop

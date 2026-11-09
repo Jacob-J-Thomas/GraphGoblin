@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { spawn } from 'node:child_process';
 import { log } from 'node:console';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdtemp, readFile, readdir, realpath, rm, stat } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { createServer } from 'node:net';
@@ -18,6 +18,28 @@ import { createSystemChatDefinition, enableChatAudio } from '@graphgoblin/domain
 const { fetch, AbortSignal } = globalThis;
 const fixture = fileURLToPath(new URL('./chat-restart.fixture.mjs', import.meta.url));
 const prefix = 'gg-chat-restart-';
+
+// A short complete mono 16 kHz PCM16 WAV; binary identity matters, no real speech/model is used.
+function canonicalWav() {
+  const samples = 160;
+  const bytes = Buffer.alloc(44 + samples * 2);
+  bytes.write('RIFF', 0);
+  bytes.writeUInt32LE(bytes.length - 8, 4);
+  bytes.write('WAVEfmt ', 8);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(16_000, 24);
+  bytes.writeUInt32LE(32_000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write('data', 36);
+  bytes.writeUInt32LE(samples * 2, 40);
+  for (let index = 0; index < samples; index++)
+    bytes.writeInt16LE(index % 2 ? 32_767 : -32_768, 44 + index * 2);
+  return bytes;
+}
+const audioDigest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 async function eventually(check, label, timeoutMs = 30_000) {
   const until = Date.now() + timeoutMs;
@@ -211,15 +233,24 @@ test(
       if (response.status === 204) return undefined;
       return response.json();
     }
-    async function upload(token, bytes) {
+    async function upload(token, bytes, uploadId, expected = 201) {
       const response = await fetch(origin + '/chat/audio', {
         method: 'POST',
         signal: AbortSignal.timeout(15_000),
-        headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'audio/wav',
+          'idempotency-key': uploadId,
+          'x-content-sha256': audioDigest(bytes),
+        },
         body: bytes,
       });
-      assert.equal(response.status, 201, 'raw upload must succeed');
       const value = await response.json();
+      assert.equal(
+        response.status,
+        expected,
+        `raw upload unexpected status (${value.code ?? 'metadata'})`,
+      );
       assert.equal('path' in value, false);
       assert.equal(JSON.stringify(value).includes(dataDir), false);
       return value;
@@ -261,8 +292,59 @@ test(
         undefined,
         404,
       );
-      const bytes = Buffer.from([0, 255, 128, 10, 13, 1, 2, 3]);
-      const audio = await upload(device, bytes);
+      const bytes = canonicalWav();
+      // Missing identity must fail before reservation; the old fixture omitted these headers.
+      const missingIdentity = await fetch(origin + '/chat/audio', {
+        method: 'POST',
+        signal: AbortSignal.timeout(15_000),
+        headers: { authorization: `Bearer ${device}`, 'content-type': 'audio/wav' },
+        body: bytes,
+      });
+      assert.equal(missingIdentity.status, 400);
+      assert.equal((await missingIdentity.json()).code, 'CHAT_AUDIO_UPLOAD_IDENTITY_REQUIRED');
+      const uploadId = randomUUID();
+      const audio = await upload(device, bytes, uploadId);
+      assert.equal(audio.mimeType, 'audio/wav');
+      assert.equal(audio.bytes, bytes.length);
+      assert.deepEqual(await call(device, 'GET', `/chat/audio/requests/${uploadId}`), {
+        state: 'ready',
+        audio,
+      });
+      await call(undefined, 'GET', `/chat/audio/requests/${uploadId}`, undefined, 401);
+      const foreignUpload = await call(
+        owner,
+        'GET',
+        `/chat/audio/requests/${uploadId}`,
+        undefined,
+        404,
+      );
+      const unknownUpload = await call(
+        owner,
+        'GET',
+        `/chat/audio/requests/${randomUUID()}`,
+        undefined,
+        404,
+      );
+      assert.equal(
+        foreignUpload.code,
+        unknownUpload.code,
+        'foreign and unknown upload identities must be indistinguishable',
+      );
+      assert.deepEqual(
+        await upload(device, bytes, uploadId),
+        audio,
+        'an acknowledged upload duplicate must reuse the exact metadata',
+      );
+      assert.equal(
+        (await readdir(audioDirectory)).filter((name) => name.endsWith('.audio')).length,
+        1,
+      );
+      const changedBytes = Buffer.from(bytes);
+      changedBytes[changedBytes.length - 1] ^= 1;
+      assert.equal(
+        (await upload(device, changedBytes, uploadId, 409)).code,
+        'CHAT_AUDIO_UPLOAD_CONFLICT',
+      );
       const requestId = randomUUID();
       const sent = { requestId, input: { kind: 'audio', audioId: audio.id } };
       let acknowledgement = false;
@@ -292,12 +374,19 @@ test(
       assert.equal(JSON.stringify(admitted).includes(privatePath), false);
       if (process.platform !== 'win32') assert.equal((await stat(privatePath)).mode & 0o777, 0o600);
       // Crash a real streaming upload too. It has a reservation and partial private bytes, no metadata commit.
+      const partialUploadId = randomUUID();
       partial = httpRequest(origin + '/chat/audio', {
         method: 'POST',
-        headers: { authorization: `Bearer ${device}`, 'content-type': 'audio/wav' },
+        headers: {
+          authorization: `Bearer ${device}`,
+          'content-type': 'audio/wav',
+          'content-length': bytes.length,
+          'idempotency-key': partialUploadId,
+          'x-content-sha256': audioDigest(bytes),
+        },
       });
       partial.on('error', () => undefined);
-      partial.write(Buffer.of(10, 20, 30));
+      partial.write(bytes.subarray(0, 46));
       let abandoned;
       await eventually(async () => {
         abandoned = (await readdir(audioDirectory)).filter(
@@ -305,6 +394,14 @@ test(
         );
         return abandoned.some((name) => name.endsWith('.tmp'));
       }, 'partial upload on disk');
+      assert.deepEqual(await call(device, 'GET', `/chat/audio/requests/${partialUploadId}`), {
+        state: 'receiving',
+      });
+      await call(owner, 'GET', `/chat/audio/requests/${partialUploadId}`, undefined, 404);
+      assert.equal(
+        (await upload(device, bytes, partialUploadId, 409)).code,
+        'CHAT_AUDIO_UPLOAD_IN_PROGRESS',
+      );
       for (const name of abandoned)
         assert.ok(
           (await stat(join(audioDirectory, name))).mtimeMs > Date.now() - 60_000,
@@ -322,6 +419,21 @@ test(
       assert.equal(await lost, 'lost');
       server = boot();
       await server.message('ready');
+      assert.deepEqual(
+        await call(device, 'GET', `/chat/audio/requests/${uploadId}`),
+        { state: 'ready', audio },
+        'a restart must preserve the completed upload acknowledgement',
+      );
+      assert.deepEqual(await call(device, 'GET', `/chat/audio/requests/${partialUploadId}`), {
+        state: 'failed',
+        code: 'CHAT_AUDIO_UPLOAD_INTERRUPTED',
+      });
+      await call(owner, 'GET', `/chat/audio/requests/${partialUploadId}`, undefined, 404);
+      assert.equal(
+        (await upload(device, bytes, partialUploadId, 410)).code,
+        'CHAT_AUDIO_UPLOAD_RETIRED',
+        'an interrupted upload identity must never restart',
+      );
       let recovered;
       await eventually(async () => {
         recovered = await call(
@@ -383,7 +495,7 @@ test(
       // A malformed real normalizer must fail before the external effect or harness is reached.
       await call(owner, 'PUT', `/loops/${gateway}/draft`, { definition: definition(marker, true) });
       await call(owner, 'POST', `/loops/${gateway}/publish`, {});
-      const badAudio = await upload(owner, bytes);
+      const badAudio = await upload(owner, bytes, randomUUID());
       const badRequest = randomUUID();
       const bad = await call(
         owner,
@@ -432,6 +544,10 @@ test(
         reply: 'Exact native fixture reply',
       });
       assert.equal(await effects(nextRequest), 1);
+      const unusedUploadId = randomUUID();
+      const unusedAudio = await upload(owner, bytes, unusedUploadId);
+      const unusedPath = join(audioDirectory, `${unusedAudio.id}.audio`);
+      assert.deepEqual(await readFile(unusedPath), bytes);
       server.child.send({ type: 'stop' });
       await eventually(() => server.child.exitCode !== null, 'graceful child stop');
       assert.equal((await server.closed).code, 0);
@@ -457,6 +573,26 @@ test(
       assert.equal(await effects(requestId), 1);
       assert.equal((await call(owner, 'GET', `/runs?loopId=${deviceLoop}`)).items.length, 2);
       assert.deepEqual(await readFile(privatePath), bytes);
+      assert.equal(
+        (await call(owner, 'GET', `/chat/audio/requests/${unusedUploadId}`, undefined, 410)).code,
+        'CHAT_AUDIO_UPLOAD_RETIRED',
+      );
+      await assert.rejects(
+        stat(unusedPath),
+        { code: 'ENOENT' },
+        'expired unused audio must be removed',
+      );
+      assert.equal(
+        (await upload(owner, bytes, unusedUploadId, 410)).code,
+        'CHAT_AUDIO_UPLOAD_RETIRED',
+        'a retired upload identity must never recreate expired audio',
+      );
+      await assert.rejects(stat(unusedPath), { code: 'ENOENT' });
+      assert.deepEqual(
+        await call(device, 'GET', `/chat/audio/requests/${partialUploadId}`),
+        { state: 'failed', code: 'CHAT_AUDIO_UPLOAD_INTERRUPTED' },
+        'interrupted upload disposition must also survive a second restart',
+      );
       log(
         JSON.stringify({
           acceptance: 'chat-restart',
@@ -464,7 +600,10 @@ test(
           lostAcknowledgement: true,
           recovered: 'same run; Script uncertainty held without replay',
           authenticated: 'owner and paired device',
-          audio: 'exact private bytes retained beyond unused expiry; interrupted upload removed',
+          audio:
+            'canonical WAV private bytes retained beyond unused expiry; interrupted and expired unused files removed',
+          uploadIdentity:
+            'ready acknowledgement survived restart; scoped recovery, conflict and terminal no-recreation verified',
           malformedNormalizer: 'rejected before external effect',
           explicitNewTurn: 'exact native fixture reply',
         }),

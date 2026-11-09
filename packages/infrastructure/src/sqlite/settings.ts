@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { claudeCatalogModels } from '../claude/models.js';
-import { JsonValueSchema } from '@graphgoblin/contracts';
-import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contracts';
+import { JsonValueSchema, VoiceProbeSchema } from '@graphgoblin/contracts';
+import type { Effort, JsonValue, ModelCatalogEntry, VoiceProbe } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, like, lt, asc, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { ollamaAvailability } from './ollama-availability.js';
 import { apiKeys, modelCatalog, modelDiscovery, ollamaConnection, settings } from './schema.js';
@@ -12,6 +12,27 @@ import { apiKeys, modelCatalog, modelDiscovery, ollamaConnection, settings } fro
 // Settings
 // ---------------------------------------------------------------------------
 
+export interface VoiceProbeState {
+  generation: number;
+  probe?: VoiceProbe;
+}
+function voiceProbeState(raw: JsonValue | undefined): VoiceProbeState {
+  if (raw === undefined) return { generation: 0 };
+  if (
+    !raw ||
+    typeof raw !== 'object' ||
+    Array.isArray(raw) ||
+    !('generation' in raw) ||
+    typeof raw.generation !== 'number' ||
+    !Number.isSafeInteger(raw.generation) ||
+    raw.generation < 0
+  )
+    throw new Error('Invalid voice qualification state');
+  return {
+    generation: raw.generation,
+    ...('probe' in raw ? { probe: VoiceProbeSchema.parse(raw.probe) } : {}),
+  };
+}
 export class SqliteSettings {
   constructor(
     private readonly db: Database,
@@ -27,7 +48,11 @@ export class SqliteSettings {
 
   async getAll(ownerId: string): Promise<Record<string, JsonValue>> {
     const rows = await this.db.select().from(settings).where(eq(settings.ownerId, ownerId));
-    return Object.fromEntries(rows.map((r) => [r.key, JsonValueSchema.parse(JSON.parse(r.value))]));
+    return Object.fromEntries(
+      rows
+        .filter((row) => !row.key.startsWith('chat.voice.'))
+        .map((r) => [r.key, JsonValueSchema.parse(JSON.parse(r.value))]),
+    );
   }
 
   async set(ownerId: string, key: string, value: JsonValue): Promise<void> {
@@ -42,6 +67,176 @@ export class SqliteSettings {
       });
   }
 
+  async beginVoiceOperation(
+    ownerId: string,
+    operationId: string,
+    value: JsonValue,
+  ): Promise<boolean | 'capacity'> {
+    return this.db.transaction(async (tx) => {
+      const key = `chat.voice.operation.${operationId}`;
+      const [existing] = await tx
+        .select()
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, key)));
+      if (existing) return false;
+      const cutoff = new Date(this.clock.now().getTime() - 30 * 86400_000).toISOString();
+      const old = await tx
+        .select()
+        .from(settings)
+        .where(
+          and(
+            eq(settings.ownerId, ownerId),
+            like(settings.key, 'chat.voice.operation.%'),
+            lt(settings.updatedAt, cutoff),
+            sql`json_extract(${settings.value}, '$.result.state') <> 'running'`,
+            sql`coalesce(json_extract(${settings.value}, '$.result.code'),'') <> 'VOICE_OPERATION_RETIRED'`,
+          ),
+        )
+        .orderBy(asc(settings.updatedAt))
+        .limit(100);
+      for (const row of old) {
+        const stored: unknown = JSON.parse(row.value);
+        if (
+          stored &&
+          typeof stored === 'object' &&
+          'hash' in stored &&
+          'result' in stored &&
+          stored.result &&
+          typeof stored.result === 'object' &&
+          'operationId' in stored.result &&
+          'kind' in stored.result
+        ) {
+          await tx
+            .update(settings)
+            .set({
+              value: JSON.stringify({
+                hash: stored.hash,
+                result: {
+                  operationId: stored.result.operationId,
+                  kind: stored.result.kind,
+                  state: 'failed',
+                  code: 'VOICE_OPERATION_RETIRED',
+                },
+              }),
+              updatedAt: this.clock.now().toISOString(),
+            })
+            .where(and(eq(settings.ownerId, ownerId), eq(settings.key, row.key)));
+        }
+      }
+      const [count] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), like(settings.key, 'chat.voice.operation.%')));
+      if (Number(count?.count ?? 0) >= 8192) return 'capacity';
+      await tx.insert(settings).values({
+        ownerId,
+        key,
+        value: JSON.stringify(JsonValueSchema.parse(value)),
+        updatedAt: this.clock.now().toISOString(),
+      });
+      return true;
+    });
+  }
+  async getVoiceProbeState(ownerId: string, route: 'local' | 'cloud'): Promise<VoiceProbeState> {
+    return voiceProbeState(await this.get(ownerId, `chat.voice.probe.${route}`));
+  }
+  async saveVoiceProbe(
+    ownerId: string,
+    probe: VoiceProbe,
+    expectedGeneration: number,
+  ): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const key = `chat.voice.probe.${probe.route}`;
+      const [row] = await tx
+        .select()
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, key)));
+      const state = voiceProbeState(row ? JsonValueSchema.parse(JSON.parse(row.value)) : undefined);
+      const [config] = await tx
+        .select()
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, 'chat.voice.v1')));
+      const current: unknown = config ? JSON.parse(config.value) : { revision: 0 };
+      if (
+        state.generation !== expectedGeneration ||
+        !current ||
+        typeof current !== 'object' ||
+        !('revision' in current) ||
+        current.revision !== probe.configRevision
+      )
+        return false;
+      const value = JSON.stringify({ generation: state.generation, probe });
+      const updatedAt = this.clock.now().toISOString();
+      await tx
+        .insert(settings)
+        .values({ ownerId, key, value, updatedAt })
+        .onConflictDoUpdate({
+          target: [settings.ownerId, settings.key],
+          set: { value, updatedAt },
+        });
+      return true;
+    });
+  }
+  async quarantineVoiceProbe(
+    ownerId: string,
+    revision: number,
+    fingerprint: string,
+    message: string,
+  ): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const key = 'chat.voice.probe.local';
+      const [row] = await tx
+        .select()
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, key)));
+      const state = voiceProbeState(row ? JsonValueSchema.parse(JSON.parse(row.value)) : undefined);
+      if (state.probe?.configRevision !== revision || state.probe.fingerprint !== fingerprint)
+        return;
+      await tx
+        .update(settings)
+        .set({
+          value: JSON.stringify({
+            generation: state.generation + 1,
+            probe: { ...state.probe, suitable: false, message },
+          }),
+          updatedAt: this.clock.now().toISOString(),
+        })
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, key)));
+    });
+  }
+  async compareVoiceConfig(
+    ownerId: string,
+    expectedRevision: number,
+    value: JsonValue,
+  ): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(settings)
+        .where(and(eq(settings.ownerId, ownerId), eq(settings.key, 'chat.voice.v1')));
+      const parsed: unknown = existing ? JSON.parse(existing.value) : { revision: 0 };
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        !('revision' in parsed) ||
+        parsed.revision !== expectedRevision
+      )
+        return false;
+      await tx
+        .insert(settings)
+        .values({
+          ownerId,
+          key: 'chat.voice.v1',
+          value: JSON.stringify(value),
+          updatedAt: this.clock.now().toISOString(),
+        })
+        .onConflictDoUpdate({
+          target: [settings.ownerId, settings.key],
+          set: { value: JSON.stringify(value), updatedAt: this.clock.now().toISOString() },
+        });
+      return true;
+    });
+  }
   async delete(ownerId: string, key: string): Promise<boolean> {
     const deleted = await this.db
       .delete(settings)

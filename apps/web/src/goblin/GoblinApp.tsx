@@ -13,13 +13,12 @@ import {
   type DeviceRecord,
 } from './credentials.js';
 import { PairScreen } from './PairScreen.js';
-import { useInstall } from './useInstall.js';
-import { useStandalone } from './standalone.js';
+import { installationGuidance, useInstall } from './useInstall.js';
+import { capturePairingCode } from './connection.js';
 
 type Connection = 'checking' | 'connected' | 'unreachable';
 
 export function GoblinApp({ initialCode }: { initialCode: string }) {
-  const installed = useStandalone();
   const [initial] = useState(() => {
     try {
       return { record: readDeviceRecord(), notice: '' };
@@ -28,7 +27,8 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
     }
   });
   const [record, setRecord] = useState<DeviceRecord | undefined>(initial.record);
-  const [pairLink, setPairLink] = useState(Boolean(initialCode) && !installed);
+  const [linkCode, setLinkCode] = useState(initialCode);
+  const [pairLink, setPairLink] = useState(Boolean(initialCode));
   const [notice, setNotice] = useState(initial.notice);
   const [lostAccess, setLostAccess] = useState(false);
   const [sheet, setSheet] = useState(false);
@@ -64,6 +64,7 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
     };
     const changed = (event: StorageEvent) => {
       if (event.key !== null && event.key !== DEVICE_CREDENTIAL_KEY) return;
+      setNotice('');
       // Each tab owns its sessionStorage. Sign-out in a different tab also clears this draft.
       try {
         sessionStorage.removeItem(GOBLIN_CHAT_STORAGE_KEY);
@@ -76,7 +77,23 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
     return () => window.removeEventListener('storage', changed);
   }, []);
 
+  useEffect(() => {
+    const capture = () => {
+      const code = capturePairingCode();
+      if (!code) return;
+      setLinkCode(code);
+      setPairLink(true);
+      setLostAccess(false);
+    };
+    window.addEventListener('hashchange', capture);
+    return () => window.removeEventListener('hashchange', capture);
+  }, []);
+
   const loseAccess = useCallback(() => {
+    setNotice('');
+    setSheetNotice('');
+    setSessionLabel('');
+    setConnection('checking');
     try {
       forgetDevice();
     } catch (cause) {
@@ -213,8 +230,8 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
   if (!device || pairLink)
     return (
       <PairScreen
-        key={record?.kind ?? 'empty'}
-        initialCode={pairLink ? initialCode : ''}
+        key={`${record?.kind ?? 'empty'}:${pairLink ? linkCode : ''}`}
+        initialCode={pairLink ? linkCode : ''}
         {...(record?.kind === 'pending' ? { pending: record } : {})}
         online={online}
         notice={notice}
@@ -241,7 +258,7 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
         ? 'bg-status-warn-border'
         : 'bg-accent';
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-2 border-b border-inverse bg-surface-inverse px-[max(1rem,env(safe-area-inset-left))] py-2 text-inverse">
         <h1 id="goblin-heading" tabIndex={-1} className="sr-only">
           Goblin
@@ -300,6 +317,7 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
         client={client}
         storageKey={GOBLIN_CHAT_STORAGE_KEY}
         onAuthenticationError={loseAccess}
+        sessionRefreshKey={checkCount}
       />
       <Dialog
         open={sheet}
@@ -371,10 +389,7 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
               Install Goblin
             </Button>
           ) : (
-            <p className="text-xs text-muted">
-              Install Goblin using your browser’s install option. On iPhone or iPad, tap Share, then
-              Add to Home Screen.
-            </p>
+            <p className="text-xs text-muted">{installationGuidance()}</p>
           )}
           <p className="text-xs text-muted">
             Loops, models and keys stay on the gateway. This device can only chat.
@@ -391,6 +406,6 @@ export function GoblinApp({ initialCode }: { initialCode: string }) {
           </p>
         </div>
       </Dialog>
-    </>
+    </div>
   );
 }

@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import { qwenContextDetail } from './context-fixture.js';
+import { OLLAMA_CONTEXT_PROFILE } from './context.js';
 import { discoverOllama, discoveredModel } from './discovery.js';
 import { requestJson, type OllamaFetch } from './http.js';
 const at = '2026-11-07T00:00:00.000Z';
 const connection = { enabled: true, baseUrl: 'http://localhost:11434', revision: 1 };
 const signal = new AbortController().signal;
-const detail = { capabilities: ['completion'] };
+const detail = { ...qwenContextDetail, capabilities: ['completion'] };
+const runtime = { version: '0.32.15' };
 const json = (value: unknown) => new Response(JSON.stringify(value));
 function scan(fetcher: OllamaFetch) {
   return discoverOllama({ connection, cached: [], at, signal, fetcher });
@@ -100,18 +103,22 @@ describe('Ollama model discovery', () => {
               { model: 'a:latest', digest: 'sha256:b' },
             ],
           })
-        : json(detail);
+        : requestUrl(url).endsWith('/api/version')
+          ? json(runtime)
+          : json(detail);
     });
     const first = await scan(fetcher);
     expect(first.map((entry) => entry.model)).toEqual(['a:latest', 'namespace/qwen:tag']);
     expect(
-      fetcher.mock.calls.slice(1).map((call) => JSON.parse(bodyText(call[1]?.body)) as unknown),
+      fetcher.mock.calls
+        .filter((call) => requestUrl(call[0]).endsWith('/api/show'))
+        .map((call) => JSON.parse(bodyText(call[1]?.body)) as unknown),
     ).toEqual([{ model: 'namespace/qwen:tag' }, { model: 'a:latest' }]);
     fetcher.mockClear();
     expect(await discoverOllama({ connection, cached: first, at, signal, fetcher })).toHaveLength(
       2,
     );
-    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(2);
     fetcher.mockClear();
     await discoverOllama({
       connection: { ...connection, revision: 2 },
@@ -120,7 +127,7 @@ describe('Ollama model discovery', () => {
       signal,
       fetcher,
     });
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
     fetcher.mockClear();
     await discoverOllama({
       connection,
@@ -129,7 +136,7 @@ describe('Ollama model discovery', () => {
       signal,
       fetcher,
     });
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
   });
   it('rechecks missing models on reappearance so unsupported metadata is not lost', async () => {
     const base = discoveredModel('a', 'd', 1, at, detail);
@@ -138,7 +145,9 @@ describe('Ollama model discovery', () => {
         Promise.resolve(
           requestUrl(url).endsWith('/api/tags')
             ? json({ models: [{ model: 'a', digest: 'd' }] })
-            : json({ capabilities }),
+            : requestUrl(url).endsWith('/api/version')
+              ? json(runtime)
+              : json({ ...qwenContextDetail, capabilities }),
         );
       const result = await discoverOllama({
         connection,
@@ -158,6 +167,65 @@ describe('Ollama model discovery', () => {
       expect(result[0]?.availability.reason).not.toBe('Previously missing');
     }
   });
+  it('requalifies old snapshots and runtime upgrades, preserving visible unsupported models', async () => {
+    let version = runtime.version;
+    const fetcher = vi.fn<OllamaFetch>((url) =>
+      Promise.resolve(
+        json(
+          requestUrl(url).endsWith('/api/tags')
+            ? { models: [{ model: 'a', digest: 'd' }] }
+            : requestUrl(url).endsWith('/api/version')
+              ? { version }
+              : detail,
+        ),
+      ),
+    );
+    const old = discoveredModel('a', 'd', 1, at, detail);
+    const first = await discoverOllama({ connection, cached: [old], at, signal, fetcher });
+    expect(first[0]).toMatchObject({
+      contextProfile: OLLAMA_CONTEXT_PROFILE,
+      efforts: ['none'],
+      availability: { state: 'available' },
+    });
+    expect(
+      fetcher.mock.calls.filter((call) => requestUrl(call[0]).endsWith('/api/show')),
+    ).toHaveLength(1);
+    version = 'future-runtime';
+    const changed = await discoverOllama({ connection, cached: first, at, signal, fetcher });
+    expect(changed[0]).toMatchObject({
+      efforts: [],
+      availability: {
+        state: 'unsupported',
+        reason: expect.stringContaining('no supported context-admission profile'),
+      },
+    });
+    expect(changed[0]?.contextProfile).toBeUndefined();
+    expect(
+      fetcher.mock.calls.filter((call) => requestUrl(call[0]).endsWith('/api/show')),
+    ).toHaveLength(2);
+  });
+  it('does not advertise named thinking controls that have no supported context profile', async () => {
+    const fetcher: OllamaFetch = (url) =>
+      Promise.resolve(
+        json(
+          requestUrl(url).endsWith('/api/tags')
+            ? { models: [{ model: 'a', digest: 'd' }] }
+            : requestUrl(url).endsWith('/api/version')
+              ? runtime
+              : {
+                  ...detail,
+                  capabilities: ['completion', 'thinking'],
+                  thinking: { values: ['high'] },
+                },
+        ),
+      );
+    const [model] = await scan(fetcher);
+    expect(model).toMatchObject({
+      efforts: [],
+      availability: { state: 'unsupported', reason: expect.stringContaining('no-thinking') },
+    });
+  });
+
   it('bounds detail concurrency to four', async () => {
     let active = 0;
     let peak = 0;
@@ -167,6 +235,7 @@ describe('Ollama model discovery', () => {
     }));
     const fetcher: OllamaFetch = async (url) => {
       if (requestUrl(url).endsWith('/api/tags')) return json({ models });
+      if (requestUrl(url).endsWith('/api/version')) return json(runtime);
       active += 1;
       peak = Math.max(active, peak);
       await new Promise((resolve) => setImmediate(resolve));

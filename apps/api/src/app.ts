@@ -1,3 +1,4 @@
+import { registerVoiceRoutes } from './routes/voice.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyBaseLogger, type FastifyServerOptions } from 'fastify';
@@ -87,6 +88,7 @@ export async function buildApp(
   registerErrorHandler(app);
   registerAuth(app, container);
   registerChatRoutes(app, container);
+  registerVoiceRoutes(app, container);
   registerOllamaRoutes(app, container);
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);

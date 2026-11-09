@@ -2,6 +2,7 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { applyFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
 import { applyTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
+import { setChatUpdateGuardExpected } from '../pwa/chat-update-lock.js';
 import { registerPwa } from '../pwa/register.js';
 import { UpdateToast } from '../pwa/UpdateToast.js';
 import { capturePairingCode } from './connection.js';
@@ -22,13 +23,15 @@ export function bootstrapGoblin(
   container: HTMLElement,
   options: { registerServiceWorker?: boolean } = {},
 ): Root {
+  const registerServiceWorker = options.registerServiceWorker ?? true;
+  setChatUpdateGuardExpected(registerServiceWorker);
   const initialCode = capturePairingCode();
   applyTheme(readStoredTheme());
   applyFont(readStoredFont());
   const root = createRoot(container);
   root.render(
     <StrictMode>
-      <Lifecycle registerServiceWorker={options.registerServiceWorker ?? true} />
+      <Lifecycle registerServiceWorker={registerServiceWorker} />
       <GoblinApp initialCode={initialCode} />
       <UpdateToast />
     </StrictMode>,
