@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acquireDataDirLock, dataDirLockState } from './data-dir-lock.js';
+import * as processIdentity from './windows-process-identity.js';
 
 let dataDir: string;
 let path: string;
@@ -25,6 +26,75 @@ afterEach(async () => {
 });
 
 describe('data-directory ownership', () => {
+  it.each(['graphgoblin.lock', 'graphgoblin.lock.reclaim', 'external.db.graphgoblin.lock'])(
+    'reclaims a proven reused Windows PID in %s without touching the unrelated process',
+    async (filename) => {
+      const file = join(dataDir, filename);
+      const original = JSON.stringify({
+        pid: process.pid + 1,
+        windowsCreationTime: '134388256826197750',
+      });
+      await writeFile(file, original);
+      const kill = vi.spyOn(process, 'kill').mockReturnValue(true);
+      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue('134388256826197760');
+      const lockName = filename.endsWith('.reclaim') ? 'graphgoblin.lock' : filename;
+      expect(await dataDirLockState(dataDir, lockName)).toEqual({ state: 'free' });
+      expect(await readFile(file, 'utf8')).toBe(original);
+      const lock = await acquireDataDirLock(dataDir, lockName);
+      expect(JSON.parse(await readFile(join(dataDir, lockName), 'utf8'))).toMatchObject({
+        pid: process.pid,
+      });
+      expect(kill.mock.calls.every(([, signal]) => signal === 0)).toBe(true);
+      await lock.release();
+    },
+  );
+
+  it.each(['134388256826197750', undefined])(
+    'preserves a matching or uncheckable Windows identity (%s)',
+    async (current) => {
+      const original = JSON.stringify({
+        pid: process.pid + 1,
+        windowsCreationTime: '134388256826197750',
+      });
+      await writeFile(path, original);
+      vi.spyOn(process, 'kill').mockReturnValue(true);
+      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue(current);
+      expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
+      expect(await readFile(path, 'utf8')).toBe(original);
+    },
+  );
+
+  it.each([undefined, null, 123, '', 'invalid'])(
+    'never infers reuse from missing/malformed creation identity %j',
+    async (windowsCreationTime) => {
+      const original = JSON.stringify({ pid: process.pid + 1, windowsCreationTime });
+      await writeFile(path, original);
+      vi.spyOn(process, 'kill').mockReturnValue(true);
+      const probe = vi.spyOn(processIdentity, 'windowsProcessIdentity');
+      expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+      expect(probe).not.toHaveBeenCalled();
+      expect(await readFile(path, 'utf8')).toBe(original);
+    },
+  );
+
+  it('stores the OS identity and refuses acquisition when it cannot establish its own identity', async () => {
+    const own = vi
+      .spyOn(processIdentity, 'ownWindowsProcessIdentity')
+      .mockResolvedValue('134388256826197750');
+    const lock = await acquireDataDirLock(dataDir);
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({
+      windowsCreationTime: '134388256826197750',
+    });
+    await lock.release();
+    own.mockRejectedValueOnce(new Error('Cannot establish Windows process identity'));
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(
+      'Cannot establish Windows process identity',
+    );
+    await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
+    await (await acquireDataDirLock(dataDir)).release();
+  });
+
   it('creates an exclusive lock with this PID and start time and releases it', async () => {
     const lock = await acquireDataDirLock(dataDir);
     const record = JSON.parse(await readFile(path, 'utf8')) as { pid: number; startedAt: string };

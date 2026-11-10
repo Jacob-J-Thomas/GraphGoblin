@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundledGoblinDist, bundledWebDist, loadConfig, type ApiConfig } from './config.js';
 import { canonicalPath } from './canonical-path.js';
+import { dataDirLockState, databaseLockState } from './data-dir-lock.js';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 
 /** The launcher shares the repository's supported installation runtime floor. */
@@ -37,6 +38,13 @@ export function instanceIdentity(config: ApiConfig): string {
     .digest('hex');
 }
 
+/** The launcher uses the writer's ownership policy, including both reclamation guards. */
+export async function launcherStoreState(config: ApiConfig): Promise<'free' | 'held'> {
+  if ((await dataDirLockState(config.dataDir)).state === 'held') return 'held';
+  const database = databaseFilePath(config.dbUrl);
+  return database && (await databaseLockState(database)).state === 'held' ? 'held' : 'free';
+}
+
 // This read-only helper loads configuration without opening the store or probing providers.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
@@ -46,7 +54,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       webDistFallback: bundledWebDist(),
       goblinDistFallback: bundledGoblinDist(),
     });
-    process.stdout.write(instanceIdentity(config) + '\n');
+    process.stdout.write(
+      (process.argv[2] === '--store-state'
+        ? await launcherStoreState(config)
+        : instanceIdentity(config)) + '\n',
+    );
   } catch {
     console.error('Launcher configuration is invalid. Check the configured GG_* overrides.');
     process.exitCode = 1;

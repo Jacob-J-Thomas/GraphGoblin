@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, stat, unlink } from 'node:fs/promises';
 import { basename, dirname, resolve } from 'node:path';
 import { canonicalPath } from './canonical-path.js';
+import { ownWindowsProcessIdentity, windowsProcessIdentity } from './windows-process-identity.js';
 
 const heldPaths = new Set<string>();
 const acquiringPaths = new Set<string>();
@@ -29,7 +30,7 @@ const held = (path: string): Error => new Error(`another GraphGoblin process hol
 
 /**
  * Who owns a lock file, read-only: `absent`, `stale` (its recorded PID is dead, or is this
- * process's own PID without an in-process hold), or `held`. Malformed records and PIDs that cannot
+ * process's own PID without an in-process hold, or a provably reused Windows PID), or `held`. Malformed records and PIDs that cannot
  * be checked count as held: they cannot establish that the owner died.
  */
 async function lockFileState(path: string): Promise<'absent' | 'stale' | 'held'> {
@@ -51,11 +52,20 @@ async function lockFileState(path: string): Promise<'absent' | 'stale' | 'held'>
     !('pid' in owner) ||
     typeof owner.pid !== 'number' ||
     !Number.isSafeInteger(owner.pid) ||
-    owner.pid <= 0 ||
-    (owner.pid === process.pid ? heldPaths.has(path) : pidIsAlive(owner.pid))
+    owner.pid <= 0
   )
     return 'held';
-  return 'stale';
+  if (owner.pid === process.pid) return heldPaths.has(path) ? 'held' : 'stale';
+  if (!pidIsAlive(owner.pid)) return 'stale';
+  if (
+    'windowsCreationTime' in owner &&
+    typeof owner.windowsCreationTime === 'string' &&
+    /^[1-9][0-9]{16,18}$/.test(owner.windowsCreationTime)
+  ) {
+    const current = await windowsProcessIdentity(owner.pid);
+    if (current && current !== owner.windowsCreationTime) return 'stale';
+  }
+  return 'held';
 }
 
 async function removeStale(path: string): Promise<void> {
@@ -119,7 +129,8 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
 
 /**
  * One API writer per local data directory, before database or recovery work. A lock naming
- * this PID is stale unless held here (container restarts reuse PIDs); other PIDs must be dead.
+ * this PID is stale unless held here (container restarts reuse PIDs); other PIDs must be dead
+ * or have a different, verified Windows creation identity.
  * The short-lived recovery guard follows the same rule after interrupted reclamation.
  */
 export async function acquireDataDirLock(
@@ -135,6 +146,7 @@ export async function acquireDataDirLock(
     const record = JSON.stringify({
       pid: process.pid,
       startedAt: new Date().toISOString(),
+      windowsCreationTime: await ownWindowsProcessIdentity(),
       token: randomUUID(),
     });
     // Take the guard even if the main file is missing after a crash during reclamation.

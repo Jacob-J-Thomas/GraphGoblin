@@ -64,7 +64,7 @@ async function stop(config) {
 
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
-  { skip: process.platform !== 'win32', timeout: 180_000 },
+  { skip: process.platform !== 'win32', timeout: 240_000 },
   async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
@@ -150,15 +150,15 @@ test(
         'same database under a different data directory cannot acquire a second gateway',
         async () => {
           const shared = await configuration('shared', {
+            StartupTimeoutSeconds: 1,
             Environment: {
               GG_DB_URL:
                 'file:' + join(first.config.DataDir, 'graphgoblin.db').replaceAll('\\', '/'),
             },
           });
-          await assert.rejects(launch(shared.path), /exited.*startup/);
-          assert.match(
-            await readFile(join(install, 'gateway.log'), 'utf8'),
-            /another GraphGoblin process holds .*graphgoblin.db.graphgoblin.lock/,
+          await assert.rejects(
+            launch(shared.path),
+            /Store ownership is held or cannot be verified/,
           );
           await health(first.config);
         },
@@ -323,18 +323,80 @@ test(
       },
     );
     await t.test(
-      'malformed store ownership is preserved and startup failure points at durable logs',
+      'malformed store ownership is preserved and refused before starting a gateway',
       async () => {
-        const failure = await configuration('failure');
+        const failure = await configuration('failure', { StartupTimeoutSeconds: 1 });
         await mkdir(failure.config.DataDir);
         const lock = join(failure.config.DataDir, 'graphgoblin.lock');
         await writeFile(lock, 'unverifiable owner');
-        await assert.rejects(launch(failure.path), /exited.*startup/);
+        const before = await readFile(join(install, 'gateway.log'), 'utf8');
+        await assert.rejects(launch(failure.path), /Store ownership is held or cannot be verified/);
         assert.equal(await readFile(lock, 'utf8'), 'unverifiable owner');
-        assert.match(
-          await readFile(join(install, 'gateway.log'), 'utf8'),
-          /another GraphGoblin process holds/,
-        );
+        assert.equal(await readFile(join(install, 'gateway.log'), 'utf8'), before);
+      },
+    );
+    await t.test(
+      'reused live PID in both locks and guards permits exactly one cold gateway',
+      async () => {
+        const reused = await configuration('reused-pid');
+        await mkdir(reused.config.DataDir);
+        const oldOwner = JSON.stringify({
+          pid: process.pid,
+          windowsCreationTime: '134000000000000000',
+          token: 'former-process',
+        });
+        for (const file of [
+          'graphgoblin.lock',
+          'graphgoblin.lock.reclaim',
+          'graphgoblin.db.graphgoblin.lock',
+          'graphgoblin.db.graphgoblin.lock.reclaim',
+        ]) {
+          await writeFile(join(reused.config.DataDir, file), oldOwner);
+        }
+        try {
+          await Promise.all([launch(reused.path), launch(reused.path)]);
+          const running = await health(reused.config);
+          const record = JSON.parse(
+            await readFile(join(reused.config.DataDir, 'graphgoblin.lock'), 'utf8'),
+          );
+          assert.equal(String(record.pid), running.pid);
+          assert.match(record.windowsCreationTime, /^[1-9][0-9]{16,18}$/);
+          assert.notEqual(record.windowsCreationTime, '134000000000000000');
+          process.kill(process.pid, 0);
+        } finally {
+          await stop(reused.config);
+        }
+      },
+    );
+    await t.test(
+      'matching and unknown identities preserve locks, guards and the live process',
+      async () => {
+        const { windowsProcessIdentity } =
+          await import('../../apps/api/dist/windows-process-identity.js');
+        const creationTime = await windowsProcessIdentity(process.pid);
+        assert.match(creationTime, /^[1-9][0-9]{16,18}$/);
+        for (const [name, record] of [
+          ['matching', { pid: process.pid, windowsCreationTime: creationTime }],
+          ['pid-only', { pid: process.pid }],
+          ['inaccessible', { pid: 4 }],
+        ]) {
+          const refused = await configuration('held-' + name, { StartupTimeoutSeconds: 1 });
+          await mkdir(refused.config.DataDir);
+          const lock = join(
+            refused.config.DataDir,
+            name === 'matching' ? 'graphgoblin.db.graphgoblin.lock.reclaim' : 'graphgoblin.lock',
+          );
+          const original = JSON.stringify(record);
+          await writeFile(lock, original);
+          const before = await readFile(join(install, 'gateway.log'), 'utf8');
+          await assert.rejects(
+            launch(refused.path),
+            /Store ownership is held or cannot be verified/,
+          );
+          assert.equal(await readFile(lock, 'utf8'), original);
+          assert.equal(await readFile(join(install, 'gateway.log'), 'utf8'), before);
+          process.kill(process.pid, 0);
+        }
       },
     );
     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));

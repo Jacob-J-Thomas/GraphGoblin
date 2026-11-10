@@ -1,0 +1,86 @@
+$ node --test tooling/scripts/windows-launcher.acceptance.mjs
+TAP version 13
+# Subtest: native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+    # Subtest: concurrent cold starts create one gateway and later clicks reuse its PID
+    ok 1 - concurrent cold starts create one gateway and later clicks reuse its PID
+      ---
+      duration_ms: 11263.0138
+      type: 'test'
+      ...
+    # Subtest: wrong store and changed gateway settings are refused without stopping the live gateway
+    ok 2 - wrong store and changed gateway settings are refused without stopping the live gateway
+      ---
+      duration_ms: 4062.9675
+      type: 'test'
+      ...
+    # Subtest: same database under a different data directory cannot acquire a second gateway
+    ok 3 - same database under a different data directory cannot acquire a second gateway
+      ---
+      duration_ms: 4758.1548
+      type: 'test'
+      ...
+# {"evidence":"native-shell-shortcut-cold-route","beforePid":"12120","afterPid":"17816"}
+    # Subtest: normal drain releases ownership and a shell shortcut cold start runs the launcher
+    ok 4 - normal drain releases ownership and a shell shortcut cold start runs the launcher
+      ---
+      duration_ms: 17220.2786
+      type: 'test'
+      ...
+    # Subtest: native HWND COM relaunch command preserves the cold launcher route
+    ok 5 - native HWND COM relaunch command preserves the cold launcher route
+      ---
+      duration_ms: 9476.4059
+      type: 'test'
+      ...
+    # Subtest: cross-process HWND metadata survives stamper exit and relaunches
+    ok 6 - cross-process HWND metadata survives stamper exit and relaunches
+      ---
+      duration_ms: 6143.9632
+      type: 'test'
+      ...
+    # Subtest: plain-health HTTP listener is refused and kept alive
+    ok 7 - plain-health HTTP listener is refused and kept alive
+      ---
+      duration_ms: 1414.6533
+      type: 'test'
+      ...
+    # Subtest: a silent TCP listener never permits a gateway spawn across repeated clicks
+    ok 8 - a silent TCP listener never permits a gateway spawn across repeated clicks
+      ---
+      duration_ms: 24589.491
+      type: 'test'
+      ...
+    # Subtest: malformed store ownership is preserved and refused before starting a gateway
+    ok 9 - malformed store ownership is preserved and refused before starting a gateway
+      ---
+      duration_ms: 4487.4923
+      type: 'test'
+      ...
+    # Subtest: reused live PID in both locks and guards permits exactly one cold gateway
+    ok 10 - reused live PID in both locks and guards permits exactly one cold gateway
+      ---
+      duration_ms: 16877.5425
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-native","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-reboot-lock-recovery\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-QPFS9V"}
+    # Subtest: matching and unknown identities preserve locks, guards and the live process
+    ok 11 - matching and unknown identities preserve locks, guards and the live process
+      ---
+      duration_ms: 36834.4002
+      type: 'test'
+      ...
+    1..11
+ok 1 - native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+  ---
+  duration_ms: 137522.3304
+  type: 'test'
+  ...
+1..1
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137625.4392

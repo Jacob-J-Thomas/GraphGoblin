@@ -2,6 +2,9 @@
 
 One file per decision. Status is Accepted unless stated. Supersede by adding a new ADR and linking both ways.
 
+[ADR-0069: Windows lock process identity](ADR-0069-windows-lock-process-identity.md) records safe
+reclamation after PID reuse and shared launcher/API ownership checks.
+
 | ADR                                                      | Title                                                                                          |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | [0001](ADR-0001-typescript-monorepo.md)                  | TypeScript monorepo for backend, frontend, and MCP server                                      |

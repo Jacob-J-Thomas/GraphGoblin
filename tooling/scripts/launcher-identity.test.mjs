@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { access, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -42,6 +42,20 @@ it('matches launcher identity to the built gateway with both bundled shells and 
     const expected = await identity();
     // The launcher helper must remain read-only even before the first gateway startup.
     expect(await readdir(dataDir)).toEqual([]);
+    const state = () =>
+      execute(process.execPath, [identityEntry, '--store-state'], {
+        cwd: root,
+        env,
+        windowsHide: true,
+        timeout: 15_000,
+      });
+    expect((await state()).stdout.trim()).toBe('free');
+    expect(await readdir(dataDir)).toEqual([]);
+    const guard = join(dataDir, 'graphgoblin.db.graphgoblin.lock.reclaim');
+    await writeFile(guard, 'unverifiable owner');
+    expect((await state()).stdout.trim()).toBe('held');
+    expect(await readFile(guard, 'utf8')).toBe('unverifiable owner');
+    await rm(guard);
     const entry = pathToFileURL(join(root, 'apps/api/dist/main.js')).href;
     const gateway = await execute(
       process.execPath,

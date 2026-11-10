@@ -7,6 +7,10 @@ configuration/store/listener refusal, shared external SQLite ownership, preserve
 detached lifetime and stdout/stderr EOF, normal drain and cold relaunch. Native shell-link readback
 and HWND COM property-store checks execute the read-back relaunch command through the launcher.
 The cross-process HWND case reads/exercises metadata after the stamping process has exited.
+Reboot/PID-reuse regressions seed a former creation identity onto a real unrelated live PID in
+both locks and their guards; concurrent clicks must acquire one gateway without stopping that
+process. Matching identities, PID-only records and a protected system PID remain refused with
+unchanged lock bytes and no gateway startup. A read-only helper test checks the database guard.
 Eight repeated silent-TCP trials require refusal without a gateway log write or store acquisition.
 They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
 tracked separately with native shell evidence. No live provider turn or owner service/store is

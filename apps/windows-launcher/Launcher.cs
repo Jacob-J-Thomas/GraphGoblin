@@ -180,9 +180,9 @@ namespace GraphGoblin.Desktop
             origin = "http://127.0.0.1:" + config.Port;
         }
 
-        string Identity()
+        string ReadHelper(string argument, string validOutput)
         {
-            var info = new ProcessStartInfo(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js"))) {
+            var info = new ProcessStartInfo(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument) {
                 WorkingDirectory = config.Repo, UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true
             };
@@ -190,14 +190,14 @@ namespace GraphGoblin.Desktop
             foreach (var item in config.ChildEnvironment()) info.EnvironmentVariables[item.Key] = item.Value;
             using (var process = Process.Start(info))
             {
-                if (!process.WaitForExit(10000)) {
+                if (!process.WaitForExit(15000)) {
                     // This is our read-only helper, never the gateway or an unrelated process.
                     try { process.Kill(); process.WaitForExit(2000); } catch (InvalidOperationException) { }
-                    throw new Exception("The configured Node runtime did not answer the read-only identity check.");
+                    throw new Exception("The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.");
                 }
                 string output = process.StandardOutput.ReadToEnd().Trim();
-                if (process.ExitCode != 0 || !System.Text.RegularExpressions.Regex.IsMatch(output, "^[a-f0-9]{64}$"))
-                    throw new Exception("The Node 22 runtime or launcher configuration is invalid. Check the configured runtime and GG_* overrides.");
+                if (process.ExitCode != 0 || !System.Text.RegularExpressions.Regex.IsMatch(output, validOutput))
+                    throw new Exception("The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.");
                 return output;
             }
         }
@@ -275,7 +275,7 @@ namespace GraphGoblin.Desktop
 
         public void Ensure()
         {
-            expected = Identity();
+            expected = ReadHelper("", "^[a-f0-9]{64}$");
             if (Probe()) return;
             var releaseDeadline = DateTime.UtcNow.AddSeconds(config.StartupTimeoutSeconds);
             while (closing)
@@ -290,7 +290,7 @@ namespace GraphGoblin.Desktop
                     Thread.Sleep(200); if (Probe()) return;
                     if (!StoreHasLiveOwner()) break;
                 }
-                if (StoreHasLiveOwner()) throw new Exception("An existing GraphGoblin process owns this store, but its configured gateway is not reachable. Check its port/configuration or let its startup/shutdown finish. No second gateway was started.");
+                if (StoreHasLiveOwner()) throw new Exception("Store ownership is held or cannot be verified, but its configured gateway is not reachable. Check graphgoblin.lock and the database's .graphgoblin.lock (including .reclaim guards). A PID may have been reused after a reboot; do not stop that process or delete a lock without verifying its owner. No second gateway was started.");
             }
             int pid = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.ChildEnvironment(), log);
             spawnedPid = pid;
@@ -312,16 +312,7 @@ namespace GraphGoblin.Desktop
 
         bool StoreHasLiveOwner()
         {
-            try {
-                var owner = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(File.ReadAllText(Path.Combine(config.DataDir, "graphgoblin.lock")));
-                object value;
-                if (owner == null || !owner.TryGetValue("pid", out value) || !(value is int) || (int)value < 1) return false;
-                using (var process = Process.GetProcessById((int)value)) return !process.HasExited;
-            }
-            catch (FileNotFoundException) { return false; }
-            catch (DirectoryNotFoundException) { return false; }
-            catch (ArgumentException) { return false; }
-            catch (InvalidOperationException) { return false; }
+            return ReadHelper(" --store-state", "^(free|held)$") == "held";
         }
     }
 

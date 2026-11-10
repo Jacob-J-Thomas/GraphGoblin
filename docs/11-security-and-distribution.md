@@ -69,6 +69,15 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
+A successfully observed different identity proves that a PID has been reused and permits the
+same guarded reclamation as a dead PID. The API and desktop launcher share this read-only policy
+for both locks and their `.reclaim` guards. Unavailable, denied or malformed identities remain
+held. Windows PowerShell and WMI must be available to establish a new writer's identity; the
+query is hidden, profile-free and bounded to five seconds. PID-only abandoned records cannot
+prove reuse and need independent inspection if their PID now belongs to another process.
+See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
+
 `scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 
 `pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
