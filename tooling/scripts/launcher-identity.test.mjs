@@ -49,11 +49,15 @@ it('matches launcher identity to the built gateway with both bundled shells and 
         windowsHide: true,
         timeout: 15_000,
       });
-    expect((await state()).stdout.trim()).toBe('free');
+    expect(JSON.parse((await state()).stdout)).toEqual({ state: 'free' });
     expect(await readdir(dataDir)).toEqual([]);
     const guard = join(dataDir, 'graphgoblin.db.graphgoblin.lock.reclaim');
     await writeFile(guard, 'unverifiable owner');
-    expect((await state()).stdout.trim()).toBe('held');
+    expect(JSON.parse((await state()).stdout)).toMatchObject({
+      state: 'held',
+      path: guard,
+      detail: expect.stringContaining('could not be verified'),
+    });
     expect(await readFile(guard, 'utf8')).toBe('unverifiable owner');
     await rm(guard);
     const entry = pathToFileURL(join(root, 'apps/api/dist/main.js')).href;

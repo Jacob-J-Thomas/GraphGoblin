@@ -614,13 +614,13 @@ export async function resetDataDirectory(
   const state = await dataDirLockState(dataDir);
   if (state.state === 'held')
     throw new ResetRefusedError(
-      `another GraphGoblin process holds ${state.path}; stop it before resetting`,
+      `${state.detail}: ${state.path}; verify ownership before resetting`,
     );
   const checkDatabaseOwnership = async (file: string): Promise<void> => {
     const state = await databaseLockState(file);
     if (state.state === 'held')
       throw new ResetRefusedError(
-        `another GraphGoblin process holds ${state.path}; stop it before resetting`,
+        `${state.detail}: ${state.path}; verify ownership before resetting`,
       );
   };
   const preview = await planReset({

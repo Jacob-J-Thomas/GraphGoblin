@@ -961,8 +961,15 @@ describe('refused resets change nothing', () => {
       expect(result).toEqual({
         code: 1,
         out: '',
-        err: `reset refused: another GraphGoblin process holds ${join(dataDir, 'graphgoblin.lock')}; stop it before resetting\nNothing in the data directory was changed.\n`,
+        err: expect.stringContaining(
+          `${join(dataDir, 'graphgoblin.lock')}; verify ownership before resetting\nNothing in the data directory was changed.\n`,
+        ),
       });
+      expect(result.err).toContain(
+        process.platform === 'win32'
+          ? 'ownership could not be verified'
+          : 'another GraphGoblin process holds',
+      );
       expect(await snapshotTree(base)).toEqual(before);
     } finally {
       child.kill();

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { access, readFile, realpath, unlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,10 +10,19 @@ import * as processIdentity from './windows-process-identity.js';
 let dataDir: string;
 let path: string;
 
+async function guardRecord(record: Record<string, unknown>): Promise<string> {
+  const token = randomUUID();
+  const marker = join(`${path}.reclaim`, `${token}.json`);
+  await mkdir(`${path}.reclaim`);
+  await writeFile(marker, JSON.stringify({ ...record, token }));
+  return marker;
+}
+
 beforeEach(async () => {
   // Lock identities use physical paths; the platform's temp directory may itself be an alias.
   dataDir = join(await realpath(tmpdir()), `gg-lock-${randomUUID()}`);
   path = join(dataDir, 'graphgoblin.lock');
+  vi.spyOn(processIdentity, 'ownWindowsProcessIdentity').mockResolvedValue('134388256826197770');
   // Acquisition creates a fresh directory. Keep the empty test directory after cleanup.
   await (await acquireDataDirLock(dataDir)).release();
 });
@@ -21,7 +30,7 @@ beforeEach(async () => {
 afterEach(async () => {
   vi.restoreAllMocks();
   for (const file of [path, `${path}.reclaim`, join(dataDir, 'not-a-directory')]) {
-    await unlink(file).catch(() => undefined);
+    await rm(file, { recursive: true, force: true }).catch(() => undefined);
   }
 });
 
@@ -29,17 +38,21 @@ describe('data-directory ownership', () => {
   it.each(['graphgoblin.lock', 'graphgoblin.lock.reclaim', 'external.db.graphgoblin.lock'])(
     'reclaims a proven reused Windows PID in %s without touching the unrelated process',
     async (filename) => {
-      const file = join(dataDir, filename);
+      let file = join(dataDir, filename);
       const original = JSON.stringify({
         pid: process.pid + 1,
         windowsCreationTime: '134388256826197750',
       });
-      await writeFile(file, original);
+      if (filename.endsWith('.reclaim'))
+        file = await guardRecord(JSON.parse(original) as Record<string, unknown>);
+      else await writeFile(file, original);
       const kill = vi.spyOn(process, 'kill').mockReturnValue(true);
-      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue('134388256826197760');
+      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue({
+        identity: '134388256826197760',
+      });
       const lockName = filename.endsWith('.reclaim') ? 'graphgoblin.lock' : filename;
       expect(await dataDirLockState(dataDir, lockName)).toEqual({ state: 'free' });
-      expect(await readFile(file, 'utf8')).toBe(original);
+      expect(JSON.parse(await readFile(file, 'utf8'))).toMatchObject(JSON.parse(original));
       const lock = await acquireDataDirLock(dataDir, lockName);
       expect(JSON.parse(await readFile(join(dataDir, lockName), 'utf8'))).toMatchObject({
         pid: process.pid,
@@ -58,9 +71,11 @@ describe('data-directory ownership', () => {
       });
       await writeFile(path, original);
       vi.spyOn(process, 'kill').mockReturnValue(true);
-      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue(current);
-      expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
-      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
+      vi.spyOn(processIdentity, 'windowsProcessIdentity').mockResolvedValue(
+        current ? { identity: current } : { reason: 'query timed out' },
+      );
+      expect(await dataDirLockState(dataDir)).toMatchObject({ state: 'held', path });
+      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(path);
       expect(await readFile(path, 'utf8')).toBe(original);
     },
   );
@@ -72,7 +87,7 @@ describe('data-directory ownership', () => {
       await writeFile(path, original);
       vi.spyOn(process, 'kill').mockReturnValue(true);
       const probe = vi.spyOn(processIdentity, 'windowsProcessIdentity');
-      expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+      expect(await dataDirLockState(dataDir)).toMatchObject({ state: 'held', path });
       expect(probe).not.toHaveBeenCalled();
       expect(await readFile(path, 'utf8')).toBe(original);
     },
@@ -109,9 +124,7 @@ describe('data-directory ownership', () => {
     async (alias) => {
       const lock = await acquireDataDirLock(dataDir);
       const original = await readFile(path, 'utf8');
-      await expect(acquireDataDirLock(alias ? `${dataDir}/.` : dataDir)).rejects.toThrow(
-        `another GraphGoblin process holds ${path}`,
-      );
+      await expect(acquireDataDirLock(alias ? `${dataDir}/.` : dataDir)).rejects.toThrow(path);
       expect(await readFile(path, 'utf8')).toBe(original);
       await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
       await lock.release();
@@ -132,7 +145,7 @@ describe('data-directory ownership', () => {
     const original = JSON.stringify({ pid: process.pid + 1 });
     await writeFile(path, original);
     vi.spyOn(process, 'kill').mockReturnValue(true);
-    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(path);
     expect(await readFile(path, 'utf8')).toBe(original);
     await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
   });
@@ -154,7 +167,7 @@ describe('data-directory ownership', () => {
       vi.spyOn(process, 'kill').mockImplementation(() => {
         throw Object.assign(new Error('cannot probe'), { code });
       });
-      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
+      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(path);
       expect(await readFile(path, 'utf8')).toBe(original);
     },
   );
@@ -163,7 +176,7 @@ describe('data-directory ownership', () => {
     'refuses unverifiable lock contents %j',
     async (original) => {
       await writeFile(path, original);
-      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
+      await expect(acquireDataDirLock(dataDir)).rejects.toThrow(path);
       expect(await readFile(path, 'utf8')).toBe(original);
     },
   );
@@ -206,7 +219,7 @@ describe('data-directory ownership', () => {
         await writeFile(path, JSON.stringify({ pid: process.pid }));
       }
       if (kind === 'stale-reclaim') {
-        await writeFile(`${path}.reclaim`, JSON.stringify({ pid: process.pid }));
+        await guardRecord({ pid: process.pid });
       }
       const results = await Promise.allSettled(
         Array.from({ length: 8 }, () => acquireDataDirLock(dataDir)),
@@ -229,7 +242,7 @@ describe('data-directory ownership', () => {
     expect(child.status).toBe(0);
     const pid = owner === 'own PID' ? process.pid : child.pid;
     if (mainExists) await writeFile(path, JSON.stringify({ pid }));
-    await writeFile(`${path}.reclaim`, JSON.stringify({ pid, token: 'interrupted-reclamation' }));
+    await guardRecord({ pid });
     const lock = await acquireDataDirLock(dataDir);
     expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
     await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
@@ -239,18 +252,64 @@ describe('data-directory ownership', () => {
   it('refuses a reclamation guard owned by another live PID', async () => {
     const original = JSON.stringify({ pid: process.pid + 1 });
     await writeFile(path, JSON.stringify({ pid: process.pid }));
-    await writeFile(`${path}.reclaim`, original);
+    const marker = await guardRecord(JSON.parse(original) as Record<string, unknown>);
     vi.spyOn(process, 'kill').mockReturnValue(true);
-    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}.reclaim`);
-    expect(await readFile(`${path}.reclaim`, 'utf8')).toBe(original);
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`${path}.reclaim`);
+    expect(JSON.parse(await readFile(marker, 'utf8'))).toMatchObject(JSON.parse(original));
     expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
   });
 
   it('refuses an existing reclamation guard without deleting either file', async () => {
     await writeFile(path, JSON.stringify({ pid: process.pid }));
     await writeFile(`${path}.reclaim`, 'interrupted reclamation');
-    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}.reclaim`);
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`${path}.reclaim`);
     expect(await readFile(`${path}.reclaim`, 'utf8')).toBe('interrupted reclamation');
+  });
+
+  it('cannot delete a successor guard after a delayed stale-owner probe', async () => {
+    const marker = await guardRecord({
+      pid: process.pid + 1,
+      windowsCreationTime: '134388256826197750',
+    });
+    let started!: () => void;
+    let finish!: (value: processIdentity.ProcessIdentity) => void;
+    const probing = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const result = new Promise<processIdentity.ProcessIdentity>((resolve) => {
+      finish = resolve;
+    });
+    vi.spyOn(process, 'kill').mockReturnValue(true);
+    vi.spyOn(processIdentity, 'windowsProcessIdentity')
+      .mockImplementationOnce(() => {
+        started();
+        return result;
+      })
+      .mockResolvedValue({ identity: '134388256826197760' });
+    const acquiring = acquireDataDirLock(dataDir);
+    const refusal = expect(acquiring).rejects.toThrow(`${path}.reclaim`);
+    await probing;
+    await unlink(marker);
+    await rm(`${path}.reclaim`, { recursive: true });
+    const successor = await guardRecord({
+      pid: process.pid + 2,
+      windowsCreationTime: '134388256826197760',
+    });
+    const record = await readFile(successor, 'utf8');
+    finish({ identity: '134388256826197760' });
+    await refusal;
+    expect(await readFile(successor, 'utf8')).toBe(record);
+    await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('reclaims an empty guard, but refuses malformed or mismatched marker directories', async () => {
+    await mkdir(`${path}.reclaim`);
+    await (await acquireDataDirLock(dataDir)).release();
+    const marker = await guardRecord({ pid: process.pid });
+    await writeFile(marker, JSON.stringify({ pid: process.pid, token: randomUUID() }));
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow('could not be verified');
+    await writeFile(join(`${path}.reclaim`, 'extra'), 'keep');
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow('could not be verified');
   });
 
   it('propagates filesystem errors instead of assuming a stale lock', async () => {
@@ -270,20 +329,26 @@ describe('reading the lock state without acquiring it', () => {
     expect(await dataDirLockState(dataDir)).toEqual({ state: 'free' });
     expect(await readFile(path, 'utf8')).toBe(stale);
     await writeFile(`${path}.reclaim`, 'interrupted reclamation');
-    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path: `${path}.reclaim` });
+    expect(await dataDirLockState(dataDir)).toMatchObject({
+      state: 'held',
+      path: `${path}.reclaim`,
+    });
     expect(await readFile(`${path}.reclaim`, 'utf8')).toBe('interrupted reclamation');
   });
 
   it('reports a live owner, and this process while it holds or acquires the lock', async () => {
     await writeFile(path, JSON.stringify({ pid: process.pid + 1 }));
     vi.spyOn(process, 'kill').mockReturnValue(true);
-    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+    expect(await dataDirLockState(dataDir)).toMatchObject({ state: 'held', path });
     vi.restoreAllMocks();
     await unlink(path);
     const acquiring = acquireDataDirLock(dataDir);
-    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path: `${path}.reclaim` });
+    expect(await dataDirLockState(dataDir)).toMatchObject({
+      state: 'held',
+      path: `${path}.reclaim`,
+    });
     const lock = await acquiring;
-    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+    expect(await dataDirLockState(dataDir)).toMatchObject({ state: 'held', path });
     await lock.release();
     expect(await dataDirLockState(dataDir)).toEqual({ state: 'free' });
   });

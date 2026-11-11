@@ -1,9 +1,11 @@
+> Superseded readiness conclusion: the six narrow passes below did not establish independent-process exclusion. Subsequent QA reproduced 4, 3, 4 and 4 simultaneous owners and blocked the initial candidate. See [the race finding](cross-process-race-finding.md) and [the corrected guard verification](guard-regression.md) for the current outcome.
+
 # Independent ownership QA — 2026-11-10
 
 Candidate: `4cc66d26` (`codex/windows-reboot-lock-recovery`), built with Node `v22.23.4`.
 Scope: the built API's exported ownership functions and the built read-only launcher helper. This is independent touched-system QA, not an Opus PR review.
 
-## Outcome
+## Historical initial outcome
 
 Six process-level scenario groups passed in the final run. No confirmed ownership-safety defect was found. All fixture processes and files were disposable; the owner's store, gateway, port 4747, shortcuts, Windows permissions, and repository implementation were untouched. The unrelated live Node fixture survived every ownership check and exited normally on stdin EOF during cleanup.
 

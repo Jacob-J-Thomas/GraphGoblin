@@ -17,18 +17,24 @@ afterEach(async () => {
 
 it('checks both the data directory and external database with the shared read-only policy', async () => {
   const directory = vi.spyOn(ownership, 'dataDirLockState').mockResolvedValue({ state: 'free' });
-  const database = vi
-    .spyOn(ownership, 'databaseLockState')
-    .mockResolvedValue({ state: 'held', path: 'external.db.graphgoblin.lock' });
+  const database = vi.spyOn(ownership, 'databaseLockState').mockResolvedValue({
+    state: 'held',
+    path: 'external.db.graphgoblin.lock',
+    detail: 'live owner',
+  });
   const config = loadConfig({ GG_DATA_DIR: '/test/store', GG_DB_URL: 'file:/external.db' });
-  expect(await launcherStoreState(config)).toBe('held');
+  expect(await launcherStoreState(config)).toMatchObject({ state: 'held' });
   expect(database).toHaveBeenCalledWith(resolve('/external.db'));
   database.mockResolvedValue({ state: 'free' });
-  expect(await launcherStoreState(config)).toBe('free');
-  expect(await launcherStoreState({ ...config, dbUrl: ':memory:' })).toBe('free');
-  directory.mockResolvedValue({ state: 'held', path: 'graphgoblin.lock.reclaim' });
+  expect(await launcherStoreState(config)).toEqual({ state: 'free' });
+  expect(await launcherStoreState({ ...config, dbUrl: ':memory:' })).toEqual({ state: 'free' });
+  directory.mockResolvedValue({
+    state: 'held',
+    path: 'graphgoblin.lock.reclaim',
+    detail: 'unknown owner',
+  });
   database.mockClear();
-  expect(await launcherStoreState(config)).toBe('held');
+  expect(await launcherStoreState(config)).toMatchObject({ state: 'held' });
   expect(database).not.toHaveBeenCalled();
 });
 

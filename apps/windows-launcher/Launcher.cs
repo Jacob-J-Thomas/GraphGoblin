@@ -290,7 +290,7 @@ namespace GraphGoblin.Desktop
                     Thread.Sleep(200); if (Probe()) return;
                     if (!StoreHasLiveOwner()) break;
                 }
-                if (StoreHasLiveOwner()) throw new Exception("Store ownership is held or cannot be verified, but its configured gateway is not reachable. Check graphgoblin.lock and the database's .graphgoblin.lock (including .reclaim guards). A PID may have been reused after a reboot; do not stop that process or delete a lock without verifying its owner. No second gateway was started.");
+                if (StoreHasLiveOwner()) throw new Exception(ownershipDetail + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.");
             }
             int pid = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.ChildEnvironment(), log);
             spawnedPid = pid;
@@ -310,9 +310,17 @@ namespace GraphGoblin.Desktop
             throw new Exception("GraphGoblin did not become ready within " + config.StartupTimeoutSeconds + " seconds. Inspect " + log + ". It may still be starting; no process was stopped. Launch again to check readiness.");
         }
 
+        string ownershipDetail;
+        sealed class Ownership { public string state, path, detail; }
+
         bool StoreHasLiveOwner()
         {
-            return ReadHelper(" --store-state", "^(free|held)$") == "held";
+            var owner = new JavaScriptSerializer().Deserialize<Ownership>(ReadHelper(" --store-state", "^[{].*[}]$"));
+            if (owner != null && owner.state == "free") return false;
+            if (owner == null || owner.state != "held" || String.IsNullOrWhiteSpace(owner.path) || String.IsNullOrWhiteSpace(owner.detail))
+                throw new Exception("The ownership helper returned an invalid result. No gateway was started.");
+            ownershipDetail = owner.detail + ": " + owner.path;
+            return true;
         }
     }
 

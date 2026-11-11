@@ -21,10 +21,19 @@ No crash supervisor, autostart, installer redesign, provider behavior or data co
 follow-ups #434–#438 remain separate. No stored data reset or migration is needed.
 
 Invariants: one writer per canonical store/database; no takeover on ambiguous identity; no unrelated
-process termination; acquisition alone reclaims proven stale records under its existing guard;
+process termination; acquisition alone reclaims proven stale records under an exclusive guard;
 read-only probes preserve bytes; release checks the acquisition token.
 
-## Executable evidence
+## Current correction evidence
+
+The first candidate's readiness conclusion was withdrawn after independent direct-process QA
+reproduced multiple simultaneous owners. [The correction report](guard-regression.md) records
+that P1, all four Opus pass-one findings as `FIX-IN-PR`, the new immutable-marker directory guard,
+and final **14/14 native** and **72/72 focused** passes. It retains the failing reproduction and
+raw corrected output. These engineering results do not claim an actual reboot test or replace
+the final Opus/CI gates recorded on PR #457.
+
+## Initial executable evidence (superseded for readiness)
 
 The retained raw output is in `focused-tests.txt` and `native-tests.txt` beside this report.
 
@@ -49,3 +58,5 @@ Follow ADR-0069: stop the previous gateway cleanly, rebuild and update the launc
 preserving its existing configuration and shortcuts. Confirm health, both shells, one gateway,
 and matching Windows creation identities in both new ownership records. Older abandoned PID-only
 records require independent stale-owner proof if their PID has been reused; they are not converted.
+Abandoned regular-file `.reclaim` guards are also refused in the new physical-directory protocol
+and require verified manual cleanup; no guard-format converter runs.

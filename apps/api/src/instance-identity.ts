@@ -39,10 +39,11 @@ export function instanceIdentity(config: ApiConfig): string {
 }
 
 /** The launcher uses the writer's ownership policy, including both reclamation guards. */
-export async function launcherStoreState(config: ApiConfig): Promise<'free' | 'held'> {
-  if ((await dataDirLockState(config.dataDir)).state === 'held') return 'held';
+export async function launcherStoreState(config: ApiConfig): ReturnType<typeof dataDirLockState> {
+  const directory = await dataDirLockState(config.dataDir);
+  if (directory.state === 'held') return directory;
   const database = databaseFilePath(config.dbUrl);
-  return database && (await databaseLockState(database)).state === 'held' ? 'held' : 'free';
+  return database ? databaseLockState(database) : { state: 'free' };
 }
 
 // This read-only helper loads configuration without opening the store or probing providers.
@@ -56,7 +57,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     });
     process.stdout.write(
       (process.argv[2] === '--store-state'
-        ? await launcherStoreState(config)
+        ? JSON.stringify(await launcherStoreState(config))
         : instanceIdentity(config)) + '\n',
     );
   } catch {
