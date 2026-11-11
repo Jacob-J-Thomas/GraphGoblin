@@ -12,6 +12,19 @@ startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
   the new build. It never stops an unrelated listener.
 - **Existing process owns the store:** it may be starting, serving another port or releasing its
   store. Wait for it or correct the configuration. Do not delete ownership files to make it start.
+- **Store ownership is held or cannot be verified after a reboot:** Windows can reuse a process
+  number for an unrelated program. New Windows ownership records also contain the process's
+  creation identity, so the gateway can safely recover those abandoned records. An older PID-only
+  record or an unavailable identity check remains protected. Inspect both `graphgoblin.lock` in
+  the data directory and `<database-file>.graphgoblin.lock`, including `.reclaim` guards. Current guards are directories containing one UUID owner marker;
+  old regular-file guards are refused and must be independently verified before manual cleanup. Confirm
+  the recorded owner is gone using independent process/boot evidence before backing up and
+  removing a stale record. Do not kill the process that inherited its number, change permissions,
+  or reset your data. Rebuild the API and reinstall the launcher together for this fix.
+- **Cannot establish Windows process identity:** check Windows PowerShell and Windows Management
+  Instrumentation availability. The cached self query retries once (twenty seconds per attempt);
+  foreign-PID queries remain bounded to five seconds. Refusals name the exact path and probe cause.
+  A denied, failed or timed-out query does not bypass ownership.
 - **Exited during startup:** read `gateway.log`; common causes are a held/malformed store lock,
   invalid settings or unsupported stored data. Correct the stated cause and retry. No reset is
   implicit in a launch.

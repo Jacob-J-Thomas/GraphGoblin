@@ -1,13 +1,14 @@
 // Native Windows executable + built API, disposable stores, no provider turns or owner ports.
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { createServer as createHttpServer } from 'node:http';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -16,6 +17,71 @@ const env = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith('GG_') && key !== 'JEV_API_KEY'),
 );
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function ownershipFixture(path, owner) {
+  const record = { ...owner, token: owner.token ?? randomUUID() };
+  if (path.endsWith('.reclaim')) {
+    await mkdir(path);
+    path = join(path, `${record.token}.json`);
+  }
+  const contents = JSON.stringify(record);
+  await writeFile(path, contents);
+  return { path, contents };
+}
+
+function ownershipContender(dataDir) {
+  const module = pathToFileURL(join(root, 'apps/api/dist/data-dir-lock.js')).href;
+  const program = `
+    const { acquireDataDirLock } = await import(process.argv[1]);
+    process.stdin.resume();
+    const released = new Promise(resolve => process.stdin.once('end', resolve));
+    try {
+      const lock = await acquireDataDirLock(process.argv[2]);
+      process.stdout.write(JSON.stringify({ status: 'acquired', pid: process.pid }) + '\\n');
+      await released;
+      await lock.release();
+    } catch (error) {
+      process.stdout.write(JSON.stringify({ status: 'refused', pid: process.pid, error: error.message }) + '\\n');
+    }
+  `;
+  const child = spawn(process.execPath, ['--input-type=module', '-e', program, module, dataDir], {
+    env,
+    windowsHide: true,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  const exited = new Promise((resolve) => child.once('exit', resolve));
+  let stdout = '';
+  let stderr = '';
+  const result = new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Ownership contender ${child.pid} timed out: ${stderr}`)),
+      55_000,
+    );
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+      const newline = stdout.indexOf('\n');
+      if (newline < 0) return;
+      clearTimeout(timer);
+      try {
+        resolve(JSON.parse(stdout.slice(0, newline)));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.once('exit', (code) => {
+      clearTimeout(timer);
+      if (!stdout.includes('\n'))
+        reject(new Error(`Ownership contender exited ${code}: ${stderr}`));
+    });
+  });
+  return { child, result, exited };
+}
 let nextPort = Number(process.env.GG_TEST_PORT_START ?? 4830);
 const lastPort = nextPort + 20;
 async function freePort() {
@@ -64,7 +130,7 @@ async function stop(config) {
 
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
-  { skip: process.platform !== 'win32', timeout: 180_000 },
+  { skip: process.platform !== 'win32', timeout: 240_000 },
   async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
@@ -150,15 +216,15 @@ test(
         'same database under a different data directory cannot acquire a second gateway',
         async () => {
           const shared = await configuration('shared', {
+            StartupTimeoutSeconds: 1,
             Environment: {
               GG_DB_URL:
                 'file:' + join(first.config.DataDir, 'graphgoblin.db').replaceAll('\\', '/'),
             },
           });
-          await assert.rejects(launch(shared.path), /exited.*startup/);
-          assert.match(
-            await readFile(join(install, 'gateway.log'), 'utf8'),
-            /another GraphGoblin process holds .*graphgoblin.db.graphgoblin.lock/,
+          await assert.rejects(
+            launch(shared.path),
+            /another GraphGoblin process holds this store; check its port\/configuration/,
           );
           await health(first.config);
         },
@@ -323,20 +389,253 @@ test(
       },
     );
     await t.test(
-      'malformed store ownership is preserved and startup failure points at durable logs',
+      'malformed store ownership is preserved and refused before starting a gateway',
       async () => {
-        const failure = await configuration('failure');
+        const failure = await configuration('failure', { StartupTimeoutSeconds: 1 });
         await mkdir(failure.config.DataDir);
         const lock = join(failure.config.DataDir, 'graphgoblin.lock');
         await writeFile(lock, 'unverifiable owner');
-        await assert.rejects(launch(failure.path), /exited.*startup/);
-        assert.equal(await readFile(lock, 'utf8'), 'unverifiable owner');
-        assert.match(
-          await readFile(join(install, 'gateway.log'), 'utf8'),
-          /another GraphGoblin process holds/,
+        const before = await readFile(join(install, 'gateway.log'), 'utf8');
+        await assert.rejects(
+          launch(failure.path),
+          /Store ownership could not be verified \(malformed or incomplete owner record\)/,
         );
+        assert.equal(await readFile(lock, 'utf8'), 'unverifiable owner');
+        assert.equal(await readFile(join(install, 'gateway.log'), 'utf8'), before);
+      },
+    );
+    await t.test(
+      'reused live PID in both locks and guards permits exactly one cold gateway',
+      async () => {
+        const reused = await configuration('reused-pid');
+        await mkdir(reused.config.DataDir);
+        const oldOwner = {
+          pid: process.pid,
+          windowsCreationTime: '134000000000000000',
+          token: randomUUID(),
+        };
+        for (const file of [
+          'graphgoblin.lock',
+          'graphgoblin.lock.reclaim',
+          'graphgoblin.db.graphgoblin.lock',
+          'graphgoblin.db.graphgoblin.lock.reclaim',
+        ]) {
+          await ownershipFixture(join(reused.config.DataDir, file), oldOwner);
+        }
+        try {
+          await Promise.all([launch(reused.path), launch(reused.path)]);
+          const running = await health(reused.config);
+          const record = JSON.parse(
+            await readFile(join(reused.config.DataDir, 'graphgoblin.lock'), 'utf8'),
+          );
+          assert.equal(String(record.pid), running.pid);
+          assert.match(record.windowsCreationTime, /^[1-9][0-9]{16,18}$/);
+          assert.notEqual(record.windowsCreationTime, '134000000000000000');
+          process.kill(process.pid, 0);
+        } finally {
+          await stop(reused.config);
+        }
+      },
+    );
+    await t.test(
+      'a protected system PID with a different verified identity is recovered without touching that process',
+      async () => {
+        const discovery = `
+          $ErrorActionPreference='Stop'; $selected=$null;
+          $candidates=Get-CimInstance Win32_Process -Filter "Name = 'csrss.exe' OR Name = 'lsass.exe' OR Name = 'services.exe' OR Name = 'unsecapp.exe' OR Name = 'wininit.exe' OR Name = 'winlogon.exe'";
+          foreach($candidate in $candidates) {
+            if ($null -eq $candidate.CreationDate) { continue }; $probe=$null;
+            try { $probe=[Diagnostics.Process]::GetProcessById([int]$candidate.ProcessId); $null=$probe.get_HasExited() }
+            catch {
+              $cause=$_.Exception.GetBaseException();
+              if ($cause -is [ComponentModel.Win32Exception] -and $cause.NativeErrorCode -eq 5) {
+                $selected=[pscustomobject]@{pid=[int]$candidate.ProcessId;name=$candidate.Name;windowsCreationTime=$candidate.CreationDate.ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture);deniedOperation='Process.HasExited';errorCode=5}; break;
+              }
+            } finally { if ($null -ne $probe) { $probe.Dispose() } }
+          }
+          ConvertTo-Json -InputObject $selected -Compress
+        `;
+        const selected = JSON.parse(
+          (
+            await execute(
+              'powershell.exe',
+              ['-NoProfile', '-NonInteractive', '-Command', discovery],
+              { env, windowsHide: true, timeout: 15_000 },
+            )
+          ).stdout,
+        );
+        assert.ok(
+          selected,
+          'Required protected-process regression could not find a system PID with denied HasExited and queryable CreationDate.',
+        );
+        assert.equal(selected.errorCode, 5);
+        assert.match(selected.windowsCreationTime, /^[1-9][0-9]{16,18}$/);
+        const reused = await configuration('reused-protected-pid');
+        await mkdir(reused.config.DataDir);
+        const previous = {
+          pid: selected.pid,
+          windowsCreationTime: (BigInt(selected.windowsCreationTime) - 10000000n).toString(),
+          token: randomUUID(),
+        };
+        const fixtures = [];
+        for (const file of [
+          'graphgoblin.lock',
+          'graphgoblin.lock.reclaim',
+          'graphgoblin.db.graphgoblin.lock',
+          'graphgoblin.db.graphgoblin.lock.reclaim',
+        ]) {
+          fixtures.push(await ownershipFixture(join(reused.config.DataDir, file), previous));
+        }
+        const state = await execute(
+          process.execPath,
+          [join(root, 'apps/api/dist/instance-identity.js'), '--store-state'],
+          {
+            cwd: root,
+            env: {
+              ...env,
+              GG_DATA_DIR: reused.config.DataDir,
+              GG_PORT: String(reused.config.Port),
+              GG_WEB_DIST: join(root, 'apps/web/dist'),
+            },
+            windowsHide: true,
+            timeout: 30_000,
+          },
+        );
+        assert.equal(JSON.parse(state.stdout).state, 'free');
+        for (const fixture of fixtures)
+          assert.equal(await readFile(fixture.path, 'utf8'), fixture.contents);
+        try {
+          await launch(reused.path);
+          const running = await health(reused.config);
+          assert.notEqual(Number(running.pid), selected.pid);
+          const { windowsProcessIdentity } =
+            await import('../../apps/api/dist/windows-process-identity.js');
+          assert.equal(
+            (await windowsProcessIdentity(selected.pid)).identity,
+            selected.windowsCreationTime,
+          );
+          console.log(
+            JSON.stringify({
+              evidence: 'protected-system-pid-reuse',
+              selected,
+              gatewayPid: running.pid,
+            }),
+          );
+        } finally {
+          await stop(reused.config);
+        }
+      },
+    );
+    await t.test(
+      'matching and unknown identities preserve locks, guards and the live process',
+      async () => {
+        const { windowsProcessIdentity } =
+          await import('../../apps/api/dist/windows-process-identity.js');
+        const { identity: creationTime } = await windowsProcessIdentity(process.pid);
+        assert.match(creationTime, /^[1-9][0-9]{16,18}$/);
+        for (const [name, record] of [
+          ['matching', { pid: process.pid, windowsCreationTime: creationTime }],
+          ['pid-only', { pid: process.pid }],
+          ['inaccessible', { pid: 4 }],
+          ['file-guard', { pid: process.pid, windowsCreationTime: '134000000000000000' }],
+        ]) {
+          const refused = await configuration('held-' + name, { StartupTimeoutSeconds: 1 });
+          await mkdir(refused.config.DataDir);
+          const lock = join(
+            refused.config.DataDir,
+            name === 'matching' || name === 'file-guard'
+              ? 'graphgoblin.db.graphgoblin.lock.reclaim'
+              : 'graphgoblin.lock',
+          );
+          const original =
+            name === 'file-guard'
+              ? { path: lock, contents: JSON.stringify(record) }
+              : await ownershipFixture(lock, record);
+          if (name === 'file-guard') await writeFile(original.path, original.contents);
+          const before = await readFile(join(install, 'gateway.log'), 'utf8');
+          await assert.rejects(
+            launch(refused.path),
+            name === 'matching'
+              ? /another GraphGoblin process holds this store/
+              : /Store ownership could not be verified/,
+          );
+          assert.equal(await readFile(original.path, 'utf8'), original.contents);
+          assert.equal(await readFile(join(install, 'gateway.log'), 'utf8'), before);
+          process.kill(process.pid, 0);
+        }
       },
     );
     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));
+  },
+);
+
+test(
+  'independent API processes never share ownership while reclaiming a reused PID',
+  { skip: process.platform !== 'win32', timeout: 180_000 },
+  async () => {
+    await mkdir(join(root, '.tmp'), { recursive: true });
+    const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-contention-'));
+    const { windowsProcessIdentity } =
+      await import('../../apps/api/dist/windows-process-identity.js');
+    const { identity } = await windowsProcessIdentity(process.pid);
+    assert.match(identity, /^[1-9][0-9]{16,18}$/);
+    for (let trial = 1; trial <= 3; trial++) {
+      const dataDir = join(base, `trial-${trial}`);
+      await mkdir(dataDir);
+      const previous = {
+        pid: process.pid,
+        windowsCreationTime: (BigInt(identity) - 10000000n).toString(),
+        token: randomUUID(),
+      };
+      await ownershipFixture(join(dataDir, 'graphgoblin.lock'), previous);
+      await ownershipFixture(join(dataDir, 'graphgoblin.lock.reclaim'), previous);
+      const contenders = Array.from({ length: 5 }, () => ownershipContender(dataDir));
+      try {
+        const results = await Promise.all(contenders.map((contender) => contender.result));
+        const owners = results.filter((result) => result.status === 'acquired');
+        // No successful contender is released before every result is known. The launcher
+        // mutex and in-process acquiringPaths cannot serialize these separate API writers.
+        for (const owner of owners) {
+          const contender = contenders.find(({ child }) => child.pid === owner.pid);
+          assert.equal(contender.child.exitCode, null);
+          process.kill(owner.pid, 0);
+        }
+        console.log(
+          JSON.stringify({
+            evidence: 'independent-api-lock-contention',
+            trial,
+            results,
+            artifacts: dataDir,
+          }),
+        );
+        assert.equal(
+          owners.length,
+          1,
+          'Expected exactly one live owner after stale-guard reclamation.',
+        );
+        for (const result of results) {
+          if (result.status === 'acquired') continue;
+          assert.equal(result.status, 'refused');
+          assert.match(
+            result.error,
+            /another GraphGoblin process holds|Store ownership could not be verified/,
+          );
+        }
+        const recorded = JSON.parse(await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8'));
+        assert.equal(recorded.pid, owners[0].pid);
+      } finally {
+        for (const { child } of contenders) child.stdin.end();
+        await Promise.all(
+          contenders.map(async ({ child, exited }) => {
+            const closed = await Promise.race([
+              exited.then(() => true),
+              sleep(5000).then(() => false),
+            ]);
+            if (!closed) child.kill();
+            assert.equal(closed, true, 'Ownership contender did not release on stdin EOF.');
+          }),
+        );
+      }
+    }
   },
 );

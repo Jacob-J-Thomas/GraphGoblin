@@ -69,6 +69,20 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
+A successfully observed different identity proves that a PID has been reused and permits the
+same guarded reclamation as a dead PID. Recovery guards are nonempty directories with immutable
+UUID owner markers, published by atomic rename; stale readers can remove only the observed marker
+and an empty directory, never a successor owner. Old regular-file guards are refused and need
+independent verification before manual cleanup. Stop old writers before updating both binaries. The API and desktop launcher share this read-only policy
+for both locks and their `.reclaim` guards. Unavailable, denied or malformed identities remain
+held. Windows PowerShell and WMI must be available to establish a new writer's identity; the
+query is hidden and profile-free; foreign-PID probes are bounded to five seconds, while
+the cached self probe retries once with a twenty-second limit per attempt. Refusals distinguish
+verified live ownership from unverifiable ownership and retain the probe failure cause. PID-only abandoned records cannot
+prove reuse and need independent inspection if their PID now belongs to another process.
+See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
+
 `scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 
 `pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
@@ -82,7 +96,7 @@ As an engineering parameter, Windows publication uses six attempts with five del
 - Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
 - Smoke test before the data-directory lock (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` worked through `docker exec`. With the lock, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` before restarting it.
 
-The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 1h` to leave time for drain and an explicit operator choice before Docker SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only that file after confirming all GraphGoblin processes using the volume have stopped.
+The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 1h` to leave time for drain and an explicit operator choice before Docker SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only the verified stale file or guard directory after confirming all GraphGoblin processes using the volume have stopped.
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
