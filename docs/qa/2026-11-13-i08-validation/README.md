@@ -27,15 +27,19 @@ The pinned JSONata 2.2.2 patch awaits sibling array and object evaluations in or
 
 The selected-version API regression initially used `input.value` in its fixture exit expression. The API admitted the valid input and completed the run, and that expression yielded null. Correcting the fixture to use the documented `trigger.payload.value` enabled the intended completed-result assertion. The focused command filters to that one regression and leaves the three unrelated tests in the file outside the selection.
 
+The first candidate created a fresh Ajv compiler per cache miss. Under full root coverage, the existing cache-eviction test took 5,378 ms and failed its unchanged 5,000 ms limit. The corrected implementation reuses the synchronous compiler and clears its authored schema registrations after each compile, including failure. A registered meta-schema retains the generic draft-07 URI alias across cleanup. The retained package run passed all 377 tests, with 99.49% lines and 98.10% branches. Its schema cases probe 260 compiles with both built-in URIs, reuse after eviction, failure cleanup and local recursion in a cached validator across other compiles.
+
 ## Reproduction artifacts
 
 SHA-256 values below are for the retained logs. Log copies use LF line endings and omit trailing blank lines. The complete gate outputs live with the batch handoff, which records any interrupted or failing step and subsequent verification. Test criteria are encoded in the repository's domain and API test files.
 
-| Artifact                                                                     | SHA-256                                                            |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [First baseline focused run](validation-baseline.log.txt)                    | `f0b629eabc7ae49dd583a07678249872ef7693e85285b99303e3f0b161ff789f` |
-| [First API fixture run](validation-api-focused.log.txt)                      | `278bc26e1cff6e41eea9b15bd3670bfe1526f0516bc6fbfaace3d2e312901d4c` |
-| [Corrected API fixture run](validation-api-verified.log.txt)                 | `10c192b735055a35b8becfc70c98a4d9232144606f62cead7e4282e3a625f8e7` |
-| [Final focused domain and adversarial run](validation-final-focused.log.txt) | `25c4c67a0ac49808f930e2137a67600bac080a0fed3691bce110605ae7f7b077` |
+| Artifact                                                                              | SHA-256                                                            |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [First baseline focused run](validation-baseline.log.txt)                             | `f0b629eabc7ae49dd583a07678249872ef7693e85285b99303e3f0b161ff789f` |
+| [First API fixture run](validation-api-focused.log.txt)                               | `278bc26e1cff6e41eea9b15bd3670bfe1526f0516bc6fbfaace3d2e312901d4c` |
+| [Corrected API fixture run](validation-api-verified.log.txt)                          | `10c192b735055a35b8becfc70c98a4d9232144606f62cead7e4282e3a625f8e7` |
+| [Final focused domain and adversarial run](validation-final-focused.log.txt)          | `25c4c67a0ac49808f930e2137a67600bac080a0fed3691bce110605ae7f7b077` |
+| [First candidate coverage failure excerpt](validation-first-coverage-excerpt.log.txt) | `75254dad279d01e40329618792dd55c80098db5b7980f7bb5a7b5d44fa099dbf` |
+| [Corrected full domain coverage](validation-compiler-domain-coverage.log.txt)         | `c44f0761a2ab3167d97b8fab5e60afa26fb02d2eb98d0e7643ba3362efe2990d` |
 
-The execution logic at this checkpoint corresponds to Git blobs `be6bdb5a68376c5847ff152e57dbc5c3429c2192` (expression.ts), `c672dcaba6a06e87f0ec908f15f2279873d929fc` (json-schema.ts) and `3f843d706e458e7db63fdc7c94b2cb91f1919fcc` (the JSONata patch).
+The execution logic at this checkpoint corresponds to Git blobs `be6bdb5a68376c5847ff152e57dbc5c3429c2192` (expression.ts), `e54f9e35ffa78e17bb4b0e5c83908eba27021572` (json-schema.ts) and `3f843d706e458e7db63fdc7c94b2cb91f1919fcc` (the JSONata patch).

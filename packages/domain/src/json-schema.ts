@@ -5,6 +5,14 @@ import type { JsonSchema } from '@graphgoblin/contracts';
 // ajv-formats is CommonJS; under NodeNext the default import is the plugin function itself.
 const addFormats = addFormatsImport as unknown as (instance: Ajv) => Ajv;
 
+const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
+addFormats(ajv);
+// Ajv clears string aliases along with authored references. Register the built-in
+// draft-07 alias as a meta-schema so it survives between compilations.
+const draftAlias = 'http://json-schema.org/schema';
+ajv.removeSchema(draftAlias);
+ajv.addMetaSchema({ $ref: 'http://json-schema.org/draft-07/schema' }, draftAlias);
+
 const cache = new Map<string, ValidateFunction>();
 const CACHE_LIMIT = 256;
 
@@ -42,11 +50,15 @@ function compileSchema(schema: JsonSchema): ValidateFunction {
   const key = stableStringify(schema);
   const hit = cache.get(key);
   if (hit) return hit;
-  // Ajv retains references to schema data and registers root and nested IDs.
-  // Compile a snapshot in its own registry so the cache always matches its key.
-  const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
-  addFormats(ajv);
-  const compiled = ajv.compile(JSON.parse(key));
+  let compiled: ValidateFunction;
+  try {
+    // The validator retains schema data, so give it a snapshot of the cache key.
+    compiled = ajv.compile(JSON.parse(key));
+  } finally {
+    // Compilation is synchronous. Clear root and nested registrations even when
+    // compilation fails. Previously compiled validators keep their resolved refs.
+    ajv.removeSchema();
+  }
   if (cache.size >= CACHE_LIMIT) {
     const first = cache.keys().next().value;
     if (first !== undefined) cache.delete(first);
