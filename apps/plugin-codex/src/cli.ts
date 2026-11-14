@@ -52,12 +52,20 @@ export function isEntryPoint(entry: string | undefined, moduleUrl: string): bool
   }
 }
 
+export async function runCli(
+  argv: readonly string[],
+  packageDir: string,
+  log: (line: string) => void,
+): Promise<number> {
+  try {
+    return await run(argv, packageDir, log);
+  } catch (error) {
+    log(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+}
+
 if (isEntryPoint(process.argv[1], import.meta.url)) {
   const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  try {
-    process.exitCode = await run(process.argv.slice(2), packageDir, console.error);
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  }
+  process.exitCode = await runCli(process.argv.slice(2), packageDir, console.error);
 }
