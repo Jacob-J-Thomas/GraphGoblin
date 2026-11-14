@@ -6,12 +6,12 @@ The owner authorized backlog reconciliation followed by I08, bounded runtime rec
 
 Baseline: `b3b5e1874a8252cc01c065d18fef42cbfbe075b4`, including merged PR #457. The owner checkout was clean. Separate PR #460 and issue #458 retain their explicit owner merge hold and incident workflow; this batch does not merge or modify them. Recheck target drift before each integration.
 
-| Lane                             | Scope                                                                                       | Sequence and state                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| I08 authoring                    | #290; #311/#312/#313; #64, #323, #125, #221, #237, #207, #209, #273, #208, #228, #229, #235 | First lane. Begin with #228/#229; conditional reproduction precedes corrective editor changes.                     |
-| Claude Code plugin               | #455; #344 shared builder-output safety prerequisite                                        | Alongside I08. Builder safety precedes shared assembly.                                                            |
-| Runtime correctness and recovery | #361, #381 incorporating #414, #410, #419                                                   | After engineering delivery of the first two lanes.                                                                 |
-| Launcher delivery                | #435, #436, #438, #456                                                                      | After runtime recovery. #456 requires its written architecture plan and human plan approval before implementation. |
+| Lane                             | Scope                                                                                       | Sequence and state                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| I08 authoring                    | #290; #311/#312/#313; #64, #323, #125, #221, #237, #207, #209, #273, #208, #228, #229, #235 | First lane. Begin with #228/#229; conditional reproduction precedes corrective editor changes.                                     |
+| Claude Code plugin               | #455; #344 shared builder-output safety prerequisite                                        | Alongside I08. Builder safety precedes shared assembly.                                                                            |
+| Runtime correctness and recovery | #361, #381 incorporating #414, #410, #419                                                   | After engineering delivery of the first two lanes.                                                                                 |
+| Launcher delivery                | #435, #436, #438, #456                                                                      | After runtime recovery. The owner approved #456's written plan on 2026-11-14; native and interactive verification remain required. |
 
 #409/#434/#437 remain optional owning-path follow-ups, not blanket dispatch. #407/#452 are narrow gate prerequisites only if a current reproduction establishes need. Full installers, the remaining macOS/distribution epics, broad mobile editing, themes, additional providers, attachments and post-1.0 quota handling remain parked. A lane can advance after its engineering gates without claiming outstanding human acceptance complete.
 
@@ -25,6 +25,12 @@ Baseline: `b3b5e1874a8252cc01c065d18fef42cbfbe075b4`, including merged PR #457. 
 - Do not alter the owner checkout, installed application, credentials, real store or ports 4747/4748. Use disposable data and alternate loopback ports. Preserve existing worktrees, including the separate #460 incident branch.
 - No public marketplace release, personal Claude installation, paid overages or model substitution is included. Distinguish scripted provider boundaries, real CLI/tool loading, native-platform behavior and live-model judgment in evidence.
 - Serialize full local build/coverage/browser suites between workers. Focused checks can run independently; load-related failures are recorded rather than retried into a claimed first-pass success.
+
+## Current model ownership
+
+The owner clarified [delivery routing on 2026-11-14](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6873399619): GPT owns architecture/backend work, Claude owns UI design and implementation, and the opposite family independently adversarially reviews each slice. Select model tier and effort for the actual task; delegate easier implementation to faster agents. The fresh Astra max final audit and total scan cap remain unchanged.
+
+Validator, builder and integration architecture uses GPT-6.1 Sol xhigh with Claude Opus 5.5 xhigh review. Stateful form/canvas UI uses Claude Opus 5.5 xhigh with independent GPT-6.1 Sol xhigh review. The in-progress #235 GPT proposal was frozen uncommitted and handed to Claude for design and final implementation. Mixed #209/#273 work separates GPT architecture/domain and Claude UI surfaces into bounded slices. The test-only #452 prerequisite is assigned to GPT-6 Luna xhigh; it changes observation timing, never product focus behavior or assertion deadlines.
 
 ## Reconciliation completed
 
@@ -47,6 +53,12 @@ The old I01–I07 result remains 59/59 engineering implementations merged, with 
 | Plugin output ownership: #344 | GPT-6.1 Sol xhigh | Claude Opus 5.5 xhigh, pending | Separate agent, pending | Fresh Astra max, pending | Dispatched alongside I08; plugin #455 follows its safe assembly primitive. |
 
 No implementation PR in this new batch has a review verdict or merge authorization from an auditor at this checkpoint. Exact heads, target tips, commands, CI links, scan counts and finding dispositions will be added as each package reaches those gates.
+
+## macOS plan approval
+
+The owner explicitly approved the [written #456 plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6872747350) in the delivery chat on 2026-11-14. The [approval record](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6873189605) preserves the decision: per-user Swift/AppKit launcher, saved Node path, bounded start or reuse of the matching gateway, default-browser handoff and detached gateway lifetime. The architecture hold is satisfied. The human-only `plan-approved` label was not self-applied by the orchestrator.
+
+The owner can make an authorized logged-in Mac available. This is future access, not a connected device or a native acceptance result. Hosted macOS CI and actual Finder/Dock verification remain separate evidence, and a reviewed candidate with a concrete checklist precedes interactive verification. No full installer, autostart, automatic upgrade or dedicated PWA-window control is added to this scope.
 
 ## Runtime refinement
 
