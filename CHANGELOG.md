@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
+  Separate evaluations of cached source keep their own depth, deadline, bindings and
+  timestamp (#228).
+- Authored JSON Schemas resolve references within their own document, so loops and versions
+  can reuse the same schema IDs without affecting each other's validation (#229). **Upgrade:**
+  if a workflow depended on a reference to a schema owned by another definition, copy that
+  schema into the referring document's `definitions`, use a local `$ref` such as
+  `#/definitions/input`, and publish the corrected workflow.
+
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports
   unverifiable ownership instead of an unexplained access-denied error (ADR-0069). **Upgrade:**
@@ -324,7 +333,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
-- The Codex plugin builder preserves existing files unless their complete tree matches the generated output inventory. If `dist/marketplace` predates that inventory or contains local edits, move the directory aside after reviewing it, then rebuild. An unused `--out` path also works. Reinstall the rebuilt marketplace to refresh the cached plugin. (#344)
+- The Codex plugin builder replaces only an empty or previously generated output with no detectable foreign filesystem data. It checks Windows named streams and user-visible macOS and Linux extended attributes, including resource forks. Replacing a tree requires Windows PowerShell with `Add-Type`, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If `dist/marketplace` predates the ownership inventory, contains local edits or metadata, or cannot be inspected, use an unused `--out` or move the directory aside after reviewing it. Reinstall the rebuilt marketplace to refresh the cached plugin. (#344)
 
 - Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
 

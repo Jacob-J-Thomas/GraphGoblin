@@ -7,12 +7,12 @@ export default createVitestConfig({
     server: {
       deps: { external: [/[/\\]tooling[/\\](?:scripts|perf)[/\\](?!.*\.test\.mjs$).*\.mjs$/] },
     },
-    include: ['scripts/**/*.test.mjs', 'perf/**/*.test.mjs', 'plugin-output.test.mjs'],
+    include: ['scripts/**/*.test.mjs', 'perf/**/*.test.mjs', '*plugin*.test.mjs'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     coverage: {
       autoAttachSubprocess: true,
-      include: ['scripts/**/*.mjs', 'perf/**/*.mjs', 'vitest.shared.mjs', 'plugin-output.mjs'],
+      include: ['scripts/**/*.mjs', 'perf/**/*.mjs', 'vitest.shared.mjs', '*plugin*.mjs'],
       // Acceptance files are executable test suites, not maintained runtime modules.
       exclude: ['**/*.test.mjs', '**/*.acceptance.mjs', '**/__fixtures__/**'],
     },

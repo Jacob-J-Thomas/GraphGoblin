@@ -450,6 +450,8 @@ The builder stages the complete marketplace and checks the previous generated fi
 
 The registration invokes Node with separate arguments for a bundled runtime check and the absolute `apps/mcp/dist/main.js` entry. The MCP process reads `GG_API_URL` and `GG_API_KEY` from the Claude Code process environment. Use `GG_NODE_BINARY` or PATH to select Node 22.22.2 or later in major 22. A rebuilt or relocated checkout needs a refreshed artifact and, for an installed copy, a refreshed copy. See [local build and installation](../apps/plugin-claude/README.md) and [ADR-0072](decisions/ADR-0072-claude-code-loop-plugin.md).
 
+Replacing an existing plugin output also requires the platform metadata check before and after staging the old tree. It checks the root, expected directories and files, and the ownership marker. Windows refuses named data streams through its in-box Windows PowerShell and Win32 APIs. macOS uses `/usr/bin/xattr` and Linux uses system Python 3.8 or later at `/usr/bin/python3` to refuse extended attributes visible to the invoking user. An unsuccessful inspection preserves the old tree. These tools run as the invoking user during replacement and do not read metadata contents.
+
 ## Client (Decided)
 
 `packages/api-client` (`@graphgoblin/api-client`) is the one HTTP client for the web app and the MCP server. It depends only on `contracts` and `openapi-fetch`, and uses nothing but `fetch`, web streams, and `TextDecoderStream`, so it runs in browsers and Node 18+.

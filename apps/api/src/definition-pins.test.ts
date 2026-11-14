@@ -152,6 +152,71 @@ const answer = async (id: string) => {
 const events = async (id: string) =>
   (await call<{ items: RunEvent[] }>('GET', `/runs/${id}/events`)).items;
 
+it('validates manual inputs against the selected schema across loops, versions and restart', async () => {
+  const schemaId = 'https://example.test/typed-input';
+  async function publish(loopId: string | undefined, name: string, type: 'integer' | 'string') {
+    const definition: LoopDefinitionInput = {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name,
+      nodes: [
+        {
+          id: 'start',
+          kind: 'trigger',
+          label: 'Start',
+          config: {
+            type: 'manual',
+            inputSchema: {
+              $id: schemaId,
+              type: 'object',
+              required: ['value'],
+              definitions: { value: { type } },
+              properties: { value: { $ref: '#/definitions/value' } },
+            },
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'trigger.payload.value' } },
+      ],
+      edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    };
+    const id =
+      loopId ?? (await call<{ loop: { id: string } }>('POST', '/loops', { definition })).loop.id;
+    if (loopId) await call('PUT', `/loops/${id}/draft`, { definition });
+    const { version } = await call<{ version: LoopVersionRecord }>('POST', `/loops/${id}/publish`);
+    return { loopId: id, versionId: version.id, type };
+  }
+
+  const checkInputs = async (version: Awaited<ReturnType<typeof publish>>) => {
+    const { loopId, versionId, type } = version;
+    const url = `/loops/${loopId}/runs`;
+    const value = type === 'integer' ? 17 : 'seventeen';
+    const wrongType = type === 'integer' ? 'seventeen' : 17;
+    expect(await call('POST', url, { versionId, input: { value: wrongType } }, 400)).toMatchObject({
+      code: 'INVALID_INPUT',
+      detail: `trigger input is invalid: /value must be ${type}`,
+    });
+    const { run: accepted } = await call<{ run: RunRecord }>('POST', url, {
+      versionId,
+      input: { value },
+    });
+    expect(accepted.versionId).toBe(versionId);
+    await idle();
+    expect(await run(accepted.id)).toMatchObject({ status: 'succeeded', result: value });
+  };
+
+  await open();
+  const numberVersion = await publish(undefined, 'Number Input', 'integer');
+  const textVersion = await publish(numberVersion.loopId, 'Number Input', 'string');
+  const otherLoopVersion = await publish(undefined, 'Other Number Input', 'integer');
+  await checkInputs(numberVersion);
+  await checkInputs(textVersion);
+  await checkInputs(otherLoopVersion);
+  await close();
+  await open();
+  await checkInputs(textVersion);
+  await checkInputs(otherLoopVersion);
+  await checkInputs(numberVersion);
+}, 120_000);
+
 describe('runs pin their definition across edits, Settings changes and a restart', () => {
   it(
     'keeps published and draft runs on their start definition and defaults',
