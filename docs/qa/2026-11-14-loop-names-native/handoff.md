@@ -1,0 +1,181 @@
+# #209 loop names: Claude UI phase 2 handoff (browser, visual, native, coverage)
+
+Status: phase 2 evidence complete for this brief; one test-fixture correction applied (uncommitted, 8 lines).
+**Not merge-ready.** Remaining gates are listed at the end. Root owns integration and the combined PR
+("Part of #209", no closing keyword). Nothing was committed, pushed, stashed, restacked or written to an
+issue/PR by me.
+
+## Identity and environment
+
+- Model: Claude Sonnet 5.5 (`claude-sonnet-5-5`). Effort requested: xhigh. I cannot observe my own effort
+  setting, so treat "xhigh" as requested, not verified.
+- Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin`, branch
+  `codex/gg-20261114-loop-names`, frozen start HEAD `5df84b2d434fa367a241891a57df13f6401cf17b`
+  (tree `2428d35ff2db10242bf5bf8d10bc9c249075b976`). Working tree at start: clean (`git-status-start.txt`).
+  Working tree now: HEAD plus exactly one modified file, `apps/web/e2e/responsive.spec.ts`
+  (`correction-batch-1.diff`, sha256 `835a1729…6d2a`; file sha256 `27e3ad19e376d875be253c5c2983f151e868cc5078cef3629dd62b5b6d159201`).
+- Node `v22.23.4` (confirmed in the shell), pnpm `12.8.1` via `pnpm.cmd`. Playwright `1.63.0`; real Microsoft Edge
+  channel `msedge` `157.0.4341.46` (UA `Chrome/153.0.8010.12`), Windows 11. Headless for all runs.
+- Candidate source hash: `git ls-files | sha1sum | sha256` of all tracked files at HEAD =
+  `90f33f205fe2d401b26372defde9b003a93ea943e9b7a072b357e0d7637eac92` (`candidate-start.txt`). Per-file hashes of the
+  #209 web/docs/CHANGELOG files with the correction applied: `source-sha256.txt` (39 lines).
+- Build: `pnpm.cmd build` exit 0, 11/11 Turbo tasks (contracts replayed from cache, the other 10 executed, web
+  included), `logs/build.log`, 04:10:43 to 04:11:05. Output listing hashes (`build-sha256.txt`):
+  `apps/web/dist` 28 files `b2e7813e…df96`; `apps/web/dist-goblin` 28 files `f9f40f3d…a266`; `apps/api/dist` 306 files
+  `1c8a8efb…4b`; `packages/infrastructure/dist` 293 files `b91846ad…2684`. The one correction is an `e2e/` spec, outside every
+  build output, so these hashes describe the candidate with and without it.
+- Artifacts: everything is under this directory. `events.jsonl`, `latest.md`, `launch.json` belong to the launcher.
+  Phase 1 assets were not touched.
+
+## Source changes made
+
+Only `apps/web/e2e/responsive.spec.ts` (test fixture): `seedDialogs` created its loop as
+`uniqueLoopName('responsive dialogs')` but the test then waited for the literal heading `responsive dialogs`
+(`exact`), so it could never find it. `seedDialogs` now returns the `name` it created and the test passes it to
+`openDraftTab`. No product source, no backend, no docs, no thresholds, deadlines, retries or test scope changed.
+Correction batches used: 1 of 2.
+
+## First failures, corrections and non-product mistakes (preserved, nothing retried silently)
+
+| #   | What failed first                                                                                                                                                                     | Cause                                                                                                                                                                                                                                                          | Action                                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Whole-suite run `responsive.spec.ts:420` "all nine node dialogs fit their controls at 360 and 768 px", dark and light (`getByRole('heading', {name:'responsive dialogs'})` not found) | phase-1 fixture renamed the loop with `uniqueLoopName` but not the heading wait                                                                                                                                                                                | fixed as above; recheck of those two tests only: 2 passed (`e2e-recheck-1/`)                                                                                                                                                                                                                                                                                                              |
+| 2   | My first launch `pnpm.cmd … test:e2e -- e2e/loop-names.spec.ts e2e/template-gallery.spec.ts …`                                                                                        | pnpm forwarded the literal `--`, so Playwright ignored my filters and began all 472 tests                                                                                                                                                                      | I stopped my own process tree (`taskkill /T`) at 232 passed, 0 failed, because it was not the targeted run the brief orders first and the 15-minute background limit would have cut it mid-suite. Log kept in `e2e-aborted-launch-0/` with a README; not used as evidence of anything. Its 563 MB of live-trace output in the git-ignored `apps/web/test-results/` was deleted afterwards |
+| 3   | First visual capture: 7 of 37 steps failed                                                                                                                                            | my script, not the product: at 360 px the Loop settings panel is an overlay that covered the node I clicked, and my "equivalent" 120-character names doubled their spaces past the 120-character limit so `maxLength` truncated them into non-equivalent names | script fixed, rerun on a fresh store: 37/37. First run's images kept in `screens-run1-superseded/` and `native/visual.v1.mjs`. I did not verify what the truncated names did; that store was throwaway and is gone                                                                                                                                                                        |
+| 4   | `native/shape.mjs` probe hung                                                                                                                                                         | my script left its child gateway attached                                                                                                                                                                                                                      | killed my own tree (PIDs 20988/31008), made `lib.mjs` stop children, port 4794 confirmed free                                                                                                                                                                                                                                                                                             |
+
+## Test results (actual counts, retries 0, real Edge)
+
+- Targeted `e2e/loop-names.spec.ts` (5) + `e2e/template-gallery.spec.ts` (11): **16 passed, 0 failed** in 30.0 s
+  (`e2e-targeted-1/`, JSON `results.json`). Both specs also passed inside the whole-suite run.
+- Whole browser suite, run once on the candidate, shared in-memory gateway: **472 tests in 66 files: 469 passed,
+  2 failed, 1 skipped, 0 flaky, max retry 0**, 28.4 min (04:37 to 05:05; `e2e-full/run.log`, `results.json`,
+  failure traces `e2e-full/test-results/responsive-*/trace.zip`, hashes in `failure-traces-sha256.txt`). The skip is
+  `live.spec.ts` "LIVE: build, publish, and run an inference loop against Codex", which needs a live provider and is
+  skipped by design; no live provider was used. The 2 failures are item 1 above. After the correction I rechecked only
+  those 2 (both passed, 18.9 s); I did not rerun the whole suite because nothing else changed. No collision of any other
+  fixture name appeared (no other `LOOP_NAME_CONFLICT` in the run).
+- Web package coverage, unchanged thresholds (90% lines/branches/functions/statements, shared in
+  `tooling/vitest.shared.mjs`, unchanged since baseline main `b3b5e187`): **199 files, 2469 tests passed**; statements 97.54%,
+  branches 93.99%, lines 98.50%, functions 97.01%; exit 0, 972 s (`coverage-web/`). The log was silent for about 10
+  minutes because this Vitest prints nothing until the end when not on a terminal; I measured progress rather than waiting
+  blind (`coverage-web/proc-snapshot-1/2.txt`: one Vitest process, CPU 1172 s then 1288 s, coverage temp files 71 then 82
+  in 50 s), so the 15-minute stop rule never applied. Per-file for the changed UI sources:
+  `coverage-web/changed-ui-files-coverage.txt` (lowest branches: `EditorToolbar.tsx` 77.77%, `LoopsPage.tsx` 78.94%; the
+  gate is package-wide, not per file).
+- Focused static checks on the final tree: `pnpm.cmd --filter @graphgoblin/web typecheck` exit 0; `… lint` exit 0;
+  `prettier --check apps/web docs/09-frontend-and-pwa.md docs/guide CHANGELOG.md` all formatted; `check:tokens` (229 files),
+  `check:layers` pass; `check:deps` exit 0 with 0 errors and 4 pre-existing `no-orphans` warnings (earlier 5 more came from my
+  aborted run's artifacts and are gone). No full root Windows check run, as instructed.
+
+## Controlled versus native evidence
+
+- **Controlled:** the Playwright suites run against `e2e/server.ts` (`createTestApp`, in-memory store, fake
+  harnesses, built web `dist`). That is all of steps 1 and 2.
+- **Native:** `node apps/api/dist/main.js` from this build, real SQLite file store in a throwaway data dir under
+  `native/data-*`, built web app served from it, real headless Edge, ports 4791 to 4795 (never 4747/4748), loopback only,
+  no providers. Scripts: `native/visual.mjs`, `native/race.mjs`, `native/aria.mjs`, `native/lib.mjs` (hashes in
+  `native-scripts-sha256.txt`). I used the Playwright library from a script, not the `playwright-cli` wrapper the skill prefers,
+  because the matrix (2 themes x 3 widths x 4 surfaces, forced colours, API seeding and a second client) is not practical as
+  separate CLI invocations. Pages are real served pages after real interactions; no image is composited or mocked.
+- **Not exercised in this phase:** startup refusal and manual repair for a store that already holds an equivalent pair
+  (backend-owned; GPT's API/SQLite matrices are in `docs/qa/2026-11-14-loop-names/`), keyboard use of real
+  assistive technology, and any Safari/Firefox engine.
+
+## Visual inspection (actual images viewed; all in `screens/`, hashes in `screens-sha256.txt`)
+
+I viewed all 41 PNGs of the final run (37/37 steps, `readback.json` has layout, focus, tab order and text for each):
+
+- Create conflict, `{dark,light}-{360,768,1440}-create-conflict.png` (6).
+- Import name form, `{dark,light}-{360,768,1440}-import-name-form.png` (6).
+- Template naming, `{dark,light}-{360,768,1440}-template-naming.png` (6).
+- Editor name notice, `{dark,light}-{360,768,1440}-editor-name-notice.png` (6).
+- Node-dialog notice, `{dark,light}-{360,1440}-editor-node-dialog-notice.png` (4).
+- Forced colours (`forcedColors: 'active'`): `forced-colors-360-create-focus-suggestion.png`,
+  `forced-colors-768-editor-name-notice.png`, `forced-colors-360-template-naming.png` (3).
+- Keyboard focus on **Use "suggestion"**, normal colours: `{dark,light}-360-focus-suggestion.png` (2).
+- Long names (120 characters, spaced and unbroken) at 360: `{dark,light}-360-long-{create-conflict,import-name-form,template-naming,editor-name-notice}.png` (8).
+- Plus 4 post-race images viewed from `native/race/` (see below), not counted above.
+
+Findings: **no defect, no UI change.** Readback across all 41 layout measurements (37 steps; the four editor steps with a dialog measure it too): `scrollWidth` equals the viewport
+width in every case and no element in the guidance region overflows. Focus is a 2 px solid ring (green dark `rgb(132,199,67)`,
+green light `rgb(82,142,30)`, cyan under forced colours) with `:focus-visible` true on every keyboard-focused control.
+Tab order measured: Create then Use "suggestion"; import field then Import as new loop then Cancel; template field then Create
+draft then Cancel; editor Use "suggestion" then Edit name then Try again (node dialog has no Edit name, and says to close the
+dialog first). Long text wraps (`wrap-anywhere`) and the suggestion buttons ellipsize while their DOM text, and so their
+accessible name, stays whole. Forced colours lose the warning tints but keep text, borders, the icon and a cyan focus ring.
+Cosmetic observations I left alone: with a 120-character unbroken name the closing period lands at the start of the next
+line; and the editor heading mirrors the typed name while it is unsaved, which is existing behaviour.
+
+**Assistive technology.** No screen-reader speech was captured or heard. NVDA is not installed on this host; Windows Narrator
+exists but I did not drive or record it, and DOM roles do not establish speech. What I do have is the browser's computed
+accessibility tree and wiring (`native/aria-snapshots.json`, `logs/aria-run-1.log`): Create has `alert` plus `aria-invalid` plus
+`aria-describedby` on the field; the import region, template card and editor notice are polite `status` regions; the Name
+field in the editor is `aria-invalid` and described by the refusal while the page holds 0 `alert` elements (no second
+announcement). I have not created any new owner gate from this.
+
+## Second-client race (native; `native/race/race-results.json`, 53/53 checks passed, `logs/race-run-1.log`)
+
+Each path: A receives a 409 with a suggestion S1, a second client claims S1, A taps the suggestion (no request is sent) and
+retries deliberately, is refused again with a fresh suggestion S2, keeps its text, creates nothing, sends nothing during
+2.5 s idle, and succeeds only after another explicit action on S2. Real bodies (all `409`, `code: LOOP_NAME_CONFLICT`):
+
+| Path                                                  | Refusal 1 `suggestedName` | Second client claimed            | Refusal 2 `suggestedName`      | Final, explicit action           | Server IDs                                                  |
+| ----------------------------------------------------- | ------------------------- | -------------------------------- | ------------------------------ | -------------------------------- | ----------------------------------------------------------- |
+| Create (client B = second Edge window through the UI) | `RACE CREATE BASE copy`   | 201 `01M7CT2DZYYTJ79D03B0NB4R1Q` | `RACE CREATE BASE copy copy`   | 201 `01M7CT2HXYGJ5VRHD5YV4QRG0K` | original `01M7CT2CABDH5H6T2R3DJ1DTD4` unchanged             |
+| Import (B = plain HTTP client)                        | `Race import base copy`   | 201 `01M7CT2JWM3C79DQBQ15MCT5T6` | `Race import base copy copy`   | 201 `01M7CT2P3JKJS8NTJA31XSHADR` | original `01M7CT2J30DKVA691WVBSG7G4E` unchanged             |
+| Template copy (B = another template copy)             | `Starter assistant copy`  | 201 `01M7CT2PZ6SSP3KFAP1TGRHN9J` | `Starter assistant copy copy`  | 201 `01M7CT2T7H5YWFZTRFN4G1FHAJ` | first copy `01M7CT2P5X2HEVV8CZS3AAW713`, catalog byte-equal |
+| Editor rename of a **published** loop                 | `race editor TARGET copy` | 201 `01M7CT2VQTVVGK5B2WDG1Y5NKZ` | `race editor TARGET copy copy` | PUT draft 200                    | `01M7CT2TD6DVPE4A4B5Q2Z9MA8`                                |
+
+Request logs per path: Create `POST /loops` 409, 409, 201; Import `POST /loops/import` 409, 409 (`?name=Race%20import%20base%20copy`),
+201 (`…%20copy%20copy`), all three bodies identical to the original export; Template `POST /templates/starter/draft` 409, 409
+(body `{"name":"Starter assistant copy"}`), 201; Editor `PUT /loops/{id}/draft` 409, 409, 200. In the editor path the
+published loop had no draft before the race (`draftVersionId` absent) and still had none after both refusals; after the accepted
+save the same loop id carries `loop.name` and the new draft named `race editor TARGET copy copy` while its published version
+is still `Race editor mine` and `currentVersionId` is unchanged. That historical difference is by design and nothing rewrote
+stored content. Post-race images viewed: `native/race/{create,import,template,editor}-after-race.png` (updated suggestion
+shown, refused text kept, **Use** button waiting).
+
+Observations for root and QA, none changed by me: (a) as phase 1 noted, a raced retry of "X copy" is refused with "X copy copy"
+because the backend derives the suggestion from the attempted name; the UI shows it as given. (b) After the refusal the
+Loops list on client A is still the list fetched at page load, so it does not yet show the loop that now holds the name; it is
+corrected by the next list fetch. It is an improvement candidate, not an acceptance defect I could demonstrate.
+
+## Criterion matrix
+
+| Criterion                                                                                                      | Evidence                                                                                                        | Status                                                   |
+| -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Create rejects case/whitespace-equivalent names; original unchanged                                            | `loop-names.spec.ts` test 1 (targeted and whole suite); race Create; `*-create-conflict.png`                    | met (controlled and native)                              |
+| Rename rejects; authored text and device draft kept; server loop, id, draft unchanged; reload retains          | `loop-names.spec.ts` test 2; race Editor (published loop); `*-editor-name-notice.png`                           | met                                                      |
+| Import 409 with suggestion; retry sends the original document plus `name`; distinct id, same graph             | `loop-names.spec.ts` test 3; race Import (body identical x3, nodes/edges equal); `*-import-name-form.png`       | met                                                      |
+| Template repeat: catalog and original unchanged; explicit name or accepted suggestion creates a distinct draft | `template-gallery.spec.ts` repeated-copy test; race Template                                                    | met                                                      |
+| Suggestion claimed before retry: refused, data preserved, new suggestion, new explicit action                  | race, 4 paths, 53/53                                                                                            | met (native)                                             |
+| `DRAFT_CONFLICT` stays distinct and first                                                                      | `loop-names.spec.ts` test 4                                                                                     | met (controlled)                                         |
+| No automatic retry or duplicate creation                                                                       | request logs above, 2.5 s idle checks, request counts                                                           | met                                                      |
+| Narrow screen: keyboard order, no sideways scroll, visible focus                                               | `loop-names.spec.ts` test 5, gallery 390/320 tests, 41 layout readbacks, 31 `:focus-visible` readbacks all true | met                                                      |
+| Both themes, 360/768/1440, node dialog, forced colours, long names                                             | 41 images viewed                                                                                                | met, no defect                                           |
+| Whole browser suite on the candidate                                                                           | 472 tests, 469 passed, 1 skipped (live), 2 failed then fixed and rechecked                                      | met after correction; correction not yet in a full rerun |
+| Web coverage 90%/90% unchanged                                                                                 | 98.50% lines, 93.99% branches                                                                                   | met                                                      |
+| Screen-reader speech                                                                                           | not established; accessibility-tree readback only                                                               | open, no owner gate created                              |
+| Existing duplicates repaired by hand or reset only                                                             | docs only; startup refusal not run here                                                                         | not exercised in phase 2                                 |
+
+## Process cleanup
+
+Every Playwright process, e2e gateway, native gateway and Edge instance I started is gone: precise final check in
+`process-final.txt` shows no `server.ts`, vitest, Playwright, or Playwright-launched Edge process, 0 listeners on
+4791 to 4795, 0 `msedge.exe`. Cleanup stopped only trees I started (`taskkill /T` on my own PIDs: launch-0 tree
+39716, shape probe 20988). The owner API (PID 19500, port 4747, started from `source\repos\GraphGoblin`) existed
+before I began (`process-baseline-start.txt`) and was untouched; nothing touched 4748. My git-ignored outputs
+`apps/web/test-results/` and `apps/web/coverage/` were removed (coverage summary kept in `coverage-web/`). `git status` shows only
+`apps/web/e2e/responsive.spec.ts`; the one stash entry belongs to branch `codex/github-triggers-29`, not me.
+
+## Remaining gates (exact; no merge-ready claim)
+
+1. Root to include the one-file fixture correction in the candidate commit; any later head change means the evidence above
+   needs a proportionate recheck (the correction itself was rechecked, not the whole suite).
+2. Opposite-family reviews of the separate surfaces at the exact head: OpenAI review of this UI diff; Claude review of the GPT backend.
+3. Separate independent behaviour / touched-systems QA (positive and negative per surface), including the store-with-equivalent-pair
+   startup refusal and repair path that I did not exercise.
+4. Current-head full Linux CI (including the browser job, which will now run the corrected responsive spec).
+5. Fresh Astra max whole-PR audit.
+6. Post-merge human QA only if the issue's labels require it (`docs/15-issue-workflow.md`); I have not decided or recorded that.

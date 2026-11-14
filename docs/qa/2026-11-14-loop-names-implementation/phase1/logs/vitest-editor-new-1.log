@@ -1,0 +1,229 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.name-conflict.test.tsx (6 tests | 3 failed) 12607ms
+   ❯ renaming to another loop’s name (#209) (6)
+     × keeps the authored name on the device and the server copy intact, and holds saves 2407ms
+     × takes the suggestion as an undoable rename and saves it under the same loop id 2753ms
+     × clears the guidance on leaving without saving the refused name, and asks again on return 1758ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.name-conflict.test.tsx > renaming to another loop’s name (#209) > keeps the authored name on the device and the server copy intact, and holds saves
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Your changes are kept on this device
+Received:
+  Another loop already has this nameThe name “nightly TRIAGE” matches another loop’s name, so this draft was not saved. Names that differ only in letter case or spacing count as the same name. Your changes are kept in this editor, and the server keeps the previous name and draft until you choose a name no other loop has.Use “nightly TRIAGE copy”Edit nameTry again
+ ❯ src/editor/EditorPage.name-conflict.test.tsx:46:20
+     44|     expect(notice).toHaveTextContent('The name “nightly TRIAGE” matche…
+     45|     expect(notice).toHaveTextContent('letter case or spacing');
+     46|     expect(notice).toHaveTextContent('Your changes are kept on this de…
+       |                    ^
+     47|     expect(screen.queryByText(STALE)).toBeNull();
+     48|     expect(saveState()).toHaveTextContent('Not saved: name in use');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/editor/EditorPage.name-conflict.test.tsx > renaming to another loop’s name (#209) > takes the suggestion as an undoable rename and saves it under the same loop id
+Error: expect(element).toHaveValue(nightly triage)
+
+Expected the element to have value:
+  nightly triage
+Received:
+  Daytime Triage
+ ❯ src/editor/EditorPage.name-conflict.test.tsx:103:59
+    101|     // The suggestion was one ordinary edit: Undo restores the refused…
+    102|     await user.click(screen.getByRole('button', { name: /^Undo/ }));
+    103|     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(…
+       |                                                           ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/editor/EditorPage.name-conflict.test.tsx > renaming to another loop’s name (#209) > clears the guidance on leaving without saving the refused name, and asks again on return
+TestingLibraryElementError: Found multiple elements with the role "link" and name "Loops"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<a[39m
+  [33maria-current[39m=[32m"page"[39m
+  [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+  [33mdata-discover[39m=[32m"true"[39m
+  [33mhref[39m=[32m"/loops"[39m
+[36m>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"[39m
+  [36m>[39m
+    [0mLoops[0m
+  [36m</span>[39m
+[36m</a>[39m
+
+Ignored nodes: comments, script, style
+[36m<a[39m
+  [33mclass[39m=[32m"touch-target text-muted no-underline hover:text-default hover:underline"[39m
+  [33mdata-discover[39m=[32m"true"[39m
+  [33mhref[39m=[32m"/loops"[39m
+[36m>[39m
+  [0mLoops[0m
+[36m</a>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_4j_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_4j_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/chat"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"[39m
+            ...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/editor/EditorPage.name-conflict.test.tsx:194:29
+    192|     act(() => useEditorStore.getState().updateMeta({ description: 'typ…
+    193|     const puts = api.callsTo('PUT', `/loops/${mine.id}/draft`).length;
+    194|     await user.click(screen.getByRole('link', { name: 'Loops' }));
+       |                             ^
+    195|     expect(await screen.findByRole('heading', { name: 'Loops' })).toBe…
+    196|     expect(screen.queryByText(NOTICE)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  01:59:40
+   Duration  23.01s (tests 55%, transform 18%, environment 13%, import 9%, setup 4%)
+

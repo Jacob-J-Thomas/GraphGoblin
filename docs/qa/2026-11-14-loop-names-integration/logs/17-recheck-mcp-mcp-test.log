@@ -1,0 +1,33 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/mcp
+
+ ❯ src/mcp.test.ts (11 tests | 1 failed) 4090ms
+   ❯ MCP server against the in-process API (10)
+     × describes a draft-only loop and maps lookup failures to coded tool errors 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/mcp.test.ts > MCP server against the in-process API > describes a draft-only loop and maps lookup failures to coded tool errors
+Error: create loop failed: {"suggestedName":"Twin copy","type":"https://graphgoblin.dev/problems/loop-name-conflict","title":"loop name conflict","status":409,"code":"LOOP_NAME_CONFLICT","detail":"A loop with an equivalent name already exists. Try \"Twin copy\"."}
+ ❯ Object.publishLoop ../api/src/testing/test-app.ts:108:45
+    106|         headers,
+    107|       });
+    108|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    109|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    110|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/mcp.test.ts:226:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  06:07:19
+   Duration  10.35s (tests 40%, import 36%, transform 24%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\apps\mcp
+

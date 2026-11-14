@@ -1,0 +1,42 @@
+Scope: 3 of 14 workspace projects
+apps/mcp test$ pnpm build && vitest run
+apps/mcp test: $ tsc -b tsconfig.build.json
+apps/mcp test: 
+apps/mcp test:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/mcp
+apps/mcp test: 
+apps/mcp test:  ❯ src/mcp.test.ts (11 tests | 1 failed) 5280ms
+apps/mcp test:    ❯ MCP server against the in-process API (10)
+apps/mcp test:      × describes a draft-only loop and maps lookup failures to coded tool errors 90ms
+apps/mcp test: 
+apps/mcp test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+apps/mcp test: 
+apps/mcp test:  FAIL  src/mcp.test.ts > MCP server against the in-process API > describes a draft-only loop and maps lookup failures to coded tool errors
+apps/mcp test: Error: create loop failed: {"suggestedName":"Twin copy","type":"https://graphgoblin.dev/problems/loop-name-conflict","title":"loop name conflict","status":409,"code":"LOOP_NAME_CONFLICT","detail":"A loop with an equivalent name already exists. Try \"Twin copy\"."}
+apps/mcp test:  ❯ Object.publishLoop ../api/src/testing/test-app.ts:108:45
+apps/mcp test:     106|         headers,
+apps/mcp test:     107|       });
+apps/mcp test:     108|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+apps/mcp test:        |                                             ^
+apps/mcp test:     109|       const id = created.json<{ loop: { id: string } }>().loop.id;
+apps/mcp test:     110|       const published = await app.inject({ method: 'POST', url: `/loop…
+apps/mcp test:  ❯ src/mcp.test.ts:226:5
+apps/mcp test: 
+apps/mcp test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+apps/mcp test: 
+apps/mcp test: 
+apps/mcp test:  Test Files  1 failed | 11 passed (12)
+apps/mcp test:       Tests  1 failed | 58 passed | 2 skipped (61)
+apps/mcp test:    Start at  06:01:38
+apps/mcp test:    Duration  15.43s (import 45%, transform 29%, tests 25%)
+apps/mcp test: 
+apps/mcp test:   Transform  transforming modules took 34.24s · 29% of tracked time, re-done on every run
+apps/mcp test:              persist transforms across runs with fsModuleCache: true
+apps/mcp test:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+apps/mcp test: 
+apps/mcp test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\apps\mcp
+
