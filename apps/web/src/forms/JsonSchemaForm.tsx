@@ -194,17 +194,32 @@ function LabelLine({
 }
 
 /**
+ * Empties a number input itself. Text the browser holds as incomplete ("-", "1e") reads as an empty
+ * `value` that carries `validity.badInput`, and React assigns `value` only when it differs from what
+ * it last saw, so the form's own `""` never replaces that text: it would stay on screen, invalid,
+ * while the form sends no such field. Assigning the empty string drops the text and the constraint
+ * state; it fires no event, and React's record of the value is already `""`.
+ */
+function clearNumberInput(control: HTMLElement) {
+  if (control instanceof HTMLInputElement) control.value = '';
+}
+
+/**
  * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
- * started, and focus goes to its control (the button itself goes away).
+ * started, and focus goes to its control (the button itself goes away). `reset` first empties what
+ * the control itself holds when the form's value alone cannot (a number input's incomplete text);
+ * it runs before focus and before the form lets go of the field.
  */
 function OmitButton({
   controlId,
   label,
   onOmit,
+  reset,
 }: {
   controlId: string;
   label: string;
   onOmit: () => void;
+  reset?: ((control: HTMLElement) => void) | undefined;
 }) {
   return (
     <button
@@ -212,7 +227,11 @@ function OmitButton({
       aria-label={`Omit ${label}`}
       className={OMIT_BUTTON}
       onClick={(event) => {
-        event.currentTarget.ownerDocument.getElementById(controlId)?.focus();
+        const control = event.currentTarget.ownerDocument.getElementById(controlId);
+        if (control) {
+          reset?.(control);
+          control.focus();
+        }
         onOmit();
       }}
     >
@@ -381,7 +400,12 @@ function PropertyField({
     // Only an edited optional field can go back to absent; a required one has no such state.
     const omit =
       !required && value !== undefined ? (
-        <OmitButton controlId={id} label={label} onOmit={() => onChange(undefined)} />
+        <OmitButton
+          controlId={id}
+          label={label}
+          onOmit={() => onChange(undefined)}
+          reset={type === 'number' ? clearNumberInput : undefined}
+        />
       ) : null;
     field = (
       <>

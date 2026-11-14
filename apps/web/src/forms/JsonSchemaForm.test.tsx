@@ -221,6 +221,81 @@ describe('JsonSchemaForm', () => {
     expect(submit).toHaveBeenLastCalledWith({ count: -5 });
   });
 
+  it('empties the number input itself on Omit, before focus, so incomplete native text goes with the field', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          properties: {
+            count: { type: 'integer' },
+            size: { type: 'number' },
+            note: { type: 'string' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const count = screen.getByLabelText<HTMLInputElement>('count');
+    // A browser holds typed text in an editing buffer that is not the input's `value`: "-" reads as
+    // an empty value with validity.badInput, and only an assignment to `value` replaces it. jsdom
+    // has no such buffer, so stand one in. This models the sequence; the native behaviour itself is
+    // exercised in Edge (e2e/form-controls.spec.ts).
+    let buffer = '';
+    const happened: string[] = [];
+    const tracked = Object.getOwnPropertyDescriptor(count, 'value')!;
+    Object.defineProperty(count, 'value', {
+      configurable: true,
+      get: tracked.get!,
+      set(value: string) {
+        happened.push(`assign ${JSON.stringify(value)}`);
+        buffer = value;
+        tracked.set!.call(count, value);
+      },
+    });
+    Object.defineProperty(count, 'validity', {
+      configurable: true,
+      get: () => ({ badInput: buffer !== '' }),
+    });
+    count.addEventListener('focus', () => happened.push(`focus, buffer ${JSON.stringify(buffer)}`));
+
+    await user.type(screen.getByLabelText('note'), 'keep');
+    await user.type(screen.getByLabelText('size'), '0');
+    buffer = '-';
+    fireEvent.input(count, { target: { value: '' }, data: '-', inputType: 'insertText' });
+    expect(happened).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(count).toHaveAccessibleDescription('count: enter a number');
+    expect(submit).not.toHaveBeenCalled();
+
+    // React already holds "" for the field, so it would assign nothing: Omit empties the input
+    // first, then focuses it, and only then does the form let go of the field.
+    await user.click(screen.getByRole('button', { name: 'Omit count' }));
+    expect(happened).toEqual(['assign ""', 'focus, buffer ""']);
+    expect(buffer).toBe('');
+    expect(count.validity.badInput).toBe(false);
+    expect(count).toHaveFocus();
+    expect(count).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByRole('button', { name: 'Omit count' })).toBeNull();
+
+    // What stays is untouched: the neighbours' text and a valid zero. Count is not sent.
+    expect(screen.getByLabelText('note')).toHaveValue('keep');
+    expect(screen.getByLabelText('size')).toHaveValue(0);
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({ size: 0, note: 'keep' });
+    expect(submit.mock.lastCall?.[0]).not.toHaveProperty('count');
+
+    // Omit still takes a complete number and plain text back to absent.
+    await user.click(screen.getByRole('button', { name: 'Omit size' }));
+    expect(screen.getByLabelText('size')).toHaveValue(null);
+    await user.click(screen.getByRole('button', { name: 'Omit note' }));
+    expect(screen.getByLabelText('note')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({});
+  });
+
   it('validates a cleared optional string against its schema and refuses edited number or JSON blanks', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();

@@ -3,7 +3,7 @@
  * and save what they show; Tab leaves a code field; required fields carry their marker and
  * `aria-required`; an error describes its control; the file picker is a labelled native input.
  */
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
   chooseOptionByKeyboard,
@@ -393,6 +393,144 @@ test('New run and Wait send the supplied input and omit untouched or reset field
   );
   await respond.click();
   expect((await answered).postDataJSON()).toEqual({ waitId: observed.waiting.waitId, input });
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const completed = await (await request.get(`/runs/${runId}`)).json();
+  expect(completed.result).toEqual({ started: input, answered: input });
+});
+
+test('Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235)', async ({
+  page,
+  request,
+}) => {
+  // A number input holding "-" (or "1e") reports `value` "" with `validity.badInput`, the same
+  // empty value React already holds: only the browser's own state, and the request, say whether
+  // Omit took the typed text away with the field. The text is typed with real key presses.
+  const inputSchema = {
+    type: 'object',
+    required: ['limit'],
+    properties: {
+      note: { type: 'string' },
+      size: { type: 'number' },
+      count: { type: 'integer' },
+      limit: { type: 'integer' },
+    },
+  };
+  const definition = approvalLoop('omit incomplete number');
+  const loopId = await publishLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) => {
+      if (node.id === 'start' || node.id === 'approve')
+        return { ...node, config: { ...node.config, inputSchema } };
+      return {
+        ...node,
+        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
+      };
+    }),
+  });
+  // Count, omitted twice, is never sent; the neighbours' text, a valid zero and the required limit
+  // (which has no Omit) are.
+  const input = { note: 'keep me', size: 0, limit: 0 };
+  const posts: string[] = [];
+  page.on('request', (req) => {
+    const path = new URL(req.url()).pathname;
+    if (req.method() === 'POST' && /^\/(loops\/[^/]+\/runs|runs\/[^/]+\/input)$/.test(path))
+      posts.push(path);
+  });
+  /** What the browser itself says about a number input: its `value` reads "" for incomplete text. */
+  const native = (field: Locator) =>
+    field.evaluate((el: HTMLInputElement) => ({
+      value: el.value,
+      badInput: el.validity.badInput,
+      valid: el.validity.valid,
+    }));
+
+  async function enterInput(submitLabel: string, omitFirstBy: 'keyboard' | 'click') {
+    const form = page.getByRole('form', { name: submitLabel });
+    const note = form.getByLabel('note', { exact: true });
+    const size = form.getByLabel('size', { exact: true });
+    const count = form.getByLabel('count', { exact: true });
+    const limit = form.getByLabel('limit', { exact: true });
+    const omit = form.getByRole('button', { name: 'Omit count', exact: true });
+    const submit = form.getByRole('button', { name: submitLabel, exact: true });
+    const sent = posts.length;
+
+    await note.fill('keep me');
+    await size.fill('0');
+    await count.press('-');
+    await limit.press('-');
+    // Real typing: both read as empty and as bad input. Only count, being optional, offers Omit.
+    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
+    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(omit).toBeVisible();
+    await expect(form.getByRole('button', { name: 'Omit limit' })).toHaveCount(0);
+    await submit.click();
+    await expect(count).toHaveAccessibleDescription('count: enter a number');
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+    expect(posts).toHaveLength(sent);
+
+    const omitCount = async (by: 'keyboard' | 'click') => {
+      if (by === 'keyboard') {
+        await count.press('Shift+Tab');
+        await expect(omit).toBeFocused();
+        await page.keyboard.press('Enter');
+      } else {
+        await omit.click();
+      }
+      await expect(omit).toHaveCount(0);
+      await expect(count).toBeFocused();
+      // The text typed into count went with it: the browser no longer holds incomplete input, and
+      // the field is valid, where an unchanged "" value would have said nothing.
+      expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });
+      await expect(count).not.toHaveAttribute('aria-invalid');
+      await expect(form.getByText('count: enter a number')).toHaveCount(0);
+    };
+    await omitCount(omitFirstBy);
+
+    // Nothing else moved: the neighbours keep their text and zero, and the required limit keeps
+    // its incomplete text and its refusal.
+    await expect(note).toHaveValue('keep me');
+    await expect(size).toHaveValue('0');
+    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+
+    // The field takes new input afterwards, and goes the same way by the other route.
+    await count.press('-');
+    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(omit).toBeVisible();
+    await omitCount(omitFirstBy === 'keyboard' ? 'click' : 'keyboard');
+
+    // The required limit is still refused, and nothing is sent, until it holds a number.
+    await submit.click();
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+    expect(posts).toHaveLength(sent);
+    await limit.fill('0');
+    expect(await native(limit)).toEqual({ value: '0', badInput: false, valid: true });
+    // The form now agrees with what it will send: no control holds text it would leave out.
+    expect(await form.evaluate((el: HTMLFormElement) => el.checkValidity())).toBe(true);
+    return submit;
+  }
+
+  await page.goto(`/app/runs/new?loop=${loopId}`);
+  const start = await enterInput('Start run', 'keyboard');
+  const started = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
+  );
+  await start.click();
+  const startBody = (await started).postDataJSON();
+  expect(startBody.input).toEqual(input);
+  expect(startBody.input).not.toHaveProperty('count');
+  await expect(page.getByText('Input requested')).toBeVisible();
+  const runId = new URL(page.url()).pathname.split('/').at(-1);
+
+  const respond = await enterInput('Submit input', 'click');
+  const observed = await (await request.get(`/runs/${runId}`)).json();
+  const answered = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
+  );
+  await respond.click();
+  const answerBody = (await answered).postDataJSON();
+  expect(answerBody).toEqual({ waitId: observed.waiting.waitId, input });
+  expect(answerBody.input).not.toHaveProperty('count');
   await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
   const completed = await (await request.get(`/runs/${runId}`)).json();
   expect(completed.result).toEqual({ started: input, answered: input });
