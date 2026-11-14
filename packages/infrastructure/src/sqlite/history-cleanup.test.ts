@@ -179,6 +179,7 @@ it('protects live dynamic templates until termination, and bounds literal templa
       'local',
       LoopDefinitionSchema.parse({
         ...minimalLoop(),
+        name,
         settings: { workingDirectory: { kind: 'template', template } },
       }),
     );
@@ -836,6 +837,7 @@ describe('large retained stores', () => {
       'local',
       LoopDefinitionSchema.parse({
         ...minimalLoop(),
+        name: 'large template',
         settings: { workingDirectory: { kind: 'template', template: '{{vars.directory}}' } },
       }),
     );
@@ -851,11 +853,12 @@ describe('large retained stores', () => {
     const paths = Array.from({ length: 128 }, (_, i) => join(fixedRoot, String(i)));
     await Promise.all(paths.map((path) => mkdir(path)));
     const fixedVersions: LoopVersionRecord[] = [];
-    for (const path of [...paths, alias]) {
+    for (const [index, path] of [...paths, alias].entries()) {
       const created = await loops.create(
         'local',
         LoopDefinitionSchema.parse({
           ...minimalLoop(),
+          name: 'large fixed ' + index,
           settings: { workingDirectory: { kind: 'fixed', path } },
         }),
       );
