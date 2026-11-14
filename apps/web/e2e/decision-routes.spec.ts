@@ -8,8 +8,8 @@ import {
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
 import {
-  chooseOptionByKeyboard,
   closeNode,
+  connectOnCanvas,
   control,
   expect,
   openNode,
@@ -265,34 +265,46 @@ test('option IDs stay connected when numeric display labels change, save, and re
   await dialog.locator('[data-field="routes.2.label"] input').fill('7');
 
   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.selectOption('route-3');
-  await dialog.getByLabel('To', { exact: true }).selectOption('branch');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-  const connections = dialog.getByRole('region', { name: 'Connections' });
-  await expect(connections).toContainText('7 (route-3)');
+  // The editor has no connection controls (#207): close it, draw the new route's output on the
+  // canvas, and read the connection from the canvas and the saved draft from here on.
+  await closeNode(page);
+  await connectOnCanvas(page, 'pick', 'route-3', 'branch');
+  const connected = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'route-3',
+  )!;
+  expect(connected.to.node).toBe('branch');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-3) to branch',
+  );
+  await openNode(page, 'pick');
 
   // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
   // that edge with it, and restoring the ID does not create or transfer another connection.
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   const thirdId = dialog.locator('[data-field="routes.2.id"] input');
   await thirdId.fill('');
-  await expect(connections).toContainText('route-3');
+  await expect(edge(page, connected.id)).toHaveAttribute('aria-label', /\(route-3\)/);
   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
   await page.reload();
   await openNode(page, 'pick');
   await expect(thirdId).toHaveValue('');
   await thirdId.fill('route-4');
-  await expect(connections).toContainText('7 (route-4)');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-4) to branch',
+  );
   await expect(handle(page, 'pick', 'route-4')).toBeVisible();
   await thirdId.fill('route-3');
-  await expect(connections).toContainText('7 (route-3)');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-3) to branch',
+  );
   await closeNode(page);
 
-  const connected = (await savedDraft(page, request, loopId)).edges.find(
+  const settled = (await savedDraft(page, request, loopId)).edges.filter(
     (item) => item.from.port === 'route-3',
-  )!;
-  expect(connected.to.node).toBe('branch');
+  );
+  expect(settled.map((item) => [item.id, item.to.node])).toEqual([[connected.id, 'branch']]);
   await page.reload();
   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
   await expect(page.getByTestId('node-pick')).toContainText('7');
@@ -334,7 +346,9 @@ test('option IDs stay connected when numeric display labels change, save, and re
   });
 });
 
-test('keyboard connection reaches the eighth option by its ID while showing its numeric label', async ({
+// The keyboard cannot create a connection since #207 (ADR-0076): the node editor's Connect form,
+// which this test drove from the keyboard, was removed.
+test('pointer connection reaches the eighth option by its ID while showing its numeric label', async ({
   page,
   request,
 }) => {
@@ -342,25 +356,21 @@ test('keyboard connection reaches the eighth option by its ID while showing its 
   await expect(
     page.locator('.react-flow__handle[data-nodeid="pick"]:not([data-handleid="in"])'),
   ).toHaveCount(8);
+  await expect(handle(page, 'pick', 'route-8')).toBeVisible();
+  await connectOnCanvas(page, 'pick', 'route-8', 'branch');
+  const connected = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'route-8',
+  );
+  expect(connected?.to.node).toBe('branch');
+  // The canvas names it by the numeric label and the stable ID.
+  await expect(edge(page, connected!.id)).toHaveAttribute(
+    'aria-label',
+    'pick 8 (route-8) to branch',
+  );
+  // The editor shows neither a Connections list nor a Connect form for the node.
   const dialog = await openNode(page, 'pick');
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.focus();
-  await chooseOptionByKeyboard(page, output, '8 (route-8)');
-  await expect(output).toHaveValue('route-8');
-  await expect(output.getByRole('option', { selected: true })).toHaveText('8 (route-8)');
-  const target = dialog.getByLabel('To', { exact: true });
-  await target.focus();
-  await chooseOptionByKeyboard(page, target, 'Branch (branch)');
-  await expect(target).toHaveValue('branch');
-  const connect = dialog.getByRole('button', { name: 'Connect', exact: true });
-  await connect.focus();
-  await connect.press('Enter');
-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText('8 (route-8)');
-  await closeNode(page);
-  expect(
-    (await savedDraft(page, request, loopId)).edges.find((item) => item.from.port === 'route-8')?.to
-      .node,
-  ).toBe('branch');
+  await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Connect', exact: true })).toHaveCount(0);
 });
 
 test('expression true/false routes preserve edges, then save and run the edited route', async ({
@@ -397,8 +407,10 @@ test('expression true/false routes preserve edges, then save and run the edited 
   await trueId.fill('affirm');
   await dialog.locator('[data-field="routes.0.label"] input').fill('Affirmative');
   await expect(handle(page, 'pick', 'affirm')).toBeVisible();
-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText(
-    'Affirmative (affirm)',
+  // The existing connection follows the renamed ID and label; the canvas names it by both.
+  await expect(edge(page, 'true-edge')).toHaveAttribute(
+    'aria-label',
+    'pick Affirmative (affirm) to branch',
   );
   await closeNode(page);
 
@@ -439,7 +451,7 @@ test('expression true/false routes preserve edges, then save and run the edited 
   ).toHaveText('affirm');
 });
 
-test('Score bands expose fractional boundaries, validate malformed coverage, and connect by keyboard', async ({
+test('Score bands expose fractional boundaries, validate malformed coverage, and connect on the canvas', async ({
   page,
   request,
 }) => {
@@ -482,15 +494,16 @@ test('Score bands expose fractional boundaries, validate malformed coverage, and
   await middleMax.fill('1.5');
   await expect(malformedBandsError).toHaveCount(0);
 
-  const connections = dialog.getByRole('region', { name: 'Connections' });
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.focus();
-  await expect(output.getByRole('option', { selected: true })).toHaveText('Middle (middle)');
-  await chooseOptionByKeyboard(page, output, 'Top score (high)');
-  await expect(output.getByRole('option', { selected: true })).toHaveText('Top score (high)');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-  await expect(connections).toContainText('Top score (high)');
+  // The editor has no connection controls (#207): close it and draw the band's output on the canvas.
   await closeNode(page);
+  await connectOnCanvas(page, 'pick', 'high', 'branch');
+  const drawn = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'high',
+  );
+  await expect(edge(page, drawn!.id)).toHaveAttribute(
+    'aria-label',
+    'pick Top score (high) to branch',
+  );
   const saved = await savedDraft(page, request, loopId);
   expect(saved.edges.find((item) => item.id === 'low-edge')).toMatchObject({
     from: { node: 'pick', port: 'low' },

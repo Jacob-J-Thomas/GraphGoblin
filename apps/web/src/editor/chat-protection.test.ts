@@ -66,7 +66,7 @@ describe('voice protocol editor protection', () => {
         .connect({ source: 'chat-normalize-check', sourceHandle: 'valid', target: 'respond' }),
     ).toBeNull();
   });
-  it('prevents internal rewiring through every canvas/keyboard connection path', () => {
+  it('prevents internal rewiring through every canvas connection path', () => {
     const definition = audio();
     useEditorStore.getState().load('gateway', definition);
     useEditorStore.setState({ systemChat: true });

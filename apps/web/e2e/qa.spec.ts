@@ -7,12 +7,13 @@ import { CURRENT_DEFINITION_FORMAT, RunSnapshotSchema } from '@graphgoblin/contr
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
-  chooseOptionByKeyboard,
   closeNode,
+  connectOnCanvas,
   control,
   expect,
   openNode,
   publishLoop,
+  removeEdgeOnCanvas,
   showLoopPanel,
   test,
 } from './fixtures.js';
@@ -311,18 +312,21 @@ async function tabTo(page: Page, target: Locator, { back = false, limit = 80 } =
   await expect(target).toBeFocused();
 }
 
-test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+// Keyboard connection creation (the node editor's Connect form) was removed in #207, ADR-0076. The
+// keyboard still adds a node, opens and leaves node editors, selects and removes a connection and
+// publishes; connections are drawn with the pointer.
+test('keyboard: add a node, walk the node editors, remove a connection and publish; the pointer connects', async ({
+  page,
+}) => {
   await page.goto('/app/loops');
   await page.getByLabel('New loop name').fill('qa keyboard');
   await page.getByLabel('New loop name').press('Enter');
   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
 
-  // Every step from here is a key press: Tab moves, Enter acts, native typeahead chooses a select's
-  // displayed option, and Esc closes. Closed-select arrow behavior differs across platforms.
+  // Except where noted, every step from here is a key press: Tab moves, Enter acts and Esc closes.
   await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-wait')).toBeInViewport();
-  // Rewire start -> wait -> done with the Connect forms.
   // Canvas nodes are focusable; Enter opens the focused node's editor and Esc closes it.
   const startNode = page.locator('.react-flow__node[data-id="start"]');
   await tabTo(page, startNode);
@@ -330,39 +334,34 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   const startDialog = page.getByRole('dialog', { name: 'Edit trigger start' });
   await expect(startDialog).toBeVisible();
   await expect(startDialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
-  // Tab walks the dialog in visual order: close, id, label, the config form, connections.
+  // Tab walks the dialog in visual order: close, id, label, then the config form.
   await page.keyboard.press('Tab');
   await expect(startDialog.getByRole('button', { name: 'Close' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(startDialog.getByLabel('Node id')).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(startDialog.getByLabel('Label')).toBeFocused();
-  await tabTo(page, startDialog.getByRole('button', { name: 'Remove edge e1' }));
-  await page.keyboard.press('Enter');
-  const startForm = page.getByRole('form', { name: 'Connect start' });
-  await tabTo(page, startForm.getByLabel('To'));
-  await expect(startForm.getByLabel('To')).toHaveValue('done');
-  await chooseOptionByKeyboard(page, startForm.getByLabel('To'), 'Wait (wait)');
-  await expect(startForm.getByLabel('To')).toHaveValue('wait');
-  await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
-  await page.keyboard.press('Enter');
+  // It lists no connections and has no Connect form or Remove edge button to reach.
+  await expect(startDialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+  await expect(startDialog.getByRole('form', { name: 'Connect start' })).toHaveCount(0);
+  await expect(startDialog.getByRole('button', { name: /^Remove edge/ })).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(startDialog).toHaveCount(0);
   await expect(startNode).toBeFocused();
 
+  // Rewire start -> wait -> done. The keyboard removes the connection (focus it, Enter, Delete);
+  // the pointer draws the two new ones.
+  await removeEdgeOnCanvas(page, 'e1');
+  await connectOnCanvas(page, 'start', 'out', 'wait');
+  await connectOnCanvas(page, 'wait', 'out', 'done');
+
+  // The pointer drags moved focus off the canvas, so give Tab more room to reach the node.
   const waitNode = page.locator('.react-flow__node[data-id="wait"]');
-  await tabTo(page, waitNode);
+  await tabTo(page, waitNode, { limit: 200 });
   await page.keyboard.press('Enter');
   const waitDialog = page.getByRole('dialog', { name: 'Edit wait wait' });
   await expect(waitDialog).toBeVisible();
-  const waitForm = page.getByRole('form', { name: 'Connect wait' });
-  await tabTo(page, waitForm.getByLabel('To'));
-  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Wait (wait)');
-  await expect(waitForm.getByLabel('To')).toHaveValue('wait');
-  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Done (done)');
-  await expect(waitForm.getByLabel('To')).toHaveValue('done');
-  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
-  await page.keyboard.press('Enter');
+  await expect(waitDialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
   // Past the last control, Tab comes back round to the first: focus stays in the dialog.
   await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
   await page.keyboard.press('Tab');

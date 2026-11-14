@@ -233,7 +233,7 @@ Product gaps known at 1.0 (each marked "After 1.0" in the guide or recorded in a
 - Secrets: no OS-keyring master-key source and no per-secret envelope keys.
 - Settings has no scheduler status card, and the API no scheduler status endpoint (WP-D2 gap).
 - The Events screen does not list webhook endpoints; they are on `GET /loops/{id}/triggers` (WP-D2 gap).
-- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons and the Connect form; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
+- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons, and since #207 (ADR-0076) a connection cannot be created from the keyboard at all, because the Connect form is gone; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
 - `run.queued.initialThread` has no size cap; offloading large seeds to the artifact store is the follow-up (05).
 
 Open defects (WP-D2 report; D26 to D28 are fixed in WP-F2):

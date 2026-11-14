@@ -6,7 +6,15 @@ import {
   RunSnapshotSchema,
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
-import { closeNode, control, expect, openNode, test } from './fixtures.js';
+import {
+  closeNode,
+  connectOnCanvas,
+  control,
+  expect,
+  openNode,
+  portHandle,
+  test,
+} from './fixtures.js';
 
 for (const finalChoice of ['repeat', 'done'] as const) {
   test(`authors a gate and terminal exits; last pass chooses ${finalChoice}`, async ({
@@ -90,21 +98,18 @@ for (const finalChoice of ['repeat', 'done'] as const) {
       .locator('[data-field="jsonata"] [role="textbox"]')
       .fill(finalChoice === 'repeat' ? '"repeat"' : 'gates.gate.passes >= 3 ? "done" : "repeat"');
     await expect(dialog.getByText(/Limit reached is taken/)).toBeVisible();
-    const connect = dialog.getByRole('form', { name: 'Connect gate' });
-    await connect.getByLabel('Output').selectOption('limit-reached');
-    await connect.getByLabel('To').selectOption('exhausted');
-    await connect.getByRole('button', { name: 'Connect', exact: true }).click();
+    // The editor offers no connection form (#207): close it, then draw Limit reached on the canvas.
+    await expect(dialog.getByRole('form', { name: 'Connect gate' })).toHaveCount(0);
     await closeNode(page);
-    await expect(
-      page.locator('.react-flow__handle[data-nodeid="gate"][data-handleid="limit-reached"]'),
-    ).toHaveCount(1);
+    await expect(portHandle(page, 'gate', 'limit-reached')).toHaveCount(1);
+    await connectOnCanvas(page, 'gate', 'limit-reached', 'exhausted');
     dialog = await openNode(page, 'exhausted');
     // The visible choice card covers its visually hidden radio, so choose it from the keyboard.
     const exhausted = dialog.getByRole('radio', { name: 'Exhausted', exact: true });
     await exhausted.focus();
     await page.keyboard.press('Space');
     await expect(exhausted).toBeChecked();
-    await expect(dialog.getByRole('form', { name: 'Connect exhausted' })).toHaveCount(0);
+    await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
     await closeNode(page);
     await expect(page.getByText('Ready to publish')).toBeVisible();
     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');

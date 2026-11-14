@@ -1,7 +1,7 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { resolve } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
-import { closeNode, expect, openNode, test } from './fixtures.js';
+import { closeNode, connectOnCanvas, expect, openNode, test } from './fixtures.js';
 
 async function fit(page: Page) {
   await settleViewport(page);
@@ -28,12 +28,6 @@ async function settleViewport(page: Page) {
       requestAnimationFrame(frame);
     });
   });
-}
-
-async function connect(dialog: Locator, port: string, target: string) {
-  await dialog.getByLabel('Output', { exact: true }).selectOption(port);
-  await dialog.getByLabel('To', { exact: true }).selectOption(target);
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
 }
 
 async function intersections(elements: Locator) {
@@ -92,7 +86,7 @@ test('palette authoring clears a three-output Decision and keeps converging labe
     await expect(page.getByTestId(`node-${kind.toLowerCase()}`)).toBeVisible();
   }
   await fit(page);
-  let dialog = await openNode(page, 'decision');
+  const dialog = await openNode(page, 'decision');
   await dialog.locator('[data-field="routes.0.id"] input').fill('again');
   await dialog.locator('[data-field="routes.0.label"] input').fill('Again');
   await dialog.locator('[data-field="routes.1.id"] input').fill('finish');
@@ -140,9 +134,8 @@ test('palette authoring clears a three-output Decision and keeps converging labe
     ['wait', [['out', 'inference']]],
   ] as const) {
     await fit(page);
-    dialog = await openNode(page, node);
-    for (const [port, target] of connections) await connect(dialog, port, target);
-    await closeNode(page);
+    // Drawn on the canvas: the node editor has no connection controls (#207).
+    for (const [port, target] of connections) await connectOnCanvas(page, node, port, target);
   }
   for (const name of ['Hide palette', 'Hide loop settings']) {
     const button = page.getByRole('button', { name, exact: true });

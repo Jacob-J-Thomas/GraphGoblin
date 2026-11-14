@@ -14,7 +14,7 @@ import {
 } from '@graphgoblin/contracts';
 import { forwardLoopBack } from '../src/__fixtures__/routing.js';
 import { defaultConfig } from '../src/editor/model.js';
-import { closeNode, expect, openNode, test, uniqueLoopName } from './fixtures.js';
+import { connectOnCanvas, expect, test, uniqueLoopName } from './fixtures.js';
 
 const card = (id: string, kind: NodeInput['kind'], x: number, y = 100, config?: unknown) =>
   ({ id, label: id, kind, config: config ?? defaultConfig(kind), ui: { x, y } }) as NodeInput;
@@ -159,11 +159,8 @@ for (const theme of ['dark', 'light']) {
     await screenshot(page, info, `returns-${theme}`);
 
     // A bypass from the second trigger: `work` no longer precedes every path to `decide`.
-    const dialog = await openNode(page, 'side');
-    await dialog.getByLabel('Output', { exact: true }).selectOption('out');
-    await dialog.getByLabel('To', { exact: true }).selectOption('decide');
-    await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-    await closeNode(page);
+    // Drawn on the canvas: the node editor has no connection controls (#207).
+    await connectOnCanvas(page, 'side', 'out', 'decide');
     const bypass = page.locator('.react-flow__edge[aria-label^="side out to decide"]');
     await expect(bypass).toHaveCount(1);
     await expectOrdinary(page, 'retry');

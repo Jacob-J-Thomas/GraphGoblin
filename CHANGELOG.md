@@ -4,6 +4,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
+  decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
+  **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
+  route, option, side, band and exit-code editing with its removal confirmations, **Delete
+  node**, and protected Chat voice steps. **Keyboard connection creation is removed.** The
+  Connect form was the only way to create a connection without a pointer (WP-D2 D18), so the
+  keyboard can no longer create or retarget one. It can still select a connection (Enter or
+  Space), remove it (Delete or Backspace), move its route segments, and remove edges the canvas
+  cannot draw from the loop's issues; a coarse pointer has the visible **Remove connection**
+  button. This is not parity with creation. On a zoomed-out touch canvas the form was also the
+  full-size way to connect: zoom in instead. Changing a connection means removing it and drawing
+  it again, which is two **Undo** steps; the new connection starts with an automatic route, and
+  undoing both restores the old one with its route. Editing a route's segments is a separate edit
+  that never changes its ends. A drop on a port that refuses it now says why in the **Connection
+  refused** notice. Stored edges the canvas cannot draw, for example after renaming or removing a
+  Script exit-code label or from an imported draft, are removed with **Remove edge** in the
+  loop's issues beside **Publish**, one **Undo** step each. No stored or exported data changes,
+  so there is no upgrade note.
 - Publish reports the version the server actually stored (#237). The editor publishes from its
   queue of saves, after rechecking held input and conflicts, and checks them again right before
   the request when it first reads the server back. It then compares the returned immutable
@@ -385,7 +403,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Decision and exit answer-type cards keep compact labels, with explanations available through hover, keyboard focus and tap help; screen readers retain each option's description. (#161)
 - Inference progress shows a bounded command preview, exit code, and status while the node is running; failed tool calls and other harness-reported item failures are also visible without provider diagnostics. Codex capability slugs are recorded but not yet resolved; Codex-only raw harness config overrides remain available. Claude rejects nonempty custom capabilities and raw overrides under its launch policy.
-- Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed. The node dialog's Connect form provides full-size connection controls. Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
+- Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed; zoom in to connect, because the node dialog no longer has a connection form (#207). Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
 - The light theme keeps the page white and gives cards, panels, the editor toolbar, and dialogs warm brown fills, borders, and control edges. Titles and column headings use dark brown; the dark theme is unchanged. See Settings → Appearance. (#11)
 - Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors. Structured rows keep parse errors with their rows, reject duplicate keys, and preserve focus and announcements when rows change. (#8, #53)
 - The node palette can be collapsed. Loop settings stay in the panel titled **Loop settings**, and the toolbar's Loop settings button has been removed (#59).

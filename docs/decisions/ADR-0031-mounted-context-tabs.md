@@ -1,6 +1,6 @@
 # ADR-0031: Mounted Context tabs in node forms
 
-Status: Accepted for the #170 part-A implementation (2026-10-10); running-product review remains the issue's human gate.
+Status: Accepted for the #170 part-A implementation (2026-10-10); running-product review remains the issue's human gate. Amended by [ADR-0076](ADR-0076-canvas-only-connection-authoring.md): the node dialog no longer has a Connections section.
 
 ## Context
 

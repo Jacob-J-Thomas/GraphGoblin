@@ -3,7 +3,14 @@
  * with LIVE=1 (`LIVE=1 pnpm --filter @graphgoblin/web test:e2e -- e2e/live.spec.ts`); otherwise
  * it is skipped. Model gpt-6-luna, effort low, read-only sandbox, a temporary working directory.
  */
-import { closeNode, expect, openNode, test } from './fixtures.js';
+import {
+  closeNode,
+  connectOnCanvas,
+  expect,
+  openNode,
+  removeEdgeOnCanvas,
+  test,
+} from './fixtures.js';
 
 test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
 
@@ -44,18 +51,10 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
     .click();
   await closeNode(page);
 
-  // Rewire start -> inference -> done in the node editors.
-  await openNode(page, 'start');
-  await page.getByRole('button', { name: 'Remove edge e1' }).click();
-  const fromStart = page.getByRole('form', { name: 'Connect start' });
-  await fromStart.getByLabel('To').selectOption('inference');
-  await fromStart.getByRole('button', { name: 'Connect' }).click();
-  await closeNode(page);
-  await openNode(page, 'inference');
-  const fromInference = page.getByRole('form', { name: 'Connect inference' });
-  await fromInference.getByLabel('To').selectOption('done');
-  await fromInference.getByRole('button', { name: 'Connect' }).click();
-  await closeNode(page);
+  // Rewire start -> inference -> done on the canvas: the node editor has no connection controls.
+  await removeEdgeOnCanvas(page, 'e1');
+  await connectOnCanvas(page, 'start', 'out', 'inference');
+  await connectOnCanvas(page, 'inference', 'out', 'done');
   await expect(page.getByText('Ready to publish')).toBeVisible();
 
   await page.getByRole('button', { name: 'Publish' }).click();
