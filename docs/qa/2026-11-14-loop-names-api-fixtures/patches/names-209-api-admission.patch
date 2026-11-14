@@ -1,0 +1,91 @@
+diff --git a/apps/api/src/cron-preview.test.ts b/apps/api/src/cron-preview.test.ts
+index df304578..be01de98 100644
+--- a/apps/api/src/cron-preview.test.ts
++++ b/apps/api/src/cron-preview.test.ts
+@@ -117,7 +117,11 @@ describe('cron preview endpoint', () => {
+       );
+       for (const response of [
+         await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
+-        await t.app.inject({ method: 'POST', url: '/loops/import', payload: definition }),
++        await t.app.inject({
++          method: 'POST',
++          url: '/loops/import?name=Cron%20admission%20copy',
++          payload: definition,
++        }),
+       ]) {
+         expect(response.statusCode).toBeLessThan(300);
+         expect(response.json().issues).toEqual(expect.arrayContaining([issue]));
+diff --git a/apps/api/src/decision-admission.test.ts b/apps/api/src/decision-admission.test.ts
+index 26dce216..69201251 100644
+--- a/apps/api/src/decision-admission.test.ts
++++ b/apps/api/src/decision-admission.test.ts
+@@ -79,7 +79,7 @@ describe('evaluator-specific decision admission', () => {
+       const id = created.json().loop.id as string;
+       const imported = await t.app.inject({
+         method: 'POST',
+-        url: '/loops/import',
++        url: '/loops/import?name=Decision%20admission%20copy',
+         payload: envelope(input),
+       });
+       expect(imported.statusCode, imported.body).toBe(201);
+@@ -132,7 +132,7 @@ describe('evaluator-specific decision admission', () => {
+         }),
+         imported = await t.app.inject({
+           method: 'POST',
+-          url: '/loops/import',
++          url: '/loops/import?name=Invalid%20decision%20copy',
+           payload: envelope(input),
+         }),
+         validated = await t.app.inject({
+diff --git a/apps/api/src/edges.test.ts b/apps/api/src/edges.test.ts
+index 90c4a62e..04aa1dd8 100644
+--- a/apps/api/src/edges.test.ts
++++ b/apps/api/src/edges.test.ts
+@@ -128,7 +128,11 @@ describe('loop and run route branches', () => {
+     expect(detail.draft).toBeUndefined();
+ 
+     const created = (
+-      await t.app.inject({ method: 'POST', url: '/loops', payload: { definition: minimalLoop() } })
++      await t.app.inject({
++        method: 'POST',
++        url: '/loops',
++        payload: { definition: { ...minimalLoop(), name: 'unpublished copy' } },
++      })
+     ).json<{ loop: { id: string } }>();
+     const missing = await t.app.inject(`/loops/${created.loop.id}/export`);
+     expect(missing.statusCode).toBe(404);
+diff --git a/apps/api/src/gates.test.ts b/apps/api/src/gates.test.ts
+index 733ef7ff..2d80737e 100644
+--- a/apps/api/src/gates.test.ts
++++ b/apps/api/src/gates.test.ts
+@@ -66,7 +66,11 @@ describe('decision gate API admission', () => {
+     const id = created.json().loop.id as string;
+     const responses = [
+       created,
+-      await t.app.inject({ method: 'POST', url: '/loops/import', payload: envelope(definition) }),
++      await t.app.inject({
++        method: 'POST',
++        url: '/loops/import?name=Gate%20admission%20copy',
++        payload: envelope(definition),
++      }),
+       await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
+       await t.app.inject({ method: 'POST', url: `/loops/${id}/validate`, payload: { definition } }),
+       await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` }),
+@@ -99,7 +103,7 @@ describe('decision gate API admission', () => {
+     const id = created.json().loop.id as string;
+     const imported = await t.app.inject({
+       method: 'POST',
+-      url: '/loops/import',
++      url: '/loops/import?name=Gate%20admission%20copy',
+       payload: envelope(definition),
+     });
+     const saved = await t.app.inject({
+@@ -155,7 +159,7 @@ describe('decision gate API admission', () => {
+       const id = created.json().loop.id as string;
+       const imported = await t.app.inject({
+         method: 'POST',
+-        url: '/loops/import',
++        url: '/loops/import?name=Gate%20admission%20copy',
+         payload: envelope(definition),
+       });
+       const saved = await t.app.inject({

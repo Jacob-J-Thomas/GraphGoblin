@@ -1,0 +1,12 @@
+Node: v22.23.4
+
+$ pnpm.cmd exec prettier --check apps/api/src/history-cleanup.test.ts apps/api/src/triggers.test.ts apps/api/src/wait-identity.test.ts apps/api/src/webhook-keys.test.ts
+exit 0: All matched files use Prettier code style.
+
+$ pnpm.cmd exec eslint apps/api/src/history-cleanup.test.ts apps/api/src/triggers.test.ts apps/api/src/wait-identity.test.ts apps/api/src/webhook-keys.test.ts
+exit 0: passed
+
+$ git diff --check -- apps/api/src/history-cleanup.test.ts apps/api/src/triggers.test.ts apps/api/src/wait-identity.test.ts apps/api/src/webhook-keys.test.ts
+exit 0: passed
+
+Not run per delegation scope: tests, coverage, build, typecheck, browser/provider checks.

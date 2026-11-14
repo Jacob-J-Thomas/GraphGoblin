@@ -1,0 +1,346 @@
+{
+  "task": "Issue #209 / PR #470 API fixture correction publication QA",
+  "status": "source correction committed; full corrected CI pending",
+  "baselineHead": "02567f879230f8b8eebb353ea87d22ea347febdd",
+  "sourceCommit": "d43d212335122af8a4e7856f22add5ca43b86d4a",
+  "worktreeHead": "d43d212335122af8a4e7856f22add5ca43b86d4a",
+  "apiFailures": {
+    "failed": 45,
+    "passed": 1870,
+    "skipped": 20,
+    "failedTestFiles": 12,
+    "passedTestFiles": 109,
+    "skippedTestFiles": 4
+  },
+  "infrastructureAtSecondRun": {
+    "passed": 1149,
+    "skipped": 8,
+    "testFiles": 74,
+    "earlierFixtureFailuresCorrected": 17
+  },
+  "otherJobs": {
+    "browser": "passed",
+    "windows": "passed",
+    "templates": "passed",
+    "overall": "failed"
+  },
+  "groups": [
+    {
+      "name": "admission",
+      "baselineFailures": 13,
+      "patch": "patches/names-209-api-admission.patch",
+      "patchSha256": "1612d388de77c42075c0c932641742885128241cd2464dbadf0796adedea9691",
+      "sourceManifestExternalPath": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-209\\names-209-api-admission\\manifest.json",
+      "sourceManifestSha256": "19f96bd9338adfe2442a434651a7c2583d49677fcd50f032d72e3ef776cd66a5",
+      "files": [
+        {
+          "path": "apps/api/src/cron-preview.test.ts",
+          "baselineBlob": "df304578dab41dd381da9d071de683029f2f5560",
+          "sourceCommitBlob": "be01de9820f8d89e49f3b6b5c56fcb89cfff6183",
+          "originalSha256": "e5a35076acb6144b0c3ecbdaa7ee1946db5dd252dba28525583bccd8a60b77f8",
+          "correctedSha256": "0a070997d11c69ded1fb7f412e833576f238cb63ae4f55dd6520ec0878a28034",
+          "committedCandidateSha256": "0a070997d11c69ded1fb7f412e833576f238cb63ae4f55dd6520ec0878a28034"
+        },
+        {
+          "path": "apps/api/src/decision-admission.test.ts",
+          "baselineBlob": "26dce216251dd69f4663653b3b019bdeca1b9537",
+          "sourceCommitBlob": "69201251b0b84bb58520caf85889969a691c8046",
+          "originalSha256": "f92405ed8047a12fb137a872ddebfdd0c000efe0d1688bc0219cf5ce3fe09b51",
+          "correctedSha256": "03877a1a5ae223ad89ebb1bb624d5394fb67fcc6c9c9acf6eec62dba2d0b9766",
+          "committedCandidateSha256": "03877a1a5ae223ad89ebb1bb624d5394fb67fcc6c9c9acf6eec62dba2d0b9766"
+        },
+        {
+          "path": "apps/api/src/edges.test.ts",
+          "baselineBlob": "90c4a62ec43858b4e1f2e2db0a3037b819e0b73c",
+          "sourceCommitBlob": "04aa1dd85cdda62fb1ff29c0e75c88ae5e2eb312",
+          "originalSha256": "2efdf15e19a39dbd3c831dd28f8c058f4bdbacd77fd981959ab4183fabc4f7c4",
+          "correctedSha256": "443da751cbc122cdc41f862ef188d9be2281deb4fd6ea99a686d9f7c26c5ddcc",
+          "committedCandidateSha256": "443da751cbc122cdc41f862ef188d9be2281deb4fd6ea99a686d9f7c26c5ddcc"
+        },
+        {
+          "path": "apps/api/src/gates.test.ts",
+          "baselineBlob": "733ef7ff1485147d57817991d777b0dbacf14411",
+          "sourceCommitBlob": "2d80737e8cf3ee0ba9f4eaa4e9be4b4228261265",
+          "originalSha256": "705920b00e77cd3a428e8429466f89401cfae6e0efee47539158d5220f59cb85",
+          "correctedSha256": "9e2bebe7244d61e5aa9ac36f9b2b4b4c3c30d5a6beebe0d38707022dc64fbf2e",
+          "committedCandidateSha256": "9e2bebe7244d61e5aa9ac36f9b2b4b4c3c30d5a6beebe0d38707022dc64fbf2e"
+        }
+      ],
+      "checkArtifacts": [
+        {
+          "path": "checks/admission/prettier.log",
+          "sha256": "769c6d366f85d7008058ed030a640946f5ee33d2554fb99312601137f0405b03",
+          "bytes": 268
+        },
+        {
+          "path": "checks/admission/eslint.log",
+          "sha256": "980e9dee35337f32cb67262fb75d6fb6a878af93410f8f08e56b30ab8408dccc",
+          "bytes": 193
+        },
+        {
+          "path": "checks/admission/git-diff-check.log",
+          "sha256": "55c1e62a81060a51078b554068511633a95d623c3f66f07e93d13f0c2cee5aca",
+          "bytes": 45
+        },
+        {
+          "path": "checks/admission/bundle-integrity.log",
+          "sha256": "f2681d9045d02ccb81a12e45a23d3a0a487244ec3828e280a954ec637e627f8b",
+          "bytes": 676
+        }
+      ],
+      "checkResult": "focused formatting, lint, and diff preparation passed; no tests or heavy checks run"
+    },
+    {
+      "name": "runtime",
+      "baselineFailures": 14,
+      "patch": "patches/names-209-api-runtime.patch",
+      "patchSha256": "efbf3794feaa0d65fdf24cde34f7b02235e60640a380c2eabc3ffbda3bb2e1f4",
+      "sourceManifestExternalPath": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-209\\names-209-api-runtime\\source-manifest.json",
+      "sourceManifestSha256": "f43399b82e9c092e0c149e179f0a05d895a645df25d470304f9c9b36576ac827",
+      "files": [
+        {
+          "path": "apps/api/src/history-cleanup.test.ts",
+          "baselineBlob": "152ac25da2d86b8efd5e5854791e3b4c0181f5ea",
+          "sourceCommitBlob": "3323feb103212b5a56dea875252fff2f121103c3",
+          "originalSha256": "9c8807828d13c5dfad1260b5cd6b19fe1ed735ef80213ce0ccb86b4b5efbeb3e",
+          "correctedSha256": "c2cb895318571defa947b8f18c100c272484206efdc7b7d292603d023aa7196c",
+          "committedCandidateSha256": "c2cb895318571defa947b8f18c100c272484206efdc7b7d292603d023aa7196c"
+        },
+        {
+          "path": "apps/api/src/triggers.test.ts",
+          "baselineBlob": "0c2471c671fb3ed0c62c07f73b94c34e6114b095",
+          "sourceCommitBlob": "43f6eb5cfb8cf831ce8fe67ce2d49955e13d4d0f",
+          "originalSha256": "e6f8448d85b038a0285d66f0a6de38b7c5e229f7d0f7b0d58b19ae24907c43f2",
+          "correctedSha256": "9cfcf5a2402f6fab0e73c39bac87ba343896077ecd935fdc7125bdadb1d2ae04",
+          "committedCandidateSha256": "9cfcf5a2402f6fab0e73c39bac87ba343896077ecd935fdc7125bdadb1d2ae04"
+        },
+        {
+          "path": "apps/api/src/wait-identity.test.ts",
+          "baselineBlob": "5ab920cb2d16b1b926b839096b46d865faab117d",
+          "sourceCommitBlob": "a17bbdbeeb9237991b6036a1d5213b43969a0dd3",
+          "originalSha256": "d47d02d4a047a6547755f3eed9be80b2d92dad8fac243b7d1418c6687b896356",
+          "correctedSha256": "e597362085ea149d35d2f92addc3d73e26999064d59a2409affb2d6f15125329",
+          "committedCandidateSha256": "e597362085ea149d35d2f92addc3d73e26999064d59a2409affb2d6f15125329"
+        },
+        {
+          "path": "apps/api/src/webhook-keys.test.ts",
+          "baselineBlob": "e2ad839b30daf3c0cbadddec6714ff96306ab4d9",
+          "sourceCommitBlob": "a22a7f8b2df8b0e65e20033f7241ec39f185ee41",
+          "originalSha256": "624884249dc92f4e14630a4385761142f020ee72c55d05b25dbee2d4a8d70296",
+          "correctedSha256": "ccb3b2ea4848810aea78139903f2897ec399d3f87e34b1ffb259ab678c831dd9",
+          "committedCandidateSha256": "ccb3b2ea4848810aea78139903f2897ec399d3f87e34b1ffb259ab678c831dd9"
+        }
+      ],
+      "checkArtifacts": [
+        {
+          "path": "checks/runtime/prep-checks.log",
+          "sha256": "0347f689e28d25f503f2b1a942796c4b080a3da8298381ac370a73e9b8c8c8ec",
+          "bytes": 675
+        },
+        {
+          "path": "checks/runtime/prep-checks.json",
+          "sha256": "1e7f4a77141481528d229dfcc9258a5cd21f3e9299143b069a3da836939c450a",
+          "bytes": 966
+        }
+      ],
+      "checkResult": "focused formatting, lint, and diff preparation passed; no tests or heavy checks run"
+    },
+    {
+      "name": "models",
+      "baselineFailures": 18,
+      "patch": "patches/names-209-api-models.patch",
+      "patchSha256": "6547f854e37e55466569e7af50bda5cd2b38be4601427a0134d4f6a447117706",
+      "sourceManifestExternalPath": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\names-209-api-models\\manifest.json",
+      "sourceManifestSha256": "479fab37938b74b4bb2ced32ce7b69a9b892283b88427ad04c5622c1d94566ad",
+      "files": [
+        {
+          "path": "apps/api/src/catalog.test.ts",
+          "baselineBlob": "2b46e04681e7fee147c3420c462716ebe0bf6fb2",
+          "sourceCommitBlob": "88a6b344d4b5adb8cd2b20a0f2455f2ec680dd3f",
+          "originalSha256": "1ca5b91dd2f9f62f90044b305589c5d68c74411d1d1759cddcd802685155b975",
+          "correctedSha256": "a2b6fbe2092ba905bbcb5706c62ee2cd2e0cf1ad1f4f96f8fe6d39a469b4c245",
+          "committedCandidateSha256": "a2b6fbe2092ba905bbcb5706c62ee2cd2e0cf1ad1f4f96f8fe6d39a469b4c245"
+        },
+        {
+          "path": "apps/api/src/claude.test.ts",
+          "baselineBlob": "82302aa3b3ed4ec4bc7babbe788720028b8dd17b",
+          "sourceCommitBlob": "d69816e31038e41e11b6cb2ad72112e6b461e585",
+          "originalSha256": "7ac7a8a08424dbdf9a2269f9708de3826f9de9d11270a2a74c3c4f40c061d77f",
+          "correctedSha256": "ba084cce75ff152022aa4f73998569d2403d6ec761d445995f6840f7bcfe7daf",
+          "committedCandidateSha256": "ba084cce75ff152022aa4f73998569d2403d6ec761d445995f6840f7bcfe7daf"
+        },
+        {
+          "path": "apps/api/src/model-readiness.test.ts",
+          "baselineBlob": "6621a4228dc9232eb49a30f216381f3495bcc7d8",
+          "sourceCommitBlob": "7ce8b0b5aba3f6163b88837e2539e0063092ab62",
+          "originalSha256": "493dcf1b0a882ea00cc24412a7a25e3bb1f94464204cd1e68706ddc6aab952f3",
+          "correctedSha256": "85e2b25fd74f9f44a85508ab4fd41784204c75725f4aa75d043894e6f7e4880c",
+          "committedCandidateSha256": "85e2b25fd74f9f44a85508ab4fd41784204c75725f4aa75d043894e6f7e4880c"
+        },
+        {
+          "path": "apps/api/src/readiness-evidence.test.ts",
+          "baselineBlob": "b067ee272ca8c719b1e8a974b5170c4c62c1fbdd",
+          "sourceCommitBlob": "638b1122364ec4672e2c58284ac22a2bb2a4acf0",
+          "originalSha256": "c022bb0820f2066232b59800c24ad40989c838a31cc17f156dfaa30baadd944d",
+          "correctedSha256": "b679bf4b3f1a8705d1c19bb1a958eb735ea7eda8649ee6aa35ddd4f282a54436",
+          "committedCandidateSha256": "b679bf4b3f1a8705d1c19bb1a958eb735ea7eda8649ee6aa35ddd4f282a54436"
+        }
+      ],
+      "checkArtifacts": [
+        {
+          "path": "checks/models/rawprepchecks.json",
+          "sha256": "b3a402838f339aeb9427ecd4abc8cf6196e6126adbf30c923ecdcb010d7276d5",
+          "bytes": 2722
+        },
+        {
+          "path": "checks/models/01-eslint.log",
+          "sha256": "71e1f8f9fe4aeabab5a57ba24a5032a7343625dbe9ec044bc5299fa60eab5f4f",
+          "bytes": 155
+        },
+        {
+          "path": "checks/models/02-prettier-check.log",
+          "sha256": "8f66e023330462012e392bd95d2a67ea9181cf6f39c9102e357a8e850a0872ef",
+          "bytes": 243
+        },
+        {
+          "path": "checks/models/03-diff-check.log",
+          "sha256": "1a2fd94786bac67c8006e570d2ad2a35e1837426e5a9262d781d23e65a614cc5",
+          "bytes": 164
+        },
+        {
+          "path": "checks/models/04-reverse-check.log",
+          "sha256": "797cc444c1b616027e1bc29ac907464411313f3c5a386379a48c16a783392f63",
+          "bytes": 65
+        }
+      ],
+      "checkResult": "focused formatting, lint, and diff preparation passed; no tests or heavy checks run"
+    }
+  ],
+  "failureCounts": {
+    "admission": 13,
+    "runtime": 14,
+    "models": 18,
+    "total": 45
+  },
+  "secondCiRawLog": {
+    "path": "ci/ci43600331688-gates-failure.log",
+    "externalSource": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-209\\ci43600331688-gates-failure.log",
+    "sha256": "841974f1c2d792d8b0e7b1695696f6aad5e23f5b2344aafad3db316c28dc0d74",
+    "bytes": 327286,
+    "copyCount": 1
+  },
+  "secondCiJobs": {
+    "path": "ci/ci43600331688-final-jobs.json",
+    "sha256": "345d71f77f9dd5f31ed31e2f96b5096ed15e10f6e189a4cc3e3a260cab422de6",
+    "bytes": 10867
+  },
+  "firstCiLog": {
+    "externalPath": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-209\\ci43597212461-gates-first-failure.log",
+    "sha256": "2bd201caf31409b317e8ea87c81b45e74ab8141148786f3448774d8560bb0697",
+    "copied": false
+  },
+  "changedFiles": [
+    {
+      "path": "apps/api/src/cron-preview.test.ts",
+      "baselineBlob": "df304578dab41dd381da9d071de683029f2f5560",
+      "sourceCommitBlob": "be01de9820f8d89e49f3b6b5c56fcb89cfff6183",
+      "originalSha256": "e5a35076acb6144b0c3ecbdaa7ee1946db5dd252dba28525583bccd8a60b77f8",
+      "correctedSha256": "0a070997d11c69ded1fb7f412e833576f238cb63ae4f55dd6520ec0878a28034",
+      "committedCandidateSha256": "0a070997d11c69ded1fb7f412e833576f238cb63ae4f55dd6520ec0878a28034"
+    },
+    {
+      "path": "apps/api/src/decision-admission.test.ts",
+      "baselineBlob": "26dce216251dd69f4663653b3b019bdeca1b9537",
+      "sourceCommitBlob": "69201251b0b84bb58520caf85889969a691c8046",
+      "originalSha256": "f92405ed8047a12fb137a872ddebfdd0c000efe0d1688bc0219cf5ce3fe09b51",
+      "correctedSha256": "03877a1a5ae223ad89ebb1bb624d5394fb67fcc6c9c9acf6eec62dba2d0b9766",
+      "committedCandidateSha256": "03877a1a5ae223ad89ebb1bb624d5394fb67fcc6c9c9acf6eec62dba2d0b9766"
+    },
+    {
+      "path": "apps/api/src/edges.test.ts",
+      "baselineBlob": "90c4a62ec43858b4e1f2e2db0a3037b819e0b73c",
+      "sourceCommitBlob": "04aa1dd85cdda62fb1ff29c0e75c88ae5e2eb312",
+      "originalSha256": "2efdf15e19a39dbd3c831dd28f8c058f4bdbacd77fd981959ab4183fabc4f7c4",
+      "correctedSha256": "443da751cbc122cdc41f862ef188d9be2281deb4fd6ea99a686d9f7c26c5ddcc",
+      "committedCandidateSha256": "443da751cbc122cdc41f862ef188d9be2281deb4fd6ea99a686d9f7c26c5ddcc"
+    },
+    {
+      "path": "apps/api/src/gates.test.ts",
+      "baselineBlob": "733ef7ff1485147d57817991d777b0dbacf14411",
+      "sourceCommitBlob": "2d80737e8cf3ee0ba9f4eaa4e9be4b4228261265",
+      "originalSha256": "705920b00e77cd3a428e8429466f89401cfae6e0efee47539158d5220f59cb85",
+      "correctedSha256": "9e2bebe7244d61e5aa9ac36f9b2b4b4c3c30d5a6beebe0d38707022dc64fbf2e",
+      "committedCandidateSha256": "9e2bebe7244d61e5aa9ac36f9b2b4b4c3c30d5a6beebe0d38707022dc64fbf2e"
+    },
+    {
+      "path": "apps/api/src/history-cleanup.test.ts",
+      "baselineBlob": "152ac25da2d86b8efd5e5854791e3b4c0181f5ea",
+      "sourceCommitBlob": "3323feb103212b5a56dea875252fff2f121103c3",
+      "originalSha256": "9c8807828d13c5dfad1260b5cd6b19fe1ed735ef80213ce0ccb86b4b5efbeb3e",
+      "correctedSha256": "c2cb895318571defa947b8f18c100c272484206efdc7b7d292603d023aa7196c",
+      "committedCandidateSha256": "c2cb895318571defa947b8f18c100c272484206efdc7b7d292603d023aa7196c"
+    },
+    {
+      "path": "apps/api/src/triggers.test.ts",
+      "baselineBlob": "0c2471c671fb3ed0c62c07f73b94c34e6114b095",
+      "sourceCommitBlob": "43f6eb5cfb8cf831ce8fe67ce2d49955e13d4d0f",
+      "originalSha256": "e6f8448d85b038a0285d66f0a6de38b7c5e229f7d0f7b0d58b19ae24907c43f2",
+      "correctedSha256": "9cfcf5a2402f6fab0e73c39bac87ba343896077ecd935fdc7125bdadb1d2ae04",
+      "committedCandidateSha256": "9cfcf5a2402f6fab0e73c39bac87ba343896077ecd935fdc7125bdadb1d2ae04"
+    },
+    {
+      "path": "apps/api/src/wait-identity.test.ts",
+      "baselineBlob": "5ab920cb2d16b1b926b839096b46d865faab117d",
+      "sourceCommitBlob": "a17bbdbeeb9237991b6036a1d5213b43969a0dd3",
+      "originalSha256": "d47d02d4a047a6547755f3eed9be80b2d92dad8fac243b7d1418c6687b896356",
+      "correctedSha256": "e597362085ea149d35d2f92addc3d73e26999064d59a2409affb2d6f15125329",
+      "committedCandidateSha256": "e597362085ea149d35d2f92addc3d73e26999064d59a2409affb2d6f15125329"
+    },
+    {
+      "path": "apps/api/src/webhook-keys.test.ts",
+      "baselineBlob": "e2ad839b30daf3c0cbadddec6714ff96306ab4d9",
+      "sourceCommitBlob": "a22a7f8b2df8b0e65e20033f7241ec39f185ee41",
+      "originalSha256": "624884249dc92f4e14630a4385761142f020ee72c55d05b25dbee2d4a8d70296",
+      "correctedSha256": "ccb3b2ea4848810aea78139903f2897ec399d3f87e34b1ffb259ab678c831dd9",
+      "committedCandidateSha256": "ccb3b2ea4848810aea78139903f2897ec399d3f87e34b1ffb259ab678c831dd9"
+    },
+    {
+      "path": "apps/api/src/catalog.test.ts",
+      "baselineBlob": "2b46e04681e7fee147c3420c462716ebe0bf6fb2",
+      "sourceCommitBlob": "88a6b344d4b5adb8cd2b20a0f2455f2ec680dd3f",
+      "originalSha256": "1ca5b91dd2f9f62f90044b305589c5d68c74411d1d1759cddcd802685155b975",
+      "correctedSha256": "a2b6fbe2092ba905bbcb5706c62ee2cd2e0cf1ad1f4f96f8fe6d39a469b4c245",
+      "committedCandidateSha256": "a2b6fbe2092ba905bbcb5706c62ee2cd2e0cf1ad1f4f96f8fe6d39a469b4c245"
+    },
+    {
+      "path": "apps/api/src/claude.test.ts",
+      "baselineBlob": "82302aa3b3ed4ec4bc7babbe788720028b8dd17b",
+      "sourceCommitBlob": "d69816e31038e41e11b6cb2ad72112e6b461e585",
+      "originalSha256": "7ac7a8a08424dbdf9a2269f9708de3826f9de9d11270a2a74c3c4f40c061d77f",
+      "correctedSha256": "ba084cce75ff152022aa4f73998569d2403d6ec761d445995f6840f7bcfe7daf",
+      "committedCandidateSha256": "ba084cce75ff152022aa4f73998569d2403d6ec761d445995f6840f7bcfe7daf"
+    },
+    {
+      "path": "apps/api/src/model-readiness.test.ts",
+      "baselineBlob": "6621a4228dc9232eb49a30f216381f3495bcc7d8",
+      "sourceCommitBlob": "7ce8b0b5aba3f6163b88837e2539e0063092ab62",
+      "originalSha256": "493dcf1b0a882ea00cc24412a7a25e3bb1f94464204cd1e68706ddc6aab952f3",
+      "correctedSha256": "85e2b25fd74f9f44a85508ab4fd41784204c75725f4aa75d043894e6f7e4880c",
+      "committedCandidateSha256": "85e2b25fd74f9f44a85508ab4fd41784204c75725f4aa75d043894e6f7e4880c"
+    },
+    {
+      "path": "apps/api/src/readiness-evidence.test.ts",
+      "baselineBlob": "b067ee272ca8c719b1e8a974b5170c4c62c1fbdd",
+      "sourceCommitBlob": "638b1122364ec4672e2c58284ac22a2bb2a4acf0",
+      "originalSha256": "c022bb0820f2066232b59800c24ad40989c838a31cc17f156dfaa30baadd944d",
+      "correctedSha256": "b679bf4b3f1a8705d1c19bb1a958eb735ea7eda8649ee6aa35ddd4f282a54436",
+      "committedCandidateSha256": "b679bf4b3f1a8705d1c19bb1a958eb735ea7eda8649ee6aa35ddd4f282a54436"
+    }
+  ],
+  "limits": [
+    "CI run 43600331688 is for pre-correction baseline 02567f879230f8b8eebb353ea87d22ea347febdd and failed overall.",
+    "Correction commit d43d212335122af8a4e7856f22add5ca43b86d4a is test-only; its corrected full CI is pending.",
+    "Only focused lint, formatting, diff, bundle integrity and patch preparation checks are recorded. No tests, coverage, build, typecheck or browser run by these fixture-correction delegations.",
+    "No source files are duplicated in this compact packet."
+  ]
+}
