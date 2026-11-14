@@ -11,6 +11,19 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "@graphgoblin/plugin-claude#build": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "@graphgoblin/plugin-claude#test": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/plugin-codex/plugin/**"]
+    },
+    "@graphgoblin/plugin-claude#test:coverage": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/plugin-codex/plugin/**"],
+      "outputs": ["coverage/**"]
+    },
     "transit": {
       "dependsOn": ["^transit"]
     },

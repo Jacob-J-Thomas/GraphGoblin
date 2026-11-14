@@ -1,0 +1,19 @@
+Initial implementation checks, before the correction fixes (Node v22.23.4):
+
+Command: pnpm.cmd --filter @graphgoblin/plugin-claude typecheck
+Result: exit 1.
+src/plugin.test.ts(119,18): TS2339 GG_NODE_BINARY missing from inferred environment type.
+src/plugin.test.ts(152,23): TS2339 GG_NODE_BINARY missing from inferred environment type.
+src/plugin.test.ts(184,12): TS18048 minor possibly undefined.
+src/plugin.test.ts(184,43): TS18048 patch possibly undefined.
+
+Command: pnpm.cmd --filter @graphgoblin/plugin-claude lint
+Result: exit 1.
+plugin/check-runtime.cjs:23:12: @typescript-eslint/no-unused-vars reported the caught error variable as unused.
+Disposition: typed child environments as NodeJS.ProcessEnv, read version components safely, and removed the unused catch binding. Subsequent plugin typecheck, lint, formatting, and coverage pass; see sibling logs.
+
+After merging the parent metadata correction, the broad selector `pnpm.cmd --filter @graphgoblin/tooling test -- plugin-output` emitted no test result for about two minutes. Only that test process was interrupted. Explicit runs of plugin-output.test.mjs and plugin-output-metadata.test.mjs then completed successfully (20/20 and 14/14).
+
+A whole-merge `git diff --cached --check` reported CRLF/trailing-whitespace diagnostics in inherited captured QA JSON/MJS and the upstream JSONata patch. Those inherited raw files were not normalized or edited. Scoped checks for the resolved docs and Claude plugin files passed.
+
+One combined PowerShell probe was rejected by command dispatch before execution and made no changes. The assembled runtime guard and strict validator were then verified with separate commands; see native-runtime.log.txt and strict-validator.log.txt.

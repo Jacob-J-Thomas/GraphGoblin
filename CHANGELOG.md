@@ -292,6 +292,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- The local GraphGoblin plugin for Claude Code adds `/graphgoblin:design-loop`, `/graphgoblin:run-loop` and `/graphgoblin:inspect-run`. It connects to the existing gateway through its client-owned stdio MCP process. Draft authoring uses the opt-in `--draft-tools` capability and the existing gateway scopes. (#455)
+
 - GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)
 
 - **Use template** immediately creates and opens an editable starting-point draft, with useful instructions and limits and no mandatory setup form. Starter, implementation, review and QA drafts use run input and existing context; repository details and model choices can be customized later. Each card has one green **Use &lt;template name&gt;** action; gallery settings, automation setup and readiness checks are removed. Configured-instance backend retirement is tracked separately in #165. (#28, #160)

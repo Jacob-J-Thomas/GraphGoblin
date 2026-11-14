@@ -405,6 +405,17 @@ Resources: the templates `graphgoblin://runs/{id}/events` (the whole log as JSON
 
 Errors: an API problem becomes a tool result with `isError: true` and the text `GraphGoblin API error <code> (HTTP <status>): <detail>`, followed by the validation `errors` when present; an unreachable gateway is `NETWORK_ERROR (HTTP 0)`. Errors raised by the MCP layer start with their code, for example `LOOP_NOT_FOUND: ...` or `AMBIGUOUS_LOOP_NAME: ...`. Resource reads reject with the API error message, which also starts with the code.
 
+Stdio clients may explicitly enable `--draft-tools`. The Claude Code plugin requests this capability. HTTP rejects the flag. The tools use the gateway's owner checks, scopes and validation.
+
+| Opt-in tool                | Input                                | Behavior                                                           | Gateway scope |
+| -------------------------- | ------------------------------------ | ------------------------------------------------------------------ | ------------- |
+| `create_loop_draft`        | `definition`                         | Create a loop and its unpublished draft. Return validation issues. | `loops:write` |
+| `get_loop_draft`           | `loopId`                             | Read the draft or published base and return its `draftToken`.      | `loops:read`  |
+| `validate_loop_definition` | `loopId`, `definition`               | Return issues and `publishable` without saving.                    | `loops:read`  |
+| `save_loop_draft`          | `loopId`, `definition`, `draftToken` | Save the draft only if the supplied base token matches.            | `loops:write` |
+
+The token is the exact 16-character hexadecimal value from a read or save. After `DRAFT_CONFLICT`, refresh the draft and reconcile the edits before applying them again.
+
 ## Codex plugin (Decided)
 
 `apps/plugin-codex` packages the MCP server registration and three skills so a Codex user can drive loops from inside a session:
@@ -432,6 +443,12 @@ apps/plugin-codex/dist/marketplace/      assembled by pnpm build
 Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>/<plugin>/<version>`, so the source `.mcp.json` carries the placeholder `${GRAPHGOBLIN_MCP_ENTRY}` and the build writes the absolute path. Install with `codex plugin marketplace add <repo>/apps/plugin-codex/dist/marketplace` and `codex plugin add graphgoblin@graphgoblin-local`; `codex mcp list` then shows the server. `env_vars` passes `GG_API_URL` and `GG_API_KEY` through from the environment Codex runs in. See `apps/plugin-codex/README.md`.
 
 The builder stages the complete marketplace and checks the previous generated file list and digests before replacing it. A linked path, an overlapping input directory, or an output with unrelated or modified entries is refused. Use an unused destination or inspect and move the old output aside before rebuilding.
+
+## Claude Code plugin
+
+`apps/plugin-claude` builds a local Claude Code plugin at `dist/plugin/graphgoblin`. Its manifest is `.claude-plugin/plugin.json`. The skills live under `skills/` and the stdio registration is in `.mcp.json`. Use `claude --plugin-dir <artifact>` for a session, or explicitly copy the complete artifact into the Claude Code skills directory for local installation.
+
+The registration invokes Node with separate arguments for a bundled runtime check and the absolute `apps/mcp/dist/main.js` entry. The MCP process reads `GG_API_URL` and `GG_API_KEY` from the Claude Code process environment. Use `GG_NODE_BINARY` or PATH to select Node 22.22.2 or later in major 22. A rebuilt or relocated checkout needs a refreshed artifact and, for an installed copy, a refreshed copy. See [local build and installation](../apps/plugin-claude/README.md) and [ADR-0072](decisions/ADR-0072-claude-code-loop-plugin.md).
 
 Replacing an existing plugin output also requires the platform metadata check before and after staging the old tree. It checks the root, expected directories and files, and the ownership marker. Windows refuses named data streams through its in-box Windows PowerShell and Win32 APIs. macOS uses `/usr/bin/xattr` and Linux uses system Python 3.8 or later at `/usr/bin/python3` to refuse extended attributes visible to the invoking user. An unsuccessful inspection preserves the old tree. These tools run as the invoking user during replacement and do not read metadata contents.
 

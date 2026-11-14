@@ -1,0 +1,320 @@
+{
+  "versions": {
+    "claude": "2.1.311 (Claude Code)",
+    "node": "v22.23.4"
+  },
+  "platform": "win32",
+  "worktree": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-cc455\\GraphGoblin",
+  "head": "55ca03b18deeb80a436943c3a8e39e8b5f4b7b0d",
+  "apiWorktree": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-cc455\\GraphGoblin",
+  "apiHead": "55ca03b18deeb80a436943c3a8e39e8b5f4b7b0d",
+  "fingerprints": {
+    "api": "e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98",
+    "mcp": "ec152a82f1cd97f82a252211dc2d82954dc8f1753cee060640826eac69860aa1",
+    "pluginManifest": "b784b847485520ad0250cae44e3706cf8b5e6589ccd9b8860d99fa2b84b9aa38"
+  },
+  "observations": [
+    {
+      "stage": "native loader",
+      "installed": false,
+      "validation": true,
+      "inventory": "graphgoblin 0.1.0\n  Description: Design, run, and inspect GraphGoblin loops from Claude Code.\n  Source: graphgoblin@inline\n\nComponent inventory\n  Skills (3)  design-loop, inspect-run, run-loop\n  Agents (0)\n  Hooks (0)\n  MCP servers (1)  graphgoblin  (tool schemas resolved at runtime; not counted)\n  LSP servers (0)\n\nProjected token cost\n  Always-on:   ~162 tok   added to every session\n\nPer-component (rounded)\n  component    always-on  on-invoke\n  design-loop        ~60      ~3.1k\n  inspect-run        ~50       ~590\n  run-loop           ~50       ~990\n\n  On-invoke cost is paid each time a skill or agent fires.\n  Token counts are estimates and may differ from actual usage.\n",
+      "mcp": "Checking MCP server health…\n\nplugin:graphgoblin:graphgoblin: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\plugin\\455 native 漢 4PJHa6\\node runtime é\\node.exe --require C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/plugin/455 native 漢 4PJHa6/built plugin 漢/check-runtime.cjs C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/plugin/455 native 漢 4PJHa6/moved checkout é/mcp entry.mjs --draft-tools - √ Connected\n"
+    },
+    {
+      "stage": "native loader",
+      "installed": false,
+      "validation": true,
+      "inventory": "graphgoblin 0.1.0\n  Description: Design, run, and inspect GraphGoblin loops from Claude Code.\n  Source: graphgoblin@inline\n\nComponent inventory\n  Skills (3)  design-loop, inspect-run, run-loop\n  Agents (0)\n  Hooks (0)\n  MCP servers (1)  graphgoblin  (tool schemas resolved at runtime; not counted)\n  LSP servers (0)\n\nProjected token cost\n  Always-on:   ~162 tok   added to every session\n\nPer-component (rounded)\n  component    always-on  on-invoke\n  design-loop        ~60      ~3.1k\n  inspect-run        ~50       ~590\n  run-loop           ~50       ~990\n\n  On-invoke cost is paid each time a skill or agent fires.\n  Token counts are estimates and may differ from actual usage.\n",
+      "mcp": "Checking MCP server health…\n\nplugin:graphgoblin:graphgoblin: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\plugin\\455 native 漢 4PJHa6\\node runtime é\\node.exe --require C:/Users/98jak/.codex/worktrees/gg-20261114-cc455/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin/check-runtime.cjs C:/Users/98jak/.codex/worktrees/gg-20261114-cc455/GraphGoblin/apps/mcp/dist/main.js --draft-tools - √ Connected\n"
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "draft create, validate and save",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "list_loops"
+        },
+        {
+          "turn": 1,
+          "waiting": false,
+          "tool": "create_loop_draft",
+          "result": "{\"items\":[{\"id\":\"01M7CE1HCJZCYA4SMCYJB9PE87\",\"name\":\"Gateway chat\",\"description\":\"System chat workflow. Its protocol boundary is protected; its workflow is editable.\",\"published\":true,\"hasDraft\":false,\"updatedAt\":\"2026-11-14T07:06:11.730Z\"}]}"
+        },
+        {
+          "turn": 2,
+          "waiting": false,
+          "tool": "get_loop_draft",
+          "result": "{\"loop\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"ownerId\":\"local\",\"name\":\"Native Claude acceptance draft\",\"draftVersionId\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"createdAt\":\"2026-11-14T07:06:19.853Z\",\"updatedAt\":\"2026-11-14T07:06:19.853Z\"},\"draft\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"version\":1,\"status\":\"draft\",\"definition\":{\"schemaVersion\":4,\"name\":\"Native Claude acceptance draft\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"\\\"claude-native-result\\\"\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-11-14T07:06:19.853Z\"},\"issues\":[]}"
+        },
+        {
+          "turn": 3,
+          "waiting": false,
+          "tool": "validate_loop_definition",
+          "result": "{\"loop\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"ownerId\":\"local\",\"name\":\"Native Claude acceptance draft\",\"draftVersionId\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"createdAt\":\"2026-11-14T07:06:19.853Z\",\"updatedAt\":\"2026-11-14T07:06:19.853Z\"},\"draft\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"version\":1,\"status\":\"draft\",\"definition\":{\"schemaVersion\":4,\"name\":\"Native Claude acceptance draft\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"\\\"claude-native-result\\\"\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-11-14T07:06:19.853Z\"},\"draftToken\":\"7aeb09cee2884465\"}"
+        },
+        {
+          "turn": 4,
+          "waiting": false,
+          "tool": "save_loop_draft",
+          "result": "{\"issues\":[],\"publishable\":true}"
+        },
+        {
+          "turn": 5,
+          "result": "{\"draft\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"version\":1,\"status\":\"draft\",\"definition\":{\"schemaVersion\":4,\"name\":\"Native Claude acceptance draft revised\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"\\\"claude-native-result\\\"\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-11-14T07:06:19.853Z\"},\"draftToken\":\"e2a7c6cc9c1cb425\",\"issues\":[]}"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "explicit provider-free draft run",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "describe_loop"
+        },
+        {
+          "turn": 1,
+          "waiting": false,
+          "tool": "start_run",
+          "result": "{\"loop\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"name\":\"Native Claude acceptance draft revised\",\"published\":false,\"hasDraft\":true,\"updatedAt\":\"2026-11-14T07:06:20.034Z\"},\"version\":{\"id\":\"01M7CE1SAD0BZRD8T5WZ2RR09X\",\"number\":1,\"status\":\"draft\"},\"note\":\"This loop has no published version; the description is of the draft. start_run needs allowDraft: true until it is published.\",\"name\":\"Native Claude acceptance draft revised\",\"nodeCount\":2,\"nodeKinds\":[\"trigger\",\"exit\"],\"variables\":{},\"triggers\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"type\":\"manual\",\"startableFromMcp\":true}],\"decisions\":[],\"inputWaits\":[],\"exits\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"outcome\":\"success\",\"returns\":\"\\\"claude-native-result\\\"\",\"destinations\":[\"caller\"]}]}"
+        },
+        {
+          "turn": 2,
+          "waiting": false,
+          "tool": "wait_for_run",
+          "result": "{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"definition\":\"Native Claude acceptance draft revised draft v1\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Native Claude acceptance draft revised\",\"label\":\"Native Claude acceptance draft revised draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"status\":\"queued\",\"next\":\"Call wait_for_run with this runId to wait for the result.\"}"
+        },
+        {
+          "turn": 3,
+          "result": "{\"run\":{\"id\":\"01M7CE1XPDNCB5505N91PTE358\",\"ownerId\":\"local\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Native Claude acceptance draft revised\",\"label\":\"Native Claude acceptance draft revised draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M7CE1XPDNCB5505N91PTE359\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"result\":\"claude-native-result\",\"createdAt\":\"2026-11-14T07:06:24.333Z\",\"startedAt\":\"2026-11-14T07:06:24.601Z\",\"finishedAt\":\"2026-11-14T07:06:25.030Z\",\"finalizedAt\":\"2026-11-14T07:06:25.068Z\",\"lastEventSeq\":9,\"recovery\":{\"observedSeq\":9,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]}]}},\"finished\":true}"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "inspect snapshot and events",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "get_run"
+        },
+        {
+          "turn": 1,
+          "waiting": false,
+          "tool": "read_run_events",
+          "result": "{\"id\":\"01M7CE1XPDNCB5505N91PTE358\",\"ownerId\":\"local\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Native Claude acceptance draft revised\",\"label\":\"Native Claude acceptance draft revised draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M7CE1XPDNCB5505N91PTE359\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"result\":\"claude-native-result\",\"createdAt\":\"2026-11-14T07:06:24.333Z\",\"startedAt\":\"2026-11-14T07:06:24.601Z\",\"finishedAt\":\"2026-11-14T07:06:25.030Z\",\"finalizedAt\":\"2026-11-14T07:06:25.068Z\",\"lastEventSeq\":9,\"recovery\":{\"observedSeq\":9,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]}]}}"
+        },
+        {
+          "turn": 2,
+          "result": "{\"items\":[{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":1,\"ts\":\"2026-11-14T07:06:24.333Z\",\"type\":\"run.queued\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Native Claude acceptance draft revised\",\"label\":\"Native Claude acceptance draft revised draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7CE1XPDNCB5505N91PTE358\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"iteration\":1},\"invocation\":{\"id\":\"01M7CE1XPDNCB5505N91PTE359\",\"source\":\"manual.mcp\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M7CE1HVB2H6W6KH7GVJBBPAP\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-14T07:06:24.333Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":2,\"ts\":\"2026-11-14T07:06:24.729Z\",\"type\":\"run.started\",\"attempt\":1},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":3,\"ts\":\"2026-11-14T07:06:24.847Z\",\"type\":\"node.started\",\"nodeId\":\"start\",\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":4,\"ts\":\"2026-11-14T07:06:24.886Z\",\"type\":\"node.finished\",\"nodeId\":\"start\",\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-14T07:06:24.878Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-14T07:06:24.878Z\"}}],\"route\":\"out\",\"durationMs\":7},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":5,\"ts\":\"2026-11-14T07:06:24.948Z\",\"type\":\"node.started\",\"nodeId\":\"done\",\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"641ecce23b923601\"},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":6,\"ts\":\"2026-11-14T07:06:24.980Z\",\"type\":\"exit.evaluated\",\"nodeId\":\"done\",\"outcome\":\"success\"},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":7,\"ts\":\"2026-11-14T07:06:24.980Z\",\"type\":\"node.finished\",\"nodeId\":\"done\",\"patch\":[],\"durationMs\":9},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":8,\"ts\":\"2026-11-14T07:06:24.980Z\",\"type\":\"run.finished\",\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":\"claude-native-result\"},{\"runId\":\"01M7CE1XPDNCB5505N91PTE358\",\"seq\":9,\"ts\":\"2026-11-14T07:06:25.047Z\",\"type\":\"return.delivered\",\"channel\":{\"kind\":\"caller\"},\"target\":\"run.result\"}],\"nextAfter\":9,\"hasMore\":false}"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "malformed and structurally invalid definitions",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "create_loop_draft"
+        },
+        {
+          "turn": 1,
+          "waiting": false,
+          "tool": "validate_loop_definition",
+          "result": "GraphGoblin API error VALIDATION_FAILED (HTTP 400): the request did not match the schema\nerrors: [\n  {\n    \"path\": \"/definition/schemaVersion\",\n    \"message\": \"Invalid input: expected 4\"\n  },\n  {\n    \"path\": \"/definition/name\",\n    \"message\": \"Invalid input: expected string, received undefined\"\n  },\n  {\n    \"path\": \"/definition/nodes\",\n    \"message\": \"Invalid input: expected array, received undefined\"\n  },\n  {\n    \"path\": \"/definition/edges\",\n    \"message\": \"Invalid input: expected array, received undefined\"\n  }\n]"
+        },
+        {
+          "turn": 2,
+          "result": "{\"issues\":[{\"code\":\"PORT_UNCONNECTED\",\"severity\":\"error\",\"message\":\"port \\\"out\\\" of node \\\"start\\\" is not connected\",\"nodeId\":\"start\"},{\"code\":\"TRIGGER_NO_EXIT_PATH\",\"severity\":\"error\",\"message\":\"trigger \\\"start\\\" cannot reach any exit node\",\"nodeId\":\"start\"},{\"code\":\"NODE_UNREACHABLE\",\"severity\":\"error\",\"message\":\"node \\\"done\\\" is not reachable from any trigger\",\"nodeId\":\"done\"}],\"publishable\":false}"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "stale draft save",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "save_loop_draft"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error DRAFT_CONFLICT (HTTP 409): the draft changed on the server since this copy was loaded; reload it or overwrite it with the server draftToken"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "missing credentials",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": true,
+          "tool": "WaitForMcpServers"
+        },
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "get_loop_draft"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error UNAUTHORIZED (HTTP 401): an API key is required"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "invalid credentials",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": true,
+          "tool": "WaitForMcpServers"
+        },
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "get_loop_draft"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error UNAUTHORIZED (HTTP 401): the API key is missing, malformed, or revoked"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "insufficient scope",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": true,
+          "tool": "WaitForMcpServers"
+        },
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "create_loop_draft"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error FORBIDDEN (HTTP 403): this key lacks the \"loops:write\" scope"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "other owner",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": true,
+          "tool": "WaitForMcpServers"
+        },
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "get_loop_draft"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error LOOP_NOT_FOUND (HTTP 404): loop 01M7CE1SAD0BZRD8T5WZ2RR09W not found"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "native loader",
+      "installed": true,
+      "validation": true,
+      "inventory": "graphgoblin 0.1.0\n  Description: Design, run, and inspect GraphGoblin loops from Claude Code.\n  Source: graphgoblin@skills-dir\n\nComponent inventory\n  Skills (3)  design-loop, inspect-run, run-loop\n  Agents (0)\n  Hooks (0)\n  MCP servers (1)  graphgoblin  (tool schemas resolved at runtime; not counted)\n  LSP servers (0)\n\nProjected token cost\n  Always-on:   ~162 tok   added to every session\n\nPer-component (rounded)\n  component    always-on  on-invoke\n  design-loop        ~60      ~3.1k\n  inspect-run        ~50       ~590\n  run-loop           ~50       ~990\n\n  On-invoke cost is paid each time a skill or agent fires.\n  Token counts are estimates and may differ from actual usage.\n",
+      "mcp": "Checking MCP server health…\n\nplugin:graphgoblin:graphgoblin: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\plugin\\455 native 漢 4PJHa6\\node runtime é\\node.exe --require C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/plugin/455 native 漢 4PJHa6/isolated Claude config/skills/graphgoblin/check-runtime.cjs C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/plugin/455 native 漢 4PJHa6/moved checkout é/mcp entry.mjs --draft-tools - √ Connected\n"
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "copied artifact inspection",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "get_run"
+        },
+        {
+          "turn": 1,
+          "result": "{\"id\":\"01M7CE1XPDNCB5505N91PTE358\",\"ownerId\":\"local\",\"loopId\":\"01M7CE1SAD0BZRD8T5WZ2RR09W\",\"versionId\":\"01M7CE1XPDNCB5505N91PTE35A\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Native Claude acceptance draft revised\",\"label\":\"Native Claude acceptance draft revised draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"invocationId\":\"01M7CE1XPDNCB5505N91PTE359\",\"status\":\"succeeded\",\"iteration\":1,\"outcome\":\"success\",\"result\":\"claude-native-result\",\"createdAt\":\"2026-11-14T07:06:24.333Z\",\"startedAt\":\"2026-11-14T07:06:24.601Z\",\"finishedAt\":\"2026-11-14T07:06:25.030Z\",\"finalizedAt\":\"2026-11-14T07:06:25.068Z\",\"lastEventSeq\":9,\"recovery\":{\"observedSeq\":9,\"resume\":{\"allowed\":false,\"code\":\"RUN_FINISHED\",\"message\":\"This run has finished. Resume only continues paused runs or supported failures.\"},\"replayDefault\":{\"allowed\":false,\"code\":\"REPLAY_NODE_NOT_REACHED\",\"message\":\"This run never reached this node.\"},\"replay\":[{\"nodeId\":\"start\",\"label\":\"Start\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]},{\"nodeId\":\"done\",\"label\":\"Done\",\"action\":{\"allowed\":true},\"effects\":[{\"nodeId\":\"done\",\"label\":\"Done\",\"kind\":\"delivery\"}]}]}}"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "moved MCP entry guard",
+      "exitCode": 1,
+      "diagnostic": "GraphGoblin could not find its MCP entry at \"C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\plugin\\455 native 漢 4PJHa6\\moved checkout é\\mcp entry.mjs\". Run pnpm build in the current checkout, then reload its plugin artifact or replace the installed copy."
+    },
+    {
+      "stage": "native loader",
+      "installed": false,
+      "validation": true,
+      "inventory": "graphgoblin 0.1.0\n  Description: Design, run, and inspect GraphGoblin loops from Claude Code.\n  Source: graphgoblin@inline\n\nComponent inventory\n  Skills (3)  design-loop, inspect-run, run-loop\n  Agents (0)\n  Hooks (0)\n  MCP servers (1)  graphgoblin  (tool schemas resolved at runtime; not counted)\n  LSP servers (0)\n\nProjected token cost\n  Always-on:   ~162 tok   added to every session\n\nPer-component (rounded)\n  component    always-on  on-invoke\n  design-loop        ~60      ~3.1k\n  inspect-run        ~50       ~590\n  run-loop           ~50       ~990\n\n  On-invoke cost is paid each time a skill or agent fires.\n  Token counts are estimates and may differ from actual usage.\n",
+      "mcp": "Checking MCP server health…\n\nplugin:graphgoblin:graphgoblin: C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\plugin\\455 native 漢 4PJHa6\\node runtime é\\node.exe --require C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/plugin/455 native 漢 4PJHa6/built plugin 漢/check-runtime.cjs C:/Users/98jak/.codex/worktrees/gg-20261114-cc455/GraphGoblin/apps/mcp/dist/main.js --draft-tools - √ Connected\n"
+    },
+    {
+      "stage": "native CLI tool invocation",
+      "scenario": "gateway unavailable",
+      "exitCode": 0,
+      "trace": [
+        {
+          "turn": 0,
+          "waiting": true,
+          "tool": "WaitForMcpServers"
+        },
+        {
+          "turn": 0,
+          "waiting": false,
+          "tool": "list_loops"
+        },
+        {
+          "turn": 1,
+          "result": "GraphGoblin API error NETWORK_ERROR (HTTP 0): fetch failed"
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "stage": "verified REST state",
+      "loopId": "01M7CE1SAD0BZRD8T5WZ2RR09W",
+      "runId": "01M7CE1XPDNCB5505N91PTE358",
+      "outcome": "succeeded",
+      "draftPublished": false,
+      "totalRuns": 1,
+      "snapshotResult": "claude-native-result"
+    }
+  ]
+}
