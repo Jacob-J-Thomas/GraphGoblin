@@ -20,6 +20,7 @@ import {
   type OnConnectEnd,
   type OnConnectStart,
   type OnInit,
+  type OnMove,
   type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
@@ -74,6 +75,7 @@ import { loopBackEdgeIds } from './loop-back-edges.js';
 import { removalFocusTarget } from './canvas-focus.js';
 import { spaceCardsEligible } from './space-cards.js';
 import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+import { createViewportGestureGate } from './viewport-gesture.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -490,6 +492,19 @@ export function Canvas({
   // A node's issue popover is placed from its badge: a pan, a zoom, or a drag closes it. Popovers
   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
   const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
+  // A mouse pan's release leaves d3's click blocker in place for a task: the selected connection's
+  // toolbar is unavailable until it is gone (#207), and so are the Space cards offer's buttons
+  // (#208), which follow this same gate. The gate's window listener is added at mount, before any
+  // press adds d3's own; a layout effect adds it before the browser can deliver one.
+  const [gesture] = useState(createViewportGestureGate);
+  useLayoutEffect(() => gesture.attach(window), [gesture]);
+  const onMove: OnMove = useCallback(
+    (event) => {
+      gesture.move(event);
+      closeCanvasPopovers();
+    },
+    [gesture, closeCanvasPopovers],
+  );
 
   const cardData = useMemo(() => {
     const next = buildCardData(definition, issues, cardDataRef.current);
@@ -703,8 +718,9 @@ export function Canvas({
         setSelectedEdge((current) => (current === edgeId ? undefined : current));
         removalFocusTarget()?.focus();
       },
+      viewport: gesture,
     };
-  }, [announce, closeStep, removeEdge, screenToFlowPosition, setEdgeRoute]);
+  }, [announce, closeStep, gesture, removeEdge, screenToFlowPosition, setEdgeRoute]);
 
   const pinnedCrossings = useCallback(() => {
     const cards = cardBoxes(planRef.current.nodes);
@@ -971,7 +987,7 @@ export function Canvas({
           onClickConnectEnd={onClickConnectEnd}
           isValidConnection={isValidConnection}
           onNodeDragStop={onNodeDragStop}
-          onMove={closeCanvasPopovers}
+          onMove={onMove}
           onNodeDragStart={onNodeDragStart}
           onNodeClick={onNodeClick}
           nodeClickDistance={CLICK_DISTANCE}
@@ -1000,7 +1016,7 @@ export function Canvas({
       onClickConnectEnd,
       isValidConnection,
       onNodeDragStop,
-      closeCanvasPopovers,
+      onMove,
       onNodeDragStart,
       onNodeClick,
       onPaneClick,
@@ -1026,6 +1042,7 @@ export function Canvas({
       {offered ? (
         <SpaceCardsOffer
           count={definition.nodes.length}
+          viewport={gesture}
           onSpace={spaceAll}
           onDismiss={dismissOffer}
         />

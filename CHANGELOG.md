@@ -11,8 +11,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   cards") that is saved like any edit. Focus stays on the canvas, and the view fits once after the
   cards move. The panel shows only while every card is at the same spot and no connection has a
   route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
-  Opening a loop, other edits, Undo and Redo never move cards by themselves. No stored or exported
-  data changes, so there is no upgrade note.
+  Right after a mouse pan, both buttons are briefly shown unavailable and do nothing, like
+  **Remove connection**, until the pan's own click blocker is gone. Opening a loop, other edits,
+  Undo and Redo never move cards by themselves. No stored or exported data changes, so there is
+  no upgrade note.
 - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
@@ -28,8 +30,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   undoing both restores the old one with its route. Editing a route's segments is a separate edit
   that never changes its ends. A drop on a port that refuses it now says why in the **Connection
   refused** notice. Stored edges the canvas cannot draw, for example after renaming or removing a
-  Script exit-code label or from an imported draft, are removed with **Remove edge** in the
-  loop's issues beside **Publish**, one **Undo** step each. No stored or exported data changes,
+  Script exit-code label, from an imported draft, or while a connected Decision route's ID is
+  blank, are listed by their ends under **Connections the canvas cannot draw** in the loop's
+  issues beside **Publish**, and removed there with **Remove edge**, one **Undo** step each.
+  Right after a mouse pan, **Remove connection** and **Reset route** are briefly shown
+  unavailable and do nothing, until the pan's own click blocker is gone; before, they looked
+  available while a click on them was silently swallowed. No stored or exported data changes,
   so there is no upgrade note.
 - Publish reports the version the server actually stored (#237). The editor publishes from its
   queue of saves, after rechecking held input and conflicts, and checks them again right before

@@ -59,4 +59,25 @@ describe('Space cards in the editor (#208)', () => {
     expect(sameValue(restored, original)).toBe(true);
     expect(screen.getByRole('button', { name: 'Space cards' })).toBeInTheDocument();
   });
+
+  it('dismisses the offer without an edit: no history step, no save and no device write', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    const saves = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    const state = useEditorStore.getState();
+    const device = await loadLocalDraft(loop.id);
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
+    expect(screen.queryByRole('button', { name: 'Space cards' })).toBeNull();
+    expect(screen.getByTestId('canvas')).toHaveFocus();
+    // Nothing for Undo to take back, and nothing for autosave to send, also once its delay passed.
+    expect(screen.getByRole('button', { name: 'Undo' })).toHaveAttribute('aria-disabled', 'true');
+    await new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_MS + 200));
+    expect(useEditorStore.getState()).toBe(state);
+    expect(saves()).toHaveLength(0);
+    expect(await loadLocalDraft(loop.id)).toEqual(device);
+  });
 });

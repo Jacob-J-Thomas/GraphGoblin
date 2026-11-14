@@ -1,6 +1,6 @@
 import { EdgeRouteSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Position, type ReactFlowProps } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -291,6 +291,10 @@ describe('Canvas handlers', () => {
     toggle('Inside');
     expect(isOpen('Inside')).toBe(true);
     act(() => flow().onMove!(null, { x: 20, y: 0, zoom: 1 }));
+    expect(isOpen('Inside')).toBe(false);
+    // A mouse pan's move closes them too (#207 adds the toolbar gate to the same callback).
+    toggle('Inside');
+    act(() => flow().onMove!(new MouseEvent('mousemove'), { x: 30, y: 0, zoom: 1 }));
     expect(isOpen('Inside')).toBe(false);
     toggle('Inside');
     const node = flow().nodes!.find((n) => n.id === 'prep')!;
@@ -966,6 +970,42 @@ describe('manual edge routes (#44)', () => {
     fireEvent.click(handle('Remove connection'));
     expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(false);
     expect(view.getByTestId('canvas')).toHaveFocus();
+  });
+
+  it('makes the toolbar unavailable from a mouse pan’s move until its release settles, and detaches on unmount (#207)', async () => {
+    const add = vi.spyOn(window, 'addEventListener');
+    const removeListener = vi.spyOn(window, 'removeEventListener');
+    const view = render(<Live />);
+    // One passive capture listener for releases, added at mount.
+    const releases = add.mock.calls.filter(([type]) => type === 'mouseup');
+    expect(releases).toHaveLength(1);
+    expect(releases[0]![2]).toEqual({ capture: true, passive: true });
+    select('start-work');
+    const remove = handle('Remove connection');
+    const viewport = { x: 0, y: 0, zoom: 1 };
+    // A new canvas is ready; a wheel, a touch pan and a fit never make it unavailable.
+    act(() => {
+      flow().onMove!(new WheelEvent('wheel'), viewport);
+      flow().onMove!(new TouchEvent('touchmove'), viewport);
+      flow().onMove!(null, viewport);
+    });
+    expect(remove).not.toHaveAttribute('aria-disabled');
+    act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
+    expect(remove).toHaveAttribute('aria-disabled', 'true');
+    expect(remove).toHaveAttribute('data-gesture', 'panning');
+    fireEvent.click(remove);
+    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(true);
+    expect(edge('start-work').selected).toBe(true);
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mouseup'));
+    });
+    expect(remove).toHaveAttribute('data-gesture', 'settling');
+    await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
+    fireEvent.click(remove);
+    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(false);
+    expect(labels()).toEqual(['remove edge start to work']);
+    view.unmount();
+    expect(removeListener).toHaveBeenCalledWith('mouseup', releases[0]![1], { capture: true });
   });
 
   it('forgets a selection whose connection is gone, so an edge reusing its id is not selected (#207)', () => {

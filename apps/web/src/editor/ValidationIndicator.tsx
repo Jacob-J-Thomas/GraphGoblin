@@ -12,7 +12,7 @@ import {
   worstSeverity,
 } from './IssuePopover.js';
 import { countsLabel, groupIssues, issuesLabel, type EditorIssue } from './model.js';
-import { removeStrandedEdge, strandedEdgeRows } from './stranded-edges.js';
+import { removeStrandedEdge, strandedEdges } from './stranded-edges.js';
 import { useEditorStore } from './store.js';
 
 const GROUP_LABEL = 'px-2 pt-0.5 text-xs font-semibold text-muted';
@@ -38,8 +38,11 @@ const STATUS: Record<ServerCheck, { icon: 'queued' | 'info' | 'check-circle'; te
  * Publish checks) that opens a popover listing every loop-level and edge issue in full, then one
  * row per node with issues ("prep: 2 issues"), which opens that node; each node's badge on the
  * canvas has the detail. A stored edge the canvas cannot draw (from a missing node or port, into a
- * missing node or a trigger) has nothing to select on the canvas, so its first issue row offers
- * Remove edge (#207): one undo step, refused for a protected Chat voice step.
+ * missing node or a trigger) has nothing to select on the canvas, so the popover's "Connections
+ * the canvas cannot draw" group lists each one by its stored ends with one Remove edge (#207): one
+ * undo step, refused for a protected Chat voice step. The group is read from the draft, so it is
+ * there also while the draft does not parse; it adds nothing to the counts. Such an edge always
+ * comes with an error (the schema's, or the edge's own), so the popover is there to open.
  */
 export function ValidationIndicator({
   issues,
@@ -58,7 +61,6 @@ export function ValidationIndicator({
   const nodeGroupId = useId();
   // Where focus goes when "Discard the unparsed text" removed the last issue, and with it the button.
   const readyRef = useRef<HTMLSpanElement>(null);
-  const system = useEditorStore((s) => s.systemChat);
   if (issues.length === 0) {
     const status = STATUS[check];
     return (
@@ -83,7 +85,6 @@ export function ValidationIndicator({
   }
   const severity = worstSeverity(issues);
   const { general, nodes } = groupIssues(issues, definition);
-  const stranded = strandedEdgeRows(general, definition);
   return (
     <Popover
       label="Loop issues"
@@ -114,29 +115,13 @@ export function ValidationIndicator({
                 issues={general}
                 subject
                 onDiscard={() => refocusAfterDiscard(close, () => readyRef.current)}
-                rowAction={(_issue, index) => {
-                  const edge = stranded.get(index);
-                  if (!edge) return null;
-                  const blocked = isProtectedVoiceEdge(definition, system, edge);
-                  return (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="ml-2"
-                      disabled={blocked}
-                      title={blocked ? VOICE_STEP_MESSAGE : undefined}
-                      onClick={() => {
-                        if (removeStrandedEdge(edge))
-                          refocusAfterDiscard(close, () => readyRef.current);
-                      }}
-                    >
-                      Remove edge {edge.id}
-                    </Button>
-                  );
-                }}
               />
             </div>
           ) : null}
+          <StrandedEdges
+            definition={definition}
+            onRemoved={() => refocusAfterDiscard(close, () => readyRef.current)}
+          />
           {nodes.length > 0 ? (
             <div role="group" aria-labelledby={nodeGroupId} className="grid gap-1.5">
               <p id={nodeGroupId} className={GROUP_LABEL}>
@@ -176,5 +161,56 @@ export function ValidationIndicator({
         </div>
       )}
     </Popover>
+  );
+}
+
+/**
+ * The open popover's "Connections the canvas cannot draw" group (#207): each such stored edge by its
+ * id and stored ends, with its one Remove edge, disabled with the voice-step message for a protected
+ * Chat edge. Read from the draft only while the popover is open, since every edge's source card is
+ * checked for its port. Nothing when there are none.
+ */
+function StrandedEdges({
+  definition,
+  onRemoved,
+}: {
+  definition: LoopDefinitionInput;
+  onRemoved: () => void;
+}) {
+  const groupId = useId();
+  const system = useEditorStore((s) => s.systemChat);
+  const stranded = strandedEdges(definition);
+  if (stranded.length === 0) return null;
+  return (
+    <div role="group" aria-labelledby={groupId} className="grid gap-1.5">
+      <p id={groupId} className={GROUP_LABEL}>
+        Connections the canvas cannot draw
+      </p>
+      <ul className="grid gap-1">
+        {stranded.map((edge) => {
+          const blocked = isProtectedVoiceEdge(definition, system, edge);
+          return (
+            <li key={edge.id} className="grid justify-items-start gap-1">
+              <span className="px-2 text-sm leading-snug text-default">
+                <code>{edge.id}</code> from <code>{edge.from.node}</code> output{' '}
+                <code>{edge.from.port}</code> to <code>{edge.to.node}</code>
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-2"
+                disabled={blocked}
+                title={blocked ? VOICE_STEP_MESSAGE : undefined}
+                onClick={() => {
+                  if (removeStrandedEdge(edge)) onRemoved();
+                }}
+              >
+                Remove edge {edge.id}
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

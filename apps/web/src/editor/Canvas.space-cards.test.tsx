@@ -1,13 +1,15 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { NodeChange, ReactFlowProps } from '@xyflow/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Canvas } from './Canvas.js';
 import type { FlowNode } from './NodeCard.js';
 import { spacedPositions } from './space-cards.js';
+import { SpaceCardsOffer } from './SpaceCardsOffer.js';
 import { useEditorStore } from './store.js';
 import type { RoutingGeometry } from './useRouting.js';
+import { createViewportGestureGate } from './viewport-gesture.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
 const fitView = vi.fn(() => Promise.resolve(true));
@@ -211,5 +213,291 @@ describe('Space cards on the canvas (#208)', () => {
     view.unmount();
     render(<Live />);
     expect(offer()).not.toBeNull();
+  });
+});
+
+describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+  const viewport = { x: 0, y: 0, zoom: 1 };
+  const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
+  /** xyflow's `onMove` for the first move of a mouse pan: the gate is `panning` from here. */
+  const pan = () => act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
+  /** A mouse release on the page, seen first by the canvas's one window listener. */
+  const release = () =>
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mouseup'));
+    });
+  const untilAvailable = () =>
+    waitFor(() => {
+      expect(spaceButton()).not.toHaveAttribute('aria-disabled');
+      expect(dismissButton()).not.toHaveAttribute('aria-disabled');
+    });
+  /** Both buttons say `gesture` (nothing when available) and are never disabled or click-through. */
+  const expectGesture = (gesture?: 'panning' | 'settling') => {
+    for (const button of [spaceButton(), dismissButton()]) {
+      if (gesture) {
+        expect(button).toHaveAttribute('aria-disabled', 'true');
+        expect(button).toHaveAttribute('data-gesture', gesture);
+      } else {
+        expect(button).not.toHaveAttribute('aria-disabled');
+        expect(button).not.toHaveAttribute('data-gesture');
+      }
+      expect(button).toBeEnabled();
+      expect(button.classList.contains('pointer-events-none')).toBe(false);
+    }
+  };
+
+  beforeEach(() => {
+    fitView.mockClear();
+    store().load('L1', kitchenSinkLoop());
+  });
+
+  it('keeps both buttons attached and focusable but unavailable, from a mouse pan’s first move until its release settles', async () => {
+    render(<Live />);
+    const space = spaceButton();
+    const dismiss = dismissButton();
+    // A new canvas is ready; a wheel, a touch pan and a programmatic move never change that.
+    act(() => {
+      flow().onMove!(new WheelEvent('wheel'), viewport);
+      flow().onMove!(new TouchEvent('touchmove'), viewport);
+      flow().onMove!(null, viewport);
+    });
+    expectGesture();
+    pan();
+    expectGesture('panning');
+    // The offer is not hidden, so a press cannot fall through to the canvas below it.
+    expect(offer()).not.toBeNull();
+    for (const button of [dismiss, space]) {
+      act(() => button.focus());
+      expect(button).toHaveFocus();
+      expect(button.isConnected).toBe(true);
+    }
+    release();
+    expectGesture('settling');
+    await untilAvailable();
+    expectGesture();
+    // The same elements throughout: nothing was replaced or remounted.
+    expect(spaceButton()).toBe(space);
+    expect(dismissButton()).toBe(dismiss);
+    expect(space).toHaveFocus();
+  });
+
+  it('refuses Space cards by click, Enter and Space while unavailable, then spaces once on the first press after release', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    const original = store().definition!;
+    measure({ prep: 400 });
+    const state = store();
+    const space = spaceButton();
+    act(() => space.focus());
+    const refused = () => {
+      expect(store()).toBe(state);
+      // Focus did not leave the button for the canvas, and nothing was announced or fitted.
+      expect(space).toHaveFocus();
+      expect(announced()).toBe('');
+      expect(fitView).not.toHaveBeenCalled();
+      expect(offer()).not.toBeNull();
+    };
+    pan();
+    fireEvent.click(space);
+    await user.keyboard('{Enter}');
+    await user.keyboard('[Space]');
+    refused();
+    // Released, and still settling: shown unavailable and refused the same way.
+    release();
+    expectGesture('settling');
+    fireEvent.click(space);
+    refused();
+
+    await untilAvailable();
+    await user.click(space);
+    expect(labels()).toEqual(['space cards']);
+    expect(positions()).toEqual(
+      spacedPositions(
+        original,
+        original.nodes.map((node) => (node.id === 'prep' ? 400 : 100)),
+      ),
+    );
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+    expect(offer()).toBeNull();
+    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(store().future).toEqual([]);
+  });
+
+  it('refuses Dismiss suggestion while unavailable, then dismisses once with no edit, save or history step', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    const state = store();
+    const changes = vi.fn();
+    const unsubscribe = useEditorStore.subscribe(changes);
+    try {
+      const dismiss = dismissButton();
+      act(() => dismiss.focus());
+      pan();
+      fireEvent.click(dismiss);
+      await user.keyboard('{Enter}');
+      await user.keyboard('[Space]');
+      release();
+      fireEvent.click(dismiss);
+      expectGesture('settling');
+      // Still offered, still focused on Dismiss, and nothing was announced.
+      expect(offer()).not.toBeNull();
+      expect(dismiss).toHaveFocus();
+      expect(announced()).toBe('');
+
+      await untilAvailable();
+      await user.click(dismiss);
+      expect(offer()).toBeNull();
+      expect(canvas()).toHaveFocus();
+      expect(announced()).toBe('Suggestion dismissed.');
+    } finally {
+      unsubscribe();
+    }
+    // Dismissal is local to the editor load: the store was never written, so there is no revision,
+    // no history step and nothing for autosave or the device copy to send.
+    expect(changes).not.toHaveBeenCalled();
+    expect(store()).toBe(state);
+    expect(store()).toMatchObject({ revision: 0, past: [], future: [] });
+  });
+
+  it('keeps the store’s own recheck behind the gate: a stale offer is refused unheard while unavailable, then by the store', async () => {
+    const user = userEvent.setup();
+    // Rendered with the pile; the store's draft then changes without this canvas rendering again.
+    render(<Canvas definition={store().definition!} issues={[]} />);
+    act(() => store().moveNode('prep', { x: 5, y: 5 }));
+    const state = store();
+    const space = spaceButton();
+    act(() => space.focus());
+    pan();
+    fireEvent.click(space);
+    // The gate refused first: the store was not asked, so no refusal text and no focus move.
+    expect(store()).toBe(state);
+    expect(space).toHaveFocus();
+    expect(announced()).toBe('');
+
+    release();
+    await untilAvailable();
+    await user.click(space);
+    expect(store()).toBe(state);
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('uses the canvas’s one gate: no second window listener, detached with the canvas', () => {
+    const add = vi.spyOn(window, 'addEventListener');
+    const removeListener = vi.spyOn(window, 'removeEventListener');
+    try {
+      const view = render(<Live />);
+      // The offer is rendered, and the page still has the gate's single passive capture listener.
+      expect(offer()).not.toBeNull();
+      const releases = add.mock.calls.filter(([type]) => type === 'mouseup');
+      expect(releases).toHaveLength(1);
+      expect(releases[0]![2]).toEqual({ capture: true, passive: true });
+      pan();
+      expectGesture('panning');
+      view.unmount();
+      expect(removeListener).toHaveBeenCalledWith('mouseup', releases[0]![1], { capture: true });
+    } finally {
+      add.mockRestore();
+      removeListener.mockRestore();
+    }
+  });
+
+  it('reads the gate when the offer returns mid-pan, so it is never shown available while unavailable', async () => {
+    render(<Live />);
+    act(() => store().moveNode('prep', { x: 1, y: 1 }));
+    expect(offer()).toBeNull();
+    // A pan begins while the offer is away; undoing the move brings it back into that pan.
+    pan();
+    act(() => store().undo());
+    expect(offer()).not.toBeNull();
+    expectGesture('panning');
+    release();
+    await untilAvailable();
+    expectGesture();
+  });
+
+  describe('the offer on its own, with the shared gate', () => {
+    const offerOn = (
+      viewportOf: Parameters<typeof SpaceCardsOffer>[0]['viewport'],
+      onSpace = vi.fn(),
+      onDismiss = vi.fn(),
+    ) => ({
+      onSpace,
+      onDismiss,
+      view: render(
+        <SpaceCardsOffer count={3} viewport={viewportOf} onSpace={onSpace} onDismiss={onDismiss} />,
+      ),
+    });
+
+    it('subscribes once while shown, unsubscribes when it leaves, and reads the current state on return', async () => {
+      const gate = createViewportGestureGate();
+      const detach = gate.attach(window);
+      let subscribed = 0;
+      let subscribers = 0;
+      // One stable viewport, as the canvas passes its gate.
+      const viewportOf = {
+        state: gate.state,
+        subscribe: (listener: () => void) => {
+          subscribed += 1;
+          subscribers += 1;
+          const off = gate.subscribe(listener);
+          return () => {
+            subscribers -= 1;
+            off();
+          };
+        },
+      };
+      try {
+        const first = offerOn(viewportOf);
+        expect(subscribers).toBe(1);
+        act(() => gate.move(new MouseEvent('mousemove')));
+        expectGesture('panning');
+        release();
+        expectGesture('settling');
+        await untilAvailable();
+        // Every change was heard through that one subscription.
+        expect(subscribed).toBe(1);
+        first.view.unmount();
+        expect(subscribers).toBe(0);
+
+        // The gate moves on while the offer is away; its next appearance already says so.
+        act(() => gate.move(new MouseEvent('mousemove')));
+        const second = offerOn(viewportOf);
+        expect(subscribers).toBe(1);
+        expectGesture('panning');
+        fireEvent.click(spaceButton());
+        fireEvent.click(dismissButton());
+        expect(second.onSpace).not.toHaveBeenCalled();
+        expect(second.onDismiss).not.toHaveBeenCalled();
+        release();
+        await untilAvailable();
+        fireEvent.click(spaceButton());
+        fireEvent.click(dismissButton());
+        expect(second.onSpace).toHaveBeenCalledTimes(1);
+        expect(second.onDismiss).toHaveBeenCalledTimes(1);
+        second.view.unmount();
+        expect(subscribers).toBe(0);
+      } finally {
+        detach();
+      }
+    });
+
+    it('asks the gate again when pressed, so a rendered state that missed a pan still refuses', () => {
+      const gate = createViewportGestureGate();
+      // A subscription that never reports: the buttons stay rendered available whatever happens.
+      const { onSpace, onDismiss } = offerOn({
+        state: gate.state,
+        subscribe: () => () => undefined,
+      });
+      act(() => gate.move(new MouseEvent('mousemove')));
+      expect(gate.state()).toBe('panning');
+      expectGesture();
+      fireEvent.click(spaceButton());
+      fireEvent.click(dismissButton());
+      expect(onSpace).not.toHaveBeenCalled();
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
   });
 });

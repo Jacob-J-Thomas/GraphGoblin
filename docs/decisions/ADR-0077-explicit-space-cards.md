@@ -19,6 +19,8 @@ The editor never moves cards by itself. When a draft has at least two nodes, eve
 - It is one history step, one revision and one autosave like any edit, with no special save or permission path. Undo restores the exact earlier draft and Redo the exact spaced one.
 - Focus stays on the canvas, the result is announced with Undo's availability, and the view fits once after the spaced cards render.
 
+The panel's two buttons, **Space cards** and **Dismiss suggestion**, follow the canvas's own viewport gate ([ADR-0076](ADR-0076-canvas-only-connection-authoring.md)), the same one that guards **Remove connection** and **Reset route**, not a second gate. After a mouse pan, d3's click blocker can swallow the next click anywhere on the page, including on these buttons, which sit outside the flow. From the pan's first move until its release has settled they are shown unavailable (`aria-disabled` and `data-gesture`, never `disabled` or `pointer-events: none`) and stay in place and focusable; a press then does nothing, so it cannot fall through to the canvas or be swallowed while they look available. Nothing is hidden, delayed or replayed. The store's recheck of eligibility is unchanged and still applies to the first press after the gate is ready.
+
 Dismissing the offer lasts for the editor load. There is no general arrange command for loops that already have positions, and no change to the stored, export or API format.
 
 ## Consequences
