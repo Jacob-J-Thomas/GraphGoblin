@@ -132,25 +132,66 @@ interface Control {
 }
 
 /**
- * The ghost button's look, drawn 20 px high so it fits the label's line: showing it never moves the
- * control below. It has no larger invisible target (`touch-target`'s 44 px square would lie 7.5 px
- * over the field below, and a tap there would omit it and lose what was typed).
+ * Omit's look. With a fine pointer, a ghost button drawn 20 px high so it fits the label's line. With
+ * a coarse pointer, an outline button of 44 by 44 px: its own box is the whole target, with no
+ * larger invisible one.
  */
 const OMIT_BUTTON = cn(
-  '-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
+  '-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center justify-center rounded-sm px-1.5',
   'border border-transparent bg-transparent text-xs leading-none font-semibold text-default',
   'transition-[background-color] hover:bg-surface-hover',
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+  'pointer-coarse:my-0 pointer-coarse:h-11 pointer-coarse:min-w-11 pointer-coarse:rounded-md',
+  'pointer-coarse:border-strong pointer-coarse:bg-surface-raised pointer-coarse:shadow-ledge',
 );
 
 /**
- * The label line of a field that can show Omit. On a coarse pointer Edge moves a tap that lands just
- * under a button onto it, even over a text field. At the 6 px gap (the button ends 4.5 px above the
- * field) real touches up to 5 px inside the top of the field omitted it and lost the typed text;
- * they still did at 6.5 px, and none did from 7.5 px. 6 px more, always there so that Omit appearing
- * moves nothing, leaves 10.5 px. A fine pointer keeps the 6 px gap.
+ * The label line of a field that can show Omit, on a coarse pointer: as high as Omit (44 px), the
+ * label at its foot, 12 px between the label and Omit, and 6 px more below it, so Omit ends 12 px
+ * above the field and starts at least 16 px below the field before. A fine pointer keeps its line.
  */
-const OMIT_ROW = 'pointer-coarse:pb-1.5';
+const OMIT_ROW = 'pointer-coarse:items-end pointer-coarse:gap-3 pointer-coarse:pb-1.5';
+
+/**
+ * A field's label line: the label, then Omit's place (an optional field) and the language tag (a
+ * JSON field) at its end. While there is no Omit, a hidden stand-in drawn as Omit holds its place,
+ * so Omit appearing moves neither the label nor the field (nor the tag), in any font.
+ */
+function LabelLine({
+  htmlFor,
+  label,
+  required = false,
+  optional,
+  omit,
+  tag,
+}: {
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+  optional: boolean;
+  omit: ReactNode;
+  tag?: ReactNode;
+}) {
+  return (
+    <div className={cn('flex min-w-0 items-center justify-between gap-2', optional && OMIT_ROW)}>
+      <Label htmlFor={htmlFor} required={required}>
+        {label}
+      </Label>
+      {optional || tag ? (
+        <span className="flex shrink-0 items-center gap-2 pointer-coarse:items-end">
+          {optional
+            ? (omit ?? (
+                <span aria-hidden="true" className={cn(OMIT_BUTTON, 'invisible')}>
+                  Omit
+                </span>
+              ))
+            : null}
+          {tag}
+        </span>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
@@ -344,20 +385,14 @@ function PropertyField({
       ) : null;
     field = (
       <>
-        <div
-          className={cn('flex min-w-0 items-center justify-between gap-2', !required && OMIT_ROW)}
-        >
-          <Label htmlFor={id} required={required}>
-            {label}
-          </Label>
-          {omit || type === 'json' ? (
-            // Omit appears before the tag, so the tag never moves.
-            <span className="flex shrink-0 items-center gap-2">
-              {omit}
-              {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
-            </span>
-          ) : null}
-        </div>
+        <LabelLine
+          htmlFor={id}
+          label={label}
+          required={required}
+          optional={!required}
+          omit={omit}
+          tag={type === 'json' ? <LanguageTag>JSON</LanguageTag> : undefined}
+        />
         {type === 'json' ? (
           <Textarea {...control} value={text} onChange={(e) => onChange(e.target.value)} />
         ) : type === 'number' ? (
@@ -540,24 +575,23 @@ export function JsonSchemaForm({
         ))
       ) : (
         <FieldGroup className="max-w-[440px]">
-          <div
-            className={cn(
-              'flex min-w-0 items-center justify-between gap-2',
-              rawOptional && OMIT_ROW,
-            )}
-          >
-            <Label htmlFor={rawId}>Input (JSON)</Label>
-            {rawOptional && raw !== undefined ? (
-              <OmitButton
-                controlId={rawId}
-                label="input"
-                onOmit={() => {
-                  setRaw(undefined);
-                  setProblems(NO_PROBLEMS);
-                }}
-              />
-            ) : null}
-          </div>
+          <LabelLine
+            htmlFor={rawId}
+            label="Input (JSON)"
+            optional={rawOptional}
+            omit={
+              rawOptional && raw !== undefined ? (
+                <OmitButton
+                  controlId={rawId}
+                  label="input"
+                  onOmit={() => {
+                    setRaw(undefined);
+                    setProblems(NO_PROBLEMS);
+                  }}
+                />
+              ) : null
+            }
+          />
           <Textarea
             id={rawId}
             value={raw ?? ''}

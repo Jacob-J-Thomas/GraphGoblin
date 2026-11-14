@@ -401,78 +401,123 @@ test('New run and Wait send the supplied input and omit untouched or reset field
 test.describe('with a coarse pointer (#235)', () => {
   test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
 
-  // The browser moves a touch that lands near a button onto it, even over a text field. A tap on
-  // the top of an edited field must keep its text, and Omit must still take a tap of its own.
-  test('a tap on an edited field never omits it, and a tap on Omit does', async ({
+  // Omit is a 44 px button in a place its label line always holds, 12 px above its field and 16 px
+  // below the field before, with no larger invisible box. The browser moves a touch that lands near
+  // a button onto it, even over a text field, so real taps on both fields must keep the text, and
+  // Omit must still take a tap anywhere on itself.
+  test('Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait', async ({
     page,
     request,
   }) => {
+    const inputSchema = {
+      type: 'object',
+      properties: {
+        first: { type: 'string' },
+        comment: { type: 'string' },
+        details: { type: 'object' },
+      },
+    };
     const definition = approvalLoop('coarse omit');
     const loopId = await publishLoop(request, {
       ...definition,
       nodes: definition.nodes.map((node) =>
-        node.id === 'start'
-          ? {
-              ...node,
-              config: {
-                ...node.config,
-                inputSchema: {
-                  type: 'object',
-                  properties: {
-                    first: { type: 'string' },
-                    comment: { type: 'string' },
-                    details: { type: 'object' },
-                  },
-                },
-              },
-            }
+        node.id === 'start' || node.id === 'approve'
+          ? { ...node, config: { ...node.config, inputSchema } }
           : node,
       ),
     });
-    await page.goto(`/app/runs/new?loop=${loopId}`);
-    expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
-    const form = page.getByRole('form', { name: 'Start run' });
 
-    for (const name of ['comment', 'details']) {
-      const field = form.getByLabel(name, { exact: true });
-      const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
-      const offset = () =>
-        field.evaluate(
-          (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
-        );
-      const resting = await offset();
-      await field.fill('typed');
-      await expect(omit).toBeVisible();
-      expect(await offset()).toBe(resting);
-      await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
-      const button = (await omit.boundingBox())!;
-      const top = (await field.boundingBox())!.y;
-      // The button stands clear of the field, beyond where the browser would move a tap onto it.
-      expect(top - (button.y + button.height)).toBeGreaterThanOrEqual(8);
+    async function tapAround(submitLabel: string) {
+      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+      const form = page.getByRole('form', { name: submitLabel });
+      for (const [name, before] of [
+        ['comment', 'first'],
+        ['details', 'comment'],
+      ] as const) {
+        const field = form.getByLabel(name, { exact: true });
+        const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
+        const offset = () =>
+          field.evaluate(
+            (el) =>
+              el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+          );
+        const resting = await offset();
+        await field.fill('typed');
+        await expect(omit).toBeVisible();
+        // Omit appearing moves nothing.
+        expect(await offset()).toBe(resting);
+        await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        const button = (await omit.boundingBox())!;
+        const box = (await field.boundingBox())!;
+        const above = (await form.getByLabel(before, { exact: true }).boundingBox())!;
+        expect(button.width, `Omit ${name}: touch width`).toBeGreaterThanOrEqual(44);
+        expect(button.height, `Omit ${name}: touch height`).toBeGreaterThanOrEqual(44);
+        expect(await omit.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
+        expect(box.y - (button.y + button.height)).toBeGreaterThanOrEqual(12);
+        expect(button.y - (above.y + above.height)).toBeGreaterThanOrEqual(16);
 
-      // Real touches over the top of the field, across and beyond the button's width.
-      const wrong: string[] = [];
-      for (
-        let x = Math.floor(button.x) - 24;
-        x <= Math.ceil(button.x + button.width) + 24;
-        x += 6
-      ) {
-        for (let depth = 0; depth <= 14; depth += 2) {
-          await page.touchscreen.tap(x, top + depth);
+        // Real touches over the top of this field and the bottom of the one before, across and
+        // beyond the button's width, a column at a time: once Omit has gone, no later tap brings
+        // it back, so a column that leaves no Omit had a tap that omitted the field.
+        const wrong: string[] = [];
+        const column = async (where: string, x: number, ys: number[]) => {
+          for (const y of ys) await page.touchscreen.tap(x, y);
           if ((await omit.count()) === 0) {
-            wrong.push(`x ${x}, ${depth} px into the field`);
+            wrong.push(`${where} at x ${x}, y ${ys.join('/')}`);
             await field.fill('typed');
             await expect(omit).toBeVisible();
           }
+        };
+        const depths = (deepest: number) =>
+          Array.from({ length: deepest / 2 + 1 }, (_, step) => 0.5 + step * 2);
+        for (
+          let x = Math.floor(button.x) - 24;
+          x <= Math.ceil(button.x + button.width) + 24;
+          x += 6
+        ) {
+          if (x > box.x && x < box.x + box.width)
+            await column(
+              name,
+              x,
+              depths(14).map((depth) => box.y + depth),
+            );
+          if (x > above.x && x < above.x + above.width)
+            await column(
+              before,
+              x,
+              depths(10).map((depth) => above.y + above.height - depth),
+            );
         }
-      }
-      expect(wrong).toEqual([]);
-      await expect(field).toHaveValue('typed');
+        expect(wrong).toEqual([]);
+        await expect(field).toHaveValue('typed');
 
-      // A tap on the button itself omits the field.
-      await page.touchscreen.tap(button.x + button.width / 2, button.y + button.height / 2);
-      await expect(omit).toHaveCount(0);
-      await expect(field).toHaveValue('');
+        // A tap anywhere on the button omits the field: 4 px inside each rounded corner, then the
+        // centre.
+        const right = button.x + button.width;
+        const bottom = button.y + button.height;
+        for (const [x, y] of [
+          [button.x + 4, button.y + 4],
+          [right - 4, button.y + 4],
+          [button.x + 4, bottom - 4],
+          [right - 4, bottom - 4],
+          [button.x + button.width / 2, button.y + button.height / 2],
+        ] as const) {
+          await expect(omit).toBeVisible();
+          await page.touchscreen.tap(x, y);
+          await expect(omit).toHaveCount(0);
+          await expect(field).toHaveValue('');
+          await field.fill('typed');
+        }
+        await omit.tap();
+        await expect(omit).toHaveCount(0);
+        expect(await offset()).toBe(resting);
+      }
+      return form.getByRole('button', { name: submitLabel, exact: true });
     }
+
+    await page.goto(`/app/runs/new?loop=${loopId}`);
+    await (await tapAround('Start run')).tap();
+    await expect(page.getByText('Input requested')).toBeVisible();
+    await tapAround('Submit input');
   });
 });

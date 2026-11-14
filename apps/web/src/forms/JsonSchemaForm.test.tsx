@@ -147,6 +147,52 @@ describe('JsonSchemaForm', () => {
     });
   });
 
+  it('holds Omit’s place in an optional field’s label line with a hidden stand-in drawn as Omit', async () => {
+    const user = userEvent.setup();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          required: ['name', 'data'],
+          properties: {
+            name: { type: 'string' },
+            data: { type: 'object' },
+            note: { type: 'string' },
+            details: { type: 'object' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={vi.fn()}
+      />,
+    );
+    /** The text "Omit" in a field's label line: its stand-in, or the button once it shows. */
+    const omitText = (label: string) =>
+      within(screen.getByLabelText(label).previousElementSibling as HTMLElement).queryAllByText(
+        'Omit',
+      );
+    const [note] = omitText('note');
+    const [details] = omitText('details');
+    for (const standIn of [note, details]) {
+      expect(standIn?.tagName).toBe('SPAN');
+      expect(standIn).toHaveAttribute('aria-hidden', 'true');
+      expect(standIn).toHaveClass('invisible');
+    }
+    // Required fields never show Omit, so they hold no place for it.
+    expect(omitText('name')).toEqual([]);
+    expect(omitText('data')).toEqual([]);
+    expect(omitButtons()).toEqual([]);
+
+    // Omit takes the stand-in's place, drawn the same way, so it takes the same room.
+    await user.type(screen.getByLabelText('note'), 'x');
+    const button = screen.getByRole('button', { name: 'Omit note' });
+    expect(omitText('note')).toHaveLength(1);
+    expect(omitText('note')[0]).toBe(button);
+    expect(details?.className).toBe(`${button.className} invisible`);
+    await user.click(button);
+    expect(omitText('note')).toHaveLength(1);
+    expect(omitText('note')[0]).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('checks a number the browser reports as incomplete rather than leaving it out', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
@@ -261,8 +307,21 @@ describe('JsonSchemaForm', () => {
   it('offers no Omit in the JSON editor when the schema refuses no input', async () => {
     const user = userEvent.setup();
     render(<JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={vi.fn()} />);
-    await user.type(screen.getByLabelText('Input (JSON)'), '1');
+    const input = screen.getByLabelText('Input (JSON)');
+    // Nor a place held for it in the label line.
+    expect(within(input.previousElementSibling as HTMLElement).queryByText('Omit')).toBeNull();
+    await user.type(input, '1');
     expect(omitButtons()).toEqual([]);
+  });
+
+  it('holds Omit’s place in the JSON editor when the schema accepts no input', async () => {
+    const user = userEvent.setup();
+    render(<JsonSchemaForm schema={undefined} submitLabel="Send" onSubmit={vi.fn()} />);
+    const input = screen.getByLabelText('Input (JSON)');
+    const line = input.previousElementSibling as HTMLElement;
+    expect(within(line).getByText('Omit')).toHaveAttribute('aria-hidden', 'true');
+    await user.type(input, '{{}');
+    expect(within(line).getByText('Omit')).toBe(screen.getByRole('button', { name: 'Omit input' }));
   });
 
   it('renders one field per property and validates before submitting', async () => {

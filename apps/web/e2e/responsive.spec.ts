@@ -3,7 +3,8 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Responsive review (#41): both stored themes, every page and transient state at four widths,
  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
- * targets (including disclosures, code fields, checkbox/radio labels, and port hit boxes), and
+ * targets (including disclosures, code fields, checkbox/radio labels, the Omit an edited run input
+ * shows, and port hit boxes), and
  * reflow at 200% zoom. Group related
  * states instead of creating a separate browser test for each matrix cell.
  */
@@ -761,6 +762,7 @@ for (const theme of ['dark', 'light'] as const) {
           ['/app/loops', 'responsive sweep'],
           [`/app/loops/${loopId}/edit`, 'Approve'],
           ['/app/runs', 'responsive sweep'],
+          [`/app/runs/new?loop=${loopId}`, 'Start run'],
           [`/app/runs/${runId}`, 'Input requested'],
           ['/app/events', 'issue-opened'],
         ] as const) {
@@ -768,6 +770,17 @@ for (const theme of ['dark', 'light'] as const) {
           expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
           await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
           expect(await smallTargets(page), path).toEqual([]);
+          if (path.startsWith('/app/runs/')) {
+            // New run's and the waiting run's input: an edited optional field shows Omit (#235).
+            const input = page.getByLabel('Input (JSON)', { exact: true });
+            await input.fill('{}');
+            const omit = page.getByRole('button', { name: 'Omit input', exact: true });
+            await expect(omit).toBeVisible();
+            expect(await smallTargets(page), `${path} with Omit`).toEqual([]);
+            await measure(`Omit input (${path.includes('/new') ? 'New run' : 'Wait'})`, omit);
+            await omit.tap();
+            await expect(input).toHaveValue('');
+          }
           if (path === `/app/runs/${runId}`) {
             for (const name of ['Full thread JSON', /^Node progress/]) {
               const toggle = page.getByRole('button', { name });
