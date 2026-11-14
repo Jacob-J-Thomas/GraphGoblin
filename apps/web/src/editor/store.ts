@@ -62,10 +62,26 @@ export interface EditorNameConflict {
   name: string;
   /** The API's advisory available name at refusal time. */
   suggestedName: string | undefined;
-  /** A deliberate Try again is waiting for or in its save: send the refused name once more. */
+  /**
+   * A deliberate Try again is waiting for or in its save, for the notice to show as busy. It
+   * permits nothing: the permission travels with that one save (`NameRetry`), which alone ends it.
+   */
   retrying: boolean;
   /** This refusal answered a deliberate Try again of the same name. */
   retried: boolean;
+}
+
+/**
+ * One deliberate Try again of a refused name (#209): permission for a single draft save that sends
+ * a name equivalent to `refusal.name`, in this loop and editor load only. Autosave spends it on
+ * that save's request; a save that stops before sending (invalid input, a draft conflict, a newer
+ * load) drops it. `refusal` is the notice as marked busy for this attempt; the attempt clears that
+ * mark when it ends, and only while the store still shows this mark.
+ */
+export interface NameRetry {
+  readonly loopId: string;
+  readonly generation: number;
+  readonly refusal: EditorNameConflict;
 }
 
 export interface EditorState {
