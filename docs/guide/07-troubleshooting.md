@@ -6,6 +6,23 @@ The launcher reports the failed step in a dialog and records it in `launcher.log
 `GraphGoblin.exe`. `gateway.log` there retains stdout/stderr from gateways it started, including
 startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
 
+- **Store remains held after an inconclusive recheck:** the launcher retains the last verified
+  owner and refuses a second gateway. Let its deliberate shutdown finish or inspect that owner;
+  do not stop unrelated processes or delete unverified locks. An incomplete final retry can
+  simply mean the release wait expired, rather than a PowerShell/WMI failure.
+- **Launcher identity/ownership check timed out:** the dialog now names the exact helper,
+  whether it waited for exit or output closure, elapsed time, allowance and output sizes.
+  Initial helpers use the configured startup timeout with a 15-second minimum (normally
+  60 seconds); ownership retries use the remaining store-release wait. A slow machine can
+  spend time loading Node modules before any PowerShell query runs. Check system load and
+  the configured runtime; check PowerShell/WMI only for an ownership-stage failure. A
+  timeout never proves a store is free. Helpers taking at least five seconds also leave a
+  metadata-only success line in `launcher.log`. Reinstall the rebuilt executable to replace
+  the old fixed 15-second helper wait and pipe-backpressure bug; preserve its existing JSON.
+- **Helper exited or returned invalid output:** check the recorded stage/exit code, supported
+  Node runtime, built checkout and `GG_*` settings. Raw stdout/stderr is intentionally omitted
+  from the log. No gateway is started when its preflight helper result cannot be validated.
+
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
   older builds too. Stop the intended old gateway through its deliberate shutdown before launching

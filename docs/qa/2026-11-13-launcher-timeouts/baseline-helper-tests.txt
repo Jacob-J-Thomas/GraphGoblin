@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: drains a full stderr pipe while the identity helper is running
+not ok 1 - drains a full stderr pipe while the identity helper is running
+  ---
+  duration_ms: 16010.4909
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher-timeouts\\GraphGoblin\\tooling\\scripts\\windows-launcher-helper.acceptance.mjs:109:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.
+    
+    Configuration: C:\Users\98jak\AppData\Local\Temp\gg-launcher-helper-eLRqM3\fixture space-α-idVJhQ\config.json
+    
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/tooling/scripts/windows-launcher-helper.acceptance.mjs:115:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: allows a slow identity helper within the configured startup budget
+not ok 2 - allows a slow identity helper within the configured startup budget
+  ---
+  duration_ms: 15135.2044
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher-timeouts\\GraphGoblin\\tooling\\scripts\\windows-launcher-helper.acceptance.mjs:121:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.
+    
+    Configuration: C:\Users\98jak\AppData\Local\Temp\gg-launcher-helper-eLRqM3\fixture space-α-PVEQiV\config.json
+    
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/tooling/scripts/windows-launcher-helper.acceptance.mjs:125:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 31295.2951

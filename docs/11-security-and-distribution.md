@@ -69,6 +69,24 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+The Windows launcher drains both read-only helper pipes concurrently. Protocol stdout is
+limited to 256 KiB and decoded as UTF-8; stderr is counted and discarded. Both initial helper
+checks use `max(15, StartupTimeoutSeconds)` seconds (60 seconds in the default installation),
+including process-exit and pipe-closure waits. Process creation is charged to elapsed time,
+but the Windows process-creation call itself is not cancellable. Timeout cleanup targets only
+that launcher-owned helper and waits at most two additional seconds; it never kills a gateway
+or an unrelated process. A successful result requires exit code zero, complete pipes, bounded
+valid output and the existing instance/ownership validation. Repeated ownership checks share
+the remaining monotonic store-release wait instead of starting fresh full-duration waits.
+After a valid held result, an incomplete or failed recheck retains that ownership reason and
+the instruction not to stop unrelated processes or delete unverified locks. It reports the
+release-wait timing instead of treating the incomplete retry as proof of a runtime/WMI problem.
+Helper, existing-store release, gateway readiness and PWA-window waits are separate phases;
+`StartupTimeoutSeconds` is not one end-to-end launch deadline. Errors identify the helper stage,
+outcome, elapsed time, allowance and output byte counts; successful helper checks taking at
+least five seconds also record these metadata in `launcher.log`. Raw helper output is never
+included in these diagnostics. This changes no ownership or stored-data protocol.
+
 On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
 A successfully observed different identity proves that a PID has been reused and permits the
 same guarded reclamation as a dead PID. Recovery guards are nonempty directories with immutable

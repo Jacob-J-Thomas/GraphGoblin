@@ -1,0 +1,68 @@
+TAP version 13
+# Subtest: drains a full stderr pipe while the identity helper is running
+ok 1 - drains a full stderr pipe while the identity helper is running
+  ---
+  duration_ms: 4675.7355
+  type: 'test'
+  ...
+# Subtest: allows a slow identity helper within the configured startup budget
+ok 2 - allows a slow identity helper within the configured startup budget
+  ---
+  duration_ms: 17657.4572
+  type: 'test'
+  ...
+# Subtest: bounds a hung identity helper and identifies its stage
+ok 3 - bounds a hung identity helper and identifies its stage
+  ---
+  duration_ms: 1147.1429
+  type: 'test'
+  ...
+# Subtest: rejects oversized stdout without pipe deadlock or logging its content
+ok 4 - rejects oversized stdout without pipe deadlock or logging its content
+  ---
+  duration_ms: 172.3307
+  type: 'test'
+  ...
+# Subtest: reports helper exit status without disclosing stderr
+ok 5 - reports helper exit status without disclosing stderr
+  ---
+  duration_ms: 175.9964
+  type: 'test'
+  ...
+# Subtest: distinguishes ownership timeout after a successful identity check
+ok 6 - distinguishes ownership timeout after a successful identity check
+  ---
+  duration_ms: 1211.0301
+  type: 'test'
+  ...
+# Subtest: bounds inherited output handles after the helper exits
+not ok 7 - bounds inherited output handles after the helper exits
+  ---
+  duration_ms: 237.6866
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\windows-launcher-timeouts\\GraphGoblin\\tooling\\scripts\\windows-launcher-helper.acceptance.mjs:211:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/tooling/scripts/windows-launcher-helper.acceptance.mjs:221:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25866.2607

@@ -20,6 +20,16 @@ They establish native routes and ABI behavior; actual installed Chrome/taskbar p
 tracked separately with native shell evidence. No live provider turn or owner service/store is
 used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
 
+The native helper suite in `test:windows-launcher` also drives the public launcher CLI with
+disposable helpers and listeners: delayed successful identity and ownership checks, filled
+stderr pipes, oversized stdout whose retained prefix remains valid after trimming, valid results
+followed by a hang, nonzero exits, malformed ownership output and preserved held ownership.
+Persistent-held retries exercise the release deadline and retain the ownership reason and safety
+guidance after a timeout, failed exit or malformed recheck. A Win32 fixture explicitly passes only
+the helper's stdout/stderr handles to a descendant, proving that the launcher finishes its bounded
+EOF wait while that descendant still owns those handles. The descendant exits itself before fixture
+cleanup. These suites run sequentially to reduce timing contention.
+
 The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.

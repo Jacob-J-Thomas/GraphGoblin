@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
@@ -169,6 +170,7 @@ namespace GraphGoblin.Desktop
     {
         readonly Configuration config;
         readonly string log;
+        readonly string launcherLog;
         readonly string origin;
         string expected;
         int? spawnedPid;
@@ -177,10 +179,45 @@ namespace GraphGoblin.Desktop
         {
             config = configuration;
             log = Path.Combine(logDirectory, "gateway.log");
+            launcherLog = Path.Combine(logDirectory, "launcher.log");
             origin = "http://127.0.0.1:" + config.Port;
         }
 
-        string ReadHelper(string argument, string validOutput)
+        // Read chunks rather than lines: a diagnostic without a newline must not allocate
+        // without bound. Only protocol stdout is retained; stderr may contain private values.
+        sealed class HelperPipe
+        {
+            const int Limit = 262144;
+            readonly MemoryStream captured = new MemoryStream();
+            long count;
+            public bool Failed { get; private set; }
+            public long Count { get { return Interlocked.Read(ref count); } }
+            public bool Oversized { get { return Count > Limit; } }
+            public string Text { get { return new UTF8Encoding(false, true).GetString(captured.ToArray()); } }
+
+            public async Task Drain(Stream stream, bool capture)
+            {
+                var buffer = new byte[4096];
+                try {
+                    int read;
+                    while ((read = await stream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) != 0) {
+                        Interlocked.Add(ref count, read);
+                        if (capture && captured.Length < Limit)
+                            captured.Write(buffer, 0, Math.Min(read, Limit - (int)captured.Length));
+                    }
+                }
+                catch (IOException) { Failed = true; }
+                catch (ObjectDisposedException) { Failed = true; }
+                finally { stream.Dispose(); }
+            }
+        }
+
+        static int Remaining(Stopwatch elapsed, int budget)
+        {
+            return (int)Math.Max(0, budget - elapsed.ElapsedMilliseconds);
+        }
+
+        string ReadHelper(string argument, string validOutput, string stage, int budget)
         {
             var info = new ProcessStartInfo(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument) {
                 WorkingDirectory = config.Repo, UseShellExecute = false, CreateNoWindow = true,
@@ -188,16 +225,42 @@ namespace GraphGoblin.Desktop
             };
             info.EnvironmentVariables.Clear();
             foreach (var item in config.ChildEnvironment()) info.EnvironmentVariables[item.Key] = item.Value;
-            using (var process = Process.Start(info))
+            // Charge process creation too, without pretending Windows CreateProcess itself
+            // can be cancelled by a managed wait timeout.
+            var elapsed = Stopwatch.StartNew();
+            Process child;
+            try { child = Process.Start(info); }
+            catch (System.ComponentModel.Win32Exception error) {
+                throw new Exception("The launcher " + stage + " check could not start Node (Windows error " + error.NativeErrorCode + "). Check the configured runtime and its execution permissions.");
+            }
+            using (var process = child)
             {
-                if (!process.WaitForExit(15000)) {
+                var stdout = new HelperPipe(); var stderr = new HelperPipe();
+                var reads = new[] { stdout.Drain(process.StandardOutput.BaseStream, true), stderr.Drain(process.StandardError.BaseStream, false) };
+                bool exited = process.WaitForExit(Remaining(elapsed, budget));
+                // Process exit does not establish EOF: a descendant may hold either pipe.
+                bool drained = exited && Task.WaitAll(reads, Remaining(elapsed, budget));
+                string observation = " after " + elapsed.ElapsedMilliseconds + " ms (budget " + budget + " ms; stdout " + stdout.Count + " bytes, stderr " + stderr.Count + " bytes)";
+                if (!exited || !drained) {
                     // This is our read-only helper, never the gateway or an unrelated process.
-                    try { process.Kill(); process.WaitForExit(2000); } catch (InvalidOperationException) { }
-                    throw new Exception("The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.");
+                    string cleanup = "";
+                    if (!exited) {
+                        try { process.Kill(); if (!process.WaitForExit(2000)) cleanup = " Read-only helper exit could not be confirmed within the 2000 ms cleanup allowance."; }
+                        catch (InvalidOperationException) { }
+                        catch (System.ComponentModel.Win32Exception error) { cleanup = " Read-only helper cleanup could not be confirmed (Windows error " + error.NativeErrorCode + ")."; }
+                    }
+                    throw new Exception("The launcher " + stage + " check timed out" + observation + " while waiting for " + (exited ? "output closure" : "process exit") + ". No gateway was started by this attempt. Check the configured runtime and system load" + (stage == "ownership" ? ", including PowerShell and Windows Management Instrumentation availability" : "") + "." + cleanup);
                 }
-                string output = process.StandardOutput.ReadToEnd().Trim();
-                if (process.ExitCode != 0 || !System.Text.RegularExpressions.Regex.IsMatch(output, validOutput))
-                    throw new Exception("The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.");
+                if (process.ExitCode != 0)
+                    throw new Exception("The launcher " + stage + " check exited with code " + process.ExitCode + observation + ". Check the Node 22 runtime, GG_* configuration and store read permissions. Helper output is not logged.");
+                string output = "";
+                try { if (!stdout.Oversized && !stdout.Failed && !stderr.Failed) output = stdout.Text.Trim(); }
+                catch (DecoderFallbackException) { }
+                if (!System.Text.RegularExpressions.Regex.IsMatch(output, validOutput))
+                    throw new Exception("The launcher " + stage + " check returned invalid, oversized or unreadable output" + observation + ". Check the configured checkout and runtime. Helper output is not logged.");
+                if (elapsed.ElapsedMilliseconds >= 5000) {
+                    try { File.AppendAllText(launcherLog, DateTime.UtcNow.ToString("o") + " Slow launcher " + stage + " check completed" + observation + ".\r\n"); } catch { }
+                }
                 return output;
             }
         }
@@ -275,22 +338,37 @@ namespace GraphGoblin.Desktop
 
         public void Ensure()
         {
-            expected = ReadHelper("", "^[a-f0-9]{64}$");
+            // Keep short readiness/release waits usable with the existing helper allowance.
+            // The default configuration gives cold helpers 60 seconds instead of 15.
+            int helperBudget = Math.Max(15000, config.StartupTimeoutSeconds * 1000);
+            expected = ReadHelper("", "^[a-f0-9]{64}$", "identity", helperBudget);
             if (Probe()) return;
-            var releaseDeadline = DateTime.UtcNow.AddSeconds(config.StartupTimeoutSeconds);
+            int releaseBudget = config.StartupTimeoutSeconds * 1000;
+            var releaseElapsed = Stopwatch.StartNew();
             while (closing)
             {
-                if (DateTime.UtcNow >= releaseDeadline) throw new Exception("The existing gateway is still releasing its store. Let deliberate shutdown finish and launch again. No process was stopped.");
+                if (Remaining(releaseElapsed, releaseBudget) == 0) throw new Exception("The existing gateway is still releasing its store. Let deliberate shutdown finish and launch again. No process was stopped.");
                 Thread.Sleep(200); if (Probe()) return;
             }
-            if (StoreHasLiveOwner())
+            bool owned = StoreHasLiveOwner(helperBudget);
+            if (owned)
             {
-                while (DateTime.UtcNow < releaseDeadline)
+                while (Remaining(releaseElapsed, releaseBudget) > 0)
                 {
-                    Thread.Sleep(200); if (Probe()) return;
-                    if (!StoreHasLiveOwner()) break;
+                    Thread.Sleep(Math.Min(200, Remaining(releaseElapsed, releaseBudget))); if (Probe()) return;
+                    int remaining = Remaining(releaseElapsed, releaseBudget);
+                    if (remaining == 0) break;
+                    // Polls share the release budget; a last full-duration helper would
+                    // otherwise extend it and replace a useful previously held diagnosis.
+                    try { owned = StoreHasLiveOwner(remaining); }
+                    catch (Exception) {
+                        // A truncated or failed recheck does not invalidate the last held
+                        // result. Keep its safety guidance rather than implying a WMI fault.
+                        throw new Exception(HeldOwnershipRefusal() + " The last ownership recheck was inconclusive after " + releaseElapsed.ElapsedMilliseconds + " ms of the " + releaseBudget + " ms release wait; the last verified held result was retained.");
+                    }
+                    if (!owned) break;
                 }
-                if (StoreHasLiveOwner()) throw new Exception(ownershipDetail + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.");
+                if (owned) throw new Exception(HeldOwnershipRefusal());
             }
             int pid = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.ChildEnvironment(), log);
             spawnedPid = pid;
@@ -311,14 +389,21 @@ namespace GraphGoblin.Desktop
         }
 
         string ownershipDetail;
+        string HeldOwnershipRefusal()
+        {
+            return ownershipDetail + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.";
+        }
         sealed class Ownership { public string state, path, detail; }
 
-        bool StoreHasLiveOwner()
+        bool StoreHasLiveOwner(int budget)
         {
-            var owner = new JavaScriptSerializer().Deserialize<Ownership>(ReadHelper(" --store-state", "^[{].*[}]$"));
+            string output = ReadHelper(" --store-state", "^[{].*[}]$", "ownership", budget);
+            Ownership owner;
+            try { owner = new JavaScriptSerializer().Deserialize<Ownership>(output); }
+            catch (Exception) { throw new Exception("The launcher ownership check returned invalid output. No gateway was started. Helper output is not logged."); }
             if (owner != null && owner.state == "free") return false;
             if (owner == null || owner.state != "held" || String.IsNullOrWhiteSpace(owner.path) || String.IsNullOrWhiteSpace(owner.detail))
-                throw new Exception("The ownership helper returned an invalid result. No gateway was started.");
+                throw new Exception("The launcher ownership check returned invalid output. No gateway was started. Helper output is not logged.");
             ownershipDetail = owner.detail + ": " + owner.path;
             return true;
         }
