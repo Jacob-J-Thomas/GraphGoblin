@@ -53,3 +53,8 @@ export function checkTemplate(template: string): string | null {
     return error instanceof Error ? error.message : String(error);
   }
 }
+
+/** Parse using the runtime dialect, without rendering or loading partials. */
+export function parseAuthoredTemplate(source: string) {
+  return { engine, templates: engine.parse(source) };
+}

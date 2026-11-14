@@ -13,6 +13,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   schema into the referring document's `definitions`, use a local `$ref` such as
   `#/definitions/input`, and publish the corrected workflow.
 
+- Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
+  JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
+  gate and visit-count identities. Direct existence checks and unresolved inherited or custom
+  output keys warn. **Upgrade:** open a draft that reports a missing reference, correct the
+  source field or restore the referenced node, then publish a new version. Existing published
+  versions and runs retain their definitions.
+
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports
   unverifiable ownership instead of an unexplained access-denied error (ADR-0069). **Upgrade:**
