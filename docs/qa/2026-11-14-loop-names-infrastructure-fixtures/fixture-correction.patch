@@ -1,0 +1,80 @@
+diff --git a/packages/infrastructure/src/sqlite/definition-pins.test.ts b/packages/infrastructure/src/sqlite/definition-pins.test.ts
+index e610bcd..c37e071 100644
+--- a/packages/infrastructure/src/sqlite/definition-pins.test.ts
++++ b/packages/infrastructure/src/sqlite/definition-pins.test.ts
+@@ -155,7 +155,7 @@ describe('draft snapshots', () => {
+   }
+ 
+   async function draftRun(seed: string) {
+-    const { loop, draft } = await loops.create('local', named('Snap'));
++    const { loop, draft } = await loops.create('local', named('Snap ' + seed));
+     const snapshot: LoopVersionRecord = {
+       ...structuredClone(draft),
+       id: fakeUlid(`snapshot:${seed}`),
+@@ -434,7 +434,10 @@ describe('draft snapshots', () => {
+ 
+   it('are stored with their run, read by id, and kept out of the version history', async () => {
+     const { loop, draft, snapshot, run } = await draftRun('history');
+-    expect(run).toMatchObject({ versionId: snapshot.id, pinned: { label: 'Snap draft v1' } });
++    expect(run).toMatchObject({
++      versionId: snapshot.id,
++      pinned: { label: 'Snap history draft v1' },
++    });
+     expect(await loops.getVersion(snapshot.id)).toEqual(snapshot);
+     expect((await loops.listVersions(loop.id)).map((version) => version.id)).toEqual([draft.id]);
+     // Editing and publishing the draft never touch the snapshot, which is never "latest".
+diff --git a/packages/infrastructure/src/sqlite/history-cleanup.test.ts b/packages/infrastructure/src/sqlite/history-cleanup.test.ts
+index bc2546d..2fe082d 100644
+--- a/packages/infrastructure/src/sqlite/history-cleanup.test.ts
++++ b/packages/infrastructure/src/sqlite/history-cleanup.test.ts
+@@ -179,6 +179,7 @@ it('protects live dynamic templates until termination, and bounds literal templa
+       'local',
+       LoopDefinitionSchema.parse({
+         ...minimalLoop(),
++        name,
+         settings: { workingDirectory: { kind: 'template', template } },
+       }),
+     );
+@@ -836,6 +837,7 @@ describe('large retained stores', () => {
+       'local',
+       LoopDefinitionSchema.parse({
+         ...minimalLoop(),
++        name: 'large template',
+         settings: { workingDirectory: { kind: 'template', template: '{{vars.directory}}' } },
+       }),
+     );
+@@ -851,11 +853,12 @@ describe('large retained stores', () => {
+     const paths = Array.from({ length: 128 }, (_, i) => join(fixedRoot, String(i)));
+     await Promise.all(paths.map((path) => mkdir(path)));
+     const fixedVersions: LoopVersionRecord[] = [];
+-    for (const path of [...paths, alias]) {
++    for (const [index, path] of [...paths, alias].entries()) {
+       const created = await loops.create(
+         'local',
+         LoopDefinitionSchema.parse({
+           ...minimalLoop(),
++          name: 'large fixed ' + index,
+           settings: { workingDirectory: { kind: 'fixed', path } },
+         }),
+       );
+diff --git a/packages/infrastructure/src/sqlite/history-summaries.test.ts b/packages/infrastructure/src/sqlite/history-summaries.test.ts
+index d8468ee..1d05cf0 100644
+--- a/packages/infrastructure/src/sqlite/history-summaries.test.ts
++++ b/packages/infrastructure/src/sqlite/history-summaries.test.ts
+@@ -145,8 +145,14 @@ describe('SQLite history queries', () => {
+     ['thread_snapshot', '{broken'],
+   ])('isolates damaged latest %s without substituting an older run', async (column, value) => {
+     const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+-    const damaged = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+-    const healthy = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
++    const damaged = await loops.create(
++      'local',
++      LoopDefinitionSchema.parse({ ...minimalLoop(), name: 'damaged summary' }),
++    );
++    const healthy = await loops.create(
++      'local',
++      LoopDefinitionSchema.parse({ ...minimalLoop(), name: 'healthy summary' }),
++    );
+     const runs = new SqliteRunRepository(handle.db);
+     const seed = async (tag: string, loopId: string, createdAt = FIXTURE_TS) => {
+       const id = fakeUlid(tag);

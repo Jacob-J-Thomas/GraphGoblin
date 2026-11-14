@@ -32,7 +32,7 @@ The 472-case browser suite and native matrix were not rerun in phase 3. The 1,25
 
 - Source hashes and merge diffs establish historical source identity and merge semantics, not runtime behavior.
 - The browser E2E runs used the built web dist with the e2e test server; the API under test ran from TypeScript source with a controlled in-memory app. These are selected controlled browser results, not provider or native-store evidence.
-- No native matrix or new screenshots were produced in phase 3 because no source/class changed. The prior visual evidence remains separately curated in [phase 2](../../../../../names-209-phase2-curation/proposed/docs/qa/2026-11-14-loop-names-native/README.md), not copied here.
+- No native matrix or new screenshots were produced in phase 3 because no source/class changed. The prior visual evidence remains separately curated in [phase 2](../2026-11-14-loop-names-native/README.md), not copied here.
 - Real assistive-technology speech and Safari/Firefox were not exercised. Owner #209 acceptance remains mandatory under the issue body.
 
 **Post-capture context from root, not phase 3 evidence:** root later merged metadata as 35436edd and reports no runtime delta. Phase 3 evidence remains bound to c427287b. Do not use the mutable current worktree to reconstruct or validate this historical candidate. The later backend test corrections are outside this bundle.
