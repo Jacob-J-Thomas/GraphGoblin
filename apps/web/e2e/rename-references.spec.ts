@@ -118,13 +118,17 @@ async function deviceCopy(page: Page, loopId: string) {
   }, loopId) as Promise<{ definition: Definition; synced: boolean; baseToken?: string }>;
 }
 
-/** Replace a CodeMirror field's text, found by its accessible label. */
-async function code(scope: Page | Locator, page: Page, label: string, text: string) {
+/**
+ * Enter unfinished text in a CodeMirror field, found by its accessible label, by typing over the
+ * selected text in one input. A live JSON field accepts an emptied editor as a valid, empty value
+ * and saves it (the variable disappears from the draft), so deleting first would change the draft
+ * before the unfinished text exists. Selecting and inserting never passes through that empty state.
+ */
+async function holdCode(scope: Page | Locator, page: Page, label: string, text: string) {
   const content = scope.locator('.cm-content').and(scope.getByLabel(label, { exact: true }));
   await content.click();
   await page.keyboard.press('ControlOrMeta+A');
-  await page.keyboard.press('Backspace');
-  if (text !== '') await page.keyboard.insertText(text);
+  await page.keyboard.insertText(text);
 }
 
 /** Replace the text of the CodeMirror field at a config path (`data-field`). */
@@ -648,19 +652,30 @@ test('focus follows the remounted form, and unfinished input elsewhere survives 
       { id: 'e5', from: { node: 'gate', port: 'limit-reached' }, to: { node: 'done', port: 'in' } },
     ],
   });
+  const saves = draftSaves(page, loopId);
   await page.goto(`/app/loops/${loopId}/edit`);
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   await saved(page);
 
-  // Unfinished input in two other places: the variables JSON and the trigger's schedule.
+  // Unfinished input in two other places: the variables JSON and the trigger's schedule. The
+  // variables text replaces the selected value in one input (see holdCode).
   await showLoopPanel(page);
-  await code(page, page, 'Variables value 1', '[1, ');
+  await holdCode(page, page, 'Variables value 1', '[1, ');
   await expect(codeText(page, 'Variables value 1')).toHaveText('[1, ');
   const start = await openNode(page, 'start');
   await start.getByLabel('Monday').uncheck();
   await expect(start.getByRole('alert')).toHaveText('Choose at least one day.');
   await start.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // Before any rename: unfinished input is not a draft change, so the accepted draft on the server
+  // is still the loop as created, with its original variable value and node ids, and the page has
+  // sent no save. This is the value the last line of the test checks again.
+  await saved(page);
+  const accepted = (await serverDraft(request, loopId)).definition;
+  expect(accepted.variables).toEqual({ key: { type: 'string' } });
+  expect(accepted.nodes.map((n) => n.id)).toEqual(['start', 'work', 'gate', 'done']);
+  expect(saves).toHaveLength(0);
 
   // Click: the id applies as focus leaves, and focus lands in the remounted form's field.
   let gate = await openNode(page, 'gate');
