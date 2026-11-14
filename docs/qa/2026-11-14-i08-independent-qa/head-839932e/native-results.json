@@ -1,0 +1,885 @@
+{
+  "head": "839932e62f8132d7a201119e8acfe591cefa369c",
+  "node": "v22.23.4",
+  "worktree": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261113-i08-validation\\GraphGoblin",
+  "store": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\i08-qa-461\\head-839932e\\sqlite-MmSwIV",
+  "processes": [
+    {
+      "idx": 1,
+      "pid": 45424,
+      "stdout": "",
+      "stderr": "",
+      "origin": "http://127.0.0.1:59429",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "existingLocks": []
+    },
+    {
+      "idx": 2,
+      "pid": 46428,
+      "stdout": "",
+      "stderr": "",
+      "origin": "http://127.0.0.1:59438",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "existingLocks": []
+    }
+  ],
+  "cases": [
+    {
+      "name": "same root and nested IDs, three selected versions and real warm/cold SQLite validation orders",
+      "status": "pass",
+      "details": [
+        {
+          "pid": 45424,
+          "version": "01M7CBNT9V7DYYHKM8792HAPA2",
+          "result": {
+            "x/y": "warm@scope.test",
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be string"
+        },
+        {
+          "pid": 45424,
+          "version": "01M7CBNTBD9BSJQS00B6SWWVCP",
+          "result": {
+            "x/y": 23,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be integer"
+        },
+        {
+          "pid": 45424,
+          "version": "01M7CBNTCRFX51Q1W93YG9ASH4",
+          "result": {
+            "x/y": true,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be boolean"
+        },
+        {
+          "pid": 46428,
+          "version": "01M7CBNTCRFX51Q1W93YG9ASH4",
+          "result": {
+            "x/y": true,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be boolean"
+        },
+        {
+          "pid": 46428,
+          "version": "01M7CBNTBD9BSJQS00B6SWWVCP",
+          "result": {
+            "x/y": 23,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be integer"
+        },
+        {
+          "pid": 46428,
+          "version": "01M7CBNT9V7DYYHKM8792HAPA2",
+          "result": {
+            "x/y": "warm@scope.test",
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be string"
+        }
+      ]
+    },
+    {
+      "name": "published independent schema cannot be used as external reference after warming, no HTTP fetch",
+      "status": "pass",
+      "details": {
+        "target": "01M7CBNZWT3RDS0PMD3TG8ESAN",
+        "consuming": "01M7CBP00J0TJE9AZZNBGN0ZM5",
+        "httpHits": 0,
+        "diagnostic": "trigger input is invalid: invalid schema: can't resolve reference http://127.0.0.1:59423/schema from id https://scope.test/cross"
+      }
+    },
+    {
+      "name": "cached recursive schema survives different successful and failed compiles through REST",
+      "status": "pass",
+      "details": {
+        "recursive": "01M7CBP01MX1WFW8JEX1E6WNKX",
+        "other": "01M7CBP071Z8BAH3T9F2M6YF4N",
+        "invalid": "trigger input is invalid: invalid schema: can't resolve reference missing from id https://scope.test/live/tree",
+        "wrongInput": "trigger input is invalid: /children/0/value must be string; /value must be string"
+      }
+    },
+    {
+      "name": "unchanged expression entry smoke test after compiler-only delta",
+      "status": "pass",
+      "details": {
+        "count": 205,
+        "runId": "01M7CBP0FK5KXN2MESJDKJ3NZG"
+      }
+    }
+  ],
+  "calls": [
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/publish",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNTBD9BSJQS00B6SWWVCN/publish",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "PUT",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/draft",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/publish",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be string",
+        "errors": {
+          "errors": [
+            "/x~1y must be string"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNT9V7DYYHKM8792HAPA2",
+        "input": {
+          "x/y": true,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNT9V7DYYHKM8792HAPA2",
+        "input": {
+          "x/y": "warm@scope.test",
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTE723YZ9HRC47S7EP41",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTE723YZ9HRC47S7EP41",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNTBD9BSJQS00B6SWWVCN/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be integer",
+        "errors": {
+          "errors": [
+            "/x~1y must be integer"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNTBD9BSJQS00B6SWWVCP",
+        "input": {
+          "x/y": "warm@scope.test",
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNTBD9BSJQS00B6SWWVCN/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNTBD9BSJQS00B6SWWVCP",
+        "input": {
+          "x/y": 23,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTKJD3911M8KVXDAZKJX",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTKJD3911M8KVXDAZKJX",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be boolean",
+        "errors": {
+          "errors": [
+            "/x~1y must be boolean"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "x/y": 23,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "x/y": true,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTQ353ZS1CKCV7T0XW57",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "GET",
+      "path": "/runs/01M7CBNTQ353ZS1CKCV7T0XW57",
+      "status": 200
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /count must be >= 1; /x~1y must match format \"email\"",
+        "errors": {
+          "errors": [
+            "/count must be >= 1",
+            "/x~1y must match format \"email\""
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNT9V7DYYHKM8792HAPA2",
+        "input": {
+          "x/y": "not-an-email",
+          "count": 0
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: / must have required property 'x/y'",
+        "errors": {
+          "errors": [
+            "/ must have required property 'x/y'"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 45424,
+      "method": "POST",
+      "path": "/system/shutdown",
+      "status": 202
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be boolean",
+        "errors": {
+          "errors": [
+            "/x~1y must be boolean"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "x/y": "warm@scope.test",
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "x/y": true,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZEX6WW9T5C3A35DT84T",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZEX6WW9T5C3A35DT84T",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNTBD9BSJQS00B6SWWVCN/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be integer",
+        "errors": {
+          "errors": [
+            "/x~1y must be integer"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNTBD9BSJQS00B6SWWVCP",
+        "input": {
+          "x/y": true,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNTBD9BSJQS00B6SWWVCN/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNTBD9BSJQS00B6SWWVCP",
+        "input": {
+          "x/y": 23,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZKGCWFHDW7PGYKJ5E0F",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZKGCWFHDW7PGYKJ5E0F",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /x~1y must be string",
+        "errors": {
+          "errors": [
+            "/x~1y must be string"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBNT9V7DYYHKM8792HAPA2",
+        "input": {
+          "x/y": 23,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNT9V7DYYHKM8792HAPA2",
+        "input": {
+          "x/y": "warm@scope.test",
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZPWVDBVAEM5K426J2W7",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZPWVDBVAEM5K426J2W7",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNT9V7DYYHKM8792HAPA1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNTCRFX51Q1W93YG9ASH4",
+        "input": {
+          "x/y": true,
+          "count": 3
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZSVWCFA26C9X08JN0QF",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZSVWCFA26C9X08JN0QF",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNZWSC1G15ETB595G2SS0/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBNZWSC1G15ETB595G2SS0/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBNZWT3RDS0PMD3TG8ESAN",
+        "input": {
+          "value": "a"
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZXQ6T99W35NH3E0AW6S",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBNZXQ6T99W35NH3E0AW6S",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP00J0TJE9AZZNBGN0ZM4/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP00J0TJE9AZZNBGN0ZM4/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: invalid schema: can't resolve reference http://127.0.0.1:59423/schema from id https://scope.test/cross",
+        "errors": {
+          "errors": [
+            "invalid schema: can't resolve reference http://127.0.0.1:59423/schema from id https://scope.test/cross"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBP00J0TJE9AZZNBGN0ZM5",
+        "input": {
+          "entry": "valid if externally loaded"
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP01KBH5AMB8S5X4CKD2P/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP01KBH5AMB8S5X4CKD2P/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBP01MX1WFW8JEX1E6WNKX",
+        "input": {
+          "value": "root",
+          "children": [
+            {
+              "value": "leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP02DSVW93SN13JJT09Z7",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP02DSVW93SN13JJT09Z7",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP058ERE2TJA6KK5W96GY/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP058ERE2TJA6KK5W96GY/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: invalid schema: can't resolve reference missing from id https://scope.test/live/tree",
+        "errors": {
+          "errors": [
+            "invalid schema: can't resolve reference missing from id https://scope.test/live/tree"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBP058ERE2TJA6KK5W96GZ",
+        "input": {
+          "value": "test"
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP064AX8J3D0CJN0C52PA/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP064AX8J3D0CJN0C52PA/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: invalid schema: can't resolve reference https://scope.test/live/private-reference from id #",
+        "errors": {
+          "errors": [
+            "invalid schema: can't resolve reference https://scope.test/live/private-reference from id #"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBP064AX8J3D0CJN0C52PB",
+        "input": "root"
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP071Z8BAH3T9F2M6YF4M/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP071Z8BAH3T9F2M6YF4M/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBP071Z8BAH3T9F2M6YF4N",
+        "input": {
+          "value": 1,
+          "children": [
+            {
+              "value": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP07X5562A36T2G9RCTVG",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP07X5562A36T2G9RCTVG",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP01KBH5AMB8S5X4CKD2P/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBP01MX1WFW8JEX1E6WNKX",
+        "input": {
+          "value": "root",
+          "children": [
+            {
+              "value": "leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP0B2XFG6JEV9JG473EWW",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP0B2XFG6JEV9JG473EWW",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP01KBH5AMB8S5X4CKD2P/runs",
+      "status": 400,
+      "error": {
+        "type": "https://graphgoblin.dev/problems/invalid-input",
+        "title": "invalid input",
+        "status": 400,
+        "code": "INVALID_INPUT",
+        "detail": "trigger input is invalid: /children/0/value must be string; /value must be string",
+        "errors": {
+          "errors": [
+            "/children/0/value must be string",
+            "/value must be string"
+          ]
+        }
+      },
+      "input": {
+        "versionId": "01M7CBP01MX1WFW8JEX1E6WNKX",
+        "input": {
+          "value": 1,
+          "children": [
+            {
+              "value": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP0ERKPJAY88K686N1QW1/publish",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/loops/01M7CBP0ERKPJAY88K686N1QW1/runs",
+      "status": 202,
+      "input": {
+        "versionId": "01M7CBP0ERKPJAY88K686N1QW2",
+        "input": {}
+      }
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP0FK5KXN2MESJDKJ3NZG",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "GET",
+      "path": "/runs/01M7CBP0FK5KXN2MESJDKJ3NZG",
+      "status": 200
+    },
+    {
+      "pid": 46428,
+      "method": "POST",
+      "path": "/system/shutdown",
+      "status": 202
+    }
+  ],
+  "hashes": {
+    "apps/api/dist/main.js": "e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98",
+    "packages/domain/dist/expression.js": "8b7b33a940b99b2f50395619d6ba26b70c0be65e06efb841393b4aa6ae69b38e",
+    "packages/domain/dist/json-schema.js": "11665354f0835d557a0cd13eb8dea04c8d20e1c233aff68718996e0d60ef95b3",
+    "packages/domain/node_modules/jsonata/jsonata.js": "10965a9e3d86ccaf87f55294959637898e918c7ef5181af72d13279c8fc8e6de"
+  },
+  "externalRequests": 0,
+  "finalHead": "839932e62f8132d7a201119e8acfe591cefa369c",
+  "finalStatus": ""
+}

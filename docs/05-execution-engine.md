@@ -578,6 +578,12 @@ The adversarial design review (`docs/qa/2026-10-03-adversarial-design-review.md`
 - **Cancel requests are claimed once** (ADV-012).
 - **A fast child cannot orphan its parent** (ADV-015).
 - **The log is the source of truth** (ADV-016 and the WP-G review): events are written before status, wakes and terminal outcomes are completed from the log at recovery, the cursor follows a durable `node.finished`, and the thread comes from a verified checkpoint plus the events after it.
+- **Expression budgets belong to one evaluation** (#228). The evaluator allows 200
+  levels of nesting and 2,000 ms by default. It checks depth on entry and time on entry
+  and exit. Each evaluation of cached source keeps its own budget, bindings and timestamp.
+  The pinned JSONata 2.2.2 patch awaits sibling array items and object members in order,
+  so a flat collection can be wider than the depth limit. Independent expressions can
+  still evaluate concurrently.
 - **Expression regexes are checked statically** (ADV-007). The JSONata time budget is cooperative: it is checked at evaluator entry and exit, which a native regex match never returns to. So every regex literal in an expression, and every `redact` and `replace` mutation pattern, is rejected before it runs when it contains a back-reference, a repeated group containing another repetition, or a repeated group whose body can match the empty string or split the same text two ways (overlapping alternatives, or an optional part overlapping what follows it), looking through nested groups without their own repetition. JSONata's `$eval`, which compiles a string at run time, is shadowed by a binding that first compiles the string through the same check and then hands it to JSONata's own `$eval`, so it keeps the caller's lexical variables and functions and shares the caller's depth and deadline budget (an expression then fails to compile, which loop validation reports as `EXPRESSION_INVALID`; a mutation pattern fails its node when it runs). Ordinary patterns (`^\w+@\w+\.com$`, `\d{4}-\d{2}`, `(foo|bar)+`) are unaffected. Polynomial backtracking and memory are not bounded in-process; see 11.
 
 ## Why no error ports (Decided, see ADR-0006)

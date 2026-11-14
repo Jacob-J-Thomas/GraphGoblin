@@ -1,0 +1,74 @@
+[
+  {
+    "name": "independent concurrent depth budgets and bindings through public evaluator",
+    "status": "pass",
+    "details": {
+      "strict": {
+        "error": "ExpressionError: expression exceeded max depth 9"
+      },
+      "loose": [
+        "loose"
+      ]
+    }
+  },
+  {
+    "name": "real asynchronous interleave isolates deadline and now/millis",
+    "status": "pass",
+    "details": [
+      {
+        "error": "ExpressionError: expression exceeded 25ms"
+      },
+      {
+        "value": {
+          "tag": "invocation-1",
+          "before": 1794637068957,
+          "after": 1794637068957,
+          "isoBefore": "2026-11-14T06:17:48.957Z",
+          "isoAfter": "2026-11-14T06:17:48.957Z"
+        }
+      },
+      {
+        "value": {
+          "tag": "invocation-2",
+          "before": 1794637069017,
+          "after": 1794637069017,
+          "isoBefore": "2026-11-14T06:17:49.017Z",
+          "isoAfter": "2026-11-14T06:17:49.017Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "dynamic eval inherits depth and cycle limits and permits legal sibling width",
+    "status": "pass",
+    "details": {
+      "dynamicLength": 333,
+      "cycleLimit": 14,
+      "nestingLimit": 18
+    }
+  },
+  {
+    "name": "independent round-trip cache mutation and eviction with nested enum objects",
+    "status": "pass",
+    "details": {
+      "mutated": "nested enum",
+      "rotatedDistinctSchemas": 258
+    }
+  },
+  {
+    "name": "JSON Pointer escaping and independent nested-ID registries",
+    "status": "pass",
+    "details": {
+      "ok": false,
+      "errors": [
+        "invalid schema: can't resolve reference https://scope.test/shared from id #"
+      ],
+      "issues": [
+        {
+          "path": [],
+          "message": "invalid schema: can't resolve reference https://scope.test/shared from id #"
+        }
+      ]
+    }
+  }
+]

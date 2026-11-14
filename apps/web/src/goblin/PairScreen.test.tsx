@@ -156,7 +156,7 @@ describe('peripheral pair screen', () => {
     expect(screen.queryByRole('button', { name: 'Retry pairing' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Device name')).not.toHaveAttribute('readonly');
     expect(screen.getByLabelText('Pairing code')).not.toHaveAttribute('readonly');
-    expect(errorContainer()).toHaveFocus();
+    await waitFor(() => expect(errorContainer()).toHaveFocus());
   });
 
   it('reports failed pending-state removal', () => {
@@ -280,7 +280,7 @@ describe('peripheral pair screen', () => {
       );
       expect(readDeviceRecord()?.kind).toBe('pending');
       const stored = localStorage.getItem(DEVICE_CREDENTIAL_KEY);
-      expect(errorContainer()).toHaveFocus();
+      await waitFor(() => expect(errorContainer()).toHaveFocus());
       expect(screen.getByRole('button', { name: 'Use a new code' })).toHaveAttribute(
         'type',
         'button',
@@ -340,7 +340,7 @@ describe('peripheral pair screen', () => {
       'reuses the saved request and device credential',
     );
     expect(screen.getByRole('alert')).not.toHaveTextContent('Pairing was refused');
-    expect(errorContainer()).toHaveFocus();
+    await waitFor(() => expect(errorContainer()).toHaveFocus());
     expect(paired).not.toHaveBeenCalled();
     const stored = localStorage.getItem(DEVICE_CREDENTIAL_KEY);
     const calls = fetcher.mock.calls.length;
@@ -451,7 +451,7 @@ describe('peripheral pair screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pair this browser' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Allow site storage');
     expect(screen.getByRole('alert')).not.toHaveTextContent('Pairing was refused');
-    expect(errorContainer()).toHaveFocus();
+    await waitFor(() => expect(errorContainer()).toHaveFocus());
     expect(paired).not.toHaveBeenCalled();
     const pending = readDeviceRecord();
     expect(pending?.kind).toBe('pending');

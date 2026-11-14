@@ -140,11 +140,11 @@ async function run(
   input: unknown,
   options: ExpressionOptions,
 ): Promise<unknown> {
-  timebox(expr, options.timeoutMs ?? 2000, options.maxDepth ?? 200);
   try {
     const result: unknown = await expr.evaluate(input, {
       ...options.bindings,
       eval: CHECKED_EVAL,
+      ...evaluationHooks(options.timeoutMs ?? 2000, options.maxDepth ?? 200),
     });
     return result;
   } catch (error) {
@@ -156,16 +156,14 @@ async function run(
 }
 
 /**
- * Time-box an evaluation. Pattern from the JSONata documentation: entry and exit hooks
- * count depth and check elapsed time, throwing when either budget is exceeded.
- * jsonata 2.x keys these hooks by symbol, not by the string names older docs show.
+ * Count nested calls and check elapsed time in one invocation, including checked $eval.
+ * The pinned JSONata patch binds the hooks in that invocation's frame and finishes
+ * sibling evaluations before starting the next.
  */
 const ENTRY_HOOK = Symbol.for('jsonata.__evaluate_entry');
 const EXIT_HOOK = Symbol.for('jsonata.__evaluate_exit');
 
-type HookAssign = (name: string | symbol, value: unknown) => void;
-
-function timebox(expr: Compiled, timeoutMs: number, maxDepth: number): void {
+function evaluationHooks(timeoutMs: number, maxDepth: number): Record<symbol, () => void> {
   let depth = 0;
   const start = Date.now();
   const check = (): void => {
@@ -176,15 +174,16 @@ function timebox(expr: Compiled, timeoutMs: number, maxDepth: number): void {
       throw new ExpressionError(`expression exceeded ${timeoutMs}ms`);
     }
   };
-  const assign = expr.assign.bind(expr) as unknown as HookAssign;
-  assign(ENTRY_HOOK, () => {
-    depth += 1;
-    check();
-  });
-  assign(EXIT_HOOK, () => {
-    depth -= 1;
-    check();
-  });
+  return {
+    [ENTRY_HOOK]: () => {
+      depth += 1;
+      check();
+    },
+    [EXIT_HOOK]: () => {
+      depth -= 1;
+      check();
+    },
+  };
 }
 
 /** Evaluate a JSONata expression against an input. Undefined results become `undefined`. */

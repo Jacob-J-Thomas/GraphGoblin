@@ -1,0 +1,218 @@
+{
+  "head": "9a459a072d769cf91f2a9fedb97580915d5ae375",
+  "base": "b3b5e1874a8252cc01c065d18fef42cbfbe075b4",
+  "node": "v22.23.4",
+  "hashes": {
+    "apps/api/dist/main.js": "e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98",
+    "packages/domain/dist/expression.js": "8b7b33a940b99b2f50395619d6ba26b70c0be65e06efb841393b4aa6ae69b38e",
+    "packages/domain/dist/json-schema.js": "d26a77ce0f6a585d8bf6909a6d1e2234797f951badfd05fbd65b3c10988951e8",
+    "packages/domain/node_modules/jsonata/jsonata.js": "10965a9e3d86ccaf87f55294959637898e918c7ef5181af72d13279c8fc8e6de"
+  },
+  "cases": [
+    {
+      "name": "same root and nested IDs, three selected versions and real warm/cold SQLite validation orders",
+      "status": "pass",
+      "details": [
+        {
+          "pid": 33276,
+          "version": "01M7CBCMWYHJ6JGHVWTCZ4F1VR",
+          "result": {
+            "x/y": "warm@scope.test",
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be string"
+        },
+        {
+          "pid": 33276,
+          "version": "01M7CBCMY7A8HFSGRSBS9QHWA8",
+          "result": {
+            "x/y": 23,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be integer"
+        },
+        {
+          "pid": 33276,
+          "version": "01M7CBCMZGPH98PDV71E6R3DGE",
+          "result": {
+            "x/y": true,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be boolean"
+        },
+        {
+          "pid": 47876,
+          "version": "01M7CBCMZGPH98PDV71E6R3DGE",
+          "result": {
+            "x/y": true,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be boolean"
+        },
+        {
+          "pid": 47876,
+          "version": "01M7CBCMY7A8HFSGRSBS9QHWA8",
+          "result": {
+            "x/y": 23,
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be integer"
+        },
+        {
+          "pid": 47876,
+          "version": "01M7CBCMWYHJ6JGHVWTCZ4F1VR",
+          "result": {
+            "x/y": "warm@scope.test",
+            "count": 3
+          },
+          "diagnostic": "trigger input is invalid: /x~1y must be string"
+        }
+      ]
+    },
+    {
+      "name": "published independent schema cannot be used as external reference after warming, no HTTP fetch",
+      "status": "pass",
+      "details": {
+        "target": "01M7CBCSYR4Q9T8CCZD7DMRS5Y",
+        "consuming": "01M7CBCT32EQJSVMZZSWV5FBSD",
+        "httpHits": 0,
+        "diagnostic": "trigger input is invalid: invalid schema: can't resolve reference http://127.0.0.1:62399/schema from id https://scope.test/cross"
+      }
+    },
+    {
+      "name": "flat JSONata literal arrays and projected inputs in real published runs",
+      "status": "pass",
+      "details": [
+        {
+          "width": 99,
+          "method": "projection",
+          "runId": "01M7CBCT5YFY6XSQV4Z14V4QPV",
+          "last": {
+            "label": "row-98",
+            "point": 196
+          }
+        },
+        {
+          "width": 99,
+          "method": "literal",
+          "runId": "01M7CBCT98K28WHTJBK3FPJJJ7",
+          "last": {
+            "label": "row-98",
+            "point": 196
+          }
+        },
+        {
+          "width": 100,
+          "method": "projection",
+          "runId": "01M7CBCTCYBAAEZ3TYNR8V835Q",
+          "last": {
+            "label": "row-99",
+            "point": 198
+          }
+        },
+        {
+          "width": 100,
+          "method": "literal",
+          "runId": "01M7CBCTG2B1KEHMJ6M9AX18JN",
+          "last": {
+            "label": "row-99",
+            "point": 198
+          }
+        },
+        {
+          "width": 200,
+          "method": "projection",
+          "runId": "01M7CBCTM3499DT8RZFCDQGMXS",
+          "last": {
+            "label": "row-199",
+            "point": 398
+          }
+        },
+        {
+          "width": 200,
+          "method": "literal",
+          "runId": "01M7CBCTQ4XFYGEJ7RVYR83JCD",
+          "last": {
+            "label": "row-199",
+            "point": 398
+          }
+        },
+        {
+          "width": 417,
+          "method": "projection",
+          "runId": "01M7CBCTTWG2XE0PF1KGDHDK8W",
+          "last": {
+            "label": "row-416",
+            "point": 832
+          }
+        },
+        {
+          "width": 417,
+          "method": "literal",
+          "runId": "01M7CBCTZ1SW82VE1DNC659BBH",
+          "last": {
+            "label": "row-416",
+            "point": 832
+          }
+        }
+      ]
+    },
+    {
+      "name": "native run true nesting and cycle guards, deadline, and precise malformed expression",
+      "status": "pass",
+      "details": [
+        {
+          "name": "deep real stack",
+          "runId": "01M7CBCV2WCAZDWQJS4DC5GW4W",
+          "code": "INTERNAL_ERROR",
+          "diagnostic": "expression exceeded max depth 200",
+          "ms": 90
+        },
+        {
+          "name": "checked eval cycle",
+          "runId": "01M7CBCV6ECBFG7CV25CN746T8",
+          "code": "INTERNAL_ERROR",
+          "diagnostic": "expression exceeded max depth 200",
+          "ms": 132
+        },
+        {
+          "name": "tail recursion deadline",
+          "runId": "01M7CBCVBEPYM6K9CY49RR7RFY",
+          "code": "INTERNAL_ERROR",
+          "diagnostic": "expression exceeded 2000ms",
+          "ms": 2102
+        },
+        {
+          "name": "valid syntax malformed operand",
+          "runId": "01M7CBCXDTTN0E1RZC0PFSV6Y4",
+          "code": "INTERNAL_ERROR",
+          "diagnostic": "expression failed: The left side of the \"*\" operator must evaluate to a number",
+          "ms": 83
+        }
+      ]
+    }
+  ],
+  "processes": [
+    {
+      "pid": 33276,
+      "origin": "http://127.0.0.1:62406",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "existingLocks": []
+    },
+    {
+      "pid": 47876,
+      "origin": "http://127.0.0.1:62411",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "existingLocks": []
+    }
+  ],
+  "externalRequests": 0,
+  "restCallCount": 101,
+  "notes": "Curated output omits host logger frames, bulk request bodies and stack/file-path text. Exact raw retained externally."
+}

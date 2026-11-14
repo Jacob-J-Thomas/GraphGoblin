@@ -1,0 +1,32 @@
+[
+  {
+    "name": "registry cleanup also isolates nested IDs and retains references in cached validators",
+    "status": "pass",
+    "elapsedMs": 7,
+    "details": {
+      "isolatedIds": [
+        "https://cleanup.scope.test/v2/root.json",
+        "https://cleanup.scope.test/v2/embedded.json",
+        "https://cleanup.scope.test/v2/second.json"
+      ]
+    }
+  },
+  {
+    "name": "failed compilation cannot contaminate another schema or prevent later valid compilation",
+    "status": "pass",
+    "elapsedMs": 2,
+    "details": [
+      "invalid schema: can't resolve reference missing from id https://cleanup.scope.test/failed/"
+    ]
+  },
+  {
+    "name": "distinct mixed-content cache churn stays below the existing five-second window in this isolated probe",
+    "status": "pass",
+    "elapsedMs": 209,
+    "details": {
+      "elapsedMs": 209,
+      "distinctContents": 290,
+      "rootIds": 7
+    }
+  }
+]
