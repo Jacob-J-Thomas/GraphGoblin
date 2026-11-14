@@ -64,13 +64,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
-  gate and visit-count identities. Direct existence checks and unresolved inherited or custom
-  output keys warn. The editor applies the repair when a node ID is committed, as one undo step
-  and one saved revision, and remounts only forms showing a repaired source. A notice counts the
-  updated references and connections and lists places where the old ID may remain, each opening
-  its field. **Upgrade:** open a draft that reports a missing reference, correct the
-  source field or restore the referenced node, then publish a new version. Existing published
-  versions and runs retain their definitions.
+  gate and visit-count identities. A direct presence check of one such reference alone, and
+  unresolved inherited or custom output keys, warn. The editor applies the repair when a node ID
+  is committed, as one undo step and one saved revision, and remounts only forms showing a
+  repaired source; the node dialog keeps its list rows, open operations and focus. Unapplied
+  section JSON keeps its exact text until the author applies or cancels it. A notice counts the
+  updated references and connections and lists places where the old ID may remain. A listed
+  field opens while its node is as the rename left it; places in loop settings, scripts and
+  nodes edited since only inform. **Upgrade:** open a draft that reports a missing reference,
+  correct the source field or restore the referenced node, then publish a new version. Existing
+  published versions and runs retain their definitions.
 
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports

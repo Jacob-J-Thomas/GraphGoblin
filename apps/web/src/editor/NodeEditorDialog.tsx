@@ -18,7 +18,11 @@ import {
   RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
-import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
+import {
+  carryCollectionIdentities,
+  createDisclosureIdentities,
+  type DisclosureStates,
+} from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
@@ -315,7 +319,8 @@ export function NodeEditorDialog({
   /**
    * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
    * The rename repairs references in one step; when it repaired one in this node's own fields, the
-   * config form remounts with the new source, and focus follows to the same control there.
+   * config form remounts with the new source. The repair rewrites strings in place, so the form
+   * keeps its collection rows and their open state, and focus follows to the same control there.
    */
   const commitId = (next?: Element | null) => {
     const problem = idProblem(id.value, node.id, definition);
@@ -323,8 +328,18 @@ export function NodeEditorDialog({
       setIdState({ ...id, error: problem });
       return;
     }
+    const nextId = id.value;
+    const rename = () => {
+      const configOf = (nodeId: string) =>
+        useEditorStore.getState().definition?.nodes.find((n) => n.id === nodeId)?.config;
+      const previous = configOf(node.id);
+      const refused = renameNode(node.id, nextId);
+      // Before the remount renders: the repaired config takes this config's row ids.
+      if (!refused) carryCollectionIdentities(disclosureIdentities, previous, configOf(nextId));
+      return refused;
+    };
     // A refusal stays with the typed text; after a rename the draft follows the new id.
-    setIdState({ ...id, error: keepFocusThrough(() => renameNode(node.id, id.value), next) });
+    setIdState({ ...id, error: keepFocusThrough(rename, next) });
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {

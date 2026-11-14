@@ -1,0 +1,219 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+stderr | src/editor/EditorPage.test.tsx > EditorPage > starts with the loop panel expanded on wide windows, and counts issues beside Publish
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/NodeEditorDialog.test.tsx (32 tests) 27949ms
+   ✓ NodeEditorDialog evaluator-specific decisions (14)
+     ✓ authors terminal success exits with returns and destinations 919ms
+     ✓ authors terminal failure exits with returns and destinations 450ms
+     ✓ authors terminal exhausted exits with returns and destinations 438ms
+     ✓ authors and saves a new expression decision from the default editor fields 782ms
+     ✓ authors and saves a new llm decision from the default editor fields 1876ms
+     ✓ authors and saves a new classifier decision from the default editor fields 1831ms
+     ✓ edits and saves a valid expression decision 783ms
+     ✓ edits and saves a valid llm decision 847ms
+     ✓ edits and saves a valid classifier decision 998ms
+     ✓ edits and saves a valid classifier decision 1006ms
+     ✓ edits and saves a valid classifier decision 1068ms
+     ✓ selects each kind with only its applicable fields and keeps source issue focus 1548ms
+   ✓ NodeEditorDialog webhook receiver (2)
+     ✓ shows Receiver only while the trigger type is Webhook 617ms
+   ✓ NodeEditorDialog GitHub trigger presets (2)
+     ✓ applies an editable body-signed fragment as one undoable graph change 1007ms
+     ✓ shows bounded item controls for the GitHub poll preset 928ms
+   ✓ NodeEditorDialog disclosures across undo and redo (11)
+     ✓ keeps incomplete Monday 07:30 across closing, reopening, undo and redo 975ms
+     ✓ keeps Advanced open through an undo and a redo of a basic picker, with focus restored 2248ms
+     ✓ keeps opened and added list items open through an undo and a redo 1411ms
+     ✓ redoing a removal from the removed row keeps its neighbour collapsed 665ms
+     ✓ undoing an add from its picker focuses a shown header without opening that row 580ms
+     ✓ follows the same row when undo and redo move its header toggle 414ms
+     ✓ follows the same row when undo and redo move its header remove 459ms
+     ✓ undoing the only added row returns focus to the collection Add button 373ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: false) 1091ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: true) 1247ms
+     ✓ undoing an injected message add returns to its surviving operation collection 567ms
+   ✓ NodeEditorDialog inference harness changes (3)
+     ✓ preserves other authored harness options and reports unsupported Claude settings 613ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: true) 878ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: false) 847ms
+ ✓ src/editor/EditorPage.test.tsx (37 tests) 33517ms
+   ✓ EditorPage (37)
+     ✓ describes valid pending JSON accurately and refuses Publish until applied or cancelled 773ms
+     ✓ shows Harness in inference but not in the decision or loop settings 938ms
+     ✓ collapses and expands the loop panel from its own controls and remembers it 545ms
+     ✓ starts with the loop panel expanded on wide windows, and counts issues beside Publish 629ms
+     ✓ loads a draft, adds nodes from the palette, edits properties, and autosaves 2091ms
+     ✓ opens the node editor’s Advanced group to focus an issue’s field inside it 1387ms
+     ✓ flags a collapsed Advanced group or operation holding an expression that does not compile 1142ms
+     ✓ keeps schema-invalid drafts on the device and explains why 1812ms
+     ✓ shows a dismissed save notice again after the draft returns to the same invalid state 3006ms
+     ✓ keeps a dismissed offline save notice hidden after an edit that remains offline 1506ms
+     ✓ keeps a newer server draft over an older unsynced local copy, and can switch 345ms
+     ✓ restores an unsynced local draft and reports offline saves 854ms
+     ✓ publishes, surfaces 422 issues, and links to the New run flow once published 1023ms
+     ✓ waits for the server check before "Ready to publish", and says when it is unavailable 896ms
+     ✓ shows the issues only the API finds on the node’s badge and in the counts 436ms
+     ✓ blocks readiness and publish when Monday 07:30 has no day chosen 819ms
+     ✓ blocks publishing on JSON that does not parse, and discards it from the badges 1762ms
+     ✓ opens a node at an issue’s field from its badge, by pointer or keyboard 1071ms
+     ✓ opens a node at an issue whose path holds a newline, a quote, or a backslash 604ms
+     ✓ connects nodes from the keyboard and customizes a default list 1033ms
+     ✓ shows the right node when the open editor is switched to another node of the same kind 391ms
+     ✓ keeps a node editor open under Strict Mode, as the dev server renders the app 367ms
+     ✓ says in the dialog why a connection was refused 366ms
+     ✓ never lets an older save land after a newer one 1660ms
+     ✓ keeps a set-aside device copy across edits and reloads until restored or discarded 808ms
+     ✓ keeps a restored device copy when leaving while an earlier save is in flight 985ms
+     ✓ loads the editor once an API key is entered after a 401 309ms
+     ✓ refuses to publish a draft that cannot be saved 330ms
+     ✓ edits loop settings, variables, node ids, and edges 2381ms
+     ✓ applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 1249ms
+     ✓ picks a published subloop and shows its signature 679ms
+     ✓ shows when the picked subloop has no published version 556ms
+ ✓ src/editor/EditorPage.conflict.test.tsx (12 tests) 15096ms
+   ✓ draft conflicts (If-Match) (9)
+     ✓ sends the loaded token, and the token from each save after it 1657ms
+     ✓ stops saving on a conflict and reloads the server draft on request 1766ms
+     ✓ overwrites the server draft with this copy on request 798ms
+     ✓ asks the server for its token when the conflict did not carry one, and shows failures 893ms
+     ✓ answers a conflict from inside an open node editor 2123ms
+     ✓ does not save over the server draft when leaving in conflict 782ms
+     ✓ saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop 3921ms
+   ✓ draft tokens across editors and saves (3)
+     ✓ does not load a delayed server draft for loop A into the editor of loop B 1179ms
+     ✓ bases the save sent on leaving on the save still in flight, so it does not conflict 864ms
+     ✓ moves a newer unsynced device copy onto the token of the save it follows 851ms
+ ✓ src/editor/EditorPage.name-conflict.test.tsx (10 tests) 25037ms
+   ✓ renaming to another loop’s name (#209) (6)
+     ✓ keeps the authored name on the device and the server copy intact, and holds saves 2869ms
+     ✓ takes the suggestion as an undoable rename and saves it under the same loop id 2193ms
+     ✓ opens and focuses the Name field from the notice, and Try again sends the name once 2498ms
+     ✓ treats a stale draft as a draft conflict first, then refuses the name on overwrite 1317ms
+     ✓ shows the notice inside the node dialog without Edit name 968ms
+     ✓ clears the guidance on leaving without saving the refused name, and asks again on return 2472ms
+   ✓ Try again is one deliberate save of the refused name (#209) (4)
+     ✓ settles a Try again that invalid companion text stopped, sending nothing 2229ms
+     ✓ sends nothing when only the companion text is repaired, then once on a fresh Try again 4586ms
+     ✓ keeps a Try again queued behind an ordinary save that then fails 2558ms
+     ✓ lets a stale draft stop a Try again queued behind the failing save 3346ms
+stderr | src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/EditorPage.undo.test.tsx (8 tests) 8757ms
+   ✓ EditorPage undo and redo (8)
+     ✓ undoes and redoes from the toolbar and the keyboard, not from inside text fields 1421ms
+     ✓ undoes typing in a label in one step, from outside the field 1179ms
+     ✓ shows restored values in the node’s config form and the loop panel’s forms 1592ms
+     ✓ closes the node editor when an undo removes its node, and returns focus to the canvas 724ms
+     ✓ undoes a rename: the id, its edges, and the open editor follow 1299ms
+     ✓ undoes a Discard the unparsed text made right after the typing, from the field or the badge 1473ms
+     ✓ leaves the keys to a code editor’s search panel, checkboxes and all 370ms
+     ✓ takes unparsed text back and forth with the step that typed it 696ms
+ ✓ src/editor/EditorPage.rename.test.tsx (10 tests) 16163ms
+   ✓ renaming a node in the editor (#273) (10)
+     ✓ lists a computed key for review even when renaming a node it does not name today 1163ms
+     ✓ focuses a listed field of the open node in place, and lists scripts without a link 903ms
+     ✓ repairs readers on Enter and lists what to review, which opens the field 1256ms
+     ✓ applies an id typed when the dialog closes and reports it above the canvas 1304ms
+     ✓ says nothing more than before for a rename that only moves connections 517ms
+     ✓ remounts the open form with its repaired source and keeps focus where the user went 1015ms
+     ✓ remounts only the settings form, keeping unfinished variables text 1174ms
+     ✓ saves the whole rename once with If-Match, mirrors it, and saves its undo and redo 3381ms
+     ✓ keeps a rename made against a stale draft until the author overwrites or reloads 1947ms
+     ✓ keeps a rename on the device while the loop name is refused, and saves it whole with the suggestion 3498ms
+ ✓ src/editor/EditorPage.restore.test.tsx (12 tests) 4935ms
+   ✓ unsupported device drafts (8)
+     ✓ pauses editing for an older unsaved draft, never converts or saves it, and opens the editor only after an explicit discard 1253ms
+   ✓ restoring a set-aside copy (4)
+     ✓ pauses editing when an earlier set-aside copy cannot be archived, and continues once the blocked copy is discarded 931ms
+     ✓ keeps a dismissed restore notice hidden while the restored editor generation is edited 334ms
+     ✓ does not load into another loop opened while the restore was being persisted 1272ms
+ ✓ src/editor/EditorPage.device.test.tsx (2 tests) 9413ms
+   ✓ device storage blocked by an older tab (2)
+     ✓ says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 5375ms
+     ✓ shows a valid edit saved to the server, with the device notice apart, until the old tab closes 4036ms
+ ✓ src/loops/LoopsPage.test.tsx (21 tests) 4449ms
+   ✓ LoopsPage (21)
+     ✓ lists loops with publish state and last run status 370ms
+     ✓ creates a loop and opens it in the editor 334ms
+     ✓ shows an empty gallery and still creates a template draft without typed settings defaults 306ms
+     ✓ exports the published version or the draft as a download 313ms
+     ✓ deletes a loop after confirmation and shows refusals 746ms
+ ✓ src/editor/EditorPage.freshness.test.tsx (8 tests) 4247ms
+   ✓ freshness of the API checks (phase review F3) (8)
+     ✓ checks a reloaded server draft instead of reusing the clean answer of the loaded one 1572ms
+     ✓ never reuses a clean unknown-catalog answer as ready when reopened with a held retry 527ms
+     ✓ waits for the check under the resolved catalog even after a clean early answer 340ms
+     ✓ names a draft without a server token by its content, and by the token once saved 848ms
+ ✓ src/editor/useLoadEditor.review.test.tsx (18 tests) 4748ms
+   ✓ F4: permanently unavailable IndexedDB keeps its warning and Retry while server autosave works 1118ms
+   ✓ F4: a transient active-read failure keeps mirrors memory-only and preserves unread device work 350ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=false) 305ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=false) 315ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=true) 311ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=true) 312ms
+ ✓ src/loops/loop-names.test.tsx (15 tests) 6286ms
+   ✓ Create: a case- or whitespace-equivalent name (#209) (3)
+     ✓ keeps the existing loop, explains the rule, and creates only on a deliberate retry 972ms
+     ✓ clears the guidance when the name changes and shows a fresh suggestion after a race 658ms
+   ✓ Import: an unchanged export while the original exists (#209) (4)
+     ✓ cancels without another request and keeps other failures retryable 395ms
+   ✓ Import: a newer file choice owns the panel (#209) (6)
+     ✓ keeps the newer file’s panel, typed name and document when an older refusal answers late 745ms
+     ✓ lists an older file’s late import without closing the newer file’s panel 592ms
+     ✓ sends nothing for a file whose read finishes after a newer choice 426ms
+     ✓ reports a file that cannot be read, unless a newer choice replaced it 414ms
+   ✓ Template copies: repeating Use (#209) (2)
+     ✓ cancels back to Use, keeps one request in flight, and refreshes a raced suggestion 585ms
+ ✓ src/forms/EarlierNodeOutputs.test.tsx (65 tests) 2393ms
+   ✓ field rendering and clipboard (39)
+     ✓ script args.0 (template) shows list: true 358ms
+     ✓ uses the live store definition in the node dialog when edges and ids change 749ms
+ ✓ src/editor/EditorPage.voice.test.tsx (5 tests) 2297ms
+   ✓ editor voice route handoff (5)
+     ✓ consumes validated route state without applying, freezes editing for CAS, and keeps Undo after the authoritative reload 1268ms
+     ✓ reloads the staged server definition without restoring the previous clean mirror as unsaved work 338ms
+     ✓ removes a consumed preview from its history entry so it does not return on Back and Forward 318ms
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=false) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":25},{"event":"memory cache miss","ms":26},{"event":"device read started","ms":26},{"event":"device read completed","ms":30},{"event":"memory cache miss","ms":30},{"event":"render device work","ms":33},{"event":"server response","ms":120},{"event":"server query cached","ms":129},{"event":"memory cache miss","ms":131},{"event":"render server copy","ms":133},{"event":"set-aside prompt (not 409)","ms":210}]
+
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=true) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":3},{"event":"memory cache hit","ms":3},{"event":"device read started","ms":3},{"event":"render device work","ms":3},{"event":"device read completed","ms":4},{"event":"memory cache hit","ms":4},{"event":"server response","ms":5},{"event":"server query cached","ms":6},{"event":"memory cache hit","ms":7},{"event":"render server copy","ms":8},{"event":"set-aside prompt (not 409)","ms":81}]
+
+ ✓ src/editor/useLoadEditor.test.tsx (20 tests) 2709ms
+   ✓ a late unsupported device draft pauses device writes, is neither converted nor replaced, and only a discard resumes 335ms
+ ✓ src/loops/TemplateGallery.test.tsx (10 tests) 1947ms
+   ✓ TemplateGallery (10)
+     ✓ offers one Use action for quick-start and opens the returned ordinary draft 438ms
+ ✓ src/editor/useUndoShortcuts.test.tsx (13 tests) 580ms
+ ✓ src/editor/useAutosave.test.tsx (11 tests) 2158ms
+   ✓ second review F1: browser reconnect keeps this editor's newer mirror safe (queued after response=false) 332ms
+   ✓ second review F1: API recovery keeps this editor's newer mirror safe (queued after response=false) 308ms
+ ✓ src/editor/IssueBadge.test.tsx (7 tests) 699ms
+ ✓ src/editor/ValidationIndicator.test.tsx (6 tests) 519ms
+ ✓ src/editor/UndoRedo.test.tsx (3 tests) 484ms
+   ✓ UndoRedo (3)
+     ✓ names each button by the step it changes, and keeps it focusable when there is none 451ms
+ ✓ src/editor/store.test.ts (41 tests) 72ms
+ ✓ src/editor/store.rename.test.ts (9 tests) 68ms
+ ✓ src/editor/store.decision-routes.test.ts (20 tests) 44ms
+ ✓ src/lib/loop-names.test.ts (3 tests) 7ms
+ ✓ src/editor/save-status.test.ts (4 tests) 6ms
+
+ Test Files  26 passed (26)
+      Tests  402 passed (402)
+   Start at  11:58:58
+   Duration  144.52s (tests 62%, environment 21%, import 9%, setup 7%, transform 2%)
+
+JSON report written to C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-promotion-verification/logs/12-web-extended-26-suites.json

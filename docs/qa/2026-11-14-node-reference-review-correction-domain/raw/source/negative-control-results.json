@@ -1,0 +1,149 @@
+[
+  {
+    "source": "ae8",
+    "exitCode": 1,
+    "files": [
+      {
+        "path": "graph.test.ts",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "node-references.test.ts",
+        "passed": 45,
+        "failed": 23
+      },
+      {
+        "path": "source-analysis.test.ts",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "syntax.test.ts",
+        "passed": 9,
+        "failed": 0
+      }
+    ],
+    "failures": [
+      {
+        "test": "uses the message item and $thread in the decide decision selector",
+        "message": "AssertionError: expected { Object (id, kind, ...) } to match object { config: { context: { …(1) } } }"
+      },
+      {
+        "test": "uses the message item and $thread in the classifier-decision decision selector",
+        "message": "AssertionError: expected { id: 'classifier-decision', …(3) } to match object { config: { context: { …(1) } } }"
+      },
+      {
+        "test": "uses the parent thread for a child variable named where and binds selectors to their own thread",
+        "message": "AssertionError: expected { id: 'child', label: 'Child', …(2) } to match object { config: { input: { …(3) }, …(1) } }"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in $distinct(rows)[id = $$.outputs.start.value].id",
+        "message": "AssertionError: expected '$distinct(rows)[id = $$.outputs.start…' to be '$distinct(rows)[id = $$.outputs.\"true…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in (rows)[outputs.start.value = $$.outputs.start.value].id",
+        "message": "AssertionError: expected '(rows)[outputs.start.value = $$.outpu…' to be '(rows)[outputs.start.value = $$.outpu…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in (rows ~> $distinct())[id = $$.outputs.start.value].id",
+        "message": "AssertionError: expected '(rows ~> $distinct())[id = $$.outputs…' to be '(rows ~> $distinct())[id = $$.outputs…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in rows.$distinct($)[id = $$.outputs.start.value].id",
+        "message": "AssertionError: expected 'rows.$distinct($)[id = $$.outputs.sta…' to be 'rows.$distinct($)[id = $$.outputs.\"tr…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in rows.($distinct($))[id = $$.outputs.start.value].id",
+        "message": "AssertionError: expected 'rows.($distinct($))[id = $$.outputs.s…' to be 'rows.($distinct($))[id = $$.outputs.\"…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in $distinct(rows){\"k\": $$.outputs.start.value, \"local\": $sum($.outputs.start.value)}",
+        "message": "AssertionError: expected '$distinct(rows){\"k\": $$.outputs.start…' to be '$distinct(rows){\"k\": $$.outputs.\"true…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in (rows){\"k\": $$.outputs.start.value, \"local\": $sum(outputs.start.value)}",
+        "message": "AssertionError: expected '(rows){\"k\": $$.outputs.start.value, \"…' to be '(rows){\"k\": $$.outputs.\"true\".value, …' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in [rows]{\"k\": $$.outputs.start.value}",
+        "message": "AssertionError: expected '[rows]{\"k\": $$.outputs.start.value}' to be '[rows]{\"k\": $$.outputs.\"true\".value}' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in rows^(id)[id = $$.outputs.start.value].id",
+        "message": "AssertionError: expected 'rows^(id)[id = $$.outputs.start.value…' to be 'rows^(id)[id = $$.outputs.\"true\".valu…' // Object.is equality"
+      },
+      {
+        "test": "repairs each evaluated filter or group key once in $distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id",
+        "message": "AssertionError: expected '$distinct(rows)[id = ($$.outputs /* k…' to be '$distinct(rows)[id = ($$.outputs /* k…' // Object.is equality"
+      },
+      {
+        "test": "enforces the publication rule for $distinct(rows)[$$.gates.missing.passes > 1]",
+        "message": "AssertionError: expected true to be false // Object.is equality"
+      },
+      {
+        "test": "enforces the publication rule for $distinct(rows){\"k\": $$.counters.nodeVisits.missing}",
+        "message": "AssertionError: expected true to be false // Object.is equality"
+      },
+      {
+        "test": "enforces the publication rule for $distinct(rows)[$exists($$.gates.missing)]",
+        "message": "AssertionError: expected [] to have a length of 1 but got +0"
+      },
+      {
+        "test": "enforces the publication rule for $exists((gates.missing)[$$.gates.other])",
+        "message": "AssertionError: expected true to be false // Object.is equality"
+      },
+      {
+        "test": "enforces the publication rule for $exists($lookup(gates,\"missing\")[$$.gates.other])",
+        "message": "AssertionError: expected true to be false // Object.is equality"
+      },
+      {
+        "test": "warns about a shadowed original root within an evaluated filter",
+        "message": "AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]"
+      },
+      {
+        "test": "warns on references in decorations skipped by JSONata function application rows ~> $distinct()[$$.gates.missing and $$.outputs.start]",
+        "message": "AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]"
+      },
+      {
+        "test": "warns on references in decorations skipped by JSONata function application rows ~> $distinct(){\"k\": $$.gates.missing, \"value\": $$.outputs.start}",
+        "message": "AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]"
+      },
+      {
+        "test": "repairs evaluated function arguments while warning on its skipped filter",
+        "message": "AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]"
+      },
+      {
+        "test": "keeps an applied presence probe optional when its function has a skipped predicate",
+        "message": "AssertionError: expected [ 'NODE_REFERENCE_OPTIONAL_MISSING' ] to deeply equal [ …(2) ]"
+      }
+    ]
+  },
+  {
+    "source": "corrected",
+    "exitCode": 0,
+    "files": [
+      {
+        "path": "graph.test.ts",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "node-references.test.ts",
+        "passed": 68,
+        "failed": 0
+      },
+      {
+        "path": "source-analysis.test.ts",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "path": "syntax.test.ts",
+        "passed": 9,
+        "failed": 0
+      }
+    ],
+    "failures": []
+  }
+]

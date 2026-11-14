@@ -1,0 +1,18 @@
+# PR #474 initial formal reviews
+
+This packet preserves the first two formal reviews of PR #474 at head `ae8add8a791699e905540465b5ddf929d00c50eb`, tree `ea2dfcfd46f7d5ab79fd98414db214513d830b52`, against target `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`. Both scans requested changes. The original [backend/domain report](raw/backend-opus-report.md.txt) is byte-preserved with SHA-256 `8d3b32eefde34b4d1681d251cac0ff2eecc3f82e9e9676af400e20d0fff7e83a`; the original [editor report](raw/ui-sol-report.md.txt) is byte-preserved with SHA-256 `0f3cf97035fb1be74fe8ab176d7bd3cc05e54ae21a00604b511135ae67242fd0`.
+
+## Findings and root disposition
+
+- **Scan 1:** Claude Opus 5.5 xhigh, backend/domain, exit 0. It reported F1 as a P2 correctness gap and F2–F4 as P3 findings. Root accepted **F1 and F2 for correction in this PR**, including F2 despite its P3 label because it affects the accepted static-reference repair/validation contract. **F3 is parked as #476 and F4 as #477.** The safe [exit](raw/backend-opus-exit.json) and [launch metadata](raw/backend-opus-launch.json) are retained; the full worker result and event stream are omitted.
+- **Scan 2:** GPT-6.1 Sol xhigh, editor, **CHANGES REQUIRED**. It reported U1, U2 and U3 as P2 in-PR corrections, plus bounded guide/changelog accuracy changes. Root accepted **U1, U2 and U3 for correction in this PR**. U3 concerns an automatic remount clearing held JSON and adding history; a later explicit Apply of a different raw document remains an author edit, with no new confirmation workflow or silent raw-text rewrite in scope.
+
+The exact root disposition record is [preserved here](raw/root-correction-dispatch.json), along with the [GitHub comment readback](raw/initial-review-comment-readback.json) for [comment 6882534449](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/474#issuecomment-6882534449). The comment states that two of three formal scans are consumed, F1/F2/U1/U2/U3 are fix-in-PR, and the fresh whole-PR Astra max scan is still reserved as scan 3. Owner acceptance and merge are not claimed.
+
+## Snapshot and current status
+
+The initial [review snapshot](raw/review-snapshot/identity.json), [product diff](raw/review-snapshot/non-qa.diff), [non-QA path list](raw/review-snapshot/non-qa-paths.txt), and [all changed paths](raw/review-snapshot/all-changed-paths.txt) preserve the examined identity and path inventory. The snapshot's `reviewGate` text says “PREPARATION ONLY”; it predates the review dispatch and is historical. The later root-disposition record and public comment supersede it.
+
+Corrections were still in progress when this packet was prepared. The original reports remain **CHANGES REQUESTED / CHANGES REQUIRED**; they do not become passing verdicts after corrections. Corrected-source native verification, exact-head CI, and scan 3 remain pending as separate evidence. The already-passing baseline [CI packet](../2026-11-14-node-references-promoted-ci/README.md) and [independent native packet](../2026-11-14-node-reference-promotion-independent/README.md) describe the reviewed baseline, not corrected-source results. The [domain-correction packet](../2026-11-14-node-reference-review-correction-domain/README.md) is a separate proposed sibling and records focused domain correction evidence only.
+
+See [manifest.json](manifest.json) for source-to-copy hashes and sizes, [link-checks.json](link-checks.json) for local and sibling link verification, and [SHA256SUMS.txt](SHA256SUMS.txt) for packet integrity. Raw reports use `.md.txt` to preserve their original bytes; worker events and full result/session files are not included.

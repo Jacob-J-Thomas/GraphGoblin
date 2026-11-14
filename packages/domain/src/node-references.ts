@@ -38,20 +38,24 @@ export type NodeRenameResult =
     };
 
 function referenceScope(kind: NodeKind, segments: string[]): ReferenceScope | undefined {
-  const [first, second] = segments;
-  const last = segments.at(-1);
+  const [first, second, third, fourth] = segments;
   if (kind === 'trigger') return undefined; // Payload/probe view before a run exists.
   if (kind === 'wait' && first === 'filter') return 'binding';
   if (kind === 'heartbeat' && first === 'until') return 'heartbeat';
   if (kind === 'subloop') {
+    // Output selectors and variable mappings receive the child's thread.
     if (first === 'output') return second === 'custom' ? 'parent' : undefined;
-    if (second === 'messages' || second === 'artifacts') return 'binding';
+    if (first === 'input' && (second === 'messages' || second === 'artifacts') && third === 'where')
+      return 'binding';
+    return 'thread';
   }
-  if (
-    last === 'where' &&
-    (first === 'operations' || first === 'input' || (first === 'output' && second === 'transforms'))
-  )
+  if (kind === 'decision' && first === 'context' && second === 'messages' && third === 'where')
     return 'binding';
+  if (kind === 'mutate' && first === 'operations' && third === 'where') return 'binding';
+  if (kind === 'inference') {
+    if (first === 'input' && third === 'where') return 'binding';
+    if (first === 'output' && second === 'transforms' && fourth === 'where') return 'binding';
+  }
   return 'thread';
 }
 

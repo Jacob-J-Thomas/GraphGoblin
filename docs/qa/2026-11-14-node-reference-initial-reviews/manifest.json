@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "packet": "2026-11-14-node-reference-initial-reviews",
+  "sourceEvidenceDirectory": "review-273",
+  "reviewIdentity": {
+    "head": "ae8add8a791699e905540465b5ddf929d00c50eb",
+    "tree": "ea2dfcfd46f7d5ab79fd98414db214513d830b52",
+    "target": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "snapshotReviewGateText": "PREPARATION ONLY. Await independent promoted nativeQA PASS before dispatching scans1/2; no scans consumed.",
+    "reviewGateSupersededBy": "root-correction-dispatch.json and public comment 6882534449"
+  },
+  "scans": [
+    {
+      "number": 1,
+      "area": "backend/domain",
+      "model": "Claude Opus 5.5",
+      "effort": "xhigh",
+      "exitCode": 0,
+      "verdict": "CHANGES REQUESTED",
+      "reportSha256": "8d3b32eefde34b4d1681d251cac0ff2eecc3f82e9e9676af400e20d0fff7e83a",
+      "findings": {
+        "F1": "P2 FIX-IN-PR",
+        "F2": "P3 FIX-IN-PR by root disposition",
+        "F3": "DEFER-ISSUE #476",
+        "F4": "DEFER-ISSUE #477"
+      }
+    },
+    {
+      "number": 2,
+      "area": "editor",
+      "model": "GPT-6.1 Sol",
+      "effort": "xhigh",
+      "verdict": "CHANGES REQUIRED",
+      "reportSha256": "0f3cf97035fb1be74fe8ab176d7bd3cc05e54ae21a00604b511135ae67242fd0",
+      "findings": {
+        "U1": "P2 FIX-IN-PR",
+        "U2": "P2 FIX-IN-PR",
+        "U3": "P2 FIX-IN-PR"
+      },
+      "documentationCorrections": "language-specific examples, direct single-presence caveat, actionable warning subset"
+    }
+  ],
+  "rootDisposition": {
+    "updatedAt": "2026-11-14T18:53:45.704Z",
+    "formalScansConsumed": 2,
+    "formalScansTotal": 3,
+    "commentId": 6882534449,
+    "commentUrl": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/474#issuecomment-6882534449",
+    "finalAstraMaxScan": "reserved/pending",
+    "sourceCorrections": "in progress",
+    "correctedNativeAndExactHeadCI": "pending",
+    "ownerAcceptance": "open",
+    "merge": "not claimed",
+    "u3ExplicitApply": "different raw document remains an author edit; no new confirmation workflow or silent raw-text rewrite"
+  },
+  "evidenceLimits": {
+    "reports": "original initial review reports; not corrected-source verdicts",
+    "initialReviewSnapshot": "historical and contains stale preparation-only reviewGate text",
+    "workerEventsAndFullResults": "excluded",
+    "duplicatedProductSourceCode": "not included; initial product diff and source snapshot retained"
+  },
+  "curatedCounts": {
+    "rawFiles": 10,
+    "rawBytes": 333322,
+    "reportFiles": 2,
+    "snapshotFiles": 4,
+    "rootDispositionFiles": 2,
+    "backendProcessMetadataFiles": 2
+  },
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 79,
+      "sha256": "c57e1a905ee499c1793e30ae0598f0919b0dd7f6be463469cb147e9b626620d8",
+      "authored": true
+    },
+    {
+      "path": "link-checks.json",
+      "bytes": 5785,
+      "sha256": "c6df8d42d4a51d0f0acf675496bcb6c6f16fc12537bb4f29b5737f75849e51ea",
+      "authored": true
+    },
+    {
+      "path": "raw/backend-opus-exit.json",
+      "bytes": 50,
+      "sha256": "51f8644da3103c5252cec826e023ef9f5542bdd481d9722fde977a1d28a095c1",
+      "authored": true
+    },
+    {
+      "path": "raw/backend-opus-launch.json",
+      "bytes": 203,
+      "sha256": "5772532cdb98729bf15123d91c532ce10e66395a31d428dfb20679ba326fcff9",
+      "authored": true
+    },
+    {
+      "path": "raw/backend-opus-report.md.txt",
+      "bytes": 10833,
+      "sha256": "8d3b32eefde34b4d1681d251cac0ff2eecc3f82e9e9676af400e20d0fff7e83a",
+      "authored": true
+    },
+    {
+      "path": "raw/initial-review-comment-readback.json",
+      "bytes": 60877,
+      "sha256": "78bcc6a91fabd27055823e24e352b686b305d49f5dfde5085b6ea0376ecc260e",
+      "authored": true
+    },
+    {
+      "path": "raw/review-snapshot/all-changed-paths.txt",
+      "bytes": 25362,
+      "sha256": "26ff85f6cb17591676c144762ba918f68b7af0c1e0e119c7b1b7688009d8b2bd",
+      "authored": true
+    },
+    {
+      "path": "raw/review-snapshot/identity.json",
+      "bytes": 7565,
+      "sha256": "fbe7823673352a80e1b1668a733709d246691220456214dd3eb09d3ffc949261",
+      "authored": true
+    },
+    {
+      "path": "raw/review-snapshot/non-qa-paths.txt",
+      "bytes": 1177,
+      "sha256": "2f3bfe0154cb585a34691ddc0537c92d9be3ed835557f57666f927ea6ed79053",
+      "authored": true
+    },
+    {
+      "path": "raw/review-snapshot/non-qa.diff",
+      "bytes": 212830,
+      "sha256": "c40c2fe6a405ede21f65918f33c0666ca0950932ef57f2e3bbfb867d1c7179db",
+      "authored": true
+    },
+    {
+      "path": "raw/root-correction-dispatch.json",
+      "bytes": 2168,
+      "sha256": "45d03095a65984247649e222703fb60b0b5195b73c5562132203fbecbed39265",
+      "authored": true
+    },
+    {
+      "path": "raw/ui-sol-report.md.txt",
+      "bytes": 12257,
+      "sha256": "0f3cf97035fb1be74fe8ab176d7bd3cc05e54ae21a00604b511135ae67242fd0",
+      "authored": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 3623,
+      "sha256": "90526eb68f98c88319270f673a311dd5068d159571b372a85d87e4a8449a4a07",
+      "authored": true
+    }
+  ]
+}
