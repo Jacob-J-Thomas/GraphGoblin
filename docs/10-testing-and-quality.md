@@ -1,5 +1,13 @@
 # 10 - Testing and quality
 
+The native helper suite in `test:windows-launcher` also drives the public launcher CLI with
+disposable helpers and listeners: delayed successful identity and ownership checks, filled
+stderr pipes, oversized stdout with a valid prefix, valid results followed by a hang, nonzero
+exits, malformed ownership output and preserved held ownership. A Win32 fixture explicitly
+passes only the helper's stdout/stderr handles to a descendant, proving that the launcher
+finishes its bounded EOF wait while that descendant still owns those handles. The descendant
+exits itself before fixture cleanup. These suites run sequentially to reduce timing contention.
+
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
 gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,

@@ -41,7 +41,7 @@
     "test:wait-restart": "node apps/api/scripts/wait-restart.acceptance.mjs",
     "test:webhook-retry": "node apps/api/scripts/webhook-retry.acceptance.mjs",
     "test:upgrade": "node --test tooling/scripts/upgrade.acceptance.mjs",
-    "test:windows-launcher": "node --test tooling/scripts/windows-launcher.acceptance.mjs",
+    "test:windows-launcher": "node --test --test-concurrency=1 tooling/scripts/windows-launcher.acceptance.mjs tooling/scripts/windows-launcher-helper.acceptance.mjs",
     "check:templates": "pnpm --filter @graphgoblin/api exec tsx --conditions=development scripts/check-templates.mjs",
     "check:migrations": "node tooling/scripts/check-migrations.mjs"
   },

@@ -1,0 +1,1460 @@
+$ pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:migrations && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:templates && pnpm check:licenses && pnpm check:docs && pnpm check:contrast
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 6b261dfafa8bb850
+@graphgoblin/contracts:typecheck: cache miss, executing 399934be23891f17
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:typecheck: cache miss, executing 5297e6d2efa52151
+@graphgoblin/domain:build: cache miss, executing 913bb3a982a59698
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing b5eb98db4c356ac5
+@graphgoblin/engine:typecheck: cache miss, executing 10f115ef6f68c663
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 369df6d47612a0b6
+@graphgoblin/adapter-jev:build: cache miss, executing ac180017980c59cf
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 6214cc01e8cc5c30
+@graphgoblin/infrastructure:typecheck: cache miss, executing db4d3e79e290f2a5
+@graphgoblin/infrastructure:build: cache miss, executing 8058c12a96d9857d
+@graphgoblin/adapter-codex:build: cache miss, executing 4e41c116612ac997
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:typecheck: cache miss, executing ffd4ca51dda63ed1
+@graphgoblin/api:build: cache miss, executing 78d1b85aa3ab4680
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 06bdd5901daea95f
+@graphgoblin/api-client:typecheck: cache miss, executing f4225db53bea161f
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: cache miss, executing c52dbf88fdc89fe0
+@graphgoblin/web:typecheck: cache miss, executing f407305a1b56658d
+@graphgoblin/mcp:build: cache miss, executing 0eb02e6211e3b63f
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing ef088b8b17e449e8
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    58.929s 
+
+$ turbo run lint
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:lint: cache miss, executing dbbd886a70f8fa5c
+@graphgoblin/tooling:lint: cache miss, executing 6e14bee68790725b
+@graphgoblin/domain:lint: cache miss, executing 19769f5143dc60ae
+@graphgoblin/engine:lint: cache miss, executing 3be1e6077c929a60
+@graphgoblin/infrastructure:lint: cache miss, executing e6728925a55262e2
+@graphgoblin/adapter-codex:lint: cache miss, executing 77e0be52de821230
+@graphgoblin/adapter-jev:lint: cache miss, executing 9cdee032596301bb
+@graphgoblin/api-client:lint: cache miss, executing ac84f1b3ce521707
+@graphgoblin/api:lint: cache miss, executing 5dee0c19160906cb
+@graphgoblin/web:lint: cache miss, executing a07c59bf24a54c02
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/tooling:lint: $ eslint scripts/*.mjs perf/*.mjs *.mjs
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/web:lint: $ eslint .
+@graphgoblin/mcp:lint: cache miss, executing a6aeb2ac2dd40c30
+@graphgoblin/mcp:lint: $ eslint .
+@graphgoblin/plugin-codex:lint: cache miss, executing bcb9bcac80eab6b8
+@graphgoblin/plugin-codex:lint: $ eslint .
+
+ Tasks:    12 successful, 12 total
+Cached:    0 cached, 12 total
+  Time:    1m56.457s 
+
+$ node tooling/scripts/check-layers.mjs
+Layer rules: OK
+$ node tooling/scripts/check-migrations.mjs
+Drizzle generation is a no-op.
+$ node tooling/scripts/check-design-tokens.mjs
+Design tokens: OK (226 files checked)
+$ depcruise packages apps --config .dependency-cruiser.cjs
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+  warn no-orphans: apps/web/public/chat-update-worker.js
+  warn no-orphans: apps/web/e2e/shutdown.config.ts
+  warn no-orphans: apps/api/scripts/check-templates.d.mts
+
+x 4 dependency violations (0 errors, 4 warnings). 1233 modules, 5288 dependencies cruised.
+
+$ turbo run test:coverage
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running test:coverage in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/engine:test:coverage: cache miss, executing 75cbcadd06e56585
+@graphgoblin/contracts:test:coverage: cache miss, executing 1fc8efebc0ee5315
+@graphgoblin/domain:test:coverage: cache miss, executing deb413be98313f02
+@graphgoblin/adapter-jev:test:coverage: cache miss, executing 9446837c24933253
+@graphgoblin/adapter-codex:test:coverage: cache miss, executing 6014bc173d4110b8
+@graphgoblin/infrastructure:test:coverage: cache miss, executing 9b9db0af49432aa0
+@graphgoblin/api-client:test:coverage: cache miss, executing 832361b30b492706
+@graphgoblin/web:test:coverage: cache miss, executing 071711ae221a6cf8
+@graphgoblin/mcp:test:coverage: cache miss, executing eb5dee9282f047c0
+@graphgoblin/contracts:build: cache hit, replaying logs 6b261dfafa8bb850
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:test:coverage: cache miss, executing 380695fc5f35571a
+@graphgoblin/engine:test:coverage: $ vitest run --coverage
+@graphgoblin/contracts:test:coverage: $ vitest run --coverage
+@graphgoblin/domain:test:coverage: $ vitest run --coverage
+@graphgoblin/adapter-jev:test:coverage: $ vitest run --coverage
+@graphgoblin/adapter-codex:test:coverage: $ vitest run --coverage
+@graphgoblin/infrastructure:test:coverage: $ vitest run --coverage
+@graphgoblin/api-client:test:coverage: $ vitest run --coverage
+@graphgoblin/web:test:coverage: $ vitest run --coverage
+@graphgoblin/mcp:test:coverage: $ pnpm build && vitest run --coverage
+@graphgoblin/plugin-codex:test:coverage: $ vitest run --coverage
+@graphgoblin/mcp:test:coverage: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:test:coverage: 
+@graphgoblin/mcp:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/apps/mcp
+@graphgoblin/mcp:test:coverage:       Coverage enabled with v8
+@graphgoblin/mcp:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/adapter-codex
+@graphgoblin/adapter-codex:test:coverage:       Coverage enabled with v8
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/web:test:coverage: 
+@graphgoblin/web:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/apps/web
+@graphgoblin/web:test:coverage:       Coverage enabled with v8
+@graphgoblin/web:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/adapter-jev
+@graphgoblin/adapter-jev:test:coverage:       Coverage enabled with v8
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/api-client:test:coverage: 
+@graphgoblin/api-client:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/api-client
+@graphgoblin/api-client:test:coverage:       Coverage enabled with v8
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/api-client:test:coverage: 
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/contracts
+@graphgoblin/contracts:test:coverage:       Coverage enabled with v8
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/engine:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/engine
+@graphgoblin/engine:test:coverage:       Coverage enabled with v8
+@graphgoblin/engine:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/apps/plugin-codex
+@graphgoblin/plugin-codex:test:coverage:       Coverage enabled with v8
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/domain
+@graphgoblin/domain:test:coverage:       Coverage enabled with v8
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/packages/infrastructure
+@graphgoblin/infrastructure:test:coverage:       Coverage enabled with v8
+@graphgoblin/infrastructure:test:coverage: 
+@graphgoblin/domain:test:coverage:  ✓ src/ollama.test.ts (3 tests) 72ms
+@graphgoblin/domain:test:coverage:  ✓ src/model-resolution.test.ts (18 tests) 168ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/decider.test.ts (27 tests) 235ms
+@graphgoblin/contracts:test:coverage:  ✓ src/trigger-integrations.test.ts (8 tests) 45ms
+@graphgoblin/contracts:test:coverage:  ✓ src/evaluation.test.ts (44 tests) 75ms
+@graphgoblin/contracts:test:coverage:  ✓ src/primitive-evaluation.test.ts (30 tests) 307ms
+@graphgoblin/contracts:test:coverage:  ✓ src/template.test.ts (11 tests) 92ms
+@graphgoblin/contracts:test:coverage:  ✓ src/ollama.test.ts (2 tests) 28ms
+@graphgoblin/contracts:test:coverage:  ✓ src/script-provenance.test.ts (6 tests) 25ms
+@graphgoblin/contracts:test:coverage:  ✓ src/gates.test.ts (24 tests) 61ms
+@graphgoblin/contracts:test:coverage:  ✓ src/classifiers.test.ts (49 tests) 150ms
+@graphgoblin/contracts:test:coverage:  ✓ src/inference-context.test.ts (7 tests) 21ms
+@graphgoblin/contracts:test:coverage:  ✓ src/text-capture.test.ts (2 tests) 99ms
+@graphgoblin/contracts:test:coverage:  ✓ src/meta.test.ts (11 tests) 137ms
+@graphgoblin/contracts:test:coverage:  ✓ src/claude.test.ts (16 tests) 152ms
+@graphgoblin/contracts:test:coverage:  ✓ src/chat.test.ts (7 tests) 599ms
+@graphgoblin/contracts:test:coverage:  ✓ src/api-keys.test.ts (7 tests) 16ms
+@graphgoblin/contracts:test:coverage:  ✓ src/schemas.test.ts (35 tests) 446ms
+@graphgoblin/contracts:test:coverage:  ✓ src/parse-identity.test.ts (6 tests) 743ms
+@graphgoblin/contracts:test:coverage:  ✓ src/deletion.test.ts (1 test) 60ms
+@graphgoblin/contracts:test:coverage:  ✓ src/session-policy.test.ts (14 tests) 50ms
+@graphgoblin/contracts:test:coverage:  ✓ src/exit-events.test.ts (1 test) 18ms
+@graphgoblin/contracts:test:coverage:  ✓ src/cron.test.ts (8 tests) 23ms
+@graphgoblin/contracts:test:coverage:  ✓ src/unlimited.test.ts (6 tests) 38ms
+@graphgoblin/contracts:test:coverage:  ✓ src/catalog.test.ts (3 tests) 14ms
+@graphgoblin/contracts:test:coverage:  ✓ src/storage.test.ts (1 test) 16ms
+@graphgoblin/contracts:test:coverage:  ✓ src/issues.test.ts (1 test) 11ms
+@graphgoblin/contracts:test:coverage:  ✓ src/delivery.test.ts (2 tests) 25ms
+@graphgoblin/contracts:test:coverage:  ✓ src/format.test.ts (1 test) 7ms
+@graphgoblin/contracts:test:coverage:  ✓ src/index.test.ts (1 test) 9ms
+@graphgoblin/api-client:test:coverage:  ✓ src/ollama.test.ts (4 tests) 457ms
+@graphgoblin/api-client:test:coverage:    ✓ Ollama client (4)
+@graphgoblin/api-client:test:coverage:      ✓ uses the gateway origin, credentials and explicit configured-connection endpoints 442ms
+@graphgoblin/api-client:test:coverage:  ✓ src/sse-completion.test.ts (10 tests) 518ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/claude/protocol.test.ts (84 tests) 414ms
+@graphgoblin/api-client:test:coverage:    ✓ stream completion contract (10)
+@graphgoblin/api-client:test:coverage:      ✓ delivers historical terminals, resumes and delivery audits before authoritative completion 499ms
+@graphgoblin/api-client:test:coverage:  ✓ src/resources.test.ts (8 tests) 446ms
+@graphgoblin/api-client:test:coverage:    ✓ forwards explicit deletion review and confirmation through the generated API 420ms
+@graphgoblin/api-client:test:coverage:  ✓ src/sse.test.ts (28 tests) 1006ms
+@graphgoblin/api-client:test:coverage:    ✓ subscribeRunEvents (24)
+@graphgoblin/api-client:test:coverage:      ✓ aborts a stalled real HTTP stream while awaiting headers without cancelling the run 306ms
+@graphgoblin/api-client:test:coverage:  ✓ src/errors.test.ts (8 tests) 1042ms
+@graphgoblin/api-client:test:coverage:    ✓ GraphGoblinApiError (6)
+@graphgoblin/api-client:test:coverage:      ✓ synthesises a code for non-problem bodies, preferring the body text 920ms
+@graphgoblin/domain:test:coverage:  ✓ src/replay.test.ts (8 tests) 32ms
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  Test Files  27 passed (27)
+@graphgoblin/contracts:test:coverage:       Tests  304 passed (304)
+@graphgoblin/contracts:test:coverage:    Start at  19:26:47
+@graphgoblin/contracts:test:coverage:    Duration  15.46s (transform 52%, import 43%, tests 3%, worker 2%)
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:   Transform  transforming modules took 48.96s · 52% of tracked time, re-done on every run
+@graphgoblin/contracts:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/contracts:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage:  % Coverage report from v8
+@graphgoblin/contracts:test:coverage: 
+@graphgoblin/contracts:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/contracts:test:coverage: Statements   : 99.41% ( 513/516 )
+@graphgoblin/contracts:test:coverage: Branches     : 95.57% ( 216/226 )
+@graphgoblin/contracts:test:coverage: Functions    : 98.43% ( 63/64 )
+@graphgoblin/contracts:test:coverage: Lines        : 99.59% ( 496/498 )
+@graphgoblin/contracts:test:coverage: ================================================================================
+@graphgoblin/api-client:test:coverage:  ✓ src/wait.test.ts (23 tests) 1173ms
+@graphgoblin/api-client:test:coverage:    ✓ waitForRun (6)
+@graphgoblin/api-client:test:coverage:      ✓ interrupts a stalled request on caller abort with the exact reason before any timer fires 776ms
+@graphgoblin/domain:test:coverage:  ✓ src/loop-io.test.ts (19 tests) 75ms
+@graphgoblin/domain:test:coverage:  ✓ src/poll-items.test.ts (8 tests) 416ms
+@graphgoblin/domain:test:coverage:  ✓ src/graph.test.ts (7 tests) 305ms
+@graphgoblin/domain:test:coverage:  ✓ src/answers.test.ts (20 tests) 159ms
+@graphgoblin/domain:test:coverage:  ✓ src/gates.test.ts (17 tests) 231ms
+@graphgoblin/domain:test:coverage:  ✓ src/patch.test.ts (24 tests) 1262ms
+@graphgoblin/domain:test:coverage:  ✓ src/syntax.test.ts (9 tests) 446ms
+@graphgoblin/domain:test:coverage:  ✓ src/reconcile-thread.test.ts (3 tests) 21ms
+@graphgoblin/mcp:test:coverage:  ✓ src/describe.test.ts (8 tests) 180ms
+@graphgoblin/domain:test:coverage:  ✓ src/readiness.test.ts (22 tests) 19ms
+@graphgoblin/domain:build: cache hit, replaying logs 913bb3a982a59698
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache hit, replaying logs b5eb98db4c356ac5
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs ac180017980c59cf
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache hit, replaying logs 8058c12a96d9857d
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 4e41c116612ac997
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:test:coverage:  ✓ src/pointer.test.ts (10 tests) 15ms
+@graphgoblin/api:build: cache hit, replaying logs 78d1b85aa3ab4680
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:test:coverage: cache miss, executing 7f210684535db528
+@graphgoblin/domain:test:coverage:  ✓ src/retired-destinations.test.ts (9 tests) 12ms
+@graphgoblin/domain:test:coverage:  ✓ src/expression.test.ts (10 tests) 410ms
+@graphgoblin/domain:test:coverage:  ✓ src/template-bundle.test.ts (4 tests) 92ms
+@graphgoblin/domain:test:coverage:  ✓ src/mutations.test.ts (15 tests) 304ms
+@graphgoblin/mcp:test:coverage:  ✓ src/wait.test.ts (4 tests) 744ms
+@graphgoblin/mcp:test:coverage:    ✓ MCP observation deadlines (4)
+@graphgoblin/mcp:test:coverage:      ✓ advertises a minimum one-second budget and refuses zero without a GET 491ms
+@graphgoblin/domain:test:coverage:  ✓ src/json-schema.test.ts (7 tests) 450ms
+@graphgoblin/domain:test:coverage:    ✓ validateJson (5)
+@graphgoblin/domain:test:coverage:      ✓ reuses compiled schemas and evicts beyond the cache limit 383ms
+@graphgoblin/mcp:test:coverage:  ✓ src/run-pagination.test.ts (1 test) 149ms
+@graphgoblin/domain:test:coverage:  ✓ src/state-machine.test.ts (3 tests) 12ms
+@graphgoblin/domain:test:coverage:  ✓ src/template.test.ts (7 tests) 27ms
+@graphgoblin/api:test:coverage: $ vitest run --coverage
+@graphgoblin/domain:test:coverage:  ✓ src/regex-safety.test.ts (46 tests) 18ms
+@graphgoblin/domain:test:coverage:  ✓ src/json-value.test.ts (3 tests) 69ms
+@graphgoblin/domain:test:coverage:  ✓ src/inherited-harness-defaults.test.ts (12 tests) 11ms
+@graphgoblin/domain:test:coverage:  ✓ src/thread-view.test.ts (3 tests) 8ms
+@graphgoblin/domain:test:coverage:  ✓ src/chat.test.ts (31 tests) 2651ms
+@graphgoblin/domain:test:coverage:  ✓ src/parse-identity.test.ts (3 tests) 325ms
+@graphgoblin/mcp:test:coverage:  ✓ src/units.test.ts (13 tests) 942ms
+@graphgoblin/mcp:test:coverage:    ✓ describe helpers (3)
+@graphgoblin/mcp:test:coverage:      ✓ describes every trigger type, waits, and exits of the kitchen-sink loop 488ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/ollama/harness.test.ts (29 tests) 384ms
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/windows-launcher-timeouts/GraphGoblin/apps/api
+@graphgoblin/api:test:coverage:       Coverage enabled with v8
+@graphgoblin/api:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/events.test.ts (54 tests) 295ms
+@graphgoblin/adapter-codex:test:coverage:  ↓ src/live.test.ts (4 tests | 4 skipped)
+@graphgoblin/adapter-jev:test:coverage:  ↓ src/live.test.ts (4 tests | 4 skipped)
+@graphgoblin/adapter-jev:test:coverage:  ↓ src/primitive-live.test.ts (1 test | 1 skipped)
+@graphgoblin/plugin-codex:test:coverage:  ✓ src/plugin.test.ts (9 tests) 13727ms
+@graphgoblin/plugin-codex:test:coverage:    ✓ plugin source (3)
+@graphgoblin/plugin-codex:test:coverage:      ✓ has a valid manifest, MCP config, and the three skills 419ms
+@graphgoblin/plugin-codex:test:coverage:    ✓ assemble (4)
+@graphgoblin/plugin-codex:test:coverage:      ✓ builds an installable marketplace with the absolute MCP entry 7570ms
+@graphgoblin/plugin-codex:test:coverage:      ✓ rejects a skill whose folder and name disagree 2036ms
+@graphgoblin/plugin-codex:test:coverage:      ✓ runs from the CLI entry with defaults and overrides 3496ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/structured.test.ts (10 tests) 858ms
+@graphgoblin/adapter-jev:test:coverage:  ✓ src/decider.test.ts (34 tests) 516ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/harness.test.ts (33 tests) 1579ms
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage:  Test Files  1 passed | 2 skipped (3)
+@graphgoblin/adapter-jev:test:coverage:       Tests  34 passed | 5 skipped (39)
+@graphgoblin/adapter-jev:test:coverage:    Start at  19:26:47
+@graphgoblin/adapter-jev:test:coverage:    Duration  25.56s (transform 73%, import 26%, tests 1%)
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage:   Transform  transforming modules took 48.15s · 73% of tracked time, re-done on every run
+@graphgoblin/adapter-jev:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/adapter-jev:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage:  % Coverage report from v8
+@graphgoblin/adapter-jev:test:coverage: 
+@graphgoblin/adapter-jev:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/adapter-jev:test:coverage: Statements   : 97.75% ( 87/89 )
+@graphgoblin/adapter-jev:test:coverage: Branches     : 96.77% ( 60/62 )
+@graphgoblin/adapter-jev:test:coverage: Functions    : 100% ( 19/19 )
+@graphgoblin/adapter-jev:test:coverage: Lines        : 98.8% ( 83/84 )
+@graphgoblin/adapter-jev:test:coverage: ================================================================================
+@graphgoblin/engine:test:coverage:  ✓ src/edge-cases.test.ts (29 tests) 2938ms
+@graphgoblin/engine:test:coverage:    ✓ handler helpers (11)
+@graphgoblin/engine:test:coverage:      ✓ inference raw repair handles target /vars/a/1/b safely 839ms
+@graphgoblin/engine:test:coverage:    ✓ handler edge cases (6)
+@graphgoblin/engine:test:coverage:      ✓ subloop: exclusions, fresh injections, default custom patches, and absent results 702ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/turn-recovery.test.ts (1 test) 2054ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ continues the recorded session after a CLI dies following durable turn.started acceptance 2051ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/waiting.test.ts (15 tests) 3743ms
+@graphgoblin/engine:test:coverage:    ✓ wait node (6)
+@graphgoblin/engine:test:coverage:      ✓ waits for input, validates it against the schema, and records it as a user message 1086ms
+@graphgoblin/engine:test:coverage:    ✓ subloop node (5)
+@graphgoblin/engine:test:coverage:      ✓ supports fresh input, parent-wins and explicit merges, and custom patches 705ms
+@graphgoblin/engine:test:coverage:      ✓ fails on missing child loops and depth limits, and cancels children with the parent 403ms
+@graphgoblin/api-client:build: cache hit, replaying logs 06bdd5901daea95f
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: cache miss, executing 0b7c66dafe49c4c3
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/flow.test.ts (55 tests) 4329ms
+@graphgoblin/engine:test:coverage:    ✓ decision node (47)
+@graphgoblin/engine:test:coverage:      ✓ records the canonical expression answer without rendering provider questions 599ms
+@graphgoblin/web:build: $ vite build && vite build --config vite.goblin.config.ts
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/effort-names.test.ts (14 tests) 10ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/termination.test.ts (2 tests) 4047ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ reports unconfirmed termination within the acknowledgement when a CLI descendant keeps its output open after abort 2175ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ confirms cancellation when the killed CLI was the only holder of its output 1818ms
+@graphgoblin/engine:test:coverage:  ❯ src/run-manager.test.ts (27 tests | 1 failed) 4907ms
+@graphgoblin/engine:test:coverage:    ✓ a minimal run (6)
+@graphgoblin/engine:test:coverage:      ✓ guards raw coded exceptions at the manager boundary (DECIDER_HTTP_ERROR) 237ms
+@graphgoblin/engine:test:coverage:      ✓ guards raw coded exceptions at the manager boundary (DECIDER_private-marker) 84ms
+@graphgoblin/engine:test:coverage:      ✓ runs trigger to exit and records the expected events 101ms
+@graphgoblin/engine:test:coverage:      ✓ defaults a null payload, picks the manual trigger, and validates trigger input 114ms
+@graphgoblin/engine:test:coverage:      ✓ rejects unknown loops, drafts, and unknown triggers 114ms
+@graphgoblin/engine:test:coverage:      ✓ uses the first trigger when there is no manual one and the explicit one when named 133ms
+@graphgoblin/engine:test:coverage:    ❯ run control (9)
+@graphgoblin/engine:test:coverage:      × keeps timers running during a fast graph cycle, so the cycle can be cancelled 351ms
+@graphgoblin/engine:test:coverage:      ✓ stops before the next node when a pause lands during the yield between nodes 27ms
+@graphgoblin/engine:test:coverage:      ✓ cancels a queued run before it starts 29ms
+@graphgoblin/engine:test:coverage:      ✓ cancels a waiting run and is idempotent on repeated requests 63ms
+@graphgoblin/engine:test:coverage:      ✓ pauses a queued run and resumes it later 308ms
+@graphgoblin/engine:test:coverage:      ✓ pauses a running run after the current node and resumes from the next one 494ms
+@graphgoblin/engine:test:coverage:      ✓ pauses a waiting run; on resume it waits again with its deadline, and a missed timer fires 28ms
+@graphgoblin/engine:test:coverage:      ✓ reports unknown runs 12ms
+@graphgoblin/engine:test:coverage:      ✓ limits concurrency to the configured number of workers 309ms
+@graphgoblin/engine:test:coverage:    ✓ failure and recovery (6)
+@graphgoblin/engine:test:coverage:      ✓ fails on a missing edge as an internal error and can be inspected 62ms
+@graphgoblin/engine:test:coverage:      ✓ resumes a failed run from the failed node 94ms
+@graphgoblin/engine:test:coverage:      ✓ recovers runs left running by a previous process and resumes harness sessions 150ms
+@graphgoblin/engine:test:coverage:      ✓ completes pending cancellations at recovery and re-queues queued runs 48ms
+@graphgoblin/engine:test:coverage:      ✓ replays the thread from the log when the snapshot is missing 86ms
+@graphgoblin/engine:test:coverage:      ✓ fails cleanly when the loop version disappears 39ms
+@graphgoblin/engine:test:coverage:    ✓ event helpers (2)
+@graphgoblin/engine:test:coverage:      ✓ finds a pending wake only between waiting and the next finish 1ms
+@graphgoblin/engine:test:coverage:      ✓ counts attempts since the last finish of the node 27ms
+@graphgoblin/engine:test:coverage:    ✓ the per-node visit cap (maxNodeVisits) (3)
+@graphgoblin/engine:test:coverage:      ✓ fails a self-routing decision with MAX_NODE_VISITS naming the node 202ms
+@graphgoblin/engine:test:coverage:      ✓ lets a long but finite cycle finish when every node stays within the cap 1395ms
+@graphgoblin/engine:test:coverage:      ✓ counts fresh entries only, not wakes or retries of the same visit 0ms
+@graphgoblin/engine:test:coverage:    ✓ the visit cap and re-entries of one visit (1)
+@graphgoblin/engine:test:coverage:      ✓ does not count wakes, pause and resume, or timer fires as visits 344ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/failure-evidence.test.ts (384 tests) 1082ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/claude/harness.test.ts (57 tests) 2725ms
+@graphgoblin/infrastructure:test:coverage:    ✓ Claude native structured repair through the engine (3)
+@graphgoblin/infrastructure:test:coverage:      ✓ repairs the exact native candidate undefined instead of final-text fallback 451ms
+@graphgoblin/engine:test:coverage:  ✓ src/finalization.test.ts (44 tests) 5974ms
+@graphgoblin/engine:test:coverage:    ✓ terminal append survives crash before status: exit-success 329ms
+@graphgoblin/engine:test:coverage:    ✓ terminal append survives crash before status: inference-timeout 1035ms
+@graphgoblin/engine:test:coverage:    ✓ terminal append survives crash before status: repair 317ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/retention.test.ts (1 test) 31ms
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/engine:test:coverage:  ✓ src/definition-pin.test.ts (15 tests) 7218ms
+@graphgoblin/engine:test:coverage:    ✓ draft runs pin a snapshot of the draft (4)
+@graphgoblin/engine:test:coverage:      ✓ keeps the snapshot through an edit while waiting; a new draft run sees the edit 998ms
+@graphgoblin/engine:test:coverage:      ✓ keeps the snapshot when the draft is edited while a node is running 777ms
+@graphgoblin/engine:test:coverage:      ✓ continues on the snapshot after a restart, and a replay fork reuses the pin 363ms
+@graphgoblin/engine:test:coverage:    ✓ published runs pin their version (1)
+@graphgoblin/engine:test:coverage:      ✓ keeps the version through a newer publish while waiting; a new run takes the newer one 347ms
+@graphgoblin/engine:test:coverage:    ✓ inherited model defaults are pinned at start (1)
+@graphgoblin/engine:test:coverage:      ✓ ignores Settings and process default changes for a waiting run, across a restart 529ms
+@graphgoblin/engine:test:coverage:    ✓ children keep their own pins (1)
+@graphgoblin/engine:test:coverage:      ✓ runs the selection pinned at parent start, on every visit, with the parent defaults 1767ms
+@graphgoblin/engine:test:coverage:    ✓ triggered starts pin like manual ones (1)
+@graphgoblin/engine:test:coverage:      ✓ pins a webhook admission at claim time and a poll item at admission 355ms
+@graphgoblin/engine:test:coverage:    ✓ classifier bindings are pinned at start (6)
+@graphgoblin/engine:test:coverage:      ✓ calls the binding pinned at start after a catalog edit while waiting and a restart 878ms
+@graphgoblin/engine:test:coverage:      ✓ gives a child its parent binding for a shared classifier 414ms
+@graphgoblin/engine:test:coverage:  ✓ src/webhook-admission.test.ts (14 tests) 1879ms
+@graphgoblin/engine:test:coverage:    ✓ durable webhook admission (11)
+@graphgoblin/engine:test:coverage:      ✓ bounds sweeps at five, persists backoff and refuses a changed existing invocation permanently 381ms
+@graphgoblin/engine:test:coverage:      ✓ finishes ordinary boot recovery before admitting fresh pending webhook runs 306ms
+@graphgoblin/engine:test:coverage:    ✓ periodic recovery runs without a restart and caps persisted backoff at five minutes 595ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/claude.test.ts (38 tests) 8572ms
+@graphgoblin/engine:test:coverage:    ✓ mixed native harness families (4)
+@graphgoblin/engine:test:coverage:      ✓ resumes previous sessions within each family across interleaved nodes 737ms
+@graphgoblin/engine:test:coverage:      ✓ keeps named keys unchanged while selecting the family across runs 552ms
+@graphgoblin/engine:test:coverage:    ✓ unconfirmed native cancellation (18)
+@graphgoblin/engine:test:coverage:      ✓ retains actionable failure over timeout cancellation 1163ms
+@graphgoblin/engine:test:coverage:    ✓ inference consumption keeps engine failures and cleans up both harness families (16)
+@graphgoblin/engine:test:coverage:      ✓ preserves codex session persistence errors as INTERNAL_ERROR and cancels 588ms
+@graphgoblin/engine:test:coverage:      ✓ repairs Claude native candidates on the same session, including missing structured output 506ms
+@graphgoblin/web:build: ✓ 762 modules transformed.
+@graphgoblin/engine:test:coverage:  ✓ src/webhook-returns.test.ts (20 tests) 3446ms
+@graphgoblin/engine:test:coverage:    ✓ durable webhook returns through RunManager (7)
+@graphgoblin/engine:test:coverage:      ✓ retains prior acknowledgement uncertainty separately from a later rejection (true) 326ms
+@graphgoblin/engine:test:coverage:      ✓ delivers or exhausts with one identity (2 attempts) 360ms
+@graphgoblin/engine:test:coverage:      ✓ delivers or exhausts with one identity (5 attempts) 317ms
+@graphgoblin/engine:test:coverage:    ✓ stops a backoff without spending another attempt and resumes the durable deadline 349ms
+@graphgoblin/engine:test:coverage:  ✓ src/child-failure-parity.test.ts (14 tests) 10355ms
+@graphgoblin/engine:test:coverage:    ✓ retains an uncertain child script dispatch on the parent and retries only on explicit Resume 1905ms
+@graphgoblin/engine:test:coverage:    ✓ child failures follow the inline rules (#251) (9)
+@graphgoblin/engine:test:coverage:      ✓ transient: script exits non-zero fails the parent like the inline node, and resumes alike 662ms
+@graphgoblin/engine:test:coverage:      ✓ transient: script times out fails the parent like the inline node, and resumes alike 818ms
+@graphgoblin/engine:test:coverage:      ✓ deterministic: decision expression fails fails the parent like the inline node, and resumes alike 686ms
+@graphgoblin/engine:test:coverage:      ✓ provider: harness quota is exhausted fails the parent like the inline node, and resumes alike 1126ms
+@graphgoblin/engine:test:coverage:      ✓ provider: classifier answers outside the declared… fails the parent like the inline node, and resumes alike 606ms
+@graphgoblin/engine:test:coverage:      ✓ bug: a mutation expression throws (bug class) fails the parent like the inline node, and resumes alike 931ms
+@graphgoblin/engine:test:coverage:      ✓ depth exceeded deep in a tree fails every ancestor non-resumably (G12) 504ms
+@graphgoblin/engine:test:coverage:      ✓ cancellation: a cancelled child cancels its parent, as cancelling the inline work cancels its run 447ms
+@graphgoblin/engine:test:coverage:      ✓ an authored Failure exit is ordinary data for the parent, distinct from an execution error 433ms
+@graphgoblin/engine:test:coverage:    ✓ repeat and recovery attempts (#251) (4)
+@graphgoblin/engine:test:coverage:      ✓ each resume of the parent resumes the same child until it succeeds 707ms
+@graphgoblin/engine:test:coverage:      ✓ a failed child directs recovery to its parent, which continues the same child 406ms
+@graphgoblin/engine:test:coverage:      ✓ nested: the root fails with the leaf failure, and resuming the root resumes the tree 753ms
+@graphgoblin/engine:test:coverage:      ✓ a crash after the child failure woke the parent fails the parent once at recovery 347ms
+@graphgoblin/engine:test:coverage:  ✓ src/adversarial.test.ts (42 tests) 11269ms
+@graphgoblin/engine:test:coverage:    ✓ adversarial engine invariants (42)
+@graphgoblin/engine:test:coverage:      ✓ 1: queued pause, invalid resume, waiting cancel and terminal signals are typed 944ms
+@graphgoblin/engine:test:coverage:      ✓ 2: parked inference resumes its session once after manager replacement 490ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-003: snapshots equal event replay at every mutation boundary 540ms
+@graphgoblin/engine:test:coverage:      ✓ 3/5: subloop result-only mapping creates missing result vars and replays 357ms
+@graphgoblin/engine:test:coverage:      ✓ 3/5: subloop merge mapping creates missing result vars and replays 488ms
+@graphgoblin/engine:test:coverage:      ✓ 3/5: subloop custom mapping creates missing result vars and replays 499ms
+@graphgoblin/engine:test:coverage:      ✓ 4: recursive subloops terminate at depth limit (two-loop cycle=false) 712ms
+@graphgoblin/engine:test:coverage:      ✓ 4: recursive subloops terminate at depth limit (two-loop cycle=true) 508ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-004: latest subloop version is pinned at parent start 970ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-004: pins reach grandchildren, replay forks, and recovery 684ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-014: custom mapping allows a protected test read 358ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-015: a child that succeeded before its parent parks wakes the parent 329ms
+@graphgoblin/engine:test:coverage:      ✓ ADV-015: a child that failed before its parent parks wakes the parent 438ms
+@graphgoblin/infrastructure:test:coverage:  ❯ src/fs/chat-audio.test.ts (39 tests | 4 failed) 10248ms
+@graphgoblin/infrastructure:test:coverage:    ❯ ChatAudioStore (25)
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves binary bytes, hashes the bounded stream, and derives an absolute internal path 160ms
+@graphgoblin/infrastructure:test:coverage:      ✓ creates private storage and tightens an existing directory before writing 12ms
+@graphgoblin/infrastructure:test:coverage:      ✓ publishes a complete file after streaming and excludes concurrent same-ID writes and cleanup 190ms
+@graphgoblin/infrastructure:test:coverage:      × refuses to replace existing files, directories, and symlinks 435ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "../outside" 3ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "01arz3ndektsv4rrffq69g5fa0" 3ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\n" 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\\x" 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "OOOOOOOOOOOOOOOOOOOOOOOOOO" 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects noncanonical identifiers before any filesystem access: "" 6ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid byte limit 0 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid byte limit -1 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid byte limit 1.5 1ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid byte limit Infinity 1ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid byte limit 10485761 2ms
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts the exact size limit, and stops an oversized stream before reading more bytes 603ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects empty bodies and empty streams without leaving files 136ms
+@graphgoblin/infrastructure:test:coverage:      ✓ cleans up an interrupted body and preserves its cause behind a bounded message 48ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports ENOSPC during publication, removes temporary bytes, and allows a retry 194ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not hide publication failures when best-effort temporary cleanup also fails 595ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a failed lock cleanup for the protected orphan scanner without losing successful bytes 1589ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports unexpected exclusive-lock and destination inspection errors 171ms
+@graphgoblin/infrastructure:test:coverage:      × refuses a non-directory or symlink dedicated storage root 431ms
+@graphgoblin/infrastructure:test:coverage:      × deletes only the exact ID, is idempotent, and never follows a file symlink 1412ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports a failed exact deletion without recursively removing directories 925ms
+@graphgoblin/infrastructure:test:coverage:    ❯ bounded chat audio orphan cleanup (14)
+@graphgoblin/infrastructure:test:coverage:      ✓ does not create a directory when there are no uploads 121ms
+@graphgoblin/infrastructure:test:coverage:      × continues bounded batches and removes only old recognized regular files without metadata 741ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rechecks the current file before deletion and tolerates concurrent exact deletion 1159ms
+@graphgoblin/infrastructure:test:coverage:      ✓ closes a cursor after a filesystem failure and can start another bounded scan 303ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves the cleanup failure if closing its directory cursor also fails 213ms
+@graphgoblin/infrastructure:test:coverage:      ✓ releases an unfinished directory cursor explicitly at shutdown 337ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an unbounded or invalid batch limit 0 39ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an unbounded or invalid batch limit -1 34ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an unbounded or invalid batch limit 1.5 56ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an unbounded or invalid batch limit 1001 66ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an unbounded or invalid batch limit Infinity 63ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid cutoff NaN 81ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid cutoff Infinity 102ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses an invalid cutoff -Infinity 2ms
+@graphgoblin/domain:test:coverage:  ✓ src/adversarial.test.ts (41 tests) 14940ms
+@graphgoblin/domain:test:coverage:    ✓ adversarial domain invariants (41)
+@graphgoblin/domain:test:coverage:      ✓ ADV-007: JSONata native regex is bounded by its expression timeout 2094ms
+@graphgoblin/domain:test:coverage:      ✓ ADV-007 review: 10 nested failing $evals stay small in a 128 MB process 2530ms
+@graphgoblin/domain:test:coverage:      ✓ ADV-007 review: 20 nested failing $evals stay small in a 128 MB process 2100ms
+@graphgoblin/domain:test:coverage:      ✓ ADV-007 review: 30 nested failing $evals stay small in a 128 MB process 2566ms
+@graphgoblin/domain:test:coverage:      ✓ ADV-007 review: nested-alternative is rejected in an isolated process 2439ms
+@graphgoblin/domain:test:coverage:      ✓ ADV-007 review: runtime-eval is rejected in an isolated process 2559ms
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/engine:test:coverage:  ✓ src/awaited-children.test.ts (24 tests) 12015ms
+@graphgoblin/engine:test:coverage:    ✓ identity-bound child wakes (#242) (2)
+@graphgoblin/engine:test:coverage:      ✓ a stale child wake never answers a later input park of its parent 716ms
+@graphgoblin/engine:test:coverage:      ✓ a stale child wake never reaches the next visit of the same subloop node 1198ms
+@graphgoblin/engine:test:coverage:    ✓ child results (#242) (10)
+@graphgoblin/engine:test:coverage:      ✓ a child that returns no output leaves the result absent in its parent 305ms
+@graphgoblin/engine:test:coverage:      ✓ a child that returns JSON null passes null, distinct from no output 306ms
+@graphgoblin/engine:test:coverage:      ✓ with a parent-wins variable merge, the result variable holds only what the child returned (3)
+@graphgoblin/engine:test:coverage:        ✓ no output: the inherited stale value is not restored by the merge 382ms
+@graphgoblin/engine:test:coverage:        ✓ JSON null: the variable holds null 506ms
+@graphgoblin/engine:test:coverage:        ✓ data: the variable holds the returned data, not the merged stale value 473ms
+@graphgoblin/engine:test:coverage:      ✓ with a child-wins variable merge, the result variable holds only what the child returned (3)
+@graphgoblin/engine:test:coverage:        ✓ JSON null: the variable holds null 497ms
+@graphgoblin/engine:test:coverage:        ✓ data: the variable holds the returned data, not the merged stale value 579ms
+@graphgoblin/engine:test:coverage:      ✓ a later visit without output removes the result an earlier visit stored, and a custom mapping sees no result 1129ms
+@graphgoblin/engine:test:coverage:      ✓ a child exit returns its data and never terminates its parent, which continues to its own exit 414ms
+@graphgoblin/engine:test:coverage:    ✓ awaiting a child across failures and restarts (#242) (12)
+@graphgoblin/engine:test:coverage:      ✓ an unfinished child is never mapped: a parent woken before its child was resumed awaits it again 813ms
+@graphgoblin/engine:test:coverage:      ✓ nested children each finish before their parent continues to its own work and exit 659ms
+@graphgoblin/engine:test:coverage:      ✓ a child that finished while the process was down wakes its parent exactly once 795ms
+@graphgoblin/engine:test:coverage:      ✓ a parent interrupted mid-wake continues exactly once after recovery 417ms
+@graphgoblin/engine:test:coverage:      ✓ a parent that dies while finishing its subloop records the child completion once after recovery (#398) 383ms
+@graphgoblin/engine:test:coverage:      ✓ a child resumed directly after its parent lost its failure write records the completion the parent observes when it succeeds (#398) 519ms
+@graphgoblin/engine:test:coverage:      ✓ the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398) 302ms
+@graphgoblin/engine:test:coverage:      ✓ a parent that dies cancelling for its child before its journal append records the completion once (#398) 330ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/submission.test.ts (6 tests) 6461ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex submission markers through the public SDK client seam and fake CLI (6)
+@graphgoblin/adapter-codex:test:coverage:      ✓ arguments distinguishes initialization from input acceptance 912ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ init distinguishes initialization from input acceptance 1125ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ accepted distinguishes initialization from input acceptance 1348ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ accepted-auth distinguishes initialization from input acceptance 1847ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing distinguishes initialization from input acceptance 1181ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/inference.test.ts (18 tests) 4906ms
+@graphgoblin/engine:test:coverage:    ✓ inference node (18)
+@graphgoblin/engine:test:coverage:      ✓ falls back to the owner defaults read at run start, then to the configured defaults 392ms
+@graphgoblin/adapter-codex:test:coverage:  ❯ src/probe-directory.test.ts (4 tests | 2 failed) 11302ms
+@graphgoblin/engine:test:coverage:      ✓ resumes the previous session in the run and named sessions across runs 541ms
+@graphgoblin/engine:test:coverage:      ✓ times out a slow session with INFERENCE_TIMEOUT 1330ms
+@graphgoblin/adapter-codex:test:coverage:    ❯ Codex readiness probe directory (4)
+@graphgoblin/adapter-codex:test:coverage:      ✓ runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 3953ms
+@graphgoblin/adapter-codex:test:coverage:      × preserves 1 existing collision directories and bounds retries 5075ms
+@graphgoblin/adapter-codex:test:coverage:      × preserves 4 existing collision directories and bounds retries 1886ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails a real directory creation fault before starting the fake CLI or removing anything 349ms
+@graphgoblin/engine:test:coverage:  ✓ src/parent-recovery.test.ts (7 tests) 2781ms
+@graphgoblin/engine:test:coverage:    ✓ surfaces a newer child failure when already accepted work advances before parent admission 609ms
+@graphgoblin/engine:test:coverage:    ✓ binds parent consent to A while external-client tries to advance the child to B 481ms
+@graphgoblin/engine:test:coverage:    ✓ binds parent consent to A while already-admitted-parent tries to advance the child to B 602ms
+@graphgoblin/engine:test:coverage:    ✓ recovers the durable child consent after losing the parent Resume acknowledgement 315ms
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:  Test Files  27 passed (27)
+@graphgoblin/domain:test:coverage:       Tests  362 passed (362)
+@graphgoblin/domain:test:coverage:    Start at  19:26:47
+@graphgoblin/domain:test:coverage:    Duration  36.19s (transform 61%, import 26%, tests 12%, worker 1%)
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage:   Transform  transforming modules took 111.65s · 61% of tracked time, re-done on every run
+@graphgoblin/domain:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/domain:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  ❯ src/process/voice.test.ts (135 tests | 46 failed) 28423ms
+@graphgoblin/infrastructure:test:coverage:    ❯ voice manifests and filesystem boundaries (29)
+@graphgoblin/infrastructure:test:coverage:      ✓ pins both real immutable upstream assets and MIT model licensing 340ms
+@graphgoblin/infrastructure:test:coverage:      ✓ fingerprints actual files, notices replacement, and never treats identity as licence proof 962ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid local relative 87ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid local null 266ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid local missing 16ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid local directory 78ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid local empty 38ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unavailable or unsafe audio: missing 78ms
+@graphgoblin/infrastructure:test:coverage:      × rejects unavailable or unsafe audio: symlink 187ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unavailable or unsafe audio: directory 27ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unavailable or unsafe audio: short 54ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unavailable or unsafe audio: oversized 73ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unavailable or unsafe audio: invalid 100ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 0 before cloud dispatch 51ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 4 before cloud dispatch 67ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 8 before cloud dispatch 38ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 12 before cloud dispatch 38ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 16 before cloud dispatch 73ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 20 before cloud dispatch 60ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 22 before cloud dispatch 396ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 24 before cloud dispatch 93ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 28 before cloud dispatch 64ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 32 before cloud dispatch 41ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 34 before cloud dispatch 70ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 36 before cloud dispatch 257ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses malformed canonical WAV header at byte 40 before cloud dispatch 138ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects misaligned or oversized PCM length 1 67ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects misaligned or oversized PCM length 3840002 45ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects misaligned or oversized PCM length 10485760 49ms
+@graphgoblin/infrastructure:test:coverage:    ❯ private runtime qualification (42)
+@graphgoblin/infrastructure:test:coverage:      × requires a matching operator record and all current dependency hashes 596ms
+@graphgoblin/infrastructure:test:coverage:      × invalidates changed runtime binary and symlink target identities 374ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: record-public 99ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: parent-public 286ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: record-link 678ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: parent-link 230ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: bad-json 81ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: too-large 136ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: empty 854ms
+@graphgoblin/infrastructure:test:coverage:      × refuses unsafe qualification storage: directory 1560ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 0 636ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 1 162ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 2 66ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 3 365ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 4 112ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 5 88ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 6 137ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 7 240ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 8 119ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 9 83ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 10 163ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 11 56ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 12 228ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 13 67ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 14 234ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 15 165ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed or unreviewed runtime evidence 16 415ms
+@graphgoblin/infrastructure:test:coverage:      × rejects selection of a different binary, nonexecutables and invalid paths 92ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: added 92ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: removed 230ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: type 90ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: duplicate 234ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: target 91ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: hash 167ms
+@graphgoblin/infrastructure:test:coverage:      × rejects a changed backend loader inventory: directory-path 96ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 0 192ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 1 163ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 2 43ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 3 117ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 4 83ms
+@graphgoblin/infrastructure:test:coverage:      × refuses malformed loader directory inventories 5 93ms
+@graphgoblin/infrastructure:test:coverage:      ✓ qualifies only exact approved model bytes and rejects changed assets 179ms
+@graphgoblin/infrastructure:test:coverage:    ✓ direct bounded local transcription (14)
+@graphgoblin/infrastructure:test:coverage:      ✓ invokes the selected executable directly with canonical WAV, no inherited secrets and bounded output/deadline 255ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 0 78ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 1 173ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 2 105ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 3 147ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 4 104ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 5 65ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 6 496ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unsuccessful or truncated process outcomes 7 615ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not accept or truncate invalid transcript 0 167ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not accept or truncate invalid transcript 1 177ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not dispatch cancelled or invalid audio and sanitizes process exceptions 313ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves unsafe native outcomes even when cancellation also arrives 0 77ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves unsafe native outcomes even when cancellation also arrives 1 39ms
+@graphgoblin/infrastructure:test:coverage:    ✓ fixed OpenAI file transcription (24)
+@graphgoblin/infrastructure:test:coverage:      ✓ uses only the explicit voice key and fixed native multipart endpoint/model, preserving returned speech 928ms
+@graphgoblin/infrastructure:test:coverage:      ✓ sanitizes HTTP 401 with no retry 67ms
+@graphgoblin/infrastructure:test:coverage:      ✓ sanitizes HTTP 429 with no retry 71ms
+@graphgoblin/infrastructure:test:coverage:      ✓ sanitizes HTTP 302 with no retry 40ms
+@graphgoblin/infrastructure:test:coverage:      ✓ sanitizes HTTP 500 with no retry 123ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unusable keys without a request 0 41ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unusable keys without a request 1 55ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unusable keys without a request 2 91ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 0 40ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 1 34ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 2 38ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 3 69ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 4 99ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 5 102ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 6 85ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses invalid/empty/long transcript 7 184ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds all provider response forms 0 71ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds all provider response forms 1 63ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds all provider response forms 2 18ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds all provider response forms 3 186ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds all provider response forms 4 25ms
+@graphgoblin/infrastructure:test:coverage:      ✓ never sends preaborted audio and treats lost acknowledgement/read cancellation as uncertain, without a retry 150ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds a fetch adapter that ignores its cancellation signal 88ms
+@graphgoblin/infrastructure:test:coverage:      ✓ sanitizes failed stream reads and failed cancellation without exposing provider data 65ms
+@graphgoblin/infrastructure:test:coverage:    ❯ bounded allowlisted model installation (26)
+@graphgoblin/infrastructure:test:coverage:      ✓ never starts build tools or downloads for missing/unqualified runtimes 35ms
+@graphgoblin/infrastructure:test:coverage:      × streams tiny.en into an exclusively created private file and atomically commits verified bytes 285ms
+@graphgoblin/infrastructure:test:coverage:      × streams base.en into an exclusively created private file and atomically commits verified bytes 390ms
+@graphgoblin/infrastructure:test:coverage:      ✓ uses an already valid model without network traffic 339ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: bad-hash 176ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: short 299ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: overflow 347ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: length 146ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: bad-length 773ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: status 547ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: no-body 111ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains the previous model and cleans every failed partial file: network 328ms
+@graphgoblin/infrastructure:test:coverage:      ✓ exposes real progress, deduplicates concurrent starts, and cancels a stalled stream with cleanup 340ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rechecks runtime trust before committing a download 1396ms
+@graphgoblin/infrastructure:test:coverage:      ✓ enforces disk headroom before network traffic 154ms
+@graphgoblin/infrastructure:test:coverage:      × rejects symlinked private voice directories 67ms
+@graphgoblin/infrastructure:test:coverage:      × rejects symlinked private models directories 269ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects: https://unapproved.example/model 731ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects: http://huggingface.co/model 299ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects: https://user:password@huggingface.co/model 296ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects: https://huggingface.co:444/model 104ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects:  412ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unsafe or unbounded redirects: loop 314ms
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts only the fixed HTTPS model host and reviewed HF asset CDN redirects 167ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects unapproved model identifiers and preaborted operations 58ms
+@graphgoblin/infrastructure:test:coverage:      ✓ cleans model partial files even if the download stream fails to cancel 428ms
+@graphgoblin/domain:test:coverage:  % Coverage report from v8
+@graphgoblin/domain:test:coverage: 
+@graphgoblin/domain:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/domain:test:coverage: Statements   : 99.14% ( 1385/1397 )
+@graphgoblin/domain:test:coverage: Branches     : 98.1% ( 1189/1212 )
+@graphgoblin/domain:test:coverage: Functions    : 97.83% ( 271/277 )
+@graphgoblin/domain:test:coverage: Lines        : 99.49% ( 1181/1187 )
+@graphgoblin/domain:test:coverage: ================================================================================
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/gates.test.ts (19 tests) 5730ms
+@graphgoblin/engine:test:coverage:    ✓ decision gates (19)
+@graphgoblin/engine:test:coverage:      ✓ recovers the recorded repeat route after the atomic append, before either snapshot or cursor saves 410ms
+@graphgoblin/engine:test:coverage:      ✓ applies the same gate policy to classifier choice routes 386ms
+@graphgoblin/engine:test:coverage:      ✓ a non-repeat choice on the last allowed pass wins 468ms
+@graphgoblin/engine:test:coverage:      ✓ repeat at the pass limit takes the distinct Limit reached output 317ms
+@graphgoblin/engine:test:coverage:      ✓ replay forks preserve the recorded count before their entry node 495ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at before-append preserves exactly one accepted repeat 520ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at after-append preserves exactly one accepted repeat 386ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at before-snapshot preserves exactly one accepted repeat 341ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at after-snapshot preserves exactly one accepted repeat 346ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at before-cursor preserves exactly one accepted repeat 432ms
+@graphgoblin/engine:test:coverage:      ✓ recovery at after-cursor preserves exactly one accepted repeat 312ms
+@graphgoblin/engine:test:coverage:  ✓ src/event-admission.test.ts (14 tests) 2891ms
+@graphgoblin/engine:test:coverage:    ✓ recovers uncertain acknowledgements at both claim and atomic run commit without duplicating a run 874ms
+@graphgoblin/engine:test:coverage:    ✓ reaches a healthy receipt behind five whose failure metadata can never be written 302ms
+@graphgoblin/engine:test:coverage:    ✓ comes back to older due receipts while full pages of newer ones keep arriving 641ms
+@graphgoblin/engine:test:coverage:  ✓ src/drain-regressions.test.ts (11 tests) 2562ms
+@graphgoblin/engine:test:coverage:    ✓ force retains ownership when its heartbeat probe termination is unconfirmed 575ms
+@graphgoblin/engine:test:coverage:    ✓ a due timer wakes during an open drain and holds it until the continuation parks again 390ms
+@graphgoblin/engine:test:coverage:  ✓ src/run-recovery.test.ts (8 tests) 1391ms
+@graphgoblin/engine:test:coverage:  ✓ src/replay.test.ts (7 tests) 1746ms
+@graphgoblin/engine:test:coverage:    ✓ replay-at-node (7)
+@graphgoblin/engine:test:coverage:      ✓ records the exact executable seed, keeps inherited counters and gates, and leaves the source byte-identical 333ms
+@graphgoblin/engine:test:coverage:      ✓ re-executes a subloop node with a new child instead of copying children 407ms
+@graphgoblin/engine:test:coverage:  ✓ src/structured-deadline.test.ts (14 tests) 3367ms
+@graphgoblin/engine:test:coverage:    ✓ releases stalled structured work at the visible run deadline and admits the queued run 1562ms
+@graphgoblin/engine:test:coverage:    ✓ times out stalled repair, frees capacity and discards late resolve 387ms
+@graphgoblin/engine:test:coverage:  ✓ src/prompt-provenance.test.ts (19 tests) 4055ms
+@graphgoblin/engine:test:coverage:    ✓ prompt provenance through RunManager and the fake harness (19)
+@graphgoblin/engine:test:coverage:      ✓ resends the exact authored task after proven refusal under fresh 312ms
+@graphgoblin/engine:test:coverage:      ✓ gives replay forks and subloop children their own visit and submission state 562ms
+@graphgoblin/engine:test:coverage:      ✓ keeps repeated visits independent even when the same node failed on an earlier visit 373ms
+@graphgoblin/engine:test:coverage:  ✓ src/hot-paths.test.ts (7 tests) 2707ms
+@graphgoblin/engine:test:coverage:    ✓ finalization reads bounded pages and yields, preserving the entire return-producing log 981ms
+@graphgoblin/engine:test:coverage:    ✓ a failed finalization page leaves delivery pending and recovery delivers exactly once 345ms
+@graphgoblin/engine:test:coverage:    ✓ rebuilds fresh visits across wakes, paused resume and restart at cap 2 500ms
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest           0.47 kB
+@graphgoblin/web:build: dist/index.html                     2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-i-0EsMdH.css     92.02 kB │ gzip:  17.60 kB
+@graphgoblin/web:build: dist/assets/index-CAHoZUtx.js   2,084.64 kB │ gzip: 649.35 kB │ map: 9,242.35 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 14.46s
+@graphgoblin/engine:test:coverage:  ✓ src/own-session.test.ts (26 tests) 12377ms
+@graphgoblin/engine:test:coverage:    ✓ node conversations through the public RunManager (3)
+@graphgoblin/engine:test:coverage:      ✓ resumes only the worker conversation after reviewer feedback 785ms
+@graphgoblin/engine:test:coverage:      ✓ reproduces resume-previous selecting the reviewer on worker revisit 342ms
+@graphgoblin/engine:test:coverage:      ✓ reproduces resume-named sharing a conversation with the reviewer and another run 699ms
+@graphgoblin/engine:test:coverage:    ✓ codex own-session isolation (10)
+@graphgoblin/engine:test:coverage:      ✓ keeps two parallel runs and both nodes separate 362ms
+@graphgoblin/engine:test:coverage:      ✓ does not inherit the private handle or reset count in a replay fork or child run 702ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary 1 and keeps loop context 826ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary 2 and keeps loop context 448ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary undefined and keeps loop context 1265ms
+@graphgoblin/engine:test:coverage:      ✓ classifies a missing own conversation without silently starting another 335ms
+@graphgoblin/engine:test:coverage:      ✓ retains the exact task on proven refusal at a reset boundary 364ms
+@graphgoblin/engine:test:coverage:    ✓ claude own-session isolation (10)
+@graphgoblin/engine:test:coverage:      ✓ does not inherit the private handle or reset count in a replay fork or child run 616ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary 1 and keeps loop context 756ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary 2 and keeps loop context 805ms
+@graphgoblin/engine:test:coverage:      ✓ honors only the authored reset boundary undefined and keeps loop context 1331ms
+@graphgoblin/engine:test:coverage:    ✓ uses the final attempt of the latest completed visit rather than a stale higher attempt 379ms
+@graphgoblin/engine:test:coverage:    ✓ keeps schema repairs within a visit and resets only after completed visits 390ms
+@graphgoblin/engine:test:coverage:  ✓ src/chat-admission.test.ts (6 tests) 676ms
+@graphgoblin/engine:test:coverage:    ✓ system starts reject audio paths through generic, draft and child entry points before execution 377ms
+@graphgoblin/infrastructure:test:coverage:  ❯ src/sqlite/chat.test.ts (25 tests | 1 failed) 12038ms
+@graphgoblin/infrastructure:test:coverage:    ❯ durable chat identities (13)
+@graphgoblin/infrastructure:test:coverage:      ✓ seeds once, joins classification through every loop read, protects save/publication/deletion and reports corruption 924ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not publish a system draft changed after its validated read 517ms
+@graphgoblin/infrastructure:test:coverage:      ✓ clones the current publication atomically, retries one claim, rejects competing/expired/revoked identities and keeps loops 179ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not create orphan devices or loops when seed is absent, unpublished, invalid, or token is already owned 211ms
+@graphgoblin/infrastructure:test:coverage:      ✓ atomically admits one run/event/turn/counter for concurrent retry and rejects body changes, stale context and busy turns 493ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses inconsistent canonical attachments and invalid pinned boundaries before mutation 592ms
+@graphgoblin/infrastructure:test:coverage:      ✓ permits canonical generic text and verifies native replay source input before retaining its authority 441ms
+@graphgoblin/infrastructure:test:coverage:      ✓ recovers exact complete native admission after commit acknowledgement loss, without replay or queued re-notification 435ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses acknowledgement recovery when complete committed native proof is missing 220ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back admission on a failing chat write and leaves neither native run nor turn 583ms
+@graphgoblin/infrastructure:test:coverage:      ✓ checks ownership and live revocation at commit, including auth-to-admission races 303ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains durable request tombstones after deletion and never re-executes the old key 299ms
+@graphgoblin/infrastructure:test:coverage:      × returns an acknowledged admission after closing/reopening the store and does not repeat seeds or pair claims 2120ms
+@graphgoblin/infrastructure:test:coverage:    ✓ audio metadata lifecycle (10)
+@graphgoblin/infrastructure:test:coverage:      ✓ reserves quota before bytes, permits three ready uploads, expires abandoned work and retries exact-ID cleanup until acknowledged 931ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports the same audio quota refusal when the gateway has eight in-flight uploads 563ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reserves worst-case bytes across retained consumed uploads and enforces audience and gateway byte quotas 452ms
+@graphgoblin/infrastructure:test:coverage:      ✓ redacts credential-bearing driver errors and throttles the durable device last-seen timestamp 189ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects invalid metadata, stale reservation and foreign/unknown access without exposing paths 414ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses stale, foreign or changed audio metadata at native commit without consuming it 251ms
+@graphgoblin/infrastructure:test:coverage:      ✓ readback of lost commit acknowledgement requires and preserves the consumed audio link 151ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains a Windows audio path encoded in a surviving initialThread until its final history is deleted 473ms
+@graphgoblin/infrastructure:test:coverage:      ✓ retains a Windows audio path encoded in a surviving threadSnapshot until its final history is deleted 591ms
+@graphgoblin/infrastructure:test:coverage:      ✓ claims bytes exactly once, validates immutable metadata, retains consumed files for native replays, then queues final deletion 250ms
+@graphgoblin/infrastructure:test:coverage:    ✓ durable audio upload identities (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ scopes identity, conflicts changed digests and preserves retired tombstones 203ms
+@graphgoblin/infrastructure:test:coverage:      ✓ marks interrupted uploads failed on restart without resuming them 249ms
+@graphgoblin/engine:test:coverage:  ❯ src/recovery.test.ts (69 tests | 1 failed) 21502ms
+@graphgoblin/engine:test:coverage:    ✓ refuses startup when recovery encounters a store I/O failure 116ms
+@graphgoblin/engine:test:coverage:    ✓ cursor boundaries, recovered twice (27)
+@graphgoblin/engine:test:coverage:      ✓ inference at append-return 419ms
+@graphgoblin/engine:test:coverage:      ✓ inference at before-cursor 218ms
+@graphgoblin/engine:test:coverage:      ✓ inference at after-cursor 220ms
+@graphgoblin/engine:test:coverage:      ✓ decision-yes at append-return 127ms
+@graphgoblin/engine:test:coverage:      ✓ decision-yes at before-cursor 117ms
+@graphgoblin/engine:test:coverage:      ✓ decision-yes at after-cursor 91ms
+@graphgoblin/engine:test:coverage:      ✓ decision-no at append-return 106ms
+@graphgoblin/engine:test:coverage:      ✓ decision-no at before-cursor 109ms
+@graphgoblin/engine:test:coverage:      ✓ decision-no at after-cursor 116ms
+@graphgoblin/engine:test:coverage:      ✓ mutate at append-return 108ms
+@graphgoblin/engine:test:coverage:      ✓ mutate at before-cursor 81ms
+@graphgoblin/engine:test:coverage:      ✓ mutate at after-cursor 92ms
+@graphgoblin/engine:test:coverage:      ✓ script at append-return 80ms
+@graphgoblin/engine:test:coverage:      ✓ script at before-cursor 109ms
+@graphgoblin/engine:test:coverage:      ✓ script at after-cursor 110ms
+@graphgoblin/engine:test:coverage:      ✓ wait at append-return 153ms
+@graphgoblin/engine:test:coverage:      ✓ wait at before-cursor 118ms
+@graphgoblin/engine:test:coverage:      ✓ wait at after-cursor 113ms
+@graphgoblin/engine:test:coverage:      ✓ heartbeat at append-return 68ms
+@graphgoblin/engine:test:coverage:      ✓ heartbeat at before-cursor 77ms
+@graphgoblin/engine:test:coverage:      ✓ heartbeat at after-cursor 89ms
+@graphgoblin/engine:test:coverage:      ✓ subloop at append-return 166ms
+@graphgoblin/engine:test:coverage:      ✓ subloop at before-cursor 178ms
+@graphgoblin/engine:test:coverage:      ✓ subloop at after-cursor 135ms
+@graphgoblin/engine:test:coverage:      ✓ exit at append-return 76ms
+@graphgoblin/engine:test:coverage:      ✓ exit at before-cursor 70ms
+@graphgoblin/engine:test:coverage:      ✓ exit at after-cursor 89ms
+@graphgoblin/engine:test:coverage:    ✓ wakes across crashes (review finding 4) (4)
+@graphgoblin/engine:test:coverage:      ✓ an accepted input survives two crashes before its node finishes 113ms
+@graphgoblin/engine:test:coverage:      ✓ a crash before the waiting-to-running write keeps the durable input 131ms
+@graphgoblin/engine:test:coverage:      ✓ a crash after the waiting-to-running write keeps the durable input 114ms
+@graphgoblin/engine:test:coverage:      ✓ a wake retries when another event lands between its read and its append 61ms
+@graphgoblin/engine:test:coverage:    ✓ terminal transitions across crashes (review finding 5) (5)
+@graphgoblin/engine:test:coverage:      ✓ an exit keeps the result it computed before its completion was recorded 84ms
+@graphgoblin/engine:test:coverage:      ✓ a recovered finish delivers returns only when none were recorded, and wakes the parent 162ms
+@graphgoblin/engine:test:coverage:      ✓ a failed event whose status write was lost is completed at recovery 40ms
+@graphgoblin/engine:test:coverage:      ✓ a cancelled event whose status write was lost is completed at recovery 54ms
+@graphgoblin/engine:test:coverage:      ✓ cancel after pause records one intent and one terminal event 40ms
+@graphgoblin/engine:test:coverage:    ✓ subloops (review finding 3) (6)
+@graphgoblin/engine:test:coverage:      ✓ pausing while the parent parks and resuming keeps the original child 155ms
+@graphgoblin/engine:test:coverage:      ✓ a child that finished while its parent was paused is delivered on resume 152ms
+@graphgoblin/engine:test:coverage:      ✓ a crash after the child started and before the park reuses the active child 190ms
+@graphgoblin/engine:test:coverage:      ✓ a crash after the child started and before the park reuses the finished child 186ms
+@graphgoblin/engine:test:coverage:      ✓ two sequential subloops produce exactly two children and two wakes 161ms
+@graphgoblin/engine:test:coverage:      ✓ a child finishing after the park commits but before reconciliation wakes once 276ms
+@graphgoblin/engine:test:coverage:    ❯ thread checkpoints (review finding 9) (5)
+@graphgoblin/engine:test:coverage:      ✓ resumes from a verified checkpoint and replays only the events after it 64ms
+@graphgoblin/engine:test:coverage:      ✓ ignores a checkpoint ahead of the log and replays from the initial thread 74ms
+@graphgoblin/engine:test:coverage:      ✓ ignores a checkpoint without a snapshot and replays from the initial thread 132ms
+@graphgoblin/engine:test:coverage:      ✓ a duplicate completion straddling the checkpoint matches a full replay (review probe) 86ms
+@graphgoblin/engine:test:coverage:      × a long log resumes from its checkpoint (10,000 completions) 11891ms
+@graphgoblin/engine:test:coverage:    ✓ wake and timer edges (9)
+@graphgoblin/engine:test:coverage:      ✓ a stale timer cannot wake the current park; its scheduled timer wakes once 122ms
+@graphgoblin/engine:test:coverage:      ✓ a wake fails cleanly when the log shows no parked wait, or keeps changing 68ms
+@graphgoblin/engine:test:coverage:      ✓ a wake that loses the status race to a pause stays in the log for resume 218ms
+@graphgoblin/engine:test:coverage:      ✓ a timer wake that fails for another reason is reported, not swallowed 95ms
+@graphgoblin/engine:test:coverage:      ✓ recovery re-arms the recorded timeout with the same observed identity 92ms
+@graphgoblin/engine:test:coverage:      ✓ an unidentified timeout cannot wake a later wait 201ms
+@graphgoblin/engine:test:coverage:      ✓ a recovered durable wake whose status write lost to a pause waits for resume 77ms
+@graphgoblin/engine:test:coverage:      ✓ deletes a loop atomically with run creation (review probe) 204ms
+@graphgoblin/engine:test:coverage:      ✓ knows which loops active runs can still reach 100ms
+@graphgoblin/engine:test:coverage:    ✓ pins and timers (review probes) (9)
+@graphgoblin/engine:test:coverage:      ✓ an expired timer re-arms at recovery and a timer of the wrong kind is ignored 58ms
+@graphgoblin/engine:test:coverage:      ✓ an expired heartbeat re-arms at recovery and a timer of the wrong kind is ignored 244ms
+@graphgoblin/engine:test:coverage:      ✓ a timer fire racing a cancel leaves one cancelled outcome 58ms
+@graphgoblin/engine:test:coverage:      ✓ two managers over the same stores both execute a queued run (single-manager restriction) 188ms
+@graphgoblin/engine:test:coverage:      ✓ a cyclic pin walk is finite and the run-time depth limit still applies 358ms
+@graphgoblin/engine:test:coverage:      ✓ a pinned child version unpublished before the child starts fails without falling back to latest 138ms
+@graphgoblin/engine:test:coverage:      ✓ a pinned child version deleted before the child starts fails without falling back to latest 218ms
+@graphgoblin/engine:test:coverage:      ✓ a replay fork copies pins and fails at the subloop when the pinned version is gone 394ms
+@graphgoblin/engine:test:coverage:      ✓ a log without pins resolves latest when the child starts 450ms
+@graphgoblin/engine:test:coverage:    ✓ deletion against replay and root resolution (fourth round) (3)
+@graphgoblin/engine:test:coverage:      ✓ a replay fork requested during a deletion registers only after it 273ms
+@graphgoblin/engine:test:coverage:      ✓ a replay fork registered first makes the deletion refuse 150ms
+@graphgoblin/engine:test:coverage:      ✓ a run whose own version is deleted between resolution and registration is refused 1ms
+@graphgoblin/engine:test:coverage:  ✓ src/child-creation.test.ts (7 tests) 3111ms
+@graphgoblin/engine:test:coverage:    ✓ child creation and finish across a process death (#320) (7)
+@graphgoblin/engine:test:coverage:      ✓ the visit records its child once, linked in the same commit as the child 419ms
+@graphgoblin/engine:test:coverage:      ✓ a death before the atomic child finish and node completion records it once 527ms
+@graphgoblin/engine:test:coverage:      ✓ a death before the atomic child finish and parent failure records it once 528ms
+@graphgoblin/engine:test:coverage:      ✓ a new outcome of the same child after a resume is recorded again 544ms
+@graphgoblin/engine:test:coverage:      ✓ records a child independently retried while its parent was interrupted 551ms
+@graphgoblin/engine:test:coverage:  ✓ src/prompt-recovery.test.ts (11 tests) 3979ms
+@graphgoblin/engine:test:coverage:    ✓ D-022 inherited-session recovery (11)
+@graphgoblin/engine:test:coverage:      ✓ blocks explicit resume of unaccepted authored work under resume-previous 874ms
+@graphgoblin/engine:test:coverage:      ✓ blocks explicit resume of unaccepted authored work under resume-named 359ms
+@graphgoblin/engine:test:coverage:      ✓ does not authorize inherited resume-previous continuation when persisting acceptance fails 354ms
+@graphgoblin/engine:test:coverage:      ✓ continues an uncertain unaccepted repair on the visit-owned session 1011ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/script.test.ts (11 tests) 1174ms
+@graphgoblin/engine:test:coverage:    ✓ authored handler mutations (9)
+@graphgoblin/engine:test:coverage:      ✓ rejects a protected mutate set target without retaining earlier changes 311ms
+@graphgoblin/engine:test:coverage:  ✓ src/unlimited.test.ts (21 tests) 8788ms
+@graphgoblin/engine:test:coverage:    ✓ execution guardrails (#243) (21)
+@graphgoblin/engine:test:coverage:      ✓ allows unlimited marked passes beyond ten without a synthetic exhaustion 2576ms
+@graphgoblin/engine:test:coverage:      ✓ keeps the configured deadline while draining after stop 1067ms
+@graphgoblin/engine:test:coverage:      ✓ still stops an unconfigured cycle at the visible ten-visit default 1234ms
+@graphgoblin/engine:test:coverage:      ✓ runs beyond the former visit cap with fake turns and cancels 1803ms
+@graphgoblin/engine:test:coverage:  ✓ src/script-recovery.test.ts (9 tests) 788ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/isolation.test.ts (30 tests) 23156ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex plugin inheritance with standalone extension isolation (19)
+@graphgoblin/adapter-codex:test:coverage:      ✓ inherits plugin configuration while switching off standalone MCP servers and other extensions 2335ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ applies a node override after the defaults, before the thread options 3039ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ lets a node explicitly disable inherited plugins 1818ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ switches off sub-agents and goals unless the node turns one back on 4706ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ does not start the turn when a listed server is named __proto__ 1010ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ does not start the turn when a listed server is named constructor 1117ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ does not start the turn when a listed server is named prototype 853ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ switches off a listed server named toString like any other 2372ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ isolates standalone servers on resumed conversations while inheriting plugins 1998ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ inherits plugins on structured calls through the common adapter too 1677ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ does not start the turn when the MCP servers cannot be listed 572ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ records a refused override key as a pinned, non-resumable run failure 647ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/admission.test.ts (20 tests) 12074ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SQLite atomic admission (20)
+@graphgoblin/infrastructure:test:coverage:      ✓ finds the exact admitted Replay after reopening the file and rejects partial intent metadata 2946ms
+@graphgoblin/infrastructure:test:coverage:      ✓ migration 0024 preserves pre-existing rows, extra columns, indexes and triggers 3092ms
+@graphgoblin/infrastructure:test:coverage:      ✓ recovers the frozen run ID after closing the database immediately after claim 1390ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back run and queued event together, keeps pending pins, then commits and notifies once 448ms
+@graphgoblin/infrastructure:test:coverage:      ✓ consumes authored keys from prior pending receipts without retaining a new intent 663ms
+@graphgoblin/infrastructure:test:coverage:      ✓ consumes authored keys from prior admitted receipts without retaining a new intent 393ms
+@graphgoblin/infrastructure:test:coverage:      ✓ keeps failed intent keys consumed when the inbound link is unavailable 315ms
+@graphgoblin/engine:test:coverage:  ✓ src/recovery-projection.test.ts (7 tests) 863ms
+@graphgoblin/engine:test:coverage:  ✓ src/parked-resume.test.ts (5 tests) 494ms
+@graphgoblin/engine:test:coverage:  ✓ src/primitive-evaluator.test.ts (27 tests) 231ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/ollama/services.test.ts (10 tests) 10899ms
+@graphgoblin/infrastructure:test:coverage:    ✓ Ollama discovery services (10)
+@graphgoblin/infrastructure:test:coverage:      ✓ coalesces concurrent refreshes before metadata resolves and retains snapshot on a later failure 1628ms
+@graphgoblin/infrastructure:test:coverage:      ✓ schedules immediate startup discovery and the five-minute cadence without generating inference 582ms
+@graphgoblin/infrastructure:test:coverage:      ✓ saves canonical connection and reports failed discovery as a saved error, never a false failed save 1490ms
+@graphgoblin/infrastructure:test:coverage:      ✓ prevents late old-origin responses from overwriting a newly configured revision 1272ms
+@graphgoblin/infrastructure:test:coverage:      ✓ waits for startup storage reads and prevents dispatch when stopped before the first read finishes 1084ms
+@graphgoblin/infrastructure:test:coverage:      ✓ aborts an active scan on stop and does not overwrite state after cancellation 1019ms
+@graphgoblin/infrastructure:test:coverage:      ✓ off cancels open inference, preflight and discovery, then prohibits all new HTTP 393ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects a captured enabled snapshot if disable or address change wins before dispatch 2136ms
+@graphgoblin/infrastructure:test:coverage:      ✓ keeps an already dispatched turn bound to its old address when the enabled address changes 620ms
+@graphgoblin/infrastructure:test:coverage:      ✓ logs storage startup failures safely and returns the current status for a rejected refresh CAS 650ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/inference-boundaries.test.ts (22 tests) 4874ms
+@graphgoblin/engine:test:coverage:    ✓ preserves later codex HARNESS_SESSION_MISSING at iterator 357ms
+@graphgoblin/engine:test:coverage:    ✓ preserves later claude GENERIC_WRAPPER at wrapper 549ms
+@graphgoblin/engine:test:coverage:    ✓ retains codex repair intent across append refusal afterCommit=false 1264ms
+@graphgoblin/engine:test:coverage:  ✓ src/missing-session.test.ts (17 tests) 6846ms
+@graphgoblin/engine:test:coverage:    ✓ codex removed sessions through RunManager (5)
+@graphgoblin/engine:test:coverage:      ✓ starts fresh at the configured boundary: {"policy":"fresh"} 474ms
+@graphgoblin/engine:test:coverage:      ✓ names the missing handle and origin: {"policy":"resume-previous"} 534ms
+@graphgoblin/engine:test:coverage:      ✓ names the missing handle and origin: {"policy":"resume-named","key":"shared"} 382ms
+@graphgoblin/engine:test:coverage:      ✓ names the missing handle and origin: {"policy":"resume-own"} 355ms
+@graphgoblin/engine:test:coverage:    ✓ claude removed sessions through RunManager (5)
+@graphgoblin/engine:test:coverage:      ✓ starts fresh at the configured boundary: {"policy":"resume-own","resetAfterVisits":1} 341ms
+@graphgoblin/engine:test:coverage:      ✓ names the missing handle and origin: {"policy":"resume-previous"} 324ms
+@graphgoblin/engine:test:coverage:    ✓ codex: a fresh visit's lost continuation requires a new explicit choice 404ms
+@graphgoblin/engine:test:coverage:    ✓ codex: an explicitly recovered fresh turn can be cancelled without another start 720ms
+@graphgoblin/engine:test:coverage:    ✓ claude: a fresh visit's lost continuation requires a new explicit choice 968ms
+@graphgoblin/engine:test:coverage:    ✓ claude: an explicitly recovered fresh turn can be cancelled without another start 513ms
+@graphgoblin/engine:test:coverage:    ✓ codex: fresh recovery after a missing repair session restarts the saved authored task 415ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/definition-pins.test.ts (13 tests) 15708ms
+@graphgoblin/infrastructure:test:coverage:    ✓ draft snapshots (11)
+@graphgoblin/infrastructure:test:coverage:      ✓ materializes omitted deadline fields in every stored copy, preserving authored null 4226ms
+@graphgoblin/infrastructure:test:coverage:      ✓ materializes omitted deadline fields in every stored copy, preserving authored 250 3431ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves malformed and invalid values untouched during the additive-default migration 2839ms
+@graphgoblin/infrastructure:test:coverage:      ✓ migrates authored deadline null once and preserves damaged JSON 446ms
+@graphgoblin/infrastructure:test:coverage:      ✓ are stored with their run, read by id, and kept out of the version history 611ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuse any change, and deletion while a run pins them 333ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports a missing pin as unreadable history for that run only 680ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration 0014 pins existing runs (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ freezes draft-run definitions, pins every run, event and saved intent 1271ms
+@graphgoblin/infrastructure:test:coverage:      ✓ pins healthy history and leaves damaged JSON untouched for unreadable-history reports 984ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/adversarial.test.ts (20 tests) 22485ms
+@graphgoblin/infrastructure:test:coverage:    ✓ adversarial infrastructure invariants (forks pool) (11)
+@graphgoblin/infrastructure:test:coverage:      ✓ 3: concurrent SQLite batches have no sequence gaps 1739ms
+@graphgoblin/infrastructure:test:coverage:      ✓ 15: skip catches missed daily slots across spring DST 660ms
+@graphgoblin/infrastructure:test:coverage:      ✓ 15: run-once catches missed daily slots across spring DST 321ms
+@graphgoblin/infrastructure:test:coverage:      ✓ ADV-010: run-once chooses the latest missed slot even beyond the run-each cap 700ms
+@graphgoblin/infrastructure:test:coverage:      ✓ ADV-011: a duration timer lost before a crash is re-armed from the waiting run 529ms
+@graphgoblin/infrastructure:test:coverage:      ✓ ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run 1151ms
+@graphgoblin/infrastructure:test:coverage:      ✓ ADV-011: a fire interrupted mid-delivery is delivered again after a restart 714ms
+@graphgoblin/infrastructure:test:coverage:      ✓ 18: concurrent set of one secret preserves one authenticated ciphertext 973ms
+@graphgoblin/infrastructure:test:coverage:      ✓ 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 4238ms
+@graphgoblin/infrastructure:test:coverage:    ✓ timer delivery (review of WP-G) (4)
+@graphgoblin/infrastructure:test:coverage:      ✓ a throwing timer listener leaves the timer for another delivery 562ms
+@graphgoblin/infrastructure:test:coverage:      ✓ a failed manager wake does not consume the timer 359ms
+@graphgoblin/infrastructure:test:coverage:      ✓ a duration with a timeout re-arms both lost deadlines (SQLite) 560ms
+@graphgoblin/infrastructure:test:coverage:      ✓ an obsolete timeout in the same poll batch does not wake a later input wait 1272ms
+@graphgoblin/infrastructure:test:coverage:    ✓ finalization on SQLite (review of WP-G, fourth round) (5)
+@graphgoblin/infrastructure:test:coverage:      ✓ a resumed failed run is finalized again after a crash on its next terminal status 2494ms
+@graphgoblin/infrastructure:test:coverage:      ✓ an older finalizer in flight cannot hide the next success 993ms
+@graphgoblin/infrastructure:test:coverage:      ✓ an older finalizer in flight cannot hide the durable resume 2531ms
+@graphgoblin/infrastructure:test:coverage:      ✓ of two concurrent resumes of one failure, only one acts (same failure) 763ms
+@graphgoblin/infrastructure:test:coverage:      ✓ of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 1590ms
+@graphgoblin/engine:test:coverage:  ✓ src/thread-read.test.ts (7 tests) 832ms
+@graphgoblin/engine:test:coverage:    ✓ reads only the checkpoint event for a current terminal snapshot 353ms
+@graphgoblin/engine:test:coverage:  ✓ src/drain.test.ts (6 tests) 876ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/catalog.test.ts (10 tests) 30572ms
+@graphgoblin/infrastructure:test:coverage:    ✓ model catalog source migration and repository (10)
+@graphgoblin/infrastructure:test:coverage:      ✓ seeds GPT-6.1 Terra enabled with medium default immediately after Sol 6.1 755ms
+@graphgoblin/infrastructure:test:coverage:      ✓ enables previously blocked Fable once, then preserves owner switches and every other row 11382ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reads current-format base catalog before discovery migrations without joining new tables 5186ms
+@graphgoblin/infrastructure:test:coverage:      ✓ adds Sonnet 5.5 and Haiku 5.5 enabled to an existing store and keeps every owner switch 1044ms
+@graphgoblin/infrastructure:test:coverage:      ✓ adds source on a fresh database and defaults direct legacy inserts to harness 696ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves seeded, edited, and hand-added 1.0.0 rows, then refreshes only seed metadata 1397ms
+@graphgoblin/infrastructure:test:coverage:      ✓ runs the previous release without SQL rollback and retains provenance on re-upgrade 8395ms
+@graphgoblin/infrastructure:test:coverage:      ✓ never refreshes a LiteLLM row that shares a seed key and toggles either source 478ms
+@graphgoblin/infrastructure:test:coverage:      ✓ can roll back the column and migration record without losing model data 944ms
+@graphgoblin/engine:test:coverage:  ✓ src/drain-admission.test.ts (4 tests) 363ms
+@graphgoblin/engine:test:coverage:  ✓ src/stored-definition.test.ts (5 tests) 1664ms
+@graphgoblin/engine:test:coverage:    ✓ stored definitions with an Event destination (#242) (5)
+@graphgoblin/engine:test:coverage:      ✓ finalizes an already completed old Event return without rewriting history or repeating it 721ms
+@graphgoblin/engine:test:coverage:      ✓ fails a run already pinned to such a definition before it executes again, and its parent with it 474ms
+@graphgoblin/engine:test:coverage: {"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+@graphgoblin/engine:test:coverage: {"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/refusal.test.ts (14 tests) 30680ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ a failure the Codex event stream reports before the CLI exits non-zero (#243) (14)
+@graphgoblin/adapter-codex:test:coverage:      ✓ records the provider refusal of the request, not the exit error that follows it 2507ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps an unclassified stream failure instead of the generic exit error 3030ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ records the SDK parse failure that follows an earlier stream diagnostic 2679ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the invalid-value provider refusal as a refusal with its own text 2343ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the missing-thread provider refusal as a refusal with its own text 1498ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run with the provider refusal as its non-resumable cause and offers no Resume 2151ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the invalid-value refusal when stderr is repeat and the stream reports report 2174ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the invalid-value refusal when stderr is banner-repeat and the stream reports report 2188ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the invalid-value refusal when stderr is repeat and the stream reports none 1301ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the missing-thread refusal when stderr is repeat and the stream reports report 1228ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the missing-thread refusal when stderr is banner-repeat and the stream reports report 1791ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the missing-thread refusal when stderr is repeat and the stream reports none 3045ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run on the invalid-value refusal repeated on stderr as a refusal, never a missing session 2159ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run on the missing-thread refusal repeated on stderr as a refusal, never a missing session 2532ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/inference-context.test.ts (10 tests) 413ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/script-dispatch.test.ts (7 tests) 30ms
+@graphgoblin/engine:test:coverage:  ✓ src/repair-deadline.test.ts (3 tests) 1479ms
+@graphgoblin/engine:test:coverage:    ✓ retains the structured repair provider, resolved model and effort on an inference transform timeout 698ms
+@graphgoblin/engine:test:coverage:    ✓ same-session schema repair follows node timeout (configured: false), independently of the structured-port deadline 459ms
+@graphgoblin/engine:test:coverage:    ✓ same-session schema repair follows node timeout (configured: true), independently of the structured-port deadline 314ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/ollama/discovery.test.ts (11 tests) 192ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/primitives.test.ts (16 tests) 2342ms
+@graphgoblin/engine:test:coverage:    ✓ classifier decision mathematics (16)
+@graphgoblin/engine:test:coverage:      ✓ uses unrounded Noul probability 0.69 at threshold 0.7 335ms
+@graphgoblin/engine:test:coverage:      ✓ accepts confidence equality and rejects chosen-side confidence without emitting a port or patch 326ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/inference-refusal.test.ts (20 tests) 2888ms
+@graphgoblin/engine:test:coverage:    ✓ does not downgrade synchronous HARNESS_TURN_FAILED delivery uncertainty to safe non-submission 684ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/heartbeat-visit.test.ts (1 test) 214ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/http/classifier.test.ts (43 tests) 1203ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/classifiers.test.ts (9 tests) 1311ms
+@graphgoblin/engine:test:coverage:    ✓ classifier selection through the executor (9)
+@graphgoblin/engine:test:coverage:      ✓ routes registered classifiers distinctly with current catalog provenance and owner 724ms
+@graphgoblin/engine:test:coverage:  ✓ src/observed-waits.test.ts (4 tests) 765ms
+@graphgoblin/engine:test:coverage:    ✓ logical wait regressions (3)
+@graphgoblin/engine:test:coverage:      ✓ rejects a duplicate answer from the previous visit at the same node 334ms
+@graphgoblin/engine:test:coverage:  ✓ src/start-admission.test.ts (4 tests) 525ms
+@graphgoblin/engine:test:coverage:    ✓ optional run-start admission policy (4)
+@graphgoblin/engine:test:coverage:      ✓ commits the checked pins without holding the pin lock during policy IO 454ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/chat-text.test.ts (8 tests) 3934ms
+@graphgoblin/engine:test:coverage:    ✓ conversational seed text envelope (8)
+@graphgoblin/engine:test:coverage:      ✓ records history omission with the exact admitted prompt and leaves the initial thread intact 1796ms
+@graphgoblin/engine:test:coverage:      ✓ applies the editable inference deadline while context admission is pending 1136ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/inference-failure.test.ts (54 tests) 20ms
+@graphgoblin/engine:test:coverage:  ✓ src/checkpoint-state.test.ts (2 tests) 106ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/stderr-evidence.test.ts (17 tests) 34760ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ stderr evidence beside the stream failure (PR #426 audit scan 3) (17)
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds a different refusal alone (control) 2465ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a different one 3015ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds a missing session alone (control) 2136ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a missing session as JSON 2386ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a missing session as text 1443ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds an authentication failure after quota (control) 1569ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated quota, then an authentication failure 2297ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds an exhausted quota after a rate limit with the same message 1823ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds a rate limit after an exhausted quota with the same message 1445ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SF 1126ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SCF 1187ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Thread not found in referenced input. when stderr decorates it and the order is SFC 1692ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SF 2215ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SCF 1823ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the refusal Error: invalid value for reasoning.effo… when stderr decorates it and the order is SFC 2180ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run with the refusal, not a missing session, when the order is SCF 2855ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run with the refusal, not a missing session, when the order is SFC 3067ms
+@graphgoblin/engine:test:coverage:  ✓ src/turn-resume.test.ts (2 tests) 482ms
+@graphgoblin/engine:test:coverage:    ✓ uses the codex generic failure rule after an accepted fresh turn loses its stream 328ms
+@graphgoblin/engine:test:coverage:  ✓ src/artifact-failure.test.ts (1 test) 325ms
+@graphgoblin/engine:test:coverage:    ✓ inference artifact failures through the store port (1)
+@graphgoblin/engine:test:coverage:      ✓ records resumable ARTIFACT_WRITE_FAILED without a transcript patch and continues the same session on explicit resume 301ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/probe-output.test.ts (3 tests) 369ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/triggers.test.ts (28 tests) 13061ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteScheduleStore (1)
+@graphgoblin/infrastructure:test:coverage:      ✓ replaces a loop version, keeping existing rows of the same version 1630ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteInboundEvents (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ re-reads inclusive anchored pages without decoding a damaged lookahead row 1153ms
+@graphgoblin/infrastructure:test:coverage:      ✓ inserts, lists newest first, pages, and reads stored run links 813ms
+@graphgoblin/infrastructure:test:coverage:    ✓ 0013 trigger configuration (21)
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts exactly the none recipe fields (null, null, null, null) 719ms
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts exactly the hmac-sha256 recipe fields (timestamp-body, x-signature, key, 1) 391ms
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts exactly the hmac-sha256 recipe fields (timestamp-body, x-signature, key, 86400) 959ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "none" / "body" / null / null / null 466ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "none" / null / "x-signature" / null / null 467ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "none" / null / null / "key" / null 1000ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "hmac-sha256" / null / "x-signature" / "key" / null 935ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "hmac-sha256" / "body" / null / "key" / null 637ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / null / 300 308ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / "key" / 1.5 385ms
+@graphgoblin/infrastructure:test:coverage:      ✓ maps both old signing rows without changing identities, tokens or timestamps and removes content uniqueness 436ms
+@graphgoblin/infrastructure:test:coverage:    ✓ refuses inconsistent authentication rows instead of filling or discarding stored signing fields 376ms
+@graphgoblin/engine:test:coverage:  ✓ src/handlers/exit.test.ts (5 tests) 430ms
+@graphgoblin/engine:test:coverage:  ✓ src/event-validation.test.ts (6 tests) 229ms
+@graphgoblin/engine:test:coverage:  ✓ src/edge-routes.test.ts (1 test) 480ms
+@graphgoblin/engine:test:coverage:    ✓ manual edge routes (#44) (1)
+@graphgoblin/engine:test:coverage:      ✓ are layout only: a routed loop runs exactly as the same loop without routes 477ms
+@graphgoblin/engine:test:coverage:  ✓ src/decider-errors.test.ts (20 tests) 46ms
+@graphgoblin/engine:test:coverage:  ✓ src/crash-bookkeeping.test.ts (1 test) 113ms
+@graphgoblin/engine:test:coverage:  ✓ src/structured-cancel.test.ts (1 test) 241ms
+@graphgoblin/engine:test:coverage:  ✓ src/claude-effort.test.ts (2 tests) 533ms
+@graphgoblin/engine:test:coverage:    ✓ resolves a Claude request against the catalog without probing the harness: supported 445ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/effort.test.ts (17 tests) 35205ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort none through the pinned SDK unchanged 2980ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort low through the pinned SDK unchanged 2570ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort medium through the pinned SDK unchanged 2337ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort high through the pinned SDK unchanged 1328ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort xhigh through the pinned SDK unchanged 1967ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort max through the pinned SDK unchanged 1456ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort none to a GPT-6 model under its canonical name 1978ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort low to a GPT-6 model under its canonical name 1739ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort medium to a GPT-6 model under its canonical name 1052ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort high to a GPT-6 model under its canonical name 1556ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort xhigh to a GPT-6 model under its canonical name 2645ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends the requested effort max to a GPT-6 model under its canonical name 1899ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ the provider name for effort none (5)
+@graphgoblin/adapter-codex:test:coverage:      ✓ sends none to gpt-6-luna as none 2895ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ sends none to gpt-6.1-sol as none 1837ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ sends none to gpt-6.1-terra as none 2405ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ sends none to gpt-5.6-terra as none 2581ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ sends none unchanged to a hand-added model of no known family 1975ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/delivery-runs.test.ts (32 tests) 16064ms
+@graphgoblin/infrastructure:test:coverage:    ✓ freezes the historical import budget in migration 0015 1225ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook"}}) 388ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"}}) 326ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"}) 332ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":null}) 337ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"}) 318ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"}) 324ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"}) 434ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 658ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 541ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}) 328ms
+@graphgoblin/infrastructure:test:coverage:    ✓ does not append a delivery journal for an absent run 427ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run 656ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run 436ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run 569ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run 685ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run 624ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run 639ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run 635ms
+@graphgoblin/infrastructure:test:coverage:    ✓ diagnoses damaged delivery journal data ({broken) 736ms
+@graphgoblin/infrastructure:test:coverage:    ✓ diagnoses damaged delivery journal data (null) 722ms
+@graphgoblin/infrastructure:test:coverage:    ✓ one-off migration converts historical webhook outcomes without retrying or changing other sinks 499ms
+@graphgoblin/infrastructure:test:coverage:    ✓ one-off migration queues only the current unfinished return, including invocation defaults (succeeded) 821ms
+@graphgoblin/infrastructure:test:coverage:    ✓ one-off migration queues only the current unfinished return, including invocation defaults (running) 516ms
+@graphgoblin/infrastructure:test:coverage:    ✓ one-off migration queues only the current unfinished return, including invocation defaults (resumed) 802ms
+@graphgoblin/infrastructure:test:coverage:    ✓ one-off migration queues only the current unfinished return, including invocation defaults (receipted) 657ms
+@graphgoblin/engine:test:coverage:  ✓ src/completion-deadline.test.ts (1 test) 13ms
+@graphgoblin/engine:test:coverage:  ✓ src/script-stop.test.ts (1 test) 196ms
+@graphgoblin/engine:test:coverage:  ✓ src/admission-contract.test.ts (20 tests) 321ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/template-retirement.test.ts (3 tests) 1435ms
+@graphgoblin/infrastructure:test:coverage:    ✓ applies 0012 during atomic fresh initialization 777ms
+@graphgoblin/infrastructure:test:coverage:    ✓ drops a populated inline-CHECK column on deployed libsql, preserving ordinary rows and structure 394ms
+@graphgoblin/plugin-codex:test:coverage:  ↓ src/live.test.ts (1 test | 1 skipped)
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage:  Test Files  1 passed | 1 skipped (2)
+@graphgoblin/plugin-codex:test:coverage:       Tests  9 passed | 1 skipped (10)
+@graphgoblin/plugin-codex:test:coverage:    Start at  19:26:47
+@graphgoblin/plugin-codex:test:coverage:    Duration  71.97s (transform 59%, import 25%, tests 15%)
+@graphgoblin/api-client:test:coverage:  ❯ src/classifiers.test.ts (2 tests | 2 skipped) 11076ms
+@graphgoblin/api-client:test:coverage:    ❯ classifier client against the real API (2)
+@graphgoblin/api-client:test:coverage:      ↓ agrees with generated schemas and executes all wrappers
+@graphgoblin/api-client:test:coverage:      ↓ encodes ids, sends enabled-only PATCH, and propagates problem details
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage:   Transform  transforming modules took 53.61s · 59% of tracked time, re-done on every run
+@graphgoblin/plugin-codex:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/plugin-codex:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage:  % Coverage report from v8
+@graphgoblin/plugin-codex:test:coverage: 
+@graphgoblin/plugin-codex:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/plugin-codex:test:coverage: Statements   : 95.52% ( 64/67 )
+@graphgoblin/plugin-codex:test:coverage: Branches     : 95.45% ( 21/22 )
+@graphgoblin/plugin-codex:test:coverage: Functions    : 100% ( 11/11 )
+@graphgoblin/plugin-codex:test:coverage: Lines        : 95.23% ( 60/63 )
+@graphgoblin/plugin-codex:test:coverage: ================================================================================
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/history-summaries.test.ts (16 tests) 10968ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SQLite history queries (16)
+@graphgoblin/infrastructure:test:coverage:      ✓ applies the history index to an existing current-format store and reruns idempotently 1357ms
+@graphgoblin/infrastructure:test:coverage:      ✓ summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls 2327ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest pinned without substituting an older run 567ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest pinned without substituting an older run 332ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest waiting without substituting an older run 720ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest result without substituting an older run 483ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest iteration without substituting an older run 378ms
+@graphgoblin/infrastructure:test:coverage:      ✓ isolates damaged latest thread_snapshot without substituting an older run 402ms
+@graphgoblin/infrastructure:test:coverage:      ✓ pages inbound timestamp ties, applies every filter before the boundary, and detects exhaustion 1610ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses unreadable latest events despite a durable finish and a valid stale running record 1145ms
+@graphgoblin/infrastructure:test:coverage:      ✓ propagates event storage failures without caching them as unreadable history 621ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/process/scripts.test.ts (46 tests) 65553ms
+@graphgoblin/infrastructure:test:coverage:    ✓ ProcessScripts (39)
+@graphgoblin/infrastructure:test:coverage:      ✓ returns raw captured byte counts and truncation for default capture, including incomplete EOF 1111ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 0 with default and explicit bounds 1167ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds 1711ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds 1890ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds 2999ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds 1843ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds 2061ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds 1192ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds 717ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds 1442ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds 2417ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds 3108ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds 2024ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 0 on both streams 2358ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 1 on both streams 1926ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 2 on both streams 1301ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 3 on both streams 2211ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 4 on both streams 2153ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 5 on both streams 1517ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 6 on both streams 2045ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 7 on both streams 1766ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 8 on both streams 2259ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 9 on both streams 2924ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 10 on both streams 1790ms
+@graphgoblin/infrastructure:test:coverage:      ✓ counts raw bytes and drops only a cap-split suffix at cap 11 on both streams 2269ms
+@graphgoblin/infrastructure:test:coverage:      ✓ replaces an incomplete trailing sequence at clean EOF on both streams 1989ms
+@graphgoblin/infrastructure:test:coverage:      ✓ kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 2733ms
+@graphgoblin/infrastructure:test:coverage:      ✓ captures stdout, stderr, exit code, env, args, and stdin 1414ms
+@graphgoblin/infrastructure:test:coverage:      ✓ closes stdin when none is provided 607ms
+@graphgoblin/infrastructure:test:coverage:      ✓ kills the process tree on timeout 1387ms
+@graphgoblin/infrastructure:test:coverage:      ✓ kills the process when the signal aborts, including when already aborted 1451ms
+@graphgoblin/infrastructure:test:coverage:      ✓ releases a cancelled script whose root already exited once the last holder of its output closes 1764ms
+@graphgoblin/infrastructure:test:coverage:      ✓ proves the native .cmd EINVAL refusal never executes its marker 304ms
+@graphgoblin/infrastructure:test:coverage:      ✓ caps captured output 900ms
+@graphgoblin/infrastructure:test:coverage:      ✓ bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture 1228ms
+@graphgoblin/infrastructure:test:coverage:      ✓ reports exact-cap output as complete and does not emit a cap-split UTF8 suffix 2145ms
+@graphgoblin/infrastructure:test:coverage:    ✓ killTree (7)
+@graphgoblin/infrastructure:test:coverage:      ✓ reports a real Windows root that exited before the kill as released 1007ms
+@graphgoblin/api-client:test:coverage:  ❯ src/templates.test.ts (2 tests | 2 failed) 12553ms
+@graphgoblin/api-client:test:coverage:    × creates an ordinary editable draft with the generated client without automation setup 5522ms
+@graphgoblin/api-client:test:coverage:    × reads manifest-only catalogue entries through the generated API 7028ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/cli.test.ts (28 tests) 56195ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ runCli (3)
+@graphgoblin/adapter-codex:test:coverage:      ✓ captures stdout and stderr together, stdout alone, and the exit code 495ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex no-turn executable boundaries (12)
+@graphgoblin/adapter-codex:test:coverage:      ✓ ready reports ready 1577ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ old reports cli-incompatible 764ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-model reports cli-incompatible 1217ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-effort reports cli-incompatible 1231ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-resume-json reports cli-incompatible 4540ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ prerelease reports ready 4118ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth reports auth 3499ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ quota reports quota 4011ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ transport reports transport 3002ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ unknown reports unknown 4782ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ hang reports unknown 1994ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ probes the actual installed SDK CLI without a model turn 7089ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ audited Codex auth evidence (5)
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-network preserves auth evidence through the executable boundary 3589ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ quota-network preserves quota evidence through the executable boundary 3242ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ stdout-quota-warning preserves quota evidence through the executable boundary 3407ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-empty preserves unknown evidence through the executable boundary 3866ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-unrecognised preserves unknown evidence through the executable boundary 3212ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/scheduler/cron-scheduler.test.ts (21 tests) 13745ms
+@graphgoblin/infrastructure:test:coverage:    ✓ CronScheduler.nextFire (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ computes slots in the schedule timezone, across daylight saving time 815ms
+@graphgoblin/infrastructure:test:coverage:      ✓ returns undefined when there is no future slot and validates input 404ms
+@graphgoblin/infrastructure:test:coverage:    ✓ CronScheduler.poll (5)
+@graphgoblin/infrastructure:test:coverage:      ✓ fires due schedules once, advances them, and ignores disabled ones 541ms
+@graphgoblin/infrastructure:test:coverage:      ✓ skips overlapping polls 928ms
+@graphgoblin/infrastructure:test:coverage:      ✓ polls on an interval between start and stop 503ms
+@graphgoblin/infrastructure:test:coverage:    ✓ CronScheduler.recover (missed-fire policies) (11)
+@graphgoblin/infrastructure:test:coverage:      ✓ skip moves to the next future slot without firing (cap undefined) 724ms
+@graphgoblin/infrastructure:test:coverage:      ✓ skip moves to the next future slot without firing (cap 2) 321ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-once fires the latest missed slot (cap undefined) 642ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-once fires the latest missed slot (cap 2) 769ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-each fires every slot up to the cap without a warning (cap undefined) 1174ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-each fires every slot up to the cap without a warning (cap 4) 818ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-each with a zero cap drops all missed slots without firing 753ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-each retains the latest slots at the cap and warns 622ms
+@graphgoblin/infrastructure:test:coverage:      ✓ run-each drops the 50 oldest of 150 missed slots and fires the latest 100 oldest first 1270ms
+@graphgoblin/infrastructure:test:coverage:      ✓ arms schedules without a next slot and leaves future ones alone 361ms
+@graphgoblin/infrastructure:test:coverage:      ✓ start applies the policy before polling 513ms
+@graphgoblin/infrastructure:test:coverage:    ✓ closed admission preserves due cron slots for the next process 644ms
+@graphgoblin/infrastructure:test:coverage:    ✓ stops poll before consuming the next slot when admission closes 454ms
+@graphgoblin/infrastructure:test:coverage:    ✓ stops recover before consuming the next slot when admission closes 1173ms
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+@graphgoblin/adapter-codex:test:coverage: Error: Test timed out in 5000ms.
+@graphgoblin/adapter-codex:test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@graphgoblin/adapter-codex:test:coverage:  ❯ src/probe-directory.test.ts:59:18
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/loop-deletion.test.ts (11 tests) 9246ms
+@graphgoblin/infrastructure:test:coverage:    ✓ loop deletion (11)
+@graphgoblin/infrastructure:test:coverage:      ✓ deletes terminal runs and every dependent table, leaving no orphan run (D5) 2137ms
+@graphgoblin/infrastructure:test:coverage:      ✓ prunes only the deleted loop run from a shared inbound event 868ms
+@graphgoblin/infrastructure:test:coverage:      ✓ deletes a loop without runs and returns false for a missing loop 525ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a queued run without changing any table 397ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a running run without changing any table 1129ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a waiting run without changing any table 1188ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a paused run without changing any table 525ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back every deletion and link update when deleting the loop row fails 928ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves another loop and its parent/child history, detaching surviving children only 388ms
+@graphgoblin/infrastructure:test:coverage:      ✓ deletes only orphan runs and their dependents, including active historical orphans 595ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back orphan cleanup when a dependent delete fails 557ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/event-admission.test.ts (10 tests) 5950ms
+@graphgoblin/infrastructure:test:coverage:    ✓ atomically reserves request keys, returns the original receipt, commits once and exposes safe delivery metadata 2195ms
+@graphgoblin/infrastructure:test:coverage:    ✓ pages due receipts after a cursor in id order, so recovery can pass a stuck head 430ms
+@graphgoblin/infrastructure:test:coverage:    ✓ isolates request keys by owner, loop, node and type and preserves literal whitespace 1192ms
+@graphgoblin/infrastructure:test:coverage:    ✓ bounds due work, records safe retry and terminal failures, and never reopens a failed request key 355ms
+@graphgoblin/infrastructure:test:coverage:    ✓ rolls back partial run admission, rejects inconsistent identities and leaves corrupt history untouched 330ms
+@graphgoblin/infrastructure:test:coverage:    ✓ preserves webhook and poll key protection while a targeted Event is pending 475ms
+@graphgoblin/adapter-codex:test:coverage:      57|   });
+@graphgoblin/adapter-codex:test:coverage:      58|
+@graphgoblin/adapter-codex:test:coverage:      59|   it.each([1, 4])(
+@graphgoblin/adapter-codex:test:coverage:        |                  ^
+@graphgoblin/adapter-codex:test:coverage:      60|     'preserves %i existing collision directories and bounds retries',
+@graphgoblin/adapter-codex:test:coverage:      61|     async (collisions) => {
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries
+@graphgoblin/adapter-codex:test:coverage: AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: Received:
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:   1st vi.fn() call:
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:     Array [
+@graphgoblin/adapter-codex:test:coverage:       "C:\Users\98jak\AppData\Local\Temp\gg-codex-collision-kzEood",
+@graphgoblin/adapter-codex:test:coverage:       Object {
+@graphgoblin/adapter-codex:test:coverage:         "force": true,
+@graphgoblin/adapter-codex:test:coverage:         "recursive": true,
+@graphgoblin/adapter-codex:test:coverage:       },
+@graphgoblin/adapter-codex:test:coverage:     ]
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: Number of calls: 1
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  ❯ src/probe-directory.test.ts:106:30
+@graphgoblin/adapter-codex:test:coverage:     104|         } else {
+@graphgoblin/adapter-codex:test:coverage:     105|           expect(runner).not.toHaveBeenCalled();
+@graphgoblin/adapter-codex:test:coverage:     106|           expect(remove).not.toHaveBeenCalled();
+@graphgoblin/adapter-codex:test:coverage:        |                              ^
+@graphgoblin/adapter-codex:test:coverage:     107|         }
+@graphgoblin/adapter-codex:test:coverage:     108|       } finally {
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  Test Files  1 failed | 15 passed | 1 skipped (17)
+@graphgoblin/adapter-codex:test:coverage:       Tests  2 failed | 640 passed | 4 skipped (646)
+@graphgoblin/adapter-codex:test:coverage:    Start at  19:26:47
+@graphgoblin/adapter-codex:test:coverage:    Duration  78.81s (tests 47%, transform 35%, import 18%)
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:   Transform  transforming modules took 156.49s · 35% of tracked time, re-done on every run
+@graphgoblin/adapter-codex:test:coverage:              persist transforms across runs with fsModuleCache: true
+@graphgoblin/adapter-codex:test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/storage.test.ts (44 tests) 44794ms
+@graphgoblin/infrastructure:test:coverage:    ✓ database (1)
+@graphgoblin/infrastructure:test:coverage:      ✓ migrates idempotently 1051ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteRunRepository (10)
+@graphgoblin/infrastructure:test:coverage:      ✓ creates, reads, updates, and clears fields 473ms
+@graphgoblin/infrastructure:test:coverage:      ✓ claims a paused status only at the reviewed durable event tail 411ms
+@graphgoblin/infrastructure:test:coverage:      ✓ only treats stored definition JSON decoding as definition unavailability 488ms
+@graphgoblin/infrastructure:test:coverage:      ✓ fences a delayed transition by the observed waiting identity 493ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back a failed ordinary transition and allows only one concurrent resume 490ms
+@graphgoblin/infrastructure:test:coverage:      ✓ migration 0002 marks runs that were already terminal as finalized 2059ms
+@graphgoblin/infrastructure:test:coverage:      ✓ claims a cancel request once, and only on an expected status 340ms
+@graphgoblin/infrastructure:test:coverage:      ✓ lists by status, children, and filters 504ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteEventStore (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ assigns increasing sequence numbers, updates the run, and notifies subscribers 567ms
+@graphgoblin/infrastructure:test:coverage:      ✓ appends conditionally on the last seq, atomically 447ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteLoopRepository draft and publish interleaving (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ never modifies a version that was published after a draft save read the loop 1280ms
+@graphgoblin/infrastructure:test:coverage:      ✓ publishes a draft once even when two publishes read the same draft 670ms
+@graphgoblin/infrastructure:test:coverage:    ✓ SqliteLoopRepository (2)
+@graphgoblin/infrastructure:test:coverage:      ✓ creates loops with drafts, publishes, and resolves versions 531ms
+@graphgoblin/infrastructure:test:coverage:    ✓ settings, api keys, model catalog (3)
+@graphgoblin/infrastructure:test:coverage:      ✓ settings round-trip per owner 406ms
+@graphgoblin/infrastructure:test:coverage:      ✓ seeds the model catalog once and answers allow-list questions 340ms
+@graphgoblin/infrastructure:test:coverage:    ✓ migration 0003 model catalog max effort (18)
+@graphgoblin/infrastructure:test:coverage:      ✓ appends max to an unedited seeded row without changing its other columns 931ms
+@graphgoblin/infrastructure:test:coverage:      ✓ upgrades every model id seeded in 1.0.0 924ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves an edited display name while adding max 840ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves an edited default effort while adding max 1229ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves a disabled row while adding max 1577ms
+@graphgoblin/infrastructure:test:coverage:      ✓ compares efforts as a set and preserves their stored order 1366ms
+@graphgoblin/infrastructure:test:coverage:      ✓ ignores duplicate old values when comparing efforts as a set 1462ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a strict subset unchanged byte for byte 1983ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a strict superset with another extra value unchanged byte for byte 2916ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a strict superset already containing max unchanged byte for byte 1537ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a shorter list already containing max unchanged byte for byte 1513ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a user-added model with the old efforts unchanged 1779ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a non-Codex harness with the old efforts unchanged 2327ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves an array with an extra null unchanged 1300ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves a JSON object with the old values unchanged 1944ms
+@graphgoblin/infrastructure:test:coverage:      ✓ leaves malformed JSON unchanged without aborting the upgrade 3085ms
+@graphgoblin/infrastructure:test:coverage:      ✓ is idempotent when the shipped SQL statement is executed again 2400ms
+@graphgoblin/infrastructure:test:coverage:      ✓ does not reapply the migration but seeding restores current harness efforts 2355ms
+@graphgoblin/infrastructure:test:coverage:    ✓ with the engine (1)
+@graphgoblin/infrastructure:test:coverage:      ✓ runs a loop end to end on SQLite 977ms
+@graphgoblin/infrastructure:test:coverage:  ✓ src/sqlite/fresh-initialization.test.ts (14 tests) 21395ms
+@graphgoblin/infrastructure:test:coverage:    ✓ atomic fresh SQLite initialisation (14)
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back an interruption after schema persistence and recovers on restart 2725ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back an interruption before marker creation and recovers on restart 1575ms
+@graphgoblin/infrastructure:test:coverage:      ✓ rolls back an interruption before marker-row persistence and recovers on restart 1453ms
+@graphgoblin/infrastructure:test:coverage:      ✓ applies pending ordinary migrations when another initialiser wins the write-lock race 2694ms
+@graphgoblin/infrastructure:test:coverage:      ✓ preserves the original initialisation error when rollback also fails 1204ms
+@graphgoblin/infrastructure:test:coverage:      ✓ initialises once and preserves schema, ledger, marker and data across repeated starts 1941ms
+@graphgoblin/infrastructure:test:coverage:      ✓ accepts an empty migration ledger without treating recorded history as fresh 1114ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a unmarked schema with empty application tables without changing it on either start 1813ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a populated unmarked store without changing it on either start 1557ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a marker table without its row without changing it on either start 2071ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a incomplete upgrade state without changing it on either start 1578ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a old complete format marker without changing it on either start 1146ms
+@graphgoblin/infrastructure:test:coverage:      ✓ refuses a recorded migration-only damaged store without changing it on either start 309ms
+@graphgoblin/mcp:test:coverage:  ❯ src/transports.test.ts (5 tests | 5 skipped) 11145ms
+@graphgoblin/mcp:test:coverage:    ❯ transports (5)
+@graphgoblin/mcp:test:coverage:      ↓ serves Streamable HTTP from main --http on an ephemeral port
+@graphgoblin/mcp:test:coverage:      ↓ answers 500 when building the server fails and allows any Host off loopback
+@graphgoblin/mcp:test:coverage:      ↓ binds IPv6 loopback and rejects a port that is in use
+@graphgoblin/mcp:test:coverage:      ↓ serves stdio from main by default
+@graphgoblin/mcp:test:coverage:      ↓ prints usage for --help and exits 2 on bad flags
+@graphgoblin/adapter-codex:test:coverage: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/mcp:test:coverage:  ❯ src/classifiers.test.ts (2 tests | 2 skipped) 11343ms
+@graphgoblin/mcp:test:coverage:    ❯ MCP classifier consumer regression (2)
+@graphgoblin/mcp:test:coverage:      ↓ runs and inspects explicit expression and classifier kinds without adding tools
+@graphgoblin/mcp:test:coverage:      ↓ preserves classifier validation messages through API-client and MCP errors
+@graphgoblin/adapter-codex#test:coverage:  ERROR  command (C:\Users\98jak\.codex\worktrees\windows-launcher-timeouts\GraphGoblin\packages\adapter-codex) C:\nvm4w\nodejs\pnpm.cmd run test:coverage exited (1)
+
+ Tasks:    12 successful, 20 total
+Cached:    8 cached, 20 total
+  Time:    1m25.068s 
+Failed:    @graphgoblin/adapter-codex#test:coverage
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

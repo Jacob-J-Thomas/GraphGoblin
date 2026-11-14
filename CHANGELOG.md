@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher helper checks use the configured startup allowance with a 15-second minimum
+  (normally 60 seconds), drain stdout and stderr concurrently, and bound both process-exit and
+  pipe-closure waits. Slow valid ownership checks no longer fail at the old fixed 15-second
+  cutoff. Failures identify identity versus ownership, timing, exit status and output sizes
+  without disclosing helper output; slow successful checks leave timing metadata. Unknown
+  ownership remains protected. **Upgrade:** rebuild and replace `GraphGoblin.exe`, preserving
+  its existing JSON configuration and shortcuts. The API/store needs no migration, reset or
+  restart for this launcher-only fix. Part of #458.
+
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports
   unverifiable ownership instead of an unexplained access-denied error (ADR-0069). **Upgrade:**
