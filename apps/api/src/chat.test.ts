@@ -257,7 +257,11 @@ describe('native workflow chat', () => {
     });
     expect(direct.statusCode, direct.body).toBe(409);
     expect(direct.json().code).toBe('CHAT_NOT_READY');
-    const imported = await t.app.inject({ method: 'POST', url: '/loops/import', payload: def });
+    const imported = await t.app.inject({
+      method: 'POST',
+      url: '/loops/import?name=Imported%20Gateway%20Chat',
+      payload: def,
+    });
     expect(imported.statusCode).toBe(201);
     expect(imported.json().loop.system).toBeUndefined();
     const before = await t.container.repos.loops.listLoops('local');
@@ -322,6 +326,39 @@ describe('native workflow chat', () => {
 });
 
 describe('isolated device authorization and enrollment', () => {
+  it('creates distinct system loop names without changing equivalent device labels', async () => {
+    t = await createTestApp({
+      requireApiKey: true,
+      env: { GG_PUBLIC_URL: 'https://goblin.example' },
+    });
+    const owner = await t.container.repos.apiKeys.create('local', 'owner', ['*']);
+    const a = await pair(owner.token, 'Écho  Desk');
+    const b = await pair(owner.token, 'écho Desk');
+    const legacy = await pair(owner.token, 'with\0NUL\uD800');
+    const binding = (deviceId: string) =>
+      t.container.repos.chat.getBinding({ ownerId: 'local', audienceKey: `device:${deviceId}` });
+    const aBinding = await binding(a.device.deviceId);
+    const bBinding = await binding(b.device.deviceId);
+    expect(aBinding?.loopId).toBeDefined();
+    expect(bBinding?.loopId).toBeDefined();
+    expect(aBinding?.loopId).not.toBe(bBinding?.loopId);
+    expect(a.device.label).toBe('Écho  Desk');
+    expect(b.device.label).toBe('écho Desk');
+    expect(await t.container.repos.loops.getLoop(aBinding!.loopId)).toMatchObject({
+      name: 'Écho  Desk Chat',
+    });
+    expect(await t.container.repos.loops.getLoop(bBinding!.loopId)).toMatchObject({
+      name: 'écho Desk Chat copy',
+    });
+    expect(
+      (await t.container.repos.loops.getLatestPublished(bBinding!.loopId))?.definition.name,
+    ).toBe('écho Desk Chat copy');
+    const legacyBinding = await binding(legacy.device.deviceId);
+    expect(await t.container.repos.loops.getLoop(legacyBinding!.loopId)).toMatchObject({
+      name: 'with�NUL� Chat',
+    });
+  });
+
   it('clones once per claim, separates audiences, protects management, and revokes every request', async () => {
     t = await createTestApp({
       requireApiKey: true,

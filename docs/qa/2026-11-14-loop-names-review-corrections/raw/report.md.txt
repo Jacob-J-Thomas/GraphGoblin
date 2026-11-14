@@ -1,0 +1,37 @@
+U1 and U2 are both fixed. All 10 new tests fail on the original code and pass on the corrected code, but nothing heavier than scoped tests has run. Nothing is staged or committed, HEAD is still `0d2fad63`, and nothing was built.
+
+**U1: import selection.** Choosing a file now creates a token for that choice, which travels with the file read, the first import request and every retry.
+- **What an old choice can still do:** a newer choice or **Cancel** ends the old one. After that, its unread file is never sent and a failed read says nothing. A late answer only refreshes the loop list, since it may have created a loop.
+- **Retry form:** it is tied to one choice, so a typed name survives that upload's retries. A second click while a retry is in flight sends nothing.
+- **Unreadable file:** it now shows `<file> could not be read.` Before, this was an unhandled error.
+- **Policy for QA:** the file picker stays enabled and the newest choice wins. Independent native QA should use `qa-mode=candidate` with B chosen while A is running. This is written up in `docs/09-frontend-and-pwa.md`.
+- **One small addition:** a first import that fails with no answer or a 5xx now also refreshes the list.
+
+**U2: Try again.** The busy display and the permission to send are now separate.
+- **The permission:** it travels only with the Try again click's own save, is tied to that loop, editor load and name, and is used up by one request.
+- **The busy state:** the `retrying` flag now only drives the button's busy state. The owning save clears it on every exit, including invalid input and the early returns.
+- **Other saves:** a different save failing no longer cancels a queued Try again. Autosave, Publish and recovery saves no longer get past the name hold while a Try again is pending (before, any save in that window did).
+- **Unchanged:** a stale-draft conflict still takes precedence, and the device copy and undo work as before.
+
+**Test results:**
+- **Final tests on the original code:** 9 of the 10 new tests failed for the predicted reasons. The late-A case showed `prior-A.json was not imported`, matching the native baseline. The 16 passes are the 15 existing tests plus the stale-draft test, which is meant to pass on both versions. I ran this by temporarily putting back the exact original runtime files and restoring the corrected ones, with hashes checked both ways.
+- **My test setup error:** in my first run, two queued Try again tests failed because of my own test setup, not the product. Undo re-renders the settings form and I was holding a stale reference to the name field. I fixed it and kept the original log.
+- **Corrected code:** the two focused files pass 25/25. A wider set of 13 related files passes 184/184. Web typecheck, ESLint on the changed files and Prettier are clean.
+
+**Other notes:**
+- Most of the `useAutosave.ts` diff is Prettier reindenting the function body; ignoring whitespace the change is +44/−14 lines.
+- I didn't touch `docs/guide/02-build-a-loop.md`. Another worker modified it about a minute after this run started.
+
+Still for you to run: full web coverage, repo-wide lint and generated docs, the build, the Edge E2E specs `e2e/loop-names.spec.ts` and `e2e/template-gallery.spec.ts`, native QA for the import fix and for the invalid-description and queued Try again cases, and the final audit. Two small defensive paths, which only run when a save is attempted with the editor disabled or no loop loaded, have no dedicated test, so coverage should be checked.
+
+Files are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-209-review-correction/`:
+- handoff.md
+- correction.diff
+- original-sha256.txt
+- current-sha256.txt
+- first-failures-original-source.log.txt
+- first-failures-original-source-editor-fixture-corrected.log.txt
+- proof-final-tests-on-original-runtime.log.txt
+- focused-after-correction.log.txt
+- scoped-after-correction.log.txt
+- corrected-backup/

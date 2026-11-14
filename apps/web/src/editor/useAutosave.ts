@@ -10,10 +10,11 @@ import {
   saveLocalDraft,
   subscribeDeviceStorage,
 } from '../drafts/local-drafts.js';
+import { loopNameConflict, sameLoopName } from '../lib/loop-names.js';
 import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
-import { useEditorStore } from './store.js';
+import { useEditorStore, type NameRetry } from './store.js';
 
 export const AUTOSAVE_DELAY_MS = 600;
 
@@ -103,7 +104,8 @@ export const CONFLICT_MESSAGE =
  * schema-valid draft is then saved with `PUT /loops/{id}/draft`. Saves for a loop are serialized
  * (including the one sent when the editor unmounts), and a save only updates the editor if the
  * same loop is still loaded in the same editor generation. Returns `flush`, which saves now and
- * resolves to whether the server holds the current revision.
+ * resolves to whether the server holds the current revision. Given a `NameRetry` (the editor's
+ * Try again), that save, and no other, may send the refused name once (#209).
  */
 export function useAutosave(
   client: GraphGoblinClient,
@@ -119,7 +121,7 @@ export function useAutosave(
     serverReconciled?: boolean;
     system?: boolean;
   } = {},
-): () => Promise<boolean> {
+): (retry?: NameRetry) => Promise<boolean> {
   const queryClient = useQueryClient();
   const systemRef = useRef(system);
   systemRef.current = system;
@@ -136,8 +138,9 @@ export function useAutosave(
   // The last rendered token and conflict, for the unmount save: the store may be reset by then.
   const baseToken = useEditorStore((s) => s.baseToken);
   const inConflict = useEditorStore((s) => s.conflict !== undefined);
-  const latest = useRef({ inConflict });
-  latest.current = { inConflict };
+  const nameConflict = useEditorStore((s) => s.nameConflict);
+  const latest = useRef({ inConflict, nameConflict });
+  latest.current = { inConflict, nameConflict };
   const enabledRef = useRef(enabled && serverReconciled);
   enabledRef.current = enabled && serverReconciled;
   const deviceReadyRef = useRef(enabled && deviceReady);
@@ -147,86 +150,144 @@ export function useAutosave(
     if (loopId && baseToken) latestTokens.set(loopId, baseToken);
   }, [baseToken, loadGeneration]);
 
-  const save = useCallback(async (): Promise<boolean> => {
-    if (!enabledRef.current) return false;
-    clearTimeout(timer.current);
-    timer.current = undefined;
-    const { loopId, generation } = useEditorStore.getState();
-    if (!loopId) return false;
-    return serializeSave(loopId, async () => {
-      for (;;) {
-        if (!enabledRef.current) return false;
-        const state = useEditorStore.getState();
-        if (state.loopId !== loopId || state.generation !== generation || !state.definition)
-          return false;
-        // A refused save waits for the user: reload the server draft or overwrite it.
-        if (state.conflict) return false;
-        const { definition, revision: rev, savedRevision, setSaveState, baseToken } = state;
-        if (rev === savedRevision) return true;
-        // Where the edits are instead (this device, or this window only) is the device copy's to
-        // say, once its write has answered (`saveNotice`).
-        if (!validateDraft(definition, systemRef.current).schemaValid) {
-          setSaveState('invalid', systemRef.current ? 'SYSTEM_CHAT_CONTRACT_INVALID' : undefined);
-          return false;
-        }
-        setSaveState('saving');
-        let saved: Awaited<ReturnType<typeof loops.saveDraft>>;
-        try {
-          saved = await loops.saveDraft(client, loopId, definition, {
-            ...(baseToken ? { ifMatch: baseToken } : {}),
-          });
-        } catch (error) {
-          const now = useEditorStore.getState();
-          if (now.loopId !== loopId || now.generation !== generation) return false;
-          const conflict = draftConflict(error);
-          if (conflict) {
-            now.setConflict(conflict);
-            setSaveState('conflict', CONFLICT_MESSAGE);
-          } else if (
-            systemRef.current &&
-            error instanceof GraphGoblinApiError &&
-            error.code === 'SYSTEM_CHAT_CONTRACT_INVALID'
-          ) {
-            setSaveState('invalid', 'SYSTEM_CHAT_CONTRACT_INVALID');
-          } else if (isOfflineError(error)) {
-            setSaveState('offline');
-            // A save can be the first request to notice an outage. Refresh the active loop
-            // read once per revision so query-driven reachability can recover it. A reachable
-            // read with a persistently failing PUT must not create a read/save retry loop.
-            const queryKey = keys.loop(loopId);
-            if (
-              !isOfflineError(queryClient.getQueryState(queryKey)?.error) &&
-              (recoveryRead.current?.generation !== generation ||
-                recoveryRead.current.revision !== rev)
-            ) {
-              recoveryRead.current = { generation, revision: rev };
-              markApiUnreachable();
-              void queryClient.refetchQueries(
-                { queryKey, exact: true, type: 'active' },
-                { cancelRefetch: false },
-              );
-            }
-          } else {
-            setSaveState('error', errorMessage(error));
-          }
-          return false;
-        }
-        const isCurrent = () => {
-          const now = useEditorStore.getState();
-          return now.loopId === loopId && now.generation === generation;
-        };
-        // Before the device write, so an edit mirrored from here on carries the new token.
-        if (isCurrent()) useEditorStore.getState().setBaseToken(saved.draftToken);
-        await recordSaved(loopId, definition, saved.draftToken, baseToken);
-        if (!isCurrent()) return false;
-        if (useEditorStore.getState().revision === rev) {
-          setSaveState('saved', undefined, rev);
-          return true;
-        }
-        // Edited while the request was in flight: the server holds an older revision; go again.
+  const save = useCallback(
+    async (retry?: NameRetry): Promise<boolean> => {
+      // This save owns `retry`: whatever happens, it ends that attempt's busy mark, unless the
+      // store already shows something newer (a fresh refusal, an accepted save, another load).
+      const settle = () => {
+        if (!retry) return;
+        const now = useEditorStore.getState();
+        if (now.nameConflict === retry.refusal)
+          now.setNameConflict({ ...retry.refusal, retrying: false });
+      };
+      if (!enabledRef.current) {
+        settle();
+        return false;
       }
-    });
-  }, [client, queryClient]);
+      clearTimeout(timer.current);
+      timer.current = undefined;
+      const { loopId, generation } = useEditorStore.getState();
+      if (!loopId) {
+        settle();
+        return false;
+      }
+      // The permission is for the loop and load it was given in, and for one request.
+      let permit = retry?.loopId === loopId && retry.generation === generation ? retry : undefined;
+      const send = async (): Promise<boolean> => {
+        for (;;) {
+          if (!enabledRef.current) return false;
+          const state = useEditorStore.getState();
+          if (state.loopId !== loopId || state.generation !== generation || !state.definition)
+            return false;
+          // A refused save waits for the user: reload the server draft or overwrite it.
+          if (state.conflict) return false;
+          const { definition, revision: rev, savedRevision, setSaveState, baseToken } = state;
+          if (rev === savedRevision) return true;
+          // Where the edits are instead (this device, or this window only) is the device copy's to
+          // say, once its write has answered (`saveNotice`).
+          if (!validateDraft(definition, systemRef.current).schemaValid) {
+            setSaveState('invalid', systemRef.current ? 'SYSTEM_CHAT_CONTRACT_INVALID' : undefined);
+            return false;
+          }
+          // Another loop holds this name (#209): keep every edit on the device and send nothing
+          // until the name changes or this save carries the user's deliberate Try again of it.
+          const held = state.nameConflict;
+          const deliberate =
+            permit !== undefined && sameLoopName(definition.name, permit.refusal.name);
+          if (held && !deliberate && sameLoopName(definition.name, held.name)) {
+            setSaveState('name-conflict');
+            return false;
+          }
+          // Spent by this request, whatever its answer: a later pass sends only as any save would.
+          permit = undefined;
+          setSaveState('saving');
+          let saved: Awaited<ReturnType<typeof loops.saveDraft>>;
+          try {
+            saved = await loops.saveDraft(client, loopId, definition, {
+              ...(baseToken ? { ifMatch: baseToken } : {}),
+            });
+          } catch (error) {
+            const now = useEditorStore.getState();
+            if (now.loopId !== loopId || now.generation !== generation) return false;
+            const conflict = draftConflict(error);
+            const refused = conflict ? undefined : loopNameConflict(error, definition.name);
+            // A name refusal replaces the guidance. Any other failure leaves it, and a Try again
+            // still queued behind this save, as they are: only that attempt's own save ends it.
+            if (refused) {
+              now.setNameConflict({
+                name: definition.name,
+                suggestedName: refused.suggestedName,
+                retrying: false,
+                retried: deliberate,
+              });
+            } else if (conflict) {
+              // A stale base takes precedence on the server; its own notice asks Reload or
+              // Overwrite, and an overwrite that meets the name again is refused afresh.
+              now.setNameConflict(undefined);
+            }
+            if (refused) {
+              setSaveState('name-conflict');
+            } else if (conflict) {
+              now.setConflict(conflict);
+              setSaveState('conflict', CONFLICT_MESSAGE);
+            } else if (
+              systemRef.current &&
+              error instanceof GraphGoblinApiError &&
+              error.code === 'SYSTEM_CHAT_CONTRACT_INVALID'
+            ) {
+              setSaveState('invalid', 'SYSTEM_CHAT_CONTRACT_INVALID');
+            } else if (isOfflineError(error)) {
+              setSaveState('offline');
+              // A save can be the first request to notice an outage. Refresh the active loop
+              // read once per revision so query-driven reachability can recover it. A reachable
+              // read with a persistently failing PUT must not create a read/save retry loop.
+              const queryKey = keys.loop(loopId);
+              if (
+                !isOfflineError(queryClient.getQueryState(queryKey)?.error) &&
+                (recoveryRead.current?.generation !== generation ||
+                  recoveryRead.current.revision !== rev)
+              ) {
+                recoveryRead.current = { generation, revision: rev };
+                markApiUnreachable();
+                void queryClient.refetchQueries(
+                  { queryKey, exact: true, type: 'active' },
+                  { cancelRefetch: false },
+                );
+              }
+            } else {
+              setSaveState('error', errorMessage(error));
+            }
+            return false;
+          }
+          const isCurrent = () => {
+            const now = useEditorStore.getState();
+            return now.loopId === loopId && now.generation === generation;
+          };
+          // Before the device write, so an edit mirrored from here on carries the new token.
+          if (isCurrent()) {
+            useEditorStore.getState().setBaseToken(saved.draftToken);
+            // The server took this name, so an earlier refusal no longer applies.
+            useEditorStore.getState().setNameConflict(undefined);
+          }
+          await recordSaved(loopId, definition, saved.draftToken, baseToken);
+          if (!isCurrent()) return false;
+          if (useEditorStore.getState().revision === rev) {
+            setSaveState('saved', undefined, rev);
+            return true;
+          }
+          // Edited while the request was in flight: the server holds an older revision; go again.
+        }
+      };
+      return serializeSave(loopId, async () => {
+        try {
+          return await send();
+        } finally {
+          settle();
+        }
+      });
+    },
+    [client, queryClient],
+  );
 
   useEffect(() => {
     if (!enabled) {
@@ -271,6 +332,9 @@ export function useAutosave(
       if (!validateDraft(last.definition, systemRef.current).schemaValid) return;
       // In conflict the user has not chosen yet: the unsynced local copy waits for the next visit.
       if (latest.current.inConflict) return;
+      // Still the refused name: the device copy keeps it, and the next visit's save asks again.
+      const refusedName = latest.current.nameConflict;
+      if (refusedName && sameLoopName(last.definition.name, refusedName.name)) return;
       void serializeSave(last.loopId, async () => {
         const token = latestTokens.get(last.loopId);
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {

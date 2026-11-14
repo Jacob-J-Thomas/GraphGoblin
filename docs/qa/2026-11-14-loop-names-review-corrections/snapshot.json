@@ -1,0 +1,56 @@
+{
+  "packet": "PR #470 U1/U2 correction evidence",
+  "candidate": {
+    "commit": "2367b15b310eac52d95af77c570d5ce36f741527",
+    "tree": "6bcc8e4eb74ee2d82dd793f88538b08d260002d8",
+    "parent": "0d2fad63c448bc5591c530d087dd05c9af7821cc",
+    "targetMain": "7c6e635539e12c56b82f226f1ee734d83b985ad4",
+    "pushed": false,
+    "strictChangedPathCount": 8,
+    "sourceHashCount": 9
+  },
+  "session": {
+    "id": "60913",
+    "actualModel": "claude-opus-5-5",
+    "resultStatus": "exit 0, confirmed by root",
+    "requestedEffort": "xhigh",
+    "effectiveEffort": "not independently observable",
+    "rawEventsCopied": false,
+    "rawResultOrUsageCopied": false
+  },
+  "reviewCorrection": {
+    "u1": "newest selected import owns panel and outcomes; picker remains enabled",
+    "u2": "retry permission is invocation-, loop-, generation-, and name-scoped; display busy state grants no save permission",
+    "changedRuntimeFiles": [
+      "apps/web/src/loops/LoopsPage.tsx",
+      "apps/web/src/editor/useAutosave.ts",
+      "apps/web/src/editor/EditorPage.tsx",
+      "apps/web/src/editor/store.ts"
+    ],
+    "testCounts": {
+      "firstOriginalRuntime": "10 failed / 15 passed, with one unhandled NotReadableError; two failures were test-fixture stale element errors",
+      "correctedFixtureOriginalRuntime": "3 failed / 7 passed in editor test file; stale-token preservation control passed",
+      "finalOriginalRuntimeNegativeControl": "9 failed / 16 passed across 25; nine defect cases fail old runtime and one new stale-token preservation control passes both",
+      "correctedFocused": "25 / 25 passed",
+      "correctedRelated": "184 / 184 passed across 13 files"
+    },
+    "reportSummaryCorrection": "Preserve original report bytes. Its opening says all ten new tests fail old; handoff and run-3 proof establish 9 fail and the tenth preservation control passes both."
+  },
+  "provenance": {
+    "rootPrecommitBinding": "raw/correction-precommit-binding.json",
+    "bindingSummary": "9 source hashes / 8 changed paths; old four dist trees totaling 655 files remained byte-identical; no fresh build",
+    "negativeControlLog": "raw/proof-final-tests-on-original-runtime.log.txt",
+    "correctedRuntimeRestoreProof": "restored four corrected runtime files from backups and matched corrected-runtime-sha256-before-proof.txt",
+    "staticCommandToolEvidence": "derived/static-command-tool-evidence.json",
+    "staticEvidenceSha256": "22dcfd2e893b453f7f21ba0e42382a7a11480a7faaf978ff2a3d0bb5f30ed182",
+    "staticSummary": "initial version lookup exit 127; first format exit 1; first ESLint exit 1 with six errors and three warnings; later typecheck, lint and all-seven format exit 0",
+    "standaloneCheckLogsInSource": false
+  },
+  "gates": {
+    "freshBuild": false,
+    "fullCoverage": false,
+    "correctedBrowserOrNativeQA": false,
+    "currentHeadCi": "pending",
+    "finalReview": "pending"
+  }
+}

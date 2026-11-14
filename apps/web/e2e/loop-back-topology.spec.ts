@@ -14,7 +14,7 @@ import {
 } from '@graphgoblin/contracts';
 import { forwardLoopBack } from '../src/__fixtures__/routing.js';
 import { defaultConfig } from '../src/editor/model.js';
-import { closeNode, expect, openNode, test } from './fixtures.js';
+import { closeNode, expect, openNode, test, uniqueLoopName } from './fixtures.js';
 
 const card = (id: string, kind: NodeInput['kind'], x: number, y = 100, config?: unknown) =>
   ({ id, label: id, kind, config: config ?? defaultConfig(kind), ui: { x, y } }) as NodeInput;
@@ -70,7 +70,10 @@ async function openGraph(
     localStorage.setItem('graphgoblin-palette', 'collapsed');
     localStorage.setItem('graphgoblin-loop-panel', 'collapsed');
   }, theme);
-  const response = await request.post('/loops', { data: { definition } });
+  // Each theme opens the same graphs on the shared gateway, where one owner cannot repeat a name (#209).
+  const response = await request.post('/loops', {
+    data: { definition: { ...definition, name: uniqueLoopName(definition.name) } },
+  });
   expect(response.status(), await response.text()).toBe(201);
   const { loop } = (await response.json()) as { loop: { id: string } };
   await page.goto(`/app/loops/${loop.id}/edit`);

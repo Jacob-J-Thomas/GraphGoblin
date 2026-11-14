@@ -119,7 +119,7 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
         expect(preflight.json()).toMatchObject({
           checks: expect.arrayContaining([expect.objectContaining({ id: 'harness.' + id, state })]),
         });
-        const definition = singleNodeLoop('Evidence', {
+        const definition = singleNodeLoop(`Evidence ${id}`, {
           id: 'work',
           kind: 'inference',
           label: 'Work',

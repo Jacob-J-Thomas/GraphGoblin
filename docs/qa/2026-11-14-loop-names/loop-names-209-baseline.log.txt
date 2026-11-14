@@ -1,0 +1,103 @@
+$ vitest run src/loop-names.test.ts
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/api
+
+ ❯ src/loop-names.test.ts (4 tests | 4 failed) 2343ms
+   × rejects case- and whitespace-equivalent create requests within one owner 1735ms
+   × rejects equivalent draft rename without changing the target loop or draft 166ms
+   × rejects an unchanged imported export with a suggested copy name 161ms
+   × rejects an equivalent template copy and preserves the first returned loop identity 279ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/loop-names.test.ts > rejects case- and whitespace-equivalent create requests within one owner
+AssertionError: {"loop":{"id":"01M3Y7RKG0F0S55R0YMN1G2PWS","ownerId":"local","name":" écho\tboard ","draftVersionId":"01M3Y7RKG0F0S55R0YMN1G2PWT","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"01M3Y7RKG0F0S55R0YMN1G2PWT","loopId":"01M3Y7RKG0F0S55R0YMN1G2PWS","version":1,"status":"draft","definition":{"schemaVersion":4,"name":" écho\tboard ","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"issues":[]}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ src/loop-names.test.ts:32:40
+     30|   await created('Écho  Board');
+     31|   const again = await create('\u00a0écho\tboard ');
+     32|   expect(again.statusCode, again.body).toBe(409);
+       |                                        ^
+     33|   expect(again.json()).toMatchObject({ code: 'LOOP_NAME_CONFLICT' });
+     34| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/loop-names.test.ts > rejects equivalent draft rename without changing the target loop or draft
+AssertionError: {"draft":{"id":"01M3Y7RKG04XVHCBWAPPA5G36M","loopId":"01M3Y7RKG04XVHCBWAPPA5G36K","version":1,"status":"draft","definition":{"schemaVersion":4,"name":" nightly  TRIAGE ","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"a98b1b236d996a65","issues":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ src/loop-names.test.ts:40:42
+     38|   const target = await created('Daytime Triage');
+     39|   const rename = await save(target.loop.id, ' nightly  TRIAGE ');
+     40|   expect(rename.statusCode, rename.body).toBe(409);
+       |                                          ^
+     41|   expect(rename.json()).toMatchObject({ code: 'LOOP_NAME_CONFLICT' });
+     42|   const stored = (await t.app.inject(`/loops/${target.loop.id}`)).json…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/loop-names.test.ts > rejects an unchanged imported export with a suggested copy name
+AssertionError: {"loop":{"id":"01M3Y7RKG03CZH7JTC2H8BG6XD","ownerId":"local","name":"Import Fixture","draftVersionId":"01M3Y7RKG03CZH7JTC2H8BG6XE","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"01M3Y7RKG03CZH7JTC2H8BG6XE","loopId":"01M3Y7RKG03CZH7JTC2H8BG6XD","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"Import Fixture","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"issues":[]}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ src/loop-names.test.ts:55:50
+     53|   };
+     54|   const duplicated = await t.app.inject({ method: 'POST', url: '/loops…
+     55|   expect(duplicated.statusCode, duplicated.body).toBe(409);
+       |                                                  ^
+     56|   expect(duplicated.json()).toMatchObject({ code: 'LOOP_NAME_CONFLICT'…
+     57| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/loop-names.test.ts > rejects an equivalent template copy and preserves the first returned loop identity
+AssertionError: {"loop":{"id":"01M3Y7RKG0RW91C00RZYAQV21Z","ownerId":"local","name":"starter   Custom draft","description":"Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.","draftVersionId":"01M3Y7RKG0RW91C00RZYAQV220","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"01M3Y7RKG0RW91C00RZYAQV220","loopId":"01M3Y7RKG0RW91C00RZYAQV21Z","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"starter   Custom draft","description":"Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Run input and context","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"instructions","label":"Workflow instructions","ui":{"x":270,"y":0},"kind":"mutate","config":{"operations":[{"op":"set","path":"/vars/instruction","value":{"kind":"literal","value":"Summarize the input and suggest a next step."}}]}},{"id":"assistant","label":"Assistant","ui":{"x":540,"y":0},"kind":"inference","config":{"harness":"codex","session":{"policy":"fresh"},"prompt":{"template":"Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n"},"input":[],"harnessOptions":{"sandbox":"read-only","approval":"never","networkAccess":false,"webSearch":false},"output":{"captureTranscript":"artifact","toMessages":"final","transforms":[]},"timeoutSeconds":300}},{"id":"done","label":"Suggested next step","ui":{"x":810,"y":0},"kind":"exit","config":{"outcome":"success","returns":"outputs.assistant.value","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"start-out-instructions","from":{"node":"start","port":"out"},"to":{"node":"instructions","port":"in"}},{"id":"instructions-out-assistant","from":{"node":"instructions","port":"out"},"to":{"node":"assistant","port":"in"}},{"id":"assistant-out-done","from":{"node":"assistant","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"issues":[]}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ src/loop-names.test.ts:63:42
+     61|   expect(first.statusCode, first.body).toBe(201);
+     62|   const second = await template('starter   Custom draft');
+     63|   expect(second.statusCode, second.body).toBe(409);
+       |                                          ^
+     64|   expect(second.json()).toMatchObject({
+     65|     code: 'LOOP_NAME_CONFLICT', suggestedName: 'starter Custom draft c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  01:00:46
+   Duration  11.94s (transform 42%, import 38%, tests 20%)
+
+  Transform  transforming modules took 4.91s · 42% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\apps\api

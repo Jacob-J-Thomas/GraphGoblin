@@ -2065,11 +2065,12 @@ describe('unified signed webhook admission and Allow', () => {
   async function setup(
     scheme: 'hmac-sha256' | 'hmac-sha256-body',
     extra: Record<string, unknown> = {},
+    name = 'unified',
   ) {
     await setSecret();
     const id = await t.publishLoop(
       triggerLoop(
-        'unified',
+        name,
         hookTrigger({
           authentication: {
             type: 'hmac-sha256',
@@ -2156,7 +2157,7 @@ describe('unified signed webhook admission and Allow', () => {
   it.each(['hmac-sha256', 'hmac-sha256-body'] as const)(
     'allows identical concurrent unkeyed %s bytes, but deduplicates an authored key',
     async (scheme) => {
-      const unkeyed = await setup(scheme);
+      const unkeyed = await setup(scheme, {}, 'unified unkeyed');
       const responses = await Promise.all([unkeyed.send('{"id":1}'), unkeyed.send('{"id":1}')]);
       expect(responses.map((response) => response.statusCode)).toEqual([202, 202]);
       await t.idle();
@@ -2173,7 +2174,7 @@ describe('unified signed webhook admission and Allow', () => {
         expect(
           (await t.container.repos.runs.getInitialThread(run.id))?.invocation.trigger.dedupeKey,
         ).toBeUndefined();
-      const keyed = await setup(scheme, { dedupeKey: '$string(id)' });
+      const keyed = await setup(scheme, { dedupeKey: '$string(id)' }, 'unified keyed');
       expect((await keyed.send('{"id":1}')).statusCode).toBe(202);
       expect((await keyed.send('{"id":1}')).statusCode).toBe(202);
       await t.idle();
@@ -2188,8 +2189,8 @@ describe('unified signed webhook admission and Allow', () => {
 });
 
 describe('general webhook configuration and unsigned intake', () => {
-  async function setup(config: Record<string, unknown> = {}) {
-    const id = await t.publishLoop(triggerLoop('general-hook', { type: 'webhook', ...config }));
+  async function setup(config: Record<string, unknown> = {}, name = 'general-hook') {
+    const id = await t.publishLoop(triggerLoop(name, { type: 'webhook', ...config }));
     const endpoint = (await triggersOf(t, id)).webhooks[0]!;
     return { id, path: endpoint.path, endpoint };
   }
@@ -2201,7 +2202,7 @@ describe('general webhook configuration and unsigned intake', () => {
       headers: { 'content-type': 'application/octet-stream', ...headers },
     });
   it('applies Allow to concurrent unsigned repeats while consuming an explicit key once', async () => {
-    const unkeyed = await setup();
+    const unkeyed = await setup({}, 'general unkeyed');
     const responses = await Promise.all([
       post(unkeyed.path, '{"id":1}'),
       post(unkeyed.path, '{"id":1}'),
@@ -2219,7 +2220,7 @@ describe('general webhook configuration and unsigned intake', () => {
     expect(receipts).toHaveLength(2);
     expect(receipts[0]?.content_hash).toBe(receipts[1]?.content_hash);
     expect(receipts[0]?.id).not.toBe(receipts[1]?.id);
-    const keyed = await setup({ dedupeKey: '$string(id)' });
+    const keyed = await setup({ dedupeKey: '$string(id)' }, 'general keyed');
     const duplicates = await Promise.all([
       post(keyed.path, '{"id":1}'),
       post(keyed.path, '{"id":1}'),

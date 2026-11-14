@@ -13,6 +13,7 @@ export * from './run-resources.js';
 export * from './history-cleanup.js';
 export * from './events.js';
 export * from './loops.js';
+export { InvalidLoopNameError, LoopNameConflictError } from './loop-names.js';
 export * from './sessions.js';
 export * from './timers.js';
 export * from './secrets.js';

@@ -41,7 +41,48 @@ import {
 type EdgeInput = z.input<typeof EdgeSchema>;
 
 export type SaveState =
-  'idle' | 'pending' | 'saving' | 'saved' | 'invalid' | 'offline' | 'error' | 'conflict';
+  | 'idle'
+  | 'pending'
+  | 'saving'
+  | 'saved'
+  | 'invalid'
+  | 'offline'
+  | 'error'
+  | 'conflict'
+  | 'name-conflict';
+
+/**
+ * A draft save the API refused because another loop of this owner has an equivalent name (409
+ * `LOOP_NAME_CONFLICT`, #209). The draft keeps the authored name and every edit stays on the
+ * device; autosave sends nothing while the name is still the refused one, until the user changes
+ * it or deliberately tries the same name again.
+ */
+export interface EditorNameConflict {
+  /** The name as the refused save sent it. */
+  name: string;
+  /** The API's advisory available name at refusal time. */
+  suggestedName: string | undefined;
+  /**
+   * A deliberate Try again is waiting for or in its save, for the notice to show as busy. It
+   * permits nothing: the permission travels with that one save (`NameRetry`), which alone ends it.
+   */
+  retrying: boolean;
+  /** This refusal answered a deliberate Try again of the same name. */
+  retried: boolean;
+}
+
+/**
+ * One deliberate Try again of a refused name (#209): permission for a single draft save that sends
+ * a name equivalent to `refusal.name`, in this loop and editor load only. Autosave spends it on
+ * that save's request; a save that stops before sending (invalid input, a draft conflict, a newer
+ * load) drops it. `refusal` is the notice as marked busy for this attempt; the attempt clears that
+ * mark when it ends, and only while the store still shows this mark.
+ */
+export interface NameRetry {
+  readonly loopId: string;
+  readonly generation: number;
+  readonly refusal: EditorNameConflict;
+}
 
 export interface EditorState {
   loopId: string | undefined;
@@ -94,6 +135,8 @@ export interface EditorState {
    * `DRAFT_CONFLICT`). Autosave stops until the user reloads the server draft or overwrites it.
    */
   conflict: { serverToken: string | undefined } | undefined;
+  /** The last name refusal while it may still apply (see `EditorNameConflict`); a load clears it. */
+  nameConflict: EditorNameConflict | undefined;
   /**
    * The undo history (#17, `history.ts`): `past` holds the state before each step, newest last;
    * `future` the steps undone since the last change, for redo. A load or reset clears both.
@@ -192,6 +235,7 @@ export interface EditorState {
   /** Record that the device copy of `revision` was written (see `deviceRevision`). */
   setDeviceRevision: (revision: number) => void;
   setConflict: (conflict: { serverToken: string | undefined } | undefined) => void;
+  setNameConflict: (conflict: EditorNameConflict | undefined) => void;
   /**
    * Record (or, with `undefined`, clear) the unparsed text of a form field. It is a change like
    * any other for undo: typed text merges into the step of the typing in that field, text a
@@ -245,6 +289,7 @@ const INITIAL = {
   generation: 0,
   baseToken: undefined,
   conflict: undefined,
+  nameConflict: undefined,
   past: [] as HistoryEntry[],
   future: [] as HistoryEntry[],
   openStep: undefined,
@@ -763,6 +808,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
       set((s) => ({ deviceRevision: Math.max(revision, s.deviceRevision ?? revision) })),
 
     setConflict: (conflict) => set({ conflict }),
+
+    setNameConflict: (nameConflict) => set({ nameConflict }),
 
     setFieldError: (scope, path, error, reason, change) => {
       const s = get();

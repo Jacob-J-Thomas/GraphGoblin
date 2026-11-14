@@ -1,0 +1,59 @@
+**Verdict: READY.** I found no blocking problems in the PR #470 backend. This is scan 1 of 3, run as Claude Opus 5.5 (`claude-opus-5-5`) at xhigh effort, read-only. It is one review gate only; independent QA, CI, the final Astra audit and owner acceptance are still separate.
+
+- **Head:** `0d2fad63c448bc5591c530d087dd05c9af7821cc`. The worktree's branch ref file holds exactly this commit.
+- **Target:** `7c6e635539e12c56b82f226f1ee734d83b985ad4`. This matches the `origin/main` ref file.
+- **CI binding:** the Gates pass log line 193 shows `Merge 0d2fad63… into 7c6e6355…`.
+- **Not checked:** I could not run commands, so I did not check the tree hash, the diff SHA256, or whether the worktree is clean.
+
+## 1. Blocking problems
+None.
+
+## 2. Non-blocking follow-ups
+1. **No test for reusing a deleted loop's name (P3, gap added by this PR, DEFER-ISSUE).** The code is correct as written: name admission (`admitLoopName`, `loop-names.ts:37-44`) only reads current `loops` rows, and `delete` (`loops.ts:502-531`) removes the row in its own transaction. But no committed test or QA artifact covers it. Smallest fix: one API test that creates "X", deletes it, then creates " x " and expects 201.
+2. **The user guide overstates (P3, added by this PR, DEFER-ISSUE).** `docs/guide/02-build-a-loop.md:44` says GraphGoblin "never picks another name for you". System Chat loops do get an automatic "… copy" name (`chat.ts:192,328`, `loops.ts:560-562`). Only ADR-0073 documents that. Smallest fix: limit the sentence to loops you create, rename, import or copy.
+3. **Three different name-matching rules (P3, mostly existed before, DEFER-ISSUE).** MCP's loop lookup (`resolveLoop`, `apps/mcp/src/tools.ts:52-53`) compares `ref.trim().toLowerCase()` with `l.name.toLowerCase()`. A loop stored as " Foo " or "Nightly  Triage" can't be found by its normal spelling. The web app also keeps its own copy of the comparison key (`apps/web/src/lib/loop-names.ts:8`). Moving `loopNameKey` into contracts, next to `isStorableLoopName`, would give one shared definition.
+4. **One test proves less than its name says (NO-CHANGE).** The test at `loop-names.test.ts:48` would also pass under a deferred transaction, because the INSERT would still fail with `SQLITE_BUSY` in WAL mode. I confirmed BEGIN IMMEDIATE from the library source instead:
+   - drizzle `libsql/session.js:61` calls `client.transaction()` with no mode;
+   - `@libsql/client` `sqlite3.js:323` defaults the mode to `"write"`;
+   - `@libsql/core` `util.js:3-5` maps `"write"` to `BEGIN IMMEDIATE`.
+
+   No duplicate can be created either way.
+5. **Old malformed draft names are refused on save, not at startup (NO-CHANGE).** An older build could store a lone surrogate in draft JSON while `loops.name` holds U+FFFD. Startup does not report this. Instead, the loop's next draft save returns 400 `LOOP_NAME_INVALID` until it is renamed. That matches the contract, which only requires startup refusal for duplicate and NUL names.
+
+## 3. Acceptance matrix
+| Criterion | Evidence | Result |
+|---|---|---|
+| Name comparison: trim, collapse whitespace runs, locale-independent lowercase; no Unicode normalization | `loop-names.ts:6-13`; `trim()` and `\s` cover the same characters | ✔ |
+| Names compared per owner only | Lookup filtered by owner (`loop-names.ts:37-40`); startup key includes `owner_id` (`store-format.ts:223`); test at `loop-names.test.ts:48` | ✔ |
+| Create, draft save, import and template copy checked inside the write transaction | `loops.ts:172-182, 407, 559-562`; `routes/loops.ts:209-220`; `templates.ts:31-48` | ✔ |
+| Renaming a loop to a case/space variant of its own name | Check excludes the loop itself (`exceptLoopId`); API test lines 56-57 | ✔ |
+| Concurrent requests | BEGIN IMMEDIATE confirmed in library source; one in-process lock serializes all database work (`db.ts:103-161`); API race test passes | ✔ |
+| Stale `DRAFT_CONFLICT` answered before name refusal | Token check runs in the per-loop queue before `saveDraft` (`routes/loops.ts:304-319`); test lines 58-66 | ✔ |
+| NUL and malformed UTF-16 refused; U+FFFD and emoji/supplementary characters kept | `contracts/loop.ts:15-17`; validity checked before conflicts; 400 `LOOP_NAME_INVALID` (`errors.ts:95-96`) | ✔ |
+| Suggestions advisory, kept within 120 characters, never split a surrogate pair | `loop-names.ts:46-58`; refusal returns 409, never auto-renames | ✔ |
+| Generated Chat names and device labels | Free name chosen in the same transaction; device label stored unchanged; bad characters replaced with U+FFFD; at most 85 characters fits the 120 limit | ✔ |
+| Startup refuses duplicate or NUL names before any store write, with repair/reset guidance | Read-only check (`container.ts:214-218`) runs before the writable open and before the WAL pragma (`db.ts:223`); guidance in `store-refusal.ts:41-44` | ✔ |
+| Loop IDs and history stable; no automatic conversion | No migration; published versions untouched; startup check only reads | ✔ |
+| Client sends a replacement name without changing the import file or skipping validation | Name goes in `?name=` (`resources.ts:111-124`); server re-parses the file with zod and runs full admission; `resources.test` checks the body is unchanged | ✔ |
+| Errors, auth and generated docs agree | Error body is problem+json with a `suggestedName` field, which the API client keeps on `problem`; MCP shows it in the detail text; OpenAPI, `schema.ts` and `api.md` match the routes | ✔ |
+| MCP duplicate-name test stays clearly synthetic | `mcp.test.ts:242-275` is commented as synthetic and calls the real `start_run` tool through the real `resolveLoop` | ✔ |
+| Deleting a loop frees its name | Correct in code, but untested | ✔ / follow-up 1 |
+
+## 4. Test-fixture corrections
+I checked all 15 test files changed after native QA, plus the earlier fixture renames.
+- Every behavior assertion is kept; the changes add distinct names or explicit `?name=` values.
+- Where an import's status code isn't checked, a hidden 409 would still fail the `issues` equality check (`gates.test.ts:119-120, 176-177`).
+- New explicit status checks were added in `classifiers.test` and `model-readiness.test`.
+- The `qa.test` round-trip now compares the `loop` part with the name overridden, instead of the whole export. The export's format fields are still enforced by the response schema.
+
+## 5. What I verified myself versus prior evidence
+- **Done myself:** read all changed backend, contracts and client code and every caller I could find (routes, voice, MCP draft tools, container startup, preflight, store refusal), plus the libsql/drizzle transaction source. I checked the identity ref files and found the new test files reported as passing in the CI log:
+  - infrastructure `loop-names.test.ts`: 4 tests;
+  - API `loop-names.test.ts`: 7 tests;
+  - API client `resources.test.ts`: 9 tests;
+  - `mcp.test.ts`: 12 tests.
+- **Not done:** I had no command execution, so I ran no tests, builds or git commands.
+- **Taken from records, not re-checked:** the 66-call backend QA, native Edge QA, coverage figures, the 406-blob check, and the Windows retry (#471 is still open).
+
+## 6. Scope and repository gates
+No new dependency, layer violation, migration, compatibility path, automatic stored-content repair, or lowered coverage. The extracted `database-types.ts` removes an import cycle. Behavior docs are updated (ADR-0073, docs/03, docs/07, the guides and CHANGELOG), apart from follow-up 2. I made no file changes.

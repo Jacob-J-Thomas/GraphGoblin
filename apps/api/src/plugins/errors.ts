@@ -3,6 +3,8 @@ import {
   ChatRepositoryError,
   SystemChatStorageError,
   InvalidStoredRunEventError,
+  InvalidLoopNameError,
+  LoopNameConflictError,
   LoopNotFoundError,
 } from '@graphgoblin/infrastructure/sqlite';
 import { ChatError, CHAT_ERROR_STATUS } from '../chat/errors.js';
@@ -90,6 +92,12 @@ export function registerErrorHandler(app: FastifyInstance): void {
 
   app.setErrorHandler(
     (error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) => {
+      if (error instanceof InvalidLoopNameError)
+        return problem(reply, 400, 'LOOP_NAME_INVALID', error.message);
+      if (error instanceof LoopNameConflictError)
+        return problem(reply, 409, 'LOOP_NAME_CONFLICT', error.message, undefined, {
+          suggestedName: error.suggestedName,
+        });
       if (error instanceof ChatError)
         return problem(reply, error.status, error.code, error.message);
       if (error instanceof SystemChatStorageError)

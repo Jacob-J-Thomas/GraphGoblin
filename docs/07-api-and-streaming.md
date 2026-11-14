@@ -130,6 +130,15 @@ nothing is saved ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversi
 paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt` under
 `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
 
+Create, draft save, import and template draft creation return
+`409 LOOP_NAME_CONFLICT` when another loop for the authenticated owner already has a
+case- and whitespace-equivalent name. The problem's `suggestedName` is an available name
+at the time of refusal. A client can retry an import with the same body and an explicit
+`name` query parameter, or a template request with `name` in its body. Admission is
+checked again on retry. An obsolete draft token retains the ordinary `DRAFT_CONFLICT`
+behavior and its server token.
+Names containing NUL or malformed UTF-16 receive `400 LOOP_NAME_INVALID` before a write.
+
 Responses and exports use format 4. A store in another format stops startup before
 ordinary migrations or recovery; no tolerant runtime reader exists.
 

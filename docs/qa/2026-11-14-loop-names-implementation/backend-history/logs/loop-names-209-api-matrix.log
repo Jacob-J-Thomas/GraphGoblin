@@ -1,0 +1,41 @@
+$ vitest run src/loop-names.test.ts src/routes/template-drafts.test.ts src/drafts.test.ts src/chat.test.ts
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/api
+
+ ❯ src/chat.test.ts (14 tests | 1 failed) 9042ms
+   ❯ native workflow chat (4)
+     × rejects boundary saves/deletion while preserving interior edits and ordinary imports 558ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/chat.test.ts > native workflow chat > rejects boundary saves/deletion while preserving interior edits and ordinary imports
+AssertionError: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ src/chat.test.ts:261:33
+    259|     expect(direct.json().code).toBe('CHAT_NOT_READY');
+    260|     const imported = await t.app.inject({ method: 'POST', url: '/loops…
+    261|     expect(imported.statusCode).toBe(201);
+       |                                 ^
+    262|     expect(imported.json().loop.system).toBeUndefined();
+    263|     const before = await t.container.repos.loops.listLoops('local');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 51 passed (52)
+   Start at  01:07:09
+   Duration  20.57s (tests 47%, import 31%, transform 22%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\apps\api
+

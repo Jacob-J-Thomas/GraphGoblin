@@ -20,10 +20,13 @@ import {
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { deviceStorageProblem } from '../drafts/local-drafts.js';
+import { focusById } from '../components/loop-name-conflict.js';
 import { focusFallback } from '../lib/focus.js';
+import { sameLoopName } from '../lib/loop-names.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
+import { NameConflictNotice } from './NameConflictNotice.js';
 import {
   DeviceBackup,
   UnpreservedDeviceCopy,
@@ -135,6 +138,7 @@ export function EditorPage() {
   useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
+  const nameConflict = useEditorStore((s) => s.nameConflict);
   const savedRevision = useEditorStore((s) => s.savedRevision);
   const revision = useEditorStore((s) => s.revision);
   const baseToken = useEditorStore((s) => s.baseToken);
@@ -265,6 +269,10 @@ export function EditorPage() {
       const saved = await flush();
       if (!saved && useEditorStore.getState().conflict)
         throw new Error('The draft changed on the server; reload it or overwrite it first.');
+      if (!saved && useEditorStore.getState().saveState === 'name-conflict')
+        throw new Error(
+          'Another loop already has this name; choose a different name before publishing.',
+        );
       if (!saved) throw new Error('The draft could not be saved; fix the issues below first.');
       try {
         return { version: await loops.publish(client, loopId) };
@@ -416,6 +424,52 @@ export function EditorPage() {
       else focusFallback(saveStatusRef.current);
     });
   };
+  // The name refusal applies while the draft still has the refused name (#209).
+  const showNameConflict =
+    nameConflict !== undefined && !conflict && sameLoopName(def.name, nameConflict.name);
+  /** Take the API's suggestion as an ordinary, undoable rename; autosave then tries it. */
+  const applySuggestedName = (name: string, inDialog: boolean) => {
+    // A step of its own, so Undo returns to the refused text rather than past the typing too.
+    useEditorStore.getState().closeStep();
+    useEditorStore.getState().updateMeta({ name });
+    useEditorStore.getState().closeStep();
+    // The notice leaves with the refused name. The save status reports the new attempt; inside
+    // the modal node dialog (the page behind is inert) focus stays in the dialog, on its title.
+    window.requestAnimationFrame(() => {
+      const dialog = inDialog ? document.querySelector('dialog[open]') : null;
+      const title = dialog?.getAttribute('aria-labelledby');
+      focusFallback(title ? document.getElementById(title) : saveStatusRef.current);
+    });
+  };
+  const editName = () => {
+    setPanelExpanded(true);
+    focusById('loop-name', true);
+  };
+  /**
+   * Send the refused name once more, for when the other loop has since been renamed. The
+   * permission goes with this one save only (`NameRetry`): ordinary autosaves keep holding the
+   * name, and a save that cannot send (invalid input, say) ends the attempt without sending.
+   */
+  const retryName = () => {
+    const state = useEditorStore.getState();
+    if (!state.loopId || !state.nameConflict || state.nameConflict.retrying) return;
+    const refusal = { ...state.nameConflict, retrying: true, retried: false };
+    state.setNameConflict(refusal);
+    state.setSaveState('pending');
+    void flush({ loopId: state.loopId, generation: state.generation, refusal });
+  };
+  const nameConflictNotice = (inDialog: boolean) =>
+    showNameConflict ? (
+      <NameConflictNotice
+        conflict={nameConflict}
+        currentName={def.name}
+        device={device}
+        inDialog={inDialog}
+        onUseSuggestion={(name) => applySuggestedName(name, inDialog)}
+        onEditName={editName}
+        onRetry={retryName}
+      />
+    ) : null;
 
   const notices = [
     voiceReview ? (
@@ -518,6 +572,7 @@ export function EditorPage() {
       </Alert>
     ) : null,
     conflict ? <ConflictNotice key="conflict" resolve={resolve} device={device} /> : null,
+    showNameConflict ? <div key="name-conflict">{nameConflictNotice(false)}</div> : null,
     showSaveNotice ? (
       <Alert
         key="save"
@@ -657,7 +712,13 @@ export function EditorPage() {
           definition={def}
           issues={validation.issues}
           loopId={loopId}
-          notice={conflict ? <ConflictNotice resolve={resolve} device={device} /> : null}
+          notice={
+            conflict ? (
+              <ConflictNotice resolve={resolve} device={device} />
+            ) : (
+              nameConflictNotice(true)
+            )
+          }
         />
       ) : null}
     </div>

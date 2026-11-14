@@ -1,13 +1,13 @@
 import { createClient, type Client, type Transaction } from '@libsql/client';
-import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { drizzle } from 'drizzle-orm/libsql';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { schema, type Schema } from './schema.js';
+import type { Database } from './database-types.js';
+import { schema } from './schema.js';
 import { guardCurrentStore, initializeFreshStore, migrateCurrentStore } from './store-format.js';
 
-export type Database = LibSQLDatabase<Schema>;
-export type SqliteTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+export type { Database, SqliteTransaction } from './database-types.js';
 
 export interface DatabaseHandle {
   client: Client;

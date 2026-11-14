@@ -1,0 +1,623 @@
+== actions.spec.ts:26
+   7:  test,
+   13:  for (
+   22:test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation', async ({
+   26:  const id = await publishLoop(request, approvalLoop('actions loop'));
+   28:  const trigger = page.getByRole('button', { name: 'Delete actions loop', exact: true });
+== actions.spec.ts:61
+   23:  await page.getByRole('button', { name: 'Export actions loop' }).click();
+   26:  await page.getByRole('button', { name: 'Confirm delete actions loop' }).click();
+   28:  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+   30:  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).not.toHaveAttribute(
+   36:test('Keep followed by a runs poll leaves body focus and Space opens no confirmation', async ({
+   41:  const id = await publishLoop(request, approvalLoop(name));
+== actions.spec.ts:513
+   28:  await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+   32:for (const confirmWith of ['mouse', 'keyboard'] as const) {
+   33:  for (const outcome of ['409', 'success'] as const) {
+   34:    for (const escapeCount of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 20]) {
+   35:      test(`busy Escape: ${confirmWith}, ${outcome}, ${escapeCount} presses`, async ({
+   41:        const id = await publishLoop(request, approvalLoop(name));
+== actions.spec.ts:711
+   14:    await page.getByRole('button', { name: 'Confirm revoke e2e' }).click();
+   18:    await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+   39:test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
+   41:  const id = await publishLoop(request, approvalLoop(name));
+== actions.spec.ts:749
+   1:test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
+   3:  const id = await publishLoop(request, approvalLoop(name));
+   24:    const button = page.getByRole('button', { name: `Export ${name}` });
+   39:test('review: pending double clicks cannot select status text', async ({ page, request }) => {
+   41:  const id = await publishLoop(request, approvalLoop(name));
+== bounded-history.spec.ts:20
+   10:test('bounded Timeline browses a long run with keyboard focus, exact threads and persisted resume', async ({
+   14:  test.setTimeout(180_000);
+   15:  const definition = replaySeedLoop('Bounded browser history');
+   20:  const loopId = await publishLoop(request, definition);
+== cron.spec.ts:20
+   7:  test,
+   13:async function createCronLoop(
+   15:  name: string,
+   19:  const definition = approvalLoop(name);
+== cron.spec.ts:127
+   7:    else await dialog.getByLabel(scenario.control).fill('');
+   13:    await dialog.getByRole('button', { name: /^Advanced Cron expression/ }).click();
+   26:    await page.getByRole('button', { name: /^Undo / }).click();
+   27:    await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+   37:test('switching trigger type to Cron waits for a schedule without a preview or mount edit', async ({
+   42:    data: { definition: approvalLoop('choose a cron schedule') },
+== cron.spec.ts:200
+   24:  await dialog.getByRole('button', { name: 'Advanced Cron expression 1 error' }).click();
+   26:  const badge = dialog.getByRole('button', { name: /issues? on start$/ });
+   29:    .getByRole('dialog', { name: 'Issues on start' })
+   30:    .getByRole('button', { name: /Error SCHEMA.*config.expression/ })
+   36:test('cron presets, keyboard days, timezone and custom source round trip through the real API', async ({
+   40:  const definition = approvalLoop('cron builder');
+== cron.spec.ts:298
+   15:test('preview and displayed slots equal the scheduler across London DST; invalid and unreachable feedback', async ({
+   40:  const definition = approvalLoop('cron DST');
+== decision-routes.spec.ts:117
+   1:  name: string,
+   40:async function openLoop(page: Page, request: APIRequestContext, definition = decisionLoop()) {
+== definition-pins.spec.ts:53
+   3:    name: 'E2E pinned draft',
+   37:test('a waiting draft run keeps its definition after the draft is edited in the editor', async ({
+   41:  const created = await request.post('/loops', { data: { definition: askThenReturn('"old"') } });
+== device-draft-format.spec.ts:12
+   11:async function create(request: APIRequestContext, name: string) {
+   12:  const response = await request.post('/loops', { data: { definition: approvalLoop(name) } });
+== device-first.spec.ts:5
+   4:async function create(request: APIRequestContext, name: string) {
+   5:  const response = await request.post('/loops', { data: { definition: approvalLoop(name) } });
+== drafts.spec.ts:28
+   18:async function describeLoop(page: Page, text: string): Promise<void> {
+   24:test('two tabs editing one draft: the stale tab is asked to reload or overwrite', async ({
+   29:    data: { definition: approvalLoop('qa conflict') },
+== drafts.spec.ts:83
+   19:  await describeLoop(a, 'tab A again');
+   23:  await describeLoop(b, 'tab B wins');
+   25:  await b.getByRole('button', { name: 'Overwrite with this copy' }).click();
+   32:  await describeLoop(a, 'tab A late');
+   37:test('a restored-draft notice stays dismissed through edits and returns after a restoring reload', async ({
+   42:    data: { definition: approvalLoop('server copy') },
+== drafts.spec.ts:162
+   9:  await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
+   14:  const dismissButtons = page.getByRole('button', { name: 'Dismiss notice' });
+   25:  await page.getByLabel('Description').fill('edited while the restore notice is dismissed');
+   33:  await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
+   37:test('an older version’s open connection blocks device drafts: the editor says so until it closes (review F2)', async ({
+   42:    data: { definition: approvalLoop('qa blocked storage') },
+== earlier-node-outputs.spec.ts:80
+== edge-labels.spec.ts:54
+   1:    name: 'S5 local label callout',
+== edge-routes.spec.ts:112
+   8:async function openLoop(page: Page, id: string, theme = 'dark') {
+   12:  for (const name of ['Hide palette', 'Hide loop settings']) {
+   17:  await page.getByRole('button', { name: 'Fit view' }).click();
+   40:async function createLoop(request: APIRequestContext, definition = crossingLoop()) {
+== edge-routes.spec.ts:518
+   6:  await openLoop(page, loopId);
+   8:  for (let i = 0; i < 31; i += 1) {
+   24:  await page.getByRole('button', { name: 'Publish' }).click();
+   28:test('routes survive export and import, publish pins them, and runs ignore them', async ({
+   32:  const definition = crossingLoop('Routed run');
+   35:  const loopId = await createLoop(request, definition);
+== editor-modal.spec.ts:19
+   15:  test,
+   18:async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
+== editor-modal.spec.ts:335
+   23:test('runs start from Runs: the editor links there, disabled with a reason until published', async ({
+   27:  const draftId = await createLoop(request, inputLoop('qa runs draft'));
+   29:  const disabled = page.getByRole('link', { name: 'Open in Runs' });
+   35:  await expect(page.getByRole('button', { name: 'Run', exact: true })).toHaveCount(0);
+   41:  const loopId = await publishLoop(request, inputLoop('qa runs published'));
+   43:  await page.getByRole('link', { name: 'Open in Runs' }).click();
+== form-controls.spec.ts:19
+   14:  test,
+   17:async function createLoop(request: APIRequestContext, kind: string, config: unknown) {
+   18:  const definition = approvalLoop(`controls ${kind}`);
+== form-controls.spec.ts:186
+   16:test('required fields are marked, and an error describes its control', async ({
+   20:  const id = await createLoop(request, 'script', { command: 'node' });
+   27:  await command.fill('');
+   33:  await command.fill('node');
+   37:test('the import file picker is a labelled native input that names the chosen file', async ({
+== form-controls.spec.ts:190
+   16:  const id = await createLoop(request, 'script', { command: 'node' });
+   23:  await command.fill('');
+   29:  await command.fill('node');
+   33:test('the import file picker is a labelled native input that names the chosen file', async ({
+   41:  await page.getByRole('textbox', { name: 'New loop name' }).fill('x');
+   42:  await page.getByRole('button', { name: 'Create', exact: true }).focus();
+== form-controls.spec.ts:191
+   15:  const id = await createLoop(request, 'script', { command: 'node' });
+   22:  await command.fill('');
+   28:  await command.fill('node');
+   32:test('the import file picker is a labelled native input that names the chosen file', async ({
+   40:  await page.getByRole('textbox', { name: 'New loop name' }).fill('x');
+   41:  await page.getByRole('button', { name: 'Create', exact: true }).focus();
+== form-controls.spec.ts:214
+   17:  await page.getByRole('textbox', { name: 'New loop name' }).fill('x');
+   18:  await page.getByRole('button', { name: 'Create', exact: true }).focus();
+   22:    name: 'not-a-loop.json',
+   34:test('the run form keeps a long choice inside its field and puts each problem beside its field', async ({
+   40:  const definition = approvalLoop('controls run form');
+   41:  const id = await publishLoop(request, {
+== forms.spec.ts:17
+   12:  test,
+   15:async function createLoop(request: APIRequestContext, config: unknown, kind = 'script') {
+   16:  const definition = approvalLoop(`forms ${kind}`);
+== forms.spec.ts:154
+   5:  await args.getByRole('button', { name: 'Remove args 2' }).focus();
+   7:  await expect(args.getByRole('button', { name: 'Add args', exact: true })).toBeFocused();
+   14:  await page.getByLabel('Env key 2').fill('A');
+   25:  await page.getByLabel('Env key 2').fill('B');
+   36:test('unparsed collection rows follow removal and rename, and stop blocking Publish when removed', async ({
+   40:  const definition = approvalLoop('structural JSON');
+== forms.spec.ts:293
+   5:  for (const source of [' ', '\u00a0']) {
+   6:    const rawId = await createLoop(request, { intervalSeconds: 5, until: source }, 'heartbeat');
+   18:test('empty and whitespace templates survive editing, API validation, publishing, and import', async ({
+   22:  const id = await createLoop(request, { command: 'cut', args: ['-d', 'before', '-f1', 'before'] });
+== forms.spec.ts:337
+   2:test('required whitespace expressions are reported by the form and API validation, import, and publish', async ({
+   6:  const id = await createLoop(
+   24:  const definition = approvalLoop('raw blank expression');
+== github-checks.spec.ts:13
+   4:for (const theme of ['light', 'dark']) {
+   5:  test(`GitHub graph preview, cancel, apply and keyboard undo in ${theme}`, async ({
+   14:      data: { definition: approvalLoop(`GitHub checks ${theme}`) },
+== github-triggers.spec.ts:47
+   22:function triggerLoop(name: string) {
+   40:async function createTriggerLoop(request: APIRequestContext, name: string): Promise<string> {
+   41:  const response = await request.post('/loops', { data: { definition: triggerLoop(name) } });
+== history.spec.ts:8
+   4:test('Runs appends a second page and preserves loop, status and parent filters', async ({
+   8:  const loopId = await publishLoop(request, { ...minimalLoop(), name: 'paging runs' });
+   10:  for (let i = 0; i < 101; i++) {
+== history.spec.ts:91
+   12:  const send = await publishEventLoop(request, ['paging-events'], url);
+   13:  for (let i = 0; i < 101; i++) {
+   20:  const more = page.getByRole('button', { name: 'Load more' });
+   36:test('Loops shows older history beyond 500 unrelated runs and a genuine never-run control', async ({
+   40:  test.setTimeout(120_000);
+   41:  const oldId = await publishLoop(request, { ...minimalLoop(), name: 'older history' });
+== history.spec.ts:94
+   33:test('Loops shows older history beyond 500 unrelated runs and a genuine never-run control', async ({
+   37:  test.setTimeout(120_000);
+   38:  const oldId = await publishLoop(request, { ...minimalLoop(), name: 'older history' });
+   41:  await publishLoop(request, { ...minimalLoop(), name: 'no history' });
+   42:  const busyId = await publishLoop(request, { ...minimalLoop(), name: 'busy history' });
+   43:  for (let i = 0; i < 501; i++) {
+== history.spec.ts:95
+   32:test('Loops shows older history beyond 500 unrelated runs and a genuine never-run control', async ({
+   36:  test.setTimeout(120_000);
+   37:  const oldId = await publishLoop(request, { ...minimalLoop(), name: 'older history' });
+   40:  await publishLoop(request, { ...minimalLoop(), name: 'no history' });
+   41:  const busyId = await publishLoop(request, { ...minimalLoop(), name: 'busy history' });
+   42:  for (let i = 0; i < 501; i++) {
+== issue-170-qa.spec.ts:461
+   11:  test(`I4/I5 ${entry.label}: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent`, async ({
+   22:    for (const text of ['{broken', JSON.stringify(entry.invalid)]) {
+   24:      await expect(sectionOf(editor).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+   32:    await expect(sectionOf(editor).getByRole('button', { name: 'Apply JSON' })).toBeEnabled();
+   34:    await dialog.getByLabel('Label', { exact: true }).fill('Saved while JSON is pending');
+   41:    await dialog.getByRole('button', { name: `Use structured editor for ${entry.label}` }).click();
+== issue-170-qa.spec.ts:472
+   11:    for (const text of ['{broken', JSON.stringify(entry.invalid)]) {
+   13:      await expect(sectionOf(editor).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+   21:    await expect(sectionOf(editor).getByRole('button', { name: 'Apply JSON' })).toBeEnabled();
+   23:    await dialog.getByLabel('Label', { exact: true }).fill('Saved while JSON is pending');
+   30:    await dialog.getByRole('button', { name: `Use structured editor for ${entry.label}` }).click();
+   41:        .getByRole('button', { name: `Use structured editor for ${entry.label}` })
+== issue-7-qa.spec.ts:70
+   14:      return { name: style.animationName, opacity: style.opacity };
+   34:test('I7-QA-03: reduced motion stops the running and live pulses at full opacity', async ({
+   41:  const loopId = await publishLoop(request, slowLoop('qa reduced motion', 'HELD PULSE'));
+== issue-7-qa.spec.ts:134
+   19:    for (const pulse of await pulses.all()) {
+   36:test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and the lists', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop(name));
+   43:  for (const viewport of [
+== issue-7-qa.spec.ts:153
+   22:  const loopId = await publishLoop(request, approvalLoop(name));
+   24:  for (const viewport of [
+   36:    await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
+   38:      page.getByRole('button', { name: /^(Show|Hide) loop settings$/ }),
+   40:    await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
+   41:    for (const path of ['/app/loops', '/app/runs']) {
+== issue-7-qa.spec.ts:166
+   23:    await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
+   25:      page.getByRole('button', { name: /^(Show|Hide) loop settings$/ }),
+   27:    await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
+   28:    for (const path of ['/app/loops', '/app/runs']) {
+   36:test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ page, request }) => {
+   41:  const loopId = await publishLoop(request, slowLoop('qa long text', 'LONG FAILURE'));
+== live-follow.spec.ts:66
+   37:test('following a fast run live refreshes bounded read models and reads no historical thread (#186)', async ({
+   41:  const loopId = await publishLoop(request, endlessCycle('Live follow'));
+== live-follow.spec.ts:148
+   15:    const heading = page.getByRole('heading', { name: /^Thread at event \d+$/ });
+   18:    await expect(page.getByRole('list', { name: 'Patch diff' })).toContainText('/vars/n');
+   27:    await page.getByRole('button', { name: 'Follow live' }).click();
+   28:    await expect(page.getByRole('heading', { name: 'Current thread' })).toBeVisible();
+   37:test('following live stays quiet for screen readers and keyboard focus can always leave (#186 QA)', async ({
+   41:  const loopId = await publishLoop(request, endlessCycle('Live follow accessibility'));
+== live.spec.ts:25
+   8:test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
+   10:test('LIVE: build, publish, and run an inference loop against Codex from the UI', async ({
+   14:  test.setTimeout(300_000);
+   25:  await page.getByLabel('New loop name').fill('live ok');
+   26:  await page.getByRole('button', { name: 'Create' }).click();
+   27:  await expect(page.getByRole('heading', { name: 'live ok' })).toBeVisible();
+== live.spec.ts:26
+   8:test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
+   10:test('LIVE: build, publish, and run an inference loop against Codex from the UI', async ({
+   14:  test.setTimeout(300_000);
+   25:  await page.getByLabel('New loop name').fill('live ok');
+   26:  await page.getByRole('button', { name: 'Create' }).click();
+   27:  await expect(page.getByRole('heading', { name: 'live ok' })).toBeVisible();
+== loop-back-topology.spec.ts:73
+   3:    name: 'Unmarked returns',
+== loop-lifecycle.spec.ts:13
+   8:test('draw a loop in the editor, publish it, run it, watch events, and provide input', async ({
+   13:  await page.getByLabel('New loop name').fill('e2e approval');
+   14:  await page.getByRole('button', { name: 'Create' }).click();
+== loop-lifecycle.spec.ts:14
+   8:test('draw a loop in the editor, publish it, run it, watch events, and provide input', async ({
+   13:  await page.getByLabel('New loop name').fill('e2e approval');
+   14:  await page.getByRole('button', { name: 'Create' }).click();
+   16:  await expect(page.getByRole('heading', { name: 'e2e approval' })).toBeVisible();
+== loop-lifecycle.spec.ts:79
+   19:  await page.getByRole('button', { name: 'Submit input' }).click();
+   34:  await page.getByRole('link', { name: 'Loops' }).click();
+   36:    page.getByRole('row', { name: /e2e approval/ }).locator('[data-status="succeeded"]'),
+   40:test('cancel a waiting run from the inspector', async ({ page, request }) => {
+   41:  const loopId = await publishLoop(request, approvalLoop('e2e cancel'));
+   43:  await page.getByRole('button', { name: 'Start run' }).click();
+== missing-session.spec.ts:53
+== model-effort.spec.ts:691
+   22:    .getByRole('region', { name: 'codex defaults' })
+   36:test('classifier keeps Question, Model, Answer visible and has no effort', async ({
+   40:  const source = minimalLoop();
+== model-picker.spec.ts:63
+   13:for (const requestedEffort of ['none', 'medium']) {
+   14:  test(`seeded GPT-6.1 Terra preserves inherited effort and publishes ${requestedEffort}`, async ({
+   32:    const source = inferenceLoop(`Terra ${requestedEffort}`);
+== model-picker.spec.ts:124
+   13:    await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+   14:    await page.getByRole('button', { name: 'Start run', exact: true }).click();
+   26:for (const theme of ['dark', 'light']) {
+   27:  test(`catalog model and effort publish and reach the harness (${theme})`, async ({
+   42:      data: { definition: inferenceLoop(`picker ${theme}`) },
+== model-picker.spec.ts:185
+   2:    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+   14:    await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+   15:    await page.getByRole('button', { name: 'Start run', exact: true }).click();
+   28:test('a saved model removed from the catalog stays selected and explicit unknown import is rejected', async ({
+   42:    data: { definition: inferenceLoop('imported unknown picker', 'imported-unknown-model') },
+== model-picker.spec.ts:191
+   8:    await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+   9:    await page.getByRole('button', { name: 'Start run', exact: true }).click();
+   22:test('a saved model removed from the catalog stays selected and explicit unknown import is rejected', async ({
+   36:    data: { definition: inferenceLoop('imported unknown picker', 'imported-unknown-model') },
+   42:    data: inferenceLoop('explicit unknown import', 'imported-unknown-model'),
+== model-picker.spec.ts:237
+   12:  await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+   33:test('catalog failure preserves the current values until retry and loop defaults share the picker', async ({
+   42:    data: { definition: inferenceLoop('failed catalog picker', chosen.model) },
+== model-picker.spec.ts:321
+   6:  const source = inferenceLoop('decision picker');
+   43:      definition: withDecision('max'),
+== model-picker.spec.ts:327
+   37:      definition: withDecision('max'),
+   41:  const created = await request.post('/loops', { data: { definition: withDecision('high') } });
+== model-picker.spec.ts:365
+   3:  const created = await request.post('/loops', { data: { definition: withDecision('high') } });
+   14:  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+   28:test('following a model issue keeps focus through a delayed catalog and a failed cached refresh', async ({
+   42:    data: { definition: inferenceLoop('delayed catalog focus', 'focus-unknown-model') },
+== node-harness.spec.ts:6
+   4:test('shows Harness on inference nodes only', async ({ page, request }) => {
+   5:  const source = minimalLoop();
+   6:  const loopId = await publishLoop(request, {
+   8:    name: 'node-harness',
+== node-json.spec.ts:24
+   23:  const loop = approvalLoop(`JSON ${kind}`);
+== node-json.spec.ts:258
+   27:  await timeout.fill('30');
+   29:  for (const [label, value] of [
+   34:    await dialog.getByRole('button', { name: `Edit as JSON: ${label}` }).click();
+   35:    const section = dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+   39:      .getByRole('button', { name: 'Apply JSON' })
+   41:    await dialog.getByRole('button', { name: `Use structured editor for ${label}` }).click();
+== node-placement.spec.ts:25
+   24:  const loop = approvalLoop(`Placement ${kind}`);
+== own-session.spec.ts:27
+   4:test('the editor saves opt-in own continuity and a visible optional reset', async ({
+   8:  const base = minimalLoop();
+   11:    name: 'qa own continuity',
+== palette-placement.spec.ts:66
+   11:  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+   17:      name: item.getAttribute('data-testid') ?? item.textContent,
+   35:test('palette authoring clears a three-output Decision and keeps converging labels apart', async ({
+   39:  test.setTimeout(90_000);
+== palette.spec.ts:5
+   4:async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
+== prereview.spec.ts:6
+   3:for (const from of ['manual', 'event']) {
+   4:  test(`untouched UTC previews after ${from} to Cron`, async ({ page, request }) => {
+   5:    const definition = approvalLoop('Synthetic cron setup');
+== prereview.spec.ts:49
+   26:test('Fit View contains every rendered card of a synthetic 29-node graph between open panels', async ({
+   30:  const base = approvalLoop('Synthetic long graph');
+== pwa.spec.ts:31
+   25:for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspector'].entries()) {
+   26:  test(`${screen} recovers after the API listener restarts with the browser online`, async ({
+   31:    const loopId = await publishLoop(request, approvalLoop(name));
+== pwa.spec.ts:87
+   37:test('a loaded run inspector reports a stream outage and resumes without navigation', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop('Loaded stream recovery'));
+== pwa.spec.ts:126
+   2:  const loopId = await publishLoop(request, approvalLoop('Loaded stream recovery'));
+   9:  const live = page.getByRole('heading', { name: /Timeline .* live\)/ });
+   36:test('an offline editor draft saves after the API listener returns without navigation', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop(name));
+== pwa.spec.ts:169
+   9:    await page.getByLabel('Description').fill('draft kept through an API outage');
+   37:test('clean event-stream closes retain backoff without refetch or worker-update churn', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop('Clean stream backoff'));
+== pwa.spec.ts:500
+   2:    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+   3:    await expect(clean.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+   35:test('cold offline Loops reload recovers on reconnect without navigating', async ({
+   41:  await publishLoop(request, approvalLoop(name));
+== qa.spec.ts:65
+   24:    .getByRole('list', { name: 'Timeline' })
+   31:test('a subloop child run opens in the inspector and replays from its seeded thread', async ({
+   41:  const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+   42:  const parentId = await publishLoop(request, {
+   43:    ...chain('qa parent', {
+== qa.spec.ts:66
+   23:    .getByRole('list', { name: 'Timeline' })
+   30:test('a subloop child run opens in the inspector and replays from its seeded thread', async ({
+   40:  const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+   41:  const parentId = await publishLoop(request, {
+   42:    ...chain('qa parent', {
+== qa.spec.ts:102
+   4:  const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+   5:  const parentId = await publishLoop(request, {
+   6:    ...chain('qa parent', {
+   27:  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').first().click();
+   34:test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+   41:  const loopId = await publishLoop(request, chain('qa many', ask('MANY ITEMS')));
+== qa.spec.ts:179
+   7:  for (const type of ['harness.session', 'harness.usage', 'harness.turn', 'harness.submission'])
+   23:  await page.getByRole('spinbutton', { name: 'Event sequence' }).fill('601');
+   24:  await page.getByRole('button', { name: 'Go to event' }).click();
+   34:test('failure reasons are typed and visible: harness failure and decider unavailable', async ({
+   41:  const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+== qa.spec.ts:220
+   8:      name: 'qa decider',
+   41:    const loopId = await publishLoop(request, decide);
+== qa.spec.ts:234
+   27:    const loopId = await publishLoop(request, decide);
+   37:test('the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop('qa syntax'));
+== qa.spec.ts:316
+   3:  await page.getByRole('button', { name: 'Publish' }).click();
+   21:  await page.getByRole('button', { name: 'Publish' }).click();
+   30:  for (
+   39:test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+   41:  await page.getByLabel('New loop name').fill('qa keyboard');
+   43:  await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
+== qa.spec.ts:317
+   2:  await page.getByRole('button', { name: 'Publish' }).click();
+   20:  await page.getByRole('button', { name: 'Publish' }).click();
+   29:  for (
+   38:test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+   40:  await page.getByLabel('New loop name').fill('qa keyboard');
+   42:  await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
+== qa.spec.ts:380
+   25:  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
+   28:  await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
+   30:  await expect(waitDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+   35:  await tabTo(page, page.getByRole('button', { name: 'Publish' }), { back: true });
+   40:test('an edit made right before leaving the editor is kept', async ({ page, request }) => {
+   41:  const loopId = await publishLoop(request, approvalLoop('qa leave'));
+== qa.spec.ts:400
+   21:  const loopId = await publishLoop(request, approvalLoop('qa leave'));
+   24:  await page.getByLabel('Description').fill('typed just before leaving');
+   26:  await page.getByRole('link', { name: 'Runs', exact: true }).click();
+   27:  await expect(page.getByRole('heading', { name: 'Runs' })).toBeVisible();
+   40:test('Settings defaults reach the next run without a restart', async ({ page, request }) => {
+   41:  const loopId = await publishLoop(request, chain('qa defaults', ask('defaults check')));
+== qa.spec.ts:485
+   12:  await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+   13:  await page.getByRole('button', { name: 'Use key' }).click();
+   20:  await page.getByRole('link', { name: 'Settings' }).click();
+   21:  await page.getByRole('button', { name: 'Forget key' }).click();
+   27:test('with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered', async ({
+   41:  const loopId = await publishLoop(api, approvalLoop('qa key deep links'));
+== qa.spec.ts:514
+   17:  for (const [path, live] of [
+   25:    await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+   26:    await page.getByRole('button', { name: 'Use key' }).click();
+   28:      await expect(page.getByRole('heading', { name: 'qa key deep links' })).toBeVisible();
+   37:test('main screens fit 1024x768 without horizontal scrolling, and deep links load cold', async ({
+   41:  const loopId = await publishLoop(request, approvalLoop('qa viewport'));
+== qa.spec.ts:522
+   17:    await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+   18:    await page.getByRole('button', { name: 'Use key' }).click();
+   20:      await expect(page.getByRole('heading', { name: 'qa key deep links' })).toBeVisible();
+   29:test('main screens fit 1024x768 without horizontal scrolling, and deep links load cold', async ({
+   33:  const loopId = await publishLoop(request, approvalLoop('qa viewport'));
+   40:  for (const path of [
+== recovery-eligibility.spec.ts:50
+   36:test('child directs recovery to its parent; two tabs Resume the same parent and child exactly once', async ({
+   41:  const childLoop = await publishLoop(request, chain('Recovery child', inference));
+   42:  const parentLoop = await publishLoop(
+== recovery-eligibility.spec.ts:51
+   35:test('child directs recovery to its parent; two tabs Resume the same parent and child exactly once', async ({
+   40:  const childLoop = await publishLoop(request, chain('Recovery child', inference));
+   41:  const parentLoop = await publishLoop(
+   43:    chain('Recovery parent', {
+== recovery-eligibility.spec.ts:127
+   9:  for (const tab of [page, other]) {
+   11:    await tab.getByRole('button', { name: 'Resume', exact: true }).click();
+   24:  for (const id of [parent.id, child.id]) {
+   37:test('stale inspector Resume is refused after API recovery, with no second attempt', async ({
+   41:  const loop = await publishLoop(request, chain('Stale recovery', inference));
+== recovery-eligibility.spec.ts:160
+   4:test('stale inspector Resume is refused after API recovery, with no second attempt', async ({
+   8:  const loop = await publishLoop(request, chain('Stale recovery', inference));
+   11:  await expect(page.getByRole('button', { name: 'Resume', exact: true })).toBeEnabled();
+   21:  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+   36:test('two tabs Replay one observed intent into one separate linked run; repeat clicks cannot add a fork', async ({
+   41:  const loop = await publishLoop(request, { ...minimalLoop(), name: 'Replay identity' });
+== recovery-eligibility.spec.ts:221
+   8:  for (const tab of [page, other]) {
+   10:    await tab.getByRole('button', { name: 'Create replay run' }).click();
+   37:test('repeat browser clicks admit one Resume and one Replay intent and preserve the exact identities', async ({
+   41:  const loop = await publishLoop(request, chain('Repeat recovery clicks', inference));
+== replay-seed.spec.ts:17
+   12:test('a replay inspector shows inherited counters and values at its first event', async ({
+   16:  const definition = LoopDefinitionSchema.parse(replaySeedLoop('Browser replay seed'));
+   17:  const loopId = await publishLoop(request, definition);
+== responsive.spec.ts:186
+   41:  const child = await publishLoop(request, approvalLoop('responsive child'));
+== responsive.spec.ts:214
+   13:  const child = await publishLoop(request, approvalLoop('responsive child'));
+== responsive.spec.ts:247
+   12:        name: 'responsive dialogs',
+   31:for (const theme of ['dark', 'light'] as const) {
+   32:  test.describe(`responsive ${theme}`, () => {
+   41:      const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
+== responsive.spec.ts:250
+   9:        name: 'responsive dialogs',
+   28:for (const theme of ['dark', 'light'] as const) {
+   29:  test.describe(`responsive ${theme}`, () => {
+   38:      const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
+   41:      const send = await publishEventLoop(request, ['issue-opened']);
+== responsive.spec.ts:260
+   19:  test.describe(`responsive ${theme}`, () => {
+   28:      const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
+   31:      const send = await publishEventLoop(request, ['issue-opened']);
+   36:    test('the full published-with-changes state fits a stacked Loops row at 360 px', async ({
+   40:      const definition = approvalLoop(`responsive changed loop ${theme}`);
+   41:      const loopId = await publishLoop(request, definition);
+== responsive.spec.ts:320
+   2:        for (const rect of range.getClientRects()) {
+   4:          for (let parent: Element | null = el; parent; parent = parent.parentElement) {
+   10:              /^(auto|scroll|hidden|clip)$/.test(css.overflowX) &&
+   15:              /^(auto|scroll|hidden|clip)$/.test(css.overflowY) &&
+   27:    test('screens and transient states fit at 360, 768, 1024, and 1440 px', async ({
+== responsive.spec.ts:576
+   3:    test('a Settings form turns into one column of full-width fields at 360 px', async ({
+   7:      const form = page.getByRole('form', { name: 'Set secret' });
+   10:      const submit = form.getByRole('button', { name: 'Set secret' });
+   35:    test('at 768 px the editor selects, edits, connects, validates, and publishes a node', async ({
+   40:      const definition = approvalLoop('responsive editor');
+== responsive.spec.ts:629
+   9:      await dialog.getByLabel('Label', { exact: true }).fill('Approve release');
+   23:      await page.getByRole('button', { name: 'Publish', exact: true }).click();
+   29:      await page.getByRole('button', { name: 'Show loop settings' }).click();
+   30:      const panel = page.getByRole('complementary', { name: 'Loop settings' });
+   36:    test('at 768 px keyboard authoring adds, edits, connects, validates, and publishes', async ({
+   40:      const definition = approvalLoop('responsive keyboard');
+== responsive.spec.ts:761
+   3:    test('on a coarse pointer the controls are at least 44 px', async ({
+   39:        for (const [path, ready] of [
+== responsive.spec.ts:941
+== responsive.spec.ts:1000
+   5:        for (const zoom of [1, 0.784, 0.5, 1.2]) {
+== responsive.spec.ts:1041
+   8:        for (const zoom of [0.6, 0.8, 1, 0.784, 0.5, 0.7, 0.9, 0.5]) await zoomTo(page, zoom);
+   33:    test('at 200% zoom (1024 by 768 px) Loops, the editor, a run, and Settings reflow without sideways scrolling', async ({
+   40:      for (const [path, ready] of [
+== routing.spec.ts:54
+   1:  forwardLoopBack,
+   10:test.use({ actionTimeout: 15_000, trace: 'off' });
+== template-gallery.spec.ts:94
+   16:    const card = gallery.getByRole('region', { name: manifest.title, exact: true });
+   19:    const use = card.getByRole('button', { name: `Use ${manifest.title}`, exact: true });
+   32:for (const width of [1440, 390, 320]) {
+   33:  test(`gallery fits at ${width}px and its Use button follows the opener in keyboard order`, async ({
+   38:    const opener = page.getByRole('button', { name: 'New from template' });
+   41:    const use = page.getByRole('button', { name: 'Use Starter assistant', exact: true });
+== template-gallery.spec.ts:140
+   1:    const gallery = page.getByRole('region', { name: 'Choose a template' });
+   2:    for (const card of await gallery.getByRole('region').all()) {
+   19:test('retains keyboard focus and guards all cards while a copy is pending', async ({ page }) => {
+   31:  await page.getByRole('button', { name: 'New from template' }).click();
+   33:    .getByRole('region', { name: 'Starter assistant', exact: true })
+   41:  const other = page.getByRole('button', { name: 'Use Implementation workflow', exact: true });
+== template-gallery.spec.ts:173
+   8:  const other = page.getByRole('button', { name: 'Use Implementation workflow', exact: true });
+   19:test('announces failed creation, keeps focus and retries only on a new activation', async ({
+   40:  await page.getByRole('button', { name: 'New from template' }).click();
+   41:  const create = page.getByRole('button', { name: 'Use Starter assistant', exact: true });
+== template-gallery.spec.ts:202
+   11:  await page.getByRole('button', { name: 'New from template' }).click();
+   12:  const create = page.getByRole('button', { name: 'Use Starter assistant', exact: true });
+   28:test('creates independent copies and leaves other drafts and the catalog unchanged after editing', async ({
+   33:  for (let index = 0; index < 2; index += 1) {
+   35:    await page.getByRole('button', { name: 'New from template' }).click();
+   41:    await page.getByRole('button', { name: 'Use Starter assistant', exact: true }).click();
+== template-gallery.spec.ts:253
+   11:    .getByRole('textbox', { name: 'Description', exact: true })
+   12:    .fill('Only this copy was edited.');
+   22:  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
+   25:    .fill('Only this copy uses this prompt.');
+   27:  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+== template-gallery.spec.ts:274
+   1:  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
+   4:    .fill('Only this copy uses this prompt.');
+   6:  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+   26:test('opens the QA starting point as an ordinary copy without configured-parent isolation warnings', async ({
+   35:  await page.getByRole('button', { name: 'New from template' }).click();
+   41:  await page.getByRole('button', { name: 'Use QA assessment', exact: true }).click();
+== trigger-types.spec.ts:12
+   3:for (const theme of ['light', 'dark']) {
+   4:  test(`trigger types and optional preset keyboard review in ${theme}`, async ({
+   13:      data: { definition: approvalLoop(`trigger types ${theme}`) },
+== trigger-types.spec.ts:127
+   14:    await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+   16:    await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
+   19:    await expect(preview.getByRole('button', { name: 'Apply GitHub preset' })).toBeFocused();
+   35:for (const width of [360, 1440]) {
+   36:  test(`general webhook configuration persists and validates at ${width}px`, async ({
+   42:      data: { definition: approvalLoop(`general webhook ${width}`) },
+== undo.spec.ts:11
+   10:async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
+== unlimited-mode.spec.ts:7
+   3:test('visible defaults and explicit unlimited persist; inspector shows the pin', async ({
+   8:    data: { definition: approvalLoop('WP-F3 limits') },
+== unlimited-mode.spec.ts:91
+   5:  await page.getByRole('combobox', { name: 'Run deadline seconds mode' }).selectOption('unlimited');
+   9:  await expect(page.getByRole('combobox', { name: 'Maximum node visits mode' })).toHaveValue(
+   12:  await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue(
+   16:    page.getByRole('spinbutton', { name: 'Structured completion milliseconds' }),
+   36:test('a repeat gate persists Unlimited passes through the node editor', async ({
+   40:  const definition = approvalLoop('WP-F3 unlimited gate');
+== validation.spec.ts:12
+   11:async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
+== webhook-delivery.spec.ts:33
+   29:test('inspector retains unknown acknowledgement after a rejection and eventual success', async ({
+== webhook-delivery.spec.ts:97
+   7:    page.getByRole('region', { name: 'Webhook delivery' }).getByText(/HTTP 429/),
+   21:test.beforeAll(async () => {
+   30:test.afterAll(async () => {
+   35:for (const finalStatus of [200, 400]) {
+   36:  test(
+== webhook-delivery.spec.ts:162
+   10:      await expect(page.getByRole('heading', { name: /^Timeline .*live\)/ })).toBeVisible();
+   13:      for (const res of held) res.writeHead(finalStatus).end('ack');
+   22:      await expect(page.getByRole('heading', { name: /^Timeline .*complete\)/ })).toBeVisible();
+   29:test('remote resume that finishes between polls stays live while its webhook is pending', async ({
+   41:  const loopId = await publishLoop(request, {
+   43:    name: 'Remote resume delivery completion',
+== webhook-receiver.spec.ts:14
+   4:test('the published receiver address accepts a JSON delivery and creates a run', async ({
+   8:  const definition = approvalLoop('Webhook receiver address');
+   14:  const loopId = await publishLoop(request, {

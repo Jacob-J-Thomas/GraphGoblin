@@ -222,12 +222,6 @@ describe('MCP server against the in-process API', () => {
     const missingId = await call('describe_loop', { loopId: fakeUlid('no-such-loop') });
     expect(text(missingId)).toMatch(/^LOOP_NOT_FOUND: .*list_loops/);
 
-    await t.publishLoop({ ...minimalLoop(), name: 'twin' });
-    await t.publishLoop({ ...minimalLoop(), name: 'Twin' });
-    const ambiguous = await call('start_run', { loopId: 'twin' });
-    expect(ambiguous.isError).toBe(true);
-    expect(text(ambiguous)).toMatch(/^AMBIGUOUS_LOOP_NAME: 2 loops/);
-
     const unpublished = await call('start_run', { loopId: draftId });
     expect(unpublished.isError).toBe(true);
     expect(text(unpublished)).toMatch(/^GraphGoblin API error [A-Z_]+ \(HTTP 4\d\d\)/);
@@ -243,6 +237,41 @@ describe('MCP server against the in-process API', () => {
       finished: true,
       run: { status: 'succeeded', versionId: fromDraft.versionId, pinned: fromDraft.pinned },
     });
+  });
+
+  it('maps an ambiguous loop name from a controlled upstream to a coded MCP error', async () => {
+    // The current API rejects equivalent names. This synthetic upstream response keeps the
+    // MCP resolver's defensive ambiguity error covered without claiming the API admits duplicates.
+    const server = createMcpServer({
+      apiUrl: 'http://controlled-upstream.test',
+      fetch: (request) => {
+        expect(request.method).toBe('GET');
+        expect(new URL(request.url).pathname).toBe('/loops');
+        return Promise.resolve(
+          Response.json({
+            items: [
+              { id: fakeUlid('ambiguous-twin-1'), name: 'Twin' },
+              { id: fakeUlid('ambiguous-twin-2'), name: 'twin' },
+            ],
+          }),
+        );
+      },
+    });
+    const ambiguousClient = new Client({ name: 'controlled-upstream-test', version: '1.0.0' });
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverSide);
+    await ambiguousClient.connect(clientSide);
+    try {
+      const ambiguous = await ambiguousClient.callTool({
+        name: 'start_run',
+        arguments: { loopId: 'twin' },
+      });
+      expect(ambiguous.isError).toBe(true);
+      expect(text(ambiguous)).toMatch(/^AMBIGUOUS_LOOP_NAME: 2 loops/);
+    } finally {
+      await ambiguousClient.close();
+      await server.close();
+    }
   });
 
   it('starts a run, waits for it, and records the manual.mcp source', async () => {

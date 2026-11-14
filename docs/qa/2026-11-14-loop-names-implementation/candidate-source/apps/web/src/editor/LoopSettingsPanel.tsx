@@ -1,0 +1,140 @@
+import {
+  LoopDefinitionSchema,
+  LoopSettingsSchema,
+  VariableDeclarationsSchema,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
+import { z } from 'zod';
+import {
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  RequiredNote,
+  Textarea,
+} from '../components/ui/index.js';
+import { LoopNameTakenHelp } from '../components/loop-name-conflict.js';
+import { SchemaForm } from '../forms/SchemaForm.js';
+import { sameLoopName } from '../lib/loop-names.js';
+import { FieldLabelsContext } from '../forms/fields/shared.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { LOOP_FIELD_CONTROLS } from './field-controls.js';
+import type { EditorIssue } from './model.js';
+import { SYSTEM_CHAT_VARIABLE_FIELDS } from './SystemChatFields.js';
+import { useEditorStore } from './store.js';
+
+const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
+
+/**
+ * Loop name, description, settings, and declared variables (name to JSON Schema). The forms keep
+ * their own state: remount this (a `key`) when the definition is replaced, as a load does.
+ */
+export function LoopSettingsPanel({
+  definition,
+  issues = [],
+  system = false,
+}: {
+  definition: LoopDefinitionInput;
+  system?: boolean;
+  issues?: readonly EditorIssue[] | undefined;
+}) {
+  const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
+  const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  // The contract's own message for a name it refuses (a blank one, say).
+  const nameError = LoopDefinitionSchema.shape.name.safeParse(definition.name).error?.issues[0]
+    ?.message;
+  // The API's refusal of this name for another loop's (#209), while the field still holds it. The
+  // editor's notice announced it, so this only describes the field (no second announcement).
+  const nameConflict = useEditorStore((s) => s.nameConflict);
+  const nameTaken =
+    !nameError && nameConflict !== undefined && sameLoopName(definition.name, nameConflict.name);
+  return (
+    <section aria-label="Loop settings" className="grid gap-field">
+      <RequiredNote />
+      <FieldGroup>
+        <Label htmlFor="loop-name" required>
+          Name
+        </Label>
+        <Input
+          id="loop-name"
+          aria-required
+          aria-invalid={nameError || nameTaken ? true : undefined}
+          aria-describedby={
+            nameError ? 'loop-name-error' : nameTaken ? 'loop-name-taken' : undefined
+          }
+          value={definition.name}
+          onChange={(e) => updateMeta({ name: e.target.value })}
+        />
+        {nameError ? (
+          <HelpText id="loop-name-error" role="alert" tone="bad">
+            {nameError}
+          </HelpText>
+        ) : null}
+        {nameTaken ? (
+          // The suggestion and Try again stay in the editor's notice, so the page offers one of each.
+          <LoopNameTakenHelp id="loop-name-taken" live={false} conflict={nameConflict} />
+        ) : null}
+      </FieldGroup>
+      <FieldGroup>
+        <Label htmlFor="loop-description">Description</Label>
+        <Textarea
+          id="loop-description"
+          className="font-sans"
+          value={definition.description ?? ''}
+          onChange={(e) => updateMeta({ description: e.target.value })}
+        />
+      </FieldGroup>
+      <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
+      <HelpText>
+        Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum
+        passes for an intentional repeat. The elapsed execution deadline includes waits and pauses.
+        There is no run deadline unless you set one. Structured completion milliseconds bounds each
+        LLM decision evaluation or output-transform repair through the structured port when Limited;
+        it defaults to Unlimited. Same-session inference schema repairs follow the node timeout.
+        Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+      </HelpText>
+      <CatalogWarningsContext
+        value={issues
+          .filter((issue) => !issue.nodeId && issue.path?.startsWith('settings.'))
+          .map((issue) => ({ ...issue, path: issue.path?.slice('settings.'.length) }))}
+      >
+        <FieldLabelsContext
+          value={{
+            structuredTimeoutMs: 'Structured completion milliseconds',
+            maxNodeVisits: 'Maximum node visits',
+            runDeadlineSeconds: 'Run deadline seconds',
+          }}
+        >
+          <SchemaForm
+            schema={LoopSettingsSchema}
+            controls={LOOP_FIELD_CONTROLS}
+            value={definition.settings ?? {}}
+            label="Loop settings form"
+            onChange={updateSettings}
+            parseErrors={fieldErrors['settings']}
+            onParseError={(path, error, reason, change) =>
+              setFieldError('settings', path, error, reason, change)
+            }
+          />
+        </FieldLabelsContext>
+      </CatalogWarningsContext>
+      <div className="mt-2 grid gap-1">
+        <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Variables</h3>
+        <HelpText>Each variable maps a name to a JSON Schema.</HelpText>
+      </div>
+      <SchemaForm
+        schema={VariablesFormSchema}
+        fieldOverrides={system ? SYSTEM_CHAT_VARIABLE_FIELDS : undefined}
+        value={{ variables: definition.variables ?? {} }}
+        label="Variables form"
+        onChange={(value, change) =>
+          updateVariables((value as { variables?: unknown }).variables ?? {}, change)
+        }
+        parseErrors={fieldErrors['variables']}
+        onParseError={(path, error, reason, change) =>
+          setFieldError('variables', path, error, reason, change)
+        }
+      />
+    </section>
+  );
+}

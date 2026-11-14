@@ -1,0 +1,102 @@
+{
+  "title": "Issue #209 / PR #470 infrastructure fixture correction",
+  "status": "Committed locally; corrected CI pending",
+  "correctionCommit": "bc9a7138dcb9b06c26e7fca92a377b7fd9599737",
+  "baseline": {
+    "commit": "34cdf722a928b38e0d1d23e593734af4394bd063",
+    "branch": "codex/gg-20261114-loop-names"
+  },
+  "firstCi": {
+    "run": "43597212461",
+    "failedTests": 17,
+    "breakdown": {
+      "definitionPins": 4,
+      "historyCleanup": 2,
+      "historySummaries": 11
+    },
+    "originalLogSha256": "2bd201caf31409b317e8ea87c81b45e74ab8141148786f3448774d8560bb0697",
+    "compactCopy": "first-ci-failure.log"
+  },
+  "sourceFiles": [
+    {
+      "path": "packages/infrastructure/src/sqlite/definition-pins.test.ts",
+      "baselineGitBlob": "e610bcdaff347ebd7cb166753c6524fa4ad3ba32",
+      "baselineSha256": "92cc636e625b2827d12a13912c6f115d9acc16a003b7b858a26ddf887d496580",
+      "correctedSha256": "14ec84bf04c71ddbc9eb537b023611807ef038e967ecffa29c1fc733bf1cec19"
+    },
+    {
+      "path": "packages/infrastructure/src/sqlite/history-cleanup.test.ts",
+      "baselineGitBlob": "bc2546d421d11002e3d7ac7383c81b2ac2e764b4",
+      "baselineSha256": "2908e1349754a95e7a468c8ab8e38205902578f018df58fea7527335b1e378cf",
+      "correctedSha256": "fd51a20253984d8d9acd1ae4e098f82fa2539e7123bbdc030efa47fc60384607"
+    },
+    {
+      "path": "packages/infrastructure/src/sqlite/history-summaries.test.ts",
+      "baselineGitBlob": "d8468eed6795aac4f23dde11f60ac33ed166be6f",
+      "baselineSha256": "ac8a7a6e2dca9da5d66ec7c4224fe57e91224a738fe36ae39f8b70a96fc454e1",
+      "correctedSha256": "11189f9409cb24679caebdf56eee1d6e0fda498cf101b926512be263cdf094be"
+    }
+  ],
+  "verification": {
+    "prettier": {
+      "command": "pnpm.cmd exec prettier --check README.md and three changed fixture files",
+      "result": "passed",
+      "fullLogRetainedInExternalPreparationArchive": "logs/preparation/05-prettier-final.log",
+      "publicationReadmeOnlyLog": "prettier-check.log",
+      "publicationReadmeOnlyExit": 0
+    },
+    "infrastructureLint": {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure lint",
+      "result": "passed",
+      "log": "infrastructure-lint.log",
+      "exit": 0
+    },
+    "diffCheck": "passed",
+    "reversePatchCheck": "passed",
+    "tests": "not run locally; corrected full CI pending",
+    "typecheck": "not run locally; corrected full CI pending",
+    "build": "not run locally"
+  },
+  "preparationArchive": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\names-209-infrastructure-fixtures\\",
+    "artifactCount": 22,
+    "artifactBytes": 378345,
+    "manifestSha256": "cc7eefcad3231f278cf7275818030612fca5a301545802fab1e18535a34ed1ed",
+    "manifestBytes": 9477,
+    "readmeSha256": "b1d9204df8d6bb48b0a27b2b0d9c0964dc4ba0dce4c20ca7520bd8bbb3282f97",
+    "readmeBytes": 2312
+  },
+  "artifacts": [
+    {
+      "path": ".gitattributes",
+      "bytes": 56,
+      "sha256": "3c4e1f3efc32d50247f58c175cc56c382cc6959681aa8376238ed3516fb5eb91"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2203,
+      "sha256": "332811c05123df793d35e4152e40c776debb02ab210fca34365b404aba85d637"
+    },
+    {
+      "path": "first-ci-failure.log",
+      "bytes": 178539,
+      "sha256": "2bd201caf31409b317e8ea87c81b45e74ab8141148786f3448774d8560bb0697"
+    },
+    {
+      "path": "fixture-correction.patch",
+      "bytes": 4112,
+      "sha256": "f8d31471c1dbe8823877410115e0f4c69bd003e0bcc4aa09817d041462ddb7eb"
+    },
+    {
+      "path": "infrastructure-lint.log",
+      "bytes": 12,
+      "sha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+    },
+    {
+      "path": "prettier-check.log",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    }
+  ],
+  "manifestSelfHash": "excluded"
+}

@@ -145,8 +145,14 @@ describe('SQLite history queries', () => {
     ['thread_snapshot', '{broken'],
   ])('isolates damaged latest %s without substituting an older run', async (column, value) => {
     const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
-    const damaged = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
-    const healthy = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    const damaged = await loops.create(
+      'local',
+      LoopDefinitionSchema.parse({ ...minimalLoop(), name: 'damaged summary' }),
+    );
+    const healthy = await loops.create(
+      'local',
+      LoopDefinitionSchema.parse({ ...minimalLoop(), name: 'healthy summary' }),
+    );
     const runs = new SqliteRunRepository(handle.db);
     const seed = async (tag: string, loopId: string, createdAt = FIXTURE_TS) => {
       const id = fakeUlid(tag);

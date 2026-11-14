@@ -2,7 +2,7 @@
 
 ## Edit the starter graph
 
-1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
+1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop. Each of your loops needs its own name, and names that differ only in letter case or spacing count as the same (see [Loop names](#loop-names)).
 2. Drag a node from the left palette onto the canvas, or click its palette button to add it below the lowest card's bottom with clearance for all its output ports. The canvas pans to the selected new node; existing nodes keep their positions. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged.
 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
@@ -38,6 +38,16 @@ If the server saved a newer draft, an untouched editor switches to it and offers
 The restored-draft notice and notices about schema-invalid, offline, or failed saves can be dismissed. The toolbar continues to show when changes are kept only on this device or a save has failed. A dismissed restore notice stays hidden while editing that loaded draft and appears again if a later reload restores it. A dismissed save notice stays hidden through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load.
 
 Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears (inside the node dialog too, when one is open), autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes and undo history and closing the dialog) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
+
+### Loop names
+
+Each of your loops has its own name. Names are compared after trimming the ends, treating any run of spaces, tabs or line breaks as one space, and ignoring letter case, so `Nightly  Triage` and `nightly triage` are the same name; the spelling you type is kept. For loop creation, rename, import, and template copy, a conflicting name is refused rather than silently replaced with a different name. When one of these actions refuses a name it suggests one that was free at that moment, which someone else can still take before you use it; you then get a fresh suggestion.
+
+- **Create** shows the refusal under **New loop name**. **Use “…”** puts the suggestion in the field; click **Create** (or press **Enter**) to try it. Editing the name clears the message.
+- **Renaming** in **Loop settings** shows **Another loop already has this name** above the canvas and marks the **Name** field. This is not a draft conflict: nothing on the server changed, and the loop keeps its previous name and draft there. Your changes, including the name you typed, stay on this device, also across a reload, and autosave sends nothing more until you change the name. **Use “…”** renames to the suggestion as one undoable step, **Edit name** opens **Loop settings** on the field, and **Try again** sends the same name once more, for when the other loop has been renamed meanwhile. **Publish** refuses until a name is accepted. Leaving the editor clears the notice; reopening it saves this device's copy again and shows the notice if the name is still taken.
+- **Import** and **New from template** ask for a different name instead of creating a copy; see [Publish, import, and export](#publish-import-and-export) and [Templates](09-templates.md).
+
+A store that already holds two equivalent names (from a build before this rule) stops at startup until one of them is renamed; the CHANGELOG's upgrade note says how.
 
 ## Choose nodes
 
@@ -195,7 +205,7 @@ Use the Loops page's file picker, or `POST /loops/import`, to import an export e
 POST /loops/import
 ```
 
-Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
+Import always creates a new loop with a draft; it never updates an existing one. When another of your loops already has the file's loop name (in any letter case or spacing), nothing is imported: the Loops page says which name, keeps the file as chosen, and asks for **Name for the imported loop**, filled with the suggested name. **Import as new loop** sends the same file again with that name as the `name` query parameter (`POST /loops/import?name=…`); the file and the existing loop are not changed, and the new loop has the file's graph under the new name. **Cancel** drops the pending import. To update an existing loop, save its draft through the editor or API:
 
 <!-- guide-example: draft-request -->
 

@@ -22,7 +22,7 @@ Loop definitions, drafts, versions.
 | ------ | ---------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- | ---------------- | --------- |
 | GET    | `/loops`                           | List loops                                                   | -                                                                   | -                | 200       |
 | POST   | `/loops`                           | Create a loop with an initial draft version                  | -                                                                   | `{ definition }` | 201       |
-| POST   | `/loops/import`                    | Create or update a loop from exported JSON                   | -                                                                   | `object`         | 201       |
+| POST   | `/loops/import`                    | Create a loop from exported JSON                             | `name`: string (query)                                              | `object`         | 201       |
 | GET    | `/loops/{id}`                      | A loop with its current published version and draft          | `id`: string (path, required)                                       | -                | 200       |
 | DELETE | `/loops/{id}`                      | Delete a loop and its run history, unless it has active runs | `id`: string (path, required)                                       | -                | 204       |
 | PUT    | `/loops/{id}/draft`                | Save the draft definition (validated, may be unpublishable)  | `id`: string (path, required), `if-match`: string (header)          | `{ definition }` | 200       |

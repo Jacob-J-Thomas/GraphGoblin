@@ -1,5 +1,13 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openAdvanced, openNode, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openAdvanced,
+  openNode,
+  test,
+  uniqueLoopName,
+} from './fixtures.js';
 
 const choice = {
   type: 'choice' as const,
@@ -20,7 +28,8 @@ const score = {
 };
 
 async function create(request: APIRequestContext, kind: string, config: unknown) {
-  const loop = approvalLoop(`JSON ${kind}`);
+  // Tests repeat this on the shared gateway, where one owner cannot repeat a name (#209).
+  const loop = approvalLoop(uniqueLoopName(`JSON ${kind}`));
   const response = await request.post('/loops', {
     data: {
       definition: {

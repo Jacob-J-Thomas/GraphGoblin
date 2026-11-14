@@ -8,7 +8,7 @@ import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { APIRequestContext, Locator, Page, TestInfo } from '@playwright/test';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { expect, test } from './fixtures.js';
+import { expect, test, uniqueLoopName } from './fixtures.js';
 import { COALESCE_MS } from '../src/editor/history.js';
 
 test.use({ trace: 'off' });
@@ -19,7 +19,8 @@ const qaDirectory = resolve('..', '..', 'docs', 'qa', '2026-10-05-issue-44-waypo
  * start -> work runs straight behind `side`, and side -> done behind `work` (forward edges that
  * cross cards); work -> side and done's loop-back return to the left. Publishable and runnable.
  */
-function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
+// Many tests open this graph on the shared gateway, where one owner cannot repeat a name (#209).
+function crossingLoop(name = uniqueLoopName('Manual routes')): LoopDefinitionInput {
   const note = {
     operations: [{ op: 'append-message' as const, role: 'note' as const, content: 'Note' }],
   };
@@ -515,9 +516,26 @@ test('routes survive export and import, publish pins them, and runs ignore them'
   expect(
     (exported as { loop: LoopDefinitionInput }).loop.edges.find((e) => e.id === 'return')?.ui,
   ).toEqual({ route: [1176, 330, 600] });
-  const imported = await request.post('/loops/import', { data: exported });
+  // The original still holds its name (#209): import the unchanged document under an explicit name.
+  const refused = await request.post('/loops/import', { data: exported });
+  expect(refused.status()).toBe(409);
+  expect(await refused.json()).toMatchObject({ code: 'LOOP_NAME_CONFLICT' });
+  const copyName = uniqueLoopName('Routed run import');
+  const imported = await request.post(`/loops/import?name=${encodeURIComponent(copyName)}`, {
+    data: exported,
+  });
   expect(imported.status()).toBe(201);
-  const copy = ((await imported.json()) as { loop: { id: string } }).loop.id;
+  const importedBody = (await imported.json()) as {
+    loop: { id: string; name: string };
+    draft: { definition: LoopDefinitionInput };
+  };
+  const copy = importedBody.loop.id;
+  expect(copy).not.toBe(loopId);
+  expect(importedBody.loop.name).toBe(copyName);
+  // The same graph as the export, under the chosen name.
+  const source = (exported as { loop: LoopDefinitionInput }).loop;
+  expect(importedBody.draft.definition.nodes).toEqual(source.nodes);
+  expect(importedBody.draft.definition.edges).toEqual(source.edges);
   expect(await storedRoute(request, copy, 'start-work')).toEqual([212, 300, 570]);
   await openLoop(page, copy);
   await expect(edge(page, 'start-work')).toHaveAttribute('aria-label', /manual route$/);

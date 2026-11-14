@@ -155,7 +155,7 @@ describe('draft snapshots', () => {
   }
 
   async function draftRun(seed: string) {
-    const { loop, draft } = await loops.create('local', named('Snap'));
+    const { loop, draft } = await loops.create('local', named('Snap ' + seed));
     const snapshot: LoopVersionRecord = {
       ...structuredClone(draft),
       id: fakeUlid(`snapshot:${seed}`),
@@ -434,7 +434,10 @@ describe('draft snapshots', () => {
 
   it('are stored with their run, read by id, and kept out of the version history', async () => {
     const { loop, draft, snapshot, run } = await draftRun('history');
-    expect(run).toMatchObject({ versionId: snapshot.id, pinned: { label: 'Snap draft v1' } });
+    expect(run).toMatchObject({
+      versionId: snapshot.id,
+      pinned: { label: 'Snap history draft v1' },
+    });
     expect(await loops.getVersion(snapshot.id)).toEqual(snapshot);
     expect((await loops.listVersions(loop.id)).map((version) => version.id)).toEqual([draft.id]);
     // Editing and publishing the draft never touch the snapshot, which is never "latest".

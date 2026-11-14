@@ -125,6 +125,7 @@ describe('validate, draft saves, and publish agree', () => {
       {
         definition: {
           ...minimalLoop(),
+          name: 'Invalid cron fixture',
           nodes: [
             {
               id: 'start',
@@ -183,8 +184,11 @@ describe('validate, draft saves, and publish agree', () => {
 
   it('accepts a published subloop, a pinned version, and a self-reference', async () => {
     const childId = await t.publishLoop(minimalLoop());
-    for (const ref of [subloop(childId), subloop(childId, 1)]) {
-      const created = await createLoop(chain('ok', ref));
+    for (const [name, ref] of [
+      ['Latest published subloop', subloop(childId)],
+      ['Pinned published subloop', subloop(childId, 1)],
+    ] as const) {
+      const created = await createLoop(chain(name, ref));
       expect(created.issues.filter((i) => i.code.startsWith('SUBLOOP'))).toEqual([]);
     }
     const missingVersion = await createLoop(chain('v9', subloop(childId, 9)));
@@ -255,7 +259,7 @@ describe('validate, draft saves, and publish agree', () => {
     const created = await createLoop(definition);
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Imported%20Cron%20Copy',
       payload: {
         format: 'graphgoblin-loop',
         formatVersion: CURRENT_DEFINITION_FORMAT,
@@ -287,7 +291,7 @@ describe('validate, draft saves, and publish agree', () => {
 });
 
 describe('export and import', () => {
-  it('round-trips: export, import, export again gives the same loop', async () => {
+  it('round-trips a loop graph through export and an explicitly named import', async () => {
     const original = await t.publishLoop({
       ...minimalLoop(),
       name: 'round trip',
@@ -296,7 +300,7 @@ describe('export and import', () => {
     const first = await t.app.inject({ method: 'GET', url: `/loops/${original}/export` });
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Round%20Trip%20Copy',
       payload: first.json(),
     });
     expect(imported.statusCode).toBe(201);
@@ -305,8 +309,11 @@ describe('export and import', () => {
       method: 'GET',
       url: `/loops/${copy}/export?draft=true`,
     });
-    const strip = (doc: Record<string, unknown>) => ({ ...doc, exportedAt: undefined });
-    expect(strip(second.json())).toEqual(strip(first.json()));
+    const exported = first.json<{ loop: LoopDefinitionInput }>();
+    expect(second.json<{ loop: LoopDefinitionInput }>().loop).toEqual({
+      ...exported.loop,
+      name: 'Round Trip Copy',
+    });
   });
 });
 

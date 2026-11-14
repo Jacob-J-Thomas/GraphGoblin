@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Exclusion and duplicate-source provenance. Excluded files are not copied or presented as raw evidence.",
+  "directFiles": [
+    {
+      "sourcePath": "events.jsonl",
+      "bytes": 1397448,
+      "sha256": "3a31751ae6a5eb7504d4d6f45f5ccfbfa7e1b0f91ec52ad509146fe86f3c9419",
+      "reason": "Launcher event stream omitted because it may contain private or thinking content."
+    },
+    {
+      "sourcePath": "result.json",
+      "bytes": 6750,
+      "sha256": "116121041576a840894bad9364260b2d8a6ed1e7b40128c467a1f19f37b5c237",
+      "reason": "Raw provider result omitted because it contains token, thinking-token, and cost metadata; safe model identity is captured in session-result-summary.json."
+    },
+    {
+      "sourcePath": "process-baseline-start.txt",
+      "bytes": 9003,
+      "sha256": "0e12293ebdbeeaa3bdddc8edd8d9220a12090d24a77d56f211ab257417ea73e3",
+      "reason": "Host process listing omitted because it can expose unrelated owner command lines."
+    },
+    {
+      "sourcePath": "process-final.txt",
+      "bytes": 1287,
+      "sha256": "360fafbb6d5782eb02aee34c9eeaa7287d023eaeec49d837cbe4bdff1d8d16c1",
+      "reason": "Host process listing omitted because it can expose unrelated owner command lines."
+    },
+    {
+      "sourcePath": "ports-baseline-start.txt",
+      "bytes": 682,
+      "sha256": "3ab6b20f833fd30c8cc6917d00b3b27c1ef84c3e6546a4eabbbb50fb897a6523",
+      "reason": "Port/process inventory omitted; cleanup facts are summarized separately."
+    },
+    {
+      "sourcePath": "ports-final.txt",
+      "bytes": 682,
+      "sha256": "3ab6b20f833fd30c8cc6917d00b3b27c1ef84c3e6546a4eabbbb50fb897a6523",
+      "reason": "Port/process inventory omitted; cleanup facts are summarized separately."
+    },
+    {
+      "sourcePath": "scripts/proc-check.ps1",
+      "bytes": 1480,
+      "sha256": "a3ec906f97a42d5fdd52c4810ba5e6c7017c1020a7adde413a989c9a25cf3850",
+      "reason": "Host process inspection script omitted; this bundle does not publish host command-line collection."
+    },
+    {
+      "sourcePath": "stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Empty file; no evidence content."
+    }
+  ],
+  "directories": [
+    {
+      "sourcePath": "moved-aside",
+      "fileCount": 7,
+      "totalBytes": 21814,
+      "inventoryDigestSha256": "352e68da4016045d7c7dcb74fc1012fa5e0f9574aa6112e1784f618ded93eef4",
+      "reason": "Moved-aside old plugin output is excluded in full; only the stale-output failure and successful rebuild logs are retained."
+    }
+  ],
+  "traceArchives": {
+    "count": 0,
+    "totalBytes": 0,
+    "files": [],
+    "note": "No trace archives were present in the phase 3 artifact root."
+  },
+  "exactDuplicateFilesNotCopied": [
+    {
+      "sourcePath": "latest.md",
+      "identicalTo": "report.md",
+      "bytes": 3575,
+      "sha256": "a19d4ff237d110b1ef7e28ab7c9a39d43dfe3b547f006c3181c268ee399e552b"
+    },
+    {
+      "sourcePath": "build-listings/final-apps_api_dist.txt",
+      "identicalTo": "build-listings/apps_api_dist.txt",
+      "bytes": 27508,
+      "sha256": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13"
+    },
+    {
+      "sourcePath": "build-listings/final-apps_web_dist.txt",
+      "identicalTo": "build-listings/apps_web_dist.txt",
+      "bytes": 2591,
+      "sha256": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2"
+    },
+    {
+      "sourcePath": "build-listings/final-apps_web_dist-goblin.txt",
+      "identicalTo": "build-listings/apps_web_dist-goblin.txt",
+      "bytes": 2591,
+      "sha256": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652"
+    },
+    {
+      "sourcePath": "build-listings/final-packages_infrastructure_dist.txt",
+      "identicalTo": "build-listings/packages_infrastructure_dist.txt",
+      "bytes": 26805,
+      "sha256": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9"
+    }
+  ],
+  "notIncludedByScope": [
+    "Build output trees, moved-aside output contents, browser profiles, stores, and full coverage trees are not published.",
+    "The 472-case browser suite and native matrix were not run in phase 3; no such results are implied."
+  ]
+}

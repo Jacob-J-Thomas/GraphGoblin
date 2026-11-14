@@ -1,0 +1,54 @@
+PASS create: first attempt refused 409 LOOP_NAME_CONFLICT with a suggestion
+PASS create: client B created the suggested name (201)
+PASS create: taking the suggestion sends no request
+PASS create: field now holds the suggestion and is focused
+PASS create: retry refused again (409) with a different, fresh suggestion
+PASS create: guidance names the refused spelling and shows the updated suggestion
+PASS create: the user’s text is kept in the field
+PASS create: nothing was created by A: same loop set as after B
+PASS create: original loop unchanged
+PASS create: no automatic retry during 2.5 s idle
+PASS create: still on the Loops page (no navigation)
+PASS create: taking the new suggestion sends no request
+PASS create: explicit retry under the new suggestion creates a distinct loop (201)
+PASS create: mutating requests sent by A: exactly three POST /loops (refused, refused, created)
+PASS create: original still unchanged at the end
+PASS import: upload refused 409 LOOP_NAME_CONFLICT with a suggestion
+PASS import: naming form prefilled with the suggestion and focused
+PASS import: client B created the suggested name (201)
+PASS import: retry sent the unchanged original document with ?name=<suggestion>
+PASS import: retry refused again (409) with a fresh suggestion
+PASS import: form shows the refused name and the updated suggestion; text and focus kept
+PASS import: exactly one more request (the retry); nothing created by A
+PASS import: original unchanged
+PASS import: no automatic retry during 2.5 s idle
+PASS import: taking the new suggestion sends no request
+PASS import: explicit retry imports under the new suggestion (201) as a distinct loop with the same graph
+PASS import: all three imports carried the identical document
+PASS import: original unchanged at the end
+PASS template: seeded the first Starter assistant copy
+PASS template: Use refused 409 LOOP_NAME_CONFLICT with a suggestion
+PASS template: naming form prefilled with the suggestion and focused
+PASS template: client B created a template copy under the suggested name (201)
+PASS template: Create draft refused again (409) with a fresh suggestion; body sent { name: S1 }
+PASS template: card shows the refused name and the updated suggestion; field text kept
+PASS template: exactly one more request; nothing created by A; catalog and original unchanged
+PASS template: no automatic retry during 2.5 s idle
+PASS template: taking the new suggestion sends no request
+PASS template: explicit Create draft under the new suggestion creates a distinct draft (201)
+PASS template: catalog unchanged at the end
+PASS editor: seeded a published loop
+PASS editor: rename refused 409 LOOP_NAME_CONFLICT with a suggestion
+PASS editor: client B created the suggested name (201)
+PASS editor: the explicit rename is refused again (409) with a fresh suggestion
+PASS editor: notice names the refused spelling and offers the updated suggestion
+PASS editor: save state still says Not saved: name in use; name field holds the user’s choice
+PASS editor: exactly one more PUT; no loop created or renamed by A
+PASS editor: server loop id, name, published version and draft unchanged by the refusals
+PASS editor: target loop unchanged
+PASS editor: no automatic retry during 2.5 s idle
+PASS editor: explicit Use of the new suggestion saves (200)
+PASS editor: same loop id; loop and draft now carry the new name
+PASS editor: published version keeps its original name (not rewritten; by design)
+PASS editor: target unchanged at the end
+checks: 53/53 passed; failed: none

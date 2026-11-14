@@ -7,7 +7,15 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { chooseOptionByKeyboard, closeNode, control, expect, openNode, test } from './fixtures.js';
+import {
+  chooseOptionByKeyboard,
+  closeNode,
+  control,
+  expect,
+  openNode,
+  test,
+  uniqueLoopName,
+} from './fixtures.js';
 import { checkAnswerTypeHelp } from './answer-type-help.js';
 
 const handle = (page: Page, node: string, port: string) =>
@@ -67,7 +75,8 @@ function decisionLoop(optionCount = 2): LoopDefinitionInput {
   ];
   return {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
-    name: `Decision with ${optionCount} options`,
+    // Tests repeat this on the shared gateway, where one owner cannot repeat a name (#209).
+    name: uniqueLoopName(`Decision with ${optionCount} options`),
     nodes,
     edges,
   };

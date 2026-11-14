@@ -23,6 +23,7 @@ import {
   publishEventLoop,
   publishLoop,
   test,
+  uniqueLoopName,
 } from './fixtures.js';
 
 /** Actual screen boxes: pseudo-elements are outside xyflow's measured handle/card geometry. */
@@ -184,7 +185,8 @@ const SETTINGS = [
 
 /** Real configurations exercise cron, code fields, collections, and nested options. */
 async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
-  const child = await publishLoop(request, approvalLoop('responsive child'));
+  // Seeded per theme and test on the shared gateway, where one owner cannot repeat a name (#209).
+  const child = await publishLoop(request, approvalLoop(uniqueLoopName('responsive child')));
   const configs = [
     ['trigger', { type: 'cron', expression: '30 7 * * 1' }],
     [
@@ -212,11 +214,12 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
     ['heartbeat', { intervalSeconds: 60, maxBeats: 3 }],
     ['exit', {}],
   ] as const;
+  const name = uniqueLoopName('responsive dialogs');
   const created = await request.post('/loops', {
     data: {
       definition: {
         schemaVersion: CURRENT_DEFINITION_FORMAT,
-        name: 'responsive dialogs',
+        name,
         nodes: configs.map(([kind, config], i) => ({
           id: kind,
           kind,
@@ -231,6 +234,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   expect(created.status()).toBe(201);
   return {
     loopId: ((await created.json()) as { loop: { id: string } }).loop.id,
+    name,
     kinds: configs.map(([kind]) => kind),
   };
 }
@@ -245,7 +249,8 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     async function seed(request: Parameters<typeof publishLoop>[0]) {
-      const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
+      // The screens' ready markers match this name's readable start (#209 unique fixtures).
+      const loopId = await publishLoop(request, approvalLoop(uniqueLoopName('responsive sweep')));
       const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
       const runId = ((await res.json()) as { run: { id: string } }).run.id;
       const send = await publishEventLoop(request, ['issue-opened']);
@@ -419,12 +424,12 @@ for (const theme of ['dark', 'light'] as const) {
       page,
       request,
     }) => {
-      const { loopId, kinds } = await seedDialogs(request);
+      const { loopId, name, kinds } = await seedDialogs(request);
       for (const viewport of WIDTHS.slice(0, 2)) {
         await page.setViewportSize(viewport);
         // xyflow hides wrappers until measurement. Keyboard press/focus does not wait for
         // visibility, so require the measured wrapper before sending Enter.
-        await openDraftTab(page, loopId, 'responsive dialogs');
+        await openDraftTab(page, loopId, name);
         for (const kind of kinds) {
           const node = page.locator(`.react-flow__node[data-id="${kind}"]`);
           await expect(node).toBeVisible();
@@ -573,7 +578,7 @@ for (const theme of ['dark', 'light'] as const) {
       request,
     }) => {
       // start -> approve, with the exit not yet connected: the loop starts with errors.
-      const definition = approvalLoop('responsive editor');
+      const definition = approvalLoop(uniqueLoopName('responsive editor'));
       const created = await request.post('/loops', {
         data: { definition: { ...definition, edges: definition.edges.slice(0, 1) } },
       });
@@ -626,7 +631,7 @@ for (const theme of ['dark', 'light'] as const) {
       page,
       request,
     }) => {
-      const definition = approvalLoop('responsive keyboard');
+      const definition = approvalLoop(uniqueLoopName('responsive keyboard'));
       const created = await request.post('/loops', {
         data: {
           definition: {
@@ -896,7 +901,7 @@ for (const theme of ['dark', 'light'] as const) {
     }, testInfo) => {
       test.setTimeout(90_000);
       const definition = {
-        ...approvalLoop('touch zoom layout'),
+        ...approvalLoop(uniqueLoopName('touch zoom layout')),
         nodes: [
           {
             id: 'start',
@@ -1010,7 +1015,9 @@ for (const theme of ['dark', 'light'] as const) {
         ).toHaveLength(0);
         // The review's 300-node/eight-zoom reproduction: no geometry invalidation or routing work.
         const dense = denseGraph(300);
-        const created = await request.post('/loops', { data: { definition: dense } });
+        const created = await request.post('/loops', {
+          data: { definition: { ...dense, name: uniqueLoopName(dense.name) } },
+        });
         expect(created.status()).toBe(201);
         const { loop: large } = (await created.json()) as { loop: { id: string } };
         await page.goto(`/app/loops/${large.id}/edit`);

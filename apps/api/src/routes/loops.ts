@@ -1,6 +1,7 @@
 import { type ReadinessOperation } from '../readiness-operation.js';
 import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
+  ExplicitLoopNameSchema,
   LoopDefinitionSchema,
   LoopExportSchema,
   LoopRecordSchema,
@@ -144,6 +145,8 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'Create a loop with an initial draft version',
+        description:
+          'An equivalent loop name for this owner returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName.',
         body: DefinitionBody,
         response: {
           201: z.object({
@@ -188,9 +191,10 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
-        summary: 'Create or update a loop from exported JSON',
+        summary: 'Create a loop from exported JSON',
         description:
-          'Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.',
+          'Imports a current-format export or bare definition. An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with the original document and an optional name query parameter to create a distinct copy. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.',
+        querystring: z.strictObject({ name: ExplicitLoopNameSchema.optional() }),
         body: z.record(z.string(), z.unknown()),
         response: {
           201: z.object({
@@ -202,14 +206,10 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const imported = importLoop(request.body);
-      const admission = await publishIssues(
-        request.auth.ownerId,
-        imported.definition,
-        undefined,
-        false,
-      );
-      if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
+      const { definition } = importLoop(request.body);
+      if (request.query.name !== undefined) definition.name = request.query.name.trim();
+      const admission = await publishIssues(request.auth.ownerId, definition, undefined, false);
+      if (admission.some((issue) => rejectsDraftAdmission(definition, issue)))
         return problem(
           reply,
           400,
@@ -217,15 +217,10 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           'invalid evaluator or model configuration',
           admission,
         );
-      const created = await loops.create(request.auth.ownerId, imported.definition);
+      const created = await loops.create(request.auth.ownerId, definition);
       reply.status(201);
       // Draft writes validate configuration without CLI probes; explicit validation/publish adds readiness.
-      const issues = await publishIssues(
-        request.auth.ownerId,
-        imported.definition,
-        created.loop.id,
-        false,
-      );
+      const issues = await publishIssues(request.auth.ownerId, definition, created.loop.id, false);
       return { ...created, issues };
     },
   );
@@ -266,7 +261,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         tags: ['loops'],
         summary: 'Save the draft definition (validated, may be unpublishable)',
         description:
-          'Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).',
+          'Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins). A name equivalent to another loop’s returns 409 `LOOP_NAME_CONFLICT`.',
         params: IdParams,
         headers: z.object({ 'if-match': z.string().optional() }),
         body: DefinitionBody,
