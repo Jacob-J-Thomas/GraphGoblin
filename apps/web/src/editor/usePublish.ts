@@ -39,12 +39,15 @@ export type Readback =
 /**
  * What one attempt established. `published`: the server answered with the immutable version it
  * stored. `not-published`: this attempt stored nothing (the server had no draft, or a check found
- * the draft already current). `unknown`: no usable answer (a network failure or a server error),
- * so the server was read back; `sent` is false when even the check before sending failed.
+ * the draft already current). `changed`: the check before a retry found that the server's draft is
+ * no longer the copy this attempt saved, so nothing was sent (a request would publish that other
+ * draft). `unknown`: no usable answer (a network failure or a server error), so the server was read
+ * back; `sent` is false when even the check before sending failed.
  */
 type Answer =
   | { kind: 'published'; version: Version }
   | { kind: 'not-published'; readback: Readback }
+  | { kind: 'changed'; readback: Extract<Readback, { ok: true }> }
   | { kind: 'unknown'; sent: boolean; reason: string; readback: Readback };
 export type PublishOutcome = Answer & {
   attempt: PublishAttempt;
@@ -119,11 +122,14 @@ async function readBack(client: GraphGoblinClient, loopId: string): Promise<Read
  * One Publish: save, then send `POST /loops/{id}/publish` in this window's queue of the loop's
  * saves, so this editor's own later saves cannot reach the server before it. The request publishes
  * whatever draft the server holds when it admits it; the outcome compares that with the copy the
- * attempt saved. Resolves to undefined, sending nothing, when another load replaced this one before
- * the request; a refusal that applies by then is thrown, and nothing is sent either. `unresolved`
- * records whether this load is left with a request whose outcome no read has established: a check
- * that answers, or a request the server answers, settles it; a failed check keeps it; a request
- * with no answer whose check failed too leaves it. A refusal, sending nothing, changes nothing.
+ * attempt saved. The check before a retry sends nothing when the server's draft is no longer that
+ * copy, and that outcome stands even if held input or a refusal appeared meanwhile; it reaches only
+ * the same load, still on that copy's token. Resolves to undefined, sending nothing, when another
+ * load replaced this one before the request; a refusal that applies by then is thrown, and nothing
+ * is sent either. `unresolved` records whether this load is left with a request whose outcome no
+ * read has established: a check that answers, or a request the server answers, settles it; a
+ * failed check keeps it; a request with no answer whose check failed too leaves it. A refusal,
+ * sending nothing, changes nothing.
  */
 async function publishAttempt(
   client: GraphGoblinClient,
@@ -168,6 +174,11 @@ async function publishAttempt(
         sameDefinition(checked.current.definition, acknowledged.definition)
       )
         result = { kind: 'not-published', readback: checked };
+      // The server's draft is no longer this attempt's copy: a request would publish that other
+      // draft. Nothing is sent, and the evidence is applied below as a mismatch (the draft conflict)
+      // before held input or a refusal met now could set it aside.
+      else if (checked.draftToken !== acknowledged.token)
+        result = { kind: 'changed', readback: checked };
     }
     if (!result) {
       if (!sendable()) return undefined;
@@ -286,16 +297,21 @@ export interface PublishNoticeText {
 }
 
 const SAVED = 'the draft saved for this publish';
+/** While the editor shows the draft conflict, its two choices are what comes before Publish. */
+const RECOVER = ' Choose Reload server draft or Overwrite with this copy before publishing again.';
+const HELD = ' Some fields still hold input that is not saved or published.';
 
 /**
  * The words for an outcome, given the editor now and the loop's current version as last read. A
  * confirmation names the immutable version the server returned or read back, never the editor's
- * revision. "Changes made after that" compares the editor's content and unfinished input with that
- * version now, so a reply that arrives after more editing never presents that work as published.
+ * revision. Claims about the editor's content are about that version only: "without the changes
+ * made after that" compares the editor's content with it now, so a reply that arrives after more
+ * editing never presents that work as published, nor as unpublished in a later version (which may
+ * hold it). Input still held in fields is in no version at all, and is said so separately.
  */
 export function publishNotice(
   outcome: PublishOutcome,
-  editor: Pick<EditorState, 'definition' | 'fieldErrors' | 'revision'>,
+  editor: Pick<EditorState, 'definition' | 'fieldErrors' | 'revision' | 'conflict'>,
   current: { version: number } | undefined,
 ): PublishNoticeText | undefined {
   const { acknowledged, arrival } = outcome;
@@ -311,17 +327,22 @@ export function publishNotice(
     release && current && current.version > release.version
       ? ` Version ${current.version} has been published since.`
       : '';
+  const content = LoopDefinitionSchema.safeParse(editor.definition);
+  const holdsEditor = (definition: unknown) =>
+    content.success && sameDefinition(content.data, definition);
   const later =
-    release && !editorHolds(editor, release.definition)
-      ? '; changes made after that are not published.'
-      : '.';
+    release && !holdsEditor(release.definition) ? ', without the changes made after that.' : '.';
+  const held = hasHeldInput(editor) ? HELD : '';
+  const recover = editor.conflict ? RECOVER : '';
   if (outcome.kind === 'unknown') {
     const title = 'Publish not confirmed';
+    // This click's own snapshot is not the earlier request's: say nothing about which draft that
+    // request carried.
     if (!outcome.sent)
       return {
         tone: 'warn',
         title,
-        text: `Checking the server before publishing again failed: ${outcome.reason} Nothing was sent, and it is still not known whether the earlier request published ${SAVED}.`,
+        text: `Checking the server before publishing again failed: ${outcome.reason} This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.`,
         dismissible: true,
       };
     if (!outcome.readback.ok)
@@ -331,15 +352,26 @@ export function publishNotice(
         text: `${outcome.reason} Checking the server failed too: ${outcome.readback.reason} It is not known whether ${SAVED} was published. Publish again checks the server first.`,
         dismissible: true,
       };
+    // Another draft on the server: Publish again would publish it, so no retry is offered.
+    const changed = outcome.readback.draftToken !== acknowledged.token;
     return {
       tone: 'warn',
       title,
       text: holdsSaved
-        ? `${outcome.reason} A check of the server found that version ${release.version}, its current published version, holds ${SAVED}${later}${since}`
-        : `${outcome.reason} A check of the server found that ${SAVED} is not its current published version. Publish again to retry.`,
+        ? `${outcome.reason} A check of the server found that version ${release.version}, its current published version, holds ${SAVED}${later}${held}${since}`
+        : changed
+          ? `${outcome.reason} A check of the server found that ${SAVED} is not its current published version, and that the server holds a different draft from it.${recover}`
+          : `${outcome.reason} A check of the server found that ${SAVED} is not its current published version. Publish again to retry.`,
       dismissible: true,
     };
   }
+  if (outcome.kind === 'changed')
+    return {
+      tone: 'warn',
+      title: 'Nothing was published',
+      text: `This Publish sent no request: a check found that the server holds a different draft from ${SAVED}. ${release ? `Its current version, version ${release.version}, does not hold ${SAVED} either.` : 'The loop has no published version.'}${since}${recover}`,
+      dismissible: true,
+    };
   if (outcome.kind === 'not-published' && !outcome.readback.ok)
     return {
       tone: 'warn',
@@ -352,7 +384,7 @@ export function publishNotice(
       ? {
           tone: 'warn',
           title: 'A different draft was published',
-          text: `Version ${outcome.version.version} holds a different stored draft from ${SAVED}. ${editorHolds(editor, outcome.version.definition) ? 'It matches the editor’s current draft.' : 'This editor’s draft is not published.'}${since}`,
+          text: `Version ${outcome.version.version} holds a different stored draft from ${SAVED}. ${holdsEditor(outcome.version.definition) ? 'It matches the editor’s current draft.' : 'It does not hold the editor’s current draft.'}${held}${since}`,
           dismissible: true,
         }
       : {
@@ -376,8 +408,8 @@ export function publishNotice(
   return {
     tone: 'good',
     text: published
-      ? `Published version ${release.version}. It holds ${SAVED}${later}${since}`
-      : `Nothing to publish: version ${release.version} already holds ${SAVED}${later}${since}`,
+      ? `Published version ${release.version}. It holds ${SAVED}${later}${held}${since}`
+      : `Nothing to publish: version ${release.version} already holds ${SAVED}${later}${held}${since}`,
     dismissible: true,
   };
 }

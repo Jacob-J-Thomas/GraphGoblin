@@ -1,9 +1,11 @@
+import type { LoopIssue } from '@graphgoblin/contracts';
+import { QueryClient } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
-import { keys } from '../api/queries.js';
+import { cachedCatalogFingerprint, keys, refreshLoopAfterWrite } from '../api/queries.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 import { AUTOSAVE_DELAY_MS } from './useAutosave.js';
@@ -221,6 +223,67 @@ describe('the save sent on leaving (#237)', () => {
   });
 });
 
+const validations = (api: FakeApi, loopId: string) =>
+  api.callsTo('POST', `/loops/${loopId}/validate`).length;
+const nodeBadge = (id: string) =>
+  screen
+    .getByTestId(`node-${id}`)
+    .querySelector<HTMLButtonElement>(`button[aria-label$=" on ${id}"]`);
+/** The open editor's API check of a loop's unchanged draft, under the catalogs cached now. */
+const checkKey = (api: FakeApi, queryClient: QueryClient, loopId: string) =>
+  keys.validation(loopId, api.draftToken(loopId)!, cachedCatalogFingerprint(queryClient));
+
+/**
+ * Loop `parent` runs loop `target`, a draft only, as a subloop. The parent's API checks report the
+ * target unpublished while it is, as the API does, and while `checks.hold` is set each waits for it
+ * after reading the target (`checks.held` counts them).
+ */
+function subloopLoops(api: FakeApi) {
+  const target = api.addLoop(newLoopDefinition('target'));
+  const definition = newLoopDefinition('parent');
+  const parent = api.addLoop({
+    ...definition,
+    nodes: [
+      ...definition.nodes,
+      { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: target.id } } },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'sub' } },
+      { id: 'e2', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
+    ],
+  });
+  const checks: { hold: ReturnType<typeof gate> | undefined; held: number } = {
+    hold: undefined,
+    held: 0,
+  };
+  api.override('POST /loops/:id/validate', async (call, [id]) => {
+    const { issues } = (await (await api.builtIn(call)).json()) as { issues: LoopIssue[] };
+    if (id === parent.id && !api.loops.get(target.id)?.current)
+      issues.push({
+        code: 'SUBLOOP_NOT_PUBLISHED',
+        severity: 'error',
+        nodeId: 'sub',
+        message: 'subloop "sub" references "target", which has no published version',
+      });
+    const hold = id === parent.id ? checks.hold : undefined;
+    if (hold) {
+      checks.held += 1;
+      await hold.promise;
+    }
+    return new Response(
+      JSON.stringify({ issues, publishable: !issues.some((i) => i.severity === 'error') }),
+      { headers: { 'content-type': 'application/json' } },
+    );
+  });
+  return { target, parent, checks };
+}
+
+async function open(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await leave(user);
+  await user.click(await screen.findByRole('link', { name }));
+  await editorReady(name);
+}
+
 describe('caches after a publish (#237)', () => {
   it('re-runs no check of the unchanged open draft, and marks other loops’ checks stale', async () => {
     const user = userEvent.setup();
@@ -233,13 +296,161 @@ describe('caches after a publish (#237)', () => {
     );
     await tick(200);
     const checks = api.callsTo('POST', `/loops/${loop.id}/validate`).length;
+    const own = checkKey(api, view.queryClient, loop.id);
+    const ownAnswer = view.queryClient.getQueryData(own);
+    expect(ownAnswer).toBeDefined();
     // Another loop's check, which can read this loop's published version as a subloop.
     const other = keys.validation('other-loop', 'its-draft', 'catalogs');
     view.queryClient.setQueryData(other, []);
+    // Caches no publication changes: another loop's detail, and the catalog.
+    const otherDetail = keys.loop('other-loop');
+    view.queryClient.setQueryData(otherDetail, { loop: { id: 'other-loop' } });
     await user.click(screen.getByRole('button', { name: /^Publish/ }));
     expect(await screen.findByText(/^Published version \d+\.$/)).toBeInTheDocument();
     await tick(300);
     expect(api.callsTo('POST', `/loops/${loop.id}/validate`)).toHaveLength(checks);
-    expect(view.queryClient.getQueryState(other)?.isInvalidated).toBe(true);
+    expect(view.queryClient.getQueryState(other)).toMatchObject({ data: [], isInvalidated: true });
+    // The open draft's own check is the same key, still answered and fresh.
+    expect(checkKey(api, view.queryClient, loop.id)).toEqual(own);
+    expect(view.queryClient.getQueryState(own)).toMatchObject({
+      data: ownAnswer,
+      isInvalidated: false,
+    });
+    expect(view.queryClient.getQueryState(otherDetail)?.isInvalidated).toBe(false);
+    expect(view.queryClient.getQueryState(keys.catalog)?.isInvalidated).toBe(false);
+  });
+
+  it('drops another loop’s check answered before the publish, and checks it again on reopening', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { target, parent, checks } = subloopLoops(api);
+    api.addLoop(newLoopDefinition('unrelated'));
+    const { queryClient } = renderApp(`/loops/${parent.id}/edit`, api);
+    await editorReady('parent');
+    await waitFor(() => expect(nodeBadge('sub')).toHaveAttribute('aria-label', '1 issue on sub'));
+    const key = checkKey(api, queryClient, parent.id);
+    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(false);
+
+    // An unrelated publication marks the parent's warm answer stale for its next use.
+    await open(user, 'unrelated');
+    await user.click(screen.getByRole('button', { name: /^Publish/ }));
+    expect(await screen.findByText(/^Published version \d+\.$/)).toBeInTheDocument();
+    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(true);
+
+    // Publish the target with its request held before admission, and go back to the parent,
+    // whose stale answer is checked again: that check reads the target before the publication.
+    const admission = gate();
+    api.override('POST /loops/:id/publish', async (call) => {
+      await admission.promise;
+      return api.builtIn(call);
+    });
+    await open(user, 'target');
+    await user.click(screen.getByRole('button', { name: /^Publish/ }));
+    await waitFor(() => expect(api.callsTo('POST', `/loops/${target.id}/publish`)).toHaveLength(1));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    const targetChecks = validations(api, target.id);
+    checks.hold = gate();
+    await open(user, 'parent');
+    await waitFor(() => expect(checks.held).toBe(1));
+    expect(queryClient.getQueryState(key)?.fetchStatus).toBe('fetching');
+    admission.release();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(api.loops.get(target.id)?.current).toBeDefined();
+    checks.hold.release();
+    checks.hold = undefined;
+    await tick();
+
+    // That answer predates the publication: it never makes the key fresh.
+    expect(queryClient.getQueryState(key)).toMatchObject({
+      fetchStatus: 'idle',
+      isInvalidated: true,
+    });
+    const before = validations(api, parent.id);
+    await open(user, 'parent');
+    await waitFor(() => expect(validations(api, parent.id)).toBe(before + 1));
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    expect(nodeBadge('sub')).toBeNull();
+    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(false);
+    // The target's own unchanged check was not run again by its publication.
+    expect(validations(api, target.id)).toBe(targetChecks);
+  });
+
+  it('drops another loop’s first check answered before the publish (nothing cached)', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { target, parent, checks } = subloopLoops(api);
+    const admission = gate();
+    api.override('POST /loops/:id/publish', async (call) => {
+      await admission.promise;
+      return api.builtIn(call);
+    });
+    const { queryClient } = renderApp(`/loops/${target.id}/edit`, api);
+    await editorReady('target');
+    await user.click(screen.getByRole('button', { name: /^Publish/ }));
+    await waitFor(() => expect(api.callsTo('POST', `/loops/${target.id}/publish`)).toHaveLength(1));
+    checks.hold = gate();
+    await open(user, 'parent');
+    const key = checkKey(api, queryClient, parent.id);
+    await waitFor(() => expect(queryClient.getQueryState(key)?.fetchStatus).toBe('fetching'));
+    expect(queryClient.getQueryState(key)?.data).toBeUndefined();
+    admission.release();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(api.loops.get(target.id)?.current).toBeDefined();
+    checks.hold.release();
+    checks.hold = undefined;
+    await tick();
+
+    expect(queryClient.getQueryState(key)).toMatchObject({ data: undefined, isInvalidated: true });
+    expect(nodeBadge('sub')).toBeNull();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    await open(user, 'parent');
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    expect(nodeBadge('sub')).toBeNull();
+  });
+
+  it('cancels a running check of another loop before marking it stale (installed query library)', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const key = keys.validation('loop-b', 'draft-b', 'catalogs');
+    const running = (answer: string[]) => {
+      const late = gate();
+      const fetched = queryClient
+        .fetchQuery({
+          queryKey: key,
+          queryFn: async () => {
+            await late.promise;
+            return answer;
+          },
+          staleTime: 0,
+        })
+        .catch(() => undefined);
+      return async () => {
+        late.release();
+        await fetched;
+      };
+    };
+    // Control: in this query library, marking a running query stale does not outlast its answer.
+    const plain = running(['before publication']);
+    await queryClient.invalidateQueries({ queryKey: key, refetchType: 'none' });
+    await plain();
+    expect(queryClient.getQueryState(key)).toMatchObject({
+      data: ['before publication'],
+      isInvalidated: false,
+    });
+
+    // After a publish of loop A, loop B's running check is dropped and B stays stale.
+    queryClient.setQueryData(key, ['earlier']);
+    const late = running(['before publication']);
+    await refreshLoopAfterWrite(queryClient, 'loop-a', { published: true });
+    await late();
+    expect(queryClient.getQueryState(key)).toMatchObject({
+      data: ['earlier'],
+      isInvalidated: true,
+      fetchStatus: 'idle',
+    });
+    // Loop A's own check, running or not, is not touched.
+    const own = keys.validation('loop-a', 'draft-a', 'catalogs');
+    queryClient.setQueryData(own, ['own']);
+    await refreshLoopAfterWrite(queryClient, 'loop-a', { published: true });
+    expect(queryClient.getQueryState(own)).toMatchObject({ data: ['own'], isInvalidated: false });
   });
 });

@@ -9,6 +9,7 @@ import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 import { serializeSave } from './useAutosave.js';
+import { CONFLICT_REFUSAL } from './usePublish.js';
 
 const SAVE_WAIT = { timeout: 4000 };
 const RECONCILING =
@@ -37,18 +38,29 @@ async function savedEditor(api: FakeApi, name = 'mine', first = 'A1') {
 const publishButton = () => screen.getByRole('button', { name: /^Publish/ });
 const PUBLISH_FEEDBACK =
   /Publish failed|Published version|Publish not confirmed|Nothing to publish|Nothing was published/;
+/** A failed check before a retry, as the notice states it in full (#237 review F2). */
+const CHECK_FAILED =
+  'Checking the server before publishing again failed: The GraphGoblin API cannot be reached. This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.';
+const RECOVER = 'Choose Reload server draft or Overwrite with this copy before publishing again.';
 const posts = (api: FakeApi, loopId: string) => api.callsTo('POST', `/loops/${loopId}/publish`);
 const puts = (api: FakeApi, loopId: string) => api.callsTo('PUT', `/loops/${loopId}/draft`);
-async function detail(api: FakeApi, loopId: string) {
+type Version = { id: string; version: number; definition: { description?: string } };
+async function read(api: FakeApi, path: string) {
   const response = await api.builtIn({
     method: 'GET',
-    path: `/loops/${loopId}`,
+    path,
     search: new URLSearchParams(),
     body: undefined,
     headers: new Headers(),
   });
-  type Version = { id: string; version: number; definition: { description?: string } };
-  return (await response.json()) as { current?: Version; draft?: Version };
+  return (await response.json()) as unknown;
+}
+async function detail(api: FakeApi, loopId: string) {
+  return (await read(api, `/loops/${loopId}`)) as { current?: Version; draft?: Version };
+}
+/** An immutable version, read by its ID. */
+async function version(api: FakeApi, loopId: string, versionId: string) {
+  return (await read(api, `/loops/${loopId}/versions/${versionId}`)) as Version;
 }
 
 describe('Publish (#237)', () => {
@@ -73,7 +85,7 @@ describe('Publish (#237)', () => {
     reply.release();
     expect(
       await screen.findByText(
-        'Published version 1. It holds the draft saved for this publish; changes made after that are not published.',
+        'Published version 1. It holds the draft saved for this publish, without the changes made after that.',
       ),
     ).toBeInTheDocument();
     await waitFor(() => expect(puts(api, loop.id)).toHaveLength(2), SAVE_WAIT);
@@ -146,7 +158,7 @@ describe('Publish (#237)', () => {
     expect(await screen.findByText('A different draft was published')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Version 1 holds a different stored draft from the draft saved for this publish. This editor’s draft is not published.',
+        'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft.',
       ),
     ).toBeInTheDocument();
     // The same draft row and number as this editor's save, holding different content.
@@ -286,11 +298,7 @@ describe('Publish (#237)', () => {
       ),
     ).toBeInTheDocument();
     await user.click(publishButton());
-    expect(
-      await screen.findByText(
-        /^Checking the server before publishing again failed: .* Nothing was sent/,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
     expect(posts(api, loop.id)).toHaveLength(1);
     reachable = true;
     await user.click(publishButton());
@@ -403,6 +411,88 @@ describe('Publish (#237)', () => {
     // The notice carries no run link: the toolbar's opens the loop's current Runs flow.
     const notice = screen.getByText(/Published version 1/).closest('[role=status]')!;
     expect(within(notice as HTMLElement).queryByRole('link')).toBeNull();
+  });
+
+  /**
+   * Version 1's reply is held while the editor moves on to A2, and A2 exactly is saved and
+   * published elsewhere as version 2: the reply describes version 1 only (#237 review F3).
+   */
+  async function laterVersionHoldsTheEdit(api: FakeApi, loopId: string, release: () => void) {
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    api.saveDraftElsewhere(loopId, useEditorStore.getState().definition!);
+    const v2 = api.publishElsewhere(loopId);
+    release();
+    await waitFor(() => expect(screen.getByText('published v2')).toBeInTheDocument());
+    expect(await version(api, loopId, v2.id)).toMatchObject({
+      version: 2,
+      definition: { description: 'A2' },
+    });
+    expect((await detail(api, loopId)).current).toMatchObject({
+      id: v2.id,
+      version: 2,
+      definition: { description: 'A2' },
+    });
+    return v2;
+  }
+
+  it('describes a delayed reply by its own version when a later version holds the newer work', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const reply = gate();
+    api.override('POST /loops/:id/publish', async (call) => {
+      const committed = await api.builtIn(call);
+      await reply.promise;
+      return committed;
+    });
+    const { loop } = await savedEditor(api);
+    await user.click(publishButton());
+    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(1));
+    const v1 = (await detail(api, loop.id)).current!;
+    await laterVersionHoldsTheEdit(api, loop.id, reply.release);
+    expect(
+      await screen.findByText(
+        'Published version 1. It holds the draft saved for this publish, without the changes made after that. Version 2 has been published since.',
+      ),
+    ).toBeInTheDocument();
+    expect(await version(api, loop.id, v1.id)).toMatchObject({
+      version: 1,
+      definition: { description: 'A1' },
+    });
+    expect(useEditorStore.getState().definition?.description).toBe('A2');
+  });
+
+  it('describes a returned different draft by its own version when a later version holds the editor’s work', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const admission = gate();
+    const reply = gate();
+    api.override('POST /loops/:id/publish', async (call) => {
+      await admission.promise;
+      const committed = await api.builtIn(call);
+      await reply.promise;
+      return committed;
+    });
+    const { loop } = await savedEditor(api);
+    await user.click(publishButton());
+    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(1));
+    api.saveDraftElsewhere(loop.id, { ...newLoopDefinition('mine'), description: 'B' });
+    admission.release();
+    await waitFor(async () => expect((await detail(api, loop.id)).current?.version).toBe(1));
+    const v1 = (await detail(api, loop.id)).current!;
+    await laterVersionHoldsTheEdit(api, loop.id, reply.release);
+    expect(await screen.findByText('A different draft was published')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft. Version 2 has been published since.',
+      ),
+    ).toBeInTheDocument();
+    expect(await version(api, loop.id, v1.id)).toMatchObject({
+      version: 1,
+      definition: { description: 'B' },
+    });
+    // The existing recovery still applies to the mismatch.
+    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
+    expect(useEditorStore.getState().definition?.description).toBe('A2');
   });
 
   it('sends one request for two clicks in the same task', async () => {
@@ -559,6 +649,138 @@ describe('Publish after an unknown outcome, while its check is answered (#237)',
   });
 });
 
+/** Another writer's draft B, saved without this editor's token. */
+const B = { ...newLoopDefinition('mine'), description: 'B' };
+/** A retry's check found B, not A1, as the server's draft, so it sent nothing (#237 review F1). */
+const CHANGED = `This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. ${RECOVER}`;
+
+describe('Publish after an unknown outcome, when the server holds another draft (#237)', () => {
+  /** B saved elsewhere after the unknown outcome: the server's draft, as it must stay. */
+  async function otherDraft(api: FakeApi, loopId: string) {
+    const own = api.draftToken(loopId)!;
+    api.saveDraftElsewhere(loopId, B);
+    const theirs = { draft: (await detail(api, loopId)).draft!, token: api.draftToken(loopId)! };
+    expect(theirs.draft.definition.description).toBe('B');
+    expect(theirs.token).not.toBe(own);
+    return { own, theirs };
+  }
+
+  /** v1 still current, B still the server's draft, A1 kept unsynced here on its own token. */
+  async function bothKept(
+    api: FakeApi,
+    loopId: string,
+    v1: Version,
+    { own, theirs }: Awaited<ReturnType<typeof otherDraft>>,
+  ) {
+    const after = await detail(api, loopId);
+    expect(after.current).toEqual(v1);
+    expect(after.draft).toEqual(theirs.draft);
+    expect(api.draftToken(loopId)).toBe(theirs.token);
+    expect(useEditorStore.getState().definition?.description).toBe('A1');
+    await waitFor(async () =>
+      expect(await loadLocalDraft(loopId)).toMatchObject({
+        synced: false,
+        baseToken: own,
+        definition: { description: 'A1' },
+      }),
+    );
+  }
+
+  it('sends nothing when the check before a retry finds another draft, and keeps both copies', async () => {
+    const api = new FakeApi();
+    const { user, loop, v1 } = await unconfirmedPublish(api);
+    const copies = await otherDraft(api, loop.id);
+    await user.click(publishButton());
+    expect(await screen.findByText(CHANGED)).toBeInTheDocument();
+    expect(screen.getByText('Nothing was published')).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    // The existing explicit recovery: nothing is resubmitted on its own.
+    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
+    expect(screen.getByTestId('save-state')).toHaveTextContent('Draft changed elsewhere');
+    await bothKept(api, loop.id, v1, copies);
+    await user.click(publishButton());
+    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    await bothKept(api, loop.id, v1, copies);
+  });
+
+  it('keeps that evidence when held input arrives during the check', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, v1 } = await unconfirmedPublish(api);
+    const copies = await otherDraft(api, loop.id);
+    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
+    act(() =>
+      useEditorStore.getState().setFieldError('variables', 'variables', {
+        message: 'invalid JSON',
+        text: '{',
+        input: 'unparsed text',
+      }),
+    );
+    hold.release();
+    expect(await screen.findByText(CHANGED)).toBeInTheDocument();
+    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    expect(useEditorStore.getState().fieldErrors['variables']?.['variables']?.text).toBe('{');
+
+    // Discarding the text sends nothing, and the next Publish meets the conflict, not B.
+    reads.hold = undefined;
+    act(() => useEditorStore.getState().setFieldError('variables', 'variables', undefined));
+    await user.click(publishButton());
+    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    await bothKept(api, loop.id, v1, copies);
+  });
+
+  it('applies that evidence to no newer load of the editor, even on the same token (control)', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await unconfirmedPublish(api);
+    const a1 = useEditorStore.getState().definition!;
+    const { own } = await otherDraft(api, loop.id);
+    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
+    const generation = useEditorStore.getState().generation;
+    act(() => useEditorStore.getState().load(loop.id, a1, { baseToken: own }));
+    expect(useEditorStore.getState().generation).toBeGreaterThan(generation);
+    hold.release();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(useEditorStore.getState()).toMatchObject({ conflict: undefined, baseToken: own });
+    expect(screen.queryByText(PUBLISH_FEEDBACK)).toBeNull();
+    expect(screen.queryByText('The draft changed on the server')).toBeNull();
+    expect(posts(api, loop.id)).toHaveLength(1);
+  });
+
+  it('points to the conflict choice when the check after a lost request finds another draft', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { loop, token } = await savedEditor(api);
+    api.override('POST /loops/:id/publish', () => {
+      // Lost before admission; B is saved elsewhere before the editor reads the server back.
+      api.saveDraftElsewhere(loop.id, B);
+      throw new TypeError('Failed to fetch');
+    });
+    await user.click(publishButton());
+    expect(await screen.findByText('Publish not confirmed')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        `The GraphGoblin API cannot be reached. A check of the server found that the draft saved for this publish is not its current published version, and that the server holds a different draft from it. ${RECOVER}`,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
+    const after = await detail(api, loop.id);
+    expect(after.current).toBeUndefined();
+    expect(after.draft?.definition.description).toBe('B');
+    await waitFor(async () =>
+      expect(await loadLocalDraft(loop.id)).toMatchObject({
+        synced: false,
+        baseToken: token,
+        definition: { description: 'A1' },
+      }),
+    );
+    await user.click(publishButton());
+    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+  });
+});
+
 /**
  * The editor for a loop with one variable (so Loop settings shows its Variables field), saved once
  * with description A1. While `reads.fail` is above zero, each of this loop's detail reads fails and
@@ -624,7 +846,6 @@ async function committedButUnconfirmed(api: FakeApi) {
 
 const HELD_REFUSAL =
   'Some fields hold input that is not a valid value yet; complete or discard it first.';
-const CHECK_FAILED = /^Checking the server before publishing again failed: .* Nothing was sent/;
 
 /** Make the Variables text unparsable, as typing `[` before it would; returns the valid text. */
 async function holdVariables(user: ReturnType<typeof userEvent.setup>) {
@@ -744,8 +965,14 @@ describe('Publish after an unknown outcome and a refusal that sent nothing (#237
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
     reads.fail = 1;
     await user.click(publishButton());
+    // The whole notice: it is about the earlier request (for A1), whose outcome is still unknown,
+    // and says this click sent nothing; it does not present this click's saved A3 as that request's.
     expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
+    expect(screen.queryByText(/the draft saved for this publish/)).toBeNull();
     expect(posts(api, loop.id)).toHaveLength(1);
+    const pending = await detail(api, loop.id);
+    expect(pending.current).toMatchObject({ version: 1, definition: { description: 'A1' } });
+    expect(pending.draft?.definition.description).toBe('A3');
 
     // A check that answers settles it: version 1 holds A1, so A3 is published, once.
     const before = api.calls.length;
