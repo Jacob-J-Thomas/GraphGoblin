@@ -45,20 +45,17 @@ The fresh inventory had 158 open issues. Reconciliation closed 18 records, leavi
 
 The old I01–I07 result remains 59/59 engineering implementations merged, with its separate acceptance obligations and historical integrated-test limitations. Reconciliation does not declare those seven intents accepted.
 
-## Initial work packages
+## Delivery checkpoint — 2026-11-14
 
-| Package                       | Implementer       | Review                         | QA                      | Audit                    | Current state                                                              |
-| ----------------------------- | ----------------- | ------------------------------ | ----------------------- | ------------------------ | -------------------------------------------------------------------------- |
-| I08 validation: #228/#229     | GPT-6.1 Sol xhigh | Claude Opus 5.5 xhigh, pending | Separate agent, pending | Fresh Astra max, pending | Dispatched after reconciliation; baseline reproductions retained.          |
-| Plugin output ownership: #344 | GPT-6.1 Sol xhigh | Claude Opus 5.5 xhigh, pending | Separate agent, pending | Fresh Astra max, pending | Dispatched alongside I08; plugin #455 follows its safe assembly primitive. |
-
-No implementation PR in this new batch has a review verdict or merge authorization from an auditor at this checkpoint. Exact heads, target tips, commands, CI links, scan counts and finding dispositions will be added as each package reaches those gates.
+- **I08 validation, PR #461 (#228/#229, with #452).** Merged as `9748714cfdf923424ba33d86e08de05f01d6185d`. Claude Opus 5.5 xhigh returned READY in scan 1. Fresh GPT-6 Astra max returned SIGN-OFF in scan 2 for head `308c6285d5f5c4dffaf82613d066aba67c4dcffc` against target `b3b5e1874a8252cc01c065d18fef42cbfbe075b4`. The initial Browser timing failure remains in the evidence. The unchanged-head Browser-only retry passed. [Opposite-family review](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/461#issuecomment-6874700515) · [Final audit](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/461#issuecomment-6874703552) · [Browser retry](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43569358108/job/132378356453)
+- **Plugin output ownership, PR #462 (#344).** Opus completed scan 1 on the earlier head. Astra scan 2 required correction A1 for loss of foreign filesystem metadata. Correction `6fff3987068059ca5d9d798c61224bf5e555d711` passed affected native Windows CLI QA and native macOS filesystem QA. The original failures and corrected results are retained. Two of three scans are used. CI on the integrated head and the targeted Astra scan 3 remain pending. [Independent metadata QA](../qa/2026-11-14-plugin-builder-metadata-independent/README.md)
+- **Claude Code integration, PR #463 (#455).** GPT-6 Luna completed the guidance correction locally at `38fab562d24a255574c0274e0e60c069df54f454`. The correction awaits restacking on the builder, followed by review and verification of the integrated candidate. Owner acceptance remains pending. [Draft PR](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/463)
 
 ## macOS plan approval
 
 The owner explicitly approved the [written #456 plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6872747350) in the delivery chat on 2026-11-14. The [approval record](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6873189605) preserves the decision: per-user Swift/AppKit launcher, saved Node path, bounded start or reuse of the matching gateway, default-browser handoff and detached gateway lifetime. The architecture hold is satisfied. The human-only `plan-approved` label was not self-applied by the orchestrator.
 
-The owner can make an authorized logged-in Mac available. This is future access, not a connected device or a native acceptance result. Hosted macOS CI and actual Finder/Dock verification remain separate evidence, and a reviewed candidate with a concrete checklist precedes interactive verification. No full installer, autostart, automatic upgrade or dedicated PWA-window control is added to this scope.
+The owner authorized SSH access to the Mac. Access was verified with `jake` logged into the console and existing Node `v22.22.2`. The builder metadata checks ran on this Mac and passed. Launching the reviewed #456 candidate from Finder and the Dock remains pending and requires the interactive checklist. Hosted macOS CI remains separate evidence. The launcher scope remains the approved per-user app and gateway lifecycle.
 
 ## Runtime refinement
 
