@@ -7,6 +7,7 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { loadLocalDraft } from '../drafts/local-drafts.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
+import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 
 const SAVE_WAIT = { timeout: 4000 };
@@ -403,5 +404,63 @@ describe('renaming a node in the editor (#273)', () => {
     await waitFor(() => expect(store().conflict).toBeUndefined(), SAVE_WAIT);
     const last = api.callsTo('PUT', `/loops/${loop.id}/draft`).at(-1)!;
     expect((last.body as { definition: unknown }).definition).toEqual(renamed);
+  });
+
+  it('keeps a rename on the device while the loop name is refused, and saves it whole with the suggestion', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.addLoop(newLoopDefinition('Nightly Triage'));
+    const loop = api.addLoop(referencing());
+    const puts = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'references' });
+
+    // The loop's own name is refused first (#209): saves are held, the device keeps the edits.
+    act(() => store().updateMeta({ name: 'nightly triage' }));
+    expect(
+      await screen.findByText('Another loop already has this name', undefined, SAVE_WAIT),
+    ).toBeInTheDocument();
+    const held = puts().length;
+
+    // A node rename meanwhile is still one atomic step, shown beside the name notice.
+    const dialog = await editNode('work', 'Edit inference work');
+    expect(within(dialog).getByText('Another loop already has this name')).toBeInTheDocument();
+    const id = within(dialog).getByLabelText('Node id');
+    await user.clear(id);
+    await user.type(id, 'draft{Enter}');
+    const renamed = store().definition!;
+    expect(id).toHaveFocus();
+    expect(notice(dialog, 'Renamed work to draft')).toHaveTextContent(
+      'Updated 3 references in expressions, templates and mutation paths, and 2 connections.',
+    );
+    expect(config('review')['prompt']).toEqual({
+      template: 'Check {{ outputs.draft.value }}. Mention work by name.',
+    });
+    expect(store().past.at(-1)?.label).toBe('rename work to draft');
+    await waitFor(async () =>
+      expect(await loadLocalDraft(loop.id)).toMatchObject({ definition: renamed, synced: false }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(puts()).toHaveLength(held);
+
+    // Taking the suggestion sends the whole renamed draft once, under the suggested name.
+    await user.click(within(dialog).getByRole('button', { name: 'Use “nightly triage copy”' }));
+    await waitFor(() => expect(puts()).toHaveLength(held + 1), SAVE_WAIT);
+    expect((puts().at(-1)!.body as { definition: unknown }).definition).toEqual({
+      ...renamed,
+      name: 'nightly triage copy',
+    });
+    await waitFor(
+      () => expect(within(dialog).queryByText('Another loop already has this name')).toBeNull(),
+      SAVE_WAIT,
+    );
+    // The rename's report outlives the name change; it ends only by its own rules.
+    expect(notice(dialog, 'Renamed work to draft')).toBeVisible();
+    await waitFor(async () =>
+      expect(await loadLocalDraft(loop.id)).toMatchObject({
+        definition: { ...renamed, name: 'nightly triage copy' },
+        synced: true,
+      }),
+    );
   });
 });
