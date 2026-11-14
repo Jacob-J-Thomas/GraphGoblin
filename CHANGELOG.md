@@ -12,7 +12,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   the version holds a different stored draft, or **Nothing to publish** finds another current
   version, the notice says so without naming a writer, and the editor keeps its copy behind the
   existing **Reload server draft** / **Overwrite with this copy** choice. A lost or failed reply
-  is read back before anything is claimed. If that check fails too, the next Publish checks first.
+  is read back before anything is claimed. If that check fails too, each later Publish in that
+  editor checks first until a check answers, also after a Publish refused in between.
   The publish notice no longer carries its own **Open in Runs** link, which opens the loop's
   current Runs flow rather than a particular version. The toolbar link remains. While a draft
   conflict or a name refusal keeps the draft from the server, the indicator beside Publish shows

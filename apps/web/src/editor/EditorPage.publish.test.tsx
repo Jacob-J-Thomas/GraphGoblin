@@ -1,6 +1,8 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
@@ -554,6 +556,325 @@ describe('Publish after an unknown outcome, while its check is answered (#237)',
     const after = await detail(api, loop.id);
     expect(after.current).toMatchObject({ version: 2, definition: { description: 'A1' } });
     expect(after.draft).toBeUndefined();
+  });
+});
+
+/**
+ * The editor for a loop with one variable (so Loop settings shows its Variables field), saved once
+ * with description A1. While `reads.fail` is above zero, each of this loop's detail reads fails and
+ * counts it down; while `reads.hold` is set, they wait for it.
+ */
+async function variablesEditor(api: FakeApi) {
+  const loop = api.addLoop({
+    ...newLoopDefinition('mine'),
+    variables: { key: { type: 'string' } },
+  });
+  const reads: { fail: number; hold: ReturnType<typeof gate> | undefined } = {
+    fail: 0,
+    hold: undefined,
+  };
+  api.override('GET /loops/:id', async (call, [id]) => {
+    if (id === loop.id && reads.fail > 0) {
+      reads.fail -= 1;
+      throw new TypeError('Failed to fetch');
+    }
+    if (id === loop.id && reads.hold) await reads.hold.promise;
+    return api.builtIn(call);
+  });
+  const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+  await screen.findByRole('heading', { name: 'mine' });
+  await waitFor(() => expect(screen.queryByText(RECONCILING)).toBeNull());
+  act(() => useEditorStore.getState().updateMeta({ description: 'A1' }));
+  await waitFor(
+    () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    SAVE_WAIT,
+  );
+  return { user: userEvent.setup(), loop, reads, queryClient };
+}
+
+/**
+ * The native diagnostic's start: the first Publish is committed as version 1, its reply is lost,
+ * and the check of the server after it fails too.
+ */
+async function committedButUnconfirmed(api: FakeApi) {
+  const editor = await variablesEditor(api);
+  let lose = true;
+  api.override('POST /loops/:id/publish', async (call) => {
+    const committed = await api.builtIn(call);
+    if (!lose) return committed;
+    lose = false;
+    editor.reads.fail = 1;
+    throw new TypeError('Failed to fetch');
+  });
+  await editor.user.click(publishButton());
+  expect(
+    await screen.findByText(
+      /Checking the server failed too: .* Publish again checks the server first\./,
+    ),
+  ).toBeInTheDocument();
+  const committed = await detail(api, editor.loop.id);
+  expect(committed.current).toMatchObject({ version: 1, definition: { description: 'A1' } });
+  expect(committed.draft).toBeUndefined();
+  expect(posts(api, editor.loop.id)).toHaveLength(1);
+  // The editor's own refresh after the attempt read the loop successfully meanwhile.
+  await waitFor(() => expect(screen.getByText('published v1')).toBeInTheDocument());
+  await waitFor(() => expect(editor.queryClient.isFetching()).toBe(0));
+  return { ...editor, v1: committed.current! };
+}
+
+const HELD_REFUSAL =
+  'Some fields hold input that is not a valid value yet; complete or discard it first.';
+const CHECK_FAILED = /^Checking the server before publishing again failed: .* Nothing was sent/;
+
+/** Make the Variables text unparsable, as typing `[` before it would; returns the valid text. */
+async function holdVariables(user: ReturnType<typeof userEvent.setup>) {
+  const show = screen.queryByRole('button', { name: 'Show loop settings' });
+  if (show) await user.click(show);
+  const valid = getCode('Variables value 1');
+  setCode('Variables value 1', `[${valid}`);
+  await screen.findByRole('button', { name: 'Discard the unparsed text' });
+  return valid;
+}
+
+/** The loop's detail reads, draft saves and Publish requests from call `from` on, in order. */
+const loopTraffic = (api: FakeApi, loopId: string, from: number) =>
+  api.calls
+    .slice(from)
+    .filter(
+      (call) =>
+        (call.method === 'GET' && call.path === `/loops/${loopId}`) ||
+        (call.method === 'PUT' && call.path === `/loops/${loopId}/draft`) ||
+        (call.method === 'POST' && call.path === `/loops/${loopId}/publish`),
+    )
+    .map((call) => call.method);
+
+/** Publish with that text held: refused in this editor, with nothing sent for the loop. */
+async function refusedPublish(
+  user: ReturnType<typeof userEvent.setup>,
+  api: FakeApi,
+  loopId: string,
+  queryClient: QueryClient,
+) {
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+  const before = api.calls.length;
+  await user.click(publishButton());
+  expect(await screen.findByText(HELD_REFUSAL)).toBeInTheDocument();
+  expect(screen.getByText('Publish failed')).toBeInTheDocument();
+  await waitFor(() => expect(publishButton()).toHaveTextContent(/^Publish$/));
+  expect(loopTraffic(api, loopId, before)).toEqual([]);
+}
+
+async function discardVariables(user: ReturnType<typeof userEvent.setup>, valid: string) {
+  await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
+  await waitFor(() => expect(getCode('Variables value 1')).toBe(valid));
+}
+
+describe('Publish after an unknown outcome and a refusal that sent nothing (#237)', () => {
+  it('reads the server first after a held-input refusal, and sends no second request', async () => {
+    const api = new FakeApi();
+    const { user, loop, v1, queryClient } = await committedButUnconfirmed(api);
+    const valid = await holdVariables(user);
+    await refusedPublish(user, api, loop.id, queryClient);
+    // The refusal is the latest attempt's feedback; the earlier notice is replaced.
+    expect(screen.queryByText('Publish not confirmed')).toBeNull();
+    await discardVariables(user, valid);
+    expect(puts(api, loop.id)).toHaveLength(1);
+
+    const before = api.calls.length;
+    await user.click(publishButton());
+    expect(
+      await screen.findByText('Nothing to publish: version 1 already holds this draft.'),
+    ).toBeInTheDocument();
+    expect(loopTraffic(api, loop.id, before)[0]).toBe('GET');
+    expect(posts(api, loop.id)).toHaveLength(1);
+    expect(puts(api, loop.id)).toHaveLength(1);
+    const after = await detail(api, loop.id);
+    expect(after.current).toEqual(v1);
+    expect(after.draft).toBeUndefined();
+    expect(screen.queryByText('Publish failed')).toBeNull();
+    expect(useEditorStore.getState().conflict).toBeUndefined();
+  });
+
+  it('stays unresolved through refusals and a failed check, until a check answers', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await committedButUnconfirmed(api);
+    let valid = await holdVariables(user);
+    await refusedPublish(user, api, loop.id, queryClient);
+    await discardVariables(user, valid);
+
+    // The check fails again: still nothing is sent.
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    reads.fail = 1;
+    await user.click(publishButton());
+    expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+
+    valid = await holdVariables(user);
+    await refusedPublish(user, api, loop.id, queryClient);
+    await discardVariables(user, valid);
+
+    await user.click(publishButton());
+    expect(
+      await screen.findByText('Nothing to publish: version 1 already holds this draft.'),
+    ).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+  });
+
+  it('stays unresolved through a Publish whose save failed, then sends once after a check', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await committedButUnconfirmed(api);
+    let saving = false;
+    api.override('PUT /loops/:id/draft', (call) =>
+      saving ? api.builtIn(call) : problem(503, 'UNAVAILABLE', 'the gateway is restarting'),
+    );
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    await user.click(publishButton());
+    expect(
+      await screen.findByText('The draft could not be saved; fix the issues below first.'),
+    ).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+
+    // The draft saves later on its own; an accepted save says nothing about the publication.
+    saving = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'A3' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    reads.fail = 1;
+    await user.click(publishButton());
+    expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+
+    // A check that answers settles it: version 1 holds A1, so A3 is published, once.
+    const before = api.calls.length;
+    await user.click(publishButton());
+    expect(await screen.findByText('Published version 2.')).toBeInTheDocument();
+    expect(loopTraffic(api, loop.id, before).slice(0, 2)).toEqual(['GET', 'POST']);
+    expect(posts(api, loop.id)).toHaveLength(2);
+    expect((await detail(api, loop.id)).current).toMatchObject({
+      version: 2,
+      definition: { description: 'A3' },
+    });
+  });
+
+  it('stays unresolved through a refusal met where the request would be sent', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await committedButUnconfirmed(api);
+    // While the publish's own save runs, another job for this loop joins the queue behind it.
+    const queued = gate();
+    let block = true;
+    api.override('PUT /loops/:id/draft', async (call) => {
+      const answer = await api.builtIn(call);
+      if (block) void serializeSave(loop.id, () => queued.promise);
+      block = false;
+      return answer;
+    });
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    await user.click(publishButton());
+    await waitFor(() => expect(puts(api, loop.id)).toHaveLength(2));
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    );
+    const valid = await holdVariables(user);
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    const before = api.calls.length;
+    queued.release();
+    expect(await screen.findByText(HELD_REFUSAL)).toBeInTheDocument();
+    await waitFor(() => expect(publishButton()).toHaveTextContent(/^Publish$/));
+    expect(loopTraffic(api, loop.id, before)).toEqual([]);
+    expect(posts(api, loop.id)).toHaveLength(1);
+    await discardVariables(user, valid);
+
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    reads.fail = 1;
+    await user.click(publishButton());
+    expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    expect((await detail(api, loop.id)).draft?.definition.description).toBe('A2');
+  });
+
+  it('sends at once after a refusal when the last outcome was known (control)', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await variablesEditor(api);
+    await user.click(publishButton());
+    expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
+    const valid = await holdVariables(user);
+    await refusedPublish(user, api, loop.id, queryClient);
+    await discardVariables(user, valid);
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+    // Reads of the loop wait; the request does not.
+    const hold = gate();
+    reads.hold = hold;
+    await user.click(publishButton());
+    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(2));
+    hold.release();
+    expect(await screen.findByText('Published version 2.')).toBeInTheDocument();
+  });
+
+  it('sends at once after a refusal when the check after a lost request answered (control)', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await variablesEditor(api);
+    let lose = true;
+    api.override('POST /loops/:id/publish', (call) => {
+      if (!lose) return api.builtIn(call);
+      lose = false;
+      throw new TypeError('Failed to fetch');
+    });
+    await user.click(publishButton());
+    expect(
+      await screen.findByText(/is not its current published version\. Publish again to retry\./),
+    ).toBeInTheDocument();
+    const valid = await holdVariables(user);
+    await refusedPublish(user, api, loop.id, queryClient);
+    await discardVariables(user, valid);
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+    const hold = gate();
+    reads.hold = hold;
+    await user.click(publishButton());
+    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(2));
+    hold.release();
+    expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
+  });
+
+  it('does not carry an unresolved request into a newer load of the editor (control)', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, queryClient } = await committedButUnconfirmed(api);
+    // Reload server draft starts a newer load, from the server's draft as read now.
+    api.saveDraftElsewhere(loop.id, {
+      ...newLoopDefinition('mine'),
+      variables: { key: { type: 'string' } },
+      description: 'B',
+    });
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    expect(
+      await screen.findByText('The draft changed on the server', undefined, SAVE_WAIT),
+    ).toBeInTheDocument();
+    const generation = useEditorStore.getState().generation;
+    await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
+    await waitFor(() => expect(useEditorStore.getState().generation).toBeGreaterThan(generation));
+    expect(useEditorStore.getState().definition?.description).toBe('B');
+    expect(screen.queryByText('Publish not confirmed')).toBeNull();
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+    const hold = gate();
+    reads.hold = hold;
+    await user.click(publishButton());
+    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(2));
+    hold.release();
+    expect(await screen.findByText('Published version 2.')).toBeInTheDocument();
+    expect((await detail(api, loop.id)).current).toMatchObject({
+      version: 2,
+      definition: { description: 'B' },
+    });
   });
 });
 

@@ -15,9 +15,15 @@ type Version = Awaited<ReturnType<typeof loops.publish>>;
 export interface PublishAttempt {
   loopId: string;
   generation: number;
-  /** The previous attempt's outcome is unknown: read the server before sending another request. */
+  /**
+   * An earlier request of this load has an outcome that no read of the server has established
+   * yet: read the server before sending another request.
+   */
   checkFirst: boolean;
 }
+
+/** An editor load: the loop, and the generation of its load in the editor. */
+type EditorLoad = Pick<PublishAttempt, 'loopId' | 'generation'>;
 
 /** The server's copy this attempt publishes: what it stored for this load, and that copy's token. */
 export interface Acknowledged {
@@ -114,13 +120,17 @@ async function readBack(client: GraphGoblinClient, loopId: string): Promise<Read
  * saves, so this editor's own later saves cannot reach the server before it. The request publishes
  * whatever draft the server holds when it admits it; the outcome compares that with the copy the
  * attempt saved. Resolves to undefined, sending nothing, when another load replaced this one before
- * the request; a refusal that applies by then is thrown, and nothing is sent either.
+ * the request; a refusal that applies by then is thrown, and nothing is sent either. `unresolved`
+ * records whether this load is left with a request whose outcome no read has established: a check
+ * that answers, or a request the server answers, settles it; a failed check keeps it; a request
+ * with no answer whose check failed too leaves it. A refusal, sending nothing, changes nothing.
  */
 async function publishAttempt(
   client: GraphGoblinClient,
   queryClient: QueryClient,
   flush: () => Promise<boolean>,
   attempt: PublishAttempt,
+  unresolved: (still: boolean) => void,
 ): Promise<PublishOutcome | undefined> {
   const { loopId } = attempt;
   const sameLoad = () => {
@@ -149,6 +159,8 @@ async function publishAttempt(
     let result: Answer | undefined;
     if (attempt.checkFirst) {
       const checked = await readBack(client, loopId);
+      // An answer establishes the server's state, whatever this attempt meets next.
+      unresolved(!checked.ok);
       if (!checked.ok)
         result = { kind: 'unknown', sent: false, reason: checked.reason, readback: checked };
       else if (
@@ -179,6 +191,7 @@ async function publishAttempt(
             readback: await readBack(client, loopId),
           };
       }
+      unresolved(result.kind === 'unknown' && !result.readback.ok);
     }
     void refreshLoopAfterWrite(queryClient, loopId, { published: true });
     const release =
@@ -219,13 +232,25 @@ async function publishAttempt(
  * The editor's Publish (#237). Only the latest attempt is reported, and only to the editor load
  * that made it: a reply that arrives after a reload or in another loop's editor shows nothing
  * there (its cache refresh still happens). `start` ignores a second click while one is running.
+ * After a request whose outcome stays unknown, the load's next Publish that gets past its
+ * refusals reads the server before sending anything; a newer load starts without that.
  */
 export function usePublish(loopId: string, flush: () => Promise<boolean>) {
   const client = useApi();
   const queryClient = useQueryClient();
   const running = useRef(false);
+  // The load left with a Publish request whose outcome no read of the server has established. It
+  // is kept apart from the latest attempt's result, which a refusal replaces: a later Publish of
+  // that load reads the server first, however many refusals or failed checks came between.
+  const unresolved = useRef<EditorLoad | undefined>(undefined);
   const mutation = useMutation({
-    mutationFn: (attempt: PublishAttempt) => publishAttempt(client, queryClient, flush, attempt),
+    mutationFn: (attempt: PublishAttempt) =>
+      publishAttempt(client, queryClient, flush, attempt, (still) => {
+        const load = unresolved.current;
+        if (still) unresolved.current = { loopId: attempt.loopId, generation: attempt.generation };
+        else if (load?.loopId === attempt.loopId && load.generation === attempt.generation)
+          unresolved.current = undefined;
+      }),
     onSettled: () => {
       running.current = false;
     },
@@ -241,10 +266,12 @@ export function usePublish(loopId: string, flush: () => Promise<boolean>) {
     start: () => {
       if (running.current) return;
       running.current = true;
+      const now = useEditorStore.getState().generation;
+      const load = unresolved.current;
       mutation.mutate({
         loopId,
-        generation: useEditorStore.getState().generation,
-        checkFirst: outcome?.kind === 'unknown' && !outcome.readback.ok,
+        generation: now,
+        checkFirst: load?.loopId === loopId && load.generation === now,
       });
     },
   };
