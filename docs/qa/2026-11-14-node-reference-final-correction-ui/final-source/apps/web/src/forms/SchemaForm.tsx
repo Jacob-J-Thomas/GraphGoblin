@@ -1,0 +1,493 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  memo,
+  use,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
+import { FormEditReviewContext } from './edit-review.js';
+import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
+import { Disclosure, FieldGroup, Label, Select } from '../components/ui/index.js';
+import { setupInstruction } from './setup-instructions.js';
+import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
+import {
+  CollectionIdentitiesContext,
+  createCollectionIdentities,
+  createDisclosureIdentities,
+  DisclosureStoreContext,
+  type DisclosureStates,
+  type DisclosureStore,
+} from './disclosures.js';
+import {
+  FieldControlsContext,
+  FieldOverridesContext,
+  UnionPickersContext,
+  Field,
+  type FieldControls,
+  type FieldOverrides,
+  type UnionPickers,
+} from './fields.js';
+import { FieldIssuesContext, FormScopeContext, ProblemPathsContext } from './fields/shared.js';
+import {
+  humanize,
+  initialValue,
+  matchOption,
+  optionLabel,
+  shapeOf,
+  withUnsetFields,
+  type Schema,
+} from './introspect.js';
+import { formLayout, orderedShape } from './layout.js';
+import {
+  ParseErrorContext,
+  repathParseErrors,
+  type ParseError,
+  type ParseErrorChannel,
+  type ParseErrorReason,
+} from './parse-errors.js';
+import { FormPanels } from './sections.js';
+import { sameJson } from './layout.js';
+import { stringRepairs, withStringRepairs } from './repair.js';
+import { stripUnset } from './unset.js';
+
+/**
+ * What a mounted SchemaForm offers its owner through `ref` (#273): a way to take a value that an
+ * edit outside the form made from the one it shows, without remounting.
+ */
+export interface SchemaFormHandle {
+  /**
+   * Take `repaired` in place of `previous`, the value the form shows, when `repaired` only rewrote
+   * strings in it (`stringRepairs`): a node rename's reference repair. The form sets those strings
+   * and reports nothing, since the change is already the owner's. Every element stays, so a
+   * control under a pressed pointer still receives its click, and rows, disclosures, focus, and
+   * held or unapplied input in other fields stay as they are; fields follow their new value as they
+   * follow any value (a code editor replaces its document). Returns false, changing nothing, when
+   * the form does not show `previous` or `repaired` is another kind of change; the owner then
+   * remounts the form with `key`.
+   */
+  applyRepair: (previous: unknown, repaired: unknown) => boolean;
+}
+
+export interface SchemaFormProps {
+  /** A Zod object or discriminated-union schema, for example a node kind's config schema. */
+  schema: Schema;
+  value: unknown;
+  /**
+   * Called with the raw form values after every change, valid or not, and what the change was:
+   * the field's path and whether it was a discrete choice or typing (`FormChange`), which the
+   * editor's undo history uses to make each choice a step and typing one step per field.
+   */
+  onChange: (value: unknown, change: FormChange) => void;
+  /** Accessible name for the form. */
+  label: string;
+  /**
+   * Optional display order for top-level object fields, on Settings and Context alike; unspecified
+   * fields keep schema order.
+   */
+  fieldOrder?: readonly string[] | undefined;
+  /** Stored held input, including invalid or unapplied JSON, by field path; restored on remount. */
+  parseErrors?: Record<string, ParseError> | undefined;
+  /**
+   * Called when a field starts or stops holding unfinished input (`undefined` clears the path); `reason` is
+   * `'discard'` when the user dropped the text (Discard the unparsed text) rather than fixing it. `change` is
+   * the change it belongs to: typing in that field, or the commit (a row's removal, say) that moved
+   * or dropped it.
+   */
+  onParseError?: (
+    path: string,
+    error: ParseError | undefined,
+    reason: ParseErrorReason | undefined,
+    change: FormChange,
+  ) => void;
+  /**
+   * Controls that draw fields in place of the default renderer, by the name a field's metadata
+   * gives in `control` (`FieldControl`); a field naming no registered control is drawn as usual.
+   */
+  controls?: FieldControls | undefined;
+  /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
+  fieldOverrides?: FieldOverrides | undefined;
+  /** Custom discriminated-union pickers by relative dotted field path; the empty key is the root. */
+  unionPickers?: UnionPickers | undefined;
+  /**
+   * Paths, relative to the form's value, of errors found outside the form (the loop's validation:
+   * template and expression syntax, the API's checks). A collapsed Advanced group or list item
+   * holding one says so, as it does for the form's own problems.
+   */
+  problems?: readonly string[] | undefined;
+  /**
+   * Which of the form's disclosures are open (the Advanced group, collapsible list items, a
+   * control's own), when the caller keeps them: the node editor does, so the remount an undo or
+   * redo causes keeps what the user opened. Without it the form keeps them itself, and each starts
+   * from its default on every mount.
+   */
+  disclosures?: DisclosureStore | undefined;
+  /** Receives the mounted form's `SchemaFormHandle`. */
+  ref?: Ref<SchemaFormHandle> | undefined;
+}
+
+const NO_CONTROLS: FieldControls = {};
+const NO_FIELD_OVERRIDES: FieldOverrides = {};
+const NO_UNION_PICKERS: UnionPickers = {};
+const NO_PROBLEMS: readonly string[] = [];
+
+interface Issue {
+  path: string;
+  message: string;
+  instruction?: string | undefined;
+}
+
+function issuesOf(schema: Schema, value: unknown): Issue[] {
+  const result = schema.safeParse(value);
+  if (result.success) return [];
+  return result.error.issues.map((issue) => ({
+    path: issue.path.map(String).join('.'),
+    message: issue.message,
+    instruction: setupInstruction(value, issue.path.map(String).join('.')),
+  }));
+}
+
+function asValues(value: unknown): FieldValues {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : {};
+}
+
+/**
+ * A form generated from a Zod schema with react-hook-form and the Zod resolver. Every change is
+ * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
+ * inline per field and as a summary. Remount with a `key` to load a different value; a repair made
+ * outside the form can be taken in place instead (`SchemaFormHandle`, through `ref`).
+ *
+ * The contracts' field metadata places the fields (`formLayout`): the basic ones first, in schema
+ * order unless `fieldOrder` overrides the top-level object, then the advanced ones under a collapsed
+ * Advanced disclosure, grouped under headings. The disclosure's state is the caller's (`disclosures`),
+ * else the form's own, collapsed on each mount.
+ */
+export function SchemaForm(props: SchemaFormProps) {
+  // Value is the mount's starting document. Subsequent edits are already held by RHF; callers
+  // remount for undo/loading. Stable callbacks keep an autosave echo from rendering every field.
+  const initialRef = useRef(props.value);
+  const latestRef = useRef(props);
+  latestRef.current = props;
+  const callbacks = useMemo(
+    () => ({
+      onChange: (...args: Parameters<SchemaFormProps['onChange']>) =>
+        latestRef.current.onChange(...args),
+      onParseError: (...args: Parameters<NonNullable<SchemaFormProps['onParseError']>>) =>
+        latestRef.current.onParseError?.(...args),
+    }),
+    [],
+  );
+  const problemsRef = useRef(props.problems);
+  if (JSON.stringify(problemsRef.current) !== JSON.stringify(props.problems))
+    problemsRef.current = props.problems;
+  return (
+    <SchemaFormBindings
+      {...props}
+      value={initialRef.current}
+      problems={problemsRef.current}
+      onChange={callbacks.onChange}
+      {...(props.onParseError ? { onParseError: callbacks.onParseError } : {})}
+    />
+  );
+}
+
+const SchemaFormBindings = memo(function SchemaFormBindings({
+  schema,
+  value,
+  onChange,
+  label,
+  parseErrors,
+  onParseError,
+  controls,
+  fieldOverrides,
+  unionPickers,
+  problems,
+  disclosures,
+  fieldOrder,
+  ref,
+}: SchemaFormProps) {
+  const shape = shapeOf(schema);
+  const id = useId();
+  const [ownDisclosures, setOwnDisclosures] = useState<DisclosureStates>({});
+  const [ownIdentities] = useState(createDisclosureIdentities);
+  const [collections] = useState(() =>
+    createCollectionIdentities(disclosures?.identities ?? ownIdentities, value),
+  );
+  const disclosureStore = useMemo<DisclosureStore>(
+    () => disclosures ?? { open: ownDisclosures, setOpen: setOwnDisclosures },
+    [disclosures, ownDisclosures],
+  );
+  const resolver = useMemo<Resolver<FieldValues>>(() => {
+    const zod = zodResolver(schema as never) as unknown as Resolver<FieldValues>;
+    return (values, context, options) => zod(stripUnset(values) as FieldValues, context, options);
+  }, [schema]);
+  const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
+  const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
+  const issuesSnapshotRef = useRef(JSON.stringify(issues));
+  // The first issue at each path, for the fields react-hook-form does not control (record values).
+  const issuesByPath = useMemo(() => {
+    const byPath = new Map<string, string>();
+    for (const issue of issues)
+      if (!byPath.has(issue.path)) byPath.set(issue.path, issue.instruction ?? issue.message);
+    return byPath;
+  }, [issues]);
+  // The change under way (`ChangeScope`): its writes are reported with it.
+  const pendingChangeRef = useRef<FormChange | undefined>(undefined);
+  const changeScope = useMemo<ChangeScope>(
+    () => (change, write) => {
+      if (pendingChangeRef.current) return write();
+      pendingChangeRef.current = { ...change, id: nextChangeId() };
+      try {
+        write();
+      } finally {
+        pendingChangeRef.current = undefined;
+      }
+    },
+    [],
+  );
+  const parseErrorsRef = useRef(parseErrors);
+  parseErrorsRef.current = parseErrors;
+  const onParseErrorRef = useRef(onParseError);
+  onParseErrorRef.current = onParseError;
+  const tracked = onParseError !== undefined;
+  const parseErrorChannel = useMemo<ParseErrorChannel>(
+    () => {
+      const update = (path: string, error: ParseError | undefined, reason?: ParseErrorReason) => {
+        const current = parseErrorsRef.current?.[path];
+        if (
+          current?.message === error?.message &&
+          current?.text === error?.text &&
+          current?.input === error?.input
+        )
+          return;
+        // Collection actions can clear and then reuse a path before React renders again.
+        const { [path]: _previous, ...rest } = parseErrorsRef.current ?? {};
+        parseErrorsRef.current = error ? { ...rest, [path]: error } : rest;
+        // Outside any action, the text was typed in that field.
+        const change = pendingChangeRef.current ?? { path, kind: 'typing', id: nextChangeId() };
+        onParseErrorRef.current?.(path, error, reason, change);
+      };
+      return {
+        get: (path) => parseErrorsRef.current?.[path],
+        report: (path, error) => update(path, error),
+        discard: (path) => update(path, undefined, 'discard'),
+        tracked,
+        errors: parseErrors,
+      };
+    },
+    // `errors` is the stored state fields compare against to notice an external discard.
+    [parseErrors, tracked],
+  );
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  // Set while `applyRepair` writes values the owner already holds: they are not reported back.
+  const repairingRef = useRef(false);
+
+  useEffect(() => {
+    void form.trigger();
+    const subscription = form.watch((values, { name }) => {
+      const next = stripUnset(values);
+      collections.remember(next);
+      const found = issuesOf(schema, next);
+      const snapshot = JSON.stringify(found);
+      if (snapshot !== issuesSnapshotRef.current) {
+        issuesSnapshotRef.current = snapshot;
+        setIssues(found);
+        // Refresh sibling refinements only when schema issues change, not on each keystroke.
+        void form.trigger();
+      }
+      if (repairingRef.current) return;
+      // Every field describes its changes; a write that does not is a step of its own.
+      const change = pendingChangeRef.current ?? {
+        path: name ?? '',
+        kind: 'commit',
+        id: nextChangeId(),
+      };
+      onChangeRef.current(next, change);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, schema, collections]);
+
+  const [unionIndex, setUnionIndex] = useState(() =>
+    shape.kind === 'union' ? matchOption(shape.options, value, shape.discriminator) : 0,
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      applyRepair: (previous, repaired) => {
+        const repairs = stringRepairs(previous, repaired);
+        if (repairs === undefined) return false;
+        if (repairs.length === 0) return true;
+        // Only the value this form shows can be repaired in place, in the variant it shows.
+        if (!sameJson(stripUnset(form.getValues()), stripUnset(previous))) return false;
+        if (
+          shape.kind === 'union' &&
+          matchOption(shape.options, repaired, shape.discriminator) !== unionIndex
+        )
+          return false;
+        repairingRef.current = true;
+        try {
+          // Each top-level field takes its section with the new strings, so whichever control
+          // shows one (a field, a record row, a JSON section) follows; the rest of the section
+          // keeps the form's own values, cleared-field markers included.
+          for (const key of new Set(repairs.map(({ path }) => String(path[0])))) {
+            const section = repairs.filter(({ path }) => String(path[0]) === key);
+            form.setValue(key, withStringRepairs(form.getValues(key), section, 1));
+          }
+        } finally {
+          repairingRef.current = false;
+        }
+        return sameJson(stripUnset(form.getValues()), stripUnset(repaired));
+      },
+    }),
+    [form, shape, unionIndex],
+  );
+  const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
+  const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
+  const RootPicker = unionPickers?.[''];
+  const reviewEdit = use(FormEditReviewContext);
+  const layout = useMemo(() => {
+    const variant = shapeOf(variantSchema);
+    return variant.kind === 'object'
+      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator, true)
+      : undefined;
+  }, [variantSchema, discriminator, fieldOrder]);
+
+  // A choice: one undo step, with the unparsed text of the fields it replaces.
+  const switchVariant = (index: number) => {
+    if (shape.kind !== 'union' || index === unionIndex) return;
+    reviewEdit(
+      { type: 'variant', path: '', value: initialValue(shape.options[index] as Schema) },
+      (value, keep = [], moves = []) =>
+        changeScope({ path: '', kind: 'commit' }, () => {
+          repathParseErrors(
+            parseErrorChannel,
+            Object.keys(parseErrorChannel.errors ?? {})
+              .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
+              .map((from) => {
+                const move = moves.find(
+                  ({ from: path }) => from === path || from.startsWith(`${path}.`),
+                );
+                return {
+                  from,
+                  ...(move ? { to: move.to + from.slice(move.from.length) } : {}),
+                  exact: true,
+                };
+              }),
+          );
+          const next = asValues(value);
+          collections.remember(next);
+          setUnionIndex(index);
+          form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
+          const found = issuesOf(schema, next);
+          issuesSnapshotRef.current = JSON.stringify(found);
+          setIssues(found);
+          onChangeRef.current(next, pendingChangeRef.current!);
+        }),
+    );
+  };
+
+  return (
+    <FormChangeContext value={changeScope}>
+      <CollectionIdentitiesContext value={collections}>
+        <DisclosureStoreContext value={disclosureStore}>
+          <ParseErrorContext value={parseErrorChannel}>
+            <FieldIssuesContext value={issuesByPath}>
+              <FieldControlsContext value={controls ?? NO_CONTROLS}>
+                <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
+                  <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
+                    <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
+                      <FormScopeContext value={{ schema: variantSchema, rootSchema: schema, id }}>
+                        <FormProvider {...form}>
+                          <form
+                            aria-label={label}
+                            noValidate
+                            onSubmit={(e) => e.preventDefault()}
+                            className="grid gap-field"
+                          >
+                            {shape.kind === 'union' && RootPicker ? (
+                              <div data-field={shape.discriminator ?? 'kind'}>
+                                <RootPicker
+                                  name={shape.discriminator ?? 'kind'}
+                                  label={humanize(shape.discriminator ?? 'kind')}
+                                  required
+                                  options={shape.options.map((option, index) => ({
+                                    value: String(index),
+                                    label: optionLabel(option, shape.discriminator),
+                                    schema: option,
+                                  }))}
+                                  value={String(unionIndex)}
+                                  onChange={(value) => switchVariant(Number(value))}
+                                />
+                              </div>
+                            ) : shape.kind === 'union' ? (
+                              <FieldGroup
+                                data-field={shape.discriminator === 'kind' ? 'kind' : undefined}
+                              >
+                                <Label htmlFor={id}>
+                                  {humanize(shape.discriminator ?? 'kind')}
+                                </Label>
+                                <Select
+                                  id={id}
+                                  value={String(unionIndex)}
+                                  onChange={(e) => switchVariant(Number(e.target.value))}
+                                >
+                                  {shape.options.map((option, index) => (
+                                    <option key={index} value={index}>
+                                      {optionLabel(option, shape.discriminator)}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </FieldGroup>
+                            ) : null}
+                            {layout ? (
+                              <FormPanels
+                                key={unionIndex}
+                                schema={variantSchema}
+                                layout={layout}
+                                fieldOrder={fieldOrder}
+                                keyPrefix=""
+                                Field={Field}
+                              />
+                            ) : null}
+                            {issues
+                              .filter((issue) => issue.path === '')
+                              .map((issue, index) => (
+                                <p key={index} role="alert" className="text-sm text-status-bad-fg">
+                                  {issue.message}
+                                </p>
+                              ))}
+                            {issues.length > 0 ? (
+                              <Disclosure
+                                label="Validation details"
+                                summary={`${issues.length} config issue${issues.length === 1 ? '' : 's'}`}
+                              >
+                                <ul className="list-disc pl-4">
+                                  {issues.map((issue, index) => (
+                                    <li key={index}>
+                                      {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
+                                      {issue.message}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </Disclosure>
+                            ) : null}
+                          </form>
+                        </FormProvider>
+                      </FormScopeContext>
+                    </ProblemPathsContext>
+                  </UnionPickersContext>
+                </FieldOverridesContext>
+              </FieldControlsContext>
+            </FieldIssuesContext>
+          </ParseErrorContext>
+        </DisclosureStoreContext>
+      </CollectionIdentitiesContext>
+    </FormChangeContext>
+  );
+});

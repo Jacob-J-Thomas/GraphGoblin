@@ -1,0 +1,37 @@
+2026-11-14T22:02:41Z
+v22.23.4
+web typecheck (tsc -p tsconfig.json --noEmit)
+$ tsc -p tsconfig.json --noEmit
+src/editor/EditorPage.rename-activation.test.tsx(64,32): error TS2322: Type 'Operation' is not assignable to type '{ op: "set"; path: string; value: { kind: "literal"; value: JSONType; } | { kind: "template"; template: string; } | { kind: "expression"; jsonata: string; }; } | { op: "delete"; path: string; } | ... 6 more ... | { ...; }'.
+  Type 'Operation' is missing the following properties from type '{ op: "replace"; target: "messages" | "vars"; pattern: string; replacement: string; where?: string | undefined; flags?: string | undefined; }': op, target, pattern, replacement
+src/editor/EditorPage.rename-activation.test.tsx(64,40): error TS2322: Type 'Operation' is not assignable to type '{ op: "set"; path: string; value: { kind: "literal"; value: JSONType; } | { kind: "template"; template: string; } | { kind: "expression"; jsonata: string; }; } | { op: "delete"; path: string; } | ... 6 more ... | { ...; }'.
+  Type 'Operation' is missing the following properties from type '{ op: "replace"; target: "messages" | "vars"; pattern: string; replacement: string; where?: string | undefined; flags?: string | undefined; }': op, target, pattern, replacement
+[ELIFECYCLE] Command failed with exit code 2.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+typecheck-exit=1
+scoped eslint
+
+C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\src\forms\repair.ts
+  59:32  error  Unsafe spread of an `any` value in an array  @typescript-eslint/no-unsafe-assignment
+
+✖ 1 problem (1 error, 0 warnings)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+eslint-exit=1
+scoped prettier check
+Checking formatting...
+[warn] src/editor/EditorPage.rename-activation.test.tsx
+[warn] src/editor/RenameNotice.test.tsx
+[warn] src/forms/SchemaForm.repair.test.tsx
+[warn] src/forms/repair.test.ts
+[warn] src/forms/repair.ts
+[warn] Code style issues found in 5 files. Run Prettier with --write to fix.
+prettier-exit=1

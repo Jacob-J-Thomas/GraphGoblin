@@ -1,0 +1,160 @@
+{
+  "startedAt": "2026-11-14T19:52:32.538Z",
+  "orchestratorPid": 42880,
+  "gatewayPid": 51792,
+  "session": "gg273-review-before-held-json",
+  "phase": "before",
+  "scenario": "held-json",
+  "commit": "pointer",
+  "origin": "http://127.0.0.1:50772",
+  "browserPid": 48464,
+  "driverExit": 0,
+  "outcome": {
+    "finding": "EQUALITY_CLEARS_HELD_JSON_AND_ADDS_HISTORY",
+    "after": {
+      "pending": false,
+      "buffer": "[    {        \"op\": \"append-message\",        \"role\": \"note\",        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"    }]",
+      "signifiers": "Use structured editor\nInput JSON\n1\n2\n3\n4\n5\n6\n7\n⌄\n⌄\n[\n    {\n        \"op\": \"append-message\",\n        \"role\": \"note\",\n        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"\n    }\n]\nApply JSON\nCancel JSON\n\nMutations applied to the thread view the template sees."
+    },
+    "afterFirstUndo": {
+      "loop": {
+        "id": "01M7DSX39HQJXC757GHWBTTR3H",
+        "ownerId": "local",
+        "name": "Coincident JSON and atomic history 950553a",
+        "draftVersionId": "01M7DSX39HQJXC757GHWBTTR3J",
+        "createdAt": "2026-11-14T19:52:43.569Z",
+        "updatedAt": "2026-11-14T19:52:46.093Z"
+      },
+      "draft": {
+        "id": "01M7DSX39HQJXC757GHWBTTR3J",
+        "loopId": "01M7DSX39HQJXC757GHWBTTR3H",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 950553a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.draft }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T19:52:43.569Z"
+      },
+      "draftToken": "7bf0a816a3e107f9"
+    },
+    "stillRenamed": true,
+    "putCount": 0
+  },
+  "failure": null,
+  "pageErrors": 0,
+  "browserClose": 0,
+  "gatewayExit": {
+    "code": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-11-14T19:52:52.859Z"
+}

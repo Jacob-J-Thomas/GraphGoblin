@@ -1,0 +1,819 @@
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/EditorPage.rename-activation.test.tsx b/apps/web/src/editor/EditorPage.rename-activation.test.tsx
+index 96048e36..bd6e764d 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/EditorPage.rename-activation.test.tsx
++++ b/apps/web/src/editor/EditorPage.rename-activation.test.tsx
+@@ -1,5 +1,9 @@
+-import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
+-import { act, screen, waitFor, within } from '@testing-library/react';
++import {
++  CURRENT_DEFINITION_FORMAT,
++  type LoopDefinitionInput,
++  type MutationOperationInput,
++} from '@graphgoblin/contracts';
++import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { beforeEach, describe, expect, it } from 'vitest';
+ import { getCode, setCode } from '../__fixtures__/codemirror.js';
+@@ -14,8 +18,9 @@ import { useEditorStore } from './store.js';
+  * presses the button (pointerdown, mousedown), moves focus there (the id's blur commits the
+  * rename and repairs this node's own source), and only then releases it (pointerup, mouseup) and
+  * clicks it. These tests drive that native order with a separate press and release, so they can
+- * look at the dialog in between. jsdom has no layout: a component test shows which elements stay
+- * and what renders while the button is held, not where a real pointer lands.
++ * look at the dialog in between and at the moment the click reaches the button. jsdom has no
++ * layout: a component test shows which elements stay and what renders before that click, not where
++ * a real pointer lands; the native driver checks that.
+  */
+ 
+ type User = ReturnType<typeof userEvent.setup>;
+@@ -33,21 +38,28 @@ const labels = () => store().past.map((step) => step.label);
+  * The independent native fixture's rows: a Coerce of the node's own visit count, then a note. The
+  * repair policy is written with the defaults the API's parse fills, so the draft keeps it exactly.
+  */
+-const COERCE: Operation = {
++const COERCE = {
+   op: 'coerce',
+   source: '/counters/nodeVisits/work',
+   jsonSchema: { type: 'integer' },
+   target: '/vars/visits',
+   repair: { enabled: false, maxAttempts: 1, onFailure: 'fail-run' },
+-};
+-const REPAIRED: Operation = { ...COERCE, source: '/counters/nodeVisits/worker' };
+-const NOTE: Operation = {
++} satisfies MutationOperationInput;
++const REPAIRED = {
++  ...COERCE,
++  source: '/counters/nodeVisits/worker',
++} satisfies MutationOperationInput;
++const NOTE = {
+   op: 'append-message',
+   role: 'note',
+   content: 'Ordinary removable row versus repaired Coerce row',
+-};
++} satisfies MutationOperationInput;
+ /** What Add operations appends: the first kind, Set, with its defaults. */
+-const ADDED: Operation = { op: 'set', path: '', value: { kind: 'literal', value: null } };
++const ADDED = {
++  op: 'set',
++  path: '',
++  value: { kind: 'literal', value: null },
++} satisfies MutationOperationInput;
+ 
+ function selfPointer(): LoopDefinitionInput {
+   return {
+@@ -55,7 +67,13 @@ function selfPointer(): LoopDefinitionInput {
+     name: 'activation',
+     variables: { visits: { type: 'integer' } },
+     nodes: [
+-      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' }, ui: { x: 0, y: 120 } },
++      {
++        id: 'start',
++        kind: 'trigger',
++        label: 'Start',
++        config: { type: 'manual' },
++        ui: { x: 0, y: 120 },
++      },
+       {
+         id: 'work',
+         kind: 'mutate',
+@@ -101,7 +119,10 @@ function rowIds(scope: HTMLElement): (string | null)[] {
+ }
+ 
+ function renamedNotice(scope: HTMLElement): HTMLElement | null {
+-  return within(scope).queryByText('Renamed work to worker')?.closest<HTMLElement>('[role="status"]') ?? null;
++  return (
++    within(scope).queryByText('Renamed work to worker')?.closest<HTMLElement>('[role="status"]') ??
++    null
++  );
+ }
+ 
+ async function typeId(user: User, dialog: HTMLElement, value: string) {
+@@ -112,6 +133,21 @@ async function typeId(user: User, dialog: HTMLElement, value: string) {
+   return id;
+ }
+ 
++/**
++ * What the dialog showed each time a click reached `button` itself: whether the rename notice had
++ * appeared above it yet, and whether it was still the focused element of the page.
++ */
++function clicksAt(button: HTMLElement, dialog: HTMLElement) {
++  const seen: { notice: boolean; focused: boolean }[] = [];
++  button.addEventListener('click', () =>
++    seen.push({
++      notice: renamedNotice(dialog) !== null,
++      focused: document.activeElement === button,
++    }),
++  );
++  return seen;
++}
++
+ /** Let frames, timers and effects run, so a late callback would have written by now. */
+ async function settle() {
+   await act(() => new Promise<void>((resolve) => setTimeout(resolve, 120)));
+@@ -131,6 +167,7 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     const source = within(dialog).getByLabelText('Source');
+     await typeId(user, dialog, 'worker');
+     const add = within(dialog).getByRole('button', { name: 'Add operations' });
++    const clicks = clicksAt(add, dialog);
+ 
+     await press(user, add);
+     // The id's blur renamed the node and repaired its own Coerce source in one step...
+@@ -151,6 +188,9 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     await release(user, add);
+     expect(operations('worker')).toEqual([REPAIRED, NOTE, ADDED]);
+     expect(labels()).toEqual(['rename work to worker', 'edit config of worker']);
++    // Exactly one click reached the pressed button, with nothing new rendered above it yet.
++    expect(clicks).toEqual([{ notice: false, focused: true }]);
++    // The notice shows once that click has been delivered.
+     expect(renamedNotice(dialog)).toHaveTextContent(
+       'Updated 1 reference in expressions, templates and mutation paths, and 2 connections.',
+     );
+@@ -211,13 +251,12 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     // Unfinished JSON in the Coerce row: held as typed, never applied, through the rename.
+     setCode('Json schema', '{"type":');
+     await waitFor(() =>
+-      expect(store().fieldErrors['node:work']?.['operations.0.jsonSchema']?.text).toBe(
+-        '{"type":',
+-      ),
++      expect(store().fieldErrors['node:work']?.['operations.0.jsonSchema']?.text).toBe('{"type":'),
+     );
+     const rows = rowIds(dialog);
+     await typeId(user, dialog, 'worker');
+     const remove = within(dialog).getByRole('button', { name: 'Remove operations 2' });
++    const clicks = clicksAt(remove, dialog);
+ 
+     await press(user, remove);
+     expect(operations('worker')).toEqual([REPAIRED, NOTE]);
+@@ -232,6 +271,7 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     await release(user, remove);
+     expect(operations('worker')).toEqual([REPAIRED]);
+     expect(labels().slice(-2)).toEqual(['rename work to worker', 'edit config of worker']);
++    expect(clicks).toEqual([{ notice: false, focused: true }]);
+     expect(rowIds(dialog)).toEqual(rows.slice(0, 1));
+     expect(header(dialog, 1)).toHaveAttribute('aria-expanded', 'true');
+     expect(getCode('Json schema')).toBe('{"type":');
+@@ -257,13 +297,16 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     const { token, dialog, puts } = await openWork();
+     await typeId(user, dialog, 'worker');
+     const add = within(dialog).getByRole('button', { name: 'Add operations' });
++    const clicks = clicksAt(add, dialog);
+     const rule = within(dialog).getByText('At least 1 item.');
+ 
+     await press(user, add);
+     expect.soft(add.isConnected).toBe(true);
+     expect.soft(renamedNotice(dialog)).toBeNull();
+-    // The pointer leaves the button before it is released: no click reaches Add.
++    // The pointer leaves the button before it is released: the click goes to an element around
++    // both, never to Add.
+     await user.pointer([{ target: rule }, { keys: '[/MouseLeft]', target: rule }]);
++    expect(clicks).toEqual([]);
+     expect(operations('worker')).toEqual([REPAIRED, NOTE]);
+     expect(labels()).toEqual(['rename work to worker']);
+     // The press is over, so the notice shows.
+@@ -278,6 +321,45 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     expect(operations('worker')).toEqual([REPAIRED, NOTE]);
+   });
+ 
++  it('keeps a press the browser cancels canceled: the notice shows at once, nothing is added', async () => {
++    const user = userEvent.setup();
++    const { dialog } = await openWork();
++    await typeId(user, dialog, 'worker');
++    const add = within(dialog).getByRole('button', { name: 'Add operations' });
++    const clicks = clicksAt(add, dialog);
++
++    await press(user, add);
++    expect(operations('worker')).toEqual([REPAIRED, NOTE]);
++    expect.soft(renamedNotice(dialog)).toBeNull();
++    // A touch the browser takes for a scroll, say: no release and no click follow.
++    fireEvent.pointerCancel(add);
++    expect(renamedNotice(dialog)).not.toBeNull();
++    await settle();
++    expect(clicks).toEqual([]);
++    expect(operations('worker')).toEqual([REPAIRED, NOTE]);
++    expect(labels()).toEqual(['rename work to worker']);
++  });
++
++  it('acts once from the keyboard after the id commits, holding nothing back', async () => {
++    const user = userEvent.setup();
++    const { dialog } = await openWork();
++    await typeId(user, dialog, 'worker');
++    const add = within(dialog).getByRole('button', { name: 'Add operations' });
++    const clicks = clicksAt(add, dialog);
++
++    // Focus moves without a press (as Tab or a screen reader moves it): the notice shows at once.
++    act(() => add.focus());
++    expect(operations('worker')).toEqual([REPAIRED, NOTE]);
++    expect(renamedNotice(dialog)).not.toBeNull();
++    expect(add).toHaveFocus();
++    await user.keyboard('{Enter}');
++    expect(clicks).toEqual([{ notice: true, focused: true }]);
++    expect(operations('worker')).toEqual([REPAIRED, NOTE, ADDED]);
++    expect(labels()).toEqual(['rename work to worker', 'edit config of worker']);
++    await settle();
++    expect(operations('worker')).toEqual([REPAIRED, NOTE, ADDED]);
++  });
++
+   it('keeps an invalid or duplicate id with its message and acts once on the unchanged node', async () => {
+     const user = userEvent.setup();
+     const { dialog } = await openWork();
+@@ -287,7 +369,9 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     await release(user, add);
+     expect(id).toHaveValue('9lives');
+     expect(id).toHaveAttribute('aria-invalid', 'true');
+-    expect(within(dialog).getByText('Use a letter first, then letters, digits, _ or -')).toBeVisible();
++    expect(
++      within(dialog).getByText('Use a letter first, then letters, digits, _ or -'),
++    ).toBeVisible();
+     expect(node('9lives')).toBeUndefined();
+     expect(operations('work')).toEqual([COERCE, NOTE, ADDED]);
+     expect(labels()).toEqual(['edit config of work']);
+@@ -313,7 +397,9 @@ describe('a pointer press that commits a self-reference rename (#273 A2)', () =>
+     const source = within(dialog).getByLabelText('Source');
+     // An edit the open form did not make (it keeps the value it mounted with).
+     act(() =>
+-      store().updateNode('work', { config: { operations: [COERCE, { ...NOTE, content: 'Elsewhere' }] } }),
++      store().updateNode('work', {
++        config: { operations: [COERCE, { ...NOTE, content: 'Elsewhere' }] },
++      }),
+     );
+     await typeId(user, dialog, 'worker');
+     await user.keyboard('{Enter}');
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/EditorPage.rename.test.tsx b/apps/web/src/editor/EditorPage.rename.test.tsx
+index 004d2f1a..d5688243 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/EditorPage.rename.test.tsx
++++ b/apps/web/src/editor/EditorPage.rename.test.tsx
+@@ -686,8 +686,10 @@ describe('renaming a node in the editor (#273)', () => {
+     expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
+     expect(labels()).toEqual(['rename work to draft']);
+ 
+-    // Typing then edits the repaired source; the old one is never written back.
+-    await user.keyboard('/x');
++    // Typing then edits the repaired source; the old one is never written back. user-event places
++    // the caret before it moves focus, so before the rename lengthened the text, where a browser
++    // places it at the pointer after; the form leaves the caret alone, so the test puts it at the end.
++    await user.keyboard('{End}/x');
+     expect(config('draft')['operations']).toEqual([
+       expect.anything(),
+       expect.anything(),
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/RenameNotice.test.tsx b/apps/web/src/editor/RenameNotice.test.tsx
+index 66ac4eca..cd37db90 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/RenameNotice.test.tsx
++++ b/apps/web/src/editor/RenameNotice.test.tsx
+@@ -70,22 +70,39 @@ it('opens only places whose node is as the rename left it, and names the nodes c
+   expect(screen.getByRole('status')).not.toHaveTextContent('changed after the rename');
+ });
+ 
+-it('appears and changes only once a pointer press ends (#273 A2)', () => {
++it('appears and changes only once a pointer press has delivered its click or ended (#273 A2)', async () => {
+   const definition = newLoopDefinition('notice');
+   definition.variables = { key: { type: 'string' } };
+   definition.nodes.push(reader('a'));
+   store().load('L1', definition);
+-  render(<Notice onChoose={vi.fn()} />);
++  render(
++    <>
++      <Notice onChoose={vi.fn()} />
++      <button type="button">Add</button>
++    </>,
++  );
++  const add = screen.getByRole('button', { name: 'Add' });
++  const atClick: boolean[] = [];
++  add.addEventListener('click', () => atClick.push(screen.queryByRole('status') !== null));
+ 
+-  // A rename while the primary button is down shows nothing until the release.
+-  fireEvent.pointerDown(document.body, { button: 0 });
++  // A rename while the primary button is down shows nothing through the release, until the click
++  // it produces has reached the button.
++  fireEvent.pointerDown(add, { button: 0 });
++  fireEvent.mouseDown(add, { button: 0 });
+   act(() => void store().renameNode('start', 'begin'));
+   expect(screen.queryByRole('status')).toBeNull();
+-  fireEvent.pointerUp(document.body, { button: 0 });
++  fireEvent.pointerUp(add, { button: 0 });
++  fireEvent.mouseUp(add, { button: 0 });
++  expect(screen.queryByRole('status')).toBeNull();
++  fireEvent.click(add);
++  expect(atClick).toEqual([false]);
+   expect(screen.getByRole('status')).toHaveTextContent('Renamed start to begin');
+-  expect(screen.getByRole('button', { name: /node a config\.operations\.0\.content/ })).toBeVisible();
++  expect(
++    screen.getByRole('button', { name: /node a config\.operations\.0\.content/ }),
++  ).toBeVisible();
+ 
+-  // A later rename under a press keeps the shown notice exactly, rows included, until it ends.
++  // A later rename under a press keeps the shown notice exactly, rows included, until it ends;
++  // a press the browser cancels ends at once, as no click follows it.
+   fireEvent.pointerDown(document.body, { button: 0 });
+   act(() => void store().renameNode('a', 'alpha'));
+   expect(screen.getByRole('status')).toHaveTextContent('Renamed start to begin');
+@@ -96,6 +113,14 @@ it('appears and changes only once a pointer press ends (#273 A2)', () => {
+     screen.getByRole('button', { name: /node alpha config\.operations\.0\.content/ }),
+   ).toBeVisible();
+ 
++  // A release that no click follows shows the change at the next task.
++  fireEvent.pointerDown(document.body, { button: 0 });
++  act(() => void store().renameNode('alpha', 'a'));
++  fireEvent.pointerUp(document.body, { button: 0 });
++  expect(screen.getByRole('status')).toHaveTextContent('Renamed a to alpha');
++  await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
++  expect(screen.getByRole('status')).toHaveTextContent('Renamed alpha to a');
++
+   // A secondary button is no press that a click could follow; dismissal is immediate.
+   fireEvent.pointerDown(document.body, { button: 2 });
+   act(() => store().dismissRenameReport());
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/RenameNotice.tsx b/apps/web/src/editor/RenameNotice.tsx
+index 3d2dadcb..d55ac076 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/RenameNotice.tsx
++++ b/apps/web/src/editor/RenameNotice.tsx
+@@ -44,10 +44,11 @@ function configOf(definition: LoopDefinitionInput, nodeId: string): unknown {
+  * The editor shows it above the canvas and, while the node dialog is open (the page is inert
+  * then), inside the dialog as well, as it does the draft conflict notice.
+  *
+- * It appears, changes and goes only between presses: while a pointer is pressed it keeps showing
+- * what it showed when the press began. Pressing a button of the dialog is what commits an id typed
+- * there (the id's blur renames), and a notice appearing above that button before the release would
+- * move it from under the pointer, so the click would land elsewhere.
++ * It appears, changes and goes only between presses: while a primary pointer press is under way it
++ * keeps showing what it showed when the press began, until the click the press produces has been
++ * delivered or the press ends without one (`usePrimaryPress`). Pressing a button of the dialog is
++ * what commits an id typed there (the id's blur renames), and a notice appearing above that button
++ * before its click would move it from under the pointer, so the click would land elsewhere.
+  */
+ export function RenameNotice({
+   definition: current,
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/pointer-press.test.tsx b/apps/web/src/editor/pointer-press.test.tsx
+index 53e8a91c..ff2bc51b 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/pointer-press.test.tsx
++++ b/apps/web/src/editor/pointer-press.test.tsx
+@@ -1,6 +1,6 @@
+-import { fireEvent, render, screen } from '@testing-library/react';
++import { act, fireEvent, render, screen } from '@testing-library/react';
+ import { useState } from 'react';
+-import { expect, it, vi } from 'vitest';
++import { describe, expect, it, vi } from 'vitest';
+ import { useHeldDuringPress, usePrimaryPress } from './pointer-press.js';
+ 
+ function Probe() {
+@@ -8,58 +8,171 @@ function Probe() {
+ }
+ const pressed = () => screen.getByLabelText('pressed').textContent;
+ 
+-it('tracks the primary press from the window, through every way a press ends', () => {
++function setup() {
+   const view = render(
+     <>
+       <Probe />
+       <input aria-label="field" />
++      <div data-testid="elsewhere">elsewhere</div>
+       <button type="button">target</button>
+     </>,
+   );
+-  const button = screen.getByRole('button', { name: 'target' });
+-  expect(pressed()).toBe('false');
++  return {
++    view,
++    button: screen.getByRole('button', { name: 'target' }),
++    field: screen.getByLabelText('field'),
++    elsewhere: screen.getByTestId('elsewhere'),
++  };
++}
+ 
+-  // A handler that stops the event on the element cannot hide it: the window sees it first.
+-  const stop = vi.fn((event: Event) => event.stopPropagation());
+-  button.addEventListener('pointerdown', stop);
+-  fireEvent.pointerDown(button, { button: 0 });
+-  expect(stop).toHaveBeenCalled();
+-  expect(pressed()).toBe('true');
+-  // A field's blur passes the window in the capture phase; it does not end the press.
+-  const field = screen.getByLabelText('field');
+-  field.focus();
+-  fireEvent.blur(field);
+-  expect(pressed()).toBe('true');
+-  fireEvent.pointerUp(button, { button: 0 });
+-  expect(pressed()).toBe('false');
+-
+-  for (const end of [
+-    () => fireEvent.pointerCancel(button),
+-    () => fireEvent.mouseUp(button, { button: 0 }),
+-    () => fireEvent.dragEnd(button),
+-    () => fireEvent.blur(window),
+-  ]) {
++/** Let the task after the current one run: where a release that no click followed ends. */
++const nextTask = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
++
++/** What the page showed when each click reached `target`, before any later render. */
++function shownAtClick(target: Element) {
++  const shown: (string | null)[] = [];
++  target.addEventListener('click', () => shown.push(pressed()));
++  return shown;
++}
++
++describe('usePrimaryPress (#273 A2)', () => {
++  it('starts at a primary press the window sees before any element, not at other buttons', () => {
++    const { button } = setup();
++    expect(pressed()).toBe('false');
++    const stop = vi.fn((event: Event) => event.stopPropagation());
++    button.addEventListener('pointerdown', stop);
+     fireEvent.pointerDown(button, { button: 0 });
++    expect(stop).toHaveBeenCalled();
+     expect(pressed()).toBe('true');
+-    end();
++    fireEvent.pointerCancel(button);
++
++    fireEvent.pointerDown(button, { button: 2 });
++    fireEvent.mouseDown(button, { button: 1 });
+     expect(pressed()).toBe('false');
+-  }
++  });
+ 
+-  // Touch's compatibility mouse events press too; other buttons do not.
+-  fireEvent.mouseDown(button, { button: 0 });
+-  expect(pressed()).toBe('true');
+-  fireEvent.mouseUp(button, { button: 0 });
+-  fireEvent.pointerDown(button, { button: 2 });
+-  fireEvent.mouseDown(button, { button: 1 });
+-  expect(pressed()).toBe('false');
++  it('lasts through a mouse release until its click has been delivered', () => {
++    const { button, field } = setup();
++    const shown = shownAtClick(button);
++    field.focus();
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.mouseDown(button, { button: 0 });
++    // Focus moving to the pressed button blurs the field, which passes the window: the press goes on.
++    const blurred = vi.fn();
++    field.addEventListener('blur', blurred);
++    act(() => button.focus());
++    expect(blurred).toHaveBeenCalled();
++    expect(pressed()).toBe('true');
++    fireEvent.pointerUp(button, { button: 0 });
++    expect(pressed()).toBe('true');
++    fireEvent.mouseUp(button, { button: 0 });
++    expect(pressed()).toBe('true');
++    fireEvent.click(button);
++    // The click reached the button with the press still held, and ended it after.
++    expect(shown).toEqual(['true']);
++    expect(pressed()).toBe('false');
++  });
+ 
+-  // The last subscriber leaving removes the listeners and forgets a press under way.
+-  fireEvent.pointerDown(button, { button: 0 });
+-  expect(pressed()).toBe('true');
+-  view.unmount();
+-  fireEvent.pointerDown(document.body, { button: 0 });
+-  render(<Probe />);
+-  expect(pressed()).toBe('false');
++  it('ends at the click of a release elsewhere, delivered to the common ancestor', () => {
++    const { button, elsewhere } = setup();
++    const atButton = vi.fn();
++    button.addEventListener('click', atButton);
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.pointerUp(elsewhere, { button: 0 });
++    fireEvent.mouseUp(elsewhere, { button: 0 });
++    expect(pressed()).toBe('true');
++    fireEvent.click(document.body);
++    expect(atButton).not.toHaveBeenCalled();
++    expect(pressed()).toBe('false');
++  });
++
++  it('ends a release no click follows, or whose click is stopped, at the next task', async () => {
++    const { button } = setup();
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.pointerUp(button, { button: 0 });
++    expect(pressed()).toBe('true');
++    await nextTask();
++    expect(pressed()).toBe('false');
++
++    button.addEventListener('click', (event) => event.stopPropagation());
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.pointerUp(button, { button: 0 });
++    fireEvent.mouseUp(button, { button: 0 });
++    fireEvent.click(button);
++    expect(pressed()).toBe('true');
++    await nextTask();
++    expect(pressed()).toBe('false');
++  });
++
++  it('keeps a new press that begins before the last one settled', async () => {
++    const { button } = setup();
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.pointerUp(button, { button: 0 });
++    fireEvent.pointerDown(button, { button: 0 });
++    await nextTask();
++    expect(pressed()).toBe('true');
++    fireEvent.pointerUp(button, { button: 0 });
++    fireEvent.click(button);
++    expect(pressed()).toBe('false');
++  });
++
++  it('follows a tap: its pointer events, then its compatibility mouse events and click', async () => {
++    const { button } = setup();
++    const shown = shownAtClick(button);
++    fireEvent.pointerDown(button, { button: 0, pointerType: 'touch' });
++    fireEvent.pointerUp(button, { button: 0, pointerType: 'touch' });
++    // The tap's click comes in a later task; nothing has moved focus yet.
++    await nextTask();
++    expect(pressed()).toBe('false');
++    fireEvent.mouseDown(button, { button: 0 });
++    expect(pressed()).toBe('true');
++    fireEvent.mouseUp(button, { button: 0 });
++    fireEvent.click(button);
++    expect(shown).toEqual(['true']);
++    expect(pressed()).toBe('false');
++  });
++
++  it('ends at once when the browser cancels the pointer or a drag ends', () => {
++    const { button } = setup();
++    fireEvent.pointerDown(button, { button: 0, pointerType: 'touch' });
++    fireEvent.pointerCancel(button);
++    expect(pressed()).toBe('false');
++
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.mouseDown(button, { button: 0 });
++    fireEvent.dragEnd(button);
++    expect(pressed()).toBe('false');
++  });
++
++  it('ends at once when the window loses focus', () => {
++    const { button } = setup();
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.blur(window);
++    expect(pressed()).toBe('false');
++  });
++
++  it('never holds for a keyboard click, nor ends a press with one', () => {
++    const { button } = setup();
++    fireEvent.keyDown(button, { key: 'Enter' });
++    fireEvent.click(button, { detail: 0 });
++    expect(pressed()).toBe('false');
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.click(button, { detail: 0 });
++    expect(pressed()).toBe('true');
++    fireEvent.pointerCancel(button);
++  });
++
++  it('removes its listeners with the last subscriber and forgets a press under way', async () => {
++    const { view, button } = setup();
++    fireEvent.pointerDown(button, { button: 0 });
++    fireEvent.pointerUp(button, { button: 0 });
++    expect(pressed()).toBe('true');
++    view.unmount();
++    await nextTask();
++    fireEvent.pointerDown(document.body, { button: 0 });
++    render(<Probe />);
++    expect(pressed()).toBe('false');
++  });
+ });
+ 
+ function Held() {
+@@ -78,9 +191,13 @@ it('holds a value while a press is under way and follows it otherwise', () => {
+   fireEvent.click(button);
+   expect(button).toHaveTextContent('value 2 shown 2');
+   fireEvent.pointerDown(button, { button: 0 });
+-  fireEvent.click(button);
+-  fireEvent.click(button);
+-  expect(button).toHaveTextContent('value 4 shown 2');
++  fireEvent.keyDown(button, { key: 'Enter' });
++  fireEvent.click(button, { detail: 0 });
++  expect(button).toHaveTextContent('value 3 shown 2');
+   fireEvent.pointerUp(button, { button: 0 });
++  fireEvent.mouseUp(button, { button: 0 });
++  expect(button).toHaveTextContent('value 3 shown 2');
++  // The press's own click applies its edit at once; what it shows follows after the click.
++  fireEvent.click(button);
+   expect(button).toHaveTextContent('value 4 shown 4');
+ });
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/pointer-press.ts b/apps/web/src/editor/pointer-press.ts
+index 763d04c2..6c41c93c 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/editor/pointer-press.ts
++++ b/apps/web/src/editor/pointer-press.ts
+@@ -1,18 +1,29 @@
+ import { useState, useSyncExternalStore } from 'react';
+ 
+ /**
+- * Whether a primary press is under way: a mouse's main button, a touch or a pen is down (#273).
+- * A browser clicks the element where a press and its release meet, so content that appears while
+- * the press is held can move a different element under the pointer and lose the click. Leaving a
+- * text field by pressing a button shows how: the field's blur runs between the press and the
+- * release. Window listeners in the capture phase see the press before any element handles it.
+- * Touch fires the compatibility `mousedown` and `mouseup` after its pointer events, so those
+- * count as a press too.
++ * Whether a primary press is under way (#273): from a mouse's main button, a touch or a pen going
++ * down until the click it produces has been delivered, or until it ends without one. A browser
++ * clicks the element where a press and its release meet, so content that appears before that click
++ * can move a different element under the pointer and lose it. Leaving a text field by pressing a
++ * button shows how: the field's blur runs between the press and the release.
++ *
++ * The press begins at `pointerdown` or `mousedown`; touch sends its compatibility `mousedown`,
++ * `mouseup` and click together, after its own pointer events. Its release (`pointerup`, `mouseup`)
++ * is followed in the same task by the click, at the element where press and release meet or at
++ * their common ancestor, so the press ends once that click has bubbled to the window, after every
++ * handler of it. A release that no click follows, or whose click is stopped on its way, ends at the
++ * next task. `pointercancel`, `dragend` and the window losing focus end it at once: no click follows
++ * them. Window listeners see the press and release in the capture phase, before any element can
++ * stop them.
+  */
+ let pressed = false;
++/** Set from a press's release until its click has passed or the next task, whichever is first. */
++let releasing: ReturnType<typeof setTimeout> | undefined;
+ const listeners = new Set<() => void>();
+ 
+ function update(next: boolean): void {
++  clearTimeout(releasing);
++  releasing = undefined;
+   if (pressed === next) return;
+   pressed = next;
+   for (const listener of [...listeners]) listener();
+@@ -21,21 +32,31 @@ function update(next: boolean): void {
+ const onPress = (event: MouseEvent) => {
+   if (event.button === 0) update(true);
+ };
+-const onRelease = () => update(false);
+-// Only the window's own blur: a field's blur also passes the window, in the capture phase.
++const onRelease = (event: MouseEvent) => {
++  if (!pressed || event.button !== 0 || releasing !== undefined) return;
++  releasing = setTimeout(() => update(false), 0);
++};
++// Only the click that follows a release ends the press; a keyboard's click during one does not.
++const onClick = () => {
++  if (releasing !== undefined) update(false);
++};
++const onCancel = () => update(false);
++// A field's blur reaches the window only in the capture phase; this listener hears its own.
+ const onWindowBlur = (event: FocusEvent) => {
+-  if (event.target === window) update(false);
++  if (event.target === event.currentTarget) update(false);
+ };
+ 
+ const PRESSES = ['pointerdown', 'mousedown'] as const;
+-/** A drag ends a press without a release on the page. */
+-const RELEASES = ['pointerup', 'pointercancel', 'mouseup', 'dragend'] as const;
++const RELEASES = ['pointerup', 'mouseup'] as const;
++/** A drag or a touch the browser takes for scrolling ends a press without a click. */
++const CANCELS = ['pointercancel', 'dragend'] as const;
+ 
+ function subscribe(listener: () => void): () => void {
+   if (listeners.size === 0) {
+     for (const type of PRESSES) window.addEventListener(type, onPress, true);
+     for (const type of RELEASES) window.addEventListener(type, onRelease, true);
+-    // So does leaving the window while the button is down.
++    for (const type of CANCELS) window.addEventListener(type, onCancel, true);
++    window.addEventListener('click', onClick);
+     window.addEventListener('blur', onWindowBlur);
+   }
+   listeners.add(listener);
+@@ -44,7 +65,11 @@ function subscribe(listener: () => void): () => void {
+     if (listeners.size > 0) return;
+     for (const type of PRESSES) window.removeEventListener(type, onPress, true);
+     for (const type of RELEASES) window.removeEventListener(type, onRelease, true);
++    for (const type of CANCELS) window.removeEventListener(type, onCancel, true);
++    window.removeEventListener('click', onClick);
+     window.removeEventListener('blur', onWindowBlur);
++    clearTimeout(releasing);
++    releasing = undefined;
+     pressed = false;
+   };
+ }
+@@ -58,7 +83,8 @@ export function usePrimaryPress(): boolean {
+ 
+ /**
+  * `value`, except while a primary press is under way: then what it was when the press began, until
+- * the press ends. `same` says when two values show the same thing.
++ * the press ends. `same` says when two values show the same thing. Only content that would move
++ * other content holds this way (the rename notice); edits themselves apply at once.
+  */
+ export function useHeldDuringPress<T>(value: T, same: (a: T, b: T) => boolean = Object.is): T {
+   const busy = usePrimaryPress();
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/SchemaForm.repair.test.tsx b/apps/web/src/forms/SchemaForm.repair.test.tsx
+index 58be0859..b4634e9d 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/SchemaForm.repair.test.tsx
++++ b/apps/web/src/forms/SchemaForm.repair.test.tsx
+@@ -62,7 +62,10 @@ describe('SchemaForm applyRepair (#273)', () => {
+     const { ref, onChange, onParseError } = setup();
+     // Held, unparsed text in one field and a cleared optional field: neither is the repair's.
+     setCode('Data', '{oops');
+-    expect(onParseError).toHaveBeenLastCalledWith('data', expect.objectContaining({ text: '{oops' }));
++    expect(onParseError).toHaveBeenLastCalledWith(
++      'data',
++      expect.objectContaining({ text: '{oops' }),
++    );
+     const note = screen.getByLabelText('Note');
+     await user.clear(note);
+     const previous = onChange.mock.calls.at(-1)![0] as typeof initial;
+@@ -106,11 +109,14 @@ describe('SchemaForm applyRepair (#273)', () => {
+       { ...initial, data: { x: 2 } },
+       { ...initial, extra: 'x' },
+     ];
+-    for (const next of refused) expect(repair(() => ref.current?.applyRepair(initial, next))).toBe(false);
++    for (const next of refused)
++      expect(repair(() => ref.current?.applyRepair(initial, next))).toBe(false);
+     // A repair of a value the form no longer shows is not its own to take.
+     const stale = { ...initial, env: { 'a.b': 'elsewhere' } };
+     expect(
+-      repair(() => ref.current?.applyRepair(stale, { ...stale, prompt: 'Read {{ outputs.x.value }}' })),
++      repair(() =>
++        ref.current?.applyRepair(stale, { ...stale, prompt: 'Read {{ outputs.x.value }}' }),
++      ),
+     ).toBe(false);
+     expect(repair(() => ref.current?.applyRepair(initial, initial))).toBe(true);
+     expect(screen.getByLabelText('Source')).toBe(source);
+@@ -130,9 +136,9 @@ describe('SchemaForm applyRepair (#273)', () => {
+       false,
+     );
+     expect(screen.getByLabelText('Text')).toHaveValue('outputs.work');
+-    expect(repair(() => ref.current?.applyRepair(shown, { kind: 'a', text: 'outputs.worker' }))).toBe(
+-      true,
+-    );
++    expect(
++      repair(() => ref.current?.applyRepair(shown, { kind: 'a', text: 'outputs.worker' })),
++    ).toBe(true);
+     expect(screen.getByLabelText('Text')).toHaveValue('outputs.worker');
+     expect(onChange).not.toHaveBeenCalled();
+   });
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/repair.test.ts b/apps/web/src/forms/repair.test.ts
+index cfb59837..e3d81724 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/repair.test.ts
++++ b/apps/web/src/forms/repair.test.ts
+@@ -67,9 +67,9 @@ describe('withStringRepairs', () => {
+     ]);
+     expect(next[1]).toBe(untouched);
+     expect(section).toEqual(frozen);
+-    expect(withStringRepairs({ env: {} }, [{ path: ['env', 'a.b'], from: '', to: 'y' }])).toEqual(
+-      { env: { 'a.b': 'y' } },
+-    );
++    expect(withStringRepairs({ env: {} }, [{ path: ['env', 'a.b'], from: '', to: 'y' }])).toEqual({
++      env: { 'a.b': 'y' },
++    });
+     expect(withStringRepairs(undefined, [{ path: ['a'], from: '', to: 'y' }])).toEqual({ a: 'y' });
+   });
+ });
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/repair.ts b/apps/web/src/forms/repair.ts
+index 2986addb..f464bb37 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/quota-source-checkpoint/node-references/source/apps/web/src/forms/repair.ts
++++ b/apps/web/src/forms/repair.ts
+@@ -29,7 +29,9 @@ export function stringRepairs(previous: unknown, next: unknown): StringRepair[]
+       return true;
+     }
+     if (Array.isArray(a) && Array.isArray(b))
+-      return a.length === b.length && a.every((item, index) => walk(item, b[index], [...path, index]));
++      return (
++        a.length === b.length && a.every((item, index) => walk(item, b[index], [...path, index]))
++      );
+     if (isRecord(a) && isRecord(b)) {
+       const keys = Object.keys(a);
+       return (
+@@ -56,12 +58,16 @@ export function withStringRepairs(
+     const [key, ...rest] = path;
+     if (key === undefined) return text;
+     if (Array.isArray(current)) {
+-      const copy: unknown[] = [...current];
+-      copy[Number(key)] = set(current[Number(key)], rest, text);
++      const items: readonly unknown[] = current;
++      const copy = [...items];
++      copy[Number(key)] = set(items[Number(key)], rest, text);
+       return copy;
+     }
+     const object = isRecord(current) ? current : {};
+     return { ...object, [key]: set(object[key], rest, text) };
+   };
+-  return repairs.reduce((result, repair) => set(result, repair.path.slice(depth), repair.to), value);
++  return repairs.reduce(
++    (result, repair) => set(result, repair.path.slice(depth), repair.to),
++    value,
++  );
+ }
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 5225bcdb..75c519fe 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -269,11 +269,11 @@ Pressing a palette entry places the new card at x = 40, below the lowest existin
+ 
+ The node dialog's **Node id** applies on Enter, on leaving the field and when the dialog closes, as before. Invalid and duplicate ids keep their messages, and protected voice steps keep their read-only id and "Voice steps stay" refusal. An accepted id goes through the domain's `renameLoopNode` with the exact current draft. The node, its connection ends, and the references the domain understands (typed mutation pointers and static JSONata and Liquid reads of `outputs`, `gates` and `counters.nodeVisits`) change in one store write. Decision route ownership, the node's unfinished field input, the selection and a pending issue focus follow it in the same write. That write is one undo step and one revision. Autosave, the device mirror and the draft token handling see the complete renamed draft once. Undo and Redo restore every repaired field, edge end, held input and the selection together. Unfinished input in other forms is never touched. A refusal the dialog did not foresee (another node with the same id, say) shows under the field like the existing id messages and changes nothing.
+ 
+-Forms keep their own state, so a rename that repaired a source the open node's config form or the loop settings form shows remounts only that form (`formEpochs` in the store, per form scope). The variables form and other buffers stay mounted. No form writes the old text back by itself: the remounted fields show the repaired source, and edits there start from it. The repair rewrites strings in place without adding, removing or reordering rows, so the node dialog gives the repaired config the replaced config's collection row ids (`carryCollectionIdentities` in `forms/disclosures.ts`, only when every recorded list keeps its length; rows are never matched by content). Operations stay open or collapsed as they were. When the id field loses focus to a control in the remounting form, focus moves to the same control in the new form, inside the same row when it is in one, as undo does (`keepFocusThrough` in `editor/useUndoShortcuts.ts`).
++Forms keep their own state. When a rename repaired a source the open node's config form shows, that form takes the repaired values in place before anything renders (`SchemaFormHandle.applyRepair` in `forms/SchemaForm.tsx`): it sets only the replaced strings (`forms/repair.ts`), reports nothing back because the store already holds them, and keeps every element, so its rows, open operations, focus and unfinished input in other fields stay. A pointer that pressed one of the dialog's buttons, which is what moved focus out of the id, releases on that same button, and its click (**Add** or **Remove**, say) acts once on the repaired config as the next undo step after the rename; a press released elsewhere or canceled stays without effect. The form takes a repair this way only when it shows exactly the config the rename replaced and the repair changed nothing but strings, in the variant shown. Otherwise it remounts with the repaired config (`formEpochs` in the store, per form scope), as the loop settings form always does; a press on a control of a remounting form loses its click. The variables form and other buffers stay mounted. No form writes the old text back by itself: the fields show the repaired source, and edits there start from it. The repair rewrites strings in place without adding, removing or reordering rows, so the node dialog gives the repaired config the replaced config's collection row ids (`carryCollectionIdentities` in `forms/disclosures.ts`, only when every recorded list keeps its length; rows are never matched by content), which undo and redo use when they remount the form. Operations stay open or collapsed as they were. When the id field loses focus to a control in a remounting form, focus moves to the same control in the new form, inside the same row when it is in one, as undo does (`keepFocusThrough` in `editor/useUndoShortcuts.ts`).
+ 
+-Held section JSON (unapplied **Edit as JSON** text) is not form state the rename repairs. The rename analyzes and repairs the accepted section only, and the held text keeps its exact bytes, also when the repair makes the accepted section equal to it. It stays held, with **Apply JSON** and **Cancel JSON**, until the author settles it; the remount adds no undo step and keeps redo, and the notice gives no diagnostics for that text. A later explicit **Apply JSON** is an ordinary whole-section edit that writes the document as held, including any old id it still names.
++Held section JSON (unapplied **Edit as JSON** text) is not form state the rename repairs. The rename analyzes and repairs the accepted section only, and the held text keeps its exact bytes, also when the repair makes the accepted section equal to it. It stays held, with **Apply JSON** and **Cancel JSON**, until the author settles it; taking the repair adds no undo step and keeps redo, and the notice gives no diagnostics for that text. A later explicit **Apply JSON** is an ordinary whole-section edit that writes the document as held, including any old id it still names.
+ 
+-A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
++A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. While a primary pointer press is under way it keeps showing what it showed when the press began, and appears or changes once the click that press produces has been delivered, or when the press ends without one (the browser cancels it, a drag ends, the window loses focus), so it never moves the button being pressed (`editor/pointer-press.ts`). Focus moved by the keyboard shows it at once. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
+ 
+ The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts`, `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the remounted Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the remount; held input; a stale tab; protected voice steps).
+ 
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fede6af9..51d7260e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -36,8 +36,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
+   gate and visit-count identities. A direct presence check of one such reference alone, and
+   unresolved inherited or custom output keys, warn. The editor applies the repair when a node ID
+-  is committed, as one undo step and one saved revision, and remounts only forms showing a
+-  repaired source; the node dialog keeps its list rows, open operations and focus. Unapplied
++  is committed, as one undo step and one saved revision. The open node dialog takes the repaired
++  source in place, keeping its list rows, open operations and focus, so a button pressed to
++  leave the ID field (Add or Remove, say) acts once on the repaired config; the loop settings
++  form remounts with it. The notice waits until that press has delivered its click. Unapplied
+   section JSON keeps its exact text until the author applies or cancels it. A notice counts the
+   updated references and connections and lists places where the old ID may remain. A listed
+   field opens while its node is as the rename left it; places in loop settings, scripts and

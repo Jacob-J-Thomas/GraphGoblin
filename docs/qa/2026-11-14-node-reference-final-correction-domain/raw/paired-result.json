@@ -1,0 +1,36 @@
+{
+  "original": {
+    "passed": 92,
+    "failed": 6
+  },
+  "corrected": {
+    "passed": 98,
+    "failed": 0
+  },
+  "failedOnOriginal": [
+    {
+      "test": "repairs nested thread references in a computed lookup key $lookup(outputs, outputs./* key source */start.value).value",
+      "message": "AssertionError: expected '$lookup(outputs, outputs./* key sourc…' to be '$lookup(outputs, outputs./* key sourc…' // Object.is equality"
+    },
+    {
+      "test": "repairs nested thread references in a computed lookup key rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = \"chosen\"].id",
+      "message": "AssertionError: expected 'rows[$lookup($$.outputs, outputs.star…' to be 'rows[$lookup($$.outputs, outputs.star…' // Object.is equality"
+    },
+    {
+      "test": "blocks publication for a required read inside a lookup key $lookup(outputs, $string(counters.nodeVisits.missing))",
+      "message": "AssertionError: expected true to be false // Object.is equality"
+    },
+    {
+      "test": "blocks publication for a required read inside a lookup key $exists($lookup(outputs, gates.missing.passes))",
+      "message": "AssertionError: expected true to be false // Object.is equality"
+    },
+    {
+      "test": "blocks publication for a required read inside a lookup key $lookup(outputs, \"start\"[$$.gates.missing])",
+      "message": "AssertionError: expected true to be false // Object.is equality"
+    },
+    {
+      "test": "keeps an explicit presence probe inside a computed lookup key optional",
+      "message": "AssertionError: expected [ { nodeId: 'done', …(4) } ] to match object [ { …(5) }, { …(2) } ]"
+    }
+  ]
+}
