@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin/apps/web
+
+ ❯ src/forms/JsonSchemaForm.test.tsx (20 tests | 1 failed) 9173ms
+   ❯ JsonSchemaForm (19)
+     × empties the number input itself on Omit, before focus, so incomplete native text goes with the field 286ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > empties the number input itself on Omit, before focus, so incomplete native text goes with the field
+AssertionError: expected [ 'focus, buffer "-"' ] to deeply equal [ 'assign ""', 'focus, buffer ""' ]
+
+- Expected
++ Received
+
+  [
+-   "assign \"\"",
+-   "focus, buffer \"\"",
++   "focus, buffer \"-\"",
+  ]
+
+ ❯ src/forms/JsonSchemaForm.test.tsx:276:22
+    274|     // first, then focuses it, and only then does the form let go of t…
+    275|     await user.click(screen.getByRole('button', { name: 'Omit count' }…
+    276|     expect(happened).toEqual(['assign ""', 'focus, buffer ""']);
+       |                      ^
+    277|     expect(buffer).toBe('');
+    278|     expect(count.validity.badInput).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  05:01:05
+   Duration  15.49s (tests 60%, environment 21%, setup 7%, transform 6%, import 6%)
+
+exit 1

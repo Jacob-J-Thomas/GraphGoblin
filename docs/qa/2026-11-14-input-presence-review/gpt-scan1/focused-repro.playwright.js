@@ -1,0 +1,117 @@
+async (page) => {
+  const origin = new URL(page.url()).origin;
+  const outcome = { origin, posts: [], newRun: null, wait: null };
+  const assert = (condition, message) => { if (!condition) throw new Error(message); };
+  const json = async (method, path, data) => {
+    const res = await page.request.fetch(origin + path, { method, data });
+    if (!res.ok()) throw new Error(method + ' ' + path + ' ' + res.status() + ' ' + await res.text());
+    return res.json();
+  };
+  try {
+    assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(origin) && !/:474[78]$/.test(origin), 'Unsafe fixture origin');
+    const schema = {
+      type: 'object', additionalProperties: false,
+      properties: {
+        count: {type: 'integer', title: 'Count'},
+        segment: {enum: ['', '""'], title: 'Segment'},
+        choice: {enum: ['', '""', 'other', 'third', 'fourth'], title: 'Choice'},
+      },
+    };
+    const definition = {
+      schemaVersion: 4,
+      name: 'Independent Omit and enum review',
+      nodes: [
+        {id:'begin', kind:'trigger', label:'Begin', config:{type:'manual', inputSchema:schema}},
+        {id:'answer', kind:'wait', label:'Answer', config:{mode:'input', prompt:'Type the fixture answer', inputSchema:schema}},
+        {id:'done', kind:'exit', label:'Done', config:{returns:'{"start": trigger.payload, "wait": lastOutput.value}'}},
+      ],
+      edges: [
+        {id:'to-answer', from:{node:'begin',port:'out'}, to:{node:'answer'}},
+        {id:'to-done', from:{node:'answer',port:'out'}, to:{node:'done'}},
+      ],
+    };
+    const created = await json('POST', '/loops', {definition});
+    const loopId = created.loop.id;
+    const published = await json('POST', '/loops/' + loopId + '/publish');
+    outcome.loopId = loopId;
+    outcome.versionId = published.version.id;
+    page.on('request', request => {
+      const path = new URL(request.url()).pathname;
+      if (request.method() === 'POST' && (/^\/loops\/[^/]+\/runs$|^\/runs\/[^/]+\/input$/).test(path))
+        outcome.posts.push({path, body:request.postDataJSON()});
+    });
+    page.on('pageerror', error => (outcome.pageErrors ??= []).push(String(error)));
+    await page.goto(origin + '/app/runs/new?loop=' + loopId);
+    const state = field => field.evaluate(el => ({
+      value: el.value,
+      badInput: el.validity.badInput,
+      valid: el.validity.valid,
+      formValid: el.form.checkValidity(),
+      noValidate: el.form.noValidate,
+      ariaInvalid: el.getAttribute('aria-invalid'),
+      focused: el.ownerDocument.activeElement === el,
+      type: el.type,
+    }));
+    async function inspect(stage, label, memberIndex) {
+      const form = page.getByRole('form', {name:label,exact:true});
+      const count = form.getByLabel('Count', {exact:true});
+      const select = form.getByLabel('Choice', {exact:true});
+      const group = form.getByRole('radiogroup', {name:'Segment', exact:true});
+      const submit = form.getByRole('button', {name:label,exact:true});
+      const omit = form.getByRole('button', {name:'Omit Count',exact:true});
+      const result = { states: {}, noPostWhileInvalid: null };
+      outcome[stage] = result;
+      result.states.initial = await state(count);
+      result.enumAccessible = await group.ariaSnapshot();
+      result.segmentMembers = await group.getByRole('radio').evaluateAll(radios => radios.map(r => ({
+        label: r.closest('label').textContent.trim(), value: r.value,
+      })));
+      result.selectMembers = await select.getByRole('option').evaluateAll(options => options.map(o => ({
+        label: o.textContent.trim(), value: o.value,
+      })));
+      await group.getByText(result.segmentMembers[memberIndex + 1].label, {exact:true}).click();
+      await select.selectOption({index:memberIndex + 1});
+      await count.press('-');
+      result.states.typed = await state(count);
+      assert(result.states.typed.badInput, 'Native keyboard did not produce badInput');
+      await omit.waitFor();
+      const postsBefore = outcome.posts.length;
+      await submit.click();
+      await count.evaluate(el => {if (el.getAttribute('aria-invalid') !== 'true') throw new Error('Expected the field to be invalid');});
+      result.noPostWhileInvalid = outcome.posts.length === postsBefore;
+      result.states.rejected = await state(count);
+      await count.press('Shift+Tab');
+      assert(await omit.evaluate(o=>document.activeElement === o), 'Keyboard did not focus Omit');
+      await page.screenshot({path:stage + '-before-omit.png', animations:'disabled'});
+      await page.keyboard.press('Enter');
+      await omit.waitFor({state:'hidden'});
+      result.states.omitted = await state(count);
+      await page.screenshot({path:stage + '-after-omit.png', animations:'disabled'});
+      result.submitEnabledAfterOmit = await submit.isEnabled();
+      return submit;
+    }
+    const start = await inspect('newRun','Start run',0);
+    const startPost = page.waitForResponse(response => response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/loops/' + loopId + '/runs');
+    await start.click();
+    const started = await startPost;
+    const admitted = await started.json();
+    outcome.newRun.status = started.status();
+    outcome.runId = admitted.run.id;
+    await page.getByText('Input requested', {exact:true}).waitFor();
+    const wait = await inspect('wait','Submit input',1);
+    const waitPost = page.waitForResponse(response => response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/runs/' + outcome.runId + '/input');
+    await wait.click();
+    outcome.wait.status = (await waitPost).status();
+    await page.locator('[data-status="succeeded"]').first().waitFor();
+    outcome.result = (await json('GET', '/runs/' + outcome.runId)).result;
+    outcome.userAgent = await page.evaluate(() => navigator.userAgent);
+  } catch (error) {
+    outcome.failure = {message:String(error), stack:error.stack};
+    await page.screenshot({path:'focused-first-failure.png', animations:'disabled'}).catch(() => {});
+  }
+  return outcome;
+}
+
+
