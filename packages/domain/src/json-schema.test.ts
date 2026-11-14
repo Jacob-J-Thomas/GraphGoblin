@@ -56,6 +56,60 @@ describe('validateJson', () => {
     expect(result.issues[0]).toEqual({ path: [], message: result.errors[0] });
   });
 
+  it.each(['integer', 'string'] as const)(
+    'compiles both versions of one schema ID starting with %s',
+    (first) => {
+      const id = `https://example.test/${first}/input`;
+      const types = [first, first === 'integer' ? 'string' : 'integer'] as const;
+      for (const type of types) {
+        const schema = {
+          $id: id,
+          definitions: { value: { $id: 'value', type } },
+          properties: { value: { $ref: 'value' } },
+        };
+        const input = type === 'integer' ? 2 : 'word';
+        expect(validateJson(schema, { value: input }).ok).toBe(true);
+        expect(validateJson(schema, { value: false }).issues).toEqual([
+          { path: ['value'], message: `must be ${type}` },
+        ]);
+        expect(validateJson({ ...schema }, { value: input }).ok).toBe(true);
+      }
+    },
+  );
+
+  it('rejects references outside the current schema even after compiling their target', () => {
+    const id = 'https://example.test/other-schema';
+    expect(validateJson({ $id: id, type: 'integer' }, 2).ok).toBe(true);
+    const result = validateJson({ properties: { value: { $ref: id } } }, { value: 2 });
+    expect(result.issues).toEqual([
+      { path: [], message: expect.stringContaining(`can't resolve reference ${id}`) },
+    ]);
+  });
+
+  it('retains local pointer references and treats reference-shaped examples as data', () => {
+    const schema = {
+      $schema: 'http://json-schema.org/schema',
+      $id: 'https://example.test/own-schema',
+      definitions: { value: { type: 'string', minLength: 1 } },
+      examples: [{ $ref: 'https://example.test/only-an-example' }],
+      properties: { value: { $ref: '#/definitions/value' } },
+    };
+    expect(validateJson(schema, { value: 'ok' }).ok).toBe(true);
+    expect(validateJson(schema, { value: '' }).issues).toEqual([
+      { path: ['value'], message: 'must NOT have fewer than 1 characters' },
+    ]);
+  });
+
+  it('keeps a cached validator tied to the original schema content after caller edits', () => {
+    const schema = { $id: 'https://example.test/constant', const: { value: 1 } };
+    expect(validateJson(schema, { value: 1 }).ok).toBe(true);
+    schema.const.value = 2;
+    expect(validateJson(schema, { value: 2 }).ok).toBe(true);
+    const original = { ...schema, const: { value: 1 } };
+    expect(validateJson(original, { value: 1 }).ok).toBe(true);
+    expect(validateJson(original, { value: 2 }).ok).toBe(false);
+  });
+
   it('reuses compiled schemas and evicts beyond the cache limit', () => {
     for (let i = 0; i < 260; i += 1) {
       expect(

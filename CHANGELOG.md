@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
+  Separate evaluations of cached source keep their own depth, deadline, bindings and
+  timestamp (#228).
+- Authored JSON Schemas resolve references within their own document, so loops and versions
+  can reuse the same schema IDs without affecting each other's validation (#229). **Upgrade:**
+  if a workflow depended on a reference to a schema owned by another definition, copy that
+  schema into the referring document's `definitions`, use a local `$ref` such as
+  `#/definitions/input`, and publish the corrected workflow.
+
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports
   unverifiable ownership instead of an unexplained access-denied error (ADR-0069). **Upgrade:**

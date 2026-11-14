@@ -5,9 +5,6 @@ import type { JsonSchema } from '@graphgoblin/contracts';
 // ajv-formats is CommonJS; under NodeNext the default import is the plugin function itself.
 const addFormats = addFormatsImport as unknown as (instance: Ajv) => Ajv;
 
-const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
-addFormats(ajv);
-
 const cache = new Map<string, ValidateFunction>();
 const CACHE_LIMIT = 256;
 
@@ -30,10 +27,6 @@ export interface SchemaValidation {
   issues: SchemaIssue[];
 }
 
-function stableKey(schema: JsonSchema): string {
-  return stableStringify(schema);
-}
-
 /** Deterministic JSON serialisation with sorted object keys. */
 export function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'undefined';
@@ -46,10 +39,14 @@ export function stableStringify(value: unknown): string {
 }
 
 function compileSchema(schema: JsonSchema): ValidateFunction {
-  const key = stableKey(schema);
+  const key = stableStringify(schema);
   const hit = cache.get(key);
   if (hit) return hit;
-  const compiled = ajv.compile(schema);
+  // Ajv retains references to schema data and registers root and nested IDs.
+  // Compile a snapshot in its own registry so the cache always matches its key.
+  const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
+  addFormats(ajv);
+  const compiled = ajv.compile(JSON.parse(key));
   if (cache.size >= CACHE_LIMIT) {
     const first = cache.keys().next().value;
     if (first !== undefined) cache.delete(first);

@@ -1,0 +1,48 @@
+$ vitest run src/definition-pins.test.ts -t 'validates manual inputs'
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261113-i08-validation/GraphGoblin/apps/api
+
+ ❯ src/definition-pins.test.ts (4 tests | 1 failed | 3 skipped) 2640ms
+   × validates manual inputs against the selected schema across loops, versions and restart 2638ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/definition-pins.test.ts > validates manual inputs against the selected schema across loops, versions and restart
+AssertionError: expected { …(16) } to match object { status: 'succeeded', result: 17 }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "result": 17,
++   "result": null,
+    "status": "succeeded",
+  }
+
+ ❯ checkInputs src/definition-pins.test.ts:203:36
+    201|     expect(accepted.versionId).toBe(versionId);
+    202|     await idle();
+    203|     expect(await run(accepted.id)).toMatchObject({ status: 'succeeded'…
+       |                                    ^
+    204|   };
+    205|
+ ❯ src/definition-pins.test.ts:210:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  00:03:20
+   Duration  13.44s (transform 42%, import 38%, tests 20%)
+
+  Transform  transforming modules took 5.48s · 42% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261113-i08-validation\GraphGoblin\apps\api

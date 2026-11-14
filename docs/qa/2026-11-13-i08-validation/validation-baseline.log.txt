@@ -1,0 +1,193 @@
+$ vitest run src/expression.test.ts src/json-schema.test.ts
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261113-i08-validation/GraphGoblin/packages/domain
+
+ ❯ src/expression.test.ts (17 tests | 6 failed) 420ms
+   ❯ evaluateExpression (15)
+     × evaluates 99 flat literal objects at the same depth as a projection 82ms
+     × evaluates 100 flat literal objects at the same depth as a projection 12ms
+     × evaluates 200 flat literal objects at the same depth as a projection 13ms
+     × does not count sibling object members as nested calls 8ms
+     × isolates budgets and bindings when the same cached source runs concurrently 8ms
+     × isolates deadlines when the same cached source runs concurrently 5ms
+ ❯ src/json-schema.test.ts (11 tests | 3 failed) 262ms
+   ❯ validateJson (9)
+     × compiles both versions of one schema ID starting with integer 10ms
+     × compiles both versions of one schema ID starting with string 3ms
+     × rejects references outside the current schema even after compiling their target 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > evaluates 99 flat literal objects at the same depth as a projection
+AssertionError: expected [ Array(99) ] to deeply equal [ { value: +0 }, { value: 1 }, …(97) ]
+
+Compared values have no visual difference.
+
+ ❯ src/expression.test.ts:21:73
+     19|     const rows = Array.from({ length: count }, (_, value) => ({ value …
+     20|     expect(await evaluateExpression(JSON.stringify(rows), {})).toEqual…
+     21|     expect(await evaluateExpression('rows.{"value": value}', { rows })…
+       |                                                                         ^
+     22|   });
+     23|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > evaluates 100 flat literal objects at the same depth as a projection
+ExpressionError: expression exceeded max depth 200
+ ❯ check src/expression.ts:173:13
+    171|   const check = (): void => {
+    172|     if (depth > maxDepth) {
+    173|       throw new ExpressionError(`expression exceeded max depth ${maxDe…
+       |             ^
+    174|     }
+    175|     if (Date.now() - start > timeoutMs) {
+ ❯ src/expression.ts:182:5
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3515:19
+ ❯ evaluateGroupExpression ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4395:33
+ ❯ evaluateUnary ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4024:32
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3526:32
+ ❯ ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4002:39
+ ❯ evaluateUnary ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3999:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > evaluates 200 flat literal objects at the same depth as a projection
+ExpressionError: expression exceeded max depth 200
+ ❯ check src/expression.ts:173:13
+    171|   const check = (): void => {
+    172|     if (depth > maxDepth) {
+    173|       throw new ExpressionError(`expression exceeded max depth ${maxDe…
+       |             ^
+    174|     }
+    175|     if (Date.now() - start > timeoutMs) {
+ ❯ src/expression.ts:182:5
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3515:19
+ ❯ ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4002:45
+ ❯ evaluateUnary ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4000:22
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3526:32
+ ❯ Object.evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:5697:26
+ ❯ run src/expression.ts:145:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > does not count sibling object members as nested calls
+ExpressionError: expression exceeded max depth 6
+ ❯ check src/expression.ts:173:13
+    171|   const check = (): void => {
+    172|     if (depth > maxDepth) {
+    173|       throw new ExpressionError(`expression exceeded max depth ${maxDe…
+       |             ^
+    174|     }
+    175|     if (Date.now() - start > timeoutMs) {
+ ❯ src/expression.ts:182:5
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3515:19
+ ❯ ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4452:32
+ ❯ evaluateGroupExpression ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4441:63
+ ❯ evaluateUnary ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:4024:26
+ ❯ evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:3526:26
+ ❯ Object.evaluate ../../node_modules/.pnpm/jsonata@2.2.2/node_modules/jsonata/jsonata.js:5697:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > isolates budgets and bindings when the same cached source runs concurrently
+AssertionError: promise resolved "12" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+12
+
+ ❯ src/expression.test.ts:41:21
+     39|     const loose = evaluateExpression(expression, {}, { maxDepth: 100, …
+     40|     await Promise.all([
+     41|       expect(strict).rejects.toThrow(/max depth 10/),
+       |                     ^
+     42|       expect(loose).resolves.toBe(19),
+     43|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/expression.test.ts > evaluateExpression > isolates deadlines when the same cached source runs concurrently
+AssertionError: promise resolved "'short'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"short"
+
+ ❯ src/expression.test.ts:57:22
+     55|       release();
+     56|       await Promise.all([
+     57|         expect(short).rejects.toThrow(/exceeded 10ms/),
+       |                      ^
+     58|         expect(long).resolves.toBe('long'),
+     59|       ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/json-schema.test.ts > validateJson > compiles both versions of one schema ID starting with integer
+ FAIL  src/json-schema.test.ts > validateJson > compiles both versions of one schema ID starting with string
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/json-schema.test.ts:71:59
+     69|         };
+     70|         const input = type === 'integer' ? 2 : 'word';
+     71|         expect(validateJson(schema, { value: input }).ok).toBe(true);
+       |                                                           ^
+     72|         expect(validateJson(schema, { value: false }).issues).toEqual([
+     73|           { path: ['value'], message: `must be ${type}` },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/json-schema.test.ts > validateJson > rejects references outside the current schema even after compiling their target
+AssertionError: expected [] to deeply equal [ { path: [], …(1) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "message": StringContaining "can't resolve reference https://example.test/other-schema",
+-     "path": [],
+-   },
+- ]
++ []
+
+ ❯ src/json-schema.test.ts:84:27
+     82|     expect(validateJson({ $id: id, type: 'integer' }, 2).ok).toBe(true…
+     83|     const result = validateJson({ properties: { value: { $ref: id } } …
+     84|     expect(result.issues).toEqual([
+       |                           ^
+     85|       { path: [], message: expect.stringContaining(`can't resolve refe…
+     86|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 19 passed (28)
+   Start at  23:58:24
+   Duration  15.72s (transform 92%, tests 4%, import 4%, worker 1%)
+
+  Transform  transforming modules took 16.66s · 92% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261113-i08-validation\GraphGoblin\packages\domain
